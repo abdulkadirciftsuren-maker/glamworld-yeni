@@ -1,0 +1,18 @@
+﻿{
+  "permissions": {
+    "allow": [
+      "Read", "Write", "Edit",
+      "Bash(npm start:*)", "Bash(npm run:*)", "Bash(npm install:*)",
+      "Bash(git add:*)", "Bash(git commit:*)", "Bash(git push:*)",
+      "Bash(git status:*)", "Bash(git checkout:*)", "Bash(git stash:*)",
+      "Bash(mkdir:*)", "Bash(touch:*)", "Bash(mv:*)", "Bash(cp:*)",
+      "Bash(rm:*)", "Bash(rmdir:*)", "Bash(del:*)", "Bash(copy:*)",
+      "Bash(move:*)", "Bash(type:*)", "Bash(cat:*)", "Bash(dir:*)",
+      "Bash(ls:*)", "Bash(echo:*)", "Bash(cd:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /:*)", "Bash(rm -rf ~:*)", "Bash(format:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}

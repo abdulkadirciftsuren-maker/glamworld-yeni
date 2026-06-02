@@ -1,0 +1,82 @@
+.gy-kok{
+  position:relative; min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center;
+  padding:30px 16px; box-sizing:border-box;
+  background:radial-gradient(circle at 50% 25%, #1a1206 0%, #0a0a0f 70%);
+  /* Dikey kayma: kart sigarsa ortali, sigmazsa (yatay/kucuk ekran) ustten kaydirilir */
+  overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none; -ms-overflow-style:none;
+  font-family:'Cormorant Garamond',serif;
+}
+.gy-kok::-webkit-scrollbar{display:none;width:0;height:0;}
+/* Yatay / kisa ekranda: ust kesilmesin, ustten basla */
+@media (max-height:700px){ .gy-kok{ align-items:flex-start; } }
+.gy-zerre{
+  position:absolute; width:4px; height:4px; border-radius:50%;
+  background:radial-gradient(circle,#FFE9A8,rgba(255,215,0,0));
+  animation:gy-yuz linear infinite; pointer-events:none;
+}
+@keyframes gy-yuz{
+  0%{transform:translateY(0) scale(.6);opacity:0;}
+  20%{opacity:.9;} 80%{opacity:.6;}
+  100%{transform:translateY(-46px) scale(1.1);opacity:0;}
+}
+.gy-kart{
+  position:relative; width:100%; max-width:340px; box-sizing:border-box;
+  background:linear-gradient(160deg,rgba(30,24,12,.95),rgba(10,10,15,.97));
+  border:1px solid rgba(201,162,39,.4); border-radius:22px;
+  padding:24px 20px 20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.6), inset 0 0 30px rgba(201,162,39,.06);
+  text-align:center;
+}
+.gy-logo-sat{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px; }
+.gy-logo{
+  font-family:'Cinzel',serif; font-size:21px; letter-spacing:2.5px;
+  background:linear-gradient(110deg,#B8860B,#FFE9A8,#FFD700,#FFE9A8,#B8860B);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.gy-baslik{ font-family:'Cinzel',serif; font-size:22px; color:#FFE9A8; margin-top:4px; }
+.gy-slogan{ color:#cbb890; font-size:13.5px; font-style:italic; margin-bottom:12px; }
+.gy-label{ display:block; text-align:left; color:#cbb890; font-size:13px; letter-spacing:.5px; margin:10px 0 5px; }
+.gy-input{
+  width:100%; box-sizing:border-box; background:rgba(0,0,0,.4);
+  border:1px solid rgba(201,162,39,.35); border-radius:12px;
+  padding:13px 14px; color:#FFD700; font-size:16px; font-family:'Cormorant Garamond',serif; outline:none;
+}
+.gy-input::placeholder{ color:#7a6f50; }
+.gy-input:focus{ border-color:#FFD700; box-shadow:0 0 0 2px rgba(255,215,0,.15); }
+.gy-input.hatali{ border-color:#e0533a; }
+.gy-sifre-sar{ position:relative; }
+.gy-goz{ position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; display:flex; }
+.gy-hata{ display:block; text-align:left; color:#ff8a6a; font-size:12.5px; margin-top:4px; }
+.gy-unuttum{ text-align:right; color:#cbb890; font-size:13px; margin:10px 2px 4px; cursor:pointer; text-decoration:underline; }
+.gy-bilgi{
+  background:rgba(201,162,39,.12); border:1px solid rgba(201,162,39,.4); color:#FFE9A8;
+  border-radius:10px; padding:9px 12px; font-size:13.5px; margin:10px 0;
+}
+.gy-btn{
+  width:100%; margin-top:14px;
+  background:linear-gradient(110deg,#B8860B,#FFD700,#B8860B); color:#1a1206;
+  border:none; border-radius:28px; padding:12px; font-size:15px; font-weight:700;
+  letter-spacing:1px; font-family:'Cinzel',serif; cursor:pointer;
+  box-shadow:0 4px 16px rgba(201,162,39,.35);
+}
+.gy-btn:active{ transform:scale(.98); }
+.gy-ayrac{ display:flex; align-items:center; gap:10px; margin:18px 0 14px; color:#7a6f50; font-size:13px; }
+.gy-ayrac::before,.gy-ayrac::after{ content:''; flex:1; height:1px; background:rgba(201,162,39,.25); }
+.gy-sosyal{
+  width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+  background:rgba(255,255,255,.06); border:1px solid rgba(201,162,39,.3); border-radius:30px;
+  padding:10px; color:#f0e6c8; font-size:14px; font-family:'Cormorant Garamond',serif; cursor:pointer; margin-bottom:9px;
+}
+.gy-sosyal svg{ width:20px; height:20px; }
+.gy-geri{
+  width:100%; margin-top:8px; background:transparent; border:1px solid rgba(201,162,39,.3);
+  border-radius:30px; padding:11px; color:#cbb890; font-size:15px; font-family:'Cormorant Garamond',serif; cursor:pointer;
+}
+.gy-alt{ margin-top:14px; color:#cbb890; font-size:14px; }
+.gy-alt b{ color:#FFD700; cursor:pointer; }
+.gy-basarili{ position:relative; text-align:center; color:#FFD700; max-width:420px; padding:24px; font-family:'Cormorant Garamond',serif; }
+.gy-basarili h1{ font-family:'Cinzel',serif; font-size:28px; color:#FFE9A8; margin:16px 0 10px; letter-spacing:1px; }
+.gy-basarili p{ color:#d8c89a; font-size:18px; line-height:1.5; }
+.gy-kok::-webkit-scrollbar{ display:none; }
+.gy-kok{ scrollbar-width:none; }

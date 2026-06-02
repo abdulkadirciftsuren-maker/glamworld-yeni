@@ -1,0 +1,93 @@
+/* ====================================================================
+   SURUM ROZETI STILLERI  (tasarimdan ayri, yuzen parca)
+   ==================================================================== */
+.yuzen-rozet{
+  position:fixed;
+  top:14px;left:50%;
+  transform:translateX(-50%);
+  z-index:99999;
+  border:1.5px solid rgba(201,162,39,.7);
+  border-radius:14px;
+  background:rgba(14,12,8,.95);
+  box-shadow:0 6px 26px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,235,170,.12);
+  font-family:'Cormorant Garamond',serif;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:none;
+  transition:left 1.2s ease, top 1.2s ease, padding .2s, border-radius .2s;
+  -webkit-backdrop-filter:blur(3px);
+  backdrop-filter:blur(3px);
+}
+.yuzen-rozet *{box-sizing:border-box;}
+.yuzen-rozet.suruklenirken{cursor:grabbing;}
+
+/* GOVDE */
+.yuzen-rozet .govde{padding:10px 14px;min-width:220px;}
+.yuzen-rozet .rozet-ust{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.yuzen-rozet .rozet-sol{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+.yuzen-rozet .rozet-no{
+  font-family:'Cinzel',serif;font-weight:700;font-size:18px;color:#FFD700;
+  letter-spacing:.04em;text-shadow:0 0 10px rgba(255,215,0,.4);white-space:nowrap;flex:none;
+}
+.yuzen-rozet .rozet-dosya{
+  font-size:12px;color:#c9a227;font-style:italic;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  border-bottom:1px dashed rgba(201,162,39,.4);padding-bottom:1px;
+  transition:color .15s;
+}
+.yuzen-rozet .rozet-dosya:hover{color:#FFD700;}
+.yuzen-rozet .rozet-saglar{display:flex;gap:4px;flex:none;}
+.yuzen-rozet .kucult-btn{
+  width:24px;height:24px;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(201,162,39,.6);background:rgba(255,215,0,.08);
+  color:#FFD700;font-size:14px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.yuzen-rozet .kucult-btn:hover{background:rgba(255,215,0,.18);}
+.yuzen-rozet .rozet-tarih{
+  margin-top:6px;font-size:12px;color:#b9ad8e;letter-spacing:.03em;
+}
+
+/* GEÇMİŞ PANELİ */
+.yuzen-rozet .gecmis-panel{
+  margin-top:8px;padding-top:8px;
+  border-top:1px solid rgba(201,162,39,.25);
+  max-height:260px;overflow-y:auto;
+  scrollbar-width:none;
+}
+.yuzen-rozet .gecmis-panel::-webkit-scrollbar{display:none;}
+.yuzen-rozet .gc-baslik{
+  font-size:11px;color:#9a8d6c;text-transform:uppercase;letter-spacing:.08em;
+  margin-bottom:6px;font-weight:600;
+}
+.yuzen-rozet .gc-sat{
+  padding:5px 0;border-bottom:1px solid rgba(201,162,39,.1);
+}
+.yuzen-rozet .gc-sat:last-child{border-bottom:none;}
+.yuzen-rozet .gc-son{background:rgba(255,215,0,.04);border-radius:6px;padding:5px 5px;}
+.yuzen-rozet .gc-ust{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px;}
+.yuzen-rozet .gc-surum{
+  font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:#FFD700;flex:none;
+}
+.yuzen-rozet .gc-zaman{font-size:11px;color:#7a6f50;white-space:nowrap;}
+.yuzen-rozet .gc-dosya-sat{margin-bottom:2px;}
+.yuzen-rozet .gc-dosya{
+  font-size:11px;color:#c9a227;font-style:italic;
+}
+.yuzen-rozet .gc-aciklama{font-size:11px;color:#b9ad8e;line-height:1.4;}
+
+/* KÜÇÜK HAL */
+.yuzen-rozet .mini{display:none;align-items:center;gap:8px;padding:9px 13px;cursor:pointer;}
+.yuzen-rozet .mini .nokta{
+  width:11px;height:11px;border-radius:50%;background:#3ecf6b;flex:none;
+  box-shadow:0 0 9px 2px rgba(62,207,107,.8);
+}
+.yuzen-rozet .mini .mini-yazi{
+  font-family:'Cinzel',serif;font-weight:700;font-size:15px;color:#FFD700;letter-spacing:.04em;
+}
+
+.yuzen-rozet.kucuk{border-radius:30px;}
+.yuzen-rozet.kucuk .govde{display:none;}
+.yuzen-rozet.kucuk .mini{display:flex;}

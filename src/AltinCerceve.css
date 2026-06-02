@@ -1,0 +1,72 @@
+/*
+  ALTIN CERCEVE CSS
+  - position:fixed + inset:0 -> ekranin tam kenarinda, HER ZAMAN sabit
+  - pointer-events:none -> altindaki dugmelere tiklamayi engellemez
+  - z-index cok yuksek -> her seyin ustunde (ama tiklama gecirir)
+  - border ile altin cerceve; gradient parilti
+  - scroll/zoom/resize'da OYNAMAZ cunku fixed + inset:0 (viewport'a kilitli)
+*/
+
+/* ALT BEYAZ SERIT ONLEME: html/body tam siyah, sayfa kaysa da beyaz cizgi cikmaz.
+   (overscroll-behavior YASAK - anayasa; arka plan rengiyle cozuyoruz) */
+html, body {
+  background-color: #0a0a0f !important;
+  margin: 0;
+  padding: 0;
+}
+#root {
+  background-color: #0a0a0f;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.altin-cerceve {
+  position: fixed;
+  top: var(--gercek-ust, 0px);
+  left: 0;
+  right: 0;
+  /* ZIPLAMA KESIN COZUM: visualViewport'tan gelen gercek gorunen yukseklik.
+     Adres cubugu kaysa da cerceve dogru yerde kalir, ziplamaz. */
+  height: 100vh;
+  height: 100dvh;
+  height: var(--gercek-vh, 100vh);
+  width: 100vw;
+  z-index: 2147483000;
+  pointer-events: none;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-sizing: border-box;
+  border: 5px solid transparent;
+  border-image: linear-gradient(
+    135deg,
+    #8a6d1f 0%,
+    #FFE9A8 22%,
+    #FFD700 38%,
+    #B8860B 50%,
+    #FFD700 62%,
+    #FFE9A8 78%,
+    #8a6d1f 100%
+  ) 1;
+  box-shadow:
+    inset 0 0 18px rgba(255, 215, 0, 0.25),
+    inset 0 0 2px rgba(255, 233, 168, 0.6);
+}
+
+/* TELEFON: daha ince cerceve */
+@media (max-width: 768px) {
+  .altin-cerceve {
+    border-width: 3px;
+    box-shadow:
+      inset 0 0 12px rgba(255, 215, 0, 0.22),
+      inset 0 0 2px rgba(255, 233, 168, 0.5);
+  }
+}
+
+/* COK kucuk ekran: cok ince */
+@media (max-width: 400px) {
+  .altin-cerceve {
+    border-width: 2.5px;
+  }
+}
