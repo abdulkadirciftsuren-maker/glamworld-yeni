@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/glamworld-yeni/static/css/main.2ac53c2e.css",
-    "main.js": "/glamworld-yeni/static/js/main.c7783dd4.js",
+    "main.js": "/glamworld-yeni/static/js/main.94a97bba.js",
     "static/js/453.36eff997.chunk.js": "/glamworld-yeni/static/js/453.36eff997.chunk.js",
     "index.html": "/glamworld-yeni/index.html",
     "main.2ac53c2e.css.map": "/glamworld-yeni/static/css/main.2ac53c2e.css.map",
-    "main.c7783dd4.js.map": "/glamworld-yeni/static/js/main.c7783dd4.js.map",
+    "main.94a97bba.js.map": "/glamworld-yeni/static/js/main.94a97bba.js.map",
     "453.36eff997.chunk.js.map": "/glamworld-yeni/static/js/453.36eff997.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.2ac53c2e.css",
-    "static/js/main.c7783dd4.js"
+    "static/js/main.94a97bba.js"
   ]
 }
