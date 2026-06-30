@@ -213,7 +213,7 @@ Her kod yazımında ve her güncellemede şu karakterler DOĞRU kullanılır:
 ### Numara sistemi
 - **A** = büyük sayfa/aşama (tamamlanınca artar). **B** = o A içinde HER deploy'da +1.
   - A1 Açılış ✅ · A2–A6 kartlar/formlar ✅ (A5 Pro & A6 Müşteri KİLİTLİ) · A7 Giriş Yap + 13 dil + gerçek üyelik ✅ · A8 Ana sayfa akışı + beğeni/yorum/takip/bildirim + foto editör + AI + feed ebatları kilitlendi ✅
-  - **A9 = AKTİF (2026-06-16, temiz sayfa):** feed ebatları onaylı/kilitli noktadan devam. Şu an **A9.B1**.
+  - **A9 = AKTİF (2026-06-16, temiz sayfa):** feed ebatları onaylı/kilitli noktadan devam. Şu an **A10.B130**.
 - Gösterim: pill'de `A9.B1`. Yeni A-serisine geçince B yeniden B1.
 
 ### Her deployda
