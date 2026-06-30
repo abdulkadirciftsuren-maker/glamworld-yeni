@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { DILLER } from "./i18n";
 import "./DilSecici.css";
 
-// GLAMWORLD'e özel altın küre ikonu (hazır emoji DEĞİL — anayasa kuralı)
+// GROXORG'e özel altın küre ikonu (hazır emoji DEĞİL — anayasa kuralı)
 function KureIkon({ boyut = 23 }) {
   return (
     <svg width={boyut} height={boyut} viewBox="0 0 24 24" fill="none">
@@ -22,6 +23,8 @@ export default function DilSecici() {
 
   function sec(kod) {
     i18n.changeLanguage(kod);
+    // Elle seçim KALICI: bir daha telefon dili değişse bile bu seçim korunur.
+    try { localStorage.setItem("gw_dil2", kod); } catch (e) {}
     setAcik(false);
   }
 
@@ -33,8 +36,9 @@ export default function DilSecici() {
         <span className="dil-etiket">{aktifDil.ad}</span>
       </div>
 
-      {/* Ortada, zarif, contained pencere */}
-      {acik && (
+      {/* Ortada, zarif, contained pencere — PORTAL ile body'ye (header'ın backdrop-filter'i
+          position:fixed'i hapsedip pencereyi yanlış yere atıyordu; portal hep ekran ortasına koyar) */}
+      {acik && createPortal((
         <div className="dil-katman" onClick={(e) => { if (e.target === e.currentTarget) setAcik(false); }}>
           <div className="dil-panel">
             <button className="dil-kapat" onClick={() => setAcik(false)} aria-label="Kapat">&#10005;</button>
@@ -45,7 +49,7 @@ export default function DilSecici() {
             <div className="dil-liste">
               {DILLER.map((d) => (
                 <button key={d.kod} className={"dil-sat" + (aktif === d.kod ? " sec" : "")} onClick={() => sec(d.kod)}>
-                  <img className="dil-bayrak" src={`https://flagcdn.com/w80/${d.bayrak}.png`} alt="" loading="lazy" />
+                  <img className="dil-bayrak" src={`https://flagcdn.com/w160/${d.bayrak}.png`} srcSet={`https://flagcdn.com/w160/${d.bayrak}.png 1x, https://flagcdn.com/w320/${d.bayrak}.png 2x`} alt="" loading="lazy" />
                   <span className="dil-ad">{d.ad}</span>
                   {aktif === d.kod && <span className="dil-tik">&#10003;</span>}
                 </button>
@@ -53,7 +57,7 @@ export default function DilSecici() {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
     </>
   );
 }

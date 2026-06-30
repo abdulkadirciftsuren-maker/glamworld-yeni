@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, OAuthProvider } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 import "./GirisYap.css";
 import SurumRozeti from "./SurumRozeti";
@@ -93,7 +93,19 @@ export default function GirisYap() {
       await signInWithEmailAndPassword(auth, ep.trim(), sifre);
       navigate("/anasayfa", { replace: true });
     } catch (e) {
-      setBilgi(t(hataMesajiKey(e.code)));
+      // Hesap YOKSA / kimlik eşleşmiyorsa → herhangi bir e-posta ile YENİ hesap aç (ilk girişteki gibi kabul et)
+      if (e.code === "auth/user-not-found" || e.code === "auth/invalid-credential" || e.code === "auth/invalid-login-credentials") {
+        if ((sifre || "").length < 6) { setBilgi(t("ghSifreKisa", "Şifre en az 6 karakter olmalı.")); setYukleniyor(false); return; }
+        try {
+          await createUserWithEmailAndPassword(auth, ep.trim(), sifre);
+          navigate("/anasayfa", { replace: true });
+        } catch (e2) {
+          if (e2.code === "auth/email-already-in-use") setBilgi(t("ghVarSifreYanlis", "Bu e-posta kayıtlı ama şifre yanlış. (Google ile açtıysan Google düğmesiyle gir.)"));
+          else setBilgi(t(hataMesajiKey(e2.code)));
+        }
+      } else {
+        setBilgi(t(hataMesajiKey(e.code)));
+      }
     } finally {
       setYukleniyor(false);
     }
@@ -104,6 +116,19 @@ export default function GirisYap() {
     setYukleniyor(true);
     try {
       await signInWithPopup(auth, googleProvider);
+      navigate("/anasayfa", { replace: true });
+    } catch (e) {
+      setBilgi(t(hataMesajiKey(e.code)));
+    } finally {
+      setYukleniyor(false);
+    }
+  }
+
+  async function microsoftGiris() {
+    setBilgi("");
+    setYukleniyor(true);
+    try {
+      await signInWithPopup(auth, new OAuthProvider("microsoft.com"));
       navigate("/anasayfa", { replace: true });
     } catch (e) {
       setBilgi(t(hataMesajiKey(e.code)));
@@ -123,7 +148,7 @@ export default function GirisYap() {
       <div className="gy-kart">
         <div className="gy-logo-sat">
           <AltinTas boyut={58} />
-          <span className="gy-logo">GLAMWORLD</span>
+          <span className="gy-logo notranslate" translate="no">GROXORG</span>
         </div>
         <div className="gy-baslik">{t('girisYapLink')}</div>
         <div className="gy-slogan">{t('tekrarHosgeldinBaslik')}</div>
@@ -161,7 +186,7 @@ export default function GirisYap() {
             </button>
           );
           const microsoft = (
-            <button key="m" className="gy-sosyal" style={oneri === "microsoft" ? vurguStil : undefined} onClick={() => yakinda(t('microsoftGiris'))}>
+            <button key="m" className="gy-sosyal" style={oneri === "microsoft" ? vurguStil : undefined} onClick={microsoftGiris} disabled={yukleniyor}>
               <svg viewBox="0 0 23 23"><path fill="#f25022" d="M1 1h10v10H1z" /><path fill="#7fba00" d="M12 1h10v10H12z" /><path fill="#00a4ef" d="M1 12h10v10H1z" /><path fill="#ffb900" d="M12 12h10v10H12z" /></svg>
               {t('microsoftGiris')}{oneri === "microsoft" && rozet}
             </button>

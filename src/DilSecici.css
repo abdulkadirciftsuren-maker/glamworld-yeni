@@ -1,5 +1,5 @@
 /* ============================================================
-   GLAMWORLD — Dil Seçici
+   GROXORG — Dil Seçici
    ORTADA · ZARİF contained pencere · satırlar çerçevesiz (ince hat)
    bayraklar kenardan UZAK · yazı ASLA kesilmez
    ============================================================ */
@@ -33,7 +33,7 @@ html[dir="rtl"] .dil-kose{ right:auto; left:14px; }
 
 /* ---- Karartı (pencere ORTADA) ---- */
 .dil-katman{
-  position:fixed; inset:0; z-index:11001;
+  position:fixed; inset:0; z-index:100040; /* menünün (100025) ÜSTÜNDE — menü içinden açılınca altında kalmasın */
   display:flex; align-items:center; justify-content:center; padding:22px;
   background:rgba(0,0,0,.68); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
   animation:dilFon .25s ease;
@@ -42,8 +42,8 @@ html[dir="rtl"] .dil-kose{ right:auto; left:14px; }
 
 /* ---- Zarif, contained pencere (çok geniş değil) ---- */
 .dil-panel{
-  position:relative; width:100%; max-width:360px; box-sizing:border-box;
-  max-height:84vh; display:flex; flex-direction:column;
+  position:relative; width:100%; max-width:330px; box-sizing:border-box;
+  max-height:82vh; display:flex; flex-direction:column;
   background:linear-gradient(180deg,#221910 0%,#150f08 60%,#0b0805 100%);
   border:1px solid rgba(255,215,0,.4); border-radius:20px;
   box-shadow:0 24px 70px rgba(0,0,0,.8), 0 0 50px rgba(255,215,0,.12), inset 0 1px 0 rgba(255,235,170,.12);
@@ -65,11 +65,11 @@ html[dir="rtl"] .dil-kapat{ right:auto; left:14px; }
 
 /* Üst başlık (küre + yazı, ortalı) */
 .dil-bilek{
-  flex:none; display:flex; flex-direction:column; align-items:center; gap:7px;
-  padding:24px 24px 14px;
+  flex:none; display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:20px 22px 12px;
 }
 .dil-baslik{
-  margin:0; font-family:'Cinzel',serif; font-weight:600; font-size:21px; letter-spacing:.05em;
+  margin:0; font-family:'Cinzel',serif; font-weight:600; font-size:18.5px; letter-spacing:.05em;
   background:linear-gradient(180deg,#fff,#FFE9A8 55%,#E8C254);
   -webkit-background-clip:text; background-clip:text; color:transparent;
   filter:drop-shadow(0 1px 5px rgba(255,215,0,.4));
@@ -77,37 +77,58 @@ html[dir="rtl"] .dil-kapat{ right:auto; left:14px; }
 
 /* Liste — içeride kayar; yan boşluk → satırlar/hatlar köşeye değmez */
 .dil-liste{
-  display:flex; flex-direction:column; gap:9px;       /* ülkeler arası BELİRGİN boşluk */
+  display:flex; flex-direction:column; gap:6px;       /* ülkeler arası boşluk (telefonda derli toplu) */
   flex:1 1 auto; min-height:0; overflow-y:auto;
-  padding:4px 22px 20px;
+  padding:4px 18px 18px;
   -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
 .dil-liste::-webkit-scrollbar{ display:none; }
 
 /* Satır — çerçevesiz; ayrı, belirgin kutucuk; bayrak kenardan UZAK */
 .dil-sat{
-  display:flex; align-items:center; gap:16px; width:100%; box-sizing:border-box;
+  display:flex; align-items:center; gap:13px; width:100%; box-sizing:border-box;
   background:rgba(255,255,255,.045); border:none; cursor:pointer; text-align:left;
-  padding:14px 18px;                       /* sol 18 + liste 22 = bayrak kenardan ~40px UZAK */
-  border-radius:14px;
+  padding:11px 15px;
+  border-radius:12px;
   transition:background .18s, box-shadow .25s;
 }
 .dil-sat:hover{ background:rgba(255,215,0,.1); }
 .dil-sat:active{ background:rgba(255,215,0,.15); }
 .dil-sat.sec{ background:linear-gradient(90deg,rgba(255,215,0,.2),rgba(255,215,0,.05)); box-shadow:0 0 16px rgba(255,215,0,.2); }
 
+/* Bayrak — zarif: yumuşak köşe, ince altın hat, hafif derinlik */
 .dil-bayrak{
-  width:38px; height:27px; object-fit:cover; border-radius:5px; flex:none;
-  box-shadow:0 2px 6px rgba(0,0,0,.6), 0 0 0 1px rgba(255,215,0,.3);
+  width:33px; height:23px; object-fit:cover; border-radius:5px; flex:none; display:block;
+  box-shadow:0 1px 5px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,235,170,.45), inset 0 1px 1px rgba(255,255,255,.25);
 }
 
 /* Dil/ülke adı — ALTIN, TAM görünür (kesme/kırpma YOK) */
 .dil-ad{
   flex:1; min-width:0; line-height:1.25;
-  font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; letter-spacing:.01em;
+  font-family:'Cormorant Garamond',serif; font-size:17.5px; font-weight:600; letter-spacing:.01em;
   color:#FFE6A8; text-shadow:0 0 8px rgba(255,215,0,.4), 0 1px 2px rgba(0,0,0,.55);
 }
 html[dir="rtl"] .dil-ad{ text-align:right; }
 .dil-sat.sec .dil-ad{ color:#FFD700; text-shadow:0 0 11px rgba(255,215,0,.7), 0 1px 2px rgba(0,0,0,.55); }
 
-.dil-tik{ color:#FFD700; font-size:18px; flex:none; filter:drop-shadow(0 0 6px rgba(255,215,0,.75)); }
+.dil-tik{ color:#FFD700; font-size:17px; flex:none; filter:drop-shadow(0 0 6px rgba(255,215,0,.75)); }
+
+/* ===== TABLET / BİLGİSAYAR — pencere ve satırlar daha büyük, ferah ===== */
+@media (min-width:760px){
+  .dil-panel{ max-width:430px; border-radius:24px; }
+  .dil-bilek{ padding:26px 28px 16px; gap:8px; }
+  .dil-baslik{ font-size:24px; }
+  .dil-liste{ gap:8px; padding:6px 24px 22px; }
+  .dil-sat{ gap:17px; padding:14px 20px; border-radius:14px; }
+  .dil-bayrak{ width:42px; height:29px; border-radius:6px; }
+  .dil-ad{ font-size:21px; }
+  .dil-tik{ font-size:20px; }
+  .dil-kapat{ font-size:24px; }
+}
+@media (min-width:1100px){
+  .dil-panel{ max-width:480px; }
+  .dil-baslik{ font-size:26px; }
+  .dil-sat{ padding:15px 22px; }
+  .dil-bayrak{ width:46px; height:32px; }
+  .dil-ad{ font-size:22.5px; }
+}

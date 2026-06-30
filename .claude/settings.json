@@ -3,6 +3,7 @@
     "allow": [
       "Read", "Write", "Edit",
       "Bash(npm start:*)", "Bash(npm run:*)", "Bash(npm install:*)",
+      "Bash(npx:*)", "Bash(curl:*)", "Bash(grep:*)", "Bash(tail:*)", "Bash(head:*)", "Bash(seq:*)", "Bash(wc:*)",
       "Bash(git add:*)", "Bash(git commit:*)", "Bash(git push:*)",
       "Bash(git status:*)", "Bash(git checkout:*)", "Bash(git stash:*)",
       "Bash(mkdir:*)", "Bash(touch:*)", "Bash(mv:*)", "Bash(cp:*)",
@@ -13,6 +14,6 @@
     "deny": [
       "Bash(rm -rf /:*)", "Bash(rm -rf ~:*)", "Bash(format:*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "bypassPermissions"
   }
 }

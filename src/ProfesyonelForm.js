@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { mc, ulkeAdiCevir } from './i18n';
-import { auth, db } from './firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { Elmas6Kose } from './Anasayfa';
+import { auth, db, googleProvider } from './firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signInWithPopup, linkWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { girisEpostasiGonder } from './eposta';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './ProfesyonelForm.css';
@@ -265,6 +267,8 @@ export default function ProfesyonelForm() {
   const [sifre1, setSifre1] = useState('');
   const [sifre2, setSifre2] = useState('');
   const [sifre1Tip, setSifre1Tip] = useState('password');
+  // Google ile gelmişse e-postasını forma hazır getir
+  useEffect(() => { try { if (auth.currentUser && auth.currentUser.email) setEp((e) => e || auth.currentUser.email); } catch (x) {} }, []);
   const [sifre2Tip, setSifre2Tip] = useState('password');
   const [telKod, setTelKod] = useState('');
   const [telNo, setTelNo] = useState('');
@@ -618,7 +622,7 @@ export default function ProfesyonelForm() {
   }
 
   function meslekKutla(ad, ik, renk) {
-    const mesaj = i18n.language.split('-')[0] === 'tr' ? (meslekMesaj[ad] || 'Hoş geldin! GLAMWORLD ailesine katıldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) });
+    const mesaj = i18n.language.split('-')[0] === 'tr' ? (meslekMesaj[ad] || 'Hoş geldin! GROXORG ailesine katıldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) });
     setKutlamaIcerik({ ik, ad: mc(ad, i18n.language), alt: mesaj, renk: renk || 'linear-gradient(135deg,#9b0e44,#e0115f)' });
     setKutlamaGor(true);
     if (kutlamaIcRef.current) { serp(kutlamaIcRef.current, 28); }
@@ -948,7 +952,7 @@ export default function ProfesyonelForm() {
     setKatman('');
     setKimlikRolYazi(t('pirlantaProfesyonel'));
     setKimlikMeslek(ik + ' ' + mc(ad, i18n.language));
-    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ((meslekMesaj[ad] || 'Hoş geldin!') + ' GLAMWORLD ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) }));
+    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ((meslekMesaj[ad] || 'Hoş geldin!') + ' GROXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) }));
     meslekKutla(ad, ik, renk);
   }
 
@@ -963,7 +967,7 @@ export default function ProfesyonelForm() {
     setKatman('');
     setKimlikRolYazi(t('hizmetAlanIsArayan'));
     setKimlikMeslek(ik + ' ' + mc(ad, i18n.language));
-    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ('Hoş geldin! ' + ad + ' olarak GLAMWORLD ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('kimlikHosgeldin'));
+    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ('Hoş geldin! ' + ad + ' olarak GROXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('kimlikHosgeldin'));
     meslekKutla(ad, ik, renk);
   }
 
@@ -980,20 +984,23 @@ export default function ProfesyonelForm() {
   }
 
   function odemeAc() {
+    const mevcut = auth.currentUser; // Google ile gelmişse e-posta/şifre zorunlu değil
     const yeniHatalar = {};
     let hataVar = false;
     if (!isim.trim()) { yeniHatalar.isim = 'İsim boş bırakılamaz'; hataVar = true; }
     if (!soyisim.trim()) { yeniHatalar.soyisim = 'Soyisim boş bırakılamaz'; hataVar = true; }
-    if (!ep.trim()) { yeniHatalar.ep = 'E-posta boş bırakılamaz'; hataVar = true; }
-    else if (ep.indexOf('@') === -1) { yeniHatalar.ep = 'Geçerli e-posta girin (örnek@mail.com)'; hataVar = true; }
-    if (!sifreAcik || !sifre1.trim()) {
-      yeniHatalar.sifre1 = 'Şifre boş bırakılamaz'; hataVar = true;
-      setSifreAcik(true);
-    } else if (sifre1.length < 8) {
-      yeniHatalar.sifre1 = 'Şifre en az 8 karakter olmalı'; hataVar = true;
+    if (!mevcut) {
+      if (!ep.trim()) { yeniHatalar.ep = 'E-posta boş bırakılamaz'; hataVar = true; }
+      else if (ep.indexOf('@') === -1) { yeniHatalar.ep = 'Geçerli e-posta girin (örnek@mail.com)'; hataVar = true; }
+      if (!sifreAcik || !sifre1.trim()) {
+        yeniHatalar.sifre1 = 'Şifre boş bırakılamaz'; hataVar = true;
+        setSifreAcik(true);
+      } else if (sifre1.length < 8) {
+        yeniHatalar.sifre1 = 'Şifre en az 8 karakter olmalı'; hataVar = true;
+      }
+      if (!sifre2.trim()) { yeniHatalar.sifre2 = 'Şifreyi tekrar girin'; hataVar = true; }
+      else if (sifre1 !== sifre2) { yeniHatalar.sifre2 = 'Şifreler aynı değil'; hataVar = true; }
     }
-    if (!sifre2.trim()) { yeniHatalar.sifre2 = 'Şifreyi tekrar girin'; hataVar = true; }
-    else if (sifre1 !== sifre2) { yeniHatalar.sifre2 = 'Şifreler aynı değil'; hataVar = true; }
     if (!telNo.trim()) { yeniHatalar.tel = 'Telefon numarası girin'; hataVar = true; }
     if (!konumYazi) { yeniHatalar.konum = true; hataVar = true; }
     if (!ilce.trim()) { yeniHatalar.ilce = 'İlçe girin'; hataVar = true; }
@@ -1004,6 +1011,7 @@ export default function ProfesyonelForm() {
       uyariGoster('Lütfen kırmızı alanları kontrol edin');
       return;
     }
+    // Ödeme penceresi HERKESE açılır (üyelik ödemesi). Google ile gelen de ödeme görür.
     setKatman('odemeKatman');
   }
 
@@ -1034,8 +1042,10 @@ export default function ProfesyonelForm() {
     clearTimeout(kutZamanRef.current);
     kutZamanRef.current = setTimeout(() => {
       setKutlamaGor(false);
-      setKatman('epOnayKatman', true);
-    }, 2500);
+      // HERKES için: kutlamadan sonra kayıt tamamlanır ve DİREKT ana sayfa.
+      // Ekstra pencere YOK (e-posta onay penceresi / anaSayfa kartı / ikinci Google düğmesi kaldırıldı).
+      epOnayla();
+    }, 2200);
   }
 
   function odemeAltSistem(ad) {
@@ -1047,28 +1057,70 @@ export default function ProfesyonelForm() {
   }
 
   async function epOnayla() {
-    // GERÇEK üyelik: Firebase'de hesap aç (kilitli çekirdeğe dokunmadan, sadece kayıt anı)
+    const mevcut = auth.currentUser; // Google ile gelip üyeliğini tamamlıyor olabilir
+    // GOOGLE ile gelmiş → createUser YOK, form bilgileriyle profili oluştur, direkt ana sayfa.
+    // SIRA ÖNEMLİ: ÖNCE profili yaz (kapı kontrolü bulsun), sonra updateProfile.
+    if (mevcut) {
+      try { localStorage.setItem('gw_profilVar', '1'); localStorage.setItem('gw_profilVarZaman', String(Date.now())); } catch (e) {}
+      try { await setDoc(doc(db, 'kullanicilar', mevcut.uid), { tip: 'profesyonel', isim: isim.trim(), soyisim: soyisim.trim(), eposta: mevcut.email || ep.trim(), foto: mevcut.photoURL || '', saglayici: 'google', olusturma: Date.now(), pro: { meslek: seciliMeslekRef.current.ad || '' }, konum: { ulke: srtUlke || '', ulkeKod: srtUlkeIso || '', sehir: srtSehir || '', yazi: konumYazi || '' } }, { merge: true }); } catch (e) {}
+      try { await updateProfile(mevcut, { displayName: (isim.trim() + ' ' + soyisim.trim()).trim() }); } catch (e) {}
+      try { localStorage.setItem('gw_profilVar', '1'); } catch (e) {}
+      try { window.dispatchEvent(new Event('gwProfilVar')); } catch (e) {}
+      girisEpostasiGonder(mevcut.email, (isim.trim() + ' ' + soyisim.trim()).trim()).catch(() => {});
+      navigate('/anasayfa', { replace: true });
+      return;
+    }
+    // E-POSTA/ŞİFRE ile yeni üyelik → kayıt + DİREKT ana sayfa (anaSayfa/Google pencereleri YOK)
+    try { localStorage.setItem('gw_profilVar', '1'); localStorage.setItem('gw_profilVarZaman', String(Date.now())); } catch (e) {}
     try {
       const cred = await createUserWithEmailAndPassword(auth, ep.trim(), sifre1);
       try { await updateProfile(cred.user, { displayName: (isim.trim() + ' ' + soyisim.trim()).trim() }); } catch (e) {}
-      try { await setDoc(doc(db, 'kullanicilar', cred.user.uid), { tip: 'profesyonel', isim: isim.trim(), soyisim: soyisim.trim(), eposta: ep.trim(), olusturma: Date.now() }); } catch (e) {}
+      try { await setDoc(doc(db, 'kullanicilar', cred.user.uid), { tip: 'profesyonel', isim: isim.trim(), soyisim: soyisim.trim(), eposta: ep.trim(), olusturma: Date.now(), pro: { meslek: seciliMeslekRef.current.ad || '' }, konum: { ulke: srtUlke || '', ulkeKod: srtUlkeIso || '', sehir: srtSehir || '', yazi: konumYazi || '' } }); } catch (e) {}
     } catch (e) {
-      const k = e && e.code;
-      uyariGoster(k === 'auth/email-already-in-use' ? t('ghEpostaKayitli') : k === 'auth/weak-password' ? t('hataSifreKisa') : k === 'auth/invalid-email' ? t('hataEpostaGecersiz') : k === 'auth/network-request-failed' ? t('ghInternet') : t('ghGenel'));
-      return;
+      if (e && e.code === 'auth/email-already-in-use') {
+        try { await signInWithEmailAndPassword(auth, ep.trim(), sifre1); } catch (e2) {}
+      }
     }
+    try { localStorage.setItem('gw_profilVar', '1'); } catch (e) {}
+    girisEpostasiGonder(ep.trim(), (isim.trim() + ' ' + soyisim.trim()).trim()).catch(() => {});
+    // TEK pencere: "Google ile giriş" veya "[e-posta] ile devam" → ana sayfa. (Tek Google düğmesi.)
     setKatman('anaSayfaKatman', true);
   }
 
+  // Kayıt-sonrası penceredeki "Google ile giriş" — GERÇEK Google hesabıyla gir, FOTO + ad yaz.
+  async function googleGir() {
+    try {
+      let res;
+      try {
+        res = auth.currentUser
+          ? await linkWithPopup(auth.currentUser, googleProvider)   // hesabı Google'a bağla
+          : await signInWithPopup(auth, googleProvider);
+      } catch (e1) {
+        const k = (e1 && e1.code) || '';
+        // Google zaten ayrı bir hesapsa → doğrudan o GERÇEK Google hesabıyla gir.
+        if (['auth/credential-already-in-use','auth/email-already-in-use','auth/provider-already-linked','auth/account-exists-with-different-credential'].includes(k)) {
+          res = await signInWithPopup(auth, googleProvider);
+        } else { throw e1; }
+      }
+      const u = res.user;
+      const g = (u.providerData || []).find(p => p.providerId === 'google.com') || {};
+      const foto = g.photoURL || u.photoURL || '';
+      const ad = g.displayName || u.displayName || '';
+      // Google foto/adı hesaba YAZ → ana sayfada fotoğraf gözüksün.
+      try { await updateProfile(u, { photoURL: foto || u.photoURL, displayName: ad || u.displayName }); } catch (e) {}
+      try { await setDoc(doc(db, 'kullanicilar', u.uid), { tip: 'profesyonel', isim: ad, eposta: u.email || '', foto, saglayici: 'google', pro: { meslek: seciliMeslekRef.current.ad || '' }, konum: { ulke: srtUlke || '', ulkeKod: srtUlkeIso || '', sehir: srtSehir || '', yazi: konumYazi || '' } }, { merge: true }); } catch (e) {}
+      girisEpostasiGonder(u.email, ad); // giriş bildirim e-postası
+    } catch (e) { /* popup iptal vb. → sessiz */ }
+    try { localStorage.setItem('gw_profilVar', '1'); } catch (e) {}
+    try { window.dispatchEvent(new Event('gwProfilVar')); } catch (e) {}
+    navigate('/anasayfa', { replace: true });
+  }
+
+  // "[e-posta] ile devam" → DOĞRUDAN ana sayfa (beyaz sayfa/ara adım YOK).
   function girisYap() {
-    navigate('/profesyonel', { replace: true });
-    setKartGizli(true);
-    setKutlamaIcerik({ ik: '🏠', ad: t('anaSayfaKutla'), alt: t('girisBasarili'), renk: 'linear-gradient(135deg,#9b0e44,#e0115f)' });
-    setKutlamaGor(true);
-    const ic = kutlamaIcRef.current;
-    if (ic) serp(ic, 20);
-    clearTimeout(kutZamanRef.current);
-    setTimeout(() => navigate('/kayit-tamam', { replace: true }), 1500);
+    try { localStorage.setItem('gw_profilVar', '1'); } catch (e) {}
+    try { window.dispatchEvent(new Event('gwProfilVar')); } catch (e) {}
+    navigate('/anasayfa', { replace: true });
   }
 
   const ureticiListesi = [
@@ -1310,25 +1362,10 @@ export default function ProfesyonelForm() {
         <div className="kart" id="anaKart" ref={anaKartRef}>
           <div className="ic">
             <div className="ust">
-              <span className="pir-sol">
-                <svg viewBox="0 0 120 120" style={{width:'44px',height:'44px'}}>
-                  <defs>
-                    <radialGradient id="kyv" cx="50%" cy="42%" r="62%"><stop offset="0" stopColor="#2a1018"/><stop offset="60%" stopColor="#12090d"/><stop offset="100%" stopColor="#050303"/></radialGradient>
-                    <radialGradient id="kbt" cx="50%" cy="40%" r="62%"><stop offset="0" stopColor="#ffd9e6"/><stop offset="40%" stopColor="#ff5d97"/><stop offset="75%" stopColor="#e0115f"/><stop offset="100%" stopColor="#9b0e44"/></radialGradient>
-                    <radialGradient id="kbm" cx="50%" cy="50%" r="50%"><stop offset="0" stopColor="rgba(255,220,235,.98)"/><stop offset="100%" stopColor="rgba(224,17,95,0)"/></radialGradient>
-                  </defs>
-                  <ellipse cx="60" cy="60" rx="50" ry="50" fill="url(#kyv)" stroke="#C9A227" strokeWidth="2.5"/>
-                  <ellipse cx="60" cy="60" rx="41" ry="41" fill="#0a0305" stroke="rgba(201,162,39,.3)" strokeWidth="1.2"/>
-                  <circle cx="60" cy="60" r="32" fill="url(#kbt)"/>
-                  <polygon points="60,60 40,46 60,38" fill="#ffd9e6" opacity=".6"/><polygon points="60,60 60,38 80,46" fill="#ffc2d8" opacity=".5"/>
-                  <polygon points="60,60 80,46 86,64" fill="#ff8fb5" opacity=".45"/><polygon points="60,60 86,64 74,82" fill="#e0115f" opacity=".5"/>
-                  <polygon points="60,60 74,82 46,82" fill="#b50d4e" opacity=".5"/><polygon points="60,60 46,82 34,64" fill="#c70f54" opacity=".5"/>
-                  <polygon points="60,60 34,64 40,46" fill="#ff8fb5" opacity=".45"/>
-                  <circle cx="60" cy="58" r="14" fill="url(#kbm)"/>
-                  <circle cx="60" cy="29" r="5.5" fill="#FFE9A8" stroke="#8a6010" strokeWidth="1.2"/><circle cx="89" cy="48" r="5.5" fill="#FFD700" stroke="#8a6010" strokeWidth="1.2"/><circle cx="31" cy="48" r="5.5" fill="#FFD700" stroke="#8a6010" strokeWidth="1.2"/>
-                </svg>
+              <span className="logo-amblem">
+                <span className="pir-sol"><Elmas6Kose c="#e0202c" /></span>
+                <span className="logo notranslate" translate="no">GROXORG</span>
               </span>
-              <span className="logo">GLAMWORLD</span>
             </div>
             <div className="h2">{t('proOlBaslik')}</div>
             <div className="slogan">{t('proSlogan')}</div>
@@ -1552,12 +1589,12 @@ export default function ProfesyonelForm() {
       <div className={'konum-katman' + (katman === 'anaSayfaKatman' ? ' acik' : '')} style={{zIndex:10001}}
         onClick={e => { if (e.target === e.currentTarget) setKatman(''); }}>
         <div className="kk-ic" ref={anaSayfaKkIcRef} onClick={e => e.stopPropagation()}>
-          <div className="kk-ust"><span className="kk-baslik">&#127968; GLAMWORLD</span></div>
+          <div className="kk-ust"><span className="kk-baslik">&#127968; GROXORG</span></div>
           <p style={{textAlign:'center',color:'#FFD700',fontFamily:"'Cinzel',serif",fontSize:'18px',marginBottom:'6px'}}>{t('hosgeldinKisa')}</p>
           <p style={{textAlign:'center',color:'#cbb890',fontSize:'14px',lineHeight:'1.5',marginBottom:'18px'}}>{t('anasayfaMetin')}</p>
           <button className="ana-btn" onClick={girisYap}>&#9993;&#65039; {kayitEposta} {t('ileGirisYapSon')}</button>
           <p style={{textAlign:'center',color:'#7a6f50',fontSize:'12px',marginTop:'14px'}}>{t('veyaSecebilirsin')}</p>
-          <button className="oturum-yontem" style={{width:'100%',marginTop:'6px'}} onClick={girisYap}><span className="oy-ikon"><b style={{color:'#4285F4'}}>G</b></span> {t('googleIleGiris')}</button>
+          <button className="oturum-yontem" style={{width:'100%',marginTop:'6px',...((kayitEposta||'').toLowerCase().endsWith('@gmail.com') ? {border:'1.5px solid #FFD700',boxShadow:'0 0 16px rgba(255,215,0,.4)'} : {})}} onClick={googleGir}><span className="oy-ikon"><b style={{color:'#4285F4'}}>G</b></span> {t('googleIleGiris')}{(kayitEposta||'').toLowerCase().endsWith('@gmail.com') && ' ✦'}</button>
         </div>
       </div>
 

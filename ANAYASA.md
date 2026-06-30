@@ -203,43 +203,26 @@ Her kod yazımında ve her güncellemede şu karakterler DOĞRU kullanılır:
 
 ---
 
-## 6.8 📊 SÜRÜM/BUILD SİSTEMİ (KESİN KURAL — A5.B9'dan itibaren geçerli)
+## 6.8 📊 SÜRÜM/BUILD SİSTEMİ + SAYAÇ (KESİN KURAL — A8.B20'de SIFIRDAN yazıldı, KİLİTLİ)
 
-### Sistem
-- **A numarası** = ana sayfa/özellik (1 kere artar, o sayfa tamamlanınca):
-  - A1 = Acilis.js (açılış animasyonu) ✅
-  - A2 = Giris.js (hoş geldin kartı) ✅
-  - A3 = UyeOl.js (müşteri/profesyonel seçimi) ✅
-  - A4 = MusteriForm.js (müşteri kayıt formu) ✅
-  - A5 = ProfesyonelForm.js (profesyonel formu) ✅ **B47'DE ONAYLANDI VE KİLİTLENDİ**
-  - A6 = MusteriForm.js (müşteri kayıt formu) ✅ **ONAYLANDI VE KİLİTLENDİ (en son A6.B sürümü referans)**
-  - A7 = Giriş Yap formu ← aktif (sıradaki)
-  - A8, A9... = sıradaki sayfalar
-- **B numarası** = o A-serisi içinde her deploy'da 1 artar (B1, B2, B3...)
-  - Her yeni deploy: önceki B'ye +1 ekle
-  - Yeni A-serisine geçince B sıfırdan başlar (B1)
-- **Gösterim:** Rozette `A5.B9` formatında görünür
+### 🔒 SAYAÇ (SurumRozeti) — DOKUNULMAZ (kullanıcı "10/10" dedi, 2026-06-03)
+- `SurumRozeti.js` + `SurumRozeti.css` **A8.B20'de SIFIRDAN sade yazıldı ve ONAYLANDI.** Bozma.
+- Davranış: SOL-ALT köşede küçük altın pill (`● A8.B20`); **parmakla (pointer) taşınır**; üstüne **dokununca geçmiş** açılır. Kendi kendine OYNAMAZ. `z-index` en üst. **Her sayfada** `<SurumRozeti />` ile eklenir (Giris dahil — eksikti, eklendi).
+- ⛔ Otomatik gezinme/animasyon EKLEME; konumu/işleyişi değiştirme; eski karmaşık sürüme dönme.
 
-### Her deployda ne yapılır
-1. `buildGecmisi.js`'te AKTİF A-serisi satırını güncelle (YENİ SATIR EKLEME):
-   - `build` → +1 artır
-   - `tarih`, `saat` → güncelle
-   - `dosya` → sadece dosya adı yaz (örn: `'ProfesyonelForm.js'`) — açıklama koyma
-   - `aciklama` → kısa açıklama
-2. (App.js/index.js'te `SURUM` sabiti YOK — sürüm rozeti otomatik `buildGecmisi`'den okunur. Cache-bust kodu kaldırıldı.)
-3. Deploy et: `npm run deploy`
+### Numara sistemi
+- **A** = büyük sayfa/aşama (tamamlanınca artar). **B** = o A içinde HER deploy'da +1.
+  - A1 Açılış ✅ · A2–A6 kartlar/formlar ✅ (A5 Pro & A6 Müşteri KİLİTLİ) · A7 Giriş Yap + 13 dil + gerçek üyelik ✅ · A8 Ana sayfa akışı + beğeni/yorum/takip/bildirim + foto editör + AI + feed ebatları kilitlendi ✅
+  - **A9 = AKTİF (2026-06-16, temiz sayfa):** feed ebatları onaylı/kilitli noktadan devam. Şu an **A9.B1**.
+- Gösterim: pill'de `A9.B1`. Yeni A-serisine geçince B yeniden B1.
 
-**YASAK:** `dosya` alanına dosya adı dışında bir şey yazmak. `dosya:'ProfesyonelForm.js'` — başka değil.
+### Her deployda
+1. `buildGecmisi.js`'te AKTİF satırın `build` +1; `tarih`/`saat`/`dosya`(kısa başlık)/`aciklama` güncelle. **Yeni A'ya geçilmedikçe YENİ SATIR EKLEME.**
+2. `npm run deploy`. (Sürüm otomatik `buildGecmisi`'den okunur; ayrı SURUM sabiti yok.)
 
-### Onay sistemi
-- Kullanıcı **"okey"** dediğinde → o B sürümü kararlı kabul edilir, A6'ya geçilir
-- A6'da B yeniden B1'den başlar
+**Not (2026-06-03 düzeltme):** `dosya` alanı artık KISA BAŞLIK olabilir (eski "sadece dosya adı" kuralı kaldırıldı). Tek satır kuralı: buildGecmisi satırında apostrof (`'`) KULLANMA (tek-tırnak stringi bozar).
 
-**Dosyalar:** `src/buildGecmisi.js` + `src/SurumRozeti.js` + `src/SurumRozeti.css`
-
-**SurumRozeti:** `buildGecmisi` import eder, `sonBuild`'den otomatik okur. Rozette `A5.B9` gösterir. Tıklayınca tüm geçmiş açılır. Props yok.
-
-**Kullanım:** `<SurumRozeti />` — props verilmez. Her sayfada bu şekilde eklenir.
+**Dosyalar:** `src/buildGecmisi.js` + `src/SurumRozeti.js` + `src/SurumRozeti.css`. Kullanım: `<SurumRozeti />` (props yok).
 
 ---
 
@@ -352,7 +335,7 @@ GLAMWORLD yarın **dev bir küresel platform** olacak. Bu yüzden:
 - **Topluluk & Sosyal Etki:** dünya geneli topluluk yapısı. **DİKKAT (2026-06-02 düzeltme):** ana sayfada "Türkiye/Almanya/Ukrayna gibi belirli ülkeleri ÖNE çıkaran bölge listesi" YANLIŞ seçimdi — kullanıcı kaldırttı. Belirli ülke öne çıkarma YOK; GLAMWORLD bütün dünyaya/tüm mesleklere açık (bkz. 6.12).
 
 ### ⏳ ŞİMDİLİK ERTELENEN (kullanıcı kararı)
-- **Firebase / gerçek arka yüz şimdilik BIRAKILDI** — kullanıcı "sonra kurarım" dedi. Şu an üye-olma Firebase'e yazmıyor (sahte akış); bu BİLİNÇLİ ertelemedir, hata değil. Arka yüz kurulunca: gerçek üyelik (hesap açma + Firestore'a profil kaydı), profil sayfaları, keşif/arama, gerçek ana sayfa bağlanacak.
+- **Firebase / gerçek arka yüz KURULDU ve CANLI (2026-06-06→09 — bu not artık GÜNCEL):** Bu satır eskiden "şimdilik bırakıldı" diyordu — ARTIK GEÇERSİZ. Firebase Auth + Firestore bağlı; gerçek üyelik Firestore'a yazıyor (kullanicilar koleksiyonu); profesyonel kayıtta meslek+konum da kaydediliyor (B177); Keşif/Arama gerçek veriyle çalışıyor (B176-179); Google girişi hesap-seçme açık. Kalan: profil penceresi içi düzenleme, İletişim/Teklif/Randevu, Storage (foto) kuralları.
 - **UNUTULMAYACAK 3 İŞ:** (1) Profil sayfası, (2) Keşif/arama, (3) Gerçek ana sayfa — hepsi arka yüze hazır şekilde, önce ön yüz/tasarım olarak kurulabilir, veri sonra bağlanır.
 
 ### 🏠 MÜŞTERİ ANA SAYFASI — TASARIM YÖNÜ (2026-06-02 — kullanıcı, NET)
@@ -437,6 +420,155 @@ GLAMWORLD yarın **dev bir küresel platform** olacak. Bu yüzden:
 12. Mesajlaşma, video akışı, Elite Guild cüzdan, kurumsal dashboard (bkz. 6.13 büyük vizyon)
 - Her yeni sayfaya sürüm rozeti + her düğme çalışır olacak. Altyapı SAĞLAM/ölçeklenebilir (bkz. 6.13).
 
+## 6.14 — ESKİYİ GETİRME, SIFIRDAN YAZ (2026-06-05, kullanıcı kesin talimatı)
+- **Eski/önceki sistemlerden hiçbir şey kopyalanıp "geri yüklenmeyecek".** Bir özellik gerekiyorsa MEVCUT yeni yapıya uygun şekilde SIFIRDAN yazılır. Eski kodu/akışı geri getirmek YASAK — her seferinde sorun çıkardı.
+- Yapmadan ÖNCE bu ANAYASA'yı ve ilgili kodu OKU; körlemesine başlama.
+- Yayından ÖNCE akışın tamamını kontrol et (her düğme nereye gidiyor, fazla pencere/çatışma/beyaz ekran var mı). Çalışanı bozma; içi boş düğme/pencere bırakma.
+- Giriş/kayıt sonrası: EN AZ pencere, temiz geçiş → doğrudan ana sayfa. (Tek kayıt-sonrası pencere yeterli: içinde Google ile giriş düğmesi olabilir; ikinci/üçüncü pencere YOK.)
+
+## 6.15 — ANA SAYFA & SAYFA TASARIM KURALLARI (2026-06-05)
+- **Cihaza göre AYRI tasarım:** Telefon, tablet (iPad) ve bilgisayar ASLA aynı görünmeyecek. Geniş ekranda daha çok içerik/sütun ve daha zengin görünürlük; tablet orta; telefon tek sütun. Büyük platformlardaki gibi her cihaza özel düzen (sadece "ölçeklenmiş" değil, gerçekten farklı yerleşim).
+- **Zemin SİYAH DEĞİL:** Platform "sanal/yüzen sayfalar" hissi versin. Arka plan canlı/değişen (turkuaz–deniz gibi, hafif hareketli) bir zemin; üstünde sanal kartlar/sayfalar yüzer. (İleride şehir/ülke canlı fotoğrafları arka plana gelebilir.)
+- **Üst ülke/şehir şeridi (canlı dünya):** KALACAK, düzenlenip güzelleştirilecek.
+- **GLAMWORLD isim/amblem bölümü:** Zemini SİYAH kalır (üst bant); üstünde düzenlemeler yapılır. Amblem her sayfaya göre uyarlanır (renk/vurgu değişir).
+- **Alt ikon düğmeleri:** KALACAK ama altlarında zemin/bar OLMAYACAK — havada, birbirinden ayrı yüzer gibi görünecek; zarif, altın, ışıltılı.
+- **Her sayfa kendine özgü:** Her sayfanın kendi renk teması + uyarlanmış GLAMWORLD amblemi olacak; hiçbir sayfa bir diğerine benzemeyecek. Zarif, lüks, güzel renkler.
+- **Performans:** Animasyon GPU-dostu (CSS gradyan/transform), ağır video yok → düşük gecikme (bkz. 6.13).
+- **🔷 SÜS KURALI ÇİPLERE DE UYGULANIR (2026-06-08):** Yazının yanındaki ikon/elmas/pırlanta üst-alt yazı hizasını ASLA bozamaz — yazıdan sayılmazlar (akış-dışı, `position:absolute`). Bu kural istatistik çipleri dahil HER yerde geçerlidir (örnek: 4 çipte ikon rakamın hizasını bozuyordu → akış-dışına alındı, A8.B164).
+- **🔷 SÜS YAZIDAN AYRI SAYILIR — HİZA KURALI (2026-06-06, kullanıcı KESİN):** Bir yazının yanına/başına/sonuna pırlanta, amblem, dünya, ikon vb. SÜS konulduğunda bu süsler AYRI sayılır — yazının ORTALANMASINI ASLA BOZMAZ. Yazılar her zaman ortalı kalır; ÜSTTEKİ başlık (GLAMWORLD) ile ALTTAKİ alt-yazı birbiriyle HİZALI/eşit durur. Teknik: süs ögeleri akış-DIŞI konumlanır (`position:absolute`), metnin genişliğine EKLENMEZ; metin kendi başına ortalanır. Süs yüzünden yazı sağa/sola kaymaz. (Hata örneği: 2026-06-06 amblem/dünya inline konuldu → yazılar ortadan kaydı; düzeltildi.)
+- **💎 PIRLANTA STİLİ — KARTLARDAKİ GİBİ (ANAYASA Madde 6'yı uygula):** Pırlanta KOYARKEN uçan/serbest SVG elmas YASAK. Pırlanta = yuvaya GÖMÜLÜ taş (yüzük taşı gibi): yuvarlak ALTIN yuva + altın TIRNAKLAR, taş SABİT durur (dönmez/sallanmaz), sadece üst görünür, İÇTEN ışık saçar (merkez parıltısı animasyonlu olabilir). Referans: kartlardaki `Tas` bileşeni (UyeOl.js — mavi/beyaz/kırmızı). Müşteri=beyaz, Profesyonel=kırmızı kimlik kuralı (Madde 6) korunur; sayfaya özel renk (ör. ana sayfa amblemi mavi) olabilir ama STİL hep bu gömülü-taş olur.
+- **🌐 MARKA ÇEVRİLMEZ (2026-06-07, kullanıcı KESİN):** "GLAMWORLD" adı sitenin HİÇBİR yerinde HİÇBİR dile çevrilmez (Google Çeviri dahil — örnek hata: Almancada "GLAMOURÖSE WELT" olup üst düzeni bozdu). Teknik: marka yazısı geçen HER öğeye `translate="no"` + `className="notranslate"` konur. Yeni eklenen her marka yazısında bu ZORUNLUDUR.
+- **🪟 HER SAYFA/PENCERE KENDİNE HAS (2026-06-07, kullanıcı KESİN — tekrarlandı):** Ana sayfadaki öğeler (ÜST DEĞERLER/piyasa şeridi, akış, arama) SADECE ana sayfada kalır; başka pencere/sayfada GÖZÜKMEZ. Diğer pencerelerin/sayfaların başlığı değişir ve oraya GEREKEN düğme+ikonlar konur — ana sayfadan otomatik öğe MİRAS ALINMAZ. Her sayfa/pencere kendine has tasarımdır. (Madde 6.13 "her sayfa farklı" kuralının pencere düzeyinde netleştirilmesi.)
+- **🪟 PENCERE/EKLENTİ KENDİ SAYFASINA BAĞLANIR — ANA SAYFAYA SIÇRAMAZ (2026-06-09, kullanıcı KESİN, TEKRARLANMASIN):** Ana sayfa DIŞINDA herhangi bir sayfada/pencerede bir şey eklendiğinde (modül, alt pencere, seçim ekranı vb.) o öğe O SAYFAYA bağlanır: O SAYFADA açılır, O SAYFADA kapanır, kapanınca O SAYFA AÇIK kalır. Ana sayfayla HİÇBİR bağı olmaz; ana sayfaya atmaz/sıçramaz. (Hata örnekleri: "meslek seçimi"nin ana sayfaya bağlanması; profil sayfasının ayrı route'a koparılıp ana sayfadan kopması — A8.B151-155. Bir daha YAPILMAZ.)
+- **❓ HER YERDE YARDIM/AÇIKLAMA (2026-06-11, kullanıcı KESİN — ÖNEMLİ):** Sayfanın HER yerinde, kullanım gerektiren her özelliğin yanında müşteriyi nazikçe bilgilendiren bir **(?) yardım ikonu + güzel, renkli açıklama yazısı** bulunur. Pencere/bölüm açılınca o bölümün ayar alanında kısa, zarif, renkli bir anlatım gösterilir ("nasıl kullanılır"). Üstte de zarif bir yönlendirme olur (ör. "Ayarlamak için bir pencereye dokunun"). Büyük platformlar bunu yapar; biz DAHA GÜZELİNİ yaparız. Teknik: `.apf-yardim` (renkli kutu) + `.apf-yardim-ik` (altın ? rozeti); açıklamalar `t()` ile çok dilli. Yeni eklenen her özelliğe bu yardım açıklaması ZORUNLU.
+- **🎨 SAYFAYA CANLILIK/RENK (2026-06-11, kullanıcı):** Profil ve diğer alanlar canlı renklerle zenginleştirilir: isim ALTIN TOZU (altın gradyan yazı), e-posta sıcak altın, profil bölümü altın, amblem turkuaz, meslek pırlanta(kırmızı/pembe) tonlarında. Fotoğraf ile çerçeve arasındaki boşluk KOYU/siyah değil renkli (altın tozu) dolgu olur — arada ekran zemini görünmez. Okunurluk korunur (Madde: okunurluk birinci), aşırıya kaçılmaz.
+- **➕ YENİ ÖĞE SADECE KENDİ SAYFASINA (2026-06-07, kullanıcı KESİN):** Bir sayfaya/pencereye eklenen HER yeni öğe (panel, düğme, yazı, ikon) YALNIZ o sayfada görünür — diğer sayfalara otomatik yayılmaz. Her sayfada görünecek genel bir öğe ancak kullanıcı AÇIKÇA isterse eklenir. (Hata örneği: "Profesyonel/Hoş geldin/Meslek Pasaportum" paneli tüm pencerelerde çıktı → tamamen silindi, A8.B156.) Profil/hesap ayarları büyük platformlardaki gibi MENÜ → AYARLAR'dan açılır.
+- **💎 GERÇEK PIRLANTA + YÜZÜK ÇERÇEVE (2026-06-12, kullanıcı KESİN, referans fotoğraflı):** Sitedeki pırlantalar GERÇEK kesimli elmas gibi çizilir (yuvarlak brilliant kesim: fasetler/yüzeyler belli — taç + yıldız + kuşak yüzleri ayrı tonlarda, merkezde ışık, kenarda koyu kuşak), ve HER pırlantanın ETRAFINDA altın YÜZÜK gibi çerçeve + tırnaklar olur (taş yüzüğe oturmuş gibi). "Saçma/basit/cansız" parıltı topu YASAK; kullanıcı defalarca gerçek elmas istedi. 12 GERÇEK RENK döner (kullanıcının verdiği referanstan): Brilliant White, Sapphire Blue, Royal Purple, Emerald Green, Golden Yellow, Pink Rose, Fire Red, Aqua Teal, Champagne, Ice Blue, Mystic Black, Aurora Opal. Bu renkler HER SAYFADA, gereken her yerde kullanılır (sayfaya göre değişir). Kod: `GercekPirlanta` bileşeni (src/Anasayfa.js) — tek kesim, renk parametreli; derinlik akışında bu pırlantalar süzülür. İçte TEK beyaz nokta YOK (aşağıdaki yasak stil hâlâ geçerli). A8.B259'da kuruldu.
+- **🚫 YASAK PIRLANTA STİLİ — "BONCUK/DAMLA + BEYAZ NOKTA" (2026-06-07, kullanıcı KESİN):** Düz/yalın taş silüeti (üçgen-damla-yuvarlak tek parça dolgu) + İÇİNDE BEYAZ NOKTA/öz olan pırlanta çizimi (yazılım adı: "cabochon / flat-gem with specular dot") sitede BİR DAHA HİÇBİR YERDE KULLANILMAZ. Kullanıcı bu stili reddetti (A8.B126-128 elite mavi pırlanta denemesi). Pırlanta HER ZAMAN GERÇEK KESİMLİ çizilir: KESİM/FASET ÇİZGİLERİ BELLİ (taç + kuşak + pavyon yüzeyleri ayrı renk tonlarıyla), içinde beyaz nokta OLMAZ. Işık efekti taşın dışına/parlaklığına verilir, içine beyaz benek konmaz.
+
+- **🔒 FEED PENCERE EBATLARI — KİLİTLİ, DEĞİŞMEZ (2026-06-16, A9.B1 onaylı):** Ana sayfa akış medya pencereleri SABİT. Bir daha DEĞİŞTİRİLMEZ; uzat/kısalt/oran/cover-contain denemesi YASAK. KESİN değerler:
+  - **ENLİ (yatay) fotoğraf:** `.apr-medya{ min-height:230px; padding:0 }` + `.apr-medya img{ width:100%; height:auto }` (foto doğal/kesiksiz, eni tam; yazı+tür ikonu FOTOĞRAFIN ÜZERİNDE açık yazı+koyu gradyan, altın şerit/boş alt YOK).
+  - **DİK (uzun) fotoğraf:** `.apr-medya.uzun{ aspect-ratio:4/5; padding:0 }` + `.apr-medya.uzun img{ width:100%; height:100%; object-fit:cover }` (pencere sabit 4/5, eni tam dolu).
+  - **VİDEO:** `.apr-medya.video{ aspect-ratio:3/4; padding:0 }` + `.apr-medya.video video{ width:100%; height:100%; object-fit:cover }`.
+  - **Sütun genişliği (cihaza göre):** telefon=tam · iPad(≥760)=max 680px · notebook(≥1100)=max 720px · geniş ekran(≥1500)=`width:58vw; max-width:820px`.
+  - **PAYLAŞIM/EDİTÖR önizleme penceresi (`.apf-oniz.post`):** kenarlar DÜZ (`border-radius:0`, `sekilYol` post=düz dörtgen, oval/yuvarlak DEĞİL); pencere FOTOĞRAFIN oranına göre açılır (enli→enli, dik→dik; `postOlcu` foto en-boyundan).
+  - Başka iş yapılırken `.apr-medya` / feed `onLoad` / `.apf-oniz.post`'a ASLA dokunulmaz.
+
+## 6.16 — ANA SAYFA, SOSYAL TİCARET & PLATFORM TEMELİ (V2 — 2026-06-06)
+*(Claude + Gemini + ChatGPT + Copilot fikirleri birleştirildi. Tek doğru kaynak burası.)*
+
+### A) KONUMLAMA / VİZYON
+GLAMWORLD = **TikTok + Facebook + LinkedIn + Booksy + Google Maps**'in lüks birleşimi.
+Sadece eğlence değil: meslek/hizmet/ticaret/üretici/tedarikçi + müşteri buluşturma merkezi.
+Kullanıcı: içerik paylaşır, iş bulur, hizmet alır, ürün/hizmet satar, güven puanıyla dünyada görünür.
+190 ülke, tüm meslekler/işletmeler. (Belirli ülke öne çıkarma YOK — bkz. 6.13.)
+
+### B) TASARIM İLKESİ (ChatGPT — KESİN DENGE)
+- **OKUNURLUK BİRİNCİ.** Lüks kalır AMA aşırı parlama/partikül/çerçeve AZALTILIR; süs sadece marka (amblem) alanında. Altın vurgu yalnız önemli yerlerde. Tek ana altın çerçeve yeter.
+- Mobilde yazılar BÜYÜK; placeholder gri ama okunur. Renk sabit: koyu zemin + altın vurgu + beyaz ana metin + gri ikincil. Kullanıcı ilk 3 saniyede ne yapacağını görmeli.
+
+### C) ANA SAYFA DÜZENİ (3 blok)
+1. **Üst (Global Header):** ince yatay ticker (saat[lokal] / EUR / USD / Altın / Gümüş / Bitcoin / borsa) — boy yemez, kullanıcı KAPATABİLİR. Sticky + cam efekti; sol menü+zil, ortada GLAMWORLD amblem, sağ arama+profil; dil tek yerde. Altında **GLOBAL ARAMA**: "Meslek, hizmet, işletme, kişi, şehir, ülke ara" + Konum + Kategori + Filtre. İsimli hızlı ikonlar (boş kalmaz): Keşfet · Meslekler · Video · Yakındakiler · Pazar · Mesajlar; aktif ikon altın shimmer; snap-scroll.
+2. **Ana Akış (Feed):** lüks dikey sonsuz akış (swipe-snap, tam ekran, ASLA boş ekran). 3 içerik tipi:
+   - **A) Profesyonel paylaşımları:** ad+meslek+şehir + ⭐puan + kalite/doğrulama etiketi + foto/video. Eylemler: Beğen · Yorum · Kaydet · Paylaş · 🤝 Hızlı Randevu · 💎 Hediye · Mesaj. (Kartta boş alan yok; görsel yoksa meslek/konum/teklif butonları görünür.)
+   - **B) Hizmet arayan paylaşımları (talep):** "Berlin'de iç mimar arıyorum" → tek tıkla profesyonele mesaj/teklif. (Sosyal+ticaret hibriti yapan şey budur.)
+   - **C) Trend Radar (AI):** en çok aranan meslekler, en çok izlenen videolar, en hızlı büyüyen şehirler, en popüler profesyoneller.
+   - **Sanal mağaza/üretici kartı:** lüks ürün + Satın Al (e-ticaret).
+3. **Alt Navigasyon:** 5 sabit, eşit boy sekme: **Keşfet · Ara · Paylaş(+) · Mesaj · Profil**. (Harita/Konum üst hızlı ikonlarda "Yakındakiler" olarak; alt barın 5. sekmesi Paylaş/Konum tartışması KARAR J3.)
+
+### D) İKİ AYRI ZEKA (karıştırma)
+- **Site Pilotu (büyüteç):** teknik arama — sesli komut + fotoğraf kabul eder; sayfa açar / eşleşen meslek-ürün döker.
+- **Glami (companion):** AYRI parlayan balon; her dilde dertleşilen, yüksek duygusal zekalı "profesyonel sırdaş" + site yardımı. Aramadan ayrıdır.
+
+### E) ÇEKİRDEK ÖZELLİKLER (rakiplerde yok — ChatGPT)
+- **Meslek Pasaportu:** meslek, şehir, deneyim, portfolyo, sertifika, puan, dil, fiyat aralığı.
+- **Güven Rozeti:** kimlik/işletme/sertifika doğrulama + tamamlanan iş sayısı.
+- **Teklif Sistemi:** müşteri iş ilan eder → hizmet verenler teklif verir → pazarlık+mesajla çözülür.
+- **Dünya Meslek Haritası:** yakındaki usta/doktor/tasarımcı/tedarikçi/fabrika haritada (Google Maps mantığı).
+- **Canlı Vitrin:** kısa video tanıtım; ürün/hizmet kartı videoya bağlı.
+- **Çoklu Rol:** aynı kişi hizmet veren+alan+üretici; rol sonradan değişir.
+- **Prestij Puanı:** beğeniden değerli — tamamlanan iş, yorum kalitesi, cevap hızı, doğrulama, süreklilik.
+
+### F) PARA MOTORU
+- **Müşteri kartı:** ÜCRETSİZ; cüzdana gerçek parayla pırlanta yükler; izler/yorum yapar.
+- **Profesyonel kartı:** 10€/AY; vitrin açar, randevu/hediye/canlı yayın.
+- **Hediye → nakit:** %30 GlamWorld kasası, %70 profesyonelin bankasına. Hediye atılınca elmas patlama animasyonu.
+- Hediye gönderen müşteriye nakit YOK → Glam-Puan + esnaf/üretici indirim kuponu (sistemde kalsın).
+- **Gelir modeli:** premium profil + teklif komisyonu + vitrin öne çıkarma + reklam.
+- **Ödeme/güvenlik:** Stripe Connect + Wise + KYC + vergi (FAZ 3 — hukuki, acele YOK).
+
+### G) İNŞAAT SIRASI (TEMEL ÖNCE — sahte veri YOK; haftalık test edilebilir çıktı)
+- **FAZ 0 — Altyapı:** Firebase Auth(✓) + Firestore + Storage + Güvenlik Kuralları; veri modeli (kullanicilar / profesyoneller / hizmetler / gonderiler / teklifler / randevular / cuzdan). Modüler, çökmeyen, ölçeklenir.
+- **FAZ 1 — Çekirdek döngü:** Meslek Pasaportu (Profil) + Keşif/Arama+Filtre + İletişim/Teklif/Randevu.
+- **FAZ 2 — Canlandırma:** akışı gerçek veriye bağla (3 içerik tipi) + mesajlaşma + Dünya Meslek Haritası + akıllı arama (sesli/foto) + Trend Radar.
+- **FAZ 3 — Para & büyüme:** hediye/komisyon/üyelik + Glami + canlı yayın/video + Elite Guild cüzdan.
+
+### H) KURALLAR
+- Sahte veri / boş düğme YOK; özellik gerçek backend'e bağlanınca AÇILIR (UI iskeleti önce kurulabilir, "çalışıyor" gibi sahte gösterilmez).
+- Okunurluk > süs. Çalışanı bozma. Yayından önce build kontrol. Sayaç DOKUNULMAZ. Onay/okey SORULMAZ (Madde 4 & 9).
+
+### J) KARAR BEKLEYENLER (netleştirilecek)
+1. Diller/ülkeler: TR + EN + DE ile başla (13 dil zaten var).
+2. Meslek kategorileri: önce 50 ana kategori, sonra alt kategoriler.
+3. Alt barın 5. sekmesi: **Paylaş(+)** mı **Konum/Harita** mı? (Diğeri üst hızlı ikonda.)
+4. Doğrulama seviyeleri: e-posta → telefon → kimlik → işletme belgesi.
+5. Gelir modeli önceliği: premium / komisyon / vitrin / reklam (hangisi önce?).
+
+### K) COPILOT v1.0 EKLEMELERİ (06.06.2026)
+- Estetiğe **Instagram** de eklendi (hızlı=TikTok, estetik=IG, profesyonel=LinkedIn, randevu=Booksy, konum=Maps, topluluk=FB).
+- **Dünya/ülke seçici:** kullanıcı ülkeyi değiştirince akış/içerik o ülkeye göre değişir (otomatik konum + elle seçim).
+- **Gönderi kartı eklemeleri:** proje fotoğrafları **carousel** + **Randevu Al** (Booksy) + **Haritada Gör** (Maps).
+- **Filtreler:** Meslek · Ülke · Şehir · Trendler · Yeni başlayanlar · Elite Guild üyeleri.
+- **Ana menü adayları (KARAR J3):** Copilot → Home · Elite Guild · Meslekler · Video · Harita; ChatGPT → Keşfet · Ara · Paylaş · Mesaj · Profil. Birleştirilecek.
+- **"A8.B100 kalite kodu" YANLIŞ ANLAŞILMASI:** O etiket aslında SÜRÜM SAYACIDIR (DOKUNULMAZ, bkz. 6.8). Profesyonelin kalite göstergesi = **Prestij Puanı + Güven Rozeti** (E) ile yapılır; sayaç bu işe ASLA karıştırılmaz.
+
+### L) TEKNOLOJİ YIĞINI (KESİN KARAR — Code'un net mühendis görüşü)
+- **MEVCUT ÇALIŞAN YIĞIN KORUNUR:** React (CRA) + Firebase (Auth ✓ + Firestore + Storage + Cloud Functions) + GitHub Pages / Firebase Hosting + Stripe Connect + Wise. Firestore zaten global/ölçeklenir; ekstra altyapı gerekmez.
+- **Copilot'un Azure + Next.js önerisi ALINMADI (bilinçli):** mevcut çalışan kodu çöpe atıp sıfırdan Next.js/Azure'a geçmek ~3 aylık emeği yok eder ve ANAYASA 6.14'e (eskiyi bozma / gereksiz sıfırdan yazma) AYKIRIDIR. Gerekirse FAZ 3'te SADECE video için ayrı medya servisi değerlendirilebilir; çekirdek Firebase kalır.
+
+### M) FAZ 0 — VERİ MODELİ (Firestore) & GÖREV LİSTESİ (2026-06-06, UYGULAMA BAŞLADI)
+**Erişim katmanı: `src/veri.js`** — TÜM Firestore okuma/yazma BURADAN geçer (bileşenler doğrudan `db` kullanmaz). Modüler; arka yüz tek yerden yönetilir.
+
+**KOLEKSİYONLAR:**
+- `kullanicilar/{uid}` (MEVCUT — korunur, genişletilir):
+  `tip` ('musteri'|'profesyonel'), `isim, soyisim, eposta, telefon, cinsiyet, foto, saglayici, diller[]`,
+  `konum:{ulke,sehir,ilce,mahalle,postaKodu,enlem,boylam}`, `olusturma, guncelleme`,
+  `pro:{ meslek, meslekKodu, deneyimYil, hakkinda, hizmetler[], fiyat:{min,max,para}, portfolyo[], sertifikalar[], calismaSaatleri, dogrulama:{eposta,telefon,kimlik,isletme}, prestijPuani, tamamlananIs, puanOrt, puanSayisi }` (sadece profesyonel — Meslek Pasaportu)
+- `gonderiler/{id}`: `sahipUid, tip('profesyonel'|'talep'|'urun'), meslek, sehir, ulke, metin, medya[], olusturma, begeni, yorumSayisi` → alt: `yorumlar/{id}:{uid,metin,olusturma}`
+- `teklifler/{id}`: `ilanUid, musteriUid, profesyonelUid, mesaj, fiyat, durum, olusturma`
+- `randevular/{id}`: `musteriUid, profesyonelUid, tarih, hizmet, durum('bekliyor'|'onay'|'iptal'), olusturma`
+- `sohbetler/{id}`: `katilimcilar[], sonMesaj, guncelleme` → alt: `mesajlar/{id}:{gonderenUid,metin,olusturma}` (FAZ 2)
+- `cuzdanlar/{uid}`: `pirlanta, glamPuan` → alt: `islemler/{id}` (FAZ 3, yazma sadece sunucu)
+
+**GÜVENLİK KURALLARI:** `firestore.rules` (repo kökünde). Kullanıcı bunu Firebase Console > Firestore > Rules'a yapıştırıp Publish eder. Özet: kullanicilar herkes okur/sadece sahibi yazar; gönderiler herkes okur/sahibi yazar; teklif/randevu/sohbet sadece taraflar; cüzdan yazma sadece sunucu.
+
+**GÖREV LİSTESİ (sırayla):**
+- FAZ 0: [x] firebase bağlı (Auth + Firestore CANLI, gerçek üyelik çalışıyor) · [x] `src/veri.js` erişim katmanı · [x] `firestore.rules` YAYINDA (2026-06-06, hatasız) · [x] Google girişi hesap-seçme (B110) · [ ] **Storage kuralları (foto yükleme için — FAZ 1'de gerekince)**.
+- FAZ 1: [~] Meslek Pasaportu/Profil — kayıt meslek+konum yazıyor (B177), gerçek okuma var; [ ] profil PENCERESİ içi düzenleme (kendi mesleğini güncelleme) HENÜZ yok · [x] **Keşif/Arama GERÇEK ÇALIŞIYOR (B176-179): kayıtlı profesyonellerde isim/meslek/şehir/ülke, Türkçe-harf + 12 dil duyarlı, sonuçlar pencerede** · [ ] İletişim/Teklif/Randevu (temel) — sıradaki.
+- FAZ 2: [ ] akış gerçek veri (3 tip) + mesajlaşma + harita + akıllı arama + Trend Radar.
+- FAZ 3: [ ] para (hediye/komisyon/üyelik) + Glami + video.
+
+## 6.17 — HER YERDE AI (GROXORG'a sor)
+Platformda **her yerde** kullanıcının yanında AI/asistan erişimi olur:
+- Her **gönderi yazısının** (feed + tam ekran) yanında, **Çevir** düğmesinin yanında küçük bir **AI (GROXORG'a sor)** ikonu → o gönderi hakkında soru/yorum/değerlendirme; konuşma **devam eder, kesmez** (bağlam = o yazı).
+- **Çevir SADECE çevirir** (orijinal↔çeviri toggle); değerlendirme/yorum AI ikonunun işidir, çeviriye karışmaz.
+- AI ikonu **küçük ve zarif** (kaba/büyük değil), her dilde kısa.
+- Yeni eklenen her içerik/pencere türünde de bu AI erişimi düşünülür ("her yerde AI").
+
+## 6.18 — PENCERE YÖNÜ: EKRAN YÖNÜNE GÖRE (yatay/dikey)
+**Bütün pencereler (gönderi/feed kartları) ekranın yönüne göre açılır — her yerde, her tür içerik:**
+- **Geniş/yatay ekran** (bilgisayar, iPad/notebook, telefon yan çevrilince) → pencereler **YATAY/geniş** gelir; içindeki fotoğraf, video, dik (portre) fotoğraflar dahil **hepsi yatay** görünür, pencereyi **%100 doldurur** (üstte/altta boşluk bırakmaz).
+- **Dar/dikey ekran** (telefon dik) → pencereler **DİKEY** gelir (mevcut davranış).
+- Bu kural **sadece video değil**: dik fotoğraflar, editörden paylaşılan yazılar/fotoğraflar, **her tür gönderi** için geçerli.
+- Teknik: genişlik tabanlı media query (≥760 yatay, base=dar dikey) → ekran yönü neyse pencere de o yönde. Yeni eklenen her pencere/içerik türü de bu yön kuralına uyar.
+- Uygulama: `.apr-medya` geniş ekranda `aspect-ratio:16/9` + medya `object-fit:cover`; telefon base'inde doğal/dikey.
+
+## 6.19 — BİLGİSAYAR YAZI/BOYUT KURALI (⚠️ EN KRİTİK — TEKRAR EDEN HATA)
+- **Yeni eklenen HER öğede (buton, yazı, kart, alan, ikon) bilgisayar (desktop) boyutu TELEFONDAN ASLA KÜÇÜK olmaz — her zaman desktop ≥ telefon.**
+- Yeni bir şey eklerken MUTLAKA `@media (min-width:560px)` (ve gerekiyorsa `1100px`) ile BÜYÜK boyut ver. Breakpoint **560** kullan (her dizüstü/küçük pencere yakalansın; 760 bazı laptoplarda tetiklenmiyor).
+- Telefon ≈16px ise bilgisayar 24-28px gibi belirgin büyük. Gerekirse `!important` (başka kural ezmesin; aynı selektörün dosya altında kopyaları olabilir, grep'le).
+- Sebep: mobil-first base + desktop @media eksikse, geniş ekranda metin ufak kalır ("küçük bilgisayara, büyük telefona" şikâyeti). Kullanıcı bu hatadan defalarca çok kızdı.
+
 ---
 *Yaşayan belge. Yeni kararlar buraya eklenir. Code her zaman en güncel halini okur.*
-*Güncelleme: Büyük vizyon (tüm dünya meslekleri, ülke/şehir, cinsiyet, çalışan düğmeler) eklendi.*
+*Güncelleme: 6.19 — Bilgisayar yazı/boyut kuralı: yeni her öğede desktop ≥ telefon, @media min-width:560 ile büyük; ASLA telefondan küçük olmaz.*

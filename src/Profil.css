@@ -1,0 +1,77 @@
+/* MESLEK PASAPORTU / PROFİL — gece mavisi + altın, lüks sade */
+.pf-kok{ position:fixed; inset:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  background:radial-gradient(140% 120% at 50% 20%, #132f64 0%, #0c2350 45%, #061633 100%);
+  color:#eaf1ff; font-family:'Cormorant Garamond',serif; padding-bottom:40px; }
+/* Sayfa YANA taşmaz: her kutu kendi sınırında kalır (sola kayma/dev görünme hatasının çözümü) */
+.pf-kok *{ box-sizing:border-box; }
+.pf-kok::-webkit-scrollbar{ display:none; }
+/* PROFESYONEL sayfası FARKLI: kırmızı vurgulu derin zemin (müşteriden ayrı kimlik) */
+.pf-kok.pro{ background:radial-gradient(130% 110% at 50% 12%, #4a1220 0%, #2a1230 38%, #120a26 72%, #070414 100%); }
+
+/* KIRMIZI PIRLANTA (profesyonel) — içten yanar, gömülü taş */
+.pf-elmas{ width:88px; height:88px; display:block; filter:drop-shadow(0 4px 14px rgba(224,53,63,.5)); }
+.pf-elmas svg{ width:100%; height:100%; }
+.pf-elmas .pf-elmas-ic{ transform-box:fill-box; transform-origin:center; animation:pfElmas 3s ease-in-out infinite; }
+@keyframes pfElmas{ 0%,100%{ opacity:.6; transform:scale(.85); } 50%{ opacity:1; transform:scale(1.08); } }
+.pf-foto.pro.mini{ width:40px; height:40px; margin-top:-22px; border:2px solid #e0353f; }
+
+/* AKIŞ · PORTFOLYO (profesyonel) */
+.pf-akis{ margin-top:18px; }
+.pf-akis-bas{ font-family:'Cinzel',serif; font-weight:700; font-size:15px; color:#ff8a90; letter-spacing:.04em; margin-bottom:8px; }
+.pf-akis-bos{ background:rgba(224,53,63,.07); border:1px dashed rgba(224,53,63,.4); border-radius:14px; padding:22px 16px; text-align:center; color:#e7b6bb; font-style:italic; font-size:14px; }
+
+.pf-bar{ position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px; padding:13px 14px;
+  background:linear-gradient(180deg,rgba(3,10,26,.95),rgba(6,18,46,.78)); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,215,0,.22); }
+.pf-geri{ background:none; border:none; color:#FFD700; cursor:pointer; display:flex; padding:4px; }
+.pf-geri svg{ width:24px; height:24px; }
+.pf-baslik{ flex:1; text-align:center; font-family:'Cinzel',serif; font-weight:800; font-size:17px;
+  background:linear-gradient(180deg,#FFF6D8,#FFD700 50%,#B8860B); -webkit-background-clip:text; background-clip:text; color:transparent; letter-spacing:.04em; }
+.pf-duzen{ background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.5); color:#FFD700; border-radius:18px;
+  padding:5px 13px; font-size:13px; cursor:pointer; font-family:'Cormorant Garamond',serif; font-weight:700; }
+.pf-bos{ width:54px; }
+.pf-yuk{ text-align:center; color:#9fb2d6; padding:60px 0; font-style:italic; }
+
+.pf-kart{ max-width:560px; margin:18px auto; padding:0 16px; }
+.pf-ust{ display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:14px; }
+.pf-foto{ width:96px; height:96px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-size:38px; font-weight:800; color:#0c1530;
+  background:radial-gradient(circle at 38% 32%, #fff, #cfe0ff 55%, #8fb0e8); box-shadow:0 6px 22px rgba(0,0,0,.4); }
+.pf-foto img{ width:100%; height:100%; object-fit:cover; }
+.pf-foto.pro{ border:3px solid #e0353f; box-shadow:0 0 16px rgba(224,53,63,.5); }
+.pf-foto.musteri{ border:3px solid #dfe7f2; box-shadow:0 0 16px rgba(220,230,245,.4); }
+.pf-rozet{ font-size:13px; font-weight:800; letter-spacing:.05em; padding:3px 14px; border-radius:20px; font-family:'Cinzel',serif; }
+.pf-rozet.pro{ color:#ff8a90; border:1px solid rgba(224,53,63,.5); background:rgba(224,53,63,.1); }
+.pf-rozet.musteri{ color:#e7eefc; border:1px solid rgba(220,230,245,.4); background:rgba(220,230,245,.08); }
+
+.pf-ad{ text-align:center; font-size:24px; font-weight:700; color:#fff; }
+.pf-meslek{ text-align:center; font-size:16px; color:#FFD700; font-style:italic; margin-top:2px; }
+.pf-konum, .pf-eposta{ text-align:center; font-size:14px; color:#9fb2d6; margin-top:3px; }
+
+.pf-pasaport{ margin-top:20px; background:rgba(255,255,255,.05); border:1px solid rgba(255,215,0,.18); border-radius:16px; padding:14px 16px; }
+.pf-blok{ padding:9px 0; border-bottom:1px solid rgba(255,215,0,.1); }
+.pf-blok:last-child{ border-bottom:none; }
+.pf-satir{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(255,215,0,.1); }
+.pf-satir:last-child{ border-bottom:none; }
+.pf-eti{ display:block; font-size:12px; color:#c9a227; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; font-weight:700; }
+.pf-satir .pf-eti{ margin-bottom:0; }
+.pf-blok p{ margin:0; color:#dfe8ff; font-size:15px; line-height:1.5; }
+.pf-etiketler{ display:flex; flex-wrap:wrap; gap:6px; }
+.pf-tag{ background:rgba(126,200,255,.12); border:1px solid rgba(126,200,255,.35); color:#bfe0ff; border-radius:14px; padding:3px 11px; font-size:13px; }
+.pf-bilgi{ margin-top:18px; text-align:center; color:#c9a227; font-style:italic; font-size:14px;
+  background:rgba(255,215,0,.06); border:1px dashed rgba(255,215,0,.3); border-radius:12px; padding:14px; }
+
+.pf-form{ margin-top:14px; display:flex; flex-direction:column; gap:12px; }
+.pf-l{ display:flex; flex-direction:column; gap:5px; font-size:13px; color:#c9a227; font-weight:700; letter-spacing:.03em; }
+.pf-l input, .pf-l textarea{ font-family:'Cormorant Garamond',serif; font-size:16px; color:#FFD700;
+  width:100%; min-width:0; max-width:100%;
+  background:rgba(0,0,0,.28); border:1px solid rgba(255,215,0,.35); border-radius:11px; padding:11px 13px; outline:none; resize:vertical; }
+.pf-l input:focus, .pf-l textarea:focus{ border-color:#FFD700; box-shadow:0 0 0 2px rgba(255,215,0,.18); }
+.pf-l input::placeholder, .pf-l textarea::placeholder{ color:#7a6f50; }
+/* İKİ alan YAN YANA (Fiyat min/max): kartı YANA UZATMAZ — ikisi de daralabilir, ekrana sığar */
+.pf-ikili{ display:flex; gap:10px; }
+.pf-ikili .pf-l{ flex:1; min-width:0; }
+.pf-dugmeler{ display:flex; gap:10px; margin-top:6px; }
+.pf-vazgec{ flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.2); color:#cdd7e8; border-radius:13px; padding:13px; font-size:15px; cursor:pointer; font-family:'Cormorant Garamond',serif; }
+.pf-kaydet{ flex:2; background:linear-gradient(180deg,#FFE9A8,#FFD700 55%,#B8860B); border:none; color:#1a1206; border-radius:13px; padding:13px; font-size:16px; font-weight:800; cursor:pointer; font-family:'Cinzel',serif; letter-spacing:.03em; }
+.pf-kaydet:disabled, .pf-vazgec:disabled{ opacity:.6; }

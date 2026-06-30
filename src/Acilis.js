@@ -21,7 +21,7 @@ const PIRLANTA_SVG = `
   <line x1="50" y1="38" x2="50" y2="86" stroke="rgba(255,255,255,.3)" stroke-width="0.5"/>
 `;
 
-export default function Acilis({ baslik = "GLAMWORLD", onBitti }) {
+export default function Acilis({ baslik = "GROXORG", onBitti }) {
   const { t } = useTranslation();
   const kokRef = useRef(null);
 
@@ -231,7 +231,7 @@ export default function Acilis({ baslik = "GLAMWORLD", onBitti }) {
               <span className="tas"><svg viewBox="0 0 100 100" width="100%" height="100%"><use href="#pirlantaSekil" /></svg></span>
               <span className="yildiz"></span><span className="parilti"></span>
             </span>
-            <span id="logo">{baslik}</span>
+            <span id="logo" className="notranslate" translate="no">{baslik}</span>
             <span className="elmas sag" id="elmasSag">
               <span className="tas"><svg viewBox="0 0 100 100" width="100%" height="100%"><use href="#pirlantaSekil" /></svg></span>
               <span className="yildiz"></span><span className="parilti"></span>

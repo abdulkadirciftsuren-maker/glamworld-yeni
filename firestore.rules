@@ -1,0 +1,97 @@
+rules_version = '2';
+// GLAMWORLD Firestore Güvenlik Kuralları (FAZ 0) — ANAYASA 6.16/M
+// Firebase Console > Firestore Database > Rules sekmesine YAPIŞTIR + Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function girisli() { return request.auth != null; }
+    function sahip(uid) { return request.auth != null && request.auth.uid == uid; }
+
+    // Kullanıcılar / profiller — keşif için herkes OKUR, sadece sahibi YAZAR
+    match /kullanicilar/{uid} {
+      allow read: if true;
+      allow create, update: if sahip(uid);
+      allow delete: if false;
+    }
+
+    // Gönderiler (akış) — herkes okur; giriş yapan oluşturur; SAHİBİ her şeyi düzenler/siler.
+    // HERKES sadece sayaçları (begeni / yorumSayisi) güncelleyebilir → beğeni/yorum başkasının gönderisinde de kaydedilir.
+    match /gonderiler/{id} {
+      allow read: if true;
+      allow create: if girisli() && request.resource.data.sahipUid == request.auth.uid;
+      allow update: if girisli() && (
+        resource.data.sahipUid == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['begeni', 'yorumSayisi', 'guncelleme'])
+      );
+      allow delete: if girisli() && resource.data.sahipUid == request.auth.uid;
+
+      match /yorumlar/{yid} {
+        allow read: if true;
+        allow create: if girisli() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if girisli() && resource.data.uid == request.auth.uid;
+      }
+    }
+
+    // Teklifler — sadece ilgili müşteri/profesyonel
+    match /teklifler/{id} {
+      allow read: if girisli() && (request.auth.uid == resource.data.musteriUid || request.auth.uid == resource.data.profesyonelUid);
+      allow create: if girisli() && request.resource.data.profesyonelUid == request.auth.uid;
+      allow update, delete: if girisli() && (request.auth.uid == resource.data.musteriUid || request.auth.uid == resource.data.profesyonelUid);
+    }
+
+    // Randevular — sadece ilgili taraflar
+    match /randevular/{id} {
+      allow read: if girisli() && (request.auth.uid == resource.data.musteriUid || request.auth.uid == resource.data.profesyonelUid);
+      allow create: if girisli() && request.resource.data.musteriUid == request.auth.uid;
+      allow update, delete: if girisli() && (request.auth.uid == resource.data.musteriUid || request.auth.uid == resource.data.profesyonelUid);
+    }
+
+    // Beğeniler — kim neyi beğendi (kalbe uzun basınca liste); herkes okur, sadece kişi kendi beğenisini ekler/siler
+    match /begeniler/{id} {
+      allow read: if girisli();
+      allow create: if girisli() && request.resource.data.uid == request.auth.uid;
+      allow delete: if girisli() && resource.data.uid == request.auth.uid;
+    }
+
+    // Takipler — herkes okur (takipçi/takip sayısı için); sadece takip EDEN kendi takibini ekler/siler
+    match /takipler/{id} {
+      allow read: if girisli();
+      allow create: if girisli() && request.resource.data.takipciUid == request.auth.uid;
+      allow delete: if girisli() && resource.data.takipciUid == request.auth.uid;
+    }
+
+    // Bildirimler — gönderen oluşturur (alıcıya); SADECE alıcı okur/işaretler/siler
+    match /bildirimler/{id} {
+      allow read: if girisli() && resource.data.aliciUid == request.auth.uid;
+      allow create: if girisli() && request.resource.data.gonderenUid == request.auth.uid;
+      allow update, delete: if girisli() && resource.data.aliciUid == request.auth.uid;
+    }
+
+    // Mesajlar (üst düzey) — gönderen yazar; sadece gönderen/alıcı okur (gelen kutusu)
+    match /mesajlar/{id} {
+      allow read: if girisli() && (resource.data.aliciUid == request.auth.uid || resource.data.gonderenUid == request.auth.uid);
+      allow create: if girisli() && request.resource.data.gonderenUid == request.auth.uid;
+      allow update: if girisli() && resource.data.aliciUid == request.auth.uid; // okundu işareti
+      allow delete: if false;
+    }
+
+    // Sohbetler / mesajlar — sadece katılımcılar (FAZ 2)
+    match /sohbetler/{id} {
+      allow read, write: if girisli() && request.auth.uid in resource.data.katilimcilar;
+      match /mesajlar/{mid} {
+        allow read: if girisli();
+        allow create: if girisli() && request.resource.data.gonderenUid == request.auth.uid;
+      }
+    }
+
+    // Cüzdanlar — sadece sahibi OKUR; yazma SADECE sunucu (Cloud Functions) (FAZ 3)
+    match /cuzdanlar/{uid} {
+      allow read: if sahip(uid);
+      allow write: if false;
+      match /islemler/{iid} {
+        allow read: if sahip(uid);
+        allow write: if false;
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+name = "groxorg-ai"
+main = "groxorg-ai.js"
+compatibility_date = "2026-01-01"
+workers_dev = true
+
+# Cloudflare Workers AI — sesi metne çevirme (Whisper). Ek hesap/anahtar YOK; Cloudflare hesabıyla çalışır.
+[ai]
+binding = "AI"

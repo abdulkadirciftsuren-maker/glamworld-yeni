@@ -5,10 +5,12 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './MusteriForm.css';
 import SurumRozeti from './SurumRozeti';
+import { Elmas6Kose } from './Anasayfa';
 import { ulkeAdiCevir } from './i18n';
-import { auth, db } from './firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db, googleProvider } from './firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signInWithPopup, linkWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { girisEpostasiGonder } from './eposta';
 
 // CRA/webpack'te Leaflet varsayılan ikon yolları kırılıyor — sabit
 delete L.Icon.Default.prototype._getIconUrl;
@@ -582,32 +584,84 @@ export default function MusteriForm() {
     hataZamanRef.current = setTimeout(() => setHataAlani(''), 4000);
   }
 
+  // Kayıt-sonrası pencere (ana sayfaya atmadan tercih ekranı)
+  const [kayitBitti, setKayitBitti] = useState(false);
+  const [kayitEp, setKayitEp] = useState('');
+  // Google ile gelmişse e-postasını forma hazır getir
+  useEffect(() => { try { if (auth.currentUser && auth.currentUser.email) setEp((e) => e || auth.currentUser.email); } catch (x) {} }, []);
+
+  // Penceredeki "Google ile giriş" — GERÇEK Google hesabıyla gir, FOTO + ad yaz.
+  async function googleGir() {
+    try {
+      let res;
+      try {
+        res = auth.currentUser
+          ? await linkWithPopup(auth.currentUser, googleProvider)
+          : await signInWithPopup(auth, googleProvider);
+      } catch (e1) {
+        const k = (e1 && e1.code) || '';
+        if (['auth/credential-already-in-use','auth/email-already-in-use','auth/provider-already-linked','auth/account-exists-with-different-credential'].includes(k)) {
+          res = await signInWithPopup(auth, googleProvider);
+        } else { throw e1; }
+      }
+      const u = res.user;
+      const g = (u.providerData || []).find(p => p.providerId === 'google.com') || {};
+      const foto = g.photoURL || u.photoURL || '';
+      const ad = g.displayName || u.displayName || '';
+      try { await updateProfile(u, { photoURL: foto || u.photoURL, displayName: ad || u.displayName }); } catch (e) {}
+      try { await setDoc(doc(db, 'kullanicilar', u.uid), { tip: 'musteri', isim: ad, eposta: u.email || '', foto, saglayici: 'google' }, { merge: true }); } catch (e) {}
+      girisEpostasiGonder(u.email, ad); // giriş bildirim e-postası
+    } catch (e) { /* popup iptal vb. → sessiz */ }
+    navigate('/anasayfa', { replace: true });
+  }
+
   async function uyeOl() {
+    const mevcut = auth.currentUser; // Google ile gelip üyeliğini tamamlıyor olabilir
     const yh = {};
     let hata = false;
     if (!isim.trim()) { yh.isim = t('hataIsim'); hata = true; }
     if (!soyisim.trim()) { yh.soyisim = t('hataSoyisim'); hata = true; }
-    if (!ep.trim()) { yh.ep = t('hataEposta'); hata = true; }
-    else if (ep.indexOf('@') === -1) { yh.ep = t('hataEpostaGecersiz'); hata = true; }
-    if (!sifreAcik || !sifre1.trim()) { yh.sifre1 = t('hataSifre'); hata = true; setSifreAcik(true); }
-    else if (sifre1.length < 8) { yh.sifre1 = t('hataSifreKisa'); hata = true; }
-    if (!sifre2.trim()) { yh.sifre2 = t('hataSifreTekrar'); hata = true; }
-    else if (sifre1 !== sifre2) { yh.sifre2 = t('hataSifreUyusmaz'); hata = true; }
+    // E-posta + şifre SADECE Google ile GELMEMİŞSE zorunlu (Google'da e-posta hazır, şifre gerekmez)
+    if (!mevcut) {
+      if (!ep.trim()) { yh.ep = t('hataEposta'); hata = true; }
+      else if (ep.indexOf('@') === -1) { yh.ep = t('hataEpostaGecersiz'); hata = true; }
+      if (!sifreAcik || !sifre1.trim()) { yh.sifre1 = t('hataSifre'); hata = true; setSifreAcik(true); }
+      else if (sifre1.length < 8) { yh.sifre1 = t('hataSifreKisa'); hata = true; }
+      if (!sifre2.trim()) { yh.sifre2 = t('hataSifreTekrar'); hata = true; }
+      else if (sifre1 !== sifre2) { yh.sifre2 = t('hataSifreUyusmaz'); hata = true; }
+    }
     if (!telNo.trim()) { yh.tel = t('hataTelefon'); hata = true; }
     if (!konumYazi) { yh.konum = true; hata = true; }
     if (!cinsiyet) { yh.cinsiyet = true; hata = true; }
     setHatalar(yh);
     if (hata) { uyariGoster(t('hataAlanlar')); return; }
-    // GERÇEK üyelik: Firebase'de hesap aç (sonra site seni hatırlar)
+
+    // GOOGLE ile gelmiş → form bilgileriyle profili oluştur (createUser YOK), direkt ana sayfa.
+    // SIRA ÖNEMLİ: ÖNCE profili yaz (kapı kontrolü bulsun), sonra updateProfile (yarış olmasın).
+    if (mevcut) {
+      try { localStorage.setItem('gw_profilVar', '1'); localStorage.setItem('gw_profilVarZaman', String(Date.now())); } catch (e) {}
+      try { await setDoc(doc(db, 'kullanicilar', mevcut.uid), { tip: 'musteri', isim: isim.trim(), soyisim: soyisim.trim(), eposta: mevcut.email || ep.trim(), telefon: telNo.trim(), cinsiyet, konum: konumYazi, foto: mevcut.photoURL || '', saglayici: 'google', olusturma: Date.now() }, { merge: true }); } catch (e) {}
+      try { await updateProfile(mevcut, { displayName: (isim.trim() + ' ' + soyisim.trim()).trim() }); } catch (e) {}
+      try { localStorage.setItem('gw_profilVar', '1'); } catch (e) {}
+      try { window.dispatchEvent(new Event('gwProfilVar')); } catch (e) {} // App'e "profil hazır" de (yarış olmasın)
+      girisEpostasiGonder(mevcut.email, (isim.trim() + ' ' + soyisim.trim()).trim()).catch(() => {}); // mail (sayfa kapanmaz, kesilmez)
+      navigate('/anasayfa', { replace: true });
+      return;
+    }
+
+    // E-POSTA/ŞİFRE ile yeni üyelik
     try {
       const cred = await createUserWithEmailAndPassword(auth, ep.trim(), sifre1);
       try { await updateProfile(cred.user, { displayName: (isim.trim() + ' ' + soyisim.trim()).trim() }); } catch (e) {}
       try { await setDoc(doc(db, 'kullanicilar', cred.user.uid), { tip: 'musteri', isim: isim.trim(), soyisim: soyisim.trim(), eposta: ep.trim(), telefon: telNo.trim(), cinsiyet, konum: konumYazi, olusturma: Date.now() }); } catch (e) {}
-      navigate('/kayit-tamam', { replace: true });
     } catch (e) {
-      const k = e && e.code;
-      uyariGoster(k === 'auth/email-already-in-use' ? t('ghEpostaKayitli') : k === 'auth/weak-password' ? t('hataSifreKisa') : k === 'auth/invalid-email' ? t('hataEpostaGecersiz') : k === 'auth/network-request-failed' ? t('ghInternet') : t('ghGenel'));
+      if (e && e.code === 'auth/email-already-in-use') {
+        try { await signInWithEmailAndPassword(auth, ep.trim(), sifre1); } catch (e2) {}
+      }
     }
+    try { localStorage.setItem('gw_profilVar', '1'); } catch (e) {}
+    setKayitEp(ep.trim());
+    setKayitBitti(true);
   }
 
   return (
@@ -621,25 +675,10 @@ export default function MusteriForm() {
       <div className="kart" id="anaKart">
         <div className="ic">
           <div className="ust">
-            <span className="pir-sol">
-              <svg viewBox="0 0 120 120" style={{ width: '44px', height: '44px' }}>
-                <defs>
-                  <radialGradient id="myv" cx="50%" cy="42%" r="62%"><stop offset="0" stopColor="#2a2418" /><stop offset="60%" stopColor="#120f09" /><stop offset="100%" stopColor="#050403" /></radialGradient>
-                  <radialGradient id="mbt" cx="50%" cy="40%" r="62%"><stop offset="0" stopColor="#ffffff" /><stop offset="40%" stopColor="#eef3f8" /><stop offset="75%" stopColor="#c0cdda" /><stop offset="100%" stopColor="#8090a0" /></radialGradient>
-                  <radialGradient id="mbm" cx="50%" cy="50%" r="50%"><stop offset="0" stopColor="rgba(255,255,255,.98)" /><stop offset="100%" stopColor="rgba(220,230,240,0)" /></radialGradient>
-                </defs>
-                <ellipse cx="60" cy="60" rx="50" ry="50" fill="url(#myv)" stroke="#C9A227" strokeWidth="2.5" />
-                <ellipse cx="60" cy="60" rx="41" ry="41" fill="#0a0805" stroke="rgba(201,162,39,.3)" strokeWidth="1.2" />
-                <circle cx="60" cy="60" r="32" fill="url(#mbt)" />
-                <polygon points="60,60 40,46 60,38" fill="#ffffff" opacity=".6" /><polygon points="60,60 60,38 80,46" fill="#f4f8fc" opacity=".5" />
-                <polygon points="60,60 80,46 86,64" fill="#d5dee8" opacity=".45" /><polygon points="60,60 86,64 74,82" fill="#aebccb" opacity=".5" />
-                <polygon points="60,60 74,82 46,82" fill="#90a0b0" opacity=".5" /><polygon points="60,60 46,82 34,64" fill="#a0aebc" opacity=".5" />
-                <polygon points="60,60 34,64 40,46" fill="#d5dee8" opacity=".45" />
-                <circle cx="60" cy="58" r="14" fill="url(#mbm)" />
-                <circle cx="60" cy="29" r="5.5" fill="#FFE9A8" stroke="#8a6010" strokeWidth="1.2" /><circle cx="89" cy="48" r="5.5" fill="#FFD700" stroke="#8a6010" strokeWidth="1.2" /><circle cx="31" cy="48" r="5.5" fill="#FFD700" stroke="#8a6010" strokeWidth="1.2" />
-              </svg>
+            <span className="logo-amblem">
+              <span className="pir-sol"><Elmas6Kose c="#dfeaff" /></span>
+              <span className="logo notranslate" translate="no">GROXORG</span>
             </span>
-            <span className="logo">GLAMWORLD</span>
           </div>
           <div className="h2">{t('uyeolBaslik')}</div>
           <div className="slogan">{t('musteriSlogan')}</div>
@@ -898,6 +937,20 @@ export default function MusteriForm() {
           <button className="kk-tamam" onClick={buTelKodunuSec}>{t('buUlkeyiSec')}</button>
         </div>
       </div>
+
+      {/* KAYIT SONRASI TERCİH PENCERESİ — ana sayfaya atmaz; e-postayla gir veya GERÇEK Google ile gir */}
+      {kayitBitti && (
+        <div className="konum-katman acik" style={{ zIndex: 10001, alignItems: 'center' }}>
+          <div className="kk-ic" style={{ textAlign: 'center' }}>
+            <div className="kk-ust"><span className="kk-baslik">&#127968; GROXORG</span></div>
+            <p style={{ textAlign: 'center', color: '#FFD700', fontFamily: "'Cinzel',serif", fontSize: '18px', margin: '10px 0 6px' }}>{t('hosgeldinKisa')}</p>
+            <p style={{ textAlign: 'center', color: '#cbb890', fontSize: '14px', lineHeight: '1.5', marginBottom: '18px' }}>{t('anasayfaMetin')}</p>
+            <button onClick={() => navigate('/anasayfa', { replace: true })} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,215,0,.5)', background: 'linear-gradient(135deg,#B8860B,#FFD700)', color: '#1c1404', fontWeight: 700, cursor: 'pointer' }}>&#9993;&#65039; {kayitEp} {t('ileGirisYapSon')}</button>
+            <p style={{ textAlign: 'center', color: '#7a6f50', fontSize: '12px', marginTop: '14px' }}>{t('veyaSecebilirsin')}</p>
+            <button onClick={googleGir} style={{ width: '100%', marginTop: '6px', padding: '12px', borderRadius: '12px', background: '#fff', color: '#222', fontWeight: 600, cursor: 'pointer', border: (kayitEp || '').toLowerCase().endsWith('@gmail.com') ? '1.5px solid #FFD700' : '1px solid #ddd', boxShadow: (kayitEp || '').toLowerCase().endsWith('@gmail.com') ? '0 0 16px rgba(255,215,0,.4)' : 'none' }}><b style={{ color: '#4285F4' }}>G</b> {t('googleIleGiris')}{(kayitEp || '').toLowerCase().endsWith('@gmail.com') && ' ✦'}</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
