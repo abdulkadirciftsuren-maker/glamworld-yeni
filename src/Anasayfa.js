@@ -2025,7 +2025,8 @@ export default function Anasayfa({ pro = false }) {
         .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
         .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, "")
         .replace(/[•★☆◆♦]/g, " ")
-        .replace(/GLOXORG/gi, "Groksorg") // marka adını harf-harf değil KELİME gibi oku
+        .replace(/Gloxoo/gi, "Gloksu") // AI maskot adı: harf-harf değil net söylensin (Glok-su)
+        .replace(/GLOXORG/gi, "Gloksorg") // marka adını harf-harf değil KELİME gibi oku (Glok-sorg)
         .replace(/\s+/g, " ").trim();
       if (!temiz) return;
       window.speechSynthesis.cancel();
