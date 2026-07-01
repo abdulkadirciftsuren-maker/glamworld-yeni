@@ -96,7 +96,7 @@ export default function Giris({ zorunluUye }) {
   // e-posta+şifresini sayfa yüklenince YAPIŞTIRAMAZ. Kullanıcı bir alana dokununca (yazma niyeti) açılır.
   const [kilit, setKilit] = useState(true);
   const kilitAc = () => { if (kilit) setKilit(false); };
-  // E-posta: HERHANGİ geçerli adres kabul (Gmail/Hotmail/groxorg...). @groxorg.com SABİT DEĞİL —
+  // E-posta: HERHANGİ geçerli adres kabul (Gmail/Hotmail/groxorg...). @gloxorg.com SABİT DEĞİL —
   // sadece arka-fon ipucu (placeholder), yazınca kaybolur. Kullanıcı eski hesabına istediği e-postayla girer.
   const epGecerli = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((ep || "").trim());
   // İki şifre tutmuyorsa ANINDA uyar (yazarken kırmızı + alt yazı) — kullanıcı: hemen uyarsın.
@@ -310,7 +310,7 @@ export default function Giris({ zorunluUye }) {
                 <div><label className="giris-label">{t('soyisim', 'Soyisim')}</label><input className="giris-input" type="text" name="gw-soyad" autoComplete="family-name" placeholder={t('soyisimPh', 'Soyisminiz')} value={soyad} onChange={(e) => { setSoyad(e.target.value); setBilgi(""); }} /></div>
               </div>
               <label className="giris-label">{t('eposta')}</label>
-              <input className="giris-input" type="email" inputMode="email" name="gw-uye-mail" autoComplete="email" readOnly={kilit} onFocus={kilitAc} placeholder="ornek@groxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
+              <input className="giris-input" type="email" inputMode="email" name="gw-uye-mail" autoComplete="email" readOnly={kilit} onFocus={kilitAc} placeholder="ornek@gloxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
               <div className="uye-ikili-alan uye-sifre-alan">
                 <div>
                   <label className="giris-label">{t('sifre')}</label>
@@ -368,7 +368,7 @@ export default function Giris({ zorunluUye }) {
               <div className="ayrac"><div className="cizgi"></div><span>{t('veya')}</span><div className="cizgi"></div></div>
 
               <label className="giris-label">{t('eposta')}</label>
-              <input className="giris-input" type="email" inputMode="email" name="gw-giris-mail" autoComplete="email" readOnly={kilit} onFocus={kilitAc} placeholder="ornek@groxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
+              <input className="giris-input" type="email" inputMode="email" name="gw-giris-mail" autoComplete="email" readOnly={kilit} onFocus={kilitAc} placeholder="ornek@gloxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
               <label className="giris-label">{t('sifre')}</label>
               <div className={"giris-sifre" + (sifreHata ? " hatali" : "")}>
                 <input className={"giris-input" + (sifreHata ? " hatali" : "")} type={goz ? "text" : "password"} name="gw-giris-pw" autoComplete="current-password" readOnly={kilit} onFocus={kilitAc} placeholder={t('sifrenPh')} value={sifre} onChange={(e) => { setSifre(e.target.value); setBilgi(""); setSifreHata(false); }} />
