@@ -1,4 +1,4 @@
-// GROXORG — ayar paneli (?) açıklamaları 13 dil (B116).
+// GLOXORG — ayar paneli (?) açıklamaları 13 dil (B116).
 export const AYAR_CEVIRI4 = {
   tr: {
     aciklamaHesabim:"Ana e-posta ve adın burada görünür. İstersen müşterilerin sana ulaşması için 2. bir iletişim e-postası ve telefon ekleyebilirsin. Telefon için ülke kodunu seç, numaranı yaz, Kaydet'e bas.",
@@ -9,7 +9,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Telefon bildirimlerini açarsan beğeni, yorum ve mesajları anında alırsın. İstediğin zaman kapatabilirsin.",
     aciklamaDil:"Uygulamanın dilini buradan seçersin. Menü, ayarlar ve harita arayüzü seçtiğin dile geçer.",
     aciklamaUyelik:"Üyelik türün ve günlük yapay zeka hakkın burada görünür. Müşteri ücretsizdir; günde 20 AI hakkın gece yarısı yenilenir.",
-    aciklamaHakkinda:"GROXORG — küresel profesyonel sosyal platform. Üye olarak Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursun.",
+    aciklamaHakkinda:"GLOXORG — küresel profesyonel sosyal platform. Üye olarak Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursun.",
   },
   en: {
     aciklamaHesabim:"Your main e-mail and name appear here. You can add a 2nd contact e-mail and a phone so customers can reach you. For the phone, pick the country code, type your number, and tap Save.",
@@ -20,7 +20,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Turn on phone notifications to get likes, comments and messages instantly. You can turn it off anytime.",
     aciklamaDil:"Choose the app language here. The menu, settings and map interface switch to your chosen language.",
     aciklamaUyelik:"Your membership type and daily AI quota appear here. Customer is free; your 20 daily AI credits renew at midnight.",
-    aciklamaHakkinda:"GROXORG — a global professional social platform. By joining you accept the Terms of Use and Privacy Policy.",
+    aciklamaHakkinda:"GLOXORG — a global professional social platform. By joining you accept the Terms of Use and Privacy Policy.",
   },
   de: {
     aciklamaHesabim:"Deine Haupt-E-Mail und dein Name erscheinen hier. Du kannst eine 2. Kontakt-E-Mail und ein Telefon hinzufügen, damit Kunden dich erreichen. Wähle für das Telefon die Vorwahl, gib deine Nummer ein und tippe Speichern.",
@@ -31,7 +31,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Aktiviere Telefonbenachrichtigungen, um Likes, Kommentare und Nachrichten sofort zu erhalten. Jederzeit abschaltbar.",
     aciklamaDil:"Wähle hier die App-Sprache. Menü, Einstellungen und Kartenoberfläche wechseln in die gewählte Sprache.",
     aciklamaUyelik:"Dein Mitgliedschaftstyp und dein tägliches KI-Kontingent erscheinen hier. Kunde ist kostenlos; deine 20 täglichen KI-Credits erneuern sich um Mitternacht.",
-    aciklamaHakkinda:"GROXORG — eine globale professionelle soziale Plattform. Mit der Anmeldung akzeptierst du die Nutzungsbedingungen und die Datenschutzrichtlinie.",
+    aciklamaHakkinda:"GLOXORG — eine globale professionelle soziale Plattform. Mit der Anmeldung akzeptierst du die Nutzungsbedingungen und die Datenschutzrichtlinie.",
   },
   fr: {
     aciklamaHesabim:"Votre e-mail principal et votre nom apparaissent ici. Vous pouvez ajouter un 2e e-mail de contact et un téléphone pour que les clients vous joignent. Pour le téléphone, choisissez l'indicatif, saisissez votre numéro et appuyez sur Enregistrer.",
@@ -42,7 +42,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Activez les notifications du téléphone pour recevoir j'aime, commentaires et messages instantanément. Désactivable à tout moment.",
     aciklamaDil:"Choisissez ici la langue de l'application. Le menu, les paramètres et l'interface de la carte passent dans la langue choisie.",
     aciklamaUyelik:"Votre type d'abonnement et votre quota IA quotidien apparaissent ici. Client est gratuit ; vos 20 crédits IA quotidiens se renouvellent à minuit.",
-    aciklamaHakkinda:"GROXORG — une plateforme sociale professionnelle mondiale. En vous inscrivant, vous acceptez les Conditions d'utilisation et la Politique de confidentialité.",
+    aciklamaHakkinda:"GLOXORG — une plateforme sociale professionnelle mondiale. En vous inscrivant, vous acceptez les Conditions d'utilisation et la Politique de confidentialité.",
   },
   es: {
     aciklamaHesabim:"Tu correo principal y tu nombre aparecen aquí. Puedes añadir un 2.º correo de contacto y un teléfono para que los clientes te contacten. Para el teléfono, elige el código de país, escribe tu número y pulsa Guardar.",
@@ -53,7 +53,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Activa las notificaciones del teléfono para recibir me gusta, comentarios y mensajes al instante. Puedes desactivarlas cuando quieras.",
     aciklamaDil:"Elige aquí el idioma de la app. El menú, los ajustes y la interfaz del mapa cambian al idioma elegido.",
     aciklamaUyelik:"Tu tipo de membresía y tu cuota diaria de IA aparecen aquí. Cliente es gratis; tus 20 créditos de IA diarios se renuevan a medianoche.",
-    aciklamaHakkinda:"GROXORG — una plataforma social profesional global. Al unirte aceptas las Condiciones de uso y la Política de privacidad.",
+    aciklamaHakkinda:"GLOXORG — una plataforma social profesional global. Al unirte aceptas las Condiciones de uso y la Política de privacidad.",
   },
   it: {
     aciklamaHesabim:"La tua e-mail principale e il tuo nome appaiono qui. Puoi aggiungere una 2ª e-mail di contatto e un telefono affinché i clienti ti raggiungano. Per il telefono scegli il prefisso, inserisci il numero e tocca Salva.",
@@ -64,7 +64,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Attiva le notifiche del telefono per ricevere mi piace, commenti e messaggi all'istante. Disattivabili in qualsiasi momento.",
     aciklamaDil:"Scegli qui la lingua dell'app. Menu, impostazioni e interfaccia della mappa passano alla lingua scelta.",
     aciklamaUyelik:"Il tuo tipo di abbonamento e la quota IA giornaliera appaiono qui. Cliente è gratuito; i tuoi 20 crediti IA giornalieri si rinnovano a mezzanotte.",
-    aciklamaHakkinda:"GROXORG — una piattaforma sociale professionale globale. Iscrivendoti accetti i Termini d'uso e l'Informativa sulla privacy.",
+    aciklamaHakkinda:"GLOXORG — una piattaforma sociale professionale globale. Iscrivendoti accetti i Termini d'uso e l'Informativa sulla privacy.",
   },
   pt: {
     aciklamaHesabim:"Seu e-mail principal e seu nome aparecem aqui. Você pode adicionar um 2.º e-mail de contato e um telefone para os clientes te encontrarem. Para o telefone, escolha o código do país, digite seu número e toque em Salvar.",
@@ -75,7 +75,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Ative as notificações do telefone para receber curtidas, comentários e mensagens na hora. Pode desativar quando quiser.",
     aciklamaDil:"Escolha aqui o idioma do app. O menu, as configurações e a interface do mapa mudam para o idioma escolhido.",
     aciklamaUyelik:"Seu tipo de assinatura e a cota diária de IA aparecem aqui. Cliente é grátis; seus 20 créditos de IA diários renovam à meia-noite.",
-    aciklamaHakkinda:"GROXORG — uma plataforma social profissional global. Ao se cadastrar, você aceita os Termos de Uso e a Política de Privacidade.",
+    aciklamaHakkinda:"GLOXORG — uma plataforma social profissional global. Ao se cadastrar, você aceita os Termos de Uso e a Política de Privacidade.",
   },
   ru: {
     aciklamaHesabim:"Здесь показаны ваша основная почта и имя. Можно добавить 2-ю контактную почту и телефон, чтобы клиенты могли с вами связаться. Для телефона выберите код страны, введите номер и нажмите Сохранить.",
@@ -86,7 +86,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Включите уведомления телефона, чтобы мгновенно получать лайки, комментарии и сообщения. Можно отключить в любой момент.",
     aciklamaDil:"Выберите здесь язык приложения. Меню, настройки и интерфейс карты переключатся на выбранный язык.",
     aciklamaUyelik:"Здесь показаны ваш тип подписки и дневной лимит ИИ. Клиент бесплатно; ваши 20 запросов ИИ в день обновляются в полночь.",
-    aciklamaHakkinda:"GROXORG — глобальная профессиональная социальная платформа. Регистрируясь, вы принимаете Условия использования и Политику конфиденциальности.",
+    aciklamaHakkinda:"GLOXORG — глобальная профессиональная социальная платформа. Регистрируясь, вы принимаете Условия использования и Политику конфиденциальности.",
   },
   uk: {
     aciklamaHesabim:"Тут показані ваша основна пошта та ім'я. Можна додати 2-гу контактну пошту й телефон, щоб клієнти могли з вами зв'язатися. Для телефону виберіть код країни, введіть номер і натисніть Зберегти.",
@@ -97,7 +97,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"Увімкніть сповіщення телефону, щоб миттєво отримувати вподобання, коментарі й повідомлення. Можна вимкнути будь-коли.",
     aciklamaDil:"Виберіть тут мову застосунку. Меню, налаштування та інтерфейс карти перемкнуться на вибрану мову.",
     aciklamaUyelik:"Тут показані ваш тип підписки й денний ліміт ШІ. Клієнт безкоштовно; ваші 20 запитів ШІ на день оновлюються опівночі.",
-    aciklamaHakkinda:"GROXORG — глобальна професійна соціальна платформа. Реєструючись, ви приймаєте Умови використання та Політику конфіденційності.",
+    aciklamaHakkinda:"GLOXORG — глобальна професійна соціальна платформа. Реєструючись, ви приймаєте Умови використання та Політику конфіденційності.",
   },
   ar: {
     aciklamaHesabim:"يظهر هنا بريدك الأساسي واسمك. يمكنك إضافة بريد تواصل ثانٍ ورقم هاتف ليصل إليك العملاء. للهاتف اختر رمز الدولة، اكتب رقمك واضغط حفظ.",
@@ -108,7 +108,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"فعّل إشعارات الهاتف لتصلك الإعجابات والتعليقات والرسائل فوراً. يمكنك إيقافها في أي وقت.",
     aciklamaDil:"اختر هنا لغة التطبيق. تتحول القائمة والإعدادات وواجهة الخريطة إلى اللغة المختارة.",
     aciklamaUyelik:"يظهر هنا نوع عضويتك وحصتك اليومية من الذكاء الاصطناعي. العميل مجاني؛ تتجدد حصتك (20) منتصف الليل.",
-    aciklamaHakkinda:"GROXORG — منصة اجتماعية مهنية عالمية. بالانضمام فإنك تقبل شروط الاستخدام وسياسة الخصوصية.",
+    aciklamaHakkinda:"GLOXORG — منصة اجتماعية مهنية عالمية. بالانضمام فإنك تقبل شروط الاستخدام وسياسة الخصوصية.",
   },
   zh: {
     aciklamaHesabim:"这里显示你的主邮箱和姓名。你可以添加第二个联系邮箱和电话，方便客户联系你。电话请选择国家代码、输入号码并点击保存。",
@@ -119,7 +119,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"开启手机通知，即时收到点赞、评论和消息。可随时关闭。",
     aciklamaDil:"在这里选择应用语言。菜单、设置和地图界面都会切换到所选语言。",
     aciklamaUyelik:"这里显示你的会员类型和每日 AI 额度。客户免费；每日 20 次 AI 额度在午夜刷新。",
-    aciklamaHakkinda:"GROXORG——全球专业社交平台。注册即表示你接受使用条款和隐私政策。",
+    aciklamaHakkinda:"GLOXORG——全球专业社交平台。注册即表示你接受使用条款和隐私政策。",
   },
   ja: {
     aciklamaHesabim:"ここに主要メールと名前が表示されます。顧客が連絡できるよう2つ目の連絡用メールと電話を追加できます。電話は国番号を選び、番号を入力して保存を押してください。",
@@ -130,7 +130,7 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"電話の通知をオンにすると、いいね・コメント・メッセージをすぐ受け取れます。いつでもオフにできます。",
     aciklamaDil:"ここでアプリの言語を選びます。メニュー・設定・地図の表示が選んだ言語に切り替わります。",
     aciklamaUyelik:"ここにメンバーシップの種類と1日のAI利用枠が表示されます。顧客は無料。1日20回のAI枠は深夜に更新されます。",
-    aciklamaHakkinda:"GROXORG——世界的なプロフェッショナル向けソーシャルプラットフォーム。登録すると利用規約とプライバシーポリシーに同意したことになります。",
+    aciklamaHakkinda:"GLOXORG——世界的なプロフェッショナル向けソーシャルプラットフォーム。登録すると利用規約とプライバシーポリシーに同意したことになります。",
   },
   hi: {
     aciklamaHesabim:"यहाँ आपका मुख्य ई-मेल और नाम दिखता है। ग्राहक आप तक पहुँच सकें इसलिए दूसरा संपर्क ई-मेल और फ़ोन जोड़ सकते हैं। फ़ोन के लिए देश कोड चुनें, नंबर लिखें और सहेजें दबाएँ।",
@@ -141,6 +141,6 @@ export const AYAR_CEVIRI4 = {
     aciklamaBildirim:"फ़ोन सूचनाएँ चालू करें ताकि लाइक, कमेंट और संदेश तुरंत मिलें। कभी भी बंद कर सकते हैं।",
     aciklamaDil:"यहाँ ऐप की भाषा चुनें। मेन्यू, सेटिंग्स और मानचित्र इंटरफ़ेस चुनी हुई भाषा में बदल जाते हैं।",
     aciklamaUyelik:"यहाँ आपकी सदस्यता का प्रकार और दैनिक AI सीमा दिखती है। ग्राहक निःशुल्क है; आपकी दैनिक 20 AI सीमाएँ आधी रात को नवीनीकृत होती हैं।",
-    aciklamaHakkinda:"GROXORG — एक वैश्विक पेशेवर सामाजिक मंच। शामिल होकर आप उपयोग की शर्तें और गोपनीयता नीति स्वीकार करते हैं।",
+    aciklamaHakkinda:"GLOXORG — एक वैश्विक पेशेवर सामाजिक मंच। शामिल होकर आप उपयोग की शर्तें और गोपनीयता नीति स्वीकार करते हैं।",
   },
 };

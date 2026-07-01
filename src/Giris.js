@@ -292,7 +292,7 @@ export default function Giris({ zorunluUye }) {
           <div className="logo-sat">
             <span className="logo-amblem">
               <span className="elmas-konum"><Elmas extra="sol" /></span>
-              <span className="logo notranslate" translate="no" ref={logoRef}>GROXORG</span>
+              <span className="logo notranslate" translate="no" ref={logoRef}>GLOXORG</span>
             </span>
           </div>
           <div className="hosgeldin">{t('hosgeldin')}</div>

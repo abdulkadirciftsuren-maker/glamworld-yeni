@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { DILLER } from "./i18n";
 import "./DilSecici.css";
 
-// GROXORG'e özel altın küre ikonu (hazır emoji DEĞİL — anayasa kuralı)
+// GLOXORG'e özel altın küre ikonu (hazır emoji DEĞİL — anayasa kuralı)
 function KureIkon({ boyut = 23 }) {
   return (
     <svg width={boyut} height={boyut} viewBox="0 0 24 24" fill="none">

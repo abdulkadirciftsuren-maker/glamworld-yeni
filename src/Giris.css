@@ -199,7 +199,7 @@
   .ust-uyeol:active{transform:scale(.98);}
   @keyframes uyeolOk{0%,100%{transform:translateX(0);}50%{transform:translateX(6px);}}
   @keyframes uyeolNabiz{0%,100%{box-shadow:0 6px 20px rgba(255,215,0,.3);}50%{box-shadow:0 7px 30px rgba(255,215,0,.6);}}
-  /* Giriş düğmelerinin üstünde açıklama: "GROXORG'a üye misin?..." — başka renk (yumuşak mavi) */
+  /* Giriş düğmelerinin üstünde açıklama: "GLOXORG'a üye misin?..." — başka renk (yumuşak mavi) */
   .uye-misin{text-align:center;color:#9fc4ee;font-size:13.5px;line-height:1.5;letter-spacing:.01em;
     margin:8px 4px 16px;animation:ic .8s ease .55s both;}
   /* Şifremi unuttum bağlantısı — şifre alanının hemen altında, sağda */

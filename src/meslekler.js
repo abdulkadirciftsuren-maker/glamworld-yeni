@@ -1,4 +1,4 @@
-// GROXORG — Ortak MESLEK LİSTESİ. Profesyonel formu + Profilim meslek seçici aynı listeyi kullanır.
+// GLOXORG — Ortak MESLEK LİSTESİ. Profesyonel formu + Profilim meslek seçici aynı listeyi kullanır.
 // (ProfesyonelForm kendi kopyasını tutuyor; burası Anasayfa/Profilim seçici içindir.)
 export const MESLEK_LISTESI = [
   { bg:'linear-gradient(135deg,#e0115f,#e0115fcc)', ik:'💄', ad:'Makyaj Sanatçısı' },

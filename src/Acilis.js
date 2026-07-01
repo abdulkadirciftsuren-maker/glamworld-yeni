@@ -21,7 +21,7 @@ const PIRLANTA_SVG = `
   <line x1="50" y1="38" x2="50" y2="86" stroke="rgba(255,255,255,.3)" stroke-width="0.5"/>
 `;
 
-export default function Acilis({ baslik = "GROXORG", onBitti }) {
+export default function Acilis({ baslik = "GLOXORG", onBitti }) {
   const { t } = useTranslation();
   const kokRef = useRef(null);
 

@@ -1,4 +1,4 @@
-// GROXORG — Bildirim metinleri ({{ad}}/{{metin}} korunur) + yazı tipi etiketleri 13 dil (B125).
+// GLOXORG — Bildirim metinleri ({{ad}}/{{metin}} korunur) + yazı tipi etiketleri 13 dil (B125).
 export const AYAR_CEVIRI7 = {
   tr: { bildBegeni:"{{ad}} gönderini beğendi", bildYorum:"{{ad}} yorum yaptı: {{metin}}", bildMesaj:"{{ad}} sana mesaj gönderdi", bildTakip:"{{ad}} seni takip etmeye başladı", ytZarif:"Zarif", ytModern:"Modern", ytDar:"Dar", ytTabela:"Tabela", ytKalin:"Kalın", ytSik:"Şık", ytTatli:"Tatlı", ytElYazisi:"El Yazısı", ytZarifEl:"Zarif El", ytRetro:"Retro" },
   en: { bildBegeni:"{{ad}} liked your post", bildYorum:"{{ad}} commented: {{metin}}", bildMesaj:"{{ad}} sent you a message", bildTakip:"{{ad}} started following you", ytZarif:"Elegant", ytModern:"Modern", ytDar:"Condensed", ytTabela:"Display", ytKalin:"Bold", ytSik:"Stylish", ytTatli:"Playful", ytElYazisi:"Handwriting", ytZarifEl:"Script", ytRetro:"Retro" },

@@ -67,8 +67,8 @@ const DERINLIK_PARCALAR = Array.from({ length: 30 }, (_, i) => {
   };
 });
 
-/* GROXORG'e özel ince-çizgi ikonlar (hazır emoji DEĞİL — ANAYASA kuralı) */
-// GÖNDERİ TÜRÜ AMBLEMLERİ — GROXORG'a özel çizim (hazır emoji/ikon DEĞİL, ANAYASA 6.124). Her tür sağ-üst köşede kendi amblemiyle.
+/* GLOXORG'e özel ince-çizgi ikonlar (hazır emoji DEĞİL — ANAYASA kuralı) */
+// GÖNDERİ TÜRÜ AMBLEMLERİ — GLOXORG'a özel çizim (hazır emoji/ikon DEĞİL, ANAYASA 6.124). Her tür sağ-üst köşede kendi amblemiyle.
 function TurAmblem({ tip }) {
   const o = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" };
   const w = (k) => <svg viewBox="0 0 24 24" {...o}>{k}</svg>;
@@ -123,7 +123,7 @@ const Ikon = {
   ara: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>,
   menu: <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
   bildirim: <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>,
-  /* ---- GROXORG'a ÖZEL ikonlar — hepsinde ortak PIRLANTA/FASET motifi (standart ikonlardan farklı, bize ait) ---- */
+  /* ---- GLOXORG'a ÖZEL ikonlar — hepsinde ortak PIRLANTA/FASET motifi (standart ikonlardan farklı, bize ait) ---- */
   // MESAJ: ZARF (mektup) + pırlanta mühür — yorum balonundan FARKLI
   mesaj: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.7 7.3l6.9 4.9a2.4 2.4 0 0 0 2.8 0l6.9-4.9" /><path d="M12 13.1l1.4 1.5-1.4 1.9-1.4-1.9z" fill="currentColor" stroke="none" /></svg>,
   // BEĞENİ: pırlanta-kesimli kalp (içinde faset çizgileri)
@@ -333,7 +333,7 @@ function MaskotYuz({ konusuyor = false, tur = "grox", boyut = 30 }) {
           <ellipse className="maskot-agiz" cx="24" cy="31" rx="3.4" ry="2.1" fill="#5b2d12" />
         </svg>
       ) : (
-        /* GROXORG — 3D TAM KARAKTER: kol, bacak, kulak, burun + büyük gözlü elmas; kollar/bacaklar/kulaklar oynar */
+        /* GLOXORG — 3D TAM KARAKTER: kol, bacak, kulak, burun + büyük gözlü elmas; kollar/bacaklar/kulaklar oynar */
         <svg viewBox="0 0 48 48" fill="none">
           <defs>
             <radialGradient id="mskGem" cx="37%" cy="28%" r="80%">
@@ -413,7 +413,7 @@ function paraBicim(deger, dil) {
   catch (e) { return Math.round(deger).toLocaleString(); }
 }
 
-// GROXORG amblemi (ana sayfa) — yuvaya GÖMÜLÜ mavi taş: altın yuva (hafif parlar) + tırnaklar,
+// GLOXORG amblemi (ana sayfa) — yuvaya GÖMÜLÜ mavi taş: altın yuva (hafif parlar) + tırnaklar,
 // sabit durur, içten ışık ÜSTE doğru reflektör gibi çıkar (ANAYASA Madde 6). Yazıdan AYRI sayılır.
 // Sayfa temalı pırlanta paletleri — HER PENCEREDE marka pırlantası O SAYFANIN renginde (ANAYASA 6.15)
 const AMBLEM_PALET = {
@@ -427,7 +427,7 @@ const AMBLEM_PALET = {
   beyaz:   { t: ["#ffffff", "#eef2f8", "#cfd8e6", "#8a96a8"], yuz: ["#ffffff", "#f6f8fc", "#e2e8f2", "#cfd8e6", "#a8b4c4", "#bcc6d4", "#e8edf5"], masa: "#f4f7fb", m: ["#ffffff", "#f6f8fc", "#e2e8f2", "rgba(220,230,245,.55)", "rgba(220,230,245,0)"] },
 };
 
-// GROXORG'e özel AYAR ikonu (dişli + ortasında pırlanta) — köşeye konur, hazır emoji DEĞİL (ANAYASA)
+// GLOXORG'e özel AYAR ikonu (dişli + ortasında pırlanta) — köşeye konur, hazır emoji DEĞİL (ANAYASA)
 function AyarIkon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -580,7 +580,7 @@ function CerceveTas({ n }) {
 }
 // Tema adı → GERÇEK pırlanta rengi (referans 12 renkten). Marka amblemi + her yer aynı gerçek taşı kullanır.
 const TEMA_HEX = { mavi: "#2f6fd6", kirmizi: "#e0202c", altin: "#f2a900", yesil: "#1ea64f", mor: "#9b4fd6", turkuaz: "#1fc2c2", zeytin: "#d6e060", beyaz: "#dfeaff" };
-// GROXORG marka amblemi (yazının iki yanı) — artık GERÇEK fasetli pırlanta + altın yüzük çerçeve (ANAYASA 6.15).
+// GLOXORG marka amblemi (yazının iki yanı) — artık GERÇEK fasetli pırlanta + altın yüzük çerçeve (ANAYASA 6.15).
 // .ana-amblem sarmalı + konum/parıltı animasyonları korunur; renk sayfanın temasına göre değişir.
 function AmblemMavi({ konum = "sag", renk = "mavi" }) {
   return (
@@ -691,7 +691,7 @@ export default function Anasayfa({ pro = false }) {
   const [srtSokak, setSrtSokak] = useState(""); // mahalle + sokak + bina no (ilçeden AYRI alan)
   const [srtPosta, setSrtPosta] = useState("");
   const [ayarHaritaAcik, setAyarHaritaAcik] = useState(false); // TAM EKRAN konum haritası (blur'lu ata DIŞINDA)
-  const [uyelikKartAcik, setUyelikKartAcik] = useState(false); // GROXORG pırlanta üyelik kartları (kırmızı/altın) tam ekran
+  const [uyelikKartAcik, setUyelikKartAcik] = useState(false); // GLOXORG pırlanta üyelik kartları (kırmızı/altın) tam ekran
   const ayarHaritaRef = useRef(null);
   const ayarPinRef = useRef(null);
   const [bildirimAcik, setBildirimAcik] = useState(false); // sol üst zil — bildirim penceresi
@@ -803,7 +803,7 @@ export default function Anasayfa({ pro = false }) {
   // DİL DEĞİŞİNCE çevirileri SIFIRLA: önceki dile (örn İngilizce) yapılan çeviri hafızada kalıp
   // yeni dilde (örn Türkçe) gönderiyi hâlâ İngilizce/eski dilde gösteriyordu. Dil değişince hepsi orijinaline döner.
   useEffect(() => { setCeviri({}); }, [dil]);
-  // GROXORG YARDIMCISI — gerçek Claude ile sohbet (sağ alt balon)
+  // GLOXORG YARDIMCISI — gerçek Claude ile sohbet (sağ alt balon)
   const [yardimciAcik, setYardimciAcik] = useState(false);
   const [yardimciMesajlar, setYardimciMesajlar] = useState(() => { try { return JSON.parse(localStorage.getItem("groxSohbet") || "[]"); } catch (e) { return []; } }); // {rol:'user'|'ai', metin} — kalıcı (yenilense silinmez)
   const [yardimciYazi, setYardimciYazi] = useState("");
@@ -857,7 +857,7 @@ export default function Anasayfa({ pro = false }) {
     let selam;
     if (ilk) {
       // İLK KAYIT/giriş — geniş tanıtım
-      selam = `Merhaba ${ad}! Ben GROXORG yardımcınım, her sayfada yanındayım. Sana paylaşım yazarım, gideceğin yere yol tarifi veririm, sorularını yanıtlarım, dünyada ne varsa bilirim. İstersen sesli konuşuruz, istersen yazarsın. Şimdi yerime çekiliyorum; bir şey lazım olursa bana dokun, hemen gelirim!`;
+      selam = `Merhaba ${ad}! Ben Gloxorg dünyasının akıllı kalbi Gloxoo. Bugün küresel ticaret ağımızda sana nasıl yardımcı olabilirim? Sana paylaşım yazarım, gideceğin yere yol tarifi veririm, sorularını yanıtlarım, dünyada ne varsa bilirim. İstersen sesli konuşuruz, istersen yazarsın. Şimdi yerime çekiliyorum; bir şey lazım olursa bana dokun, hemen gelirim!`;
       try { localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
     } else {
       // SONRAKİ seferler — FARKLI kısa selamlar (aynısını tekrarlamaz)
@@ -890,12 +890,12 @@ export default function Anasayfa({ pro = false }) {
     try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
     setMaskotTanit(false);
   };
-  const maskotSohbetAc = () => { setMaskotTanit(false); setYardimciMod(maskotTur === "ekspert" ? "site" : "sohbet"); setYardimciAcik(true); }; // "Yaz" → tam panel (Ekspert=site, GROXORG=sohbet). KONUŞMAYI KESME: kullanıcı yazıları görmek için açtı, karşılama sesli devam etsin (B-AI: "yazıyı açtım, o konuşma devam edecek")
+  const maskotSohbetAc = () => { setMaskotTanit(false); setYardimciMod(maskotTur === "ekspert" ? "site" : "sohbet"); setYardimciAcik(true); }; // "Yaz" → tam panel (Ekspert=site, GLOXORG=sohbet). KONUŞMAYI KESME: kullanıcı yazıları görmek için açtı, karşılama sesli devam etsin (B-AI: "yazıyı açtım, o konuşma devam edecek")
   // EKSPERT (ayı) maskotuna dokun → büyür + sayfa uzmanı gibi konuşur, bitince çekilir
   const eksperTanitYap = () => {
     const sayfaAd = { home: "Ana sayfa / Keşfet", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", konum: "Konum", akademi: "Akademi", profil: "Profil" }[aktifKodRef.current] || "Ana sayfa";
     const ad = ((profilBilgi && profilBilgi.isim) || adTam || "").split(" ")[0] || "dostum";
-    setYardimciBaglam(`Kullanıcı şu an GROXORG "${sayfaAd}" sayfasında; bu sayfanın eksperti gibi yardım et.`);
+    setYardimciBaglam(`Kullanıcı şu an GLOXORG "${sayfaAd}" sayfasında; bu sayfanın eksperti gibi yardım et.`);
     const havuz = [
       `Selam ${ad}! Ben Ekspert ayı, bu sayfanın uzmanıyım. Şu an ${sayfaAd} sayfasındasın; burayla ilgili ne istersen sor!`,
       `Hey ${ad}! Ekspert burada 🐻 ${sayfaAd} sayfasındayız, sana yardıma hazırım. Yazmak için kalem düğmesine dokun.`,
@@ -1032,7 +1032,7 @@ export default function Anasayfa({ pro = false }) {
     });
     return unsub;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
-  const adTam = (u && (u.displayName || u.email)) || "GROXORG";
+  const adTam = (u && (u.displayName || u.email)) || "GLOXORG";
   const harf = (adTam || "G").trim().charAt(0).toUpperCase();
   const fotoInputRef = useRef(null);
 
@@ -1040,7 +1040,7 @@ export default function Anasayfa({ pro = false }) {
   const [profilBilgi, setProfilBilgi] = useState(null);
   // İKİ AYRI PROFİL:
   // • googleFoto = Google hesabının fotosu → SADECE Google hesabı menüsünde (top-right popup) gösterilir.
-  // • foto (GROXORG avatarı) = kullanıcının Profilim'den yüklediği AYRI foto → Google fotosu ASLA gelmez.
+  // • foto (GLOXORG avatarı) = kullanıcının Profilim'den yüklediği AYRI foto → Google fotosu ASLA gelmez.
   const googleFoto = (u && u.photoURL) || "";
   const foto = (profilBilgi && profilBilgi.avatarFoto) || "";
   const [kopyalandi, setKopyalandi] = useState(false);
@@ -1057,7 +1057,7 @@ export default function Anasayfa({ pro = false }) {
   const [meslekSecAcik, setMeslekSecAcik] = useState(false); // meslek seçici ızgarası açık mı
   const [meslekFiltre, setMeslekFiltre] = useState(""); // meslek arama kutusu
   const proUye = !!(profilBilgi && profilBilgi.tip === "profesyonel"); // kırmızı pırlanta + PRO ÜYE
-  const uyelik = (profilBilgi && profilBilgi.uyelik) || ""; // "" | "kirmizi" (GROXORG Kırmızı Pırlanta) | "altin" (GROXORG Altın Pırlanta) — günlük AI sınırını kaldırır
+  const uyelik = (profilBilgi && profilBilgi.uyelik) || ""; // "" | "kirmizi" (GLOXORG Kırmızı Pırlanta) | "altin" (GLOXORG Altın Pırlanta) — günlük AI sınırını kaldırır
   // ÇOKLU meslek: pro.meslekler (dizi) ana kaynak; geriye uyum için pro.meslek = ilk meslek.
   // pro.meslekler ANA kaynak; yoksa pro.meslek; yoksa ÜST düzey meslekler/meslek (eski ayarMeslekSec kayıtları için geriye uyum)
   const proMeslekDizi = (profilBilgi && profilBilgi.pro && Array.isArray(profilBilgi.pro.meslekler) && profilBilgi.pro.meslekler.length)
@@ -1390,8 +1390,8 @@ export default function Anasayfa({ pro = false }) {
     try {
       if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
       const reg = (navigator.serviceWorker && (await navigator.serviceWorker.getRegistration() || await navigator.serviceWorker.ready)) || null;
-      if (reg && reg.showNotification) reg.showNotification("GROXORG", { body: metin, icon: foto2 || "/glamworld-yeni/logo192.png", badge: "/glamworld-yeni/logo192.png", tag: "grox-bildirim" });
-      else if (typeof Notification === "function") new Notification("GROXORG", { body: metin, icon: foto2 || undefined });
+      if (reg && reg.showNotification) reg.showNotification("GLOXORG", { body: metin, icon: foto2 || "/glamworld-yeni/logo192.png", badge: "/glamworld-yeni/logo192.png", tag: "grox-bildirim" });
+      else if (typeof Notification === "function") new Notification("GLOXORG", { body: metin, icon: foto2 || undefined });
     } catch (e) {}
   }
   // Yazı alanı DIŞINDA bir kontrole (kaydırıcı/renk/düğme) dokununca klavyeyi KAPAT
@@ -1737,7 +1737,7 @@ export default function Anasayfa({ pro = false }) {
   // PAYLAŞ — telefonun yerel paylaş menüsü (yoksa bağlantıyı kopyala)
   function paylasNative(p) {
     try {
-      if (navigator.share) navigator.share({ title: "GROXORG", text: (p && (p.yazi || p.ad)) || "", url: window.location.href }).catch(() => {});
+      if (navigator.share) navigator.share({ title: "GLOXORG", text: (p && (p.yazi || p.ad)) || "", url: window.location.href }).catch(() => {});
       else if (navigator.clipboard) { navigator.clipboard.writeText(window.location.href); bilgiBalonu(t("baglantiKopyalandi", "Bağlantı kopyalandı")); }
     } catch (e) {}
   }
@@ -1793,7 +1793,7 @@ export default function Anasayfa({ pro = false }) {
       const r = await fetch(AI_KOPRU, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: istek, sistem: "Sen GROXORG adli luks bir profesyonel sosyal platform icin yazi asistanisin. Kisa, sik, zarif ve samimi yaz." }),
+        body: JSON.stringify({ prompt: istek, sistem: "Sen GLOXORG adli luks bir profesyonel sosyal platform icin yazi asistanisin. Kisa, sik, zarif ve samimi yaz." }),
       });
       if (r.ok) {
         const veri = await r.json();
@@ -1867,7 +1867,7 @@ export default function Anasayfa({ pro = false }) {
       setYardimciEk({ tur: "diger", ad });
     }
   };
-  // GROXORG YARDIMCISI — gerçek Claude ile sohbet (köprü üzerinden, çok turlu) — 2 mod: genel sohbet + site asistanı + FOTO (vision)
+  // GLOXORG YARDIMCISI — gerçek Claude ile sohbet (köprü üzerinden, çok turlu) — 2 mod: genel sohbet + site asistanı + FOTO (vision)
   async function yardimciGonder(metinOverride, opt) {
     const canliIc = !!(opt && opt.canli); // canlı döngünün KENDİ çağrısı (canlıyı kapatma)
     const soru = ((typeof metinOverride === "string" ? metinOverride : yardimciYazi) || "").trim();
@@ -1892,7 +1892,7 @@ export default function Anasayfa({ pro = false }) {
     const sahibiMi = !!(u && u.email && (u.email.toLowerCase() === "abdulkadirciftsuren@gmail.com" || u.email.toLowerCase().endsWith("@groxorg.com")));
     const aiLimit = (proUye || sahibiMi || uyelik) ? 100000 : 20; // müşteri: günde 20; üye (kırmızı/altın pırlanta) sınırsız; gece yarısı yenilenir
     if (say.sayi >= aiLimit) {
-      const uyari = `Bugünkü 20 ücretsiz GROXORG yapay zekâ hakkın doldu 🙂 Gece yarısı (00:00) otomatik yenilenir — yarın yine 20 hakkın olur.\n\nKesintisiz devam etmek istersen GROXORG pırlanta üyeliğine geçebilirsin: günlük sınır kalkar, her an benimle çalışırsın. Aşağıdaki düğmeye dokun, üyelik kartlarını aç ve sana uygun olanı seç. 💎`;
+      const uyari = `Bugünkü 20 ücretsiz GLOXORG yapay zekâ hakkın doldu 🙂 Gece yarısı (00:00) otomatik yenilenir — yarın yine 20 hakkın olur.\n\nKesintisiz devam etmek istersen GLOXORG pırlanta üyeliğine geçebilirsin: günlük sınır kalkar, her an benimle çalışırsın. Aşağıdaki düğmeye dokun, üyelik kartlarını aç ve sana uygun olanı seç. 💎`;
       setListe((s) => [...s, { rol: "user", metin: soru, foto, ek, zamanMs: Date.now(), konum: myTamKonum || konum.kod }, { rol: "ai", metin: uyari, zamanMs: Date.now(), uyelikTeklif: true }]);
       setYardimciYazi(""); setYardimciFoto(null); setYardimciEk(null);
       return;
@@ -1940,8 +1940,8 @@ export default function Anasayfa({ pro = false }) {
     sistem += `KISA ve net konuş, laf kalabalığı yapma (açıklaman 1-2 cümle). Yıldız (*), çift yıldız (**kalın**), kare (#), tire-liste, markdown ASLA kullanma — düz metin yaz; sesli konuşur gibi akıcı cümleler; ara sıra emoji serbest. SADECE kullanıcının sorduğu/istediği şeye cevap ver; kullanıcı istemeden kendiliğinden konu açma, ekstra bilgi/öneri YAĞDIRMA, "şunu da yapayım mı" diye üstüne gitme — kullanıcının ne isteyeceğini BEKLE. Resim/görsel ÇİZME, çizemezsin; istenirse kibarca metinle yardım et. KİŞİLİK: sıcak, samimi, neşeli ve CANLI bir dost gibi konuş; yeri gelince hafif şaka yap, espri yap, gül (😄😊); robot gibi soğuk olma — ama yine de KISA kal ve kullanıcı istemeden konuyu uzatma. `;
     // === ROL + BAĞLAM (daha az kritik — köprü kısaltırsa buradan kısalır) ===
     sistem += site
-      ? `Sen GROXORG sitesinin asistanısın (lüks küresel profesyonel sosyal platform; bölümler: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar). SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
-      : `Sen GROXORG adlı lüks, küresel profesyonel sosyal platformun yardımcı asistanısın. Paylaşım yazma, meslek tanıtımı, müşteri bulma gibi konularda yardım et.`;
+      ? `Sen Gloxoo'sun, GLOXORG sitesinin akıllı asistanı (lüks küresel profesyonel sosyal platform; bölümler: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar). SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
+      : `Sen Gloxoo'sun — GLOXORG adlı lüks, küresel profesyonel sosyal platformun akıllı kalbi ve yardımcı asistanı. Adın Gloxoo; kendini tanıtırken "Gloxorg dünyasının akıllı kalbi Gloxoo" dersin. Paylaşım yazma, meslek tanıtımı, müşteri bulma gibi konularda yardım et.`;
     if (yardimciBaglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${yardimciBaglam} Soruları büyük olasılıkla bununla ilgili.`;
     sistem += ` KULLANICI BİLGİSİ: ${proUye ? "Profesyonel (kırmızı pırlanta) üye" : "Müşteri (beyaz pırlanta) üye"}${meslekAd ? ", meslek " + meslekAd : ""}, konum ${myTamKonum || konum.kod}${u && u.email ? ", e-posta " + u.email : ""}. Nerede olduğu sorulursa konumu kullan.`;
     const mesajlar = yeniListe.map((m) => {
@@ -2025,7 +2025,7 @@ export default function Anasayfa({ pro = false }) {
         .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
         .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, "")
         .replace(/[•★☆◆♦]/g, " ")
-        .replace(/GROXORG/gi, "Groksorg") // marka adını harf-harf değil KELİME gibi oku
+        .replace(/GLOXORG/gi, "Groksorg") // marka adını harf-harf değil KELİME gibi oku
         .replace(/\s+/g, " ").trim();
       if (!temiz) return;
       window.speechSynthesis.cancel();
@@ -2183,19 +2183,19 @@ export default function Anasayfa({ pro = false }) {
   const aiSelamMetni = () => {
     const ad = (u && (u.displayName || u.ad)) ? String(u.displayName || u.ad).split(" ")[0] : "";
     const m = {
-      tr: `Merhaba${ad ? " " + ad : ""}, ben GROXORG sesli asistanınım. Seni dinliyorum, nasıl yardımcı olabilirim?`,
-      en: `Hello${ad ? " " + ad : ""}, I'm your GROXORG voice assistant. I'm listening — how can I help you?`,
-      de: `Hallo${ad ? " " + ad : ""}, ich bin dein GROXORG-Sprachassistent. Ich höre zu — wie kann ich helfen?`,
-      fr: `Bonjour${ad ? " " + ad : ""}, je suis ton assistant vocal GROXORG. Je t'écoute — comment puis-je aider ?`,
-      es: `Hola${ad ? " " + ad : ""}, soy tu asistente de voz GROXORG. Te escucho, ¿en qué puedo ayudarte?`,
-      ru: `Здравствуйте${ad ? ", " + ad : ""}, я голосовой помощник GROXORG. Слушаю вас — чем могу помочь?`,
-      ar: `مرحبا${ad ? " " + ad : ""}، أنا مساعد GROXORG الصوتي. أنا أستمع إليك، كيف يمكنني المساعدة؟`,
-      it: `Ciao${ad ? " " + ad : ""}, sono il tuo assistente vocale GROXORG. Ti ascolto, come posso aiutarti?`,
-      pt: `Olá${ad ? " " + ad : ""}, sou o seu assistente de voz GROXORG. Estou a ouvir — como posso ajudar?`,
-      zh: `你好${ad ? "，" + ad : ""}，我是你的 GROXORG 语音助手。我在听，有什么可以帮你的？`,
-      ja: `こんにちは${ad ? "、" + ad : ""}。GROXORG の音声アシスタントです。聞いています、どうされましたか？`,
-      hi: `नमस्ते${ad ? " " + ad : ""}, मैं आपका GROXORG वॉइस असिस्टेंट हूँ। मैं सुन रहा हूँ, कैसे मदद करूँ?`,
-      uk: `Вітаю${ad ? ", " + ad : ""}, я голосовий помічник GROXORG. Слухаю вас — чим можу допомогти?`,
+      tr: `Merhaba${ad ? " " + ad : ""}, ben Gloxoo, Gloxorg dünyasının sesli asistanıyım. Seni dinliyorum, nasıl yardımcı olabilirim?`,
+      en: `Hello${ad ? " " + ad : ""}, I'm your GLOXORG voice assistant. I'm listening — how can I help you?`,
+      de: `Hallo${ad ? " " + ad : ""}, ich bin dein GLOXORG-Sprachassistent. Ich höre zu — wie kann ich helfen?`,
+      fr: `Bonjour${ad ? " " + ad : ""}, je suis ton assistant vocal GLOXORG. Je t'écoute — comment puis-je aider ?`,
+      es: `Hola${ad ? " " + ad : ""}, soy tu asistente de voz GLOXORG. Te escucho, ¿en qué puedo ayudarte?`,
+      ru: `Здравствуйте${ad ? ", " + ad : ""}, я голосовой помощник GLOXORG. Слушаю вас — чем могу помочь?`,
+      ar: `مرحبا${ad ? " " + ad : ""}، أنا مساعد GLOXORG الصوتي. أنا أستمع إليك، كيف يمكنني المساعدة؟`,
+      it: `Ciao${ad ? " " + ad : ""}, sono il tuo assistente vocale GLOXORG. Ti ascolto, come posso aiutarti?`,
+      pt: `Olá${ad ? " " + ad : ""}, sou o seu assistente de voz GLOXORG. Estou a ouvir — como posso ajudar?`,
+      zh: `你好${ad ? "，" + ad : ""}，我是你的 GLOXORG 语音助手。我在听，有什么可以帮你的？`,
+      ja: `こんにちは${ad ? "、" + ad : ""}。GLOXORG の音声アシスタントです。聞いています、どうされましたか？`,
+      hi: `नमस्ते${ad ? " " + ad : ""}, मैं आपका GLOXORG वॉइस असिस्टेंट हूँ। मैं सुन रहा हूँ, कैसे मदद करूँ?`,
+      uk: `Вітаю${ad ? ", " + ad : ""}, я голосовий помічник GLOXORG. Слухаю вас — чим можу допомогти?`,
     };
     return m[aiDilRef.current] || m.tr;
   };
@@ -2227,13 +2227,13 @@ export default function Anasayfa({ pro = false }) {
     setYardimciMesajlar((s) => [...s, { rol: "ai", metin: bilgi, zamanMs: Date.now() }]);
     setTimeout(() => { try { setYardimciAcik(false); setMenuAcik(true); } catch (e) {} }, 1600);
   };
-  // GROXORG PIRLANTA ÜYELİK seçimi — şimdilik ÜCRETSİZ (kart ödeme yok): seç, sınır kalksın, devam et
+  // GLOXORG PIRLANTA ÜYELİK seçimi — şimdilik ÜCRETSİZ (kart ödeme yok): seç, sınır kalksın, devam et
   const uyelikSec = (tur) => {
     const uu = auth.currentUser;
     setProfilBilgi((p) => ({ ...(p || {}), uyelik: tur }));
     if (uu) profilKaydet(uu.uid, { uyelik: tur }).catch(() => {});
     setUyelikKartAcik(false);
-    const ad = tur === "altin" ? "GROXORG Altın Pırlanta" : "GROXORG Kırmızı Pırlanta";
+    const ad = tur === "altin" ? "GLOXORG Altın Pırlanta" : "GLOXORG Kırmızı Pırlanta";
     setYardimciMesajlar((s) => [...s, { rol: "ai", metin: `🎉 Tebrikler! ${ad} üyeliğin etkinleştirildi (tanıtım dönemi — ücretsiz). Artık günlük sınır olmadan benimle çalışabilirsin. Hadi kaldığımız yerden devam edelim! 💎`, zamanMs: Date.now() }]);
   };
   // Metni panoya KOPYALA (mesaja/karta dokununca) — kısa onay balonu
@@ -2253,7 +2253,7 @@ export default function Anasayfa({ pro = false }) {
       const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "GROXORG-" + (txt.replace(/\s+/g, "-").slice(0, 24) || "paylasim") + ".txt";
+      a.href = url; a.download = "GLOXORG-" + (txt.replace(/\s+/g, "-").slice(0, 24) || "paylasim") + ".txt";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
       setKucukMesaj(t("indirildi", "İndirildi 📄"));
@@ -2346,14 +2346,14 @@ export default function Anasayfa({ pro = false }) {
       setTimeout(() => URL.revokeObjectURL(u), 1500);
     } catch (e) { window.open(url, "_blank"); }
   };
-  // Günün şehri fotoğrafından "GROXORG'a sor" → site asistanını ŞEHİR BAĞLAMIYLA aç
+  // Günün şehri fotoğrafından "GLOXORG'a sor" → site asistanını ŞEHİR BAĞLAMIYLA aç
   const sehirAISor = () => {
     setSehirAcik(false);
     setYardimciMod("site");
     setYardimciBaglam(`Ana sayfadaki "günün şehri" fotoğrafı: ${buguninSehri.ad}, ${buguninSehri.ulke}. Kullanıcı bu şehir/ülke hakkında (gezi, kültür, yaşam, meslekler, iş fırsatları, fotoğraf) soruyor olabilir.`);
     setYardimciAcik(true);
   };
-  // Bir GÖNDERİ hakkında GROXORG'a sor — o yazıyı + FOTOĞRAFINI (vision) bağlam yapar, asistanı açar
+  // Bir GÖNDERİ hakkında GLOXORG'a sor — o yazıyı + FOTOĞRAFINI (vision) bağlam yapar, asistanı açar
   // (her AI kendi penceresinin içeriğini görür; konuşma devam eder, kesmez)
   const yaziAISor = (p) => {
     if (!p) return;
@@ -2983,7 +2983,7 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => { acikBolumRef.current = acikBolum; }, [acikBolum]);
   const uyeSayfaRef = useRef(uyeSayfa); // Üye paylaşım sayfası — android geri TANISIN
   useEffect(() => { uyeSayfaRef.current = uyeSayfa; }, [uyeSayfa]);
-  const yardimciAcikRef = useRef(yardimciAcik); // GROXORG Yardımcısı — android geri TANISIN
+  const yardimciAcikRef = useRef(yardimciAcik); // GLOXORG Yardımcısı — android geri TANISIN
   useEffect(() => { yardimciAcikRef.current = yardimciAcik; }, [yardimciAcik]);
   // AI konuşmaları KALICI — sayfa yenilenince silinmesin (son 40 mesaj saklanır)
   // localStorage'a foto base64 YAZMA (quota şişmesin) — foto geçici, metin kalıcı
@@ -3268,7 +3268,7 @@ export default function Anasayfa({ pro = false }) {
         </button>
         {/* DİL — SADECE geniş ekranda (bilgisayar/iPad/notebook) header'da görünür; telefonda menüdedir (yer dar). CSS: .header-dil telefonda display:none, >=760px görünür */}
         <span className="header-dil"><DilSecici /></span>
-        {/* MARKA her pencerede O SAYFANIN renginde: pırlanta + GROXORG + sayfanın adı (ANAYASA 6.15) */}
+        {/* MARKA her pencerede O SAYFANIN renginde: pırlanta + GLOXORG + sayfanın adı (ANAYASA 6.15) */}
         <div className="ana-logo-sar">
           <span className="ana-logo-yazi">
             <MarkaCizgi konum="sol" />
@@ -3580,13 +3580,13 @@ export default function Anasayfa({ pro = false }) {
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
                               {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
                             </button>
-                            <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GROXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
+                            <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
                           </span>
                         </div>
                       )}
                       {/* Tür amblemi artık YAZARIN yanında (isim hizasında) — sağ raile binmiyor */}
-                      {/* Sağ-ALT: GROXORG amblemi (şeffaf) */}
-                      <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GROXORG</span>
+                      {/* Sağ-ALT: GLOXORG amblemi (şeffaf) */}
+                      <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
                     </div>
                     {/* İKON ŞERİDİ — fotoğrafın/videonun ALTINDA, AYRI şerit (medyanın üzerinde DEĞİL) */}
                     <div className={"apr-rail" + (p.video ? " video" : "")} onClick={(e) => e.stopPropagation()}>
@@ -3643,7 +3643,7 @@ export default function Anasayfa({ pro = false }) {
                   )}
                   {p.medya && (
                     <div className="ana-post-medya" style={{ background: p.medya }}>
-                      <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GROXORG</span>
+                      <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
                     </div>
                   )}
                   <div className="ana-post-eylem">
@@ -3909,7 +3909,7 @@ export default function Anasayfa({ pro = false }) {
                         <div className="apf-kimlik">
                           <div className="apf-kimlik-rol">{proUye ? t("pirlantaProfesyonel", "KIRMIZI PIRLANTA · PROFESYONEL") : t("profUye", "ÜYE")}</div>
                           <div className="apf-kimlik-meslek">{proMeslekDizi.map((m) => mc(m, dil)).join(" · ")}</div>
-                          <div className="apf-kimlik-mesaj">{t("profKimlikHosgeldin", "Hoş geldin! GROXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.")}</div>
+                          <div className="apf-kimlik-mesaj">{t("profKimlikHosgeldin", "Hoş geldin! GLOXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.")}</div>
                           {(profilBilgi && profilBilgi.konum && profilBilgi.konum.yazi) ? <div className="apf-kimlik-konum">{profilBilgi.konum.yazi}</div> : (konumYazi && <div className="apf-kimlik-konum">{konumYazi}</div>)}
                         </div>
                       ) : (
@@ -4222,7 +4222,7 @@ export default function Anasayfa({ pro = false }) {
         </div>
       )}
 
-      {/* GÜNÜN ŞEHRİ — tam ekran NET foto görüntüleyici (krem perde yok), indir + GROXORG'a sor */}
+      {/* GÜNÜN ŞEHRİ — tam ekran NET foto görüntüleyici (krem perde yok), indir + GLOXORG'a sor */}
       {/* AYLIK KONUŞMA ARŞİVİ — her AY tek dosya (renkli, ay+yıl), yıl grupları, oku */}
       {arsivAcik && (() => {
         const hepsi = arsivTum.filter((m) => m.zamanMs).sort((a, b) => a.zamanMs - b.zamanMs);
@@ -4332,7 +4332,7 @@ export default function Anasayfa({ pro = false }) {
               </button>
               <button className="sehir-btn sehir-ai" onClick={sehirAISor}>
                 <span className="sehir-ai-pir" aria-hidden="true"><Elmas4 c="#FFD700" /></span>
-                {t("sehirSor", "GROXORG'a sor")}
+                {t("sehirSor", "GLOXORG'a sor")}
               </button>
             </div>
           </div>
@@ -4361,7 +4361,7 @@ export default function Anasayfa({ pro = false }) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
               {tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
             </button>
-            <button className="ana-post-cevir tf-cevir tf-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GROXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
+            <button className="ana-post-cevir tf-cevir tf-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
           </span>
         ) : null;
         // OYNATMA/SEEK çubuğu — artık alt KOLON (.tf-dip) içinde (sabit konum yok → çakışmaz)
@@ -4453,8 +4453,8 @@ export default function Anasayfa({ pro = false }) {
                 <button className="tf-ic ape-mesaj" onClick={() => { setTamFoto(""); if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); }}>{Ikon.mesaj}</button>
               </div>
             </div>
-            {/* SAĞ-ALT — GROXORG amblemi (şeffaf) — dip'in ÜSTÜNDE */}
-            <span className="tf-amblem notranslate" translate="no"><Elmas4 c="#ffd700" /> GROXORG</span>
+            {/* SAĞ-ALT — GLOXORG amblemi (şeffaf) — dip'in ÜSTÜNDE */}
+            <span className="tf-amblem notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
           </div>
         );
       })()}
@@ -4545,12 +4545,12 @@ export default function Anasayfa({ pro = false }) {
         </button>
       )}
 
-      {/* GROXORG YARDIMCISI — sağ-alt yapay zeka sohbet balonu (gerçek Claude) */}
+      {/* GLOXORG YARDIMCISI — sağ-alt yapay zeka sohbet balonu (gerçek Claude) */}
       {!uyeSayfa && !paylasAcik && !duzenAcik && !yardimciAcik && !maskotTanit && (
         <button ref={balonRef} className={"ai-balon" + (tamFoto ? " ust" : "") + (aiKonusuyor ? " konusuyor" : "") + (maskotKizgin ? " kizgin" : "")} style={balonYer ? { left: balonYer.x, top: balonYer.y, right: "auto", bottom: "auto" } : undefined}
           onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir} onClick={balonTik}
-          aria-label={t("yardimciAc", "GROXORG Yardımcısı")}>
-          {/* MASKOT — her yerde gezen GROXORG karakteri (konuşurken şişer/canlanır) */}
+          aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
+          {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
           <MaskotYuz konusuyor={aiKonusuyor} tur="grox" boyut={52} />
         </button>
       )}
@@ -4573,7 +4573,7 @@ export default function Anasayfa({ pro = false }) {
           <button className="ai-maskot-kapat" onClick={(e) => { e.stopPropagation(); maskotSelamKapat(); }} aria-label={t("kapat", "Kapat")}>×</button>
           <div className="ai-maskot-metin">
             <b>{t("maskotSelamBas", "Hoş geldin")}{adTam ? " " + adTam.split(" ")[0] : ""}! 👋</b>
-            {t("maskotSelamGovde", " Ben GROXORG yardımcınım 💎 — paylaşım yazar, yol tarifi veririm, her sayfada yanındayım. Üstteki 🐻 Ekspert de bulunduğun sayfanın uzmanı. Bana dokun, konuşalım!")}
+            {t("maskotSelamGovde", " Ben Gloxoo, Gloxorg dünyasının akıllı kalbi 💎 — paylaşım yazar, yol tarifi veririm, her sayfada yanındayım. Üstteki 🐻 Ekspert de bulunduğun sayfanın uzmanı. Bana dokun, konuşalım!")}
           </div>
         </div>
       )}
@@ -4581,7 +4581,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="ai-fon" onClick={(e) => { if (e.target === e.currentTarget) setYardimciAcik(false); }}>
           <div className={"ai-pencere " + (proUye ? "ai-tema-pro" : "ai-tema-musteri")}>
             <div className="ai-bas">
-              <span className="ai-bas-ad"><MaskotYuz konusuyor={aiKonusuyor} tur={yardimciMod === "site" ? "ekspert" : "grox"} boyut={32} />{yardimciMod === "site" ? t("siteAsistan", "Site Asistanı") : t("yardimciBaslik", "GROXORG Yardımcısı")}</span>
+              <span className="ai-bas-ad"><MaskotYuz konusuyor={aiKonusuyor} tur={yardimciMod === "site" ? "ekspert" : "grox"} boyut={32} />{yardimciMod === "site" ? t("siteAsistan", "Site Asistanı") : t("yardimciBaslik", "GLOXORG Yardımcısı")}</span>
               {/* KONUŞMALARIM — kayıtlı (yeni açılan) konuşmaların listesi */}
               <button className="ai-arsiv-btn ai-konusma-btn" onClick={() => setOturumAcik(true)} aria-label={t("konusmalarim", "Konuşmalarım")}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
@@ -4596,7 +4596,7 @@ export default function Anasayfa({ pro = false }) {
               {aktifMesajlar.length === 0 && (
                 <div className="ai-karsilama">{yardimciMod === "site"
                   ? t("siteKarsilama", "Site asistanınım. \"Profilimi aç\", \"paylaşım penceresini aç\", \"aramayı aç\" de — senin için açayım. 🧭")
-                  : t("yardimciKarsilama", "Merhaba! Ben GROXORG yapay zeka yardımcınım. Paylaşım yazma, meslek tanıtımı, müşteri bulma — ne istersen sor. 🤖")}</div>
+                  : t("yardimciKarsilama", "Merhaba! Ben Gloxoo, Gloxorg dünyasının akıllı kalbi. Paylaşım yazma, meslek tanıtımı, müşteri bulma — ne istersen sor. 🤖")}</div>
               )}
               {aktifMesajlar.map((m, i) => {
                 const onceki = aktifMesajlar[i - 1];
@@ -4667,7 +4667,7 @@ export default function Anasayfa({ pro = false }) {
                         </button>
                       </div>
                     )}
-                    {/* 20 LİMİTİ DOLDU → GROXORG pırlanta üyelik kartlarını aç (canlı yönlendirme ikonlu düğme) */}
+                    {/* 20 LİMİTİ DOLDU → GLOXORG pırlanta üyelik kartlarını aç (canlı yönlendirme ikonlu düğme) */}
                     {m.uyelikTeklif && !uyelik && (
                       <div className="ai-uyelik-sar">
                         <button className="ai-uyelik-btn" onClick={() => setUyelikKartAcik(true)}>
@@ -4894,8 +4894,8 @@ export default function Anasayfa({ pro = false }) {
                   <button className="ayar-btn" onClick={ayarIletisimKaydet}>{t("kaydet", "Kaydet")}</button>
                 </AyarBolum>
 
-                <AyarBolum acik={ayarBolum==="profil"} onTik={()=>setAyarBolum(b=>b==="profil"?null:"profil")} renk="#1ea64f" ad={t("ayarProfilFoto", "Profil / Amblem fotoğrafı")} ikon="🖼️" onAcBilgi={setAciklama} bilgi={t("aciklamaProfilAyar", "Burası GROXORG profilin — Google hesabınla DEĞİL. Profil fotoğrafın ve şirket amblemin burada görünür. Paylaşım yaparken hangisinin (fotoğraf mı, amblem mi) kullanılacağını buradan seçersin. 'Düzenle / yükle' ile yeni görsel ekleyip ayarlayabilirsin.")}>
-                  <p className="ayar-not">{t("ayarProfilNot2", "GROXORG profilin (Google'ınla değil). Aşağıdan paylaşımlarda kullanılacak görseli seç; düzenlemek/yüklemek için alttaki düğmeye bas.")}</p>
+                <AyarBolum acik={ayarBolum==="profil"} onTik={()=>setAyarBolum(b=>b==="profil"?null:"profil")} renk="#1ea64f" ad={t("ayarProfilFoto", "Profil / Amblem fotoğrafı")} ikon="🖼️" onAcBilgi={setAciklama} bilgi={t("aciklamaProfilAyar", "Burası GLOXORG profilin — Google hesabınla DEĞİL. Profil fotoğrafın ve şirket amblemin burada görünür. Paylaşım yaparken hangisinin (fotoğraf mı, amblem mi) kullanılacağını buradan seçersin. 'Düzenle / yükle' ile yeni görsel ekleyip ayarlayabilirsin.")}>
+                  <p className="ayar-not">{t("ayarProfilNot2", "GLOXORG profilin (Google'ınla değil). Aşağıdan paylaşımlarda kullanılacak görseli seç; düzenlemek/yüklemek için alttaki düğmeye bas.")}</p>
                   <div className="ayar-et-sat"><span className="ayar-et">{t("ayarPaylasGorsel", "Paylaşımlarda kullanılacak görsel")}</span><BilgiBtn metin={t("aciklamaPaylasGorsel", "Gönderi paylaştığında profilinin yanında bu görsel görünür. Profil fotoğrafını mı yoksa şirket/iş amblemini mi kullanmak istediğini seç. İstediğin zaman değiştirebilirsin.")} onAc={setAciklama} /></div>
                   <div className="ayar-avatar-grup">
                     <button className={"ayar-avatar-kart" + (paylasAvatar === "profil" ? " sec" : "")} onClick={() => setPaylasAvatar("profil")}>
@@ -5047,8 +5047,8 @@ export default function Anasayfa({ pro = false }) {
                   {!limitsiz && <p className="ayar-not">{t("ayarUyelikNot", "20 hakkın gece yarısı yenilenir. Daha fazlası için Pro/Max üyelik yakında.")}</p>}
                 </AyarBolum>
 
-                <AyarBolum acik={ayarBolum==="hakkinda"} onTik={()=>setAyarBolum(b=>b==="hakkinda"?null:"hakkinda")} renk="#b07cff" ad={t("ayarHakkinda", "Hakkında & Gizlilik")} ikon="ℹ️" onAcBilgi={setAciklama} bilgi={t("aciklamaHakkinda", "GROXORG — küresel profesyonel sosyal platform. Üye olarak Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursun.")}>
-                  <p className="ayar-not">GROXORG — {t("vizyon", "küresel profesyonel sosyal platform")}.</p>
+                <AyarBolum acik={ayarBolum==="hakkinda"} onTik={()=>setAyarBolum(b=>b==="hakkinda"?null:"hakkinda")} renk="#b07cff" ad={t("ayarHakkinda", "Hakkında & Gizlilik")} ikon="ℹ️" onAcBilgi={setAciklama} bilgi={t("aciklamaHakkinda", "GLOXORG — küresel profesyonel sosyal platform. Üye olarak Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursun.")}>
+                  <p className="ayar-not">GLOXORG — {t("vizyon", "küresel profesyonel sosyal platform")}.</p>
                   <p className="ayar-not">{t("kvkk", "Üye olarak Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursun.")}</p>
                 </AyarBolum>
 
@@ -5131,22 +5131,22 @@ export default function Anasayfa({ pro = false }) {
         </div>
       ), document.body)}
 
-      {/* GROXORG PIRLANTA ÜYELİK KARTLARI — 20 limit dolunca AI buraya yönlendirir; şimdilik ücretsiz seç-devam et */}
+      {/* GLOXORG PIRLANTA ÜYELİK KARTLARI — 20 limit dolunca AI buraya yönlendirir; şimdilik ücretsiz seç-devam et */}
       {uyelikKartAcik && createPortal((
         <div className="uyelik-fon" onClick={(e) => { if (e.target === e.currentTarget) setUyelikKartAcik(false); }}>
           <div className="uyelik-pencere">
             <div className="uyelik-bas">
-              <span className="uyelik-baslik">{t("uyelikBaslik", "GROXORG Pırlanta Üyelik")}</span>
+              <span className="uyelik-baslik">{t("uyelikBaslik", "GLOXORG Pırlanta Üyelik")}</span>
               <button className="uyelik-kapat" onClick={() => setUyelikKartAcik(false)} aria-label="Kapat">✕</button>
             </div>
-            <p className="uyelik-not">{t("uyelikNot", "Günlük 20 sınırını kaldır, GROXORG yapay zekâsıyla kesintisiz çalış. Sana uygun pırlantayı seç.")}</p>
+            <p className="uyelik-not">{t("uyelikNot", "Günlük 20 sınırını kaldır, GLOXORG yapay zekâsıyla kesintisiz çalış. Sana uygun pırlantayı seç.")}</p>
             <div className="uyelik-kartlar">
               {/* KIRMIZI PIRLANTA */}
               <div className="uyelik-kart kart-kirmizi">
                 <div className="uyelik-taslar">
                   <GercekPirlanta c="#e0202c" cerceve={false} /><GercekPirlanta c="#e0202c" cerceve={false} /><GercekPirlanta c="#e0202c" cerceve={false} />
                 </div>
-                <div className="uyelik-ad">{t("uyelikKirmizi", "GROXORG Kırmızı Pırlanta")}</div>
+                <div className="uyelik-ad">{t("uyelikKirmizi", "GLOXORG Kırmızı Pırlanta")}</div>
                 <div className="uyelik-fiyat">15 <span>€</span><i>/{t("ay", "ay")}</i></div>
                 <ul className="uyelik-ozellik">
                   <li>♦ {t("uyelikOz1", "Günlük AI sınırı YOK")}</li>
@@ -5161,7 +5161,7 @@ export default function Anasayfa({ pro = false }) {
                 <div className="uyelik-taslar">
                   <GercekPirlanta c="#FFD700" cerceve={false} /><GercekPirlanta c="#FFD700" cerceve={false} /><GercekPirlanta c="#FFD700" cerceve={false} /><GercekPirlanta c="#FFD700" cerceve={false} /><GercekPirlanta c="#FFD700" cerceve={false} />
                 </div>
-                <div className="uyelik-ad">{t("uyelikAltin", "GROXORG Altın Pırlanta")}</div>
+                <div className="uyelik-ad">{t("uyelikAltin", "GLOXORG Altın Pırlanta")}</div>
                 <div className="uyelik-fiyat">50 <span>€</span><i>/{t("ay", "ay")}</i></div>
                 <ul className="uyelik-ozellik">
                   <li>♦ {t("uyelikOzA1", "Sınırsız AI + tüm araçlar")}</li>

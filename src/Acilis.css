@@ -103,7 +103,7 @@
 
   /* yazi uzerinden gecen isilti */
   #logo::after{
-    content:var(--logo-metin,"GROXORG");
+    content:var(--logo-metin,"GLOXORG");
     position:absolute;inset:0;
     background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%);
     -webkit-background-clip:text;background-clip:text;

@@ -1,4 +1,4 @@
-// GROXORG — eksik meslek adlarının 12 dile çevirisi (Parti 1/2, B119). meslekCevir'e merge edilir (mc() kullanır).
+// GLOXORG — eksik meslek adlarının 12 dile çevirisi (Parti 1/2, B119). meslekCevir'e merge edilir (mc() kullanır).
 // Anahtar = Türkçe meslek adı; tr gerekmez (mc tr için adı döndürür).
 export const MESLEK_EK = {
   "Araba Tamircisi": { en:"Car Mechanic", de:"Automechaniker", fr:"Mécanicien auto", es:"Mecánico de autos", it:"Meccanico auto", pt:"Mecânico de carros", ru:"Автомеханик", uk:"Автомеханік", ar:"ميكانيكي سيارات", zh:"汽车修理工", ja:"自動車整備士", hi:"कार मैकेनिक" },

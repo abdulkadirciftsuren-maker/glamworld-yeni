@@ -34,7 +34,7 @@ function Yukleniyor() {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at 50% 0%,#1c2842 0%,#111a2e 55%,#0a1020 100%)" }}>
       <style>{"@keyframes gwYukYanip{0%,100%{opacity:.5;transform:scale(.99)}50%{opacity:1;transform:scale(1.02)}}"}</style>
-      <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, fontSize: "32px", letterSpacing: ".09em", background: "linear-gradient(110deg,#B8860B,#FFE9A8,#FFD700,#FFE9A8,#B8860B)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", animation: "gwYukYanip 1.4s ease-in-out infinite" }}>GROXORG</div>
+      <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, fontSize: "32px", letterSpacing: ".09em", background: "linear-gradient(110deg,#B8860B,#FFE9A8,#FFD700,#FFE9A8,#B8860B)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", animation: "gwYukYanip 1.4s ease-in-out infinite" }}>GLOXORG</div>
     </div>
   );
 }
@@ -106,7 +106,7 @@ function App() {
   if (!acilisBitti) {
     return (
       <>
-        <Acilis baslik="GROXORG" onBitti={() => { try { localStorage.setItem("gwAcilisGoruldu", "1"); } catch (e) {} setAcilisBitti(true); }} />
+        <Acilis baslik="GLOXORG" onBitti={() => { try { localStorage.setItem("gwAcilisGoruldu", "1"); } catch (e) {} setAcilisBitti(true); }} />
         <AltinCerceve />
       </>
     );

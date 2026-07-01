@@ -1,4 +1,4 @@
-// GROXORG — Giriş bildirim e-postası (EmailJS ile, gerçek gönderim)
+// GLOXORG — Giriş bildirim e-postası (EmailJS ile, gerçek gönderim)
 import emailjs from "@emailjs/browser";
 
 // EmailJS anahtarları (kullanıcının hesabı)
@@ -18,7 +18,7 @@ export function girisEpostasiGonder(eposta, isim) {
     to_email: eposta,
     name: isim || eposta,
     isim: isim || eposta,
-    mesaj: "GROXORG hesabınıza giriş yapıldı. Bu siz değilseniz lütfen dikkate alın.",
+    mesaj: "GLOXORG hesabınıza giriş yapıldı. Bu siz değilseniz lütfen dikkate alın.",
     zaman: new Date().toLocaleString("tr-TR"),
   };
   try {

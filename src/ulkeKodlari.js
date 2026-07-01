@@ -1,4 +1,4 @@
-// GROXORG — Telefon ülke kodu haritası için paylaşımlı tablolar.
+// GLOXORG — Telefon ülke kodu haritası için paylaşımlı tablolar.
 // (ProfesyonelForm.js kendi kopyasını tutuyor; burası Ayarlar telefon kod HARİTASI içindir.)
 // isoToTelKod: ISO2 → uluslararası telefon kodu.  NUM_TO_ISO2: world-atlas sayısal ülke id → ISO2.
 

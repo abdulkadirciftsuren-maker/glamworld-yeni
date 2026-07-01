@@ -1,4 +1,4 @@
-// GROXORG VERİ ERİŞİM KATMANI (FAZ 0) — ANAYASA 6.16/M
+// GLOXORG VERİ ERİŞİM KATMANI (FAZ 0) — ANAYASA 6.16/M
 // TÜM Firestore okuma/yazma BURADAN geçer. Bileşenler doğrudan db kullanmaz.
 // Böylece arka yüz tek yerden yönetilir, modüler kalır, çökerse tek parça çökmez.
 import { db } from "./firebase";
@@ -37,7 +37,7 @@ export async function begenenleriOku(postId, adet = 100) {
 // Büyük video Firestore'a sığmaz → Cloudinary'e yüklenir, sadece güvenli URL saklanır.
 // İmzasız (unsigned) yükleme: tarayıcıdan doğrudan; gizli anahtar gerekmez.
 const CLOUDINARY_CLOUD = "dqtclc035";   // Bulut adı (public)
-const CLOUDINARY_PRESET = "GROXORG";    // İmzasız yükleme ön ayarı
+const CLOUDINARY_PRESET = "GLOXORG";    // İmzasız yükleme ön ayarı
 export function videoYukle(file, uid, onProgress) {
   return new Promise((resolve, reject) => {
     if (!file) return reject(new Error("eksik"));
