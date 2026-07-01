@@ -49,7 +49,7 @@ const GEM_RENK = ["#dfeaff", "#2f6fd6", "#9b4fd6", "#1ea64f", "#f2a900", "#ff7ab
 // Akış kartı renkleri — her gönderi FARKLI renk vurgusu (canlılık; kullanıcı kuralı). Sırayla döner.
 const POST_RENK = ["#2f7fd6", "#1fc2c2", "#9b59b6", "#1ea64f", "#f2a900", "#ff7ab0", "#e0707a", "#5aa6e0", "#46d37a", "#c98bff"];
 // GERÇEK CLAUDE yapay zeka köprüsü (Cloudflare Worker) — anahtar köprüde GİZLİ, siteye yazılmaz
-const AI_KOPRU = "https://groxorg-ai.abdulkadirciftsuren.workers.dev";
+const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
 // Meslek → kendi rengi (ızgaradaki bg'nin ilk hex'i) — gönderi/etikette meslek kendi renginde yazılır.
 const MESLEK_RENK = {};
 try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; }); } catch (e) {}
