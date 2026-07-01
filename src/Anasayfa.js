@@ -50,6 +50,26 @@ const GEM_RENK = ["#dfeaff", "#2f6fd6", "#9b4fd6", "#1ea64f", "#f2a900", "#ff7ab
 const POST_RENK = ["#2f7fd6", "#1fc2c2", "#9b59b6", "#1ea64f", "#f2a900", "#ff7ab0", "#e0707a", "#5aa6e0", "#46d37a", "#c98bff"];
 // GERÇEK CLAUDE yapay zeka köprüsü (Cloudflare Worker) — anahtar köprüde GİZLİ, siteye yazılmaz
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
+
+// HER CÜMLE FARKLI RENK + küçük elmas ikonu (kullanıcı isteği: renkli, ikonlu, her cümle bir renk).
+// RC_KOYU = AÇIK zeminde okunur (karşılama balonu); RC_ACIK = KOYU zeminde okunur (Gloxoo sohbeti).
+const RC_KOYU = ["#b3271e", "#1257b8", "#0e7c56", "#7b2cbf", "#b5730a", "#0e7c7b", "#c02685"];
+const RC_ACIK = ["#FFD54A", "#7fe0ff", "#ff9ec4", "#8affc1", "#c9a0ff", "#ffb877", "#7ad0ff"];
+function renkliCumleler(metin, palet) {
+  if (!metin) return null;
+  const p = palet || RC_ACIK;
+  const parcalar = String(metin).match(/[^.!?…\n]+[.!?…]*/g) || [String(metin)];
+  return parcalar.map((c, i) => {
+    const s = c.trim();
+    if (!s) return null;
+    const renk = p[i % p.length];
+    return (
+      <span key={i} className="rc-cumle" style={{ color: renk }}>
+        <span className="rc-ik" style={{ color: renk }} aria-hidden="true">◆</span>{s}{" "}
+      </span>
+    );
+  }).filter(Boolean);
+}
 // Meslek → kendi rengi (ızgaradaki bg'nin ilk hex'i) — gönderi/etikette meslek kendi renginde yazılır.
 const MESLEK_RENK = {};
 try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; }); } catch (e) {}
@@ -4574,7 +4594,7 @@ export default function Anasayfa({ pro = false }) {
           <button className="ai-maskot-kapat" onClick={(e) => { e.stopPropagation(); maskotSelamKapat(); }} aria-label={t("kapat", "Kapat")}>×</button>
           <div className="ai-maskot-metin">
             <b>{t("maskotSelamBas", "Hoş geldin")}{adTam ? " " + adTam.split(" ")[0] : ""}! 👋</b>
-            {t("maskotSelamGovde", " Ben Gloxoo, Gloxorg dünyasının akıllı kalbi 💎 — paylaşım yazar, yol tarifi veririm, her sayfada yanındayım. Üstteki 🐻 Ekspert de bulunduğun sayfanın uzmanı. Bana dokun, konuşalım!")}
+            {renkliCumleler(t("maskotSelamGovde", " Ben Gloxoo, Gloxorg dünyasının akıllı kalbi 💎 — paylaşım yazar, yol tarifi veririm, her sayfada yanındayım. Üstteki 🐻 Ekspert de bulunduğun sayfanın uzmanı. Bana dokun, konuşalım!"), RC_KOYU)}
           </div>
         </div>
       )}
@@ -4596,8 +4616,8 @@ export default function Anasayfa({ pro = false }) {
             <div className="ai-akis" ref={yardimciAkisRef}>
               {aktifMesajlar.length === 0 && (
                 <div className="ai-karsilama">{yardimciMod === "site"
-                  ? t("siteKarsilama", "Site asistanınım. \"Profilimi aç\", \"paylaşım penceresini aç\", \"aramayı aç\" de — senin için açayım. 🧭")
-                  : t("yardimciKarsilama", "Merhaba! Ben Gloxoo, Gloxorg dünyasının akıllı kalbi. Paylaşım yazma, meslek tanıtımı, müşteri bulma — ne istersen sor. 🤖")}</div>
+                  ? renkliCumleler(t("siteKarsilama", "Site asistanınım. \"Profilimi aç\", \"paylaşım penceresini aç\", \"aramayı aç\" de — senin için açayım. 🧭"), RC_ACIK)
+                  : renkliCumleler(t("yardimciKarsilama", "Merhaba! Ben Gloxoo, Gloxorg dünyasının akıllı kalbi. Paylaşım yazma, meslek tanıtımı, müşteri bulma — ne istersen sor. 🤖"), RC_ACIK)}</div>
               )}
               {aktifMesajlar.map((m, i) => {
                 const onceki = aktifMesajlar[i - 1];
@@ -4622,7 +4642,7 @@ export default function Anasayfa({ pro = false }) {
                       {m.foto && m.foto.dataURL && <img className="ai-msj-foto" src={m.foto.dataURL} alt="" />}
                       {m.ek && m.ek.tur === "video" && (m.ek.url || m.ek.dataURL) && <video className="ai-msj-video" src={m.ek.url || m.ek.dataURL} controls playsInline />}
                       {m.ek && m.ek.tur !== "video" && <span className="ai-msj-dosya">{m.ek.tur === "pdf" ? "📄" : m.ek.tur === "metin" ? "📝" : "📎"} {m.ek.ad}</span>}
-                      {m.metin}
+                      {m.rol === "user" ? m.metin : renkliCumleler(m.metin, RC_ACIK)}
                       {m.zamanMs && <span className="ai-msj-saat">{new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" })}</span>}
                       {/* AI mesajını TEKRAR sesli okut (istediğin kadar) */}
                       {m.rol !== "user" && m.metin && (
