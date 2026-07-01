@@ -1,4 +1,4 @@
-// GROXORG — Claude yapay zeka KÖPRÜSÜ (Cloudflare Worker)
+// GLOXORG (Gloxoo) — Claude yapay zeka KÖPRÜSÜ (Cloudflare Worker)
 // Anahtar (ANTHROPIC_API_KEY) BURADA gizli durur; siteye/GitHub'a ASLA yazılmaz.
 // Site bu köprüye sorar, köprü Claude'a sorup yanıtı döner.
 // Maliyet kontrolü: ucuz/hızlı model (Haiku) + kısa istek sınırı; gerçek tavan = Anthropic'teki kredi.
@@ -44,7 +44,7 @@ export default {
       } catch (e) { return cevap({ hata: "Ses cozulemedi" }, 502, origin); }
     }
 
-    const sistem = (govde.sistem || "Sen GROXORG icin yardimci bir asistansin. Kisa, net ve nazik yanit ver.").toString().slice(0, 9000);
+    const sistem = (govde.sistem || "Sen Gloxoo, GLOXORG icin yardimci bir asistansin. Kisa, net ve nazik yanit ver.").toString().slice(0, 9000);
     // İki kullanım: (1) tek istek {prompt}, (2) çok turlu sohbet {mesajlar:[{role,content}]}
     let mesajlar;
     if (Array.isArray(govde.mesajlar) && govde.mesajlar.length) {
