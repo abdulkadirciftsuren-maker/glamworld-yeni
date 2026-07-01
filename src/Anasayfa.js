@@ -2132,7 +2132,7 @@ export default function Anasayfa({ pro = false }) {
     if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} await new Promise((r) => setTimeout(r, 200)); }
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr; sesParcaRef.current = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) sesParcaRef.current.push(e.data); };
@@ -2177,7 +2177,7 @@ export default function Anasayfa({ pro = false }) {
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     try {
       // UZAK/DERİN SESLERİ ELE: gürültü engelleme + yankı iptali + oto-kazanç KAPALI (uzak sesler yükseltilmesin)
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr; sesParcaRef.current = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) sesParcaRef.current.push(e.data); };
@@ -2191,9 +2191,9 @@ export default function Anasayfa({ pro = false }) {
           an.getByteTimeDomainData(veri);
           let rms = 0; for (let i = 0; i < veri.length; i++) { const v = (veri[i] - 128) / 128; rms += v * v; } rms = Math.sqrt(rms / veri.length);
           const simdi = Date.now();
-          // SADECE YAKIN konuşma: eşik yüksek (0.14) + arka arkaya 3 kare → araba/rüzgar/uzak ses TETİKLEMEZ (parlama/boş döngü biter)
-          if (rms > 0.14) { yuksek++; if (yuksek >= 3) { konustu = true; sessizBas = 0; } }
-          else { yuksek = 0; if (konustu && !sessizBas) sessizBas = simdi; else if (konustu && sessizBas && simdi - sessizBas > 2500) { try { mr.stop(); } catch (e) {} return; } } // 2.5sn SESSİZLİK → bitti, yarıda kesme
+          // KONUŞMA ALGILA: eşik makul (0.05) + 2 kare → normal/hafif ses de yakalanır (kullanıcı: konuştuğumda cevap vermiyordu). noiseSuppression arka gürültüyü baskılar.
+          if (rms > 0.05) { yuksek++; if (yuksek >= 2) { konustu = true; sessizBas = 0; } }
+          else { yuksek = 0; if (konustu && !sessizBas) sessizBas = simdi; else if (konustu && sessizBas && simdi - sessizBas > 1200) { try { mr.stop(); } catch (e) {} return; } } // 1.2sn SESSİZLİK → bitti (hızlı cevap), yarıda kesme yok
           if (simdi - basT > 30000) { try { mr.stop(); } catch (e) {} return; } // en fazla 30sn (uzun konuşmaya izin)
           raf = requestAnimationFrame(izle);
         };
@@ -2207,7 +2207,7 @@ export default function Anasayfa({ pro = false }) {
         // CANLI bu sırada KAPANDIYSA (dikte mikrofonuna basıldı vb.) tamponlanan sesi GÖNDERME, AT (yukarı yollayıp geri çekme olmasın)
         if (!canliSohbetRef.current) return;
         const blob = new Blob(sesParcaRef.current, { type: mr.mimeType || "audio/webm" });
-        if (!konustu || !blob.size) { if (canliSohbetRef.current) canliDinle(); return; }
+        if (!konustu || !blob.size) { if (canliSohbetRef.current) { setKucukMesaj(t("duyamadim", "Seni duyamadım — biraz daha yüksek konuş 🎤")); canliDinle(); } return; }
         const b64 = await new Promise((res) => { const fr = new FileReader(); fr.onloadend = () => res(((fr.result || "") + "").split(",")[1] || ""); fr.readAsDataURL(blob); });
         if (!b64) { if (canliSohbetRef.current) canliDinle(); return; }
         setYardimciYukleniyor(true);
