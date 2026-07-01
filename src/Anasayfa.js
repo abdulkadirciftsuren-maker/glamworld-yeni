@@ -2184,18 +2184,18 @@ export default function Anasayfa({ pro = false }) {
     const ad = (u && (u.displayName || u.ad)) ? String(u.displayName || u.ad).split(" ")[0] : "";
     const m = {
       tr: `Merhaba${ad ? " " + ad : ""}, ben Gloxoo, Gloxorg dünyasının sesli asistanıyım. Seni dinliyorum, nasıl yardımcı olabilirim?`,
-      en: `Hello${ad ? " " + ad : ""}, I'm your GLOXORG voice assistant. I'm listening — how can I help you?`,
-      de: `Hallo${ad ? " " + ad : ""}, ich bin dein GLOXORG-Sprachassistent. Ich höre zu — wie kann ich helfen?`,
-      fr: `Bonjour${ad ? " " + ad : ""}, je suis ton assistant vocal GLOXORG. Je t'écoute — comment puis-je aider ?`,
-      es: `Hola${ad ? " " + ad : ""}, soy tu asistente de voz GLOXORG. Te escucho, ¿en qué puedo ayudarte?`,
-      ru: `Здравствуйте${ad ? ", " + ad : ""}, я голосовой помощник GLOXORG. Слушаю вас — чем могу помочь?`,
-      ar: `مرحبا${ad ? " " + ad : ""}، أنا مساعد GLOXORG الصوتي. أنا أستمع إليك، كيف يمكنني المساعدة؟`,
-      it: `Ciao${ad ? " " + ad : ""}, sono il tuo assistente vocale GLOXORG. Ti ascolto, come posso aiutarti?`,
-      pt: `Olá${ad ? " " + ad : ""}, sou o seu assistente de voz GLOXORG. Estou a ouvir — como posso ajudar?`,
-      zh: `你好${ad ? "，" + ad : ""}，我是你的 GLOXORG 语音助手。我在听，有什么可以帮你的？`,
-      ja: `こんにちは${ad ? "、" + ad : ""}。GLOXORG の音声アシスタントです。聞いています、どうされましたか？`,
-      hi: `नमस्ते${ad ? " " + ad : ""}, मैं आपका GLOXORG वॉइस असिस्टेंट हूँ। मैं सुन रहा हूँ, कैसे मदद करूँ?`,
-      uk: `Вітаю${ad ? ", " + ad : ""}, я голосовий помічник GLOXORG. Слухаю вас — чим можу допомогти?`,
+      en: `Hello${ad ? " " + ad : ""}, I'm Gloxoo, the voice assistant of the Gloxorg world. I'm listening — how can I help you?`,
+      de: `Hallo${ad ? " " + ad : ""}, ich bin Gloxoo, der Sprachassistent der Gloxorg-Welt. Ich höre zu — wie kann ich helfen?`,
+      fr: `Bonjour${ad ? " " + ad : ""}, je suis Gloxoo, l'assistant vocal du monde Gloxorg. Je t'écoute — comment puis-je aider ?`,
+      es: `Hola${ad ? " " + ad : ""}, soy Gloxoo, el asistente de voz del mundo Gloxorg. Te escucho, ¿en qué puedo ayudarte?`,
+      ru: `Здравствуйте${ad ? ", " + ad : ""}, я Gloxoo, голосовой помощник мира Gloxorg. Слушаю вас — чем могу помочь?`,
+      ar: `مرحبا${ad ? " " + ad : ""}، أنا Gloxoo، المساعد الصوتي لعالم Gloxorg. أنا أستمع إليك، كيف يمكنني المساعدة؟`,
+      it: `Ciao${ad ? " " + ad : ""}, sono Gloxoo, l'assistente vocale del mondo Gloxorg. Ti ascolto, come posso aiutarti?`,
+      pt: `Olá${ad ? " " + ad : ""}, sou o Gloxoo, o assistente de voz do mundo Gloxorg. Estou a ouvir — como posso ajudar?`,
+      zh: `你好${ad ? "，" + ad : ""}，我是 Gloxoo，Gloxorg 世界的语音助手。我在听，有什么可以帮你的？`,
+      ja: `こんにちは${ad ? "、" + ad : ""}。Gloxorg の世界の音声アシスタント、Gloxoo です。聞いています、どうされましたか？`,
+      hi: `नमस्ते${ad ? " " + ad : ""}, मैं Gloxoo हूँ, Gloxorg दुनिया का वॉइस असिस्टेंट। मैं सुन रहा हूँ, कैसे मदद करूँ?`,
+      uk: `Вітаю${ad ? ", " + ad : ""}, я Gloxoo, голосовий помічник світу Gloxorg. Слухаю вас — чим можу допомогти?`,
     };
     return m[aiDilRef.current] || m.tr;
   };
