@@ -53,8 +53,8 @@ const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
 
 // HER CÜMLE FARKLI RENK + küçük elmas ikonu (kullanıcı isteği: renkli, ikonlu, her cümle bir renk).
 // RC_KOYU = AÇIK zeminde okunur (karşılama balonu); RC_ACIK = KOYU zeminde okunur (Gloxoo sohbeti).
-const RC_KOYU = ["#b3271e", "#1257b8", "#0e7c56", "#7b2cbf", "#b5730a", "#0e7c7b", "#c02685"];
-const RC_ACIK = ["#FFD54A", "#7fe0ff", "#ff9ec4", "#8affc1", "#c9a0ff", "#ffb877", "#7ad0ff"];
+const RC_KOYU = ["#e11d1d", "#1553d8", "#0e8f47", "#9026d1", "#c76a06", "#0c8a8a", "#d61b7a"];
+const RC_ACIK = ["#ffd743", "#74dcff", "#ff97c2", "#78f2b4", "#cfa2ff", "#ffb066", "#7cd0ff"];
 function renkliCumleler(metin, palet) {
   if (!metin) return null;
   const p = palet || RC_ACIK;
@@ -2054,7 +2054,13 @@ export default function Anasayfa({ pro = false }) {
       if (!("speechSynthesis" in window) || !metin) { if (typeof onBitti === "function") onBitti(); return; }
       const sesDilKodu = aiSesKodu(aiDilRef.current);
       // İŞARETLERİ TEMİZLE: yıldız/markdown/emoji sesli okunmasın ("yıldız yıldız" saçmalığı biter)
+      const _okDil = (sesDilKodu || "tr").toLowerCase().split("-")[0];
+      const _et = _okDil === "tr" ? " et " : " at ";
+      const _nokta = _okDil === "tr" ? " nokta " : " dot ";
       const temiz = String(metin)
+        // E-POSTA/@ DOĞRU OKUNSUN: "ali@gmail.com" -> "ali et gmail nokta com"; tek "@" -> "et/at"
+        .replace(/([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, (m, u, d) => (u + _et + d).replace(/\./g, _nokta))
+        .replace(/@/g, _et)
         .replace(/\*\*?|__?|`+|#+|>|~+|\|/g, " ")
         .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
         .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, "")
