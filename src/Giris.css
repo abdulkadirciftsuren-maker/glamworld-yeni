@@ -418,7 +418,7 @@
 /* Maskot bilgisayarda telefondan kucuk olmasin -> BELIRGIN BUYUK (ANAYASA 6.19) */
 @media (min-width:560px){ .sifre-maskot svg{width:50px;height:76px;} .sifre-maskot{top:-26px;right:4px;} .giris-sifre .giris-input{padding-right:52px;} }
 @media (min-width:1100px){ .sifre-maskot svg{width:58px;height:88px;} .sifre-maskot{top:-30px;} .giris-sifre .giris-input{padding-right:60px;} }
-/* @groxorg.com SONEK SERIDI: girdi(yalniz kullanici adi) + sabit sonek = tek strip gorunur (kullanici: seritte @groxorg.com hazir bulunsun, sadece groxorg kabul) */
+/* @gloxorg.com SONEK SERIDI: girdi(yalniz kullanici adi) + sabit sonek = tek strip gorunur (kullanici: seritte @gloxorg.com hazir bulunsun, sadece gloxorg kabul) */
 .giris-eposta{display:flex;align-items:stretch;}
 .giris-eposta .giris-eposta-girdi{flex:1;min-width:0;border-top-right-radius:0;border-bottom-right-radius:0;border-right:none;}
 .giris-eposta-sonek{flex:none;display:flex;align-items:center;white-space:nowrap;padding:0 12px;

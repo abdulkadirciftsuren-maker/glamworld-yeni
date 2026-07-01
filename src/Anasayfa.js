@@ -1889,7 +1889,7 @@ export default function Anasayfa({ pro = false }) {
     let say = {}; try { say = JSON.parse(localStorage.getItem("groxAiSayac") || "{}"); } catch (e) {}
     if (say.tarih !== bugun) say = { tarih: bugun, sayi: 0 };
     // SAHİP/test hesapları AI limitinden MUAF (kullanıcı geliştirirken 20'ye takılmasın); gerçek müşteri 20 kalır.
-    const sahibiMi = !!(u && u.email && (u.email.toLowerCase() === "abdulkadirciftsuren@gmail.com" || u.email.toLowerCase().endsWith("@groxorg.com")));
+    const sahibiMi = !!(u && u.email && (u.email.toLowerCase() === "abdulkadirciftsuren@gmail.com" || u.email.toLowerCase().endsWith("@gloxorg.com")));
     const aiLimit = (proUye || sahibiMi || uyelik) ? 100000 : 20; // müşteri: günde 20; üye (kırmızı/altın pırlanta) sınırsız; gece yarısı yenilenir
     if (say.sayi >= aiLimit) {
       const uyari = `Bugünkü 20 ücretsiz GLOXORG yapay zekâ hakkın doldu 🙂 Gece yarısı (00:00) otomatik yenilenir — yarın yine 20 hakkın olur.\n\nKesintisiz devam etmek istersen GLOXORG pırlanta üyeliğine geçebilirsin: günlük sınır kalkar, her an benimle çalışırsın. Aşağıdaki düğmeye dokun, üyelik kartlarını aç ve sana uygun olanı seç. 💎`;
@@ -2326,7 +2326,7 @@ export default function Anasayfa({ pro = false }) {
       const b = await r.blob();
       const url = URL.createObjectURL(b);
       const a = document.createElement("a");
-      a.href = url; a.download = `groxorg-${buguninSehri.tag}-${sehirFotoNo + 1}.jpg`;
+      a.href = url; a.download = `gloxorg-${buguninSehri.tag}-${sehirFotoNo + 1}.jpg`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1500);
     } catch (e) { window.open(sehirGaleriUrl, "_blank"); }
@@ -2341,7 +2341,7 @@ export default function Anasayfa({ pro = false }) {
       const b = await r.blob();
       const u = URL.createObjectURL(b);
       const a = document.createElement("a");
-      a.href = u; a.download = `groxorg-${(p.ad || "gonderi").replace(/\s+/g, "-")}.${uzanti}`;
+      a.href = u; a.download = `gloxorg-${(p.ad || "gonderi").replace(/\s+/g, "-")}.${uzanti}`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(u), 1500);
     } catch (e) { window.open(url, "_blank"); }
@@ -4856,7 +4856,7 @@ export default function Anasayfa({ pro = false }) {
       {/* AYARLAR penceresi — X gibi tam ayarlar (Profilim/menüden) */}
       {ayarlarAcik && (() => {
         const aiBugun = (() => { try { const s = JSON.parse(localStorage.getItem("groxAiSayac") || "{}"); const bg = new Date().toLocaleDateString("en-CA"); return s.tarih === bg ? (s.sayi || 0) : 0; } catch (e) { return 0; } })();
-        const sahibiMi = !!(u && u.email && (u.email.toLowerCase() === "abdulkadirciftsuren@gmail.com" || u.email.toLowerCase().endsWith("@groxorg.com")));
+        const sahibiMi = !!(u && u.email && (u.email.toLowerCase() === "abdulkadirciftsuren@gmail.com" || u.email.toLowerCase().endsWith("@gloxorg.com")));
         const limitsiz = proUye || sahibiMi;
         const tipSimdi = (profilBilgi && profilBilgi.tip) || "musteri";
         return (
@@ -4873,7 +4873,7 @@ export default function Anasayfa({ pro = false }) {
                 <AyarBolum acik={ayarBolum==="hesap"} onTik={()=>setAyarBolum(b=>b==="hesap"?null:"hesap")} renk="#2f7fd6" ad={t("ayarHesabim", "Hesabım")} ikon="👤" onAcBilgi={setAciklama} bilgi={t("aciklamaHesabim", "Ana e-posta ve adın burada görünür. İstersen müşterilerin sana ulaşması için 2. bir iletişim e-postası ve telefon ekleyebilirsin. Telefon için ülke kodunu seç, numaranı yaz, Kaydet'e bas.")}>
                   <div className="ayar-bilgi"><b>{adTam}</b><span>{(u && u.email) || "—"}</span></div>
                   <label className="ayar-et">{t("ayar2Eposta", "2. e-posta (iletişim)")} <BilgiBtn metin={t("aciklama2Eposta", "Bu, İSTEĞE BAĞLI ikinci bir İLETİŞİM e-postasıdır — müşteriler sana ulaşsın diye profiline eklenir. Giriş/şifre kurtarma e-postan DEĞİLDİR (o, hesabını açtığın ana e-postandır). Boş bırakabilirsin; istersen ikinci bir e-posta yazıp Kaydet'e bas.")} onAc={setAciklama} /></label>
-                  <input className="ayar-input" type="email" value={ek2Eposta} onChange={(e) => setEk2Eposta(e.target.value)} placeholder={t("epostaOrnek", "ornek@groxorg.com")} />
+                  <input className="ayar-input" type="email" value={ek2Eposta} onChange={(e) => setEk2Eposta(e.target.value)} placeholder={t("epostaOrnek", "ornek@gloxorg.com")} />
                   <label className="ayar-et">{t("ayarTelefon", "Telefon")} <BilgiBtn metin={t("aciklamaTelKod", "Ülke kodunu 3 yolla ayarlayabilirsin: (1) soldaki kutuya kendin yaz (örn +90), (2) ülke adı yazınca kod gelir, (3) 'Konumumdan otomatik al' bulunduğun ülkenin kodunu koyar, ya da haritadan ülkene dokun. Sonra numaranı yaz ve Kaydet.")} onAc={setAciklama} /></label>
                   <div className="ayar-tel-satir">
                     <input className="ayar-input ayar-telkod-input" type="text" value={telKodu} onChange={(e) => setTelKodu(e.target.value)} placeholder="+90" aria-label={t("ayarTelKodu", "Ülke kodu")} />
