@@ -799,8 +799,10 @@
 }
 .ana-profil:hover{ filter:brightness(1.08); }
 /* pırlanta GLOXORG markası */
-.apm-marka{ display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:12px; }
-.apm-elmas{ color:#bfe3ff; font-size:13px; filter:drop-shadow(0 0 5px rgba(120,190,255,.8)); }
+.apm-marka{ display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+/* SÜS YAZIDAN AYRI (ANAYASA 6.15): pırlanta flow-dışı → GLOXORG yazısı tek başına ortalanır, hizası bozulmaz */
+.apm-amblem{ position:relative; display:inline-flex; align-items:center; }
+.apm-elmas{ position:absolute; right:100%; top:50%; transform:translateY(-50%); margin-right:7px; color:#bfe3ff; font-size:13px; filter:drop-shadow(0 0 5px rgba(120,190,255,.8)); line-height:0; }
 .apm-marka-yazi{ font-family:'Cinzel',serif; font-weight:800; font-size:15px; letter-spacing:.12em;
   background:linear-gradient(180deg,#fff,#FFE9A8 55%,#E8C254); -webkit-background-clip:text; background-clip:text; color:transparent;
   filter:drop-shadow(0 1px 4px rgba(255,215,0,.3)); }

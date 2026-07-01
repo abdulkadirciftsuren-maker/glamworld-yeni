@@ -3273,7 +3273,7 @@ export default function Anasayfa({ pro = false }) {
           <span className="ana-logo-yazi">
             <MarkaCizgi konum="sol" />
             <AmblemMavi konum="sol" renk={temaRenk} />
-            <span className="ana-logo notranslate" translate="no">GRO<b>X</b>ORG</span>
+            <span className="ana-logo notranslate" translate="no">GLO<b>X</b>ORG</span>
             <AmblemMavi konum="sag" renk={temaRenk} />
             <MarkaCizgi konum="sag" />
           </span>
@@ -3312,7 +3312,7 @@ export default function Anasayfa({ pro = false }) {
         <>
           <div className="ana-profil-fon" onClick={() => setProfilAcik(false)} />
           <div className="ana-profil-menu">
-            <div className="apm-marka"><span className="apm-elmas"><Elmas4 c="#bfe3ff" /></span><span className="apm-marka-yazi notranslate" translate="no">GRO<b>X</b>ORG</span></div>
+            <div className="apm-marka"><span className="apm-amblem"><span className="apm-elmas"><Elmas4 c="#bfe3ff" /></span><span className="apm-marka-yazi notranslate" translate="no">GLO<b>X</b>ORG</span></span></div>
             <div className="apm-bas">
               <div className="apm-foto">{googleFoto ? <img src={googleFoto} alt="" referrerPolicy="no-referrer" /> : harf}</div>
               <div className="apm-bilgi">
