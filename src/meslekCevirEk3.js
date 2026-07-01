@@ -1,4 +1,4 @@
-// GROXORG — Fabrika/Tedarik/İşçi/Devlet kategori öğelerinin 12 dile çevirisi (B121). meslekCevir'e merge.
+// GLOXORG — Fabrika/Tedarik/İşçi/Devlet kategori öğelerinin 12 dile çevirisi (B121). meslekCevir'e merge.
 export const MESLEK_EK3 = {
   "Konfeksiyon / Hazır Giyim": { en:"Apparel / Ready-Wear", de:"Konfektion / Bekleidung", fr:"Confection / Prêt-à-porter", es:"Confección / Prêt-à-porter", it:"Confezioni / Pronto moda", pt:"Confecção / Vestuário", ru:"Швейное / Готовая одежда", uk:"Швейне / Готовий одяг", ar:"ملابس جاهزة", zh:"成衣", ja:"アパレル・既製服", hi:"रेडीमेड वस्त्र" },
   "İplik / Dokuma": { en:"Yarn / Weaving", de:"Garn / Weberei", fr:"Fil / Tissage", es:"Hilo / Tejido", it:"Filati / Tessitura", pt:"Fio / Tecelagem", ru:"Пряжа / Ткачество", uk:"Пряжа / Ткацтво", ar:"غزل / نسج", zh:"纱线/织造", ja:"糸・織物", hi:"धागा / बुनाई" },

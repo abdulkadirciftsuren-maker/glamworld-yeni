@@ -148,7 +148,7 @@ export default function GirisYap() {
       <div className="gy-kart">
         <div className="gy-logo-sat">
           <AltinTas boyut={58} />
-          <span className="gy-logo notranslate" translate="no">GROXORG</span>
+          <span className="gy-logo notranslate" translate="no">GLOXORG</span>
         </div>
         <div className="gy-baslik">{t('girisYapLink')}</div>
         <div className="gy-slogan">{t('tekrarHosgeldinBaslik')}</div>

@@ -622,7 +622,7 @@ export default function ProfesyonelForm() {
   }
 
   function meslekKutla(ad, ik, renk) {
-    const mesaj = i18n.language.split('-')[0] === 'tr' ? (meslekMesaj[ad] || 'Hoş geldin! GROXORG ailesine katıldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) });
+    const mesaj = i18n.language.split('-')[0] === 'tr' ? (meslekMesaj[ad] || 'Hoş geldin! GLOXORG ailesine katıldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) });
     setKutlamaIcerik({ ik, ad: mc(ad, i18n.language), alt: mesaj, renk: renk || 'linear-gradient(135deg,#9b0e44,#e0115f)' });
     setKutlamaGor(true);
     if (kutlamaIcRef.current) { serp(kutlamaIcRef.current, 28); }
@@ -952,7 +952,7 @@ export default function ProfesyonelForm() {
     setKatman('');
     setKimlikRolYazi(t('pirlantaProfesyonel'));
     setKimlikMeslek(ik + ' ' + mc(ad, i18n.language));
-    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ((meslekMesaj[ad] || 'Hoş geldin!') + ' GROXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) }));
+    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ((meslekMesaj[ad] || 'Hoş geldin!') + ' GLOXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('meslekHosgeldinSablon', { meslek: mc(ad, i18n.language) }));
     meslekKutla(ad, ik, renk);
   }
 
@@ -967,7 +967,7 @@ export default function ProfesyonelForm() {
     setKatman('');
     setKimlikRolYazi(t('hizmetAlanIsArayan'));
     setKimlikMeslek(ik + ' ' + mc(ad, i18n.language));
-    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ('Hoş geldin! ' + ad + ' olarak GROXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('kimlikHosgeldin'));
+    setKimlikAciklama(i18n.language.split('-')[0] === 'tr' ? ('Hoş geldin! ' + ad + ' olarak GLOXORG ailesine katıldın. Profilin hazır, platformda yerini aldın.') : t('kimlikHosgeldin'));
     meslekKutla(ad, ik, renk);
   }
 
@@ -1364,7 +1364,7 @@ export default function ProfesyonelForm() {
             <div className="ust">
               <span className="logo-amblem">
                 <span className="pir-sol"><Elmas6Kose c="#e0202c" /></span>
-                <span className="logo notranslate" translate="no">GROXORG</span>
+                <span className="logo notranslate" translate="no">GLOXORG</span>
               </span>
             </div>
             <div className="h2">{t('proOlBaslik')}</div>
@@ -1589,7 +1589,7 @@ export default function ProfesyonelForm() {
       <div className={'konum-katman' + (katman === 'anaSayfaKatman' ? ' acik' : '')} style={{zIndex:10001}}
         onClick={e => { if (e.target === e.currentTarget) setKatman(''); }}>
         <div className="kk-ic" ref={anaSayfaKkIcRef} onClick={e => e.stopPropagation()}>
-          <div className="kk-ust"><span className="kk-baslik">&#127968; GROXORG</span></div>
+          <div className="kk-ust"><span className="kk-baslik">&#127968; GLOXORG</span></div>
           <p style={{textAlign:'center',color:'#FFD700',fontFamily:"'Cinzel',serif",fontSize:'18px',marginBottom:'6px'}}>{t('hosgeldinKisa')}</p>
           <p style={{textAlign:'center',color:'#cbb890',fontSize:'14px',lineHeight:'1.5',marginBottom:'18px'}}>{t('anasayfaMetin')}</p>
           <button className="ana-btn" onClick={girisYap}>&#9993;&#65039; {kayitEposta} {t('ileGirisYapSon')}</button>

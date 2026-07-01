@@ -677,7 +677,7 @@ export default function MusteriForm() {
           <div className="ust">
             <span className="logo-amblem">
               <span className="pir-sol"><Elmas6Kose c="#dfeaff" /></span>
-              <span className="logo notranslate" translate="no">GROXORG</span>
+              <span className="logo notranslate" translate="no">GLOXORG</span>
             </span>
           </div>
           <div className="h2">{t('uyeolBaslik')}</div>
@@ -942,7 +942,7 @@ export default function MusteriForm() {
       {kayitBitti && (
         <div className="konum-katman acik" style={{ zIndex: 10001, alignItems: 'center' }}>
           <div className="kk-ic" style={{ textAlign: 'center' }}>
-            <div className="kk-ust"><span className="kk-baslik">&#127968; GROXORG</span></div>
+            <div className="kk-ust"><span className="kk-baslik">&#127968; GLOXORG</span></div>
             <p style={{ textAlign: 'center', color: '#FFD700', fontFamily: "'Cinzel',serif", fontSize: '18px', margin: '10px 0 6px' }}>{t('hosgeldinKisa')}</p>
             <p style={{ textAlign: 'center', color: '#cbb890', fontSize: '14px', lineHeight: '1.5', marginBottom: '18px' }}>{t('anasayfaMetin')}</p>
             <button onClick={() => navigate('/anasayfa', { replace: true })} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,215,0,.5)', background: 'linear-gradient(135deg,#B8860B,#FFD700)', color: '#1c1404', fontWeight: 700, cursor: 'pointer' }}>&#9993;&#65039; {kayitEp} {t('ileGirisYapSon')}</button>

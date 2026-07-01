@@ -1,4 +1,4 @@
-// GROXORG — Sektör/bölüm kategorileri (Ayarlar'da seçilir). Gerçek şirket adı DEĞİL, TÜR/kategori listeleri.
+// GLOXORG — Sektör/bölüm kategorileri (Ayarlar'da seçilir). Gerçek şirket adı DEĞİL, TÜR/kategori listeleri.
 // Kullanıcı listede yoksa kendi yazar → onaylanıp eklenir. Her öğe { ik, ad }.
 
 // FABRİKA / İMALAT türleri

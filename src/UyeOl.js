@@ -103,7 +103,7 @@ export default function UyeOl() {
         <div className="kart">
           <div className="logo-sat">
             <Tas renk="mavi" boyut={46} />
-            <span className="logo">GROXORG</span>
+            <span className="logo">GLOXORG</span>
           </div>
           <div className="uye-baslik">{t('uyeolBaslik')}</div>
           <div className="alt-slogan">{t('nasilKatil')}</div>

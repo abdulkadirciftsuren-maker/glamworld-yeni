@@ -1,4 +1,4 @@
-// GROXORG — Ayarlar + Konum/Harita arayüzü 13 DİL çevirisi.
+// GLOXORG — Ayarlar + Konum/Harita arayüzü 13 DİL çevirisi.
 // Bu anahtarlar Anasayfa.js'te t("anahtar","Türkçe") ile kullanılıyordu ama i18n.js'te yoktu → her dilde Türkçe kalıyordu.
 // Burada 13 dile çevrildi ve i18n.js init'ten önce resources'a eklenir.
 export const AYAR_CEVIRI = {

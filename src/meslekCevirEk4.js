@@ -1,4 +1,4 @@
-// GROXORG — Sektör kategorilerine eklenen yeni öğelerin 12 dile çevirisi (B124).
+// GLOXORG — Sektör kategorilerine eklenen yeni öğelerin 12 dile çevirisi (B124).
 export const MESLEK_EK4 = {
   "Çorap / Triko Fabrikası": { en:"Socks / Knitwear Factory", de:"Socken- / Strickwarenfabrik", fr:"Usine chaussettes / maille", es:"Fábrica de calcetines / punto", it:"Calzifico / Maglieria", pt:"Fábrica de meias / malhas", ru:"Фабрика носков / трикотажа", uk:"Фабрика шкарпеток / трикотажу", ar:"مصنع جوارب / تريكو", zh:"袜子/针织厂", ja:"靴下・ニット工場", hi:"मोज़े / निटवियर फ़ैक्ट्री" },
   "Halı Fabrikası": { en:"Carpet Factory", de:"Teppichfabrik", fr:"Usine de tapis", es:"Fábrica de alfombras", it:"Fabbrica di tappeti", pt:"Fábrica de tapetes", ru:"Ковровая фабрика", uk:"Килимова фабрика", ar:"مصنع سجاد", zh:"地毯厂", ja:"絨毯工場", hi:"कालीन फ़ैक्ट्री" },

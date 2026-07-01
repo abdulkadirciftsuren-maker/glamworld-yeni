@@ -1,4 +1,4 @@
-// GROXORG — Firebase bağlantısı (gerçek arka yüz: veritabanı + giriş)
+// GLOXORG — Firebase bağlantısı (gerçek arka yüz: veritabanı + giriş)
 // Bu dosya sitenin "beyni"dir: Üye Ol → veriler buraya kaydedilir,
 // Giriş Yap → buradan doğrulanır. Anahtar genel web kimliğidir (gizli şifre değil).
 import { initializeApp } from "firebase/app";

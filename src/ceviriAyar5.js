@@ -1,4 +1,4 @@
-// GROXORG — sesli dinleme düğmesi etiketleri 13 dil (B116).
+// GLOXORG — sesli dinleme düğmesi etiketleri 13 dil (B116).
 export const AYAR_CEVIRI5 = {
   tr: { sesDinle:"Sesli dinle", sesDurdur:"Durdur", sesYok:"Cihaz sesli okumayı desteklemiyor", epostaOrnek:"ornek@groxorg.com" },
   en: { sesDinle:"Listen", sesDurdur:"Stop", sesYok:"Device doesn't support text-to-speech", epostaOrnek:"example@groxorg.com" },

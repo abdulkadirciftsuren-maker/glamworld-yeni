@@ -1,4 +1,4 @@
-// GROXORG - DUNYA ULKELERI (tam liste, ~120 ulke)
+// GLOXORG - DUNYA ULKELERI (tam liste, ~120 ulke)
 // Kullanici yazdikca bu listeden eslesen ulkeler siralanir (bayrak + ad + kod).
 // Tanimadigi yeri de KABUL eder (her yer yazilabilir). Sabit zorlamasi YOK.
 // NOT: Adres bolumu (ulke/sehir/ilce) artik PHOTON (gercek harita) kullanir.

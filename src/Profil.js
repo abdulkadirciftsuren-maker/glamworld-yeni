@@ -144,7 +144,7 @@ export default function Profil() {
         <button className="pf-geri" onClick={() => { if (duzenRef.current) duzenKapat(); else navigate("/anasayfa"); }} aria-label="Geri">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
-        <span className="pf-baslik">{pro ? t("profilPasaport", "Meslek Pasaportu") : t("profilBaslik", "GROXORG Profilim")}</span>
+        <span className="pf-baslik">{pro ? t("profilPasaport", "Meslek Pasaportu") : t("profilBaslik", "GLOXORG Profilim")}</span>
         {!duzen && !yuk ? <button className="pf-duzen" onClick={duzenAc}>{t("profDuzenle", "Düzenle")}</button> : <span className="pf-bos" />}
       </header>
 

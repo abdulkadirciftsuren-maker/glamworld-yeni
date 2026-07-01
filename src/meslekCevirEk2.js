@@ -1,4 +1,4 @@
-// GROXORG — eksik meslek adlarının 12 dile çevirisi (Parti 2/2, B119).
+// GLOXORG — eksik meslek adlarının 12 dile çevirisi (Parti 2/2, B119).
 export const MESLEK_EK2 = {
   "Oto Yedek Parça": { en:"Auto Spare Parts", de:"Autoersatzteile", fr:"Pièces auto", es:"Repuestos auto", it:"Ricambi auto", pt:"Autopeças", ru:"Автозапчасти", uk:"Автозапчастини", ar:"قطع غيار سيارات", zh:"汽车配件", ja:"自動車部品", hi:"ऑटो स्पेयर पार्ट्स" },
   "Oto Aksesuar / Ses Sistemi": { en:"Auto Accessories / Audio", de:"Autozubehör / Audio", fr:"Accessoires auto / Audio", es:"Accesorios auto / Audio", it:"Accessori auto / Audio", pt:"Acessórios auto / Som", ru:"Автоаксессуары / Аудио", uk:"Автоаксесуари / Аудіо", ar:"إكسسوارات / صوتيات سيارات", zh:"汽车饰品/音响", ja:"カー用品・オーディオ", hi:"ऑटो सहायक / ऑडियो" },

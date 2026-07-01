@@ -1,5 +1,5 @@
 /* ============================================================
-   GROXORG — MÜŞTERİ ANA SAYFASI (keşif) · siyah-altın-pırlanta
+   GLOXORG — MÜŞTERİ ANA SAYFASI (keşif) · siyah-altın-pırlanta
    Kendi düzeni; diğer sayfalara benzemez (ANAYASA: her sayfa farklı)
    ============================================================ */
 /* ARKA PLAN FOTO katmanı — ekrana SABİT (gerçek görünen yükseklik), sayfa/adres çubuğu kayınca ZIPLAMAZ, alttan açıklık vermez */
@@ -257,7 +257,7 @@
 .ana-post-resim{ padding:0 !important; cursor:pointer; background:transparent; height:auto !important; display:block !important; }
 .ana-post-resim img{ width:100%; height:auto; max-height:82vh; object-fit:contain; display:block; }
 .ana-post-resim video{ width:100%; height:auto; max-height:82vh; display:block; background:transparent; }
-/* GROXORG amblemi SAĞ-ALT köşe (kullanıcı isteği) */
+/* GLOXORG amblemi SAĞ-ALT köşe (kullanıcı isteği) */
 .ana-post-resim .ana-post-medya-rozet{ position:absolute; right:8px; bottom:8px; margin:0; }
 /* fotoğraf üstü yazan: avatar + (isim+pırlanta / meslek·zaman) iki satır */
 .apr-bil{ display:flex; flex-direction:column; min-width:0; flex:1; }
@@ -318,7 +318,7 @@
 .pyl-avsec-btn.secili{ border-color:rgba(255,215,0,.75); background:rgba(255,215,0,.12); color:#FFE9A8; }
 .pyl-avsec-foto{ width:30px; height:30px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); }
 .pyl-avsec-foto img{ width:100%; height:100%; object-fit:cover; }
-/* GROXORG amblemi SAĞ-ALT + TAM ŞEFFAF (zemin/çerçeve YOK, sadece altın yazı) */
+/* GLOXORG amblemi SAĞ-ALT + TAM ŞEFFAF (zemin/çerçeve YOK, sadece altın yazı) */
 .apr-medya .ana-post-medya-rozet{ position:absolute; right:8px; bottom:8px; top:auto; margin:0; background:transparent !important; border:none !important; -webkit-backdrop-filter:none; backdrop-filter:none; font-size:9px; padding:0; text-shadow:0 1px 3px rgba(0,0,0,.95); }
 /* SAĞ-ÜST tür ikonu (fotoğraf/video) — renkli */
 .apr-tipikon{ position:absolute; top:7px; right:8px; z-index:3; width:15px; height:15px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.9)); }
@@ -414,7 +414,7 @@
 .apr-cevir svg{ width:12px; height:12px; }
 /* ÇEVİR + AI(Sor) yan yana küçük araç şeridi */
 .apr-alt-arac, .tf-cevir-arac{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-/* AI (GROXORG'a sor) butonu — çeviri yanında, altın tonlu, küçük */
+/* AI (GLOXORG'a sor) butonu — çeviri yanında, altın tonlu, küçük */
 .apr-ai, .tf-ai{ color:#FFE9A8 !important; border-color:rgba(255,215,0,.5) !important; background:rgba(40,30,8,.4) !important; display:inline-flex !important; align-items:center; gap:7px; }
 .apr-ai-tas{ width:13px; height:13px; display:inline-flex; align-items:center; justify-content:center; flex:none; } /* pırlanta SABİT, yazıya BİNMEZ */
 .tf-ai .apr-ai-tas{ width:15px; height:15px; }
@@ -533,8 +533,8 @@
 }
 .tf-ic.ape-kalp{ color:#ff5d6c; } .tf-ic.ape-yorum{ color:#5aa6e0; } .tf-ic.ape-paylas{ color:#46d37a; } .tf-ic.tf-kaydet{ color:#FFD700; } .tf-ic.ape-mesaj{ color:#b07cff; }
 .tf-ic.tf-indir{ color:#2fd1c4; text-decoration:none; } .tf-ic.tf-daha{ color:#ffe9a8; }
-/* tam ekran GROXORG amblemi — sağ-alt köşe, şeffaf */
-/* GROXORG amblemi indirme/3 nokta ve ikon şeridinin ÜZERİNDE (üstünde) durur, üstlerine binmez */
+/* tam ekran GLOXORG amblemi — sağ-alt köşe, şeffaf */
+/* GLOXORG amblemi indirme/3 nokta ve ikon şeridinin ÜZERİNDE (üstünde) durur, üstlerine binmez */
 .tf-amblem{ display:none !important; position:absolute; right:14px; top:62px; bottom:auto; z-index:6; align-items:center; gap:5px; font-family:'Cinzel',serif; font-size:10px; font-weight:700; letter-spacing:.06em; color:#FFD700; background:rgba(0,0,0,.25); border:1px solid rgba(255,215,0,.3); padding:3px 9px; border-radius:9px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
 /* 3 nokta yerine UFAK ÇERÇEVESİZ SİYAH pırlanta (sadece taş; koyu zeminde görünsün diye ince ışık kenarı) */
 .tf-daha .daha-tas{ width:22px; height:22px; display:block; filter:drop-shadow(0 0 1px rgba(255,255,255,.55)) drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
@@ -666,7 +666,7 @@
   position:relative;
   display:flex; align-items:center; gap:5px; padding:18px 19px;
   /* İsim/amblem bandı ÖZEL GECE MAVİSİ — çerçeve: kalın altın çizgi YOK, ince altın şerit + İÇİNE gömülü gerçek taşlar (tek parça) */
-  background:linear-gradient(180deg,#17357e,#0c1d4e); /* ÖZEL gece mavisi (GROXORG) */
+  background:linear-gradient(180deg,#17357e,#0c1d4e); /* ÖZEL gece mavisi (GLOXORG) */
   /* backdrop-filter KALDIRILDI: kaydırınca çerçeve taşları/şerit KAYBOLUYORDU (repaint hatası). Zemin opak. */
   transform:translateZ(0); will-change:transform; /* sabit GPU katmanı → taşlar kaybolmaz */
   border:none; box-shadow:0 8px 26px rgba(0,0,0,.4);
@@ -740,12 +740,12 @@
   background:linear-gradient(180deg,#eaf6ff,#7ec8ff 45%,#2f7fd6);
   -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 4px rgba(126,200,255,.7)); }
-/* GROXORG aynası: sağdaki R ve G harfleri TERS çevrilir (ortadaki X eksen) — kendi altın
+/* GLOXORG aynası: sağdaki R ve G harfleri TERS çevrilir (ortadaki X eksen) — kendi altın
    gradyanını taşır ki kaybolmasın (B267 düzeltme: parent background-clip transform'lu çocuğa geçmiyordu). */
 .ana-logo .logo-ayna{ display:inline-block; transform:scaleX(-1);
   background:linear-gradient(180deg,#FFF6D8,#FFD700 45%,#B8860B);
   -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
-/* GROXORG yazısı ORTALI kalır; amblemler İKİ YANDA, AYRI sayılır (akış-dışı) — hizayı BOZMAZ.
+/* GLOXORG yazısı ORTALI kalır; amblemler İKİ YANDA, AYRI sayılır (akış-dışı) — hizayı BOZMAZ.
    İki yanda 26px boşluk: amblemler (19px + pay) zil/arama düğmelerinin ÜSTÜNE BİNMEZ. */
 .ana-logo-yazi{ position:relative; display:inline-block; margin:0 38px; }
 .ana-amblem{ position:absolute; top:50%; transform:translateY(-50%);
@@ -798,14 +798,14 @@
   transition:filter .2s;
 }
 .ana-profil:hover{ filter:brightness(1.08); }
-/* pırlanta GROXORG markası */
+/* pırlanta GLOXORG markası */
 .apm-marka{ display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:12px; }
 .apm-elmas{ color:#bfe3ff; font-size:13px; filter:drop-shadow(0 0 5px rgba(120,190,255,.8)); }
 .apm-marka-yazi{ font-family:'Cinzel',serif; font-weight:800; font-size:15px; letter-spacing:.12em;
   background:linear-gradient(180deg,#fff,#FFE9A8 55%,#E8C254); -webkit-background-clip:text; background-clip:text; color:transparent;
   filter:drop-shadow(0 1px 4px rgba(255,215,0,.3)); }
 .apm-marka-yazi b{ -webkit-text-fill-color:#e0115f; color:#e0115f; }
-/* GROXORG — ortadaki X eksen; sağ yarının R ve G harfleri AYNA (ters çevrilir) → simetrik marka */
+/* GLOXORG — ortadaki X eksen; sağ yarının R ve G harfleri AYNA (ters çevrilir) → simetrik marka */
 .logo-ayna{ display:inline-block; transform:scaleX(-1); }
 /* menü liste */
 .apm-liste{ display:flex; flex-direction:column; gap:2px; margin-top:10px; }
@@ -1544,7 +1544,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   /* başlık BANDI tam ekran genişler (kesik değil), içerik ortada */
   .ana-header{ padding:48px 6vw; gap:18px; min-height:128px; } /* bilgisayar: isim bandı DİKEY UZUN (telefondan belirgin büyük) */
   .ana-zil{ margin-left:10px; } .ana-site-ai{ margin-right:26px; } /* büyük ekran: ikonlar DAHA ferah, pusula profilden iyice uzak */
-  .ana-logo{ font-size:37px !important; }           /* GROXORG BÜYÜK */
+  .ana-logo{ font-size:37px !important; }           /* GLOXORG BÜYÜK */
   .ana-logo-yazi{ margin:0 60px; }
   .ana-amblem{ width:19px; height:19px; }           /* yan pırlantalar KÜÇÜK (kullanıcı: iyice ufalt) */
   .ana-amblem.sag{ margin-left:6px; } .ana-amblem.sol{ margin-right:6px; }
@@ -1630,11 +1630,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   /* ALT YAZI büyük + fotoğraf penceresinden uzak */
   .apr-alt{ right:0; bottom:0; padding:13px 18px 16px; }
   .apr-altyazi{ font-size:17px; }
-  /* GROXORG amblemi büyük + kenardan uzak */
+  /* GLOXORG amblemi büyük + kenardan uzak */
   .apr-medya .ana-post-medya-rozet{ right:18px; bottom:16px; font-size:12px; }
   .apr-play{ width:84px; height:84px; }
   .apr-play .gercek-pir{ width:48px; height:48px; }
-  /* GROXORG ismi BİLGİSAYARDA BÜYÜK (telefondan belirgin büyük) */
+  /* GLOXORG ismi BİLGİSAYARDA BÜYÜK (telefondan belirgin büyük) */
   .ana-logo{ font-size:54px !important; }
   /* alttaki çıkış ikonları (Keşfet/Ara/Konum/Mesaj/Profil) BÜYÜK */
   .ana-tab-oge svg{ width:31px; height:31px; }
@@ -1913,7 +1913,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ana-site-ai-pusula{ width:28px; height:28px; filter:drop-shadow(0 0 5px rgba(255,215,0,.5)); }
 .ana-site-ai:active{ transform:scale(.9); }
 
-/* ===== GROXORG YARDIMCISI — yapay zeka sohbet balonu + penceresi ===== */
+/* ===== GLOXORG YARDIMCISI — yapay zeka sohbet balonu + penceresi ===== */
 /* MASKOT BALONU — altın daire değil; maskot KARAKTERİN kendisi, hafifçe süzülür (yüzer) */
 .ai-balon{ position:fixed; left:12px; right:auto; bottom:80px; z-index:55; width:58px; height:58px; border:none; cursor:grab; padding:0;
   display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; -webkit-user-select:none;
@@ -2146,7 +2146,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-uyelik-btn:active{ transform:scale(.96); }
 @media(min-width:560px){ .ai-uyelik-btn{ font-size:17px; padding:14px 22px; } .ai-uyelik-pir > span{ width:21px; height:21px; } .ai-uyelik-yon{ width:24px; height:24px; } }
 
-/* ===== GROXORG PIRLANTA ÜYELİK KARTLARI (tam ekran) ===== */
+/* ===== GLOXORG PIRLANTA ÜYELİK KARTLARI (tam ekran) ===== */
 .uyelik-fon{ position:fixed; inset:0; z-index:100045; background:rgba(6,10,22,.93); display:flex; align-items:center; justify-content:center; padding:16px; overflow-y:auto; }
 .uyelik-pencere{ width:100%; max-width:520px; background:linear-gradient(170deg,#1d2742,#141d33 60%,#0f1626); border:1.5px solid rgba(255,215,0,.4); border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.7); padding:18px 16px 20px; transform:translateZ(0); }
 .uyelik-bas{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
@@ -2376,7 +2376,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ayar-tur.sec{ border:2.5px solid #fff; box-shadow:0 0 16px rgba(255,255,255,.5); transform:scale(1.03); }
 @media(min-width:560px){ .ayar-tur{ padding:16px 10px; } .ayar-tur-ik{ width:40px; height:40px; } }
 @media(min-width:1100px){ .ayar-tur-ik{ width:48px; height:48px; } }
-/* AYARLAR — Paylaşımda kullanılacak görsel seçimi (GROXORG profili; Google DEĞİL) */
+/* AYARLAR — Paylaşımda kullanılacak görsel seçimi (GLOXORG profili; Google DEĞİL) */
 .ayar-et-sat{ display:flex; align-items:center; gap:6px; margin-top:4px; }
 .ayar-avatar-grup{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:6px 0 2px; }
 .ayar-avatar-kart{ position:relative; display:flex; flex-direction:column; align-items:center; gap:8px; border:1.5px solid rgba(255,255,255,.22); border-radius:14px; padding:13px 8px; cursor:pointer; background:rgba(255,255,255,.05); color:#dbe6fb; font-family:'Cormorant Garamond',serif; font-weight:700; font-size:15px; text-align:center; transition:transform .12s, box-shadow .15s; }
