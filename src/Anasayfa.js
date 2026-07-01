@@ -1915,6 +1915,10 @@ export default function Anasayfa({ pro = false }) {
       const uyari = `Bugünkü 20 ücretsiz GLOXORG yapay zekâ hakkın doldu 🙂 Gece yarısı (00:00) otomatik yenilenir — yarın yine 20 hakkın olur.\n\nKesintisiz devam etmek istersen GLOXORG pırlanta üyeliğine geçebilirsin: günlük sınır kalkar, her an benimle çalışırsın. Aşağıdaki düğmeye dokun, üyelik kartlarını aç ve sana uygun olanı seç. 💎`;
       setListe((s) => [...s, { rol: "user", metin: soru, foto, ek, zamanMs: Date.now(), konum: myTamKonum || konum.kod }, { rol: "ai", metin: uyari, zamanMs: Date.now(), uyelikTeklif: true }]);
       setYardimciYazi(""); setYardimciFoto(null); setYardimciEk(null);
+      // CANLI/SESLİ modda SUSMA YOK: uyarıyı SESLİ söyle (müşteri hakkının dolduğunu DUYSUN, susmuş sanmasın) + dinleme döngüsünü durdur
+      if (canliIc && canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} }
+      if (canliIc || sesliMod) { try { sesliOku(uyari); } catch (e) {} }
+      try { aiAltaKay(); } catch (e) {}
       return;
     }
     say.sayi++; try { localStorage.setItem("groxAiSayac", JSON.stringify(say)); } catch (e) {}
