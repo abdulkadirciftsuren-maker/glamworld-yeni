@@ -64,7 +64,7 @@ function renkliCumleler(metin, palet) {
     if (!s) return null;
     const renk = p[i % p.length];
     return (
-      <span key={i} className="rc-cumle" style={{ color: renk }}>
+      <span key={i} data-ci={i} className="rc-cumle" style={{ color: renk }}>
         <span className="rc-ik" style={{ color: renk }} aria-hidden="true">◆</span>{s}{" "}
       </span>
     );
@@ -866,6 +866,16 @@ export default function Anasayfa({ pro = false }) {
   const maskotSelamKapat = () => { setMaskotSelam(false); try { localStorage.setItem("groxMaskotSelam", "1"); } catch (e) {} };
   const [maskotTanit, setMaskotTanit] = useState(false); // maskot BÜYÜK halde konuşuyor mu
   const [maskotMetni, setMaskotMetni] = useState("");
+  const maskotBalonRef = useRef(null); // BÜYÜK maskot balonu — okurken teleprompter gibi kaydırma
+  // Gloxoo konuşurken o cümleyi görünür alana kaydır (yazı konuşmayla beraber yukarı yürüsün, canlı ilerlesin)
+  const maskotKaydir = (idx) => {
+    const b = maskotBalonRef.current; if (!b) return;
+    const el = b.querySelector('[data-ci="' + idx + '"]'); if (!el) return;
+    const hedef = el.offsetTop - b.clientHeight / 2 + el.offsetHeight / 2;
+    try { b.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { b.scrollTop = Math.max(0, hedef); }
+  };
+  // Yeni metin gelince (karşılama/AI cevabı) balonu EN BAŞA sar (üstten başlasın, kesik gelmesin)
+  useEffect(() => { const b = maskotBalonRef.current; if (b) b.scrollTop = 0; }, [maskotMetni]);
   const [maskotTur, setMaskotTur] = useState("grox"); // "grox" (yardımcı) | "ekspert" (ayı)
   const [maskotKizgin, setMaskotKizgin] = useState(false); // kötü/hata olunca KIRMIZILAŞIR
   const maskotTanitRef = useRef(false); // büyük maskot açık mı (async cevapta okumak için)
@@ -893,7 +903,7 @@ export default function Anasayfa({ pro = false }) {
     setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("sohbet");
     // KARŞILAMA sayfaya/transkripte YAZILMAZ (sadece sesli söyler). KENDİ KENDİNE KAPANMAZ — açık/hazır kalır,
     // KAPATMAYI KULLANICI yapar (boşluğa dokun / ✕). (Kullanıcı: konuşunca kapatmasın, ben kapatacağım, beni beklesin.)
-    try { sesliOku(selam); } catch (e) {}
+    try { sesliOku(selam, undefined, maskotKaydir); } catch (e) {}
     maskotCanliBaslat(); // karşılama bitince mikrofonu aç, SABIRLA bekle → kullanıcı konuşunca cevap ver, sohbet devam etsin
   };
   // BÜYÜK MASKOT canlı sohbet: karşılama sesi BİTİNCE mikrofonu açar, kullanıcıyı SABIRLA bekler (kendi konuşmaz, cevap dayatmaz),
@@ -924,7 +934,7 @@ export default function Anasayfa({ pro = false }) {
     const selam = havuz[Math.floor(Math.random() * havuz.length)];
     setMaskotTur("ekspert"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
     // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
-    try { sesliOku(selam); } catch (e) {}
+    try { sesliOku(selam, undefined, maskotKaydir); } catch (e) {}
     maskotCanliBaslat(); // ekspert de karşılamadan sonra mikrofonu açıp seni bekler, sohbete devam eder
   };
   const [paylasDuzen, setPaylasDuzen] = useState(null); // paylaşım fotoğrafının katman hafızası (yeniden düzenle)
@@ -2024,7 +2034,7 @@ export default function Anasayfa({ pro = false }) {
       setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, zamanMs: Date.now() }]);
       if (maskotTanitRef.current && metin) setMaskotMetni(metin); // BÜYÜK maskot açıksa: balonunda da cevabı göster (sadece karşılama kalmasın, konuşmaya devam ediyormuş gibi)
       // OTOMATİK SESLİ OKUMA: yeni cevabın BALON düğmesinde × göster (konuşurken), bitince kendiliğinden kapansın → balon düğmesi = konuşma göstergesi/kontrolü
-      if (sesliMod && metin) { const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi; sesliOku(metin, okuTemizle); }
+      if (sesliMod && metin) { const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi; sesliOku(metin, okuTemizle, maskotTanitRef.current ? maskotKaydir : undefined); }
       if (canliIc && canliSohbetRef.current) canliDevam(); // CANLI: cevap bitince tekrar dinlemeye geç (döngü ölmesin)
       if (komut) setTimeout(() => komutAc(komut), 650);
     } catch (e) {
@@ -2039,7 +2049,7 @@ export default function Anasayfa({ pro = false }) {
   const aiSesKodu = (kod) => ({ tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR", es: "es-ES", ru: "ru-RU", ar: "ar-SA", it: "it-IT", pt: "pt-PT", zh: "zh-CN", ja: "ja-JP", hi: "hi-IN", uk: "uk-UA" }[kod] || (typeof navigator !== "undefined" && navigator.language) || "tr-TR");
   const sesDilKodu = aiSesKodu(aiDil);
   // AI cevabını SESLİ oku (tarayıcı seslendirme) — dil kodu HER ZAMAN güncel aiDilRef'ten
-  const sesliOku = (metin, onBitti) => {
+  const sesliOku = (metin, onBitti, onCumle) => {
     try {
       if (!("speechSynthesis" in window) || !metin) { if (typeof onBitti === "function") onBitti(); return; }
       const sesDilKodu = aiSesKodu(aiDilRef.current);
@@ -2074,6 +2084,8 @@ export default function Anasayfa({ pro = false }) {
         parcalar.forEach((p, idx) => {
           const u = new SpeechSynthesisUtterance(p);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+          // HER cümle okunmaya başlayınca haber ver → balon o cümleye kaysın (teleprompter)
+          u.onstart = () => { if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } };
           // SON parça bitince haber ver (oku düğmesi × → tekrar normale dönsün)
           if (idx === parcalar.length - 1 && typeof onBitti === "function") u.onend = () => { try { onBitti(); } catch (e) {} };
           window.speechSynthesis.speak(u);
@@ -4582,7 +4594,7 @@ export default function Anasayfa({ pro = false }) {
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
         <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")} onClick={maskotTanitGec}>
-          {maskotMetni && <div className="maskot-tanit-balon" onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
+          {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
           <div className="maskot-tanit-yuz"><MaskotYuz konusuyor={aiKonusuyor} tur={maskotTur} boyut={160} /></div>
           {dinliyor ? <div className="maskot-tanit-dinle"><span className="mtd-nokta" /><span className="mtd-nokta" /><span className="mtd-nokta" /> {t("maskotDinliyor", "Seni dinliyorum — buyur, söyle")}</div>
             : (canliSohbet && !aiKonusuyor && !yardimciYukleniyor) ? <div className="maskot-tanit-dinle bekle">⏳ {t("maskotBekle", "Seni bekliyorum, ne dersen söyle")}</div> : null}
