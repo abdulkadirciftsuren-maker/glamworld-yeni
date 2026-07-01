@@ -18,6 +18,19 @@ const ALTIN_STILLERI = [
   "linear-gradient(110deg,#c9a227 0%,#fff4cc 45%,#ffe9a8 55%,#c9a227 100%)",
 ];
 
+// KABUL EDİLEN E-POSTA ALANLARI: gloxorg.com + uluslararası tanınmış sağlayıcılar.
+// groxorg.com (eski marka) ARTIK KABUL EDİLMEZ; uydurma/tanınmayan alan adları reddedilir.
+const KABUL_EPOSTA = new Set([
+  "gloxorg.com",
+  "gmail.com", "googlemail.com",
+  "outlook.com", "outlook.de", "outlook.fr", "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de", "live.com", "live.co.uk", "live.de", "msn.com",
+  "yahoo.com", "yahoo.co.uk", "yahoo.de", "yahoo.fr", "ymail.com", "rocketmail.com",
+  "icloud.com", "me.com", "mac.com",
+  "aol.com", "gmx.com", "gmx.net", "gmx.de", "web.de", "mail.com", "yandex.com", "yandex.ru", "mail.ru", "proton.me", "protonmail.com", "zoho.com", "hey.com", "fastmail.com",
+]);
+function epAlanAdi(email) { const m = String(email || "").trim().toLowerCase().match(/@([^@\s]+)$/); return m ? m[1] : ""; }
+function epKabulEdilir(email) { const a = epAlanAdi(email); if (!a) return false; if (a === "groxorg.com") return false; return KABUL_EPOSTA.has(a); }
+
 // Giriş kartı elması — ana sayfadakinden FARKLI: ALTI KÖŞE (hexagon) elmas (kullanıcı: ana sayfa pırlantasını kullanma).
 const Elmas = ({ extra }) => (
   <span className={"elmas " + (extra || "")}>
@@ -157,6 +170,7 @@ export default function Giris({ zorunluUye }) {
     if (!isim.trim()) { setBilgi(t("hataIsim", "Lütfen isminizi girin.")); return; }
     if (!soyad.trim()) { setBilgi(t("hataSoyisim", "Lütfen soyisminizi girin.")); return; }
     if (!epGecerli) { setBilgi(t("ghEpostaGecerli")); return; }
+    if (!epKabulEdilir(ep)) { setBilgi(t("ghEpostaKabul", "Lütfen gloxorg.com ya da Gmail, Outlook, Yahoo, iCloud gibi tanınmış bir e-posta kullanın. Kendi uydurduğunuz adresler kabul edilmez.")); return; }
     if ((sifre || "").length < 8 || !/[0-9]/.test(sifre) || !/[a-zA-ZçğıİıöşüÇĞÖŞÜ]/.test(sifre)) { setSifreHata(true); setGoz(true); setBilgi(t("ghSifreKural", "Şifre en az 8 karakter olmalı ve harf + rakam içermeli.")); return; }
     if (sifre !== sifre2) { setSifreHata(true); setGoz(true); setBilgi(t("ghSifreUyusmuyor", "İki şifre aynı değil.")); return; }
     setSifreHata(false); setBilgi(""); setYuk(true);
@@ -224,6 +238,7 @@ export default function Giris({ zorunluUye }) {
   // "üye ol" der. Hesap açma SADECE Üye Ol kartında (uyeOl) olur.
   async function epGiris() {
     if (!epGecerli) { setBilgi(t("ghEpostaGecerli")); return; }
+    if (!epKabulEdilir(ep)) { setBilgi(t("ghEpostaKabul", "Lütfen gloxorg.com ya da Gmail, Outlook, Yahoo, iCloud gibi tanınmış bir e-posta kullanın. Kendi uydurduğunuz adresler kabul edilmez.")); return; }
     if (!sifre.trim()) { setBilgi(t("ghSifreGir")); return; }
     setBilgi(""); setYuk(true);
     try {

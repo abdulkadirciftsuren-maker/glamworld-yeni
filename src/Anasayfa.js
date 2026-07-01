@@ -4578,7 +4578,7 @@ export default function Anasayfa({ pro = false }) {
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
         <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")} onClick={maskotTanitGec}>
-          {maskotMetni && <div className="maskot-tanit-balon" onClick={(e) => e.stopPropagation()}>{maskotMetni}</div>}
+          {maskotMetni && <div className="maskot-tanit-balon" onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
           <div className="maskot-tanit-yuz"><MaskotYuz konusuyor={aiKonusuyor} tur={maskotTur} boyut={160} /></div>
           {dinliyor ? <div className="maskot-tanit-dinle"><span className="mtd-nokta" /><span className="mtd-nokta" /><span className="mtd-nokta" /> {t("maskotDinliyor", "Seni dinliyorum — buyur, söyle")}</div>
             : (canliSohbet && !aiKonusuyor && !yardimciYukleniyor) ? <div className="maskot-tanit-dinle bekle">⏳ {t("maskotBekle", "Seni bekliyorum, ne dersen söyle")}</div> : null}
