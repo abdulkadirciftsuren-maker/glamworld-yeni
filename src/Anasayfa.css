@@ -1932,8 +1932,19 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .maskot-tanit-balon{ max-width:min(86vw,440px); flex:0 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; background:linear-gradient(160deg,#fffefa,#fff6e0); color:#221a0c; border:1.5px solid rgba(184,134,11,.55); border-radius:18px; border-bottom-left-radius:6px; padding:12px 16px; font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:500; line-height:1.4; box-shadow:0 12px 34px rgba(0,0,0,.42); text-align:center; }
 .maskot-tanit-balon::-webkit-scrollbar{ display:none; }
 @media(min-width:560px){ .maskot-tanit-balon{ font-size:18px; line-height:1.42; padding:14px 18px; } }
-.maskot-tanit-yuz{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)); }
+.maskot-tanit-yuz{ position:relative; filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)); }
 .maskot-tanit-yuz .maskot-yuz{ width:150px !important; height:150px !important; }
+/* AI ELMASLARI — maskotun ÜST kenarında yay şeklinde, DAİMA canlı hareketli; konuşurken KIRMIZI (istek #3/#4) */
+.maskot-taclar{ position:absolute; left:50%; top:-6px; transform:translateX(-50%); width:170px; height:60px; pointer-events:none; z-index:2; }
+.maskot-taclar .mtac{ position:absolute; width:14px; height:14px; background:linear-gradient(135deg,#bfe3ff,#5aa6e0 55%,#2f6fa8); clip-path:polygon(50% 0,100% 38%,50% 100%,0 38%); box-shadow:0 0 8px rgba(120,190,255,.9); animation:mtacTwinkle 1.8s ease-in-out infinite; }
+.maskot-taclar .mtac.t1{ left:6px;  top:30px; width:11px; height:11px; animation-delay:0s; }
+.maskot-taclar .mtac.t2{ left:36px; top:8px;  animation-delay:.3s; }
+.maskot-taclar .mtac.t3{ left:78px; top:-2px; width:17px; height:17px; animation-delay:.6s; }
+.maskot-taclar .mtac.t4{ left:124px; top:8px; animation-delay:.9s; }
+.maskot-taclar .mtac.t5{ left:154px; top:30px; width:11px; height:11px; animation-delay:1.2s; }
+@keyframes mtacTwinkle{ 0%,100%{ transform:translateY(0) scale(.82) rotate(0deg); opacity:.6; } 50%{ transform:translateY(-5px) scale(1.12) rotate(20deg); opacity:1; } }
+/* KONUŞURKEN kırmızıya döner + daha hızlı çakar */
+.maskot-tanit-yuz.konus .mtac{ background:linear-gradient(135deg,#ffd0d0,#ff5a5a 55%,#d10f0f); box-shadow:0 0 12px rgba(255,60,60,.95); animation-duration:.85s; }
 .maskot-tanit-dugmeler{ display:flex; gap:9px; align-items:center; }
 .maskot-tanit-btn{ display:inline-flex; align-items:center; gap:5px; border:none; border-radius:14px; padding:7px 15px; font-family:inherit; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,.32); }
 .maskot-tanit-btn:active{ transform:scale(.94); }
@@ -2018,6 +2029,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 @keyframes aiAcil{ from{ transform:translateY(100%); opacity:.6; } to{ transform:translateY(0); opacity:1; } }
 .ai-bas{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 14px; border-bottom:1px solid rgba(255,215,0,.18); flex:none; }
 .ai-bas-ad{ display:flex; align-items:center; gap:8px; font-family:'Cinzel',serif; font-weight:700; font-size:15px; color:#FFD700; flex:1; min-width:0; }
+/* Panel başlığındaki maskot = CANLI SOHBET düğmesi (istek #7): dokun → canlı aç/kapa */
+.ai-bas-maskot{ position:relative; display:inline-flex; align-items:center; justify-content:center; border:none; background:transparent; padding:2px; margin:-2px; cursor:pointer; border-radius:50%; flex:none; }
+.ai-bas-maskot:active{ transform:scale(.9); }
+.ai-bas-maskot.canli{ box-shadow:0 0 0 2px rgba(70,211,122,.9), 0 0 12px rgba(70,211,122,.7); animation:aiBasCanli 1.4s ease-in-out infinite; }
+.ai-bas-canli-nokta{ position:absolute; right:-1px; top:-1px; width:9px; height:9px; border-radius:50%; background:#46d37a; box-shadow:0 0 6px #46d37a; }
+@keyframes aiBasCanli{ 0%,100%{ box-shadow:0 0 0 2px rgba(70,211,122,.9),0 0 10px rgba(70,211,122,.6); } 50%{ box-shadow:0 0 0 3px rgba(70,211,122,1),0 0 16px rgba(70,211,122,.9); } }
 /* AI DİL SEÇİCİ (sesli yanıt + cevap dili) */
 .ai-dil-sar{ position:relative; flex:none; }
 .ai-dil-btn{ display:flex; align-items:center; justify-content:center; background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.4); color:#FFD700; cursor:pointer; font-family:inherit; }
