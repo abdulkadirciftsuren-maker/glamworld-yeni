@@ -1944,6 +1944,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .maskot-tanit-dinle.bekle{ color:#ffe0a8; border-color:rgba(255,200,100,.4); }
 .mtd-nokta{ width:8px; height:8px; border-radius:50%; background:#54b3ff; display:inline-block; animation:mtdAtim 1.2s infinite ease-in-out; }
 .mtd-nokta:nth-child(2){ animation-delay:.2s; } .mtd-nokta:nth-child(3){ animation-delay:.4s; }
+/* Büyük maskot balonundaki küçük Duraklat/Sus düğmeleri */
+.maskot-tanit-dugmeler{ flex-wrap:wrap; }
+.maskot-tanit-btn.mt-durakla{ background:linear-gradient(135deg,#8fd3ff,#2b8fe0); color:#06213b; }
+.maskot-tanit-btn.mt-sus{ background:linear-gradient(135deg,#ff9a9a,#e0202c); color:#fff; }
 @keyframes mtdAtim{ 0%,100%{ transform:scale(.6); opacity:.4; } 50%{ transform:scale(1.15); opacity:1; } }
 @media(min-width:560px){ .maskot-tanit-yuz .maskot-yuz{ width:200px !important; height:200px !important; } .maskot-tanit-btn{ font-size:16px; padding:9px 20px; } .maskot-tanit-balon{ font-size:22px; max-width:min(80vw,520px); } .maskot-tanit-dinle{ font-size:18px; } .mtd-nokta{ width:10px; height:10px; } }
 @media(min-width:1100px){ .maskot-tanit-balon{ font-size:25px; } .maskot-tanit-dinle{ font-size:20px; } }
