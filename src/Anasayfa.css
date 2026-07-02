@@ -2046,6 +2046,14 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-arac{ display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
 /* yazı şeridi: tek satır DİKEY ORTALI (placeholder ortada), yazdıkça büyür; kaydırma çubuğu DIŞARI taşmaz */
 .ai-yaz-satir{ display:flex; gap:8px; align-items:flex-end; }
+/* KONUŞMA KONTROL — Gloxoo konuşurken: Duraklat/Devam (mavi) + Sus (kırmızı) */
+.ai-konus-kontrol{ display:flex; gap:8px; justify-content:center; }
+.ai-kk-btn{ flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:7px; border:none; border-radius:14px; padding:10px 12px; font-family:'Cinzel',serif; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,.3); }
+.ai-kk-btn svg{ width:20px; height:20px; flex:none; }
+.ai-kk-btn:active{ transform:scale(.96); }
+.ai-kk-btn.durakla{ background:linear-gradient(135deg,#8fd3ff,#2b8fe0); color:#06213b; }
+.ai-kk-btn.sus{ background:linear-gradient(135deg,#ff9a9a,#e0202c); color:#fff; }
+@media(min-width:560px){ .ai-kk-btn{ font-size:16px; padding:12px 16px; } .ai-kk-btn svg{ width:23px; height:23px; } }
 .ai-input{ flex:1; resize:none; max-height:200px; min-height:48px; padding:13px 16px; border-radius:14px; border:1.5px solid rgba(255,215,0,.5);
   background:rgba(10,17,34,.78); color:#fff; font-size:15px; font-family:inherit; line-height:1.45; text-align:center; overflow-y:auto;
   scrollbar-width:none; -ms-overflow-style:none; /* sağdaki aşağı-yukarı kaydırma çizgisi GİZLİ (dışarı taşmaz) */

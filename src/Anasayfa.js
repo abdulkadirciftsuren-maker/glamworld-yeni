@@ -64,6 +64,9 @@ const AIPANEL = {
   indir: { tr: "İndir", en: "Download", de: "Herunterladen", fr: "Télécharger", es: "Descargar", it: "Scarica", pt: "Baixar", ru: "Скачать", uk: "Завантажити", ar: "تنزيل", zh: "下载", ja: "ダウンロード", hi: "डाउनलोड" },
   paylas: { tr: "Paylaş", en: "Share", de: "Teilen", fr: "Partager", es: "Compartir", it: "Condividi", pt: "Partilhar", ru: "Поделиться", uk: "Поділитися", ar: "مشاركة", zh: "分享", ja: "共有", hi: "साझा करें" },
   yaz: { tr: "Buraya yaz…", en: "Type here…", de: "Hier schreiben…", fr: "Écris ici…", es: "Escribe aquí…", it: "Scrivi qui…", pt: "Escreve aqui…", ru: "Напишите здесь…", uk: "Пишіть тут…", ar: "اكتب هنا…", zh: "在这里输入…", ja: "ここに入力…", hi: "यहाँ लिखें…" },
+  durakla: { tr: "Duraklat", en: "Pause", de: "Pause", fr: "Pause", es: "Pausa", it: "Pausa", pt: "Pausa", ru: "Пауза", uk: "Пауза", ar: "إيقاف مؤقت", zh: "暂停", ja: "一時停止", hi: "रोकें" },
+  devam: { tr: "Devam", en: "Resume", de: "Weiter", fr: "Reprendre", es: "Continuar", it: "Riprendi", pt: "Continuar", ru: "Продолжить", uk: "Продовжити", ar: "متابعة", zh: "继续", ja: "再開", hi: "जारी रखें" },
+  sus: { tr: "Sus", en: "Stop", de: "Aus", fr: "Stop", es: "Parar", it: "Basta", pt: "Parar", ru: "Стоп", uk: "Стоп", ar: "إسكات", zh: "停止", ja: "止める", hi: "बंद" },
 };
 function pl(dil, key) { const o = AIPANEL[key]; return (o && (o[dil] || o.en)) || ""; }
 function renkliCumleler(metin, palet) {
@@ -782,6 +785,7 @@ export default function Anasayfa({ pro = false }) {
   const [ustBoyut, setUstBoyut] = useState("orta"); // kucuk | orta | buyuk
   const [ustYer, setUstYer] = useState("alt");      // ust | orta | alt
   const [aiKonusuyor, setAiKonusuyor] = useState(false); // TTS çalıyor mu — maskot ağzını oynatır
+  const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
   const maskotBosRef = useRef(0);
   useEffect(() => {
     const id = setInterval(() => {
@@ -2279,6 +2283,21 @@ export default function Anasayfa({ pro = false }) {
   // Sesli modu kapatınca konuşmayı sustur
   // Hoparlör = SADECE sonraki cevapların oto-okumasını aç/kapar. ÇALAN konuşmayı KESMEZ (onu sadece balon × düğmesi durdurur — iki düğme AYRI, birbirine bağlı değil).
   const sesliModToggle = () => { setSesliMod((v) => !v); };
+  // DURAKLAT/DEVAM — konuşmayı olduğu yerde durdurur; tekrar basınca kaldığı yerden devam eder
+  const sesDuraklaToggle = () => {
+    try {
+      const ss = window.speechSynthesis; if (!ss) return;
+      if (aiDuraklat || ss.paused) { ss.resume(); setAiDuraklat(false); }
+      else if (ss.speaking) { ss.pause(); setAiDuraklat(true); }
+    } catch (e) {}
+  };
+  // SUS — konuşmayı tamamen keser (sen hemen konuşabilirsin); canlı modda dinlemeye geçer
+  const sesSus = () => {
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    setAiDuraklat(false);
+    try { okuTemizle(); } catch (e) {}
+    if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // sustuktan sonra SENİ dinle
+  };
   // MÜŞTERİ → Profesyonele yönlendirme: kısa açıklama (AI hakkı bitti, yeni istek atmadan) + menüyü aç
   const proYukselt = () => {
     const bilgi = "✨ Profesyonel (kırmızı pırlanta) üyelik avantajları: günde 200 yapay zeka sorusu (ücretsizde 15), profilin öne çıkar, daha çok müşteriye ulaşırsın ve gelişmiş araçlar açılır. Yükseltmek için menüden Profesyonel üyeliğe geçebilirsin. 💎";
@@ -4859,6 +4878,21 @@ export default function Anasayfa({ pro = false }) {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
               </div>
+              {/* KONUŞMA KONTROL — Gloxoo konuşurken çıkar: Duraklat/Devam + Sus (kullanıcı isteği) */}
+              {(aiKonusuyor || aiDuraklat) && (
+                <div className="ai-konus-kontrol">
+                  <button className="ai-kk-btn durakla" onClick={sesDuraklaToggle}>
+                    {aiDuraklat
+                      ? <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                      : <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>}
+                    <span>{aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")}</span>
+                  </button>
+                  <button className="ai-kk-btn sus" onClick={sesSus}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M17 9l5 6M22 9l-5 6" /></svg>
+                    <span>{pl(aiDil, "sus")}</span>
+                  </button>
+                </div>
+              )}
               {/* ALT: yazı dikte MİKROFONU + yazı şeridi + GÖNDER (mikrofon şeridin YANINDA — sesi metne çevirir, sen düzenle/gönder) */}
               <div className="ai-yaz-satir">
                 <button className={"ai-ses ai-mik" + (dinliyor && !canliSohbet ? " dinliyor" : "")} onClick={sesleSor} aria-label={dinliyor && !canliSohbet ? t("durdur", "Durdur") : t("yaziDikte", "Sesle yaz (metne çevir)")}>
