@@ -1927,13 +1927,22 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   background:none; filter:drop-shadow(0 5px 12px rgba(0,0,0,.45));
   animation:aiSuzul 3.2s ease-in-out infinite; }
 .ai-balon .maskot-yuz{ width:52px; height:52px; }
-/* MİNİ MOD — köşede ama sohbet açık: Yaz/✕ sığsın diye biraz içeri al (sol kenara yapışmasın) */
-.ai-balon-sar.mini-aktif:not([style*="left"]){ left:78px; }
-/* Yaz (sol bacak) + ✕ (sağ bacak) — sabit, maskotla birlikte durur/taşınır */
-.ai-mini-btn{ position:absolute; bottom:3px; display:inline-flex; align-items:center; gap:3px; border:none; border-radius:11px; padding:4px 8px; font-family:'Cormorant Garamond',serif; font-size:11.5px; font-weight:800; cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.36); white-space:nowrap; z-index:2; }
-.ai-mini-btn:active{ transform:scale(.92); }
-.ai-mini-btn.mini-yaz{ right:100%; margin-right:-3px; background:linear-gradient(135deg,#FFE9A8,#FFD700); color:#1a1206; }
-.ai-mini-btn.mini-kapat{ left:100%; margin-left:-3px; background:rgba(30,40,60,.92); color:#e9eef7; border:1px solid rgba(255,255,255,.2); font-size:13px; padding:3px 8px; border-radius:50%; }
+/* MİNİ MOD — köşede ama sohbet açık. Düğmeler maskotun ALTINDA, ALT ŞERİDİN ÜSTÜNDE dursun diye YUKARI al */
+.ai-balon-sar.mini-aktif:not([style*="top"]){ bottom:120px; }
+@media(min-width:560px){ .ai-balon-sar.mini-aktif:not([style*="top"]){ bottom:150px; } }
+/* Maskotun ALTINDA: etiket + ikon düğme sırası (maskotla birlikte durur/taşınır) */
+.ai-mini-alt{ position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; display:flex; flex-direction:column; align-items:center; gap:3px; z-index:2; }
+.ai-mini-btnlar{ display:flex; align-items:center; gap:9px; }
+.mini-ikon{ width:34px; height:34px; border-radius:50%; border:1.5px solid rgba(255,255,255,.25); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 9px rgba(0,0,0,.4); padding:0; }
+.mini-ikon svg{ width:18px; height:18px; }
+.mini-ikon:active{ transform:scale(.9); }
+.mini-ikon.mi-yaz{ background:linear-gradient(140deg,#FFE9A8,#FFC53d); color:#5a3d00; } /* renkli zemin: altın */
+.mini-ikon.mi-ses{ background:linear-gradient(140deg,#5fe08a,#1d9e54); color:#06331c; } /* KAPALI=yeşil (konuş) */
+.mini-ikon.mi-ses.acik{ background:linear-gradient(140deg,#ff8a8a,#e0202c); color:#fff; animation:miniSesYan 1s ease-in-out infinite; } /* AÇIK=kırmızı (sus) */
+@keyframes miniSesYan{ 0%,100%{ box-shadow:0 3px 9px rgba(0,0,0,.4),0 0 6px rgba(255,60,60,.7); } 50%{ box-shadow:0 3px 9px rgba(0,0,0,.4),0 0 14px rgba(255,60,60,1); } }
+/* Basınca üstünde ne olduğu yazar (kısa süre) — normalde yok, pencereyi meşgul etmez */
+.ai-mini-etiket{ background:rgba(20,28,48,.94); color:#ffe9a8; font-family:'Cormorant Garamond',serif; font-weight:800; font-size:12px; padding:2px 9px; border-radius:10px; box-shadow:0 3px 9px rgba(0,0,0,.4); white-space:nowrap; }
+@media(min-width:560px){ .mini-ikon{ width:42px; height:42px; } .mini-ikon svg{ width:22px; height:22px; } .ai-mini-etiket{ font-size:15px; } }
 /* KÜÇÜKKEN KONUŞMA BALONU — maskotun ÜSTÜNDE küçük */
 .ai-mini-balon{ position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:6px; max-width:min(64vw,240px); width:max-content;
   background:linear-gradient(160deg,#fffefa,#fff6e0); color:#221a0c; border:1.5px solid rgba(184,134,11,.55); border-radius:14px; border-bottom-left-radius:5px;
