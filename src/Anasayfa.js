@@ -902,7 +902,9 @@ export default function Anasayfa({ pro = false }) {
   const [maskotSelam, setMaskotSelam] = useState(false);
   const maskotSelamKapat = () => { setMaskotSelam(false); try { localStorage.setItem("groxMaskotSelam", "1"); } catch (e) {} };
   const [maskotTanit, setMaskotTanit] = useState(false); // maskot BÜYÜK halde konuşuyor mu
-  const [maskotMini, setMaskotMini] = useState(false); // KÜÇÜLTÜLMÜŞ ama sohbet AÇIK (köşede Yaz/✕ düğmeleriyle, kapanmadı)
+  const [maskotMini, setMaskotMini] = useState(false); // KÜÇÜLTÜLMÜŞ ama sohbet AÇIK (köşede ikon düğmelerle, kapanmadı)
+  const [miniEtiket, setMiniEtiket] = useState(""); // ikon düğmeye basınca ÜSTÜNDE ne olduğu yazar (kısa süre)
+  const miniEtiketZmn = useRef(null);
   const [maskotMetni, setMaskotMetni] = useState("");
   const maskotBalonRef = useRef(null); // BÜYÜK maskot balonu — okurken teleprompter gibi kaydırma
   // Gloxoo konuşurken o cümleyi görünür alana kaydır (yazı konuşmayla beraber yukarı yürüsün, canlı ilerlesin)
@@ -991,6 +993,24 @@ export default function Anasayfa({ pro = false }) {
     setAiDuraklat(false);
     setMaskotTanit(false); setMaskotMini(true); // köşeye in AMA KAPANMA: mini modda (Yaz/✕ düğmeleri görünür, sohbet açık)
     if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // canlı dinleme sürer
+  };
+  // Mini ikon düğmeye basınca ÜSTÜNDE kısa etiket göster (buton üzerinde sürekli yazı DURMAZ — istek)
+  const miniEtiketGoster = (metin) => {
+    setMiniEtiket(metin);
+    try { clearTimeout(miniEtiketZmn.current); } catch (e) {}
+    miniEtiketZmn.current = setTimeout(() => setMiniEtiket(""), 1500);
+  };
+  // KÜÇÜKKEN ses AÇ/KAPA: maskotu BÜYÜTMEDEN konuşmayı başlat/durdur (istek: ufakken de oradan konuş)
+  const miniSesToggle = () => {
+    if (canliSohbetRef.current) { // KAPAT (sus) — mini kalır, düğmeler kaybolmaz
+      canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
+      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
+      miniEtiketGoster(t("kapat", "Kapat"));
+    } else { // AÇ (konuş) — büyütmeden canlı dinlemeyi başlat
+      miniEtiketGoster(t("konus", "Konuş"));
+      maskotCanliBaslat();
+    }
   };
   const maskotSwipe = useRef(null);
   const maskotSwipeYapildi = useRef(false);
@@ -4720,12 +4740,22 @@ export default function Anasayfa({ pro = false }) {
             onClick={balonTik} aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
             <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52} rozet />
           </button>
-          {/* KÜÇÜKKEN: Yaz (sol) + ✕ (sağ) sabit düğmeler — SADECE ✕ kapatır, maskota dokun = büyült */}
+          {/* KÜÇÜKKEN: maskotun ALTINDA renkli İKON düğmeler (kaybolmaz). Basınca üstünde ne olduğu yazar.
+              Yaz = metin paneli; Ses = AÇ/KAPA (büyütmeden konuş/sus — yeşil konuş, kırmızı sus). */}
           {maskotMini && (
-            <>
-              <button className="ai-mini-btn mini-yaz" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); maskotSohbetAc(); }}>✍️ {t("yaz", "Yaz")}</button>
-              <button className="ai-mini-btn mini-kapat" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); maskotTanitGec(); }} aria-label={t("kapat", "Kapat")}>✕</button>
-            </>
+            <div className="ai-mini-alt" onPointerDown={(e) => e.stopPropagation()}>
+              {miniEtiket && <div className="ai-mini-etiket">{miniEtiket}</div>}
+              <div className="ai-mini-btnlar">
+                <button className="mini-ikon mi-yaz" onClick={(e) => { e.stopPropagation(); miniEtiketGoster(t("yaz", "Yaz")); maskotSohbetAc(); }} aria-label={t("yaz", "Yaz")}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
+                </button>
+                <button className={"mini-ikon mi-ses" + (canliSohbet ? " acik" : "")} onClick={(e) => { e.stopPropagation(); miniSesToggle(); }} aria-label={canliSohbet ? t("kapat", "Kapat") : t("konus", "Konuş")}>
+                  {canliSohbet
+                    ? <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.6" /></svg>
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}
