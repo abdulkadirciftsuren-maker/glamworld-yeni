@@ -895,7 +895,7 @@ export default function Anasayfa({ pro = false }) {
   const [maskotKizgin, setMaskotKizgin] = useState(false); // kötü/hata olunca KIRMIZILAŞIR
   const maskotTanitRef = useRef(false); // büyük maskot açık mı (async cevapta okumak için)
   useEffect(() => { maskotTanitRef.current = maskotTanit; }, [maskotTanit]);
-  const maskotTanitYap = () => {
+  const maskotTanitYap = (oto) => {
     setMaskotTur("grox");
     const ad = ((profilBilgi && profilBilgi.isim) || adTam || "").split(" ")[0] || "dostum";
     let ilk = false; try { ilk = !localStorage.getItem("groxMaskotTanitildi"); } catch (e) {}
@@ -923,7 +923,7 @@ export default function Anasayfa({ pro = false }) {
     // KARŞILAMA sayfaya/transkripte YAZILMAZ (sadece sesli söyler). KENDİ KENDİNE KAPANMAZ — açık/hazır kalır,
     // KAPATMAYI KULLANICI yapar (boşluğa dokun / ✕). (Kullanıcı: konuşunca kapatmasın, ben kapatacağım, beni beklesin.)
     try { sesliOku(selam, undefined, maskotKaydir); } catch (e) {}
-    maskotCanliBaslat(); // karşılama bitince mikrofonu aç, SABIRLA bekle → kullanıcı konuşunca cevap ver, sohbet devam etsin
+    if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
   };
   // BÜYÜK MASKOT canlı sohbet: karşılama sesi BİTİNCE mikrofonu açar, kullanıcıyı SABIRLA bekler (kendi konuşmaz, cevap dayatmaz),
   // kullanıcı konuşunca AI cevap verir (sesli) ve TEKRAR dinler — maskot büyük kalır, kapanmaz, tekrar karşılamaz.
@@ -1063,7 +1063,15 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) {}
   }, [u]);
   // İlk açılışta maskot ana sayfada bir kez "hoş geldin" der (giriş yapılmış olsun ya da olmasın görünür)
-  useEffect(() => { try { if (!localStorage.getItem("groxMaskotSelam")) setMaskotSelam(true); } catch (e) {} }, []);
+  // İLK AÇILIŞ: büyük Gloxoo ORTADA çıkıp SESLİ karşılar (tek sefer, her güncellemede değil).
+  // Tarayıcı otomatik sesi engellerse yazı görünür kalır; mikrofon izinsiz AÇILMAZ (ilk dokunuşta açılır).
+  useEffect(() => {
+    let ilk = false; try { ilk = !localStorage.getItem("groxMaskotSelam"); } catch (e) {}
+    if (!ilk) return;
+    try { localStorage.setItem("groxMaskotSelam", "1"); } catch (e) {}
+    const ti = setTimeout(() => { try { maskotTanitYap(true); } catch (e) {} }, 700);
+    return () => clearTimeout(ti);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => { if ("serviceWorker" in navigator) navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js").catch(() => {}); }, []);
   // CANLI bildirim dinle (sayfa açıkken anında gelir); yeni gelenleri telefon bildirimi olarak göster
