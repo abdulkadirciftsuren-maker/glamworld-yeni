@@ -1102,7 +1102,21 @@ export default function Anasayfa({ pro = false }) {
     return () => clearTimeout(ti);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
-  useEffect(() => { if ("serviceWorker" in navigator) navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js").catch(() => {}); }, []);
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js").then((reg) => {
+      try { reg.update(); } catch (e) {}
+      // Yeni surum hazir olunca (yeni servis calisan devralinca) sayfayi BIR KEZ yenile → kullanici hep guncel gorur
+      reg.addEventListener && reg.addEventListener("updatefound", () => {
+        const yeni = reg.installing; if (!yeni) return;
+        yeni.addEventListener("statechange", () => {
+          if (yeni.state === "activated" && navigator.serviceWorker.controller) {
+            try { if (!window.__groxYenilendi) { window.__groxYenilendi = true; window.location.reload(); } } catch (e) {}
+          }
+        });
+      });
+    }).catch(() => {});
+  }, []);
   // CANLI bildirim dinle (sayfa açıkken anında gelir); yeni gelenleri telefon bildirimi olarak göster
   useEffect(() => {
     if (!u || !u.uid) { setBildirimListe([]); gorulenBildirimRef.current = null; return; }
