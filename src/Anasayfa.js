@@ -926,7 +926,7 @@ export default function Anasayfa({ pro = false }) {
     let ilk = false; try { ilk = !localStorage.getItem("groxMaskotTanitildi"); } catch (e) {}
     // KARŞILAMA SAYFA DİLİNE GÖRE (aiDil = ses dili). Türkçe metni Rusça sesle okuma karışması biter.
     void ilk;
-    const _ad = ad && ad !== "dostum" ? " " + ad : "";
+    const _ad = (ad && ad !== "dostum" && ad.indexOf("@") < 0) ? " " + ad : ""; // e-posta ise İSİM olarak kullanma
     const G = {
       tr: `Merhaba${_ad}! Ben Gloxoo, Gloxorg dünyasının akıllı kalbi. Her konuda yardımcı olurum — konuş ya da yaz, buradayım.`,
       en: `Hello${_ad}! I'm Gloxoo, the smart heart of the Gloxorg world. I can help with anything — talk or type, I'm here.`,
@@ -950,20 +950,12 @@ export default function Anasayfa({ pro = false }) {
       try { const son = parseInt(localStorage.getItem("groxSonSelamMs") || "0", 10); if (son > 0) { ilkTanisma = false; fark = Date.now() - son; } } catch (e) {}
       try { localStorage.setItem("groxSonSelamMs", String(Date.now())); } catch (e) {}
       if (ilkTanisma) return G[dilK] || G.en; // ilk kez: kendini tanıtır
-      const gun = Math.floor(fark / 86400000); // dönüş: geçen güne göre
+      const gun = Math.floor(fark / 86400000); // dönüş: geçen güne göre. KISA + istek DAYATMADAN (istemediğini sayma).
       const T = {
-        tr: gun >= 1
-          ? `Hoş geldin${_ad}! ${gun === 1 ? "Bir gün" : gun + " gün"} olmuş, neredeydin? 🙂 Bugün bir isteğin var mı — paylaşım yazayım, yol tarifi vereyim, müşteri bulayım, ne dersen yapayım.`
-          : `Tekrar hoş geldin${_ad}! Bir isteğin varsa söyle — paylaşım, arama, yol tarifi… hemen yardımcı olayım.`,
-        en: gun >= 1
-          ? `Welcome back${_ad}! It's been ${gun === 1 ? "a day" : gun + " days"} — where were you? 🙂 Any request today — a post, directions, finding customers, anything you say.`
-          : `Welcome back${_ad}! Tell me if you need anything — a post, a search, directions… I'll help right away.`,
-        ru: gun >= 1
-          ? `С возвращением${_ad}! Прошло ${gun === 1 ? "уже день" : gun + " дн."} — где ты был? 🙂 Есть просьба на сегодня — напишу пост, дам маршрут, найду клиентов, всё сделаю.`
-          : `С возвращением${_ad}! Скажи, если что-то нужно — пост, поиск, маршрут… помогу сразу.`,
-        de: gun >= 1
-          ? `Willkommen zurück${_ad}! Es ist ${gun === 1 ? "ein Tag" : gun + " Tage"} her — wo warst du? 🙂 Hast du heute einen Wunsch — Beitrag, Route, Kunden finden, alles was du sagst.`
-          : `Willkommen zurück${_ad}! Sag, wenn du etwas brauchst — ich helfe sofort.`,
+        tr: gun >= 1 ? `Hoş geldin${_ad}! ${gun === 1 ? "Bir gün" : gun + " gün"} olmuş, neredeydin? 🙂 Bir isteğin olursa buradayım.` : `Tekrar hoş geldin${_ad}! Bir isteğin olursa söyle, buradayım.`,
+        en: gun >= 1 ? `Welcome back${_ad}! It's been ${gun === 1 ? "a day" : gun + " days"} — where were you? 🙂 I'm here whenever you need me.` : `Welcome back${_ad}! Just tell me if you need anything, I'm here.`,
+        ru: gun >= 1 ? `С возвращением${_ad}! Прошло ${gun === 1 ? "уже день" : gun + " дн."} — где ты был? 🙂 Я здесь, если понадоблюсь.` : `С возвращением${_ad}! Скажи, если что-то нужно, я здесь.`,
+        de: gun >= 1 ? `Willkommen zurück${_ad}! Es ist ${gun === 1 ? "ein Tag" : gun + " Tage"} her — wo warst du? 🙂 Ich bin da, wenn du mich brauchst.` : `Willkommen zurück${_ad}! Sag einfach, wenn du etwas brauchst.`,
       };
       return T[dilK] || T.en;
     })();
@@ -4751,8 +4743,8 @@ export default function Anasayfa({ pro = false }) {
                 </button>
                 <button className={"mini-ikon mi-ses" + (canliSohbet ? " acik" : "")} onClick={(e) => { e.stopPropagation(); miniSesToggle(); }} aria-label={canliSohbet ? t("kapat", "Kapat") : t("konus", "Konuş")}>
                   {canliSohbet
-                    ? <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.6" /></svg>
-                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
+                    ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
                 </button>
               </div>
             </div>
