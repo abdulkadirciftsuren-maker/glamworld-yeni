@@ -1,7 +1,23 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar. */
 self.addEventListener("install", (e) => { self.skipWaiting(); });
-self.addEventListener("activate", (e) => { e.waitUntil(self.clients.claim()); });
+self.addEventListener("activate", (e) => { e.waitUntil((async () => {
+  // Eski onbellekleri temizle (kullanici bir daha ESKI surumde takilmasin)
+  try { const anahtarlar = await caches.keys(); await Promise.all(anahtarlar.map((k) => caches.delete(k))); } catch (x) {}
+  await self.clients.claim();
+})()); });
+
+// SAYFA GEZINMESI icin ONCE AGDAN getir (index.html asla onbellekte takilmasin → her guncelleme ANINDA gorunur).
+// Cevrimdisi/hata olursa tarayici onbellegine dus. Diger istekler (hash'li JS/CSS) normal akisla gider.
+self.addEventListener("fetch", (e) => {
+  const istek = e.request;
+  if (istek.mode === "navigate") {
+    e.respondWith((async () => {
+      try { return await fetch(istek, { cache: "no-store" }); }
+      catch (x) { const c = await caches.match(istek); return c || Response.error(); }
+    })());
+  }
+});
 
 // Push (FCM/sunucu bağlanınca uygulama TAM KAPALIYKEN de çalışır — şu an hazır temel)
 self.addEventListener("push", (e) => {
