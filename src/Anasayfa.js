@@ -337,7 +337,7 @@ function oneriIkon(metin) {
 }
 
 // CANLI MASKOT YÜZÜ — konuşurken (konusuyor=true) ağzı açılıp kapanır + hafif zıplar. tur: "grox" (elmas) | "ekspert" (ayı).
-function MaskotYuz({ konusuyor = false, dinliyor = false, tur = "grox", boyut = 30, children }) {
+function MaskotYuz({ konusuyor = false, dinliyor = false, tur = "grox", boyut = 30, rozet = false, children }) {
   return (
     <span className={"maskot-yuz" + (konusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "")} style={{ width: boyut, height: boyut }} aria-hidden="true">
       {tur === "ekspert" ? (
@@ -394,6 +394,16 @@ function MaskotYuz({ konusuyor = false, dinliyor = false, tur = "grox", boyut = 
           <ellipse cx="24" cy="26.5" rx="1.5" ry="1.1" fill="#16265c" />
           {/* AĞIZ */}
           <ellipse className="maskot-agiz" cx="24" cy="30.5" rx="3.7" ry="2.2" fill="#0b1226" />
+          {/* AI ROZETİ — kulakların TAM ARASINA gömülü (SVG); maskotla büyür/küçülür, asla kopmaz.
+              Boşta altın, konuşurken kırmızı, dinlerken yeşil; küçük çubuklar hep canlı oynar. */}
+          {rozet && (
+            <g className="msvg-rozet" aria-hidden="true">
+              <rect className="msvg-rozet-bg" x="16.8" y="2.2" width="14.4" height="6.6" rx="3.3" />
+              <text className="msvg-rozet-ai" x="21.3" y="7.15" textAnchor="middle">AI</text>
+              <rect className="msvg-bar msvg-bar1" x="25.3" y="3.7" width="1.35" height="3.3" rx="0.6" />
+              <rect className="msvg-bar msvg-bar2" x="27.5" y="3.7" width="1.35" height="3.3" rx="0.6" />
+            </g>
+          )}
         </svg>
       )}
       {children}
@@ -4680,9 +4690,7 @@ export default function Anasayfa({ pro = false }) {
           onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir} onClick={balonTik}
           aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
-          <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52}>
-            <MaskotAiRozet mini konusuyor={aiKonusuyor} dinliyor={dinliyor} />
-          </MaskotYuz>
+          <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52} rozet />
         </button>
       )}
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
@@ -4690,9 +4698,7 @@ export default function Anasayfa({ pro = false }) {
         <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
           <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={160}>
-              <MaskotAiRozet buton konusuyor={aiKonusuyor} dinliyor={dinliyor} onClick={(e) => { e.stopPropagation(); maskotKucult(); }} etiket={t("kucult", "Küçült")} />
-            </MaskotYuz>
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={160} rozet />
             <button className="maskot-bacak-btn mbb-yaz" onClick={(e) => { e.stopPropagation(); maskotSohbetAc(); }}>✍️ {t("yaz", "Yaz")}</button>
             <button className="maskot-bacak-btn mbb-kapat" onClick={(e) => { e.stopPropagation(); maskotTanitGec(); }} aria-label={t("kapat", "Kapat")}>✕</button>
           </div>
