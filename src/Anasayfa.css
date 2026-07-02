@@ -1372,11 +1372,11 @@
 .ana-tab{
   position:fixed; left:0; right:0; bottom:0; z-index:20;
   display:flex; justify-content:space-around; align-items:flex-end;
-  /* ALTIN TOZU yarı-şeffaf zemin (şeffaf değil ki alttaki içerik çakışmasın) */
-  background:linear-gradient(180deg, rgba(120,90,20,0) 0%, rgba(140,104,24,.34) 42%, rgba(96,70,16,.82) 100%);
-  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
-  border:none; border-top:1px solid rgba(255,224,140,.32);
-  padding:7px 10px calc(8px + env(safe-area-inset-bottom)); pointer-events:none;
+  /* ALTIN TOZU yarı-şeffaf zemin — İNCE (sadece alt kısım altın, üstü şeffaf: sayfayı kapatmasın) */
+  background:linear-gradient(180deg, rgba(120,90,20,0) 0%, rgba(120,90,20,0) 52%, rgba(140,104,24,.4) 78%, rgba(96,70,16,.8) 100%);
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+  border:none;
+  padding:0 10px calc(5px + env(safe-area-inset-bottom)); pointer-events:none;
   transition:transform .32s ease, opacity .32s ease;
 }
 .ana-tab.gizli{ transform:translateY(calc(100% + 22px)); opacity:0; }
@@ -1939,7 +1939,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* ZEMİN YOK — sadece iki ikon (istek: ayrı plaka koyma) */
 .ai-mini-btnlar{ display:flex; align-items:center; gap:8px; }
 /* BÜYÜK maskotta aynı ikonlar — akışta (absolute değil), maskotun altında ortalı */
-.ai-mini-alt.buyuk{ position:relative; top:auto; left:auto; transform:none; margin-top:7px; display:flex; justify-content:center; }
+.ai-mini-alt.buyuk{ position:relative; top:auto; left:auto; transform:none; margin-top:-10px; display:flex; justify-content:center; } /* ayaklara YAKIN (maskot kutusunun altındaki boşluğu kapat) */
 .ai-mini-alt.buyuk .mini-ikon{ width:34px; height:34px; border-radius:10px; }
 .ai-mini-alt.buyuk .mini-ikon svg{ width:19px; height:19px; }
 .ai-mini-alt.buyuk .mi-canli{ height:17px; }
@@ -1971,13 +1971,16 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-balon:not(.konusuyor) .maskot-yuz{ animation:maskotSelamla 5.5s ease-in-out infinite; transform-origin:50% 80%; }
 @keyframes maskotSelamla{ 0%,80%,100%{ transform:rotate(0deg); } 86%{ transform:rotate(-9deg); } 92%{ transform:rotate(9deg); } 97%{ transform:rotate(-4deg); } }
 /* MASKOT DOKUNUNCA BÜYÜK KONUŞMA — büyüyerek gelir, ağzı oynar, balonla anlatır */
-.maskot-tanit{ position:fixed; left:0; right:0; top:calc(var(--gercek-ust,0px) + 146px); bottom:88px; z-index:100025; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:10px; cursor:pointer; padding:0 12px; animation:maskotBuyu .42s cubic-bezier(.16,1,.3,1); }
+/* SAYFAYI KİLİTLEMEZ: kap pointer-events:none → arkadaki sayfa yukarı/aşağı KAYAR; sadece balon/maskot/düğmeler tıklanır */
+.maskot-tanit{ position:fixed; left:0; right:0; top:calc(var(--gercek-ust,0px) + 146px); bottom:88px; z-index:100025; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:8px; pointer-events:none; padding:0 12px; animation:maskotBuyu .42s cubic-bezier(.16,1,.3,1); }
+.maskot-tanit-balon, .maskot-tanit-yuz, .maskot-tanit .ai-mini-alt, .maskot-tanit-dinle, .maskot-tanit-dugmeler{ pointer-events:auto; }
+.maskot-tanit-yuz{ cursor:pointer; }
 @keyframes maskotBuyu{ from{ transform:scale(.25); opacity:0; } to{ transform:scale(1); opacity:1; } }
 .maskot-tanit-balon{ max-width:min(86vw,440px); flex:0 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; background:linear-gradient(160deg,#fffefa,#fff6e0); color:#221a0c; border:1.5px solid rgba(184,134,11,.55); border-radius:18px; border-bottom-left-radius:6px; padding:12px 16px; font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:500; line-height:1.4; box-shadow:0 12px 34px rgba(0,0,0,.42); text-align:center; }
 .maskot-tanit-balon::-webkit-scrollbar{ display:none; }
 @media(min-width:560px){ .maskot-tanit-balon{ font-size:18px; line-height:1.42; padding:14px 18px; } }
 .maskot-tanit-yuz{ position:relative; filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)); }
-.maskot-tanit-yuz .maskot-yuz{ width:150px !important; height:150px !important; }
+.maskot-tanit-yuz .maskot-yuz{ width:120px !important; height:120px !important; }
 /* PENCERE efekti: konuşurken kırmızı, dinlerken yeşil hâle (istek: kenar konuşma/dinleme efekti) */
 .maskot-tanit-yuz.konus{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 14px rgba(255,55,55,.85)); animation:maskotKonusHale .9s ease-in-out infinite; }
 .maskot-tanit-yuz.dinle{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 14px rgba(70,211,122,.85)); animation:maskotDinleHale 1.5s ease-in-out infinite; }
@@ -2056,7 +2059,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .maskot-tanit-btn.mt-durakla{ background:linear-gradient(135deg,#8fd3ff,#2b8fe0); color:#06213b; }
 .maskot-tanit-btn.mt-sus{ background:linear-gradient(135deg,#ff9a9a,#e0202c); color:#fff; }
 @keyframes mtdAtim{ 0%,100%{ transform:scale(.6); opacity:.4; } 50%{ transform:scale(1.15); opacity:1; } }
-@media(min-width:560px){ .maskot-tanit-yuz .maskot-yuz{ width:200px !important; height:200px !important; } .maskot-tanit-btn{ font-size:16px; padding:9px 20px; } .maskot-tanit-balon{ font-size:22px; max-width:min(80vw,520px); } .maskot-tanit-dinle{ font-size:18px; } .mtd-nokta{ width:10px; height:10px; } }
+@media(min-width:560px){ .maskot-tanit-yuz .maskot-yuz{ width:164px !important; height:164px !important; } .maskot-tanit-btn{ font-size:16px; padding:9px 20px; } .maskot-tanit-balon{ font-size:22px; max-width:min(80vw,520px); } .maskot-tanit-dinle{ font-size:18px; } .mtd-nokta{ width:10px; height:10px; } }
 @media(min-width:1100px){ .maskot-tanit-balon{ font-size:25px; } .maskot-tanit-dinle{ font-size:20px; } }
 .ai-balon:active{ cursor:grabbing; transform:scale(.94); }
 @keyframes aiSuzul{ 0%,100%{ transform:translateY(0) scale(1); } 50%{ transform:translateY(-4px) scale(1); } }
