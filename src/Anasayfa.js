@@ -884,22 +884,26 @@ export default function Anasayfa({ pro = false }) {
     setMaskotTur("grox");
     const ad = ((profilBilgi && profilBilgi.isim) || adTam || "").split(" ")[0] || "dostum";
     let ilk = false; try { ilk = !localStorage.getItem("groxMaskotTanitildi"); } catch (e) {}
-    let selam;
-    if (ilk) {
-      // İLK KAYIT/giriş — geniş tanıtım
-      selam = `Merhaba ${ad}! Ben Gloxorg dünyasının akıllı kalbi Gloxoo. Bugün küresel ticaret ağımızda sana nasıl yardımcı olabilirim? Sana paylaşım yazarım, gideceğin yere yol tarifi veririm, sorularını yanıtlarım, dünyada ne varsa bilirim. İstersen sesli konuşuruz, istersen yazarsın. Şimdi yerime çekiliyorum; bir şey lazım olursa bana dokun, hemen gelirim!`;
-      try { localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
-    } else {
-      // SONRAKİ seferler — FARKLI kısa selamlar (aynısını tekrarlamaz)
-      const havuz = [
-        `Yine buradayım ${ad}! Bugün ne yapalım? İster paylaşım yazayım, ister yol tarif edeyim, ister sohbet edelim.`,
-        `Hoş geldin ${ad} 😊 Seni dinliyorum; aklında ne varsa söyle, hemen yardımcı olayım.`,
-        `Buyur ${ad}! İster yazıyla ister sesle konuşalım, ne istersen yanındayım.`,
-        `Selam ${ad}! Kaldığımız yerden devam mı edelim, yoksa yeni bir şey mi yapalım? Sen söyle.`,
-        `Hey ${ad}! Bugün keyifler nasıl? Söyle bakalım, ne işimiz var bugün 👋`,
-      ];
-      selam = havuz[Math.floor(Math.random() * havuz.length)];
-    }
+    // KARŞILAMA SAYFA DİLİNE GÖRE (aiDil = ses dili). Türkçe metni Rusça sesle okuma karışması biter.
+    void ilk;
+    const _ad = ad && ad !== "dostum" ? " " + ad : "";
+    const G = {
+      tr: `Merhaba${_ad}! Ben Gloxoo, Gloxorg dünyasının akıllı kalbi. Her konuda yardımcı olurum — konuş ya da yaz, buradayım.`,
+      en: `Hello${_ad}! I'm Gloxoo, the smart heart of the Gloxorg world. I can help with anything — talk or type, I'm here.`,
+      de: `Hallo${_ad}! Ich bin Gloxoo, das kluge Herz der Gloxorg-Welt. Ich helfe dir bei allem — sprich oder schreib, ich bin da.`,
+      fr: `Bonjour${_ad}! Je suis Gloxoo, le cœur intelligent du monde Gloxorg. Je t'aide en tout — parle ou écris, je suis là.`,
+      es: `¡Hola${_ad}! Soy Gloxoo, el corazón inteligente del mundo Gloxorg. Te ayudo en todo — habla o escribe, aquí estoy.`,
+      it: `Ciao${_ad}! Sono Gloxoo, il cuore intelligente del mondo Gloxorg. Ti aiuto in tutto — parla o scrivi, sono qui.`,
+      pt: `Olá${_ad}! Sou o Gloxoo, o coração inteligente do mundo Gloxorg. Ajudo-te em tudo — fala ou escreve, estou aqui.`,
+      ru: `Привет${_ad}! Я Gloxoo, умное сердце мира Gloxorg. Помогу тебе во всём — говори или пиши, я здесь.`,
+      uk: `Привіт${_ad}! Я Gloxoo, розумне серце світу Gloxorg. Допоможу тобі в усьому — говори або пиши, я тут.`,
+      ar: `مرحبا${_ad}! أنا Gloxoo، القلب الذكي لعالم Gloxorg. أساعدك في كل شيء — تحدث أو اكتب، أنا هنا.`,
+      zh: `你好${_ad}！我是 Gloxoo，Gloxorg 世界的智慧核心。任何事都能帮你——说话或打字，我都在。`,
+      ja: `こんにちは${_ad}！私は Gloxoo、Gloxorg の世界の賢い心です。何でもお手伝いします——話しても書いても、ここにいます。`,
+      hi: `नमस्ते${_ad}! मैं Gloxoo हूँ, Gloxorg दुनिया का स्मार्ट दिल। मैं हर चीज़ में मदद करता हूँ — बोलो या लिखो, मैं यहाँ हूँ।`,
+    };
+    const selam = G[aiDilRef.current] || G.en;
+    try { localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
     setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("sohbet");
     // KARŞILAMA sayfaya/transkripte YAZILMAZ (sadece sesli söyler). KENDİ KENDİNE KAPANMAZ — açık/hazır kalır,
     // KAPATMAYI KULLANICI yapar (boşluğa dokun / ✕). (Kullanıcı: konuşunca kapatmasın, ben kapatacağım, beni beklesin.)
