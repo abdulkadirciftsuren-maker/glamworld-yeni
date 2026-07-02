@@ -2490,10 +2490,15 @@ export default function Anasayfa({ pro = false }) {
     // PANEL KAPANINCA / başka yere geçince: çalan canlı/dikte/ses TAMAMEN DURSUN (arka planda kalmasın = "kilitlenme" bitti)
     if (!yardimciAcik) {
       aiKarsiladiRef.current = false;
-      if (canliSohbetRef.current) { canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false); }
-      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
-      try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
-      if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} }
+      if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} } // dikte panele özel — dursun
+      // PANELİ ✕ İLE KAPATINCA CANLI SOHBET SÜRÜYORSA DURDURMA: mini maskota devret,
+      // ana sayfada konuşma DEVAM etsin (kullanıcı Gloxoo'yu kendi kapatana kadar). İstek.
+      if (canliSohbetRef.current) {
+        setMaskotMini(true);
+      } else {
+        try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+        try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
+      }
     }
   }, [yardimciAcik, yardimciMod]); // eslint-disable-line react-hooks/exhaustive-deps
   // 🌍 GÖNDERİ ÇEVİRİSİ — gerçek Claude ile kullanıcının diline çevir (köprü üzerinden); aç/kapa
@@ -4757,10 +4762,10 @@ export default function Anasayfa({ pro = false }) {
       )}
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
-        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
+        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")}>
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
-          <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={160} rozet />
+          <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={132} rozet />
           </div>
           {/* Büyük maskot düğmeleri = KÜÇÜK maskotla AYNI ikonlar (Yaz kalem + ses aç/kapa) */}
           <div className="ai-mini-alt buyuk" onPointerDown={(e) => e.stopPropagation()}>
