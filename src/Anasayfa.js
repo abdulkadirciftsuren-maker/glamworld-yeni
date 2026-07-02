@@ -894,15 +894,15 @@ export default function Anasayfa({ pro = false }) {
   function balonTik() {
     if (balonSur.current.moved) return;
     maskotSelamKapat();
-    if (maskotTanit) { maskotTanitGec(); return; } // konuşurken tekrar dokun = geç
-    // Küçültülmüş ama CANLI sohbet sürüyorsa: BÜYÜT (yeniden karşılama YOK — kaldığı yerden devam)
-    if (canliSohbetRef.current) { setMaskotTanit(true); return; }
+    // KÜÇÜLTÜLMÜŞ (mini) maskota dokun = BÜYÜT (yeniden karşılama YOK — kaldığı yerden devam). KAPATMAZ.
+    if (maskotMini || canliSohbetRef.current) { setMaskotMini(false); setMaskotTanit(true); return; }
     maskotTanitYap();
   }
   // MASKOT KARŞILAMA — yeni üye ilk girişte ana sayfada maskot "hoş geldin" der (tek sefer). Kapatınca/dokununca yerine çekilir.
   const [maskotSelam, setMaskotSelam] = useState(false);
   const maskotSelamKapat = () => { setMaskotSelam(false); try { localStorage.setItem("groxMaskotSelam", "1"); } catch (e) {} };
   const [maskotTanit, setMaskotTanit] = useState(false); // maskot BÜYÜK halde konuşuyor mu
+  const [maskotMini, setMaskotMini] = useState(false); // KÜÇÜLTÜLMÜŞ ama sohbet AÇIK (köşede Yaz/✕ düğmeleriyle, kapanmadı)
   const [maskotMetni, setMaskotMetni] = useState("");
   const maskotBalonRef = useRef(null); // BÜYÜK maskot balonu — okurken teleprompter gibi kaydırma
   // Gloxoo konuşurken o cümleyi görünür alana kaydır (yazı konuşmayla beraber yukarı yürüsün, canlı ilerlesin)
@@ -940,9 +940,33 @@ export default function Anasayfa({ pro = false }) {
       ja: `こんにちは${_ad}！私は Gloxoo、Gloxorg の世界の賢い心です。何でもお手伝いします——話しても書いても、ここにいます。`,
       hi: `नमस्ते${_ad}! मैं Gloxoo हूँ, Gloxorg दुनिया का स्मार्ट दिल। मैं हर चीज़ में मदद करता हूँ — बोलो या लिखो, मैं यहाँ हूँ।`,
     };
-    const selam = G[aiDilRef.current] || G.en;
+    // AKILLI KARŞILAMA: İLK tanışmada tam tanıtım; sonraki gelişlerde ZAMANA göre kısa selam +
+    // "bir isteğin var mı" (her açılışta aynı "ben Gloxoo'yum" TEKRARLANMAZ). Yerel metin — AI hakkı harcamaz.
+    const dilK = aiDilRef.current;
+    const selam = (() => {
+      let ilkTanisma = true, fark = 0;
+      try { const son = parseInt(localStorage.getItem("groxSonSelamMs") || "0", 10); if (son > 0) { ilkTanisma = false; fark = Date.now() - son; } } catch (e) {}
+      try { localStorage.setItem("groxSonSelamMs", String(Date.now())); } catch (e) {}
+      if (ilkTanisma) return G[dilK] || G.en; // ilk kez: kendini tanıtır
+      const gun = Math.floor(fark / 86400000); // dönüş: geçen güne göre
+      const T = {
+        tr: gun >= 1
+          ? `Hoş geldin${_ad}! ${gun === 1 ? "Bir gün" : gun + " gün"} olmuş, neredeydin? 🙂 Bugün bir isteğin var mı — paylaşım yazayım, yol tarifi vereyim, müşteri bulayım, ne dersen yapayım.`
+          : `Tekrar hoş geldin${_ad}! Bir isteğin varsa söyle — paylaşım, arama, yol tarifi… hemen yardımcı olayım.`,
+        en: gun >= 1
+          ? `Welcome back${_ad}! It's been ${gun === 1 ? "a day" : gun + " days"} — where were you? 🙂 Any request today — a post, directions, finding customers, anything you say.`
+          : `Welcome back${_ad}! Tell me if you need anything — a post, a search, directions… I'll help right away.`,
+        ru: gun >= 1
+          ? `С возвращением${_ad}! Прошло ${gun === 1 ? "уже день" : gun + " дн."} — где ты был? 🙂 Есть просьба на сегодня — напишу пост, дам маршрут, найду клиентов, всё сделаю.`
+          : `С возвращением${_ad}! Скажи, если что-то нужно — пост, поиск, маршрут… помогу сразу.`,
+        de: gun >= 1
+          ? `Willkommen zurück${_ad}! Es ist ${gun === 1 ? "ein Tag" : gun + " Tage"} her — wo warst du? 🙂 Hast du heute einen Wunsch — Beitrag, Route, Kunden finden, alles was du sagst.`
+          : `Willkommen zurück${_ad}! Sag, wenn du etwas brauchst — ich helfe sofort.`,
+      };
+      return T[dilK] || T.en;
+    })();
     try { localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
-    setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("sohbet");
+    setMaskotMetni(selam); setMaskotTanit(true); setMaskotMini(false); setYardimciMod("sohbet");
     // KARŞILAMA sayfaya/transkripte YAZILMAZ (sadece sesli söyler). KENDİ KENDİNE KAPANMAZ — açık/hazır kalır,
     // KAPATMAYI KULLANICI yapar (boşluğa dokun / ✕). (Kullanıcı: konuşunca kapatmasın, ben kapatacağım, beni beklesin.)
     try { sesliOku(selam, undefined, maskotKaydir); } catch (e) {}
@@ -960,14 +984,13 @@ export default function Anasayfa({ pro = false }) {
     canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
     try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
-    setMaskotTanit(false);
+    setMaskotTanit(false); setMaskotMini(false); // TAM KAPAT (sadece ✕ ile)
   };
   // KAYDIR (parmakla sağa/sola çek): BÜYÜK maskot köşesine iner AMA canlı dinleme SÜRER — kapatma yok, kullanıcı kapatana kadar dinler (istek #5)
   const maskotKucult = () => {
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
     setAiDuraklat(false);
-    setMaskotTanit(false); // köşedeki ai-balon'a dön (görünür kalır); canliSohbet açıksa döngü devam eder
-    if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} }
+    setMaskotTanit(false); setMaskotMini(true); // köşeye in AMA KAPANMA: mini modda (Yaz/✕ düğmeleri görünür, sohbet açık)
+    if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // canlı dinleme sürer
   };
   const maskotSwipe = useRef(null);
   const maskotSwipeYapildi = useRef(false);
@@ -978,7 +1001,7 @@ export default function Anasayfa({ pro = false }) {
     const dx = t0.clientX - s.x, dy = t0.clientY - s.y;
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) { maskotSwipeYapildi.current = true; maskotKucult(); }
   };
-  const maskotTanitTik = () => { if (maskotSwipeYapildi.current) { maskotSwipeYapildi.current = false; return; } maskotTanitGec(); };
+  const maskotTanitTik = () => { if (maskotSwipeYapildi.current) { maskotSwipeYapildi.current = false; return; } maskotKucult(); }; // büyük maskota/boşluğa dokun = KÜÇÜL (kapatma DEĞİL — sadece ✕ kapatır)
   const maskotSohbetAc = () => { setMaskotTanit(false); setYardimciMod(maskotTur === "ekspert" ? "site" : "sohbet"); setYardimciAcik(true); }; // "Yaz" → tam panel (Ekspert=site, GLOXORG=sohbet). KONUŞMAYI KESME: kullanıcı yazıları görmek için açtı, karşılama sesli devam etsin (B-AI: "yazıyı açtım, o konuşma devam edecek")
   // EKSPERT (ayı) maskotuna dokun → büyür + sayfa uzmanı gibi konuşur, bitince çekilir
   const eksperTanitYap = () => {
@@ -1102,13 +1125,13 @@ export default function Anasayfa({ pro = false }) {
       }
     } catch (e) {}
   }, [u]);
-  // İlk açılışta maskot ana sayfada bir kez "hoş geldin" der (giriş yapılmış olsun ya da olmasın görünür)
-  // İLK AÇILIŞ: büyük Gloxoo ORTADA çıkıp SESLİ karşılar (tek sefer, her güncellemede değil).
-  // Tarayıcı otomatik sesi engellerse yazı görünür kalır; mikrofon izinsiz AÇILMAZ (ilk dokunuşta açılır).
+  // AÇILIŞ KARŞILAMASI: büyük Gloxoo ORTADA çıkıp SESLİ karşılar. AMA her yenilemede/tekrar girişte DEĞİL —
+  // sadece YENİ oturumda (son karşılamadan 3 saatten fazla geçmişse). Böylece bir gün/2 gün sonra girince
+  // yeniden karşılar (metin zamana göre "bir gün olmuş" vб.); aynı oturumda sayfa yenilenince tekrar etmez.
   useEffect(() => {
-    let ilk = false; try { ilk = !localStorage.getItem("groxMaskotSelam"); } catch (e) {}
-    if (!ilk) return;
-    try { localStorage.setItem("groxMaskotSelam", "1"); } catch (e) {}
+    let selamla = true;
+    try { const son = parseInt(localStorage.getItem("groxSonSelamMs") || "0", 10); if (son > 0 && (Date.now() - son) < 3 * 3600 * 1000) selamla = false; } catch (e) {}
+    if (!selamla) return;
     const ti = setTimeout(() => { try { maskotTanitYap(true); } catch (e) {} }, 700);
     return () => clearTimeout(ti);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -4686,12 +4709,25 @@ export default function Anasayfa({ pro = false }) {
 
       {/* GLOXORG YARDIMCISI — sağ-alt yapay zeka sohbet balonu (gerçek Claude) */}
       {!uyeSayfa && !paylasAcik && !duzenAcik && !yardimciAcik && !maskotTanit && (
-        <button ref={balonRef} className={"ai-balon" + (tamFoto ? " ust" : "") + (aiKonusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "") + (maskotKizgin ? " kizgin" : "")} style={balonYer ? { left: balonYer.x, top: balonYer.y, right: "auto", bottom: "auto" } : undefined}
-          onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir} onClick={balonTik}
-          aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
+        <div ref={balonRef} className={"ai-balon-sar" + (tamFoto ? " ust" : "") + (maskotMini ? " mini-aktif" : "")} style={balonYer ? { left: balonYer.x, top: balonYer.y, right: "auto", bottom: "auto" } : undefined}
+          onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir}>
+          {/* KÜÇÜKKEN KONUŞURKEN: üstte küçük konuşma balonu (istek: ufakken de konuşunca balon çıksın) */}
+          {maskotMini && maskotMetni && (aiKonusuyor || aiDuraklat) && (
+            <div className="ai-mini-balon">{renkliCumleler(maskotMetni, RC_KOYU)}</div>
+          )}
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
-          <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52} rozet />
-        </button>
+          <button className={"ai-balon" + (aiKonusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "") + (maskotKizgin ? " kizgin" : "")}
+            onClick={balonTik} aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52} rozet />
+          </button>
+          {/* KÜÇÜKKEN: Yaz (sol) + ✕ (sağ) sabit düğmeler — SADECE ✕ kapatır, maskota dokun = büyült */}
+          {maskotMini && (
+            <>
+              <button className="ai-mini-btn mini-yaz" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); maskotSohbetAc(); }}>✍️ {t("yaz", "Yaz")}</button>
+              <button className="ai-mini-btn mini-kapat" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); maskotTanitGec(); }} aria-label={t("kapat", "Kapat")}>✕</button>
+            </>
+          )}
+        </div>
       )}
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
