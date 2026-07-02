@@ -4757,8 +4757,20 @@ export default function Anasayfa({ pro = false }) {
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
           <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")}>
             <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={160} rozet />
-            <button className="maskot-bacak-btn mbb-yaz" onClick={(e) => { e.stopPropagation(); maskotSohbetAc(); }}>✍️ {t("yaz", "Yaz")}</button>
-            <button className="maskot-bacak-btn mbb-kapat" onClick={(e) => { e.stopPropagation(); maskotTanitGec(); }} aria-label={t("kapat", "Kapat")}>✕</button>
+          </div>
+          {/* Büyük maskot düğmeleri = KÜÇÜK maskotla AYNI ikonlar (Yaz kalem + ses aç/kapa) */}
+          <div className="ai-mini-alt buyuk" onPointerDown={(e) => e.stopPropagation()}>
+            {miniEtiket && <div className="ai-mini-etiket">{miniEtiket}</div>}
+            <div className="ai-mini-btnlar">
+              <button className="mini-ikon mi-yaz" onClick={(e) => { e.stopPropagation(); miniEtiketGoster(t("yaz", "Yaz")); maskotSohbetAc(); }} aria-label={t("yaz", "Yaz")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
+              </button>
+              <button className={"mini-ikon mi-ses" + (canliSohbet ? " acik" : "")} onClick={(e) => { e.stopPropagation(); miniSesToggle(); }} aria-label={canliSohbet ? t("kapat", "Kapat") : t("konus", "Konuş")}>
+                {canliSohbet
+                  ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
+                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
+              </button>
+            </div>
           </div>
           {dinliyor ? <div className="maskot-tanit-dinle"><span className="mtd-nokta" /><span className="mtd-nokta" /><span className="mtd-nokta" /> {t("maskotDinliyor", "Seni dinliyorum — buyur, söyle")}</div>
             : (canliSohbet && !aiKonusuyor && !yardimciYukleniyor) ? <div className="maskot-tanit-dinle bekle">⏳ {t("maskotBekle", "Seni bekliyorum, ne dersen söyle")}</div> : null}

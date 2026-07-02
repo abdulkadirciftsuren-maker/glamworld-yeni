@@ -1370,9 +1370,13 @@
 .sehir-ai{ background:linear-gradient(150deg,#FFE9A8,#FFD700 55%,#B8860B); color:#3a2c08; border-color:rgba(184,134,11,.6); }
 .sehir-ai-pir{ width:17px; height:17px; display:inline-block; line-height:0; }
 .ana-tab{
-  position:fixed; left:0; right:0; bottom:calc(8px + env(safe-area-inset-bottom)); z-index:20;
+  position:fixed; left:0; right:0; bottom:0; z-index:20;
   display:flex; justify-content:space-around; align-items:flex-end;
-  background:none; border:none; padding:0 10px; pointer-events:none;
+  /* ALTIN TOZU yarı-şeffaf zemin (şeffaf değil ki alttaki içerik çakışmasın) */
+  background:linear-gradient(180deg, rgba(120,90,20,0) 0%, rgba(140,104,24,.34) 42%, rgba(96,70,16,.82) 100%);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  border:none; border-top:1px solid rgba(255,224,140,.32);
+  padding:7px 10px calc(8px + env(safe-area-inset-bottom)); pointer-events:none;
   transition:transform .32s ease, opacity .32s ease;
 }
 .ana-tab.gizli{ transform:translateY(calc(100% + 22px)); opacity:0; }
@@ -1930,13 +1934,18 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* MİNİ MOD — köşede ama sohbet açık. Düğmeler maskotun ALTINDA, ALT ŞERİDİN ÜSTÜNDE dursun diye YUKARI al */
 .ai-balon-sar.mini-aktif:not([style*="top"]){ bottom:120px; }
 @media(min-width:560px){ .ai-balon-sar.mini-aktif:not([style*="top"]){ bottom:150px; } }
-/* Maskotun ALTINDA: etiket + ikon düğme sırası (maskotla birlikte durur/taşınır) */
-.ai-mini-alt{ position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; display:flex; flex-direction:column; align-items:center; gap:3px; z-index:2; }
-/* İkonlar sayfa rengiyle çatışmasın diye ALTINA koyu-altın zemin plakası */
-.ai-mini-btnlar{ display:flex; align-items:center; gap:8px; background:linear-gradient(160deg,rgba(28,22,6,.82),rgba(46,36,10,.82)); border:1px solid rgba(255,224,140,.45); border-radius:12px; padding:5px 7px; box-shadow:0 4px 12px rgba(0,0,0,.4); }
+/* Maskotun ALTINDA: ikon düğme sırası (maskotla birlikte durur/taşınır). Etiket ABSOLUTE — ikonları İTMEZ. */
+.ai-mini-alt{ position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; z-index:2; }
+/* ZEMİN YOK — sadece iki ikon (istek: ayrı plaka koyma) */
+.ai-mini-btnlar{ display:flex; align-items:center; gap:8px; }
+/* BÜYÜK maskotta aynı ikonlar — akışta (absolute değil), maskotun altında ortalı */
+.ai-mini-alt.buyuk{ position:relative; top:auto; left:auto; transform:none; margin-top:7px; display:flex; justify-content:center; }
+.ai-mini-alt.buyuk .mini-ikon{ width:34px; height:34px; border-radius:10px; }
+.ai-mini-alt.buyuk .mini-ikon svg{ width:19px; height:19px; }
+.ai-mini-alt.buyuk .mi-canli{ height:17px; }
 /* KARE (yumuşak köşeli), KÜÇÜK ikon düğmeler — yuvarlak değil */
-.mini-ikon{ width:30px; height:30px; border-radius:8px; border:1px solid rgba(255,255,255,.22); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.35); padding:0; }
-.mini-ikon svg{ width:17px; height:17px; }
+.mini-ikon{ width:28px; height:28px; border-radius:8px; border:1px solid rgba(255,255,255,.22); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.4); padding:0; }
+.mini-ikon svg{ width:16px; height:16px; }
 .mini-ikon:active{ transform:scale(.9); }
 .mini-ikon.mi-yaz{ background:linear-gradient(140deg,#FFE9A8,#FFC53d); color:#5a3d00; } /* altın */
 .mini-ikon.mi-ses{ background:linear-gradient(140deg,#ff8a8a,#e0202c); color:#fff; } /* KAPALI = KIRMIZI (konuş için bas) */
@@ -1947,9 +1956,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .mi-canli i{ width:3px; height:100%; border-radius:2px; background:#06331c; transform-origin:50% 100%; animation:miCanliBar .7s ease-in-out infinite; }
 .mi-canli i:nth-child(2){ animation-delay:.18s; } .mi-canli i:nth-child(3){ animation-delay:.36s; }
 @keyframes miCanliBar{ 0%,100%{ transform:scaleY(.35); } 50%{ transform:scaleY(1); } }
-/* Basınca üstünde ne olduğu yazar (kısa süre) — normalde yok, pencereyi meşgul etmez */
-.ai-mini-etiket{ background:rgba(20,28,48,.94); color:#ffe9a8; font-family:'Cormorant Garamond',serif; font-weight:800; font-size:12px; padding:2px 9px; border-radius:10px; box-shadow:0 3px 9px rgba(0,0,0,.4); white-space:nowrap; }
-@media(min-width:560px){ .mini-ikon{ width:38px; height:38px; border-radius:10px; } .mini-ikon svg{ width:21px; height:21px; } .mi-canli{ height:19px; } .mi-canli i{ width:3.5px; } .ai-mini-etiket{ font-size:15px; } }
+/* Basınca üstünde ne olduğu yazar (kısa süre) — ABSOLUTE: ikonları AŞAĞI İTMEZ, üstlerinde belirir */
+.ai-mini-etiket{ position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:4px; z-index:3; background:rgba(20,28,48,.94); color:#ffe9a8; font-family:'Cormorant Garamond',serif; font-weight:800; font-size:12px; padding:2px 9px; border-radius:10px; box-shadow:0 3px 9px rgba(0,0,0,.4); white-space:nowrap; pointer-events:none; }
+@media(min-width:560px){ .mini-ikon{ width:34px; height:34px; border-radius:10px; } .mini-ikon svg{ width:19px; height:19px; } .mi-canli{ height:17px; } .mi-canli i{ width:3.2px; } .ai-mini-etiket{ font-size:15px; } }
 /* KÜÇÜKKEN KONUŞMA BALONU — EKRANDA SABİT (fixed), ortada; pencere dışına ASLA taşmaz, kaydırınca kaybolmaz */
 .ai-mini-balon{ position:fixed; left:50%; transform:translateX(-50%); bottom:206px; z-index:57; max-width:calc(100vw - 20px); width:max-content;
   background:linear-gradient(160deg,#fffefa,#fff6e0); color:#221a0c; border:1.5px solid rgba(184,134,11,.55); border-radius:14px;
