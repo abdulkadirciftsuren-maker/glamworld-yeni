@@ -1934,17 +1934,47 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 @media(min-width:560px){ .maskot-tanit-balon{ font-size:18px; line-height:1.42; padding:14px 18px; } }
 .maskot-tanit-yuz{ position:relative; filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)); }
 .maskot-tanit-yuz .maskot-yuz{ width:150px !important; height:150px !important; }
-/* AI ELMASLARI — maskotun ÜST kenarında yay şeklinde, DAİMA canlı hareketli; konuşurken KIRMIZI (istek #3/#4) */
-.maskot-taclar{ position:absolute; left:50%; top:-6px; transform:translateX(-50%); width:170px; height:60px; pointer-events:none; z-index:2; }
-.maskot-taclar .mtac{ position:absolute; width:14px; height:14px; background:linear-gradient(135deg,#bfe3ff,#5aa6e0 55%,#2f6fa8); clip-path:polygon(50% 0,100% 38%,50% 100%,0 38%); box-shadow:0 0 8px rgba(120,190,255,.9); animation:mtacTwinkle 1.8s ease-in-out infinite; }
-.maskot-taclar .mtac.t1{ left:6px;  top:30px; width:11px; height:11px; animation-delay:0s; }
-.maskot-taclar .mtac.t2{ left:36px; top:8px;  animation-delay:.3s; }
-.maskot-taclar .mtac.t3{ left:78px; top:-2px; width:17px; height:17px; animation-delay:.6s; }
-.maskot-taclar .mtac.t4{ left:124px; top:8px; animation-delay:.9s; }
-.maskot-taclar .mtac.t5{ left:154px; top:30px; width:11px; height:11px; animation-delay:1.2s; }
-@keyframes mtacTwinkle{ 0%,100%{ transform:translateY(0) scale(.82) rotate(0deg); opacity:.6; } 50%{ transform:translateY(-5px) scale(1.12) rotate(20deg); opacity:1; } }
-/* KONUŞURKEN kırmızıya döner + daha hızlı çakar */
-.maskot-tanit-yuz.konus .mtac{ background:linear-gradient(135deg,#ffd0d0,#ff5a5a 55%,#d10f0f); box-shadow:0 0 12px rgba(255,60,60,.95); animation-duration:.85s; }
+/* PENCERE efekti: konuşurken kırmızı, dinlerken yeşil hâle (istek: kenar konuşma/dinleme efekti) */
+.maskot-tanit-yuz.konus{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 14px rgba(255,55,55,.85)); animation:maskotKonusHale .9s ease-in-out infinite; }
+.maskot-tanit-yuz.dinle{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 14px rgba(70,211,122,.85)); animation:maskotDinleHale 1.5s ease-in-out infinite; }
+@keyframes maskotKonusHale{ 0%,100%{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(255,55,55,.7)); } 50%{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 20px rgba(255,55,55,1)); } }
+@keyframes maskotDinleHale{ 0%,100%{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 9px rgba(70,211,122,.6)); } 50%{ filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)) drop-shadow(0 0 18px rgba(70,211,122,1)); } }
+
+/* ====== MASKOT AI ROZETİ — kulakların ARASINDA sabit, maskotla küçülür, DAİMA canlı ====== */
+.maskot-ai-rozet{ position:absolute; left:50%; top:1%; transform:translateX(-50%); z-index:4;
+  display:inline-flex; align-items:center; justify-content:center; gap:8%; width:40%; height:15%;
+  padding:0 6%; border-radius:999px; border:1.5px solid rgba(255,224,140,.9);
+  background:linear-gradient(150deg,#4a3a08,#7a5c10 55%,#5a4408); box-shadow:0 2px 7px rgba(0,0,0,.4), inset 0 0 6px rgba(255,224,140,.35);
+  cursor:pointer; overflow:hidden; }
+.maskot-ai-rozet.btn{ padding:0 6%; }
+.maskot-ai-rozet:active{ transform:translateX(-50%) scale(.92); }
+.maskot-ai-rozet .mar-ai{ font-family:'Cinzel',serif; font-weight:800; font-size:min(2.6vw,15px); letter-spacing:.03em; line-height:1;
+  background:linear-gradient(120deg,#fff3c4,#ffd700,#ffe9a8,#ffd700); -webkit-background-clip:text; background-clip:text; color:transparent;
+  background-size:200% 100%; animation:marShimmer 1.8s linear infinite; }
+/* Canlı altın AI ikonları — küçük eşitleyici çubukları (DAİMA hareketli) */
+.maskot-ai-rozet .mar-bar{ width:9%; min-width:2px; max-width:4px; height:40%; border-radius:2px; background:linear-gradient(#ffe9a8,#ffd700); box-shadow:0 0 4px rgba(255,215,0,.8); animation:marBar .8s ease-in-out infinite; }
+.maskot-ai-rozet .mar-bar:nth-child(2){ animation-delay:.15s; } .maskot-ai-rozet .mar-bar:nth-child(3){ animation-delay:.3s; } .maskot-ai-rozet .mar-bar:nth-child(4){ animation-delay:.45s; }
+@keyframes marBar{ 0%,100%{ transform:scaleY(.4); } 50%{ transform:scaleY(1); } }
+@keyframes marShimmer{ 0%{ background-position:0% 0; } 100%{ background-position:200% 0; } }
+/* KONUŞURKEN kırmızı + hızlı, DİNLERKEN yeşil */
+.maskot-ai-rozet.konus{ border-color:rgba(255,120,120,.95); background:linear-gradient(150deg,#5a0f0f,#a01414 55%,#6a0f0f); box-shadow:0 2px 8px rgba(0,0,0,.45), 0 0 12px rgba(255,60,60,.9), inset 0 0 6px rgba(255,140,140,.4); }
+.maskot-ai-rozet.konus .mar-bar{ background:linear-gradient(#ffd0d0,#ff3b3b); box-shadow:0 0 5px rgba(255,60,60,.95); animation-duration:.42s; }
+.maskot-ai-rozet.konus .mar-ai{ background:linear-gradient(120deg,#ffd0d0,#ff5a5a,#ffb0b0,#ff5a5a); -webkit-background-clip:text; background-clip:text; }
+.maskot-ai-rozet.dinle{ border-color:rgba(120,240,170,.95); background:linear-gradient(150deg,#0c3a22,#12703e 55%,#0c4a2a); box-shadow:0 2px 8px rgba(0,0,0,.45), 0 0 12px rgba(70,211,122,.9), inset 0 0 6px rgba(140,255,190,.4); animation:marDinlePulse 1.3s ease-in-out infinite; }
+.maskot-ai-rozet.dinle .mar-bar{ background:linear-gradient(#d0ffe0,#46d37a); box-shadow:0 0 5px rgba(70,211,122,.95); animation-duration:.9s; }
+.maskot-ai-rozet.dinle .mar-ai{ background:linear-gradient(120deg,#d0ffe0,#46d37a,#b0ffcf,#46d37a); -webkit-background-clip:text; background-clip:text; }
+@keyframes marDinlePulse{ 0%,100%{ box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 8px rgba(70,211,122,.7),inset 0 0 6px rgba(140,255,190,.4); } 50%{ box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 16px rgba(70,211,122,1),inset 0 0 6px rgba(140,255,190,.5); } }
+/* Küçük (köşedeki) maskotta rozet: sadece çubuklar, ince */
+.maskot-ai-rozet.mini{ width:52%; height:22%; top:-3%; gap:12%; padding:0 8%; border-width:1px; pointer-events:none; }
+.maskot-ai-rozet.mini .mar-bar{ max-width:3px; height:52%; }
+/* DİNLERKEN kulaklar biraz büyür */
+.maskot-yuz.dinliyor .maskot-kulak{ transform:scale(1.18); transform-box:fill-box; transform-origin:50% 90%; transition:transform .3s ease; }
+
+/* Yaz / Kapat düğmeleri — maskotun BACAKLARININ yanında, küçük (istek: Yaz sol bacak solu, Kapat sağ bacak yanı) */
+.maskot-bacak-btn{ position:absolute; bottom:6%; display:inline-flex; align-items:center; gap:4px; border:none; border-radius:12px; padding:6px 11px; font-family:'Cormorant Garamond',serif; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 3px 9px rgba(0,0,0,.34); z-index:4; white-space:nowrap; }
+.maskot-bacak-btn:active{ transform:scale(.92); }
+.maskot-bacak-btn.mbb-yaz{ right:100%; margin-right:-4px; background:linear-gradient(135deg,#FFE9A8,#FFD700); color:#1a1206; }
+.maskot-bacak-btn.mbb-kapat{ left:100%; margin-left:-4px; background:rgba(30,40,60,.9); color:#e9eef7; border:1px solid rgba(255,255,255,.2); font-size:15px; padding:5px 10px; border-radius:50%; }
 .maskot-tanit-dugmeler{ display:flex; gap:9px; align-items:center; }
 .maskot-tanit-btn{ display:inline-flex; align-items:center; gap:5px; border:none; border-radius:14px; padding:7px 15px; font-family:inherit; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,.32); }
 .maskot-tanit-btn:active{ transform:scale(.94); }
