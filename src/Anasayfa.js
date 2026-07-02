@@ -55,6 +55,17 @@ const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
 // RC_KOYU = AÇIK zeminde okunur (karşılama balonu); RC_ACIK = KOYU zeminde okunur (Gloxoo sohbeti).
 const RC_KOYU = ["#e11d1d", "#1553d8", "#0e8f47", "#9026d1", "#c76a06", "#0c8a8a", "#d61b7a"];
 const RC_ACIK = ["#ffd743", "#74dcff", "#ff97c2", "#78f2b4", "#cfa2ff", "#ffb066", "#7cd0ff"];
+
+// AI PANEL butonlari — 13 dil (i18n cogu anahtari yalniz tr/en tuttugu icin bu butonlar burada cok dilli)
+const AIPANEL = {
+  oku: { tr: "Sesli oku", en: "Read aloud", de: "Vorlesen", fr: "Lire à voix haute", es: "Leer en voz alta", it: "Leggi ad alta voce", pt: "Ler em voz alta", ru: "Озвучить", uk: "Озвучити", ar: "اقرأ بصوت", zh: "朗读", ja: "読み上げ", hi: "पढ़कर सुनाएँ" },
+  durdur: { tr: "Durdur", en: "Stop", de: "Stopp", fr: "Arrêter", es: "Detener", it: "Ferma", pt: "Parar", ru: "Стоп", uk: "Стоп", ar: "إيقاف", zh: "停止", ja: "停止", hi: "रोकें" },
+  kopyala: { tr: "Kopyala", en: "Copy", de: "Kopieren", fr: "Copier", es: "Copiar", it: "Copia", pt: "Copiar", ru: "Копировать", uk: "Копіювати", ar: "نسخ", zh: "复制", ja: "コピー", hi: "कॉपी" },
+  indir: { tr: "İndir", en: "Download", de: "Herunterladen", fr: "Télécharger", es: "Descargar", it: "Scarica", pt: "Baixar", ru: "Скачать", uk: "Завантажити", ar: "تنزيل", zh: "下载", ja: "ダウンロード", hi: "डाउनलोड" },
+  paylas: { tr: "Paylaş", en: "Share", de: "Teilen", fr: "Partager", es: "Compartir", it: "Condividi", pt: "Partilhar", ru: "Поделиться", uk: "Поділитися", ar: "مشاركة", zh: "分享", ja: "共有", hi: "साझा करें" },
+  yaz: { tr: "Buraya yaz…", en: "Type here…", de: "Hier schreiben…", fr: "Écris ici…", es: "Escribe aquí…", it: "Scrivi qui…", pt: "Escreve aqui…", ru: "Напишите здесь…", uk: "Пишіть тут…", ar: "اكتب هنا…", zh: "在这里输入…", ja: "ここに入力…", hi: "यहाँ लिखें…" },
+};
+function pl(dil, key) { const o = AIPANEL[key]; return (o && (o[dil] || o.en)) || ""; }
 function renkliCumleler(metin, palet) {
   if (!metin) return null;
   const p = palet || RC_ACIK;
@@ -4479,7 +4490,7 @@ export default function Anasayfa({ pro = false }) {
             <div className="tf-dip">
               {/* İNDİRME + 3 NOKTA — sağ üstte ayrı satır (foto/videoya ait) */}
               <div className="tf-ustarac" onClick={(e) => e.stopPropagation()}>
-                <a className="tf-ic tf-indir" href={p.video || p.gorsel || "#"} download target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} aria-label={t("indir", "İndir")}>{Ikon.indir}</a>
+                <a className="tf-ic tf-indir" href={p.video || p.gorsel || "#"} download target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} aria-label={pl(aiDil, "indir")}>{Ikon.indir}</a>
                 <button className="tf-ic tf-daha" aria-label={t("dahaFazla", "Daha fazla")} onClick={() => dahaAc(p)}><span className="daha-tas" aria-hidden="true"><Elmas4 c="#1a1a1a" /></span></button>
               </div>
               {/* YAZI + Çevir/Sor (foto/video açıklaması) */}
@@ -4688,19 +4699,19 @@ export default function Anasayfa({ pro = false }) {
                             {konusanMesaj === "p" + i
                               ? <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
                               : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>}
-                            {konusanMesaj === "p" + i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")}
+                            {konusanMesaj === "p" + i ? pl(aiDil, "durdur") : pl(aiDil, "oku")}
                           </button>
                           <button className="ai-paylasim-btn kopya" onClick={() => panoyaKopyala(m.paylasim)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-                            {t("kopyala", "Kopyala")}
+                            {pl(aiDil, "kopyala")}
                           </button>
                           <button className="ai-paylasim-btn indir" onClick={() => metniIndir(m.paylasim)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-                            {t("indir", "İndir")}
+                            {pl(aiDil, "indir")}
                           </button>
                           <button className="ai-paylasim-btn paylas" onClick={() => paylasimaTasi(m.paylasim)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-                            {t("paylas", "Paylaş")}
+                            {pl(aiDil, "paylas")}
                           </button>
                         </div>
                       </div>
@@ -4728,13 +4739,13 @@ export default function Anasayfa({ pro = false }) {
                     {m.rol !== "user" && m.metin && !m.paylasim && !m.proButon && !m.uyelikTeklif && (
                       <div className="ai-msj-arac">
                         <button className="ai-msj-arac-btn kopya" onClick={() => panoyaKopyala(m.metin)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>{t("kopyala", "Kopyala")}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>{pl(aiDil, "kopyala")}
                         </button>
                         <button className="ai-msj-arac-btn indir" onClick={() => metniIndir(m.metin)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>{t("indir", "İndir")}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>{pl(aiDil, "indir")}
                         </button>
                         <button className="ai-msj-arac-btn paylas" onClick={() => paylasimaTasi(m.metin)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>{t("paylas", "Paylaş")}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>{pl(aiDil, "paylas")}
                         </button>
                       </div>
                     )}
@@ -4855,7 +4866,7 @@ export default function Anasayfa({ pro = false }) {
                     ? <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>}
                 </button>
-                <textarea ref={yardimciInputRef} className="ai-input" value={yardimciYazi} onFocus={(e) => { if (canliSohbetRef.current) { canliSohbetToggle(); } try { const el = e.target; setTimeout(() => { try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (er) {} }, 320); } catch (er) {} }} onChange={(e) => { setYardimciYazi(e.target.value); try { e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px"; } catch (er) {} }} placeholder={canliSohbet ? t("canliAcik", "Canlı sohbet açık — konuş, ben dinliyorum…") : (dinliyor ? t("dinleniyor", "Konuş… bitince mikrofona tekrar bas") : t("yardimciYaz", "Buraya yaz…"))} rows={1}
+                <textarea ref={yardimciInputRef} className="ai-input" value={yardimciYazi} onFocus={(e) => { if (canliSohbetRef.current) { canliSohbetToggle(); } try { const el = e.target; setTimeout(() => { try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (er) {} }, 320); } catch (er) {} }} onChange={(e) => { setYardimciYazi(e.target.value); try { e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px"; } catch (er) {} }} placeholder={canliSohbet ? t("canliAcik", "Canlı sohbet açık — konuş, ben dinliyorum…") : (dinliyor ? t("dinleniyor", "Konuş… bitince mikrofona tekrar bas") : pl(aiDil, "yaz"))} rows={1}
                   maxLength={2000} />
                 <button className="ai-gonder" onClick={() => yardimciGonder()} disabled={yardimciYukleniyor || !yardimciYazi.trim()} aria-label={t("gonder", "Gönder")}>
                   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 20l18-8L3 4l0 6 12 2-12 2z" /></svg>
