@@ -337,7 +337,7 @@ function oneriIkon(metin) {
 }
 
 // CANLI MASKOT YÜZÜ — konuşurken (konusuyor=true) ağzı açılıp kapanır + hafif zıplar. tur: "grox" (elmas) | "ekspert" (ayı).
-function MaskotYuz({ konusuyor = false, dinliyor = false, tur = "grox", boyut = 30 }) {
+function MaskotYuz({ konusuyor = false, dinliyor = false, tur = "grox", boyut = 30, children }) {
   return (
     <span className={"maskot-yuz" + (konusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "")} style={{ width: boyut, height: boyut }} aria-hidden="true">
       {tur === "ekspert" ? (
@@ -396,6 +396,7 @@ function MaskotYuz({ konusuyor = false, dinliyor = false, tur = "grox", boyut = 
           <ellipse className="maskot-agiz" cx="24" cy="30.5" rx="3.7" ry="2.2" fill="#0b1226" />
         </svg>
       )}
+      {children}
     </span>
   );
 }
@@ -4679,8 +4680,9 @@ export default function Anasayfa({ pro = false }) {
           onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir} onClick={balonTik}
           aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
-          <MaskotAiRozet mini konusuyor={aiKonusuyor} dinliyor={dinliyor} />
-          <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52} />
+          <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52}>
+            <MaskotAiRozet mini konusuyor={aiKonusuyor} dinliyor={dinliyor} />
+          </MaskotYuz>
         </button>
       )}
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
@@ -4688,8 +4690,9 @@ export default function Anasayfa({ pro = false }) {
         <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
           <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")}>
-            <MaskotAiRozet buton konusuyor={aiKonusuyor} dinliyor={dinliyor} onClick={(e) => { e.stopPropagation(); maskotKucult(); }} etiket={t("kucult", "Küçült")} />
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={160} />
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={160}>
+              <MaskotAiRozet buton konusuyor={aiKonusuyor} dinliyor={dinliyor} onClick={(e) => { e.stopPropagation(); maskotKucult(); }} etiket={t("kucult", "Küçült")} />
+            </MaskotYuz>
             <button className="maskot-bacak-btn mbb-yaz" onClick={(e) => { e.stopPropagation(); maskotSohbetAc(); }}>✍️ {t("yaz", "Yaz")}</button>
             <button className="maskot-bacak-btn mbb-kapat" onClick={(e) => { e.stopPropagation(); maskotTanitGec(); }} aria-label={t("kapat", "Kapat")}>✕</button>
           </div>
