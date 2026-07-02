@@ -939,6 +939,23 @@ export default function Anasayfa({ pro = false }) {
     try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
     setMaskotTanit(false);
   };
+  // KAYDIR (parmakla sağa/sola çek): BÜYÜK maskot köşesine iner AMA canlı dinleme SÜRER — kapatma yok, kullanıcı kapatana kadar dinler (istek #5)
+  const maskotKucult = () => {
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    setAiDuraklat(false);
+    setMaskotTanit(false); // köşedeki ai-balon'a dön (görünür kalır); canliSohbet açıksa döngü devam eder
+    if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} }
+  };
+  const maskotSwipe = useRef(null);
+  const maskotSwipeYapildi = useRef(false);
+  const maskotDokunBas = (e) => { const t0 = e.touches && e.touches[0]; if (t0) maskotSwipe.current = { x: t0.clientX, y: t0.clientY }; };
+  const maskotDokunBit = (e) => {
+    const s = maskotSwipe.current; maskotSwipe.current = null; if (!s) return;
+    const t0 = e.changedTouches && e.changedTouches[0]; if (!t0) return;
+    const dx = t0.clientX - s.x, dy = t0.clientY - s.y;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) { maskotSwipeYapildi.current = true; maskotKucult(); }
+  };
+  const maskotTanitTik = () => { if (maskotSwipeYapildi.current) { maskotSwipeYapildi.current = false; return; } maskotTanitGec(); };
   const maskotSohbetAc = () => { setMaskotTanit(false); setYardimciMod(maskotTur === "ekspert" ? "site" : "sohbet"); setYardimciAcik(true); }; // "Yaz" → tam panel (Ekspert=site, GLOXORG=sohbet). KONUŞMAYI KESME: kullanıcı yazıları görmek için açtı, karşılama sesli devam etsin (B-AI: "yazıyı açtım, o konuşma devam edecek")
   // EKSPERT (ayı) maskotuna dokun → büyür + sayfa uzmanı gibi konuşur, bitince çekilir
   const eksperTanitYap = () => {
@@ -4641,9 +4658,14 @@ export default function Anasayfa({ pro = false }) {
       )}
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
-        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")} onClick={maskotTanitGec}>
+        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
-          <div className="maskot-tanit-yuz"><MaskotYuz konusuyor={aiKonusuyor} tur={maskotTur} boyut={160} /></div>
+          <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : "")}>
+            <span className="maskot-taclar" aria-hidden="true">
+              <i className="mtac t1" /><i className="mtac t2" /><i className="mtac t3" /><i className="mtac t4" /><i className="mtac t5" />
+            </span>
+            <MaskotYuz konusuyor={aiKonusuyor} tur={maskotTur} boyut={160} />
+          </div>
           {dinliyor ? <div className="maskot-tanit-dinle"><span className="mtd-nokta" /><span className="mtd-nokta" /><span className="mtd-nokta" /> {t("maskotDinliyor", "Seni dinliyorum — buyur, söyle")}</div>
             : (canliSohbet && !aiKonusuyor && !yardimciYukleniyor) ? <div className="maskot-tanit-dinle bekle">⏳ {t("maskotBekle", "Seni bekliyorum, ne dersen söyle")}</div> : null}
           <div className="maskot-tanit-dugmeler">
@@ -4672,7 +4694,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="ai-fon" onClick={(e) => { if (e.target === e.currentTarget) setYardimciAcik(false); }}>
           <div className={"ai-pencere " + (proUye ? "ai-tema-pro" : "ai-tema-musteri")}>
             <div className="ai-bas">
-              <span className="ai-bas-ad"><MaskotYuz konusuyor={aiKonusuyor} tur={yardimciMod === "site" ? "ekspert" : "grox"} boyut={32} />{yardimciMod === "site" ? t("siteAsistan", "Site Asistanı") : t("yardimciBaslik", "GLOXORG Yardımcısı")}</span>
+              <span className="ai-bas-ad"><button type="button" className={"ai-bas-maskot" + (canliSohbet ? " canli" : "")} onClick={canliSohbetToggle} aria-label={t("canliSohbet", "Canlı Sohbet")} title={t("canliSohbet", "Canlı Sohbet")}><MaskotYuz konusuyor={aiKonusuyor} tur={yardimciMod === "site" ? "ekspert" : "grox"} boyut={32} />{canliSohbet && <span className="ai-bas-canli-nokta" />}</button>{yardimciMod === "site" ? t("siteAsistan", "Site Asistanı") : t("yardimciBaslik", "GLOXORG Yardımcısı")}</span>
               {/* KONUŞMALARIM — kayıtlı (yeni açılan) konuşmaların listesi */}
               <button className="ai-arsiv-btn ai-konusma-btn" onClick={() => setOturumAcik(true)} aria-label={t("konusmalarim", "Konuşmalarım")}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
