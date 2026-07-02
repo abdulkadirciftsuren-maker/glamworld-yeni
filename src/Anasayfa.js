@@ -4639,6 +4639,12 @@ export default function Anasayfa({ pro = false }) {
           {dinliyor ? <div className="maskot-tanit-dinle"><span className="mtd-nokta" /><span className="mtd-nokta" /><span className="mtd-nokta" /> {t("maskotDinliyor", "Seni dinliyorum — buyur, söyle")}</div>
             : (canliSohbet && !aiKonusuyor && !yardimciYukleniyor) ? <div className="maskot-tanit-dinle bekle">⏳ {t("maskotBekle", "Seni bekliyorum, ne dersen söyle")}</div> : null}
           <div className="maskot-tanit-dugmeler">
+            {(aiKonusuyor || aiDuraklat) && (
+              <>
+                <button className="maskot-tanit-btn mt-durakla" onClick={(e) => { e.stopPropagation(); sesDuraklaToggle(); }}>{aiDuraklat ? "▶" : "⏸"} {aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")}</button>
+                <button className="maskot-tanit-btn mt-sus" onClick={(e) => { e.stopPropagation(); sesSus(); }}>🔇 {pl(aiDil, "sus")}</button>
+              </>
+            )}
             <button className="maskot-tanit-btn yaz" onClick={(e) => { e.stopPropagation(); maskotSohbetAc(); }}>✍️ {t("yaz", "Yaz")}</button>
             <button className="maskot-tanit-btn kapat" onClick={(e) => { e.stopPropagation(); maskotTanitGec(); }}>✕ {t("kapat", "Kapat")}</button>
           </div>
