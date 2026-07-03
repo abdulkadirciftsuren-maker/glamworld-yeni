@@ -2708,16 +2708,14 @@ export default function Anasayfa({ pro = false }) {
     setYardimciYazi("");
     aiKarsiladiRef.current = false; // tekrar karşılayabilsin
   };
-  // GLOXOO KAPANINCA OTOMATİK YENİ KONUŞMA: panel her kapandığında mevcut konuşma "Konuşmalarım"a KAYDEDİLİR (SİLİNMEZ),
-  // görünüm temizlenir → bir dahaki açılışta TEMİZ/yeni konuşma başlar (eski konuşmalar karışmaz, arşivde/oturumda durur).
+  // NOT: Panel kapanınca konuşmayı OTOMATİK temizleme KALDIRILDI (B42). O davranış konuşma sürerken
+  // geçmişi siliyordu → Gloxoo önceki mesajları unutuyordu. Artık konuşma SÜRER ve HATIRLANIR; yalnızca
+  // kullanıcı BİLİNÇLİ olarak "Yeni konuşma" (+) düğmesine basınca sonlanır (eski konuşma Konuşmalarım'a kaydedilir).
+  // Panel her kapandığında sessizce oturumu KAYDET (kaybolmasın) — ama görünümü TEMİZLEME.
   useEffect(() => {
     const onceki = yardimciAcikOnceRef.current;
     yardimciAcikOnceRef.current = yardimciAcik;
-    if (onceki && !yardimciAcik) {
-      try { oturumKaydet(); } catch (e) {}          // mevcut konuşmayı kalıcı olarak Konuşmalarım'a kaydet
-      setYardimciMesajlar([]); setSiteMesajlar([]);  // görünümü temizle (veri arşivde/oturumda KALIR)
-      setYardimciYazi(""); aiKarsiladiRef.current = false;
-    }
+    if (onceki && !yardimciAcik) { try { oturumKaydet(); } catch (e) {} } // sadece kaydet (yedek), TEMİZLEME yok
   }, [yardimciAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   // KAYITLI bir konuşmayı geri yükle (görünüme getir) — Konuşmalarım panelinden
   const oturumYukle = (o) => {
