@@ -867,6 +867,11 @@ export default function Anasayfa({ pro = false }) {
   const kameraModRef = useRef(false);      // görüntülü mod açık mı (async okunur)
   const kameraStreamRef = useRef(null);    // kamera akışı (kapatınca durdurulur)
   const kameraVideoRef = useRef(null);     // self-view <video> elemanı (kare buradan çekilir)
+  const [kameraYon, setKameraYon] = useState("user"); // "user"=ön kamera (selfie), "environment"=arka kamera (etraf)
+  const [kameraYer, setKameraYer] = useState(null);   // self-view penceresinin sürüklenmiş konumu {x,y} (null=varsayılan sağ-alt)
+  const kameraSurRef = useRef({ on: false });          // self-view sürükleme durumu
+  const kameraPenRef = useRef(null);                   // self-view sarmalayıcı (sürükleme sınırı için)
+  const yardimciAcikOnceRef = useRef(false);           // Gloxoo panelinin önceki açık/kapalı durumu (kapanışı yakalamak için)
   const recognitionRef = useRef(null);     // CANLI DİKTE (tarayıcı SpeechRecognition) — konuştukça şeride yazar
   const dikteBazRef = useRef("");          // dikte başlarken şeritte olan metin (üzerine eklenir)
   const dikteAcikRef = useRef(false);      // canlı dikte açık mı (onend'de yeniden başlat için)
@@ -2203,7 +2208,7 @@ export default function Anasayfa({ pro = false }) {
       else if (tamKonumIzin) sistem += `Kullanıcı tam konum yetkisini açtı ama kesin nokta henüz gelmedi; şehir/ilçe bilgisini kullan, "hangi mağaza/bina" diye çok özel sorulursa bir saniye içinde kesinleşeceğini kısaca söyle. `;
       else sistem += `Kullanıcı şehir/ilçe düzeyinde konumunu paylaşıyor ama "tam nokta" (bina/mağaza) yetkisi KAPALI. "Tam olarak hangi mağaza/binadayım" gibi çok özel bir şey sorarsa, Ayarlar > Konum'dan "Gloxoo tam konumumu bilsin" anahtarını açabileceğini KISACA (tek cümle) söyle; şehir/ilçe sorularını normal yanıtla. `; }
     // GÖRÜNTÜLÜ SOHBET: kamera açık → ekteki fotoğraf kullanıcının CANLI kamera görüntüsüdür (kendisi + çevresi)
-    if (kameraModRef.current) sistem += `GÖRÜNTÜLÜ CANLI SOHBET AÇIK: Kullanıcının mesajına EKLİ fotoğraf, ŞU AN kamerasından gelen CANLI görüntüsüdür — onu ve çevresini GÖRÜYORSUN. Karşındaki gerçek kişiymiş gibi, gördüğünü doğal ve sıcak biçimde yorumla: kim/nasıl görünüyor, ne giymiş, arkasında/çevresinde ne var (oda, dışarısı, su, orman, eşyalar). Sorduğunda gördüğünü net söyle ("evet seni görüyorum, ... giymişsin, arkanda ... var" gibi); ASLA "seni göremiyorum/fotoğraf yok" deme. Kısa, samimi, sohbet gibi konuş; her karede aynı şeyleri tekrar sayma, konuşmanın akışına göre yeni/ilginç olanı söyle. Görünüş hakkında kaba/incitici yorum yapma, nazik ve olumlu ol. `;
+    if (kameraModRef.current) sistem += `GÖRÜNTÜLÜ CANLI SOHBET AÇIK: Kullanıcının mesajına EKLİ fotoğraf, ŞU AN kamerasından gelen CANLI görüntüsüdür — onu ve/veya çevresini (${kameraYon === "environment" ? "ARKA kamera: etrafı/manzarayı" : "ÖN kamera: kendisini"}) GÖRÜYORSUN. Onu gerçekten görüyorsun; kim olduğunu, ne giydiğini, çevresinde ne olduğunu BİLİYORSUN. ÇOK ÖNEMLİ: Kullanıcı SORMADAN kendiliğinden görünüş dökümü YAPMA — "üzerinde şu var, elinde bu var, arkanda şu var" diye HER mesajda TEKRARLAMA, bu sinir bozucu. Normal, sıcak, akıcı bir DOST gibi sohbet et; gördüklerini yalnızca (a) kullanıcı AÇIKÇA sorunca ("beni görüyor musun, ne giymişim, arkamda ne var" gibi), ya da (b) o an gerçekten anlamlı/ilginç/yeni bir şey olduğunda ve konuya uyduğunda söyle. Sorulunca net ve doğru söyle ("evet, görüyorum — ... giymişsin, arkanda ... var"); ASLA "göremiyorum/fotoğraf yok" deme. Görünüş hakkında daima nazik ve olumlu ol, kaba/incitici olma. Kısa konuş. `;
     // DÜNYA ÇAPINDA — kısıtlama YOK (kullanıcı her yerden, her şeyi sorabilir)
     sistem += `SEN DÜNYA ÇAPINDA SINIRSIZ BİLGİLİ BİR ASİSTANSIN — sen (Claude) ne biliyorsan KULLANICI için de o kadar bilirsin. Dünyanın HER ülkesi, şehri, ilçesi, kasabası; oteller, bankalar, postaneler, marketler, restoranlar, hastaneler, fabrikalar, üreticiler, markalar, üniversiteler, müzeler, tarihî yerler, güzergâhlar — bildiğin HER ŞEYİ söyle ve yardım et. "Bunu bilmiyorum", "veremiyorum", "yapamıyorum", "sadece yakını biliyorum", "elimde sadece şu şehirler var" gibi şeyleri ASLA deme; bilginle gerçek isimler ver. Kullanıcı bir güzergâh/yolculuk anlatırsa (örn "Vilnius'tan Mykolaiv/Nikolayev'e gideceğim, yolda otel"), o güzergâh ve VARIŞ şehri için GERÇEK otel/yer isimleri öner ve her biri için [HARITA: Yer adı | Şehir, Ülke] etiketi koy (UZAK/dünya yerlerinde koordinat yerine YER ADINI yaz, örn [HARITA: Hotel Reikartz Mykolaiv | Mykolaiv, Ukrayna]; yakın yerlerde yukarıdaki listenin koordinatını kullan). Birden çok yer için birden çok [HARITA:] koy. Bu platform TÜM DÜNYAYA hizmet eder, kimseye özel kısıt YOKTUR. SADECE gerçek zamanlı/bugünkü anlık haber-fiyat gibi şeyleri canlı bilemezsin; onun dışında her şeyi bilir ve yardım edersin. `;
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
@@ -2523,18 +2528,29 @@ export default function Anasayfa({ pro = false }) {
       return b64 ? { base64: b64, mediaType: "image/jpeg" } : null;
     } catch (e) { return null; }
   };
+  // Verilen yönle (ön/arka) kamera akışını al + self-view'e bağla (eski akışı durdurur)
+  const kameraAkisAl = async (yon) => {
+    try { if (kameraStreamRef.current) kameraStreamRef.current.getTracks().forEach((tr) => tr.stop()); } catch (e) {}
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: yon }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    kameraStreamRef.current = stream;
+    setTimeout(() => { try { if (kameraVideoRef.current) { kameraVideoRef.current.srcObject = stream; kameraVideoRef.current.play().catch(() => {}); } } catch (e) {} }, 60);
+    return stream;
+  };
   // GÖRÜNTÜLÜ CANLI SOHBET BAŞLAT: kamera aç (seni + çevreni görür) + sesli canlı sohbeti başlat
   const kameraBaslat = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setKucukMesaj(t("kameraYok", "Bu cihaz kamerayı desteklemiyor")); return; }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-      kameraStreamRef.current = stream;
+      await kameraAkisAl(kameraYon);
       kameraModRef.current = true; setKameraAcik(true);
-      // <video> elemanı render edilince akışı bağla (kısa gecikme ile)
-      setTimeout(() => { try { if (kameraVideoRef.current) { kameraVideoRef.current.srcObject = stream; kameraVideoRef.current.play().catch(() => {}); } } catch (e) {} }, 60);
       // sesli canlı sohbeti de başlat (görüntülü sohbet = ses + kamera)
       if (!canliSohbetRef.current) { try { maskotCanliBaslat(); } catch (e) {} }
     } catch (e) { setKucukMesaj(t("kameraIzin", "Kamera izni gerekli — tarayıcı/telefon ayarından izin ver")); }
+  };
+  // ÖN/ARKA KAMERA DEĞİŞTİR: selfie (user) <-> etraf (environment)
+  const kameraDegistir = async () => {
+    const yeni = kameraYon === "user" ? "environment" : "user";
+    setKameraYon(yeni);
+    try { await kameraAkisAl(yeni); } catch (e) { try { await kameraAkisAl(kameraYon); } catch (e2) {} setKucukMesaj(t("kameraDegisemedi", "Bu cihazda ikinci kamera bulunamadı")); setKameraYon(kameraYon); }
   };
   const kameraKapat = () => {
     kameraModRef.current = false; setKameraAcik(false);
@@ -2543,6 +2559,23 @@ export default function Anasayfa({ pro = false }) {
     try { if (kameraVideoRef.current) kameraVideoRef.current.srcObject = null; } catch (e) {}
   };
   const kameraToggle = () => { if (kameraModRef.current) kameraKapat(); else kameraBaslat(); };
+  // SELF-VIEW SÜRÜKLE (istediğin yere taşı — sabit değil)
+  const kameraSurBas = (e) => {
+    if (!kameraPenRef.current) return;
+    const r = kameraPenRef.current.getBoundingClientRect();
+    kameraSurRef.current = { on: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top };
+    try { kameraPenRef.current.setPointerCapture(e.pointerId); } catch (_) {}
+  };
+  const kameraSurGit = (e) => {
+    const d = kameraSurRef.current; if (!d.on || !kameraPenRef.current) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) d.moved = true;
+    const w = kameraPenRef.current.offsetWidth, h = kameraPenRef.current.offsetHeight;
+    const x = Math.max(6, Math.min(d.ox + dx, window.innerWidth - w - 6));
+    const y = Math.max(6, Math.min(d.oy + dy, window.innerHeight - h - 6));
+    setKameraYer({ x, y });
+  };
+  const kameraSurBitir = () => { kameraSurRef.current.on = false; };
   const canliSohbetToggle = () => {
     if (canliSohbetRef.current) { // KAPAT
       canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
@@ -2648,6 +2681,17 @@ export default function Anasayfa({ pro = false }) {
     setYardimciYazi("");
     aiKarsiladiRef.current = false; // tekrar karşılayabilsin
   };
+  // GLOXOO KAPANINCA OTOMATİK YENİ KONUŞMA: panel her kapandığında mevcut konuşma "Konuşmalarım"a KAYDEDİLİR (SİLİNMEZ),
+  // görünüm temizlenir → bir dahaki açılışta TEMİZ/yeni konuşma başlar (eski konuşmalar karışmaz, arşivde/oturumda durur).
+  useEffect(() => {
+    const onceki = yardimciAcikOnceRef.current;
+    yardimciAcikOnceRef.current = yardimciAcik;
+    if (onceki && !yardimciAcik) {
+      try { oturumKaydet(); } catch (e) {}          // mevcut konuşmayı kalıcı olarak Konuşmalarım'a kaydet
+      setYardimciMesajlar([]); setSiteMesajlar([]);  // görünümü temizle (veri arşivde/oturumda KALIR)
+      setYardimciYazi(""); aiKarsiladiRef.current = false;
+    }
+  }, [yardimciAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   // KAYITLI bir konuşmayı geri yükle (görünüme getir) — Konuşmalarım panelinden
   const oturumYukle = (o) => {
     if (!o) return;
@@ -4978,12 +5022,17 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       )}
-      {/* GÖRÜNTÜLÜ SOHBET — KENDİ GÖRÜNTÜN (self-view): kamera açıkken ekranda küçük pencere; Gloxoo seni buradan görür */}
+      {/* GÖRÜNTÜLÜ SOHBET — KENDİ GÖRÜNTÜN (self-view): SÜRÜKLENEBİLİR küçük pencere; Gloxoo seni buradan görür. Ön/arka kamera değiştirilebilir. */}
       {kameraAcik && (
-        <div className="kamera-self">
-          <video ref={kameraVideoRef} className="kamera-self-vid" autoPlay playsInline muted />
-          <span className="kamera-self-et">{aiKonusuyor ? t("kameraKonusuyor", "Gloxoo konuşuyor…") : dinliyor ? t("kameraDinliyor", "Dinliyorum…") : t("kameraGoruyor", "Seni görüyorum 👀")}</span>
-          <button className="kamera-self-kapat" onClick={kameraKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+        <div className="kamera-self" ref={kameraPenRef}
+          style={kameraYer ? { left: kameraYer.x, top: kameraYer.y, right: "auto", bottom: "auto" } : undefined}
+          onPointerDown={kameraSurBas} onPointerMove={kameraSurGit} onPointerUp={kameraSurBitir} onPointerCancel={kameraSurBitir}>
+          <video ref={kameraVideoRef} className={"kamera-self-vid" + (kameraYon === "user" ? " ayna" : "")} autoPlay playsInline muted />
+          <span className="kamera-self-et">{aiKonusuyor ? t("kameraKonusuyor", "Gloxoo konuşuyor…") : dinliyor ? t("kameraDinliyor", "Dinliyorum…") : (kameraYon === "environment" ? t("kameraEtraf", "Etrafını görüyorum 🌿") : t("kameraGoruyor", "Seni görüyorum 👀"))}</span>
+          <button className="kamera-self-cevir" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); kameraDegistir(); }} aria-label={t("kameraCevir", "Ön/arka kamera")} title={t("kameraCevir", "Ön/arka kamera")}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v3M9 20H6a2 2 0 0 1-2-2v-3"/><path d="M20 9a8 8 0 0 0-14-3M4 15a8 8 0 0 0 14 3"/></svg>
+          </button>
+          <button className="kamera-self-kapat" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); kameraKapat(); }} aria-label={t("kapat", "Kapat")}>✕</button>
         </div>
       )}
       {yardimciAcik && (
