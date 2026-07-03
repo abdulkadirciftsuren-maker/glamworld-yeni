@@ -2374,6 +2374,14 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-arsiv-btn{ flex:none; width:38px; height:38px; border-radius:11px; border:1px solid rgba(240,150,46,.45); background:rgba(240,150,46,.12); color:#f0962e; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .ai-arsiv-btn svg{ width:23px; height:23px; }
 .ai-konusma-btn{ color:#13c4c4; background:rgba(19,196,196,.14); border-color:rgba(19,196,196,.5); } /* Konuşmalarım = turkuaz, Arşiv = turuncu (renkli kare, sade değil) */
+/* KONUM DURUM İKONU (panel üstü) — konum AÇIK=yeşil (canlı nokta), KAPALI=gri; dokununca aç/kapa */
+.ai-bas-konum{ position:relative; flex:none; width:38px; height:38px; border-radius:11px; border:1px solid rgba(150,150,150,.4); background:rgba(150,150,150,.14); color:#c8c8c8; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+.ai-bas-konum svg{ width:22px; height:22px; }
+.ai-bas-konum .ai-bas-konum-nokta{ display:none; }
+.ai-bas-konum.acik{ color:#25d366; border-color:rgba(37,211,102,.6); background:linear-gradient(135deg,rgba(37,211,102,.22),rgba(30,166,79,.16)); box-shadow:0 0 8px rgba(37,211,102,.4); }
+.ai-bas-konum.acik .ai-bas-konum-nokta{ display:block; position:absolute; top:5px; right:5px; width:8px; height:8px; border-radius:50%; background:#25d366; border:1.5px solid #2a0d12; animation:konumNokta 1.4s ease-in-out infinite; }
+@keyframes konumNokta{ 0%,100%{ opacity:1; box-shadow:0 0 0 rgba(37,211,102,.6); } 50%{ opacity:.6; box-shadow:0 0 7px rgba(37,211,102,.9); } }
+@media(min-width:560px){ .ai-bas-konum{ width:42px; height:42px; } .ai-bas-konum svg{ width:26px; height:26px; } }
 /* ===== ASİSTAN BİLGİSAYAR/iPad BÜYÜTME — TÜM .ai- kurallarından SONRA (kaynak sırası kazansın; eskiden temel kurallar eziyordu, o yüzden küçük kalıyordu) ===== */
 @media (min-width:560px){
   .ai-pencere{ max-width:560px; } /* pencere DAR (eski) — yazı ayrı büyütülür */
