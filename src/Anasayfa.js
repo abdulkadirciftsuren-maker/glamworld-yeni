@@ -735,11 +735,14 @@ export default function Anasayfa({ pro = false }) {
   const [konumLat, setKonumLat] = useState(null);
   const [konumLon, setKonumLon] = useState(null);
   const [konumAdres, setKonumAdres] = useState("");
-  // GLOXOO CANLI KONUM: kullanıcı panelde "tam konum" düğmesine basınca yüksek doğruluklu GPS + en yakın mekan (mağaza/otel/kuaför/banka) bulunur, AI tam nerede olduğunu bilir
+  // GLOXOO TAM KONUM YETKİSİ: kullanıcı AYARLAR'dan aç/kapat. AÇIK iken sürekli (watchPosition) yüksek doğruluklu GPS
+  // ile şehir/ilçe + ev/bina + içinde bulunduğu mekân (mağaza/otel/kuaför/banka) TAKİP edilir; Gloxoo her an tam yeri bilir.
   const [anlikYer, setAnlikYer] = useState(null);   // { adres, yer, tur, lat, lon }
   const anlikYerRef = useRef(null);                 // async AI isteğinde okunur
-  const [konumDurum, setKonumDurum] = useState(""); // "" | "aliniyor" | "acik" | "yok"
-  const [konumMsg, setKonumMsg] = useState("");     // panelde kısa onay metni (📍 bulunan yer)
+  const [tamKonumIzin, setTamKonumIzin] = useState(() => { try { return localStorage.getItem("groxTamKonum") === "1"; } catch (e) { return false; } });
+  const tamKonumIzinRef = useRef(tamKonumIzin);
+  useEffect(() => { tamKonumIzinRef.current = tamKonumIzin; }, [tamKonumIzin]);
+  const konumTakipRef = useRef({ id: null, sonMs: 0, sonLat: null, sonLon: null }); // watch id + son çözümleme (throttle)
   const [bulunan, setBulunan] = useState(null); // haritaya dokununca çözülen adres ÖNİZLEMESİ (şeritlere otomatik yazılmaz)
   const [haritaMsg, setHaritaMsg] = useState(""); // harita üstünde düğme onay mesajı (kopyalandı/yazıldı)
   const [haritaBilgi, setHaritaBilgi] = useState(false); // konum haritası (?) açıklaması
@@ -941,58 +944,79 @@ export default function Anasayfa({ pro = false }) {
     y = y.replace(/[._\-0-9]+/g, " ").trim().split(/\s+/)[0] || "";
     return y ? y.charAt(0).toUpperCase() + y.slice(1) : "";
   }
-  // GLOXOO'YA TAM KONUM İZNİ: yüksek doğruluklu GPS (navigasyon) + en yakın isimli mekân (mağaza/otel/kuaför/banka).
-  // Kullanıcı nerede olursa olsun (mağaza/otel/kuaför/banka) Gloxoo tam yeri bilir. Panel düğmesinden tetiklenir.
-  function tamKonumBul() {
-    if (!navigator.geolocation) { setKonumDurum("yok"); setKonumMsg(t("konumYok", "Cihaz konumu desteklemiyor")); setTimeout(() => setKonumMsg(""), 3000); return; }
-    setKonumDurum("aliniyor"); setKonumMsg(t("konumAliniyor", "Konum alınıyor…"));
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const lat = pos.coords.latitude, lon = pos.coords.longitude;
-      setKonum((k) => ({ ...k, lat, lon })); // koordinat hemen (etraf taraması + AI konumu bununla tazelenir)
-      const alDili = (dil || "tr").split("-")[0];
-      // 1) TAM ADRES (zoom 18 — bina/mekân seviyesi)
-      let adres = "";
-      try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=${alDili}`, { headers: { Accept: "application/json" } });
-        const d = await r.json();
-        adres = (d && d.display_name) || "";
-        const a = d && d.address;
-        if (a) setKonum((k) => ({ ...k, kod: (a.country_code || k.kod || "").toUpperCase(), sehir: a.city || a.town || a.village || a.municipality || k.sehir, ilce: a.suburb || a.city_district || a.district || a.county || k.ilce, mahalle: a.neighbourhood || a.quarter || a.hamlet || k.mahalle }));
-      } catch (e) {}
-      // 2) EN YAKIN İSİMLİ MEKÂN (~70 m): mağaza/otel/kuaför/banka/restoran… → "tam olarak neredesin"
-      let yer = "", tur = "";
-      try {
-        const q = `[out:json][timeout:15];(nwr(around:70,${lat},${lon})[name][shop];nwr(around:70,${lat},${lon})[name][amenity];nwr(around:70,${lat},${lon})[name][tourism];nwr(around:70,${lat},${lon})[name][office];nwr(around:70,${lat},${lon})[name][leisure];);out center 60;`;
-        const sunucular = ["https://overpass.kumi.systems/api/interpreter", "https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"];
-        let d = null;
-        for (const sv of sunucular) { try { const r = await fetch(sv, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(q) }); if (!r.ok) continue; d = await r.json(); if (d && Array.isArray(d.elements)) break; } catch (e2) {} }
-        if (d && d.elements && d.elements.length) {
-          const TUR_AD = { hairdresser: "kuaför", beauty: "güzellik salonu", barber: "berber", bank: "banka", atm: "ATM", hotel: "otel", motel: "motel", guest_house: "pansiyon", hostel: "hostel", restaurant: "restoran", cafe: "kafe", fast_food: "fast-food", pharmacy: "eczane", hospital: "hastane", clinic: "klinik", supermarket: "süpermarket", convenience: "market", mall: "AVM", bakery: "fırın", clothes: "giyim mağazası", jewelry: "kuyumcu", fuel: "benzin istasyonu", school: "okul", university: "üniversite", post_office: "postane" };
-          const R = 6371000, rad = (x) => (x * Math.PI) / 180;
-          let enYakin = null, enM = Infinity;
-          d.elements.forEach((el) => {
-            const tg = el.tags || {}; if (!tg.name) return;
-            const plat = el.lat != null ? el.lat : (el.center && el.center.lat);
-            const plon = el.lon != null ? el.lon : (el.center && el.center.lon);
-            if (plat == null || plon == null) return;
-            const dLat = rad(plat - lat), dLon = rad(plon - lon);
-            const aa = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat)) * Math.cos(rad(plat)) * Math.sin(dLon / 2) ** 2;
-            const m = R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
-            if (m < enM) { enM = m; enYakin = tg; }
-          });
-          if (enYakin) { yer = enYakin.name; const t0 = enYakin.shop || enYakin.amenity || enYakin.tourism || enYakin.office || enYakin.leisure || ""; tur = TUR_AD[t0] || t0.replace(/_/g, " "); }
-        }
-      } catch (e) {}
-      const bilgi = { adres, yer, tur, lat, lon };
-      anlikYerRef.current = bilgi; setAnlikYer(bilgi); setKonumDurum("acik");
-      const kisa = yer ? ("📍 " + yer + (tur ? " (" + tur + ")" : "")) : (adres ? "📍 " + adres.split(",").slice(0, 2).join(",") : t("konumAlindi", "Konum alındı ✓"));
-      setKonumMsg(kisa); setTimeout(() => setKonumMsg(""), 4500);
-    }, (err) => {
-      setKonumDurum("yok");
-      setKonumMsg(err && err.code === 1 ? t("konumIzinYok", "Konum izni verilmedi — tarayıcı ayarından izin ver") : t("konumBulunamadi", "Konum bulunamadı, tekrar dene"));
-      setTimeout(() => setKonumMsg(""), 4000);
-    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+  // Verilen koordinat için TAM ADRES (bina/mekân) + içinde bulunulan İSİMLİ MEKÂN (mağaza/otel/kuaför/banka) çöz → anlikYer güncelle.
+  // Sürekli takipte ağı yormasın diye THROTTLE: en az 40 sn geçmeden VE ~25 m'den az hareket ettiyse yeniden çözmez.
+  async function konumCozVeMekan(lat, lon, zorla) {
+    const t0d = konumTakipRef.current;
+    if (!zorla && t0d.sonLat != null) {
+      const R0 = 6371000, r0 = (x) => (x * Math.PI) / 180;
+      const dLa = r0(lat - t0d.sonLat), dLo = r0(lon - t0d.sonLon);
+      const a0 = Math.sin(dLa / 2) ** 2 + Math.cos(r0(lat)) * Math.cos(r0(t0d.sonLat)) * Math.sin(dLo / 2) ** 2;
+      const uzak = R0 * 2 * Math.atan2(Math.sqrt(a0), Math.sqrt(1 - a0));
+      if (uzak < 25 && (Date.now() - t0d.sonMs) < 40000) return; // ne yer değişti ne süre doldu → geç
+    }
+    t0d.sonMs = Date.now(); t0d.sonLat = lat; t0d.sonLon = lon;
+    const alDili = (dil || "tr").split("-")[0];
+    let adres = "";
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=${alDili}`, { headers: { Accept: "application/json" } });
+      const d = await r.json();
+      adres = (d && d.display_name) || "";
+      const a = d && d.address;
+      if (a) setKonum((k) => ({ ...k, lat, lon, kod: (a.country_code || k.kod || "").toUpperCase(), sehir: a.city || a.town || a.village || a.municipality || k.sehir, ilce: a.suburb || a.city_district || a.district || a.county || k.ilce, mahalle: a.neighbourhood || a.quarter || a.hamlet || k.mahalle }));
+    } catch (e) {}
+    let yer = "", tur = "";
+    try {
+      const q = `[out:json][timeout:15];(nwr(around:70,${lat},${lon})[name][shop];nwr(around:70,${lat},${lon})[name][amenity];nwr(around:70,${lat},${lon})[name][tourism];nwr(around:70,${lat},${lon})[name][office];nwr(around:70,${lat},${lon})[name][leisure];);out center 60;`;
+      const sunucular = ["https://overpass.kumi.systems/api/interpreter", "https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"];
+      let d = null;
+      for (const sv of sunucular) { try { const r = await fetch(sv, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(q) }); if (!r.ok) continue; d = await r.json(); if (d && Array.isArray(d.elements)) break; } catch (e2) {} }
+      if (d && d.elements && d.elements.length) {
+        const TUR_AD = { hairdresser: "kuaför", beauty: "güzellik salonu", barber: "berber", bank: "banka", atm: "ATM", hotel: "otel", motel: "motel", guest_house: "pansiyon", hostel: "hostel", restaurant: "restoran", cafe: "kafe", fast_food: "fast-food", pharmacy: "eczane", hospital: "hastane", clinic: "klinik", supermarket: "süpermarket", convenience: "market", mall: "AVM", bakery: "fırın", clothes: "giyim mağazası", jewelry: "kuyumcu", fuel: "benzin istasyonu", school: "okul", university: "üniversite", post_office: "postane" };
+        const R = 6371000, rad = (x) => (x * Math.PI) / 180;
+        let enYakin = null, enM = Infinity;
+        d.elements.forEach((el) => {
+          const tg = el.tags || {}; if (!tg.name) return;
+          const plat = el.lat != null ? el.lat : (el.center && el.center.lat);
+          const plon = el.lon != null ? el.lon : (el.center && el.center.lon);
+          if (plat == null || plon == null) return;
+          const dLat = rad(plat - lat), dLon = rad(plon - lon);
+          const aa = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat)) * Math.cos(rad(plat)) * Math.sin(dLon / 2) ** 2;
+          const m = R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+          if (m < enM) { enM = m; enYakin = tg; }
+        });
+        if (enYakin) { yer = enYakin.name; const tp = enYakin.shop || enYakin.amenity || enYakin.tourism || enYakin.office || enYakin.leisure || ""; tur = TUR_AD[tp] || tp.replace(/_/g, " "); }
+      }
+    } catch (e) {}
+    const bilgi = { adres, yer, tur, lat, lon };
+    anlikYerRef.current = bilgi; setAnlikYer(bilgi);
   }
+  // AYARLAR: "Gloxoo tam konumumu bilsin" AÇ/KAPAT. AÇARKEN izin ister (watchPosition → tarayıcı sorar). Tercih localStorage'da tutulur.
+  function tamKonumToggle() {
+    const yeni = !tamKonumIzinRef.current;
+    if (yeni && !navigator.geolocation) { setAyarMsg(t("ayarKonumYok", "Cihaz konumu desteklemiyor")); setTimeout(() => setAyarMsg(""), 2500); return; }
+    if (yeni) {
+      // hemen bir kez dene (izin penceresi çıksın); watch etkisi asıl takibi başlatır
+      try { navigator.geolocation.getCurrentPosition((pos) => { konumCozVeMekan(pos.coords.latitude, pos.coords.longitude, true); setAyarMsg(t("ayarTamKonumAcik", "Gloxoo artık tam konumunu biliyor ✓")); setTimeout(() => setAyarMsg(""), 3000); }, (err) => { if (err && err.code === 1) { setTamKonumIzin(false); try { localStorage.setItem("groxTamKonum", "0"); } catch (e) {} setAyarMsg(t("ayarKonumIzinYok", "Konum izni verilmedi — tarayıcı/telefon ayarından izin ver")); setTimeout(() => setAyarMsg(""), 4000); } }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }); } catch (e) {}
+    } else {
+      anlikYerRef.current = null; setAnlikYer(null);
+      setAyarMsg(t("ayarTamKonumKapali", "Tam konum kapatıldı")); setTimeout(() => setAyarMsg(""), 2500);
+    }
+    setTamKonumIzin(yeni); try { localStorage.setItem("groxTamKonum", yeni ? "1" : "0"); } catch (e) {}
+  }
+  // TAM KONUM AÇIK iken SÜREKLİ TAKİP (watchPosition): kullanıcı hareket ettikçe şehir/ilçe/mekân TAZELENİR (başka şehre gidince Gloxoo bilir).
+  useEffect(() => {
+    if (!tamKonumIzin || !navigator.geolocation) return;
+    let iptal = false;
+    const id = navigator.geolocation.watchPosition((pos) => {
+      if (iptal) return;
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      setKonum((k) => ({ ...k, lat, lon }));
+      konumCozVeMekan(lat, lon, false);
+    }, () => {}, { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 });
+    konumTakipRef.current.id = id;
+    return () => { iptal = true; try { navigator.geolocation.clearWatch(id); } catch (e) {} };
+  }, [tamKonumIzin]); // eslint-disable-line react-hooks/exhaustive-deps
   const maskotTanitYap = (oto) => {
     setMaskotTur("grox");
     const ad = hitapAdi() || "dostum";
@@ -2153,10 +2177,11 @@ export default function Anasayfa({ pro = false }) {
     if (konum.lat != null && konum.lon != null) sistem += `KULLANICININ GERÇEK KONUMU (haritadan/GPS): ${myTamKonum || konum.kod}. Dahili koordinat ${konum.lat.toFixed(5)},${konum.lon.toFixed(5)} — bu SADECE harita linki içindir; kullanıcıya ASLA rakamla koordinat SÖYLEME, konumu normal kelimelerle anlat (mahalle/şehir/ülke). Konum burada ne yazıyorsa ODUR; başka şehir/ülke UYDURMA. ÖNEMLİ: Kullanıcı "konumumu aç/göster", "haritada göster", "neredeyim haritada" derse SAYFA AÇMA komutu KULLANMA; bunun yerine kısa bir cümle + [HARITA: Konumum | ${konum.lat.toFixed(5)},${konum.lon.toFixed(5)}] etiketi koy (bu, haritada konumunu açan düğmeye dönüşür). `;
     if (etraf) sistem += `KULLANICININ YAKIN ÇEVRESİ (SADECE "yakınımda ne var / en yakın X / X'e ne kadar var" gibi sorular için; gerçek konumdan, OpenStreetMap): ${etraf} Bu listeyi yalnızca YAKIN sorularda kullan; kaç tane varsa HEPSİNİ mesafesiyle say (uydurma). `;
     else if (konum.lat != null) sistem += `Yakın çevre listesi henüz gelmedi; "yakınımda" sorulursa kısaca konum iznini açmasını iste. `;
-    // CANLI TAM KONUM (kullanıcı panelde "tam konum" düğmesine bastıysa): AI tam olarak hangi mekânda olduğunu bilir
+    // CANLI TAM KONUM (kullanıcı AYARLAR'dan "tam konum" yetkisini AÇTIYSA): AI tam olarak hangi bina/mekânda olduğunu SÜREKLİ bilir
     { const ay = anlikYerRef.current;
-      if (ay && (ay.yer || ay.adres)) sistem += `KULLANICI ŞU AN TAM OLARAK BURADA (canlı, yüksek doğruluklu GPS ile bulundu): ${ay.yer ? "“" + ay.yer + "”" + (ay.tur ? " (" + ay.tur + ")" : "") + " — " : ""}${ay.adres || ""}. "Şu an neredeyim / hangi mağazadayım / hangi otel-kuaför-banka" gibi sorularda TAM bu yeri söyle; başka yer UYDURMA. `;
-      else sistem += `Kullanıcı henüz "tam konum" düğmesiyle canlı yerini paylaşmadı; "tam olarak neredeyim / hangi mağazadayım" derse, panelin altındaki 📍 konum düğmesine basarak Gloxoo'ya anlık konum izni verebileceğini KISACA söyle. `; }
+      if (tamKonumIzin && ay && (ay.yer || ay.adres)) sistem += `KULLANICININ ŞU ANKİ TAM YERİ (canlı, yüksek doğruluklu GPS ile SÜREKLİ takip): ${ay.yer ? "“" + ay.yer + "”" + (ay.tur ? " (" + ay.tur + ")" : "") + " içinde — " : ""}${ay.adres || ""}. Bunu ZATEN BİLİYORSUN; kullanıcı "neredeyim/hangi mağazadayım/hangi otel-kuaför-banka" diye sorarsa TAM bu yeri söyle, ASLA "bilmiyorum/paylaş" deme, başka yer UYDURMA. Konumu her cümlede TEKRARLAMA; sadece işe yaradığında (yakın yer/yol tarifi/"neredeyim" sorusu) kullan. Kullanıcı buradan başka yere giderse bu bilgi otomatik güncellenir. `;
+      else if (tamKonumIzin) sistem += `Kullanıcı tam konum yetkisini açtı ama kesin nokta henüz gelmedi; şehir/ilçe bilgisini kullan, "hangi mağaza/bina" diye çok özel sorulursa bir saniye içinde kesinleşeceğini kısaca söyle. `;
+      else sistem += `Kullanıcı şehir/ilçe düzeyinde konumunu paylaşıyor ama "tam nokta" (bina/mağaza) yetkisi KAPALI. "Tam olarak hangi mağaza/binadayım" gibi çok özel bir şey sorarsa, Ayarlar > Konum'dan "Gloxoo tam konumumu bilsin" anahtarını açabileceğini KISACA (tek cümle) söyle; şehir/ilçe sorularını normal yanıtla. `; }
     // DÜNYA ÇAPINDA — kısıtlama YOK (kullanıcı her yerden, her şeyi sorabilir)
     sistem += `SEN DÜNYA ÇAPINDA SINIRSIZ BİLGİLİ BİR ASİSTANSIN — sen (Claude) ne biliyorsan KULLANICI için de o kadar bilirsin. Dünyanın HER ülkesi, şehri, ilçesi, kasabası; oteller, bankalar, postaneler, marketler, restoranlar, hastaneler, fabrikalar, üreticiler, markalar, üniversiteler, müzeler, tarihî yerler, güzergâhlar — bildiğin HER ŞEYİ söyle ve yardım et. "Bunu bilmiyorum", "veremiyorum", "yapamıyorum", "sadece yakını biliyorum", "elimde sadece şu şehirler var" gibi şeyleri ASLA deme; bilginle gerçek isimler ver. Kullanıcı bir güzergâh/yolculuk anlatırsa (örn "Vilnius'tan Mykolaiv/Nikolayev'e gideceğim, yolda otel"), o güzergâh ve VARIŞ şehri için GERÇEK otel/yer isimleri öner ve her biri için [HARITA: Yer adı | Şehir, Ülke] etiketi koy (UZAK/dünya yerlerinde koordinat yerine YER ADINI yaz, örn [HARITA: Hotel Reikartz Mykolaiv | Mykolaiv, Ukrayna]; yakın yerlerde yukarıdaki listenin koordinatını kullan). Birden çok yer için birden çok [HARITA:] koy. Bu platform TÜM DÜNYAYA hizmet eder, kimseye özel kısıt YOKTUR. SADECE gerçek zamanlı/bugünkü anlık haber-fiyat gibi şeyleri canlı bilemezsin; onun dışında her şeyi bilir ve yardım edersin. `;
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
@@ -5081,11 +5106,7 @@ export default function Anasayfa({ pro = false }) {
                     ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>
                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM22 9l-5 6M17 9l5 6"/></svg>}
                 </button>
-                {/* TAM KONUM — Gloxoo'ya anlık konum izni ver (yüksek doğruluklu GPS → tam nerede olduğunu bilir: mağaza/otel/kuaför/banka).
-                    Kapalı=altın pin, alınıyor=nabız, açık=yeşil (canlı konum aktif). */}
-                <button className={"ai-ses ai-konum" + (konumDurum === "acik" ? " acik" : konumDurum === "aliniyor" ? " yukleniyor" : "")} onClick={tamKonumBul} aria-label={t("tamKonum", "Tam konum")} title={t("tamKonum", "Tam konum")}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
-                </button>
+                {/* (TAM KONUM düğmesi buradan KALDIRILDI — artık AYARLAR > Konum'da AÇ/KAPAT anahtarı; Gloxoo sürekli bilir.) */}
                 {/* AI DİL SEÇİCİ — düğmelerin yanında, YUKARI açılır; öğeler: ÜLKE KODU · ülke adı */}
                 <div className="ai-dil-sar">
                   <button className="ai-ses ai-dil-btn" onClick={() => setAiDilAcik((v) => !v)} aria-label={t("aiDil", "AI dili")}>
@@ -5107,8 +5128,6 @@ export default function Anasayfa({ pro = false }) {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
               </div>
-              {/* TAM KONUM onay/bilgi metni (kısa süre) — bulunan mekân/adres burada görünür */}
-              {konumMsg && <div className={"ai-konum-msg" + (konumDurum === "acik" ? " ok" : "")}>{konumMsg}</div>}
               {/* KONUŞMA KONTROL — Gloxoo konuşurken çıkar: Duraklat/Devam + Sus (kullanıcı isteği) */}
               {(aiKonusuyor || aiDuraklat) && (
                 <div className="ai-konus-kontrol">
@@ -5328,6 +5347,19 @@ export default function Anasayfa({ pro = false }) {
                 </AyarBolum>
 
                 <AyarBolum acik={ayarBolum==="konum"} onTik={()=>setAyarBolum(b=>b==="konum"?null:"konum")} renk="#e0202c" ad={t("ayarKonum", "Konum / Adres")} ikon="📍" onAcBilgi={setAciklama} bilgi={t("aciklamaKonum", "İşini nerede yaptığını ayarla. 'Konumumu bul' otomatik doldurur ya da 'Haritada bul' ile haritadan seçersin. Alanları kendin de yazabilirsin. Adres profilinde/aramada konumun olarak kullanılır.")}>
+                  {/* GLOXOO TAM KONUM YETKİSİ — AÇ/KAPAT. Açıkken Gloxoo her an tam yerini bilir (şehir/ilçe + bina + içindeki mekân), hareket ettikçe tazelenir. */}
+                  <div className="ayar-konum-yetki">
+                    <div className="akyet-metin">
+                      <b>📍 {t("ayarTamKonumBaslik", "Gloxoo tam konumumu bilsin")}</b>
+                      <span>{t("ayarTamKonumAcik2", "Açıkken Gloxoo her an tam yerini bilir: şehir/ilçe + bina, hatta içinde bulunduğun mağaza/otel/kuaför/banka. Sorularına konumuna göre net cevap verir; başka şehre gidince otomatik günceller. İstediğin an kapatabilirsin.")}</span>
+                    </div>
+                    <button type="button" role="switch" aria-checked={tamKonumIzin} className={"akyet-switch" + (tamKonumIzin ? " acik" : "")} onClick={tamKonumToggle} aria-label={t("ayarTamKonumBaslik", "Gloxoo tam konumumu bilsin")}>
+                      <span className="akyet-top" />
+                    </button>
+                  </div>
+                  {tamKonumIzin && anlikYer && (anlikYer.yer || anlikYer.adres) && (
+                    <div className="ayar-konum-anlik">📍 {anlikYer.yer ? anlikYer.yer + (anlikYer.tur ? " (" + anlikYer.tur + ")" : "") : (anlikYer.adres || "").split(",").slice(0, 3).join(",")}</div>
+                  )}
                   <p className="ayar-not">{t("ayarKonumNot", "İşini nerede yapıyorsun? Haritada bir yere dokun → adres altta çıkar (kopyala ya da 'Şeritlere yaz'). 'Konumumu bul' alanları doldurur. Alanları kendin de yazabilirsin.")}</p>
                   <div className="ayar-konum-dugmeler">
                     <button className="ayar-btn ayar-btn-konum" onClick={ayarKonumBul}>📍 {t("ayarKonumBul", "Konumumu bul")}</button>
