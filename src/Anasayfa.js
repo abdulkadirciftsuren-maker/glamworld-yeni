@@ -1004,18 +1004,19 @@ export default function Anasayfa({ pro = false }) {
     }
     setTamKonumIzin(yeni); try { localStorage.setItem("groxTamKonum", yeni ? "1" : "0"); } catch (e) {}
   }
-  // TAM KONUM AÇIK iken SÜREKLİ TAKİP (watchPosition): kullanıcı hareket ettikçe şehir/ilçe/mekân TAZELENİR (başka şehre gidince Gloxoo bilir).
+  // TAM KONUM AÇIK iken SÜREKLİ TAKİP: watchPosition HAREKET ettikçe tetiklenir; SABİT dururken tetiklenmediği için
+  // ayrıca PERİYODİK (25 sn) bir yoklama yapılır → mekân/adres ilk kez de gelir, taze kalır (başka şehre gidince güncellenir).
   useEffect(() => {
     if (!tamKonumIzin || !navigator.geolocation) return;
     let iptal = false;
-    const id = navigator.geolocation.watchPosition((pos) => {
-      if (iptal) return;
-      const lat = pos.coords.latitude, lon = pos.coords.longitude;
-      setKonum((k) => ({ ...k, lat, lon }));
-      konumCozVeMekan(lat, lon, false);
-    }, () => {}, { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 });
+    const isle = (pos) => { if (iptal) return; const lat = pos.coords.latitude, lon = pos.coords.longitude; setKonum((k) => ({ ...k, lat, lon })); konumCozVeMekan(lat, lon, false); };
+    const id = navigator.geolocation.watchPosition(isle, () => {}, { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 });
     konumTakipRef.current.id = id;
-    return () => { iptal = true; try { navigator.geolocation.clearWatch(id); } catch (e) {} };
+    // hemen bir kez + her 25 sn'de bir yokla (sabit dururken bile en az bir kez kesin adres/mekân gelsin)
+    const yokla = () => { if (iptal) return; navigator.geolocation.getCurrentPosition(isle, () => {}, { enableHighAccuracy: true, timeout: 12000, maximumAge: 20000 }); };
+    yokla();
+    const zmn = setInterval(yokla, 25000);
+    return () => { iptal = true; clearInterval(zmn); try { navigator.geolocation.clearWatch(id); } catch (e) {} };
   }, [tamKonumIzin]); // eslint-disable-line react-hooks/exhaustive-deps
   const maskotTanitYap = (oto) => {
     setMaskotTur("grox");
@@ -2148,6 +2149,19 @@ export default function Anasayfa({ pro = false }) {
     const yeniListe = [...listeAl, { rol: "user", metin: soru, foto, ek, zamanMs: Date.now(), konum: myTamKonum || konum.kod }];
     setListe(yeniListe); setYardimciYazi(""); setYardimciFoto(null); setYardimciEk(null); setYardimciYukleniyor(true);
     aiAltaKay();
+    // TAM KONUM AÇIKSA: cevaptan ÖNCE anlık yeri (adres+mekân) KESİNLEŞTİR — watchPosition sabit dururken tetiklenmeyebilir,
+    // bu yüzden burada TAZE bir GPS + adres çözümü yapılır ki Gloxoo "neredeyim"e TAM cevap versin (henüz yoksa zorla).
+    if (tamKonumIzin && navigator.geolocation) {
+      try {
+        const konumSoz = new Promise((coz) => {
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => { try { await konumCozVeMekan(pos.coords.latitude, pos.coords.longitude, !anlikYerRef.current); } catch (e) {} coz(); },
+            () => coz(), { enableHighAccuracy: true, timeout: 8000, maximumAge: 20000 });
+        });
+        // en fazla ~8.5 sn bekle (AI cevabını çok geciktirme); gelirse anlikYerRef güncel olur
+        await Promise.race([konumSoz, new Promise((c) => setTimeout(c, 8500))]);
+      } catch (e) {}
+    }
     const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", ru: "Rusça (Русский)", ar: "Arapça (العربية)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)", uk: "Ukraynaca (Українська)" }[aiDilRef.current] || "Türkçe";
     // Zaman + ad ÖNCEDEN hesaplanır ve promptun BAŞINA konur (köprü 2000'de kesse bile AI saati/tarihi BİLİR)
     const aiAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || hitapAdi() || ""; // e-postayı isim yapma
