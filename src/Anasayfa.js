@@ -862,6 +862,11 @@ export default function Anasayfa({ pro = false }) {
   const yardimciDosyaRef = useRef(null);
   const mediaRecorderRef = useRef(null);  // ses kaydedici (Whisper'a gönderilir)
   const sesParcaRef = useRef([]);          // kaydedilen ses parçaları
+  // GÖRÜNTÜLÜ CANLI SOHBET: kamera açık → Gloxoo seni ve çevreni GÖRÜR (her konuşmada kare çekilip AI'ya eklenir), sesli konuşur
+  const [kameraAcik, setKameraAcik] = useState(false);
+  const kameraModRef = useRef(false);      // görüntülü mod açık mı (async okunur)
+  const kameraStreamRef = useRef(null);    // kamera akışı (kapatınca durdurulur)
+  const kameraVideoRef = useRef(null);     // self-view <video> elemanı (kare buradan çekilir)
   const recognitionRef = useRef(null);     // CANLI DİKTE (tarayıcı SpeechRecognition) — konuştukça şeride yazar
   const dikteBazRef = useRef("");          // dikte başlarken şeritte olan metin (üzerine eklenir)
   const dikteAcikRef = useRef(false);      // canlı dikte açık mı (onend'de yeniden başlat için)
@@ -2190,13 +2195,15 @@ export default function Anasayfa({ pro = false }) {
     sistem += `ŞU ANKİ GERÇEK TARİH VE SAAT: ${simdiStr}${tzAd ? " (" + tzAd + ")" : ""}${myAd ? ", " + myAd + " yerel saati" : ""}.${saatNet ? " Saat tam olarak " + saatNet + " (24 saat biçimi)." : ""} Bu, YAZ/KIŞ saati farkı ZATEN uygulanmış kesin yerel saattir; üstüne ASLA saat ekleme/çıkarma yapma, "kış saati/yaz saati/tarife/şu an aslında saat şu" diye DÜZELTME yapma, başka saat dilimine çevirme, kendi kafandan saat HESAPLAMA — sadece yukarıda yazan saati birebir söyle. Saat kaç, bugün ne, hangi gün gibi sorulursa MUTLAKA tam bunu söyle; ASLA "bilmiyorum" deme, asla eski/yanlış tarih uydurma.${zamanBilgi} Kullanıcının adı: ${aiAd || "değerli üye"}; ismini HER cümlede DEĞİL, ara sıra (uygun olunca "${(aiAd || "").split(" ")[0] || "değerli üye"} Bey/Hanım" gibi) kullan. KULLANICIYA ASLA E-POSTA ADRESİYLE HİTAP ETME (örn "kadirciftsuren@..." deme); sadece yukarıdaki İSMİ kullan, isim yoksa "değerli üye" de. Tonunu/üslubunu konuşmanın havasına göre ayarla (samimi, ciddi, neşeli). `;
     // KONUM + YAKIN ÇEVRE (başa alındı — kesilmez): AI gerçek yeri ve etrafı bilsin
     if (konum.lat != null && konum.lon != null) sistem += `KULLANICININ GERÇEK KONUMU (GPS): ${myTamKonum || konum.kod}. Konumu normal kelimelerle anlat (mahalle/şehir/ülke); ASLA rakamla koordinat söyleme. Konum burada ne yazıyorsa ODUR; başka şehir/ülke UYDURMA. ÖNEMLİ: Kullanıcı "neredeyim" diye sorunca HARİTA/harita düğmesi/[HARITA] etiketi KOYMA, "haritada göster" deme — kullanıcı harita İSTEMİYOR; sadece KELİMELERLE, sohbet ederek nerede olduğunu ve orayı anlat (aşağıdaki TAM YER bilgisini kullan). `;
-    if (etraf) sistem += `KULLANICININ YAKIN ÇEVRESİ (SADECE "yakınımda ne var / en yakın X / X'e ne kadar var" gibi sorular için; gerçek konumdan, OpenStreetMap): ${etraf} Bu listeyi yalnızca YAKIN sorularda kullan; kaç tane varsa HEPSİNİ mesafesiyle say (uydurma). `;
+    if (etraf) sistem += `KULLANICININ ÇEVRESİ / MANZARASI (gerçek GPS konumundan, OpenStreetMap — yer + mesafe): ${etraf} BUNU KULLAN: kullanıcı "etrafımda ne var / ne görüyorsun / neredeyim / burası nasıl bir yer / yakınımda ne var / en yakın X" derse buradaki bilgiyle DOĞAL, sohbet gibi anlat — özellikle EN YAKIN doğal/çevre öğesini vurgula (örn "Suyun/gölün hemen kenarındasın, arkanda bir orman var, yakınında bir park ve bir kaç kafe var" gibi). Çok yakın (≈100 m ve altı) olanı "hemen kenarında/yanında", uzağı "yakınında/biraz ötede" diye söyle. ASLA "bilmiyorum/göremiyorum" deme; listede ne varsa gerçek isim ve mesafesiyle söyle, UYDURMA. Her cümlede hepsini sayma; sorulana göre en anlamlı 2-4 tanesini seç. `;
     else if (konum.lat != null) sistem += `Yakın çevre listesi henüz gelmedi; "yakınımda" sorulursa kısaca konum iznini açmasını iste. `;
     // CANLI TAM KONUM (kullanıcı AYARLAR'dan "tam konum" yetkisini AÇTIYSA): AI tam olarak hangi bina/mekânda olduğunu SÜREKLİ bilir
     { const ay = anlikYerRef.current;
       if (tamKonumIzin && ay && (ay.yer || ay.adres)) sistem += `KULLANICININ ŞU ANKİ TAM YERİ (canlı, yüksek doğruluklu GPS ile SÜREKLİ takip — bunu ZATEN BİLİYORSUN): ${ay.yer ? "İçinde bulunduğu yer: “" + ay.yer + "”" + (ay.tur ? " (" + ay.tur + ")" : "") + ". " : ""}${ay.adres ? "Tam adres: " + ay.adres + ". " : ""}Kullanıcı "neredeyim / şu an neredeyim / hangi mekândayım" diye sorarsa DOĞRUDAN bu yeri söyle (örn "Şu an ${ay.yer || "…"} adlı ${ay.tur || "mekân"}dasın"), ASLA "bilmiyorum / paylaş / haritadan bak" deme, başka yer UYDURMA, koordinat verme, HARİTA düğmesi koyma. ${ay.yer ? "Bu mekân (" + ay.yer + ") hakkında SEN NE BİLİYORSAN (nasıl bir yer, ne yapılır, tarihi/özelliği, çevresi) sohbet ederek anlat; kullanıcı orada oturmuş seninle konuşuyor gibi." : "Sokak/bina adresini bildiğin için çevreyi ve oranın nasıl bir yer olduğunu kelimelerle anlatabilirsin."} Konumu her cümlede TEKRARLAMA; sadece sorulunca ya da işe yaradığında kullan. Kullanıcı başka yere giderse bu bilgi otomatik güncellenir (eski yeri söyleme, en son bilgiyi kullan). `;
       else if (tamKonumIzin) sistem += `Kullanıcı tam konum yetkisini açtı ama kesin nokta henüz gelmedi; şehir/ilçe bilgisini kullan, "hangi mağaza/bina" diye çok özel sorulursa bir saniye içinde kesinleşeceğini kısaca söyle. `;
       else sistem += `Kullanıcı şehir/ilçe düzeyinde konumunu paylaşıyor ama "tam nokta" (bina/mağaza) yetkisi KAPALI. "Tam olarak hangi mağaza/binadayım" gibi çok özel bir şey sorarsa, Ayarlar > Konum'dan "Gloxoo tam konumumu bilsin" anahtarını açabileceğini KISACA (tek cümle) söyle; şehir/ilçe sorularını normal yanıtla. `; }
+    // GÖRÜNTÜLÜ SOHBET: kamera açık → ekteki fotoğraf kullanıcının CANLI kamera görüntüsüdür (kendisi + çevresi)
+    if (kameraModRef.current) sistem += `GÖRÜNTÜLÜ CANLI SOHBET AÇIK: Kullanıcının mesajına EKLİ fotoğraf, ŞU AN kamerasından gelen CANLI görüntüsüdür — onu ve çevresini GÖRÜYORSUN. Karşındaki gerçek kişiymiş gibi, gördüğünü doğal ve sıcak biçimde yorumla: kim/nasıl görünüyor, ne giymiş, arkasında/çevresinde ne var (oda, dışarısı, su, orman, eşyalar). Sorduğunda gördüğünü net söyle ("evet seni görüyorum, ... giymişsin, arkanda ... var" gibi); ASLA "seni göremiyorum/fotoğraf yok" deme. Kısa, samimi, sohbet gibi konuş; her karede aynı şeyleri tekrar sayma, konuşmanın akışına göre yeni/ilginç olanı söyle. Görünüş hakkında kaba/incitici yorum yapma, nazik ve olumlu ol. `;
     // DÜNYA ÇAPINDA — kısıtlama YOK (kullanıcı her yerden, her şeyi sorabilir)
     sistem += `SEN DÜNYA ÇAPINDA SINIRSIZ BİLGİLİ BİR ASİSTANSIN — sen (Claude) ne biliyorsan KULLANICI için de o kadar bilirsin. Dünyanın HER ülkesi, şehri, ilçesi, kasabası; oteller, bankalar, postaneler, marketler, restoranlar, hastaneler, fabrikalar, üreticiler, markalar, üniversiteler, müzeler, tarihî yerler, güzergâhlar — bildiğin HER ŞEYİ söyle ve yardım et. "Bunu bilmiyorum", "veremiyorum", "yapamıyorum", "sadece yakını biliyorum", "elimde sadece şu şehirler var" gibi şeyleri ASLA deme; bilginle gerçek isimler ver. Kullanıcı bir güzergâh/yolculuk anlatırsa (örn "Vilnius'tan Mykolaiv/Nikolayev'e gideceğim, yolda otel"), o güzergâh ve VARIŞ şehri için GERÇEK otel/yer isimleri öner ve her biri için [HARITA: Yer adı | Şehir, Ülke] etiketi koy (UZAK/dünya yerlerinde koordinat yerine YER ADINI yaz, örn [HARITA: Hotel Reikartz Mykolaiv | Mykolaiv, Ukrayna]; yakın yerlerde yukarıdaki listenin koordinatını kullan). Birden çok yer için birden çok [HARITA:] koy. Bu platform TÜM DÜNYAYA hizmet eder, kimseye özel kısıt YOKTUR. SADECE gerçek zamanlı/bugünkü anlık haber-fiyat gibi şeyleri canlı bilemezsin; onun dışında her şeyi bilir ve yardım edersin. `;
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
@@ -2212,7 +2219,12 @@ export default function Anasayfa({ pro = false }) {
       : `Sen Gloxoo'sun — GLOXORG adlı lüks, küresel profesyonel sosyal platformun akıllı kalbi ve yardımcı asistanı. Adın Gloxoo; kendini tanıtırken "Gloxorg dünyasının akıllı kalbi Gloxoo" dersin. Paylaşım yazma, meslek tanıtımı, müşteri bulma gibi konularda yardım et.`;
     if (yardimciBaglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${yardimciBaglam} Soruları büyük olasılıkla bununla ilgili.`;
     sistem += ` KULLANICI BİLGİSİ: ${proUye ? "Profesyonel (kırmızı pırlanta) üye" : "Müşteri (beyaz pırlanta) üye"}${meslekAd ? ", meslek " + meslekAd : ""}, konum ${myTamKonum || konum.kod}${u && u.email ? ", e-posta " + u.email : ""}. Nerede olduğu sorulursa konumu kullan.`;
-    const mesajlar = yeniListe.map((m) => {
+    const sonIdx = yeniListe.length - 1;
+    // GÖRÜNTÜLÜ SOHBET: kamera açıksa (sesli ya da yazılı fark etmez) O ANKİ kareyi al — kullanıcının son mesajına eklenir
+    const kk = (opt && opt.kameraKare) ? opt.kameraKare : (kameraModRef.current ? kameraKare() : null);
+    const mesajlar = yeniListe.map((m, mi) => {
+      // SADECE en son (şu anki) kullanıcı mesajına kamera karesini ekle — geçmişte biriktirme (maliyet/karışıklık olmasın)
+      if (mi === sonIdx && kk && kk.base64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: kk.mediaType || "image/jpeg", data: kk.base64 } }, { type: "text", text: m.metin || "Kameradan beni görüyorsun; buna göre konuş." } ] };
       if (m.foto && m.foto.base64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: m.foto.mediaType || "image/jpeg", data: m.foto.base64 } }, { type: "text", text: m.metin || "Bu görseli incele ve hakkında kısaca konuş." } ] };
       // EK: PDF (AI okur/document), metin dosyası (içeriği yazıya eklenir), video/diğer (AI izleyemez → not)
       if (m.ek) {
@@ -2464,7 +2476,7 @@ export default function Anasayfa({ pro = false }) {
           const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ses: b64, dil: aiDilRef.current }) });
           const veri2 = await r.json(); setYardimciYukleniyor(false);
           const metin = ((veri2 && veri2.metin) || "").trim();
-          if (metin) yardimciGonder(metin, { canli: true }); // cevap sesli okunur → bitince (onend) tekrar dinler
+          if (metin) yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); // görüntülü modda o anki kareyi ekle (Gloxoo seni görür); cevap sesli okunur → bitince tekrar dinler
           else if (canliSohbetRef.current) canliDinle();
         } catch (e) { setYardimciYukleniyor(false); if (canliSohbetRef.current) canliDinle(); }
       };
@@ -2498,12 +2510,46 @@ export default function Anasayfa({ pro = false }) {
     sesliOku(selam);
     if (canliSohbetRef.current) canliDevam(); // karşılama bitince dinlemeye geç (kesintisiz döngü, onend'e bağlı değil)
   };
+  // GÖRÜNTÜLÜ SOHBET: kameradan O ANKİ kareyi JPEG base64 olarak al (AI'nın "görmesi" için)
+  const kameraKare = () => {
+    try {
+      const v = kameraVideoRef.current;
+      if (!v || !v.videoWidth) return null;
+      const en = 640, boy = Math.round(en * (v.videoHeight / v.videoWidth)) || 480;
+      const c = document.createElement("canvas"); c.width = en; c.height = boy;
+      const ctx = c.getContext("2d"); ctx.drawImage(v, 0, 0, en, boy);
+      const url = c.toDataURL("image/jpeg", 0.7);
+      const b64 = (url.split(",")[1]) || "";
+      return b64 ? { base64: b64, mediaType: "image/jpeg" } : null;
+    } catch (e) { return null; }
+  };
+  // GÖRÜNTÜLÜ CANLI SOHBET BAŞLAT: kamera aç (seni + çevreni görür) + sesli canlı sohbeti başlat
+  const kameraBaslat = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setKucukMesaj(t("kameraYok", "Bu cihaz kamerayı desteklemiyor")); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      kameraStreamRef.current = stream;
+      kameraModRef.current = true; setKameraAcik(true);
+      // <video> elemanı render edilince akışı bağla (kısa gecikme ile)
+      setTimeout(() => { try { if (kameraVideoRef.current) { kameraVideoRef.current.srcObject = stream; kameraVideoRef.current.play().catch(() => {}); } } catch (e) {} }, 60);
+      // sesli canlı sohbeti de başlat (görüntülü sohbet = ses + kamera)
+      if (!canliSohbetRef.current) { try { maskotCanliBaslat(); } catch (e) {} }
+    } catch (e) { setKucukMesaj(t("kameraIzin", "Kamera izni gerekli — tarayıcı/telefon ayarından izin ver")); }
+  };
+  const kameraKapat = () => {
+    kameraModRef.current = false; setKameraAcik(false);
+    try { if (kameraStreamRef.current) kameraStreamRef.current.getTracks().forEach((tr) => tr.stop()); } catch (e) {}
+    kameraStreamRef.current = null;
+    try { if (kameraVideoRef.current) kameraVideoRef.current.srcObject = null; } catch (e) {}
+  };
+  const kameraToggle = () => { if (kameraModRef.current) kameraKapat(); else kameraBaslat(); };
   const canliSohbetToggle = () => {
     if (canliSohbetRef.current) { // KAPAT
       canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
       aiKarsiladiRef.current = false;
       try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
       try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
+      // NOT: kamerayı burada KAPATMA — yazı kutusuna dokununca da canlı ses kapanıyor; kamera açık kalsın (sadece ✕ / kamera düğmesi kapatır)
       return;
     }
     canliSohbetRef.current = true; setCanliSohbet(true); setSesliMod(true);
@@ -2981,13 +3027,14 @@ export default function Anasayfa({ pro = false }) {
       "shop=supermarket": "süpermarket", "shop=convenience": "market", "shop=mall": "AVM", "shop=bakery": "fırın", "shop=greengrocer": "manav", "shop=butcher": "kasap",
       "amenity=marketplace": "pazar", "amenity=post_office": "postane", "amenity=pharmacy": "eczane", "amenity=bank": "banka", "amenity=hospital": "hastane", "amenity=clinic": "klinik", "amenity=cafe": "kafe", "amenity=restaurant": "restoran", "amenity=fuel": "benzin istasyonu", "amenity=school": "okul", "amenity=place_of_worship": "ibadethane", "amenity=police": "polis", "amenity=fire_station": "itfaiye",
       "natural=water": "su/göl", "natural=beach": "plaj", "natural=coastline": "deniz kıyısı", "natural=peak": "tepe/dağ",
+      "natural=wood": "orman", "landuse=forest": "orman", "natural=scrub": "çalılık", "natural=grassland": "çayır", "landuse=meadow": "çayır", "landuse=farmland": "tarla", "natural=cliff": "uçurum/kayalık", "natural=wetland": "sulak alan", "natural=bay": "koy", "natural=sand": "kumluk", "landuse=vineyard": "bağ", "landuse=orchard": "meyve bahçesi",
       "waterway=river": "nehir", "waterway=stream": "dere", "waterway=canal": "kanal",
-      "leisure=park": "park",
+      "leisure=park": "park", "leisure=garden": "bahçe", "leisure=nature_reserve": "doğa koruma alanı",
     };
     (async () => {
       try {
         // Market/dükkanlar 1500m (daha çok market yakalanır), su/doğa 3000m. node+way (bazı marketler bina=way).
-        const q = `[out:json][timeout:25];(nwr(around:1500,${lat},${lon})[shop~"^(supermarket|convenience|mall|bakery|greengrocer|butcher|kiosk|department_store)$"];nwr(around:1500,${lat},${lon})[amenity~"^(marketplace|post_office|pharmacy|bank|atm|hospital|clinic|doctors|cafe|restaurant|fast_food|fuel|school|kindergarten|place_of_worship|police|fire_station)$"];nwr(around:1500,${lat},${lon})[leisure~"^(park|playground|sports_centre)$"];way(around:3000,${lat},${lon})[natural~"^(water|beach|coastline|peak)$"];way(around:3000,${lat},${lon})[waterway~"^(river|stream|canal)$"];);out center 200;`;
+        const q = `[out:json][timeout:25];(nwr(around:1500,${lat},${lon})[shop~"^(supermarket|convenience|mall|bakery|greengrocer|butcher|kiosk|department_store)$"];nwr(around:1500,${lat},${lon})[amenity~"^(marketplace|post_office|pharmacy|bank|atm|hospital|clinic|doctors|cafe|restaurant|fast_food|fuel|school|kindergarten|place_of_worship|police|fire_station)$"];nwr(around:1500,${lat},${lon})[leisure~"^(park|playground|sports_centre|garden|nature_reserve)$"];way(around:2500,${lat},${lon})[natural~"^(water|beach|coastline|peak|wood|scrub|grassland|cliff|wetland|bay|sand)$"];way(around:2500,${lat},${lon})[landuse~"^(forest|meadow|farmland|vineyard|orchard)$"];way(around:3000,${lat},${lon})[waterway~"^(river|stream|canal)$"];);out center 200;`;
         // Overpass ana sunucu yoğunsa diye yedek aynalar
         const sunucular = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
         let d = null;
@@ -4931,6 +4978,14 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       )}
+      {/* GÖRÜNTÜLÜ SOHBET — KENDİ GÖRÜNTÜN (self-view): kamera açıkken ekranda küçük pencere; Gloxoo seni buradan görür */}
+      {kameraAcik && (
+        <div className="kamera-self">
+          <video ref={kameraVideoRef} className="kamera-self-vid" autoPlay playsInline muted />
+          <span className="kamera-self-et">{aiKonusuyor ? t("kameraKonusuyor", "Gloxoo konuşuyor…") : dinliyor ? t("kameraDinliyor", "Dinliyorum…") : t("kameraGoruyor", "Seni görüyorum 👀")}</span>
+          <button className="kamera-self-kapat" onClick={kameraKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+        </div>
+      )}
       {yardimciAcik && (
         <div className="ai-fon" onClick={(e) => { if (e.target === e.currentTarget) setYardimciAcik(false); }}>
           <div className={"ai-pencere " + (proUye ? "ai-tema-pro" : "ai-tema-musteri")}>
@@ -5140,6 +5195,10 @@ export default function Anasayfa({ pro = false }) {
                   {sesliMod
                     ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>
                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM22 9l-5 6M17 9l5 6"/></svg>}
+                </button>
+                {/* GÖRÜNTÜLÜ CANLI SOHBET — kamera aç: Gloxoo seni ve çevreni GÖRÜR, sesli konuşur. Açık=yeşil. */}
+                <button className={"ai-ses ai-kamera" + (kameraAcik ? " acik" : "")} onClick={kameraToggle} aria-label={t("goruntuluSohbet", "Görüntülü sohbet")} title={t("goruntuluSohbet", "Görüntülü sohbet")}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                 </button>
                 {/* (TAM KONUM düğmesi buradan KALDIRILDI — artık AYARLAR > Konum'da AÇ/KAPAT anahtarı; Gloxoo sürekli bilir.) */}
                 {/* AI DİL SEÇİCİ — düğmelerin yanında, YUKARI açılır; öğeler: ÜLKE KODU · ülke adı */}
