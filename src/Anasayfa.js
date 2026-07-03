@@ -814,13 +814,14 @@ export default function Anasayfa({ pro = false }) {
   const [ustBoyut, setUstBoyut] = useState("orta"); // kucuk | orta | buyuk
   const [ustYer, setUstYer] = useState("alt");      // ust | orta | alt
   const [aiKonusuyor, setAiKonusuyor] = useState(false); // TTS çalıyor mu — maskot ağzını oynatır
+  const aiKonusuyorRef = useRef(false); // Gloxoo KONUŞUYOR mu (async okunur): konuşurken mikrofon dinlemez (yarı-çift yönlü)
   const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
   const maskotBosRef = useRef(0);
   useEffect(() => {
     const id = setInterval(() => {
       let s = false; try { s = !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (e) {}
-      if (s) { maskotBosRef.current = 0; setAiKonusuyor((p) => (p ? p : true)); }
-      else { maskotBosRef.current++; if (maskotBosRef.current >= 2) setAiKonusuyor((p) => (p ? false : p)); } // 2 boş ölçüm (~400ms) → cümle arası boşlukta titremesin
+      if (s) { maskotBosRef.current = 0; aiKonusuyorRef.current = true; setAiKonusuyor((p) => (p ? p : true)); }
+      else { maskotBosRef.current++; if (maskotBosRef.current >= 2) { aiKonusuyorRef.current = false; setAiKonusuyor((p) => (p ? false : p)); } } // 2 boş ölçüm (~400ms) → cümle arası boşlukta titremesin
     }, 200);
     return () => clearInterval(id);
   }, []);
@@ -2184,7 +2185,7 @@ export default function Anasayfa({ pro = false }) {
       if (ilk && ilk !== onceki) zamanBilgi += ` Bu sohbet ${sureMetni(Math.round((simdiMs - ilk.zamanMs) / 60000))} önce başladı.`;
     } catch (e) {}
     // === KRİTİK KURALLAR EN BAŞTA === (köprü sistem metnini kısaltsa bile bunlar HEP görünür — paylaşım/öneri ayrımı bozulmasın)
-    let sistem = `ÇOK ÖNEMLİ DİL KURALI: Kullanıcı SANA HANGİ DİLDE yazarsa/konuşursa, yanıtını TAM O DİLDE ver. Kullanıcı Rusça yazdıysa tamamen Rusça, Türkçe yazdıysa Türkçe, Arapça ise Arapça, İngilizce ise İngilizce yanıtla — kullanıcının diline UY. "Seni anlamadım", "ben şu dilde konuşurum" gibi şeyler ASLA deme; her dili anlarsın ve o dilde akıcı yanıt verirsin. Dili net anlaşılmıyorsa ${dilAd} kullan. Tek yanıt içinde dilleri KARIŞTIRMA. `;
+    let sistem = `ÇOK ÖNEMLİ DİL KURALI: Yanıtını HER ZAMAN ve SADECE ${dilAd} dilinde ver — uygulamanın ŞU AN seçili dili budur. Sesli konuşmada mikrofon bazen ARKA PLAN GÜRÜLTÜSÜNÜ (araba, rüzgâr, uzaktan gelen sesler) ya da eski bir cümleyi yanlışlıkla BAŞKA bir dile (özellikle İngilizce'ye) çevirebilir; BUNA ALDANMA. Gelen metin karışık, anlamsız ya da başka dilde görünse bile dili DEĞİŞTİRME, İngilizce'ye veya başka dile ASLA geçme — yanıtın DAİMA ${dilAd} olsun. Ne dendiğini anlamadıysan ${dilAd} dilinde kısaca "tam duyamadım, tekrar eder misin?" de; ama başka dile GEÇME. Tek yanıt içinde dilleri KARIŞTIRMA. (Not: kullanıcı uygulama dilini değiştirirse bu talimattaki dil de otomatik değişir; sen her zaman burada yazan dile uyarsın, kendiliğinden dil seçmezsin.) `;
     // ZAMAN/TARİH (erken — kesilmez): AI saati bilsin
     sistem += `ŞU ANKİ GERÇEK TARİH VE SAAT: ${simdiStr}${tzAd ? " (" + tzAd + ")" : ""}${myAd ? ", " + myAd + " yerel saati" : ""}.${saatNet ? " Saat tam olarak " + saatNet + " (24 saat biçimi)." : ""} Bu, YAZ/KIŞ saati farkı ZATEN uygulanmış kesin yerel saattir; üstüne ASLA saat ekleme/çıkarma yapma, "kış saati/yaz saati/tarife/şu an aslında saat şu" diye DÜZELTME yapma, başka saat dilimine çevirme, kendi kafandan saat HESAPLAMA — sadece yukarıda yazan saati birebir söyle. Saat kaç, bugün ne, hangi gün gibi sorulursa MUTLAKA tam bunu söyle; ASLA "bilmiyorum" deme, asla eski/yanlış tarih uydurma.${zamanBilgi} Kullanıcının adı: ${aiAd || "değerli üye"}; ismini HER cümlede DEĞİL, ara sıra (uygun olunca "${(aiAd || "").split(" ")[0] || "değerli üye"} Bey/Hanım" gibi) kullan. KULLANICIYA ASLA E-POSTA ADRESİYLE HİTAP ETME (örn "kadirciftsuren@..." deme); sadece yukarıdaki İSMİ kullan, isim yoksa "değerli üye" de. Tonunu/üslubunu konuşmanın havasına göre ayarla (samimi, ciddi, neşeli). `;
     // KONUM + YAKIN ÇEVRE (başa alındı — kesilmez): AI gerçek yeri ve etrafı bilsin
@@ -2382,7 +2383,7 @@ export default function Anasayfa({ pro = false }) {
         if (!b64) return;
         setYardimciYukleniyor(true);
         try {
-          const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ses: b64 }) });
+          const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ses: b64, dil: aiDilRef.current }) });
           const veri = await r.json();
           setYardimciYukleniyor(false);
           const metin = ((veri && veri.metin) || "").trim();
@@ -2410,6 +2411,9 @@ export default function Anasayfa({ pro = false }) {
   const canliDinle = async () => {
     if (!canliSohbetRef.current) return;
     if (mediaRecorderRef.current) return; // zaten dinliyor (çift kayıt olmasın)
+    // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
+    // Konuşma bitince canliDevam otomatik tekrar dinlemeye geçirir (kullanıcının düğmesi otomatik açılır).
+    if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     try {
       // UZAK/DERİN SESLERİ ELE: gürültü engelleme + yankı iptali + oto-kazanç KAPALI (uzak sesler yükseltilmesin)
@@ -2417,13 +2421,15 @@ export default function Anasayfa({ pro = false }) {
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr; sesParcaRef.current = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) sesParcaRef.current.push(e.data); };
-      let ac, raf, konustu = false, sessizBas = 0, yuksek = 0; const basT = Date.now();
+      let ac, raf, konustu = false, sessizBas = 0, yuksek = 0, ttsKesti = false; const basT = Date.now();
       try {
         ac = new (window.AudioContext || window.webkitAudioContext)();
         const src = ac.createMediaStreamSource(stream); const an = ac.createAnalyser(); an.fftSize = 1024; src.connect(an);
         const veri = new Uint8Array(an.fftSize);
         const izle = () => {
           if (!mr || mr.state !== "recording") return;
+          // Kayıt sırasında GLOXOO KONUŞMAYA BAŞLADIYSA (ör. sesli okuma) → kaydı hemen bırak, GÖNDERME; TTS bitince tekrar dinlenir.
+          if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { ttsKesti = true; konustu = false; try { mr.stop(); } catch (e) {} return; }
           an.getByteTimeDomainData(veri);
           let rms = 0; for (let i = 0; i < veri.length; i++) { const v = (veri[i] - 128) / 128; rms += v * v; } rms = Math.sqrt(rms / veri.length);
           const simdi = Date.now();
@@ -2443,12 +2449,19 @@ export default function Anasayfa({ pro = false }) {
         // CANLI bu sırada KAPANDIYSA (dikte mikrofonuna basıldı vb.) tamponlanan sesi GÖNDERME, AT (yukarı yollayıp geri çekme olmasın)
         if (!canliSohbetRef.current) return;
         const blob = new Blob(sesParcaRef.current, { type: mr.mimeType || "audio/webm" });
-        if (!konustu || !blob.size) { if (canliSohbetRef.current) { setKucukMesaj(t("duyamadim", "Seni duyamadım — biraz daha yüksek konuş 🎤")); canliDinle(); } return; }
+        if (!konustu || !blob.size) {
+          if (canliSohbetRef.current) {
+            // TTS yüzünden kesildiyse "duyamadım" DEME (Gloxoo konuşuyordu); TTS bitince canliDevam tekrar dinletir. Sessizlikse normal uyar + tekrar dinle.
+            if (ttsKesti || aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { canliDevam(); }
+            else { setKucukMesaj(t("duyamadim", "Seni duyamadım — biraz daha yüksek konuş 🎤")); canliDinle(); }
+          }
+          return;
+        }
         const b64 = await new Promise((res) => { const fr = new FileReader(); fr.onloadend = () => res(((fr.result || "") + "").split(",")[1] || ""); fr.readAsDataURL(blob); });
         if (!b64) { if (canliSohbetRef.current) canliDinle(); return; }
         setYardimciYukleniyor(true);
         try {
-          const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ses: b64 }) });
+          const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ses: b64, dil: aiDilRef.current }) });
           const veri2 = await r.json(); setYardimciYukleniyor(false);
           const metin = ((veri2 && veri2.metin) || "").trim();
           if (metin) yardimciGonder(metin, { canli: true }); // cevap sesli okunur → bitince (onend) tekrar dinler
@@ -2511,9 +2524,10 @@ export default function Anasayfa({ pro = false }) {
   // SUS — konuşmayı tamamen keser (sen hemen konuşabilirsin); canlı modda dinlemeye geçer
   const sesSus = () => {
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    aiKonusuyorRef.current = false; setAiKonusuyor(false); // Gloxoo sustu → mikrofon otomatik açılabilir (senin düğmen açılır)
     setAiDuraklat(false);
     try { okuTemizle(); } catch (e) {}
-    if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // sustuktan sonra SENİ dinle
+    if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // sustuktan sonra SENİ dinle (otomatik)
   };
   // MÜŞTERİ → Profesyonele yönlendirme: kısa açıklama (AI hakkı bitti, yeni istek atmadan) + menüyü aç
   const proYukselt = () => {
