@@ -2110,43 +2110,56 @@ export default function Anasayfa({ pro = false }) {
     rd.readAsDataURL(f);
     e.target.value = "";
   };
-  // CANLI GÜNCEL HABER / FUTBOL — Google Haberler RSS'ten O ANKİ başlıkları çeker (CORS köprüsü ile).
-  // Gloxoo'ya bağlam olarak verilir → "bugün ne oldu / haberler / futbol skor" gibi GÜNCEL soruları yanıtlar.
+  // CANLI GÜNCEL HABER / FUTBOL — birden çok haber kaynağı (Google + Yahoo News RSS) ve birden çok CORS köprüsü dener;
+  // biri çalışırsa başlıkları döndürür. Gloxoo'ya bağlam olur → güncel soruları GERÇEK başlıklarla yanıtlar (uydurmaz).
+  function haberBasliklariCoz(xml) {
+    const out = []; if (!xml) return out;
+    const re = /<item[\s>][\s\S]*?<\/item>/gi; let m;
+    while ((m = re.exec(xml)) && out.length < 14) {
+      const blok = m[0];
+      const tm = blok.match(/<title>\s*(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?\s*<\/title>/i);
+      const pm = blok.match(/<pubDate>([\s\S]*?)<\/pubDate>/i);
+      if (!tm || !tm[1]) continue;
+      const baslik = tm[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
+      if (!baslik || baslik.length < 8) continue;
+      let ne = "";
+      if (pm) { try { const d = new Date(pm[1].trim()); const dk = Math.round((Date.now() - d.getTime()) / 60000); if (dk >= 0 && dk < 20160) ne = dk < 60 ? dk + " dk önce" : dk < 1440 ? Math.round(dk / 60) + " saat önce" : Math.round(dk / 1440) + " gün önce"; } catch (e) {} }
+      out.push(`• ${baslik}${ne ? " — " + ne : ""}`);
+    }
+    return out;
+  }
   async function guncelHaberAra(soru) {
     try {
       const hl = ((aiDilRef.current || dil || "tr") + "").split("-")[0];
       const gl = ((konum && konum.kod) || "TR").toUpperCase();
       const dusuk = (soru || "").toLowerCase();
-      // Genel gündem mi (top haberler) yoksa belirli konu/futbol araması mı?
       const genelMi = /\b(haber|haberler|gündem|son dakika|ne oldu|ne olmuş|neler ol|bugün ne|dünyada|news|headline|breaking|today|новости|nachrichten)\b/i.test(dusuk)
-        && !/futbol|maç|skor|sonuç|gol|lig|puan|transfer|şampiyon|takım|football|soccer|match|score|result|league|матч|fußball|[A-ZÇĞİÖŞÜ][a-zçğıöşü]{3,}spor/i.test(soru || "");
+        && !/futbol|maç|skor|sonuç|gol|lig|puan|transfer|şampiyon|takım|dünya kupası|fifa|derbi|football|soccer|match|score|result|league|матч|fußball/i.test(soru || "");
       const arama = (soru || "").replace(/\s+/g, " ").trim().slice(0, 90);
-      const rss = genelMi
-        ? `https://news.google.com/rss?hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`
-        : `https://news.google.com/rss/search?q=${encodeURIComponent(arama + " when:3d")}&hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`;
-      const proksiler = [
-        "https://api.allorigins.win/raw?url=" + encodeURIComponent(rss),
-        "https://corsproxy.io/?url=" + encodeURIComponent(rss),
-        "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(rss),
+      // KAYNAKLAR: Google News + Yahoo News (biri engellenirse diğeri) — hem genel hem aramalı
+      const kaynaklar = genelMi
+        ? [`https://news.google.com/rss?hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`, `https://news.search.yahoo.com/rss?p=${encodeURIComponent((konum && konum.sehir ? konum.sehir + " " : "") + "son dakika haberler")}`]
+        : [`https://news.google.com/rss/search?q=${encodeURIComponent(arama + " when:4d")}&hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`, `https://news.search.yahoo.com/rss?p=${encodeURIComponent(arama)}`];
+      // PROKSİLER: her kaynağı farklı köprülerle dene (allorigins/get JSON, Jina reader, corsproxy, codetabs)
+      const sar = (u) => [
+        "https://api.allorigins.win/get?url=" + encodeURIComponent(u),
+        "https://r.jina.ai/" + u,
+        "https://corsproxy.io/?url=" + encodeURIComponent(u),
+        "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u),
+        "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
       ];
-      for (const px of proksiler) {
-        try {
-          const r = await fetch(px);
-          if (!r.ok) continue;
-          const xml = await r.text();
-          if (!xml || xml.indexOf("<item") < 0) continue;
-          const doc = new DOMParser().parseFromString(xml, "text/xml");
-          const items = Array.from(doc.querySelectorAll("item")).slice(0, 12);
-          const list = items.map((it) => {
-            const baslik = ((it.querySelector("title") || {}).textContent || "").trim();
-            const kaynak = ((it.querySelector("source") || {}).textContent || "").trim();
-            const pd = ((it.querySelector("pubDate") || {}).textContent || "").trim();
-            let ne = "";
-            try { const d = new Date(pd); const dk = Math.round((Date.now() - d.getTime()) / 60000); if (dk >= 0) ne = dk < 60 ? dk + " dk önce" : dk < 1440 ? Math.round(dk / 60) + " saat önce" : Math.round(dk / 1440) + " gün önce"; } catch (e) {}
-            return baslik ? `• ${baslik}${kaynak ? " [" + kaynak + "]" : ""}${ne ? " — " + ne : ""}` : "";
-          }).filter(Boolean);
-          if (list.length) return list.join("\n");
-        } catch (e) {}
+      for (const src of kaynaklar) {
+        for (const px of sar(src)) {
+          try {
+            const r = await fetch(px, { headers: px.indexOf("r.jina.ai") >= 0 ? { "x-return-format": "text" } : {} });
+            if (!r.ok) continue;
+            let metin = await r.text();
+            if (px.indexOf("allorigins.win/get") >= 0) { try { const j = JSON.parse(metin); metin = j.contents || ""; } catch (e) {} }
+            if (!metin || metin.indexOf("<item") < 0) continue;
+            const list = haberBasliklariCoz(metin);
+            if (list.length) return list.join("\n");
+          } catch (e) {}
+        }
       }
     } catch (e) {}
     return "";
@@ -2234,13 +2247,13 @@ export default function Anasayfa({ pro = false }) {
         await Promise.race([konumSoz, new Promise((c) => setTimeout(c, 8500))]);
       } catch (e) {}
     }
-    // CANLI HABER/FUTBOL: kullanıcı güncel/haber/futbol/skor sorduysa cevaptan ÖNCE Google Haberler'den taze başlıkları çek (max ~7 sn)
-    let guncelHaber = "";
+    // CANLI HABER/FUTBOL: kullanıcı güncel/haber/futbol/skor sorduysa cevaptan ÖNCE taze başlıkları çek (max ~9 sn)
+    let guncelHaber = "", haberSoruldu = false;
     try {
       const hd = (soru || "").toLowerCase();
-      const haberTetik = /haber|gündem|son dakika|ne oldu|ne olmuş|neler ol|bugün ne|dünyada|güncel|futbol|maç\b|skor|sonuç|gol\b|lig\b|puan|transfer|şampiyon|deprem|seçim|savaş|protesto|zam\b|dolar|euro|borsa|news|latest|today|breaking|headline|happening|football|soccer|match|score|result|league|standings|earthquake|election|новости|сегодня|футбол|матч|счёт|nachrichten|heute|fußball|spiel|ergebnis/i.test(hd);
-      if (haberTetik && !foto && !ek) {
-        guncelHaber = await Promise.race([guncelHaberAra(soru), new Promise((c) => setTimeout(() => c(""), 7000))]);
+      haberSoruldu = /haber|gündem|son dakika|ne oldu|ne olmuş|neler ol|bugün ne|dünyada|güncel|olup biten|futbol|maç\b|skor|sonuç|gol\b|lig\b|puan|transfer|şampiyon|dünya kupası|fifa|derbi|kim kazand|kaç kaç|kaç-kaç|kim önde|deprem|seçim|savaş|protesto|zam\b|dolar|euro|borsa|hava durumu|news|latest|today|breaking|headline|happening|football|soccer|match|score|result|league|standings|world cup|earthquake|election|новости|сегодня|футбол|матч|счёт|nachrichten|heute|fußball|spiel|ergebnis/i.test(hd);
+      if (haberSoruldu && !foto && !ek) {
+        guncelHaber = await Promise.race([guncelHaberAra(soru), new Promise((c) => setTimeout(() => c(""), 9000))]);
       }
     } catch (e) {}
     const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", ru: "Rusça (Русский)", ar: "Arapça (العربية)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)", uk: "Ukraynaca (Українська)" }[aiDilRef.current] || "Türkçe";
@@ -2289,7 +2302,8 @@ export default function Anasayfa({ pro = false }) {
     // DÜNYA ÇAPINDA — kısıtlama YOK (kullanıcı her yerden, her şeyi sorabilir)
     sistem += `SEN DÜNYA ÇAPINDA SINIRSIZ BİLGİLİ BİR ASİSTANSIN — sen (Claude) ne biliyorsan KULLANICI için de o kadar bilirsin. Dünyanın HER ülkesi, şehri, ilçesi, kasabası; oteller, bankalar, postaneler, marketler, restoranlar, hastaneler, fabrikalar, üreticiler, markalar, üniversiteler, müzeler, tarihî yerler, güzergâhlar — bildiğin HER ŞEYİ söyle ve yardım et. "Bunu bilmiyorum", "veremiyorum", "yapamıyorum", "sadece yakını biliyorum", "elimde sadece şu şehirler var" gibi şeyleri ASLA deme; bilginle gerçek isimler ver. Kullanıcı bir güzergâh/yolculuk anlatırsa (örn "Vilnius'tan Mykolaiv/Nikolayev'e gideceğim, yolda otel"), o güzergâh ve VARIŞ şehri için GERÇEK otel/yer isimleri öner ve her biri için [HARITA: Yer adı | Şehir, Ülke] etiketi koy (UZAK/dünya yerlerinde koordinat yerine YER ADINI yaz, örn [HARITA: Hotel Reikartz Mykolaiv | Mykolaiv, Ukrayna]; yakın yerlerde yukarıdaki listenin koordinatını kullan). Birden çok yer için birden çok [HARITA:] koy. Bu platform TÜM DÜNYAYA hizmet eder, kimseye özel kısıt YOKTUR. Gerçek zamanlı/bugünkü anlık haber, futbol skoru, döviz-fiyat gibi şeyleri normalde tek başına bilemezsin AMA aşağıda "GÜNCEL HABER" verilmişse ONU kullanarak güncel yanıt ver (o veriler o an canlı çekildi). `;
     // CANLI HABER/FUTBOL — o an Google Haberler'den çekilen taze başlıklar (varsa): AI bunlarla GÜNCEL yanıtlar
-    if (guncelHaber) sistem += `GÜNCEL HABER BAŞLIKLARI (ŞU AN, ${simdiStr} itibarıyla Google Haberler'den CANLI çekildi — GERÇEK ve TAZE): \n${guncelHaber}\nKullanıcının haber/futbol/güncel sorusunu BU BAŞLIKLARA dayanarak yanıtla: en alakalı 2-5 haberi doğal biçimde özetle/anlat, futbol ise skor/sonuç başlıkta varsa onu ver. "Canlı/güncel bilemem, bilgim eski" ASLA DEME — işte güncel başlıklar. Başlıkta olmayan ayrıntıyı UYDURMA; net bilgi başlıkta yoksa "şu an gelen başlıklarda bu kadarı var" de. Başlıklar hangi dildeyse özetini KULLANICININ diline (${dilAd}) çevirerek anlat. `;
+    if (guncelHaber) sistem += `GÜNCEL HABER BAŞLIKLARI (ŞU AN, ${simdiStr} itibarıyla canlı haber kaynağından çekildi — GERÇEK ve TAZE): \n${guncelHaber}\nKullanıcının haber/futbol/güncel sorusunu BU BAŞLIKLARA dayanarak yanıtla: en alakalı 2-5 haberi doğal biçimde özetle/anlat, futbol ise skor/sonuç başlıkta varsa onu ver. "Canlı/güncel bilemem, bilgim eski" ASLA DEME — işte güncel başlıklar. Başlıkta olmayan ayrıntıyı UYDURMA; net bilgi başlıkta yoksa "şu an gelen başlıklarda bu kadarı var" de. Başlıklar hangi dildeyse özetini KULLANICININ diline (${dilAd}) çevirerek anlat. `;
+    else if (haberSoruldu) sistem += `ÇOK ÖNEMLİ — GÜNCEL VERİ GELMEDİ: Kullanıcı güncel bir şey (haber/futbol skoru/son dakika) sordu ama şu an canlı habere ULAŞILAMADI. Bu durumda SAKIN TAHMİN/UYDURMA yapma: hangi takım kazandı, kaç-kaç bitti, bugün ne oldu gibi GÜNCEL/DEĞİŞKEN bilgiyi UYDURMA, "muhtemelen/sanırım şu oldu" DEME, ESKİ bilgini GÜNCELMİŞ gibi sunma (örn geçmiş bir turnuvayı "şu an oluyor" DEME). Bunun yerine KISA ve dürüst ol: "Şu an güncel habere/skora ulaşamadım 🙏 Birkaç saniye sonra tekrar sorar mısın?" de. İsterse konuyla ilgili GENEL, DEĞİŞMEYEN bilgi verebilirsin (örn "X ligi genelde şöyledir") ama bunu güncel sonuç gibi SUNMA. `;
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
     sistem += `EN ÖNEMLİ KURAL — HAZIRLANAN METİN AYRI: Kullanıcı için bir paylaşım, gönderi, mesaj, şiir, kutlama, ilan, slogan, biyografi veya kopyalanabilir/paylaşılabilir HERHANGİ bir metin hazırladığında (kısa ya da uzun, KAÇINCI kez olursa olsun HER SEFERİNDE), o metni MUTLAKA ve SADECE şu etiketlerin arasına koy: [PAYLASIM]...sadece paylaşılacak metin...[/PAYLASIM]. Bu etiketlerin İÇİNE kendi sohbetini/açıklamanı ASLA yazma; etiket DIŞINDAki sözün en fazla TEK kısa cümle olsun. Hazırladığın metin ŞIK, canlı, SÜSLÜ olsun: bol emoji + çiçek/yıldız süsleri (🌸✨🌟💫🎉), sönük/düz değil. ÖRNEK: kullanıcı "bana doğum günü paylaşımı yaz" derse yanıtın TAM şöyle: Hazır! 🎉 [PAYLASIM]🎂✨ Nice mutlu yıllara! Bugün senin günün! 🥳🌸[/PAYLASIM]. UNUTMA: paylaşılacak/kopyalanacak metin SADECE [PAYLASIM][/PAYLASIM] arasında olur; etiketi koymayı ASLA unutma yoksa kullanıcı kopyalayamaz. `;
     // 2) TIKLANABİLİR ÖNERİLER (ayrı)
