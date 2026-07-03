@@ -2535,6 +2535,17 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ayar-input option{ color:#111; }
 .ayar-btn{ align-self:flex-start; background:linear-gradient(180deg,#FFE9A8,#FFD700); color:#2a1d00; border:none; border-radius:11px; padding:10px 18px; font-weight:700; font-family:'Cinzel',serif; font-size:14px; cursor:pointer; margin-top:4px; }
 .ayar-btn:active{ transform:scale(.97); }
+/* CİNSİYET seçimi (3 düğme) — Gloxoo hitabı buna göre */
+.ayar-cinsiyet-grup{ display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px; }
+.ayar-cins-btn{ flex:1 1 30%; min-width:96px; padding:9px 10px; border-radius:11px; cursor:pointer; font-family:'Cormorant Garamond',serif; font-weight:700; font-size:14px;
+  background:rgba(255,255,255,.06); color:#ffe9a8; border:1.5px solid rgba(255,215,0,.3); }
+.ayar-cins-btn.geniş{ flex:1 1 100%; }
+.ayar-cins-btn.sec{ background:linear-gradient(135deg,#FFE9A8,#FFD700); color:#2a1d00; border-color:#C9A227; font-weight:800; }
+.ayar-cins-btn:active{ transform:scale(.97); }
+/* DOĞUM TARİHİ — gün/ay/yıl seçiciler */
+.ayar-dogum-satir{ display:flex; gap:8px; margin:2px 0 4px; }
+.ayar-dogum-sec{ flex:1; min-width:0; -webkit-appearance:menulist; appearance:menulist; cursor:pointer; }
+.ayar-dogum-sec option{ background:#1a1206; color:#fff; }
 .ayar-konum-dugmeler{ display:flex; flex-direction:column; gap:8px; } /* Konumumu bul ÜSTTE, Haritada bul ALTTA, eşit en */
 .ayar-konum-dugmeler .ayar-btn{ align-self:stretch; width:100%; text-align:center; margin-top:0; }
 .ayar-btn-konum{ background:linear-gradient(180deg,#7fd1ff,#2196f3); color:#012; } /* Konumumu bul = mavi */

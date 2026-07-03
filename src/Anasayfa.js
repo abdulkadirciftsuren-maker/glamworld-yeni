@@ -719,6 +719,9 @@ export default function Anasayfa({ pro = false }) {
   const [ayarBolum, setAyarBolum] = useState(null); // açık akordeon bölümü
   const [ekTelefon, setEkTelefon] = useState("");
   const [ek2Eposta, setEk2Eposta] = useState("");
+  // CİNSİYET + DOĞUM TARİHİ (Ayarlar) — Gloxoo hitabı (Bey/Hanım) ve yaşı buradan bilir
+  const [cinsiyet, setCinsiyet] = useState(""); // "bayan" | "erkek" | "belirtme" | ""
+  const [dogumGun, setDogumGun] = useState(""); const [dogumAy, setDogumAy] = useState(""); const [dogumYil, setDogumYil] = useState("");
   const [kurumTur, setKurumTur] = useState("");
   const [kurumAd, setKurumAd] = useState("");
   const [ayarMsg, setAyarMsg] = useState("");
@@ -1663,6 +1666,7 @@ export default function Anasayfa({ pro = false }) {
     if (!ayarlarAcik) return;
     const b = profilBilgi || {};
     setEkTelefon(b.telefon || ""); setEk2Eposta(b.eposta2 || "");
+    setCinsiyet(b.cinsiyet || ""); const dg = b.dogum || {}; setDogumGun(dg.gun ? String(dg.gun) : ""); setDogumAy(dg.ay ? String(dg.ay) : ""); setDogumYil(dg.yil ? String(dg.yil) : "");
     setKurumTur((b.kurum && b.kurum.tur) || ""); setKurumAd((b.kurum && b.kurum.ad) || "");
     const k = b.konum || {};
     setKonumLat(typeof k.lat === "number" ? k.lat : null); setKonumLon(typeof k.lon === "number" ? k.lon : null); setKonumAdres(k.adres || "");
@@ -1924,6 +1928,22 @@ export default function Anasayfa({ pro = false }) {
     setProfilBilgi((p) => ({ ...(p || {}), ...veri }));
     profilKaydet(uu.uid, veri).then(() => { setAyarMsg(t("ayarKaydedildi", "Kaydedildi ✓")); setTimeout(() => setAyarMsg(""), 2500); }).catch(() => setAyarMsg(t("ayarHata", "Kaydedilemedi")));
   }
+  // CİNSİYET seç → ANINDA kaydet (Gloxoo hitabı buna göre: Bey/Hanım)
+  function cinsiyetSec(deger) {
+    setCinsiyet(deger);
+    const uu = auth.currentUser; if (!uu) return;
+    setProfilBilgi((p) => ({ ...(p || {}), cinsiyet: deger }));
+    profilKaydet(uu.uid, { cinsiyet: deger }).then(() => { setAyarMsg(t("ayarKaydedildi", "Kaydedildi ✓")); setTimeout(() => setAyarMsg(""), 2000); }).catch(() => {});
+  }
+  // DOĞUM TARİHİ kaydet (gün/ay/yıl) → Gloxoo yaşı bilir
+  function dogumKaydet() {
+    const uu = auth.currentUser; if (!uu) return;
+    const g = parseInt(dogumGun, 10), a = parseInt(dogumAy, 10), y = parseInt(dogumYil, 10);
+    if (!g || !a || !y) { setAyarMsg(t("ayarDogumEksik", "Gün, ay ve yıl seç")); setTimeout(() => setAyarMsg(""), 2500); return; }
+    const veri = { dogum: { gun: g, ay: a, yil: y } };
+    setProfilBilgi((p) => ({ ...(p || {}), ...veri }));
+    profilKaydet(uu.uid, veri).then(() => { setAyarMsg(t("ayarKaydedildi", "Kaydedildi ✓")); setTimeout(() => setAyarMsg(""), 2500); }).catch(() => setAyarMsg(t("ayarHata", "Kaydedilemedi")));
+  }
   // Hesap türü / kurumsal kaydet
   function ayarTurKaydet(yeniTip, kurum) {
     const uu = auth.currentUser; if (!uu) return;
@@ -2176,6 +2196,13 @@ export default function Anasayfa({ pro = false }) {
     const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", ru: "Rusça (Русский)", ar: "Arapça (العربية)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)", uk: "Ukraynaca (Українська)" }[aiDilRef.current] || "Türkçe";
     // Zaman + ad ÖNCEDEN hesaplanır ve promptun BAŞINA konur (köprü 2000'de kesse bile AI saati/tarihi BİLİR)
     const aiAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || hitapAdi() || ""; // e-postayı isim yapma
+    // CİNSİYET + YAŞ (Ayarlar'dan) → Gloxoo hitabı ve tonu buna göre
+    const _cins = (profilBilgi && profilBilgi.cinsiyet) || "";
+    const cinsEk = _cins === "bayan" ? `Kullanıcı KADIN — uygun olduğunda "${(aiAd || "").split(" ")[0] || ""} Hanım" gibi nazik hitap et (her cümlede değil).`
+      : _cins === "erkek" ? `Kullanıcı ERKEK — uygun olduğunda "${(aiAd || "").split(" ")[0] || ""} Bey" gibi nazik hitap et (her cümlede değil).`
+      : `Kullanıcı cinsiyetini belirtmedi — Bey/Hanım DEME, sadece ismiyle ya da nötr hitap et.`;
+    let yasEk = "";
+    try { const dg = profilBilgi && profilBilgi.dogum; if (dg && dg.yil) { const bugun = new Date(); let ys = bugun.getFullYear() - dg.yil; if (dg.ay && ((dg.ay - 1) > bugun.getMonth() || ((dg.ay - 1) === bugun.getMonth() && (dg.gun || 1) > bugun.getDate()))) ys--; if (ys >= 0 && ys < 120) { yasEk = ` Kullanıcı ${ys} yaşında (tonunu yaşına göre ayarla: gençse daha samimi, büyükse daha saygılı); doğum tarihi ${dg.gun}.${dg.ay}.${dg.yil} — bugün doğum günüyse içtenlikle kutla.`; } } } catch (e) {}
     // SAAT = CİHAZIN KENDİ SAATİ (kullanıcının telefonunda gördüğü saat). IP saat dilimi YANLIŞ olabiliyordu (örn Almanya yerine İstanbul +1 saat). timeZone VERMEDEN cihaz yerel saati kullanılır → telefon saatiyle birebir.
     let simdiStr = "", tzAd = "", saatNet = "";
     try {
@@ -2197,7 +2224,7 @@ export default function Anasayfa({ pro = false }) {
     // === KRİTİK KURALLAR EN BAŞTA === (köprü sistem metnini kısaltsa bile bunlar HEP görünür — paylaşım/öneri ayrımı bozulmasın)
     let sistem = `ÇOK ÖNEMLİ DİL KURALI: Yanıtını HER ZAMAN ve SADECE ${dilAd} dilinde ver — uygulamanın ŞU AN seçili dili budur. Sesli konuşmada mikrofon bazen ARKA PLAN GÜRÜLTÜSÜNÜ (araba, rüzgâr, uzaktan gelen sesler) ya da eski bir cümleyi yanlışlıkla BAŞKA bir dile (özellikle İngilizce'ye) çevirebilir; BUNA ALDANMA. Gelen metin karışık, anlamsız ya da başka dilde görünse bile dili DEĞİŞTİRME, İngilizce'ye veya başka dile ASLA geçme — yanıtın DAİMA ${dilAd} olsun. Ne dendiğini anlamadıysan ${dilAd} dilinde kısaca "tam duyamadım, tekrar eder misin?" de; ama başka dile GEÇME. Tek yanıt içinde dilleri KARIŞTIRMA. (Not: kullanıcı uygulama dilini değiştirirse bu talimattaki dil de otomatik değişir; sen her zaman burada yazan dile uyarsın, kendiliğinden dil seçmezsin.) `;
     // ZAMAN/TARİH (erken — kesilmez): AI saati bilsin
-    sistem += `ŞU ANKİ GERÇEK TARİH VE SAAT: ${simdiStr}${tzAd ? " (" + tzAd + ")" : ""}${myAd ? ", " + myAd + " yerel saati" : ""}.${saatNet ? " Saat tam olarak " + saatNet + " (24 saat biçimi)." : ""} Bu, YAZ/KIŞ saati farkı ZATEN uygulanmış kesin yerel saattir; üstüne ASLA saat ekleme/çıkarma yapma, "kış saati/yaz saati/tarife/şu an aslında saat şu" diye DÜZELTME yapma, başka saat dilimine çevirme, kendi kafandan saat HESAPLAMA — sadece yukarıda yazan saati birebir söyle. Saat kaç, bugün ne, hangi gün gibi sorulursa MUTLAKA tam bunu söyle; ASLA "bilmiyorum" deme, asla eski/yanlış tarih uydurma.${zamanBilgi} Kullanıcının adı: ${aiAd || "değerli üye"}; ismini HER cümlede DEĞİL, ara sıra (uygun olunca "${(aiAd || "").split(" ")[0] || "değerli üye"} Bey/Hanım" gibi) kullan. KULLANICIYA ASLA E-POSTA ADRESİYLE HİTAP ETME (örn "kadirciftsuren@..." deme); sadece yukarıdaki İSMİ kullan, isim yoksa "değerli üye" de. Tonunu/üslubunu konuşmanın havasına göre ayarla (samimi, ciddi, neşeli). `;
+    sistem += `ŞU ANKİ GERÇEK TARİH VE SAAT: ${simdiStr}${tzAd ? " (" + tzAd + ")" : ""}${myAd ? ", " + myAd + " yerel saati" : ""}.${saatNet ? " Saat tam olarak " + saatNet + " (24 saat biçimi)." : ""} Bu, YAZ/KIŞ saati farkı ZATEN uygulanmış kesin yerel saattir; üstüne ASLA saat ekleme/çıkarma yapma, "kış saati/yaz saati/tarife/şu an aslında saat şu" diye DÜZELTME yapma, başka saat dilimine çevirme, kendi kafandan saat HESAPLAMA — sadece yukarıda yazan saati birebir söyle. Saat kaç, bugün ne, hangi gün gibi sorulursa MUTLAKA tam bunu söyle; ASLA "bilmiyorum" deme, asla eski/yanlış tarih uydurma.${zamanBilgi} Kullanıcının adı: ${aiAd || "değerli üye"}; ismini HER cümlede DEĞİL, ara sıra kullan. ${cinsEk}${yasEk} KULLANICIYA ASLA E-POSTA ADRESİYLE HİTAP ETME (örn "kadirciftsuren@..." deme); sadece yukarıdaki İSMİ kullan, isim yoksa "değerli üye" de. Tonunu/üslubunu konuşmanın havasına göre ayarla (samimi, ciddi, neşeli). `;
     // KONUM + YAKIN ÇEVRE (başa alındı — kesilmez): AI gerçek yeri ve etrafı bilsin
     if (konum.lat != null && konum.lon != null) sistem += `KULLANICININ GERÇEK KONUMU (GPS): ${myTamKonum || konum.kod}. Konumu normal kelimelerle anlat (mahalle/şehir/ülke); ASLA rakamla koordinat söyleme. Konum burada ne yazıyorsa ODUR; başka şehir/ülke UYDURMA. ÖNEMLİ: Kullanıcı "neredeyim" diye sorunca HARİTA/harita düğmesi/[HARITA] etiketi KOYMA, "haritada göster" deme — kullanıcı harita İSTEMİYOR; sadece KELİMELERLE, sohbet ederek nerede olduğunu ve orayı anlat (aşağıdaki TAM YER bilgisini kullan). `;
     if (etraf) sistem += `KULLANICININ ÇEVRESİ / MANZARASI (gerçek GPS konumundan, OpenStreetMap — yer + mesafe): ${etraf} BUNU KULLAN: kullanıcı "etrafımda ne var / ne görüyorsun / neredeyim / burası nasıl bir yer / yakınımda ne var / en yakın X" derse buradaki bilgiyle DOĞAL, sohbet gibi anlat — özellikle EN YAKIN doğal/çevre öğesini vurgula (örn "Suyun/gölün hemen kenarındasın, arkanda bir orman var, yakınında bir park ve bir kaç kafe var" gibi). Çok yakın (≈100 m ve altı) olanı "hemen kenarında/yanında", uzağı "yakınında/biraz ötede" diye söyle. ASLA "bilmiyorum/göremiyorum" deme; listede ne varsa gerçek isim ve mesafesiyle söyle, UYDURMA. Her cümlede hepsini sayma; sorulana göre en anlamlı 2-4 tanesini seç. `;
@@ -5377,6 +5404,30 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                   )}
                   <button className="ayar-btn" onClick={ayarIletisimKaydet}>{t("kaydet", "Kaydet")}</button>
+                  {/* CİNSİYET — Gloxoo hitabı (Bey/Hanım) buna göre olur */}
+                  <label className="ayar-et">{t("ayarCinsiyet", "Cinsiyet")} <BilgiBtn metin={t("aciklamaCinsiyet", "Gloxoo sana DOĞRU hitap edebilsin diye (örn 'Bey' / 'Hanım') cinsiyetini seç. İstemiyorsan 'Belirtmek istemiyorum'a bas — o zaman Gloxoo nötr, ismiyle hitap eder. İstediğin zaman değiştirebilirsin, bu bilgi gizli kalır.")} onAc={setAciklama} /></label>
+                  <div className="ayar-cinsiyet-grup">
+                    <button className={"ayar-cins-btn" + (cinsiyet === "bayan" ? " sec" : "")} onClick={() => cinsiyetSec("bayan")}>👩 {t("ayarBayan", "Bayan")}</button>
+                    <button className={"ayar-cins-btn" + (cinsiyet === "erkek" ? " sec" : "")} onClick={() => cinsiyetSec("erkek")}>👨 {t("ayarErkek", "Erkek")}</button>
+                    <button className={"ayar-cins-btn geniş" + (cinsiyet === "belirtme" ? " sec" : "")} onClick={() => cinsiyetSec("belirtme")}>🚫 {t("ayarBelirtme", "Belirtmek istemiyorum")}</button>
+                  </div>
+                  {/* DOĞUM TARİHİ — Gloxoo yaşını bilir, doğum gününü kutlar */}
+                  <label className="ayar-et">{t("ayarDogum", "Doğum tarihi")} <BilgiBtn metin={t("aciklamaDogum", "Gloxoo yaşını bilip sana uygun konuşabilsin ve doğum gününü kutlayabilsin diye doğum tarihini seç: gün, ay, yıl. Sonra 'Doğum tarihini kaydet'e bas. Bu bilgi gizli kalır.")} onAc={setAciklama} /></label>
+                  <div className="ayar-dogum-satir">
+                    <select className="ayar-input ayar-dogum-sec" value={dogumGun} onChange={(e) => setDogumGun(e.target.value)} aria-label={t("gun", "Gün")}>
+                      <option value="">{t("gun", "Gün")}</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <select className="ayar-input ayar-dogum-sec" value={dogumAy} onChange={(e) => setDogumAy(e.target.value)} aria-label={t("ay", "Ay")}>
+                      <option value="">{t("ay", "Ay")}</option>
+                      {Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2000, i, 1).toLocaleDateString(dil || "tr", { month: "long" })}</option>)}
+                    </select>
+                    <select className="ayar-input ayar-dogum-sec" value={dogumYil} onChange={(e) => setDogumYil(e.target.value)} aria-label={t("yil", "Yıl")}>
+                      <option value="">{t("yil", "Yıl")}</option>
+                      {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 6 - i).map((y) => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                  <button className="ayar-btn" onClick={dogumKaydet}>{t("ayarDogumKaydet", "Doğum tarihini kaydet")}</button>
                 </AyarBolum>
 
                 <AyarBolum acik={ayarBolum==="profil"} onTik={()=>setAyarBolum(b=>b==="profil"?null:"profil")} renk="#1ea64f" ad={t("ayarProfilFoto", "Profil / Amblem fotoğrafı")} ikon="🖼️" onAcBilgi={setAciklama} bilgi={t("aciklamaProfilAyar", "Burası GLOXORG profilin — Google hesabınla DEĞİL. Profil fotoğrafın ve şirket amblemin burada görünür. Paylaşım yaparken hangisinin (fotoğraf mı, amblem mi) kullanılacağını buradan seçersin. 'Düzenle / yükle' ile yeni görsel ekleyip ayarlayabilirsin.")}>
