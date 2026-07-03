@@ -895,7 +895,11 @@ export default function Anasayfa({ pro = false }) {
     if (balonSur.current.moved) return;
     maskotSelamKapat();
     // KÜÇÜLTÜLMÜŞ (mini) maskota dokun = BÜYÜT (yeniden karşılama YOK — kaldığı yerden devam). KAPATMAZ.
-    if (maskotMini || canliSohbetRef.current) { setMaskotMini(false); setMaskotTanit(true); return; }
+    if (maskotMini || canliSohbetRef.current) {
+      setMaskotMini(false); setMaskotTanit(true);
+      if (!canliSohbetRef.current) { try { maskotCanliBaslat(); } catch (e) {} } // KAPALIYSA büyürken SES AÇ (istek)
+      return;
+    }
     maskotTanitYap();
   }
   // MASKOT KARŞILAMA — yeni üye ilk girişte ana sayfada maskot "hoş geldin" der (tek sefer). Kapatınca/dokununca yerine çekilir.
@@ -4995,8 +4999,8 @@ export default function Anasayfa({ pro = false }) {
                 {/* CANLI SOHBET — DÜĞMESİZ: bir kez başlat, sonra konuş-dinle döngüsü (bas=başlat/dur) */}
                 <button className={"ai-ses ai-canli" + (canliSohbet ? " aktif" : "")} onClick={canliSohbetToggle} aria-label={t("canliSohbet", "Canlı Sohbet")}>
                   {canliSohbet
-                    ? <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10v4M8 6v12M12 3v18M16 6v12M20 10v4"/></svg>}
+                    ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
                 </button>
                 {/* HOPARLÖR — sesli yanıtı aç/kapa (açıkken AI cevapları sesli okunur) */}
                 <button className={"ai-ses ai-hoparlor" + (sesliMod ? " acik" : "")} onClick={sesliModToggle} aria-label={t("sesliYanit", "Sesli yanıt")}>

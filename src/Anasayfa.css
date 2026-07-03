@@ -1935,7 +1935,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-balon-sar.mini-aktif:not([style*="top"]){ bottom:120px; }
 @media(min-width:560px){ .ai-balon-sar.mini-aktif:not([style*="top"]){ bottom:150px; } }
 /* Maskotun ALTINDA: ikon düğme sırası (maskotla birlikte durur/taşınır). Etiket ABSOLUTE — ikonları İTMEZ. */
-.ai-mini-alt{ position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:4px; z-index:2; }
+.ai-mini-alt{ position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:-9px; z-index:2; } /* bacaklara YAKIN (kutu altı boşluğu kapat) */
 /* ZEMİN YOK — sadece iki ikon (istek: ayrı plaka koyma) */
 .ai-mini-btnlar{ display:flex; align-items:center; gap:8px; }
 /* BÜYÜK maskotta aynı ikonlar — akışta (absolute değil), maskotun altında ortalı */
@@ -1944,8 +1944,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-mini-alt.buyuk .mini-ikon svg{ width:19px; height:19px; }
 .ai-mini-alt.buyuk .mi-canli{ height:17px; }
 /* KARE (yumuşak köşeli), KÜÇÜK ikon düğmeler — yuvarlak değil */
-.mini-ikon{ width:28px; height:28px; border-radius:8px; border:1px solid rgba(255,255,255,.22); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.4); padding:0; }
-.mini-ikon svg{ width:16px; height:16px; }
+.mini-ikon{ width:24px; height:24px; border-radius:7px; border:1px solid rgba(255,255,255,.22); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.4); padding:0; }
+.mini-ikon svg{ width:14px; height:14px; }
 .mini-ikon:active{ transform:scale(.9); }
 .mini-ikon.mi-yaz{ background:linear-gradient(140deg,#FFE9A8,#FFC53d); color:#5a3d00; } /* altın */
 .mini-ikon.mi-ses{ background:linear-gradient(140deg,#ff8a8a,#e0202c); color:#fff; } /* KAPALI = KIRMIZI (konuş için bas) */
@@ -2200,8 +2200,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-mik.dinliyor{ background:linear-gradient(135deg,#ff5d6c,#c0303d); color:#fff; border-color:#ff8a96; }
 .ai-hoparlor.acik{ background:linear-gradient(135deg,#FFE9A8,#FFD700 55%,#E8C254); color:#1a1206; border-color:rgba(184,134,11,.5); }
 /* Canlı sohbet düğmesi — açıkken yeşil SABİT (nabız YOK, parlama yok) */
-.ai-canli{ color:#46d37a; border-color:rgba(70,211,122,.5); }
-.ai-canli.aktif{ background:linear-gradient(135deg,#46d37a,#1ea64f); color:#06160d; border-color:#7fe0a8; }
+/* KAPALI = KIRMIZI (konuşmak için bas), AÇIK = YEŞİL + içi canlı (mini toggle ile aynı mantık) */
+.ai-canli{ color:#ff5a5a; border-color:rgba(224,32,44,.55); background:linear-gradient(135deg,rgba(255,120,120,.16),rgba(224,32,44,.14)); }
+.ai-canli.aktif{ background:linear-gradient(135deg,#5fe08a,#1ea64f); color:#06160d; border-color:#7fe0a8; animation:miniSesYan 1.1s ease-in-out infinite; }
+.ai-canli .mi-canli{ height:20px; }
+.ai-canli .mi-canli i{ background:#06331c; }
 /* Asistana eklenen fotoğraf — önizleme + mesajdaki görsel */
 .ai-foto-onizle{ position:relative; align-self:flex-start; margin:0 12px 6px; width:66px; height:66px; flex:none; }
 .ai-foto-onizle img{ width:100%; height:100%; object-fit:cover; border-radius:11px; border:1.5px solid rgba(255,215,0,.55); }
