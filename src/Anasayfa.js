@@ -352,6 +352,16 @@ const NAV_RENK = { home: "mavi", elite: "altin", topluluk: "yesil", video: "mor"
 const GUN_RENK = ["#e0202c", "#2f7fd6", "#1ea64f", "#9b4fd6", "#f2a900", "#1fc2c2", "#e0608c"];
 // Öneri çipleri — her biri farklı CANLI renk (hepsi aynı/karanlık değil)
 const ONERI_RENK = ["#ff9d2e", "#34c98b", "#4aa3ff", "#d96bff", "#ff6b8f", "#39d0d0"];
+// 7 EKSEN EYLEM PLANI — GLOXORG Hakkında sayfasında gösterilir; Gloxoo da sistem promptundan bilir (istenince kişiye özel doldurur)
+const EKSEN_PLANI = [
+  { ik: "🧠", ad: "DÜŞÜN", ac: "Neredesin, ne istiyorsun? Kafanı netleştir, kendini tanı.", renk: "#4aa3ff" },
+  { ik: "🔭", ad: "GELECEĞİ GÖR", ac: "İleriyi ve fırsatı gör; nereye gittiğini bil, vizyon kur.", renk: "#9b6bff" },
+  { ik: "🎯", ad: "HEDEF SEÇ", ac: "Net, ölçülebilir tek bir hedef koy. Dağılma, odaklan.", renk: "#ff6b8f" },
+  { ik: "🛠️", ad: "ÜRET", ac: "Harekete geç, somut bir şey ortaya koy. Mükemmeli bekleme, başla.", renk: "#ff9d2e" },
+  { ik: "✨", ad: "FARK YARAT", ac: "Seni özel kılanı öne çıkar. Herkes gibi değil, 'sen' ol.", renk: "#ffd23f" },
+  { ik: "🤝", ad: "PAYLAŞ & BAĞ KUR", ac: "İşini paylaş, doğru insanlar ve müşterilerle bağ kur — GLOXORG'un kalbi.", renk: "#34c98b" },
+  { ik: "🚀", ad: "İLERLE", ac: "Düzenli ilerle, ölç, geliştir, durma. Her gün bir adım — ben yanındayım.", renk: "#1fc2c2" },
+];
 // Öneri çipinin ikonu — metindeki KONUYA göre renkli emoji (sadece yıldız değil; her şeye uygun ikon)
 function oneriIkon(metin) {
   const s = (metin || "").toLocaleLowerCase("tr");
@@ -759,6 +769,7 @@ export default function Anasayfa({ pro = false }) {
   const [profilAcik, setProfilAcik] = useState(false); // profil fotoğrafı penceresi (menüden AYRI)
   // AYARLAR penceresi (X gibi tam ayarlar) — Profilim/menüden açılır
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
+  const [hakkindaAcik, setHakkindaAcik] = useState(false); // GLOXORG Hakkında + 7 Eksen Eylem Planı sayfası
   const [ayarBolum, setAyarBolum] = useState(null); // açık akordeon bölümü
   const [ekTelefon, setEkTelefon] = useState("");
   const [ek2Eposta, setEk2Eposta] = useState("");
@@ -5670,6 +5681,7 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-oge c-mor" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🎓</span>{t("navAkademi")} · {t("anaYakinda")}</button>
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); navigate("/profesyonel"); }}><span className="ana-menu-ik">💎</span>{t("anaProMisin")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
+            <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{t("menuHakkinda", "GLOXORG Hakkında + 7 Eksen")}</button>
             {/* TELEFON BİLDİRİMLERİ — ayardan aç/durum göster */}
             <button className="ana-menu-oge ana-menu-bildirim c-pembe" onClick={bildirimIzniIste}>
               <span className="ana-menu-ik">🔔</span>{t("menuTelefonBildirim", "Telefon bildirimleri")}
@@ -5680,6 +5692,43 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-cikis" onClick={cikisYap}>{t("cikisYap")}</button>
           </div>
         </>
+      ), document.body)}
+
+      {/* GLOXORG HAKKINDA + 7 EKSEN EYLEM PLANI — görünür "hakkımızda" sayfası */}
+      {hakkindaAcik && createPortal((
+        <div className="hakkinda-fon" onClick={(e) => { if (e.target === e.currentTarget) setHakkindaAcik(false); }}>
+          <div className="hakkinda-pencere">
+            <button className="hakkinda-kapat" onClick={() => setHakkindaAcik(false)} aria-label="Kapat">&#10005;</button>
+            <div className="hakkinda-ic">
+              <h1 className="hakkinda-baslik">💠 GLOXORG</h1>
+              <p className="hakkinda-alt">Dünyanın lüks profesyonel sosyal platformu</p>
+              <section className="hakkinda-blok">
+                <h2>🌍 GLOXORG nedir?</h2>
+                <p>GLOXORG, dünyaya açık lüks bir profesyonel sosyal platformdur — paylaş, bağ kur, müşteri bul, mesleğini büyüt. İnsanları, meslekleri ve fırsatları bir araya getirir. Web: <b>gloxorg.com</b></p>
+              </section>
+              <section className="hakkinda-blok">
+                <h2>💎 Gloxoo — akıllı kalp</h2>
+                <p>Ben <b>Gloxoo</b>, GLOXORG'un akıllı yardımcısıyım. Her sayfada yanındayım: paylaşım yazar, yol tarifi ve güncel bilgi/haber veririm, sana özel yardım ederim, konuşur ve dinlerim. Web: <b>gloxoo.com</b></p>
+              </section>
+              <section className="hakkinda-blok">
+                <h2>🐻 Ekspert — sayfa uzmanı</h2>
+                <p><b>Ekspert</b> ayı, bulunduğun sayfanın uzmanıdır. Üstteki ayı düğmesine dokun; o sayfada derinlemesine yardım eder, sana özel öneri verir ve seni dinler.</p>
+              </section>
+              <section className="hakkinda-blok hakkinda-eksen-blok">
+                <h2>🎯 7 Eksen Eylem Planı</h2>
+                <p className="hakkinda-eksen-alt">İlerlemenin 7 temel ekseni. Gloxoo'ya <b>"bana eylem planı çıkar"</b> de — bunları sana özel doldursun.</p>
+                {EKSEN_PLANI.map((e, i) => (
+                  <div className="hakkinda-eksen-oge" key={i} style={{ "--er": e.renk }}>
+                    <span className="hakkinda-eksen-no">{i + 1}</span>
+                    <span className="hakkinda-eksen-ik">{e.ik}</span>
+                    <div className="hakkinda-eksen-metin"><b>{e.ad}</b><span>{e.ac}</span></div>
+                  </div>
+                ))}
+                <button className="hakkinda-plan-btn" onClick={() => { setHakkindaAcik(false); setYardimciMod("sohbet"); setYardimciAcik(true); setYardimciYazi("Bana özel bir eylem planı çıkar"); }}>🚀 Bana özel plan çıkar</button>
+              </section>
+            </div>
+          </div>
+        </div>
       ), document.body)}
 
       {/* AYARLAR penceresi — X gibi tam ayarlar (Profilim/menüden) */}
