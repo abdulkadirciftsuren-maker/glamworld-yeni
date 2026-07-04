@@ -8,6 +8,7 @@ import "leaflet/dist/leaflet.css";
 import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Google Haritalar gibi: WebGL, iki parmakla döner)
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
+import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
@@ -442,19 +443,19 @@ const HAKKINDA_CEVIRI = {
 };
 // "Davet Et / Paylaş" — kopyalanır/gönderilir link penceresi metinleri (13 dil)
 const DAVET_CEVIRI = {
-  tr: { menu: "Davet Et / Paylaş", baslik: "GLOXORG'a Davet Et", aciklama: "Bu bağlantıyı kopyala ya da gönder — açan herkes GLOXORG'a girer.", kopyala: "Bağlantıyı kopyala", kopyalandi: "Kopyalandı ✓", gonder: "Gönder / Paylaş", mesaj: "GLOXORG'a katıl — dünyanın lüks profesyonel sosyal platformu 💎" },
-  en: { menu: "Invite / Share", baslik: "Invite to GLOXORG", aciklama: "Copy or send this link — anyone who opens it enters GLOXORG.", kopyala: "Copy link", kopyalandi: "Copied ✓", gonder: "Send / Share", mesaj: "Join GLOXORG — the world's luxury professional social platform 💎" },
-  de: { menu: "Einladen / Teilen", baslik: "Zu GLOXORG einladen", aciklama: "Kopiere oder sende diesen Link — wer ihn öffnet, betritt GLOXORG.", kopyala: "Link kopieren", kopyalandi: "Kopiert ✓", gonder: "Senden / Teilen", mesaj: "Komm zu GLOXORG — die luxuriöse berufliche Social-Plattform der Welt 💎" },
-  fr: { menu: "Inviter / Partager", baslik: "Inviter sur GLOXORG", aciklama: "Copie ou envoie ce lien — quiconque l'ouvre entre sur GLOXORG.", kopyala: "Copier le lien", kopyalandi: "Copié ✓", gonder: "Envoyer / Partager", mesaj: "Rejoins GLOXORG — la plateforme sociale professionnelle de luxe du monde 💎" },
-  es: { menu: "Invitar / Compartir", baslik: "Invitar a GLOXORG", aciklama: "Copia o envía este enlace — quien lo abra entra en GLOXORG.", kopyala: "Copiar enlace", kopyalandi: "Copiado ✓", gonder: "Enviar / Compartir", mesaj: "Únete a GLOXORG — la plataforma social profesional de lujo del mundo 💎" },
-  it: { menu: "Invita / Condividi", baslik: "Invita su GLOXORG", aciklama: "Copia o invia questo link — chi lo apre entra in GLOXORG.", kopyala: "Copia link", kopyalandi: "Copiato ✓", gonder: "Invia / Condividi", mesaj: "Unisciti a GLOXORG — la piattaforma sociale professionale di lusso del mondo 💎" },
-  pt: { menu: "Convidar / Partilhar", baslik: "Convidar para a GLOXORG", aciklama: "Copia ou envia este link — quem o abrir entra na GLOXORG.", kopyala: "Copiar link", kopyalandi: "Copiado ✓", gonder: "Enviar / Partilhar", mesaj: "Junta-te à GLOXORG — a plataforma social profissional de luxo do mundo 💎" },
-  ru: { menu: "Пригласить / Поделиться", baslik: "Пригласить в GLOXORG", aciklama: "Скопируй или отправь эту ссылку — кто откроет, войдёт в GLOXORG.", kopyala: "Скопировать ссылку", kopyalandi: "Скопировано ✓", gonder: "Отправить / Поделиться", mesaj: "Присоединяйся к GLOXORG — мировая люксовая профессиональная соцплатформа 💎" },
-  uk: { menu: "Запросити / Поділитися", baslik: "Запросити в GLOXORG", aciklama: "Скопіюй або надішли це посилання — хто відкриє, увійде в GLOXORG.", kopyala: "Скопіювати посилання", kopyalandi: "Скопійовано ✓", gonder: "Надіслати / Поділитися", mesaj: "Приєднуйся до GLOXORG — світова люксова професійна соцплатформа 💎" },
-  ar: { menu: "دعوة / مشاركة", baslik: "ادعُ إلى GLOXORG", aciklama: "انسخ هذا الرابط أو أرسله — كل من يفتحه يدخل GLOXORG.", kopyala: "نسخ الرابط", kopyalandi: "تم النسخ ✓", gonder: "إرسال / مشاركة", mesaj: "انضم إلى GLOXORG — منصة العالم الاجتماعية المهنية الفاخرة 💎" },
-  zh: { menu: "邀请 / 分享", baslik: "邀请加入 GLOXORG", aciklama: "复制或发送此链接——打开的人即可进入 GLOXORG。", kopyala: "复制链接", kopyalandi: "已复制 ✓", gonder: "发送 / 分享", mesaj: "加入 GLOXORG——全球奢华专业社交平台 💎" },
-  ja: { menu: "招待 / 共有", baslik: "GLOXORG に招待", aciklama: "このリンクをコピーまたは送信——開いた人は GLOXORG に入れます。", kopyala: "リンクをコピー", kopyalandi: "コピーしました ✓", gonder: "送信 / 共有", mesaj: "GLOXORG に参加しよう——世界のラグジュアリーなプロ向けソーシャル基盤 💎" },
-  hi: { menu: "आमंत्रित करें / साझा करें", baslik: "GLOXORG में आमंत्रित करें", aciklama: "इस लिंक को कॉपी या भेजें — जो भी खोलेगा GLOXORG में आ जाएगा।", kopyala: "लिंक कॉपी करें", kopyalandi: "कॉपी हो गया ✓", gonder: "भेजें / साझा करें", mesaj: "GLOXORG में शामिल हों — दुनिया का लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म 💎" },
+  tr: { menu: "Davet Et / Paylaş", baslik: "GLOXORG'a Davet Et", aciklama: "Bu bağlantıyı kopyala ya da gönder — açan herkes GLOXORG'a girer.", kopyala: "Bağlantıyı kopyala", kopyalandi: "Kopyalandı ✓", gonder: "Gönder / Paylaş", mesaj: "GLOXORG'a katıl — dünyanın lüks profesyonel sosyal platformu 💎", qr: "Kamerayla okut", kur: "Uygulamayı yükle", kurIos: "iPhone'da: aşağıdaki Paylaş ⬆ → 'Ana Ekrana Ekle'" },
+  en: { menu: "Invite / Share", baslik: "Invite to GLOXORG", aciklama: "Copy or send this link — anyone who opens it enters GLOXORG.", kopyala: "Copy link", kopyalandi: "Copied ✓", gonder: "Send / Share", mesaj: "Join GLOXORG — the world's luxury professional social platform 💎", qr: "Scan with camera", kur: "Install app", kurIos: "On iPhone: Share ⬆ below → 'Add to Home Screen'" },
+  de: { menu: "Einladen / Teilen", baslik: "Zu GLOXORG einladen", aciklama: "Kopiere oder sende diesen Link — wer ihn öffnet, betritt GLOXORG.", kopyala: "Link kopieren", kopyalandi: "Kopiert ✓", gonder: "Senden / Teilen", mesaj: "Komm zu GLOXORG — die luxuriöse berufliche Social-Plattform der Welt 💎", qr: "Mit Kamera scannen", kur: "App installieren", kurIos: "Auf dem iPhone: Teilen ⬆ unten → 'Zum Home-Bildschirm'" },
+  fr: { menu: "Inviter / Partager", baslik: "Inviter sur GLOXORG", aciklama: "Copie ou envoie ce lien — quiconque l'ouvre entre sur GLOXORG.", kopyala: "Copier le lien", kopyalandi: "Copié ✓", gonder: "Envoyer / Partager", mesaj: "Rejoins GLOXORG — la plateforme sociale professionnelle de luxe du monde 💎", qr: "Scanner avec la caméra", kur: "Installer l'application", kurIos: "Sur iPhone : Partager ⬆ en bas → 'Sur l'écran d'accueil'" },
+  es: { menu: "Invitar / Compartir", baslik: "Invitar a GLOXORG", aciklama: "Copia o envía este enlace — quien lo abra entra en GLOXORG.", kopyala: "Copiar enlace", kopyalandi: "Copiado ✓", gonder: "Enviar / Compartir", mesaj: "Únete a GLOXORG — la plataforma social profesional de lujo del mundo 💎", qr: "Escanea con la cámara", kur: "Instalar la app", kurIos: "En iPhone: Compartir ⬆ abajo → 'Añadir a inicio'" },
+  it: { menu: "Invita / Condividi", baslik: "Invita su GLOXORG", aciklama: "Copia o invia questo link — chi lo apre entra in GLOXORG.", kopyala: "Copia link", kopyalandi: "Copiato ✓", gonder: "Invia / Condividi", mesaj: "Unisciti a GLOXORG — la piattaforma sociale professionale di lusso del mondo 💎", qr: "Inquadra con la fotocamera", kur: "Installa l'app", kurIos: "Su iPhone: Condividi ⬆ in basso → 'Aggiungi a Home'" },
+  pt: { menu: "Convidar / Partilhar", baslik: "Convidar para a GLOXORG", aciklama: "Copia ou envia este link — quem o abrir entra na GLOXORG.", kopyala: "Copiar link", kopyalandi: "Copiado ✓", gonder: "Enviar / Partilhar", mesaj: "Junta-te à GLOXORG — a plataforma social profissional de luxo do mundo 💎", qr: "Digitalizar com a câmara", kur: "Instalar a app", kurIos: "No iPhone: Partilhar ⬆ abaixo → 'Adicionar ao ecrã principal'" },
+  ru: { menu: "Пригласить / Поделиться", baslik: "Пригласить в GLOXORG", aciklama: "Скопируй или отправь эту ссылку — кто откроет, войдёт в GLOXORG.", kopyala: "Скопировать ссылку", kopyalandi: "Скопировано ✓", gonder: "Отправить / Поделиться", mesaj: "Присоединяйся к GLOXORG — мировая люксовая профессиональная соцплатформа 💎", qr: "Сканируй камерой", kur: "Установить приложение", kurIos: "На iPhone: Поделиться ⬆ внизу → 'На экран «Домой»'" },
+  uk: { menu: "Запросити / Поділитися", baslik: "Запросити в GLOXORG", aciklama: "Скопіюй або надішли це посилання — хто відкриє, увійде в GLOXORG.", kopyala: "Скопіювати посилання", kopyalandi: "Скопійовано ✓", gonder: "Надіслати / Поділитися", mesaj: "Приєднуйся до GLOXORG — світова люксова професійна соцплатформа 💎", qr: "Скануй камерою", kur: "Встановити застосунок", kurIos: "На iPhone: Поділитися ⬆ внизу → 'На екран «Домівка»'" },
+  ar: { menu: "دعوة / مشاركة", baslik: "ادعُ إلى GLOXORG", aciklama: "انسخ هذا الرابط أو أرسله — كل من يفتحه يدخل GLOXORG.", kopyala: "نسخ الرابط", kopyalandi: "تم النسخ ✓", gonder: "إرسال / مشاركة", mesaj: "انضم إلى GLOXORG — منصة العالم الاجتماعية المهنية الفاخرة 💎", qr: "امسحه بالكاميرا", kur: "تثبيت التطبيق", kurIos: "على iPhone: مشاركة ⬆ بالأسفل ← 'إضافة إلى الشاشة الرئيسية'" },
+  zh: { menu: "邀请 / 分享", baslik: "邀请加入 GLOXORG", aciklama: "复制或发送此链接——打开的人即可进入 GLOXORG。", kopyala: "复制链接", kopyalandi: "已复制 ✓", gonder: "发送 / 分享", mesaj: "加入 GLOXORG——全球奢华专业社交平台 💎", qr: "用相机扫描", kur: "安装应用", kurIos: "在 iPhone 上：底部分享 ⬆ →『添加到主屏幕』" },
+  ja: { menu: "招待 / 共有", baslik: "GLOXORG に招待", aciklama: "このリンクをコピーまたは送信——開いた人は GLOXORG に入れます。", kopyala: "リンクをコピー", kopyalandi: "コピーしました ✓", gonder: "送信 / 共有", mesaj: "GLOXORG に参加しよう——世界のラグジュアリーなプロ向けソーシャル基盤 💎", qr: "カメラで読み取る", kur: "アプリをインストール", kurIos: "iPhoneでは：下の共有 ⬆ →「ホーム画面に追加」" },
+  hi: { menu: "आमंत्रित करें / साझा करें", baslik: "GLOXORG में आमंत्रित करें", aciklama: "इस लिंक को कॉपी या भेजें — जो भी खोलेगा GLOXORG में आ जाएगा।", kopyala: "लिंक कॉपी करें", kopyalandi: "कॉपी हो गया ✓", gonder: "भेजें / साझा करें", mesaj: "GLOXORG में शामिल हों — दुनिया का लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म 💎", qr: "कैमरे से स्कैन करें", kur: "ऐप इंस्टॉल करें", kurIos: "iPhone पर: नीचे शेयर ⬆ → 'होम स्क्रीन में जोड़ें'" },
 };
 // Öneri çipinin ikonu — metindeki KONUYA göre renkli emoji (sadece yıldız değil; her şeye uygun ikon)
 function oneriIkon(metin) {
@@ -866,6 +867,7 @@ export default function Anasayfa({ pro = false }) {
   const [hakkindaAcik, setHakkindaAcik] = useState(false); // GLOXORG Hakkında + 7 Eksen Eylem Planı sayfası
   const [davetAcik, setDavetAcik] = useState(false);       // "Davet Et / Paylaş" — kopyalanır/gönderilir link
   const [davetKopya, setDavetKopya] = useState(false);     // link kopyalandı geri bildirimi
+  const [kurulabilir, setKurulabilir] = useState(typeof window !== "undefined" && !!window.__groxKurPrompt); // PWA "Uygulamayı yükle" hazır mı
   const [ayarBolum, setAyarBolum] = useState(null); // açık akordeon bölümü
   const [ekTelefon, setEkTelefon] = useState("");
   const [ek2Eposta, setEk2Eposta] = useState("");
@@ -1537,6 +1539,13 @@ export default function Anasayfa({ pro = false }) {
         });
       });
     }).catch(() => {});
+  }, []);
+  // UYGULAMAYI YÜKLE (PWA): index.js beforeinstallprompt'u window.__groxKurPrompt'a saklar; burada dinleyip düğmeyi göster
+  useEffect(() => {
+    const f = () => setKurulabilir(!!window.__groxKurPrompt);
+    window.addEventListener("grox-kurulabilir", f);
+    f();
+    return () => window.removeEventListener("grox-kurulabilir", f);
   }, []);
   // OTOMATİK GÜNCELLEME (service worker'a bağlı DEĞİL): sunucudaki index.html'i belli aralıklarla kontrol et;
   // yüklü ana script (main.<hash>.js) ile sunucudaki FARKLIYSA → yeni sürüm yayınlanmış → sayfayı BİR KEZ yenile.
@@ -5950,6 +5959,14 @@ export default function Anasayfa({ pro = false }) {
           try { if (navigator.share) { await navigator.share({ title: "GLOXORG", text: D.mesaj, url: link }); return; } } catch (e) {}
           try { const wa = "https://wa.me/?text=" + encodeURIComponent(D.mesaj + " " + link); window.open(wa, "_blank"); } catch (e) {}
         };
+        // QR kod (GÖMÜLÜ, CDN yok): davet linkini karekoda çevir — telefon kamerasıyla okutup girsinler
+        let qrSrc = "";
+        try { const qr = qrOlustur(0, "M"); qr.addData(link); qr.make(); qrSrc = qr.createDataURL(5, 10); } catch (e) {}
+        // Uygulamayı yükle (PWA "Ana ekrana ekle") — Android Chrome'da beforeinstallprompt hazırsa
+        const uygulamaKur = async () => {
+          const p = window.__groxKurPrompt;
+          if (p && p.prompt) { try { await p.prompt(); await p.userChoice; } catch (e) {} window.__groxKurPrompt = null; setKurulabilir(false); }
+        };
         return (
           <div className="davet-fon" onClick={(e) => { if (e.target === e.currentTarget) setDavetAcik(false); }}>
             <div className="davet-pencere">
@@ -5958,8 +5975,17 @@ export default function Anasayfa({ pro = false }) {
               <h2 className="davet-baslik">{D.baslik}</h2>
               <p className="davet-aciklama">{D.aciklama}</p>
               <div className="davet-link" onClick={kopyala} title={D.kopyala}>{link}</div>
+              {qrSrc ? (
+                <div className="davet-qr-sar">
+                  <img className="davet-qr" src={qrSrc} alt="QR" />
+                  <div className="davet-qr-yazi">{D.qr}</div>
+                </div>
+              ) : null}
               <button className="davet-btn davet-kopya" onClick={kopyala}>{davetKopya ? D.kopyalandi : "🔗 " + D.kopyala}</button>
               <button className="davet-btn davet-gonder" onClick={gonder}>📤 {D.gonder}</button>
+              {kurulabilir
+                ? <button className="davet-btn davet-kur" onClick={uygulamaKur}>📲 {D.kur}</button>
+                : <div className="davet-kur-ios">📲 {D.kurIos}</div>}
             </div>
           </div>
         );

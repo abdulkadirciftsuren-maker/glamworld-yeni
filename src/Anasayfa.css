@@ -1989,6 +1989,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .davet-btn:active{ transform:scale(.97); }
 .davet-kopya{ background:linear-gradient(135deg,#7aa8ff,#2a5bd0); color:#fff; }
 .davet-gonder{ background:linear-gradient(135deg,#34c98b,#1ea6a0); color:#04140d; }
+.davet-kur{ background:linear-gradient(135deg,#f2c04b,#d99b1c); color:#241a03; }
+/* QR kod — davet linkini kamerayla okutmak için */
+.davet-qr-sar{ display:flex; flex-direction:column; align-items:center; gap:8px; margin:6px 0 14px; }
+.davet-qr{ width:180px; height:180px; image-rendering:pixelated; background:#fff; padding:10px; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+.davet-qr-yazi{ color:#ffe9a8; font-size:13px; font-weight:700; opacity:.9; }
+.davet-kur-ios{ margin-top:12px; color:#cfe0ff; font-size:12.5px; line-height:1.5; opacity:.85; }
 /* ===== BEĞENEN AVATAR ŞERİDİ (istiflenmiş ufak profil resimleri) ===== */
 .begenen-serit{ display:flex; align-items:center; gap:8px; padding:2px 12px 8px; }
 .begenen-avlar{ display:flex; align-items:center; }
