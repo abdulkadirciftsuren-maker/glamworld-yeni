@@ -116,6 +116,18 @@ function kelimeSayisi(metin) {
   if (!metin) return 0;
   return String(metin).trim().split(/\s+/).filter(Boolean).length;
 }
+// ADRESİ SAF LATİN/İNGİLİZCE HARFE ÇEVİR: ß→ss, ö→o, ü→u, ş→s, ç→c, aksanları at.
+// Böylece adres HER dilde İngilizce/Latin çıkar (özel harf yüzünden hata/karmaşa olmaz).
+function latinYap(s) {
+  if (!s) return s || "";
+  return String(s)
+    .replace(/ß/g, "ss").replace(/ẞ/g, "Ss")
+    .replace(/æ/g, "ae").replace(/Æ/g, "Ae").replace(/œ/g, "oe").replace(/Œ/g, "Oe")
+    .replace(/ø/g, "o").replace(/Ø/g, "O").replace(/ð/g, "d").replace(/Ð/g, "D")
+    .replace(/þ/g, "th").replace(/Þ/g, "Th").replace(/ł/g, "l").replace(/Ł/g, "L")
+    .replace(/đ/g, "d").replace(/Đ/g, "D").replace(/ı/g, "i").replace(/İ/g, "I")
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); // kalan tüm aksanları (ö/ü/ä/é/ç/ş/ğ...) sil
+}
 // BEĞENEN AVATAR ŞERİDİ — gönderiyi beğenenlerin ufak profil resimleri, İSTİFLENMİŞ (öne doğru küçülerek).
 // Gerçek beğeni verisi Firestore'dan (begenenleriOku) çekilir; beğeni yoksa hiç görünmez.
 function BegenenlerSerit({ postId, sayi, dil }) {
@@ -1131,14 +1143,14 @@ export default function Anasayfa({ pro = false }) {
       if (uzak < 25 && (Date.now() - t0d.sonMs) < 40000) return; // ne yer değişti ne süre doldu → geç
     }
     t0d.sonMs = Date.now(); t0d.sonLat = lat; t0d.sonLon = lon;
-    const alDili = (dil || "tr").split("-")[0];
     let adres = "";
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=${alDili}`, { headers: { Accept: "application/json" } });
+      // ADRES HER DİLDE İNGİLİZCE/LATİN: accept-language=en + latinYap (özel harf yok)
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=en`, { headers: { Accept: "application/json" } });
       const d = await r.json();
-      adres = (d && d.display_name) || "";
+      adres = latinYap((d && d.display_name) || "");
       const a = d && d.address;
-      if (a) setKonum((k) => ({ ...k, lat, lon, kod: (a.country_code || k.kod || "").toUpperCase(), sehir: a.city || a.town || a.village || a.municipality || k.sehir, ilce: a.suburb || a.city_district || a.district || a.county || k.ilce, mahalle: a.neighbourhood || a.quarter || a.hamlet || k.mahalle }));
+      if (a) setKonum((k) => ({ ...k, lat, lon, kod: (a.country_code || k.kod || "").toUpperCase(), sehir: latinYap(a.city || a.town || a.village || a.municipality || "") || k.sehir, ilce: latinYap(a.suburb || a.city_district || a.district || a.county || "") || k.ilce, mahalle: latinYap(a.neighbourhood || a.quarter || a.hamlet || "") || k.mahalle }));
     } catch (e) {}
     let yer = "", tur = "";
     try {
@@ -1160,7 +1172,7 @@ export default function Anasayfa({ pro = false }) {
           const m = R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
           if (m < enM) { enM = m; enYakin = tg; }
         });
-        if (enYakin) { yer = enYakin.name; const tp = enYakin.shop || enYakin.amenity || enYakin.tourism || enYakin.office || enYakin.leisure || ""; tur = TUR_AD[tp] || tp.replace(/_/g, " "); }
+        if (enYakin) { yer = latinYap(enYakin["name:en"] || enYakin.name); const tp = enYakin.shop || enYakin.amenity || enYakin.tourism || enYakin.office || enYakin.leisure || ""; tur = TUR_AD[tp] || tp.replace(/_/g, " "); }
       }
     } catch (e) {}
     const bilgi = { adres, yer, tur, lat, lon };
@@ -2002,10 +2014,10 @@ export default function Anasayfa({ pro = false }) {
     const CC_LANG = { ua: "uk", ru: "ru", by: "be", kz: "ru", cn: "zh", tw: "zh", hk: "zh", jp: "ja", kr: "ko", sa: "ar", ae: "ar", eg: "ar", iq: "ar", sy: "ar", jo: "ar", kw: "ar", qa: "ar", om: "ar", ye: "ar", ma: "ar", dz: "ar", tn: "ar", ly: "ar", lb: "ar", ir: "fa", il: "he", gr: "el", cz: "cs", se: "sv", dk: "da", no: "nb", at: "de", ch: "de", br: "pt", mx: "es", in: "hi", pk: "ur", th: "th", vn: "vi", gb: "en", us: "en", au: "en", ca: "en", ie: "en", nz: "en" };
     const ccDil = (cc) => { cc = (cc || "").toLowerCase(); return CC_LANG[cc] || cc || "en"; };
     const cikar = (d) => { if (!d) return null; const a = d.address || {}; return {
-      ulke: a.country || "", sehir: a.province || a.state || a.city || a.town || "",
-      ilce: a.county || a.district || a.city_district || a.town || a.suburb || "",
-      sokak: [a.neighbourhood || a.quarter || a.suburb, a.road, a.house_number].filter(Boolean).join(" "),
-      posta: a.postcode || "", adres: d.display_name || "",
+      ulke: latinYap(a.country || ""), sehir: latinYap(a.province || a.state || a.city || a.town || ""),
+      ilce: latinYap(a.county || a.district || a.city_district || a.town || a.suburb || ""),
+      sokak: latinYap([a.neighbourhood || a.quarter || a.suburb, a.road, a.house_number].filter(Boolean).join(" ")),
+      posta: a.postcode || "", adres: latinYap(d.display_name || ""),
     }; };
     const bitir = (en, yerel) => {
       const obj = { en, yerel: yerel || en };
@@ -3563,16 +3575,16 @@ export default function Anasayfa({ pro = false }) {
       setKonum((k) => ({ ...k, lat, lon })); // koordinat hemen (etraf taraması bununla başlar)
       // 1) NOMINATIM (zengin, doğru adres) — şehir/ülkeyi GPS'ten KESİNLEŞTİR (IP'nin yanlış şehir/ülkesini EZER; "Kyiv/Ukrayna" hatası buradandı)
       try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=14&accept-language=tr`, { headers: { Accept: "application/json" } });
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=14&accept-language=en`, { headers: { Accept: "application/json" } });
         const d = await r.json();
         const a = d && d.address;
         if (a && a.country_code) {
           setKonum((k) => ({
             ...k,
             kod: (a.country_code || "").toUpperCase(),
-            sehir: a.city || a.town || a.village || a.municipality || a.county || a.state || "",
-            ilce: a.city_district || a.suburb || a.borough || a.district || a.county || "",
-            mahalle: a.neighbourhood || a.quarter || a.suburb || a.hamlet || "",
+            sehir: latinYap(a.city || a.town || a.village || a.municipality || a.county || a.state || ""),
+            ilce: latinYap(a.city_district || a.suburb || a.borough || a.district || a.county || ""),
+            mahalle: latinYap(a.neighbourhood || a.quarter || a.suburb || a.hamlet || ""),
           }));
           return;
         }
