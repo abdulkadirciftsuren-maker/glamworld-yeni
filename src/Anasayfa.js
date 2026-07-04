@@ -1123,8 +1123,10 @@ export default function Anasayfa({ pro = false }) {
       canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
       try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
       try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
+      try { recognitionRef.current && recognitionRef.current.abort(); recognitionRef.current = null; } catch (e) {} // tarayıcı ses tanımasını durdur
       miniEtiketGoster(t("kapat", "Kapat"));
     } else { // AÇ (konuş) — büyütmeden canlı dinlemeyi başlat
+      if (kameraModRef.current) { try { kameraKapat(); } catch (e) {} } // KARŞILIKLI: Canlı açılınca Kamera kapanır (ikisi aynı anda olmaz)
       miniEtiketGoster(t("konus", "Konuş"));
       maskotCanliBaslat();
     }
@@ -2746,6 +2748,7 @@ export default function Anasayfa({ pro = false }) {
       // NOT: kamerayı burada KAPATMA — yazı kutusuna dokununca da canlı ses kapanıyor; kamera açık kalsın (sadece ✕ / kamera düğmesi kapatır)
       return;
     }
+    if (kameraModRef.current) { try { kameraKapat(); } catch (e) {} } // KARŞILIKLI: Canlı açılınca Kamera kapanır
     canliSohbetRef.current = true; setCanliSohbet(true); setSesliMod(true);
     aiKarsiladiRef.current = true;
     aiKarsila(); // AI ÖNCE konuşur (karşılama), sonra dinlemeye geçer
@@ -5130,7 +5133,7 @@ export default function Anasayfa({ pro = false }) {
                 <button className="mini-ikon mi-yaz" onClick={(e) => { e.stopPropagation(); miniEtiketGoster(t("yaz", "Yaz")); maskotSohbetAc(); }} aria-label={t("yaz", "Yaz")}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
                 </button>
-                <button className={"mini-ikon mi-ses" + (canliSohbet ? " acik" : "")} onClick={(e) => { e.stopPropagation(); miniSesToggle(); }} aria-label={canliSohbet ? t("kapat", "Kapat") : t("konus", "Konuş")}>
+                <button className={"mini-ikon mi-ses" + (canliSohbet && !kameraAcik ? " acik" : "")} onClick={(e) => { e.stopPropagation(); miniSesToggle(); }} aria-label={canliSohbet ? t("kapat", "Kapat") : t("konus", "Konuş")}>
                   {canliSohbet
                     ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
@@ -5154,7 +5157,7 @@ export default function Anasayfa({ pro = false }) {
               <button className="mini-ikon mi-yaz" onClick={(e) => { e.stopPropagation(); miniEtiketGoster(t("yaz", "Yaz")); maskotSohbetAc(); }} aria-label={t("yaz", "Yaz")}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
               </button>
-              <button className={"mini-ikon mi-ses" + (canliSohbet ? " acik" : "")} onClick={(e) => { e.stopPropagation(); miniSesToggle(); }} aria-label={canliSohbet ? t("kapat", "Kapat") : t("konus", "Konuş")}>
+              <button className={"mini-ikon mi-ses" + (canliSohbet && !kameraAcik ? " acik" : "")} onClick={(e) => { e.stopPropagation(); miniSesToggle(); }} aria-label={canliSohbet ? t("kapat", "Kapat") : t("konus", "Konuş")}>
                 {canliSohbet
                   ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
                   : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
@@ -5393,8 +5396,8 @@ export default function Anasayfa({ pro = false }) {
                   )}
                 </div>
                 {/* CANLI SOHBET — DÜĞMESİZ: bir kez başlat, sonra konuş-dinle döngüsü (bas=başlat/dur) */}
-                <button className={"ai-ses ai-canli" + (canliSohbet ? " aktif" : "")} onClick={canliSohbetToggle} aria-label={t("canliSohbet", "Canlı Sohbet")}>
-                  {canliSohbet
+                <button className={"ai-ses ai-canli" + (canliSohbet && !kameraAcik ? " aktif" : "")} onClick={canliSohbetToggle} aria-label={t("canliSohbet", "Canlı Sohbet")}>
+                  {canliSohbet && !kameraAcik
                     ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
                 </button>
