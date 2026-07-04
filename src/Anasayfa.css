@@ -1950,6 +1950,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .mini-ikon.mi-yaz{ background:linear-gradient(140deg,#FFE9A8,#FFC53d); color:#5a3d00; } /* altın */
 .mini-ikon.mi-ses{ background:linear-gradient(140deg,#ff8a8a,#e0202c); color:#fff; } /* KAPALI = KIRMIZI (konuş için bas) */
 .mini-ikon.mi-ses.acik{ background:linear-gradient(140deg,#5fe08a,#1d9e54); color:#06331c; animation:miniSesYan 1.1s ease-in-out infinite; } /* AÇIK = YEŞİL + canlı */
+.mini-ikon.mi-ayar{ background:linear-gradient(140deg,#7aa8ff,#2a5bd0); color:#fff; } /* Ayarlar = mavi (güncel/doğru bilgi için doldur) */
 @keyframes miniSesYan{ 0%,100%{ box-shadow:0 2px 6px rgba(0,0,0,.35),0 0 5px rgba(70,211,122,.7); } 50%{ box-shadow:0 2px 6px rgba(0,0,0,.35),0 0 13px rgba(70,211,122,1); } }
 /* Açıkken İÇİNDE canlı ikon (eşitleyici çubukları oynar) */
 .mi-canli{ display:inline-flex; align-items:flex-end; gap:2px; height:15px; }

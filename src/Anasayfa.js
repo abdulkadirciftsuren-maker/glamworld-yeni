@@ -1342,6 +1342,39 @@ export default function Anasayfa({ pro = false }) {
       });
     }).catch(() => {});
   }, []);
+  // OTOMATİK GÜNCELLEME (service worker'a bağlı DEĞİL): sunucudaki index.html'i belli aralıklarla kontrol et;
+  // yüklü ana script (main.<hash>.js) ile sunucudaki FARKLIYSA → yeni sürüm yayınlanmış → sayfayı BİR KEZ yenile.
+  // Böylece her yayında kullanıcı ELLE yenilemeden otomatik güncel sürüme geçer (sw.js değişmese bile çalışır).
+  useEffect(() => {
+    let durdu = false;
+    // Şu an ÇALIŞAN ana script dosyası (main.<hash>.js) — her yayında hash değişir
+    const suanki = (() => {
+      try {
+        const s = Array.from(document.querySelectorAll('script[src]')).map((x) => x.src).find((u) => /\/static\/js\/main\.[a-z0-9]+\.js/.test(u));
+        return s ? (s.match(/main\.[a-z0-9]+\.js/) || [""])[0] : "";
+      } catch (e) { return ""; }
+    })();
+    const kontrol = async () => {
+      if (durdu || !suanki || window.__groxYenilendi) return;
+      try {
+        const r = await fetch((process.env.PUBLIC_URL || "") + "/index.html?_g=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) return;
+        const html = await r.text();
+        const yeni = (html.match(/main\.[a-z0-9]+\.js/) || [""])[0];
+        if (yeni && yeni !== suanki) { // sunucuda YENİ sürüm var → otomatik yenile (tek sefer)
+          window.__groxYenilendi = true;
+          try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
+          window.location.reload();
+        }
+      } catch (e) {}
+    };
+    const iv = setInterval(kontrol, 60000);                 // her 60 sn'de bir kontrol
+    const onVis = () => { if (document.visibilityState === "visible") kontrol(); }; // uygulamaya dönünce hemen kontrol
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", kontrol);
+    const ilk = setTimeout(kontrol, 5000);                  // açılıştan ~5 sn sonra ilk kontrol
+    return () => { durdu = true; clearInterval(iv); clearTimeout(ilk); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("focus", kontrol); };
+  }, []);
   // CANLI bildirim dinle (sayfa açıkken anında gelir); yeni gelenleri telefon bildirimi olarak göster
   useEffect(() => {
     if (!u || !u.uid) { setBildirimListe([]); gorulenBildirimRef.current = null; return; }
@@ -2382,6 +2415,12 @@ export default function Anasayfa({ pro = false }) {
     sistem += site
       ? `Sen Gloxoo'sun, GLOXORG sitesinin akıllı asistanı (lüks küresel profesyonel sosyal platform; bölümler: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar). SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
       : `Sen Gloxoo'sun — GLOXORG adlı lüks, küresel profesyonel sosyal platformun akıllı kalbi ve yardımcı asistanı. Adın Gloxoo; kendini tanıtırken "Gloxorg dünyasının akıllı kalbi Gloxoo" dersin. Paylaşım yazma, meslek tanıtımı, müşteri bulma gibi konularda yardım et.`;
+    // AYARLAR + UZMAN YÖNLENDİRME: kullanıcı senden GÜNCEL/DOĞRU/kişiye özel bilgi (haber, kişisel öneri, "bana göre") beklerse
+    // ve gerekli bilgileri (cinsiyet, doğum tarihi, konum) EKSİKSE, KISACA balondaki ⚙ Ayarlar ikonundan bilgilerini doldurmasını öner
+    // ("daha doğru ve sana özel yardım için Ayarlar'dan bilgilerini doldur"). Ayrıca bulunduğu sayfaya ÖZEL derin yardım için üstteki
+    // 🐻 UZMAN maskotunu (o sayfanın uzmanı, seninle aynı şekilde konuşup dinler, sayfayı bilir) öner. Bunu HER mesajda DEĞİL, sadece
+    // konu gerçekten uyduğunda ve BİR kez söyle; sürekli tekrarlama.
+    sistem += ` YÖNLENDİRME: Kullanıcı güncel/kişiye özel bir şey isteyip Ayarlar'ı (cinsiyet, doğum tarihi, konum) doldurmamışsa, uygun olduğunda BİR kez "Ayarlar'dan bilgilerini doldurursan sana daha doğru ve özel yardım ederim" de (balonda ⚙ Ayarlar ikonu var). Bulunduğu sayfaya özel derin yardım gerekirse üstteki 🐻 Uzman'a yönlendir. Bunları her mesajda TEKRARLAMA. `;
     if (yardimciBaglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${yardimciBaglam} Soruları büyük olasılıkla bununla ilgili.`;
     sistem += ` KULLANICI BİLGİSİ: ${proUye ? "Profesyonel (kırmızı pırlanta) üye" : "Müşteri (beyaz pırlanta) üye"}${meslekAd ? ", meslek " + meslekAd : ""}, konum ${myTamKonum || konum.kod}${u && u.email ? ", e-posta " + u.email : ""}. Nerede olduğu sorulursa konumu kullan.`;
     const sonIdx = yeniListe.length - 1;
@@ -5286,6 +5325,10 @@ export default function Anasayfa({ pro = false }) {
                 {canliSohbet
                   ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
                   : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}
+              </button>
+              {/* AYARLAR — güncel/doğru bilgi için bilgilerini doldur (Gloxoo yönlendirir) */}
+              <button className="mini-ikon mi-ayar" onClick={(e) => { e.stopPropagation(); miniEtiketGoster(t("ayarlar", "Ayarlar")); try { setAyarlarAcik(true); } catch (er) {} }} aria-label={t("ayarlar", "Ayarlar")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15z" /></svg>
               </button>
             </div>
           </div>
