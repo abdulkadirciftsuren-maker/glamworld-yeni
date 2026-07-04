@@ -1976,7 +1976,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .maskot-tanit-balon, .maskot-tanit-yuz, .maskot-tanit .ai-mini-alt, .maskot-tanit-dinle, .maskot-tanit-dugmeler{ pointer-events:auto; }
 .maskot-tanit-yuz{ cursor:pointer; }
 @keyframes maskotBuyu{ from{ transform:scale(.25); opacity:0; } to{ transform:scale(1); opacity:1; } }
-.maskot-tanit-balon{ max-width:min(86vw,440px); flex:0 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; background:linear-gradient(160deg,#fffefa,#fff6e0); color:#221a0c; border:1.5px solid rgba(184,134,11,.55); border-radius:18px; border-bottom-left-radius:6px; padding:12px 16px; font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:500; line-height:1.4; box-shadow:0 12px 34px rgba(0,0,0,.42); text-align:center; }
+.maskot-tanit-balon{ max-width:min(86vw,440px); max-height:34vh; flex:0 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; background:linear-gradient(160deg,#fffefa,#fff6e0); color:#221a0c; border:1.5px solid rgba(184,134,11,.55); border-radius:18px; border-bottom-left-radius:6px; padding:12px 16px; font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:500; line-height:1.4; box-shadow:0 12px 34px rgba(0,0,0,.42); text-align:center; }
 .maskot-tanit-balon::-webkit-scrollbar{ display:none; }
 @media(min-width:560px){ .maskot-tanit-balon{ font-size:18px; line-height:1.42; padding:14px 18px; } }
 .maskot-tanit-yuz{ position:relative; filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)); }
@@ -2093,6 +2093,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .rc-ik{ font-size:.72em; margin-right:3px; opacity:.9; vertical-align:1px; }
 /* ŞU AN OKUNAN CÜMLE — kalın + parıltı + hafif zemin (kullanıcı nerede okunduğunu görür, alt yazı gibi) */
 .rc-aktif{ font-weight:800 !important; text-shadow:0 0 10px rgba(255,255,255,.65); background:rgba(255,235,150,.20); box-shadow:0 0 0 2px rgba(255,235,150,.22); }
+/* KELİME KELİME balon (teleprompter): her kelime span; OKUNAN kelime vurgulu + üstünde ▸ imleç */
+.kb-kel{ display:inline; border-radius:6px; padding:0 1px; transition:background .12s ease, text-shadow .12s ease; }
+.kb-aktif{ font-weight:800 !important; background:rgba(255,224,120,.32); text-shadow:0 0 11px rgba(255,240,170,.9); box-shadow:0 0 0 2px rgba(255,224,120,.38); border-radius:6px; }
+.kb-ok{ color:#ffcf3f; font-size:.85em; margin-right:2px; text-shadow:0 0 6px rgba(255,207,63,.9); animation:kbOk .55s ease-in-out infinite; }
+@keyframes kbOk{ 0%,100%{ opacity:.45; transform:translateY(0); } 50%{ opacity:1; transform:translateY(-1px); } }
 .ai-maskot-kapat{ position:absolute; top:5px; right:7px; width:23px; height:23px; border:none; background:rgba(120,80,10,.12); color:#6a4a12; border-radius:50%; font-size:16px; line-height:1; cursor:pointer; padding:0; }
 @media(min-width:560px){ .ai-maskot-selam{ max-width:360px; bottom:150px; padding:15px 34px 16px 18px; } .ai-maskot-metin{ font-size:18px; } .ai-maskot-metin b{ font-size:17px; } .ai-maskot-kapat{ width:28px; height:28px; font-size:19px; } }
 /* CANLI MASKOT — konuşurken ağız açılıp kapanır + hafif zıplar; her zaman ara sıra göz kırpar */

@@ -86,6 +86,36 @@ function renkliCumleler(metin, palet, aktif) {
     );
   }).filter(Boolean);
 }
+// KELİME KELİME balon (teleprompter): metin KELİMELERE bölünür, her kelime ayrı <span data-wi=index>.
+// OKUNAN kelime (aktif===index) VURGULANIR + üstüne ▸ imleç konur → kullanıcı NEREDE okunduğunu görür.
+// Renk cümleye göre (okunaklı, canlı). aktif değişince sadece o kelime yeniden boyanır.
+function kelimeBalon(metin, palet, aktif) {
+  if (!metin) return null;
+  const p = palet || RC_ACIK;
+  const cumleler = String(metin).match(/[^.!?…\n]+[.!?…]*/g) || [String(metin)];
+  let wi = -1;
+  const cikti = [];
+  cumleler.forEach((c, ci) => {
+    const renk = p[ci % p.length];
+    const kelimeler = c.trim().split(/\s+/).filter(Boolean);
+    kelimeler.forEach((k, ki) => {
+      wi++;
+      const bu = wi;
+      const aktifMi = aktif === bu;
+      cikti.push(
+        <span key={ci + "-" + ki} data-wi={bu} className={"kb-kel" + (aktifMi ? " kb-aktif" : "")} style={{ color: renk }}>
+          {aktifMi && <span className="kb-ok" aria-hidden="true">▸</span>}{k}{" "}
+        </span>
+      );
+    });
+  });
+  return cikti;
+}
+// Metindeki toplam kelime sayısı (teleprompter ilerlemesini kelimeye çevirmek için) — kelimeBalon ile AYNI bölme
+function kelimeSayisi(metin) {
+  if (!metin) return 0;
+  return String(metin).trim().split(/\s+/).filter(Boolean).length;
+}
 // Meslek → kendi rengi (ızgaradaki bg'nin ilk hex'i) — gönderi/etikette meslek kendi renginde yazılır.
 const MESLEK_RENK = {};
 try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; }); } catch (e) {}
@@ -938,22 +968,35 @@ export default function Anasayfa({ pro = false }) {
   const miniEtiketZmn = useRef(null);
   const [maskotMetni, setMaskotMetni] = useState("");
   const maskotBalonRef = useRef(null); // BÜYÜK maskot balonu — okurken teleprompter gibi kaydırma
-  const [okunanCumle, setOkunanCumle] = useState(-1); // ŞU AN okunan cümle indeksi (balonda VURGULANIR)
-  const elleKaydirRef = useRef(false);                // kullanıcı PARMAĞIYLA kaydırdıysa → oto-kaydırma DURUR (serbest)
-  // Gloxoo konuşurken: o cümleyi VURGULA + görünür alanın ORTASINA kaydır (alt yazı gibi yukarı yürüsün).
-  // Kullanıcı parmağıyla kaydırdıysa (elleKaydirRef) oto-kaydırma YAPMA — serbest bıraktık, kendi okur.
-  const maskotKaydir = (idx) => {
-    setOkunanCumle(idx); // hangi cümle okunuyor → balonda vurgulanır
-    if (elleKaydirRef.current) return; // elle kaydırma açık → oto-kaydırma yok
+  const [okunanKelime, setOkunanKelime] = useState(-1); // ŞU AN okunan KELİME indeksi (balonda vurgulanır + ▸ imleç)
+  const okunanKelimeRef = useRef(-1);
+  const toplamKelimeRef = useRef(0);                    // maskotMetni'nin kelime sayısı (ilerleme→kelime)
+  const elleKaydirRef = useRef(false);                  // kullanıcı PARMAĞIYLA kaydırdıysa → oto-kaydırma DURUR (serbest)
+  // Okunan KELİMEYİ balonun ORTASINA kaydır (alt yazı/şerit gibi tek tek yukarı yürür, sonuna kadar).
+  // Kullanıcı parmağıyla kaydırdıysa (elleKaydirRef) oto-kaydırma YAPMA — serbest bıraktık.
+  const maskotKaydirKelime = (wi) => {
+    if (elleKaydirRef.current) return;
     const b = maskotBalonRef.current; if (!b) return;
-    const el = b.querySelector('[data-ci="' + idx + '"]'); if (!el) return;
-    const hedef = el.offsetTop - b.clientHeight / 2 + el.offsetHeight / 2; // OKUNAN cümle balonun ORTASINDA kalır
+    const el = b.querySelector('[data-wi="' + wi + '"]'); if (!el) return;
+    const hedef = el.offsetTop - b.clientHeight / 2 + el.offsetHeight / 2; // OKUNAN kelime balonun ORTASINDA kalır
     try { b.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { b.scrollTop = Math.max(0, hedef); }
+  };
+  // TTS ilerlemesi (0..1) → kaçıncı kelimede olduğumuzu bul, VURGULA + ortaya KAYDIR (kelime kelime ilerler)
+  const teleIlerleme = (frac) => {
+    const n = toplamKelimeRef.current; if (!n) return;
+    let w = Math.floor(frac * n); if (w >= n) w = n - 1; if (w < 0) w = 0;
+    if (w === okunanKelimeRef.current) return; // aynı kelime → gereksiz yeniden çizim yok
+    okunanKelimeRef.current = w; setOkunanKelime(w); maskotKaydirKelime(w);
   };
   // Kullanıcı balona parmağıyla dokunup kaydırınca → oto-kaydırmayı bırak (serbest); yeni cevap gelince tekrar otomatiğe döner
   const maskotElleKaydir = () => { elleKaydirRef.current = true; };
-  // Yeni metin gelince (karşılama/AI cevabı) balonu EN BAŞA sar + oto-kaydırmayı yeniden aç + vurguyu sıfırla
-  useEffect(() => { const b = maskotBalonRef.current; if (b) b.scrollTop = 0; elleKaydirRef.current = false; setOkunanCumle(-1); }, [maskotMetni]);
+  // Yeni metin gelince (karşılama/AI cevabı) balonu EN BAŞA sar + oto-kaydırmayı aç + kelime sayısını hesapla + vurguyu sıfırla
+  useEffect(() => {
+    const b = maskotBalonRef.current; if (b) b.scrollTop = 0;
+    elleKaydirRef.current = false;
+    toplamKelimeRef.current = kelimeSayisi(maskotMetni);
+    okunanKelimeRef.current = -1; setOkunanKelime(-1);
+  }, [maskotMetni]);
   const [maskotTur, setMaskotTur] = useState("grox"); // "grox" (yardımcı) | "ekspert" (ayı)
   const [maskotKizgin, setMaskotKizgin] = useState(false); // kötü/hata olunca KIRMIZILAŞIR
   const maskotTanitRef = useRef(false); // büyük maskot açık mı (async cevapta okumak için)
@@ -1088,7 +1131,7 @@ export default function Anasayfa({ pro = false }) {
     // İLK AÇILIŞ (oto) karşılaması SESLİ BİTİNCE maskot kendini KAPATIR (köşedeki yerine çekilir, ortada büyük durmaz).
     // Kullanıcı KENDİSİ dokununca (oto değil) BÜYÜK kalır, kapatmayı kullanıcı yapar.
     const bitince = oto ? () => { try { setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); } catch (e) {} } : undefined;
-    try { sesliOku(selam, bitince, maskotKaydir); } catch (e) {}
+    try { sesliOku(selam, bitince, undefined, teleIlerleme); } catch (e) {}
     if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
   };
   // BÜYÜK MASKOT canlı sohbet: karşılama sesi BİTİNCE mikrofonu açar, kullanıcıyı SABIRLA bekler (kendi konuşmaz, cevap dayatmaz),
@@ -1155,7 +1198,7 @@ export default function Anasayfa({ pro = false }) {
     const selam = havuz[Math.floor(Math.random() * havuz.length)];
     setMaskotTur("ekspert"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
     // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
-    try { sesliOku(selam, undefined, maskotKaydir); } catch (e) {}
+    try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
     maskotCanliBaslat(); // ekspert de karşılamadan sonra mikrofonu açıp seni bekler, sohbete devam eder
   };
   const [paylasDuzen, setPaylasDuzen] = useState(null); // paylaşım fotoğrafının katman hafızası (yeniden düzenle)
@@ -2404,7 +2447,7 @@ export default function Anasayfa({ pro = false }) {
       if (paylasim && !yardimciAcikRef.current && !site) { try { setYardimciAcik(true); } catch (e) {} }
       if (maskotTanitRef.current && metin) setMaskotMetni(metin); // BÜYÜK maskot açıksa: balonunda da cevabı göster (sadece karşılama kalmasın, konuşmaya devam ediyormuş gibi)
       // OTOMATİK SESLİ OKUMA: yeni cevabın BALON düğmesinde × göster (konuşurken), bitince kendiliğinden kapansın → balon düğmesi = konuşma göstergesi/kontrolü
-      if (sesliMod && metin) { const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi; sesliOku(metin, okuTemizle, maskotTanitRef.current ? maskotKaydir : undefined); }
+      if (sesliMod && metin) { const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi; sesliOku(metin, okuTemizle, undefined, (maskotTanitRef.current || maskotMini) ? teleIlerleme : undefined); }
       if (canliIc && canliSohbetRef.current) canliDevam(); // CANLI: cevap bitince tekrar dinlemeye geç (döngü ölmesin)
       if (komut) setTimeout(() => komutAc(komut), 650);
     } catch (e) {
@@ -2419,7 +2462,7 @@ export default function Anasayfa({ pro = false }) {
   const aiSesKodu = (kod) => ({ tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR", es: "es-ES", ru: "ru-RU", ar: "ar-SA", it: "it-IT", pt: "pt-PT", zh: "zh-CN", ja: "ja-JP", hi: "hi-IN", uk: "uk-UA" }[kod] || (typeof navigator !== "undefined" && navigator.language) || "tr-TR");
   const sesDilKodu = aiSesKodu(aiDil);
   // AI cevabını SESLİ oku (tarayıcı seslendirme) — dil kodu HER ZAMAN güncel aiDilRef'ten
-  const sesliOku = (metin, onBitti, onCumle) => {
+  const sesliOku = (metin, onBitti, onCumle, onIlerleme) => {
     try {
       if (!("speechSynthesis" in window) || !metin) { if (typeof onBitti === "function") onBitti(); return; }
       const sesDilKodu = aiSesKodu(aiDilRef.current);
@@ -2457,14 +2500,43 @@ export default function Anasayfa({ pro = false }) {
       const parcalar = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
       const konus = () => {
         const ses = sesSec();
+        // ── KELİME KELİME İLERLEME (teleprompter) ──
+        // İlerleme 0→1 hesaplanır: onboundary VARSA gerçek karakter konumundan (kesin), YOKSA zamana göre (tahmin).
+        // Böylece Android onboundary desteklemese bile yazı kelime kelime akmaya DEVAM eder (sonuna kadar).
+        const toplamChar = temiz.length || 1;
+        const tahminMs = Math.max(1200, toplamChar * 62); // ~62ms/karakter (rate 1) → toplam süre tahmini
+        let basMs = Date.now(), duraklaTop = 0, duraklaBas = 0, boundaryChar = -1, ilerTimer = null, ilerBitti = false;
+        const durdurIler = () => { if (ilerTimer) { clearInterval(ilerTimer); ilerTimer = null; } if (!ilerBitti) { ilerBitti = true; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } } };
+        if (typeof onIlerleme === "function") {
+          let baslamisMi = false, tikSay = 0;
+          ilerTimer = setInterval(() => {
+            tikSay++;
+            const ss = window.speechSynthesis;
+            if (!ss) { durdurIler(); return; }
+            if (ss.speaking || ss.pending) baslamisMi = true;
+            if (baslamisMi && !ss.speaking && !ss.pending) { durdurIler(); return; } // bitti/İPTAL → interval kendini kapatır (sızıntı yok)
+            if (!baslamisMi && tikSay > 60) { durdurIler(); return; }               // ~5.4sn içinde başlamadıysa bırak
+            if (!ss.speaking && !ss.pending) return;                                 // henüz başlamadı
+            if (ss.paused) { if (!duraklaBas) duraklaBas = Date.now(); return; }      // DURAKLAT → ilerleme dursun
+            if (duraklaBas) { duraklaTop += Date.now() - duraklaBas; duraklaBas = 0; }
+            let frac = boundaryChar >= 0 ? (boundaryChar / toplamChar) : ((Date.now() - basMs - duraklaTop) / tahminMs);
+            if (frac < 0) frac = 0; if (frac > 1) frac = 1;
+            try { onIlerleme(frac); } catch (e) {}
+          }, 90);
+        }
+        let charOfs = 0;
         parcalar.forEach((p, idx) => {
           const u = new SpeechSynthesisUtterance(p);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-          // HER cümle okunmaya başlayınca haber ver → balon o cümleye kaysın (teleprompter)
-          u.onstart = () => { if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } };
-          // SON parça bitince haber ver (oku düğmesi × → tekrar normale dönsün)
-          if (idx === parcalar.length - 1 && typeof onBitti === "function") u.onend = () => { try { onBitti(); } catch (e) {} };
+          const buOfs = charOfs;
+          // HER cümle okunmaya başlayınca haber ver (teleprompter geri uyumluluk) + ilk parçada zaman sıfırla
+          u.onstart = () => { if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } };
+          // KELİME sınırı (destekleyen tarayıcıda): gerçek karakter konumu → ilerleme kesinleşir
+          u.onboundary = (ev) => { try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} };
+          // SON parça bitince: ilerlemeyi 1 yap/kapat + haber ver (oku düğmesi × → normale dönsün)
+          if (idx === parcalar.length - 1) u.onend = () => { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
           window.speechSynthesis.speak(u);
+          charOfs += p.length + 1;
         });
       };
       let basladi = false;
@@ -5125,7 +5197,7 @@ export default function Anasayfa({ pro = false }) {
           onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir}>
           {/* KÜÇÜKKEN KONUŞURKEN: üstte küçük konuşma balonu (istek: ufakken de konuşunca balon çıksın) */}
           {maskotMini && maskotMetni && (aiKonusuyor || aiDuraklat) && (
-            <div className="ai-mini-balon">{renkliCumleler(maskotMetni, RC_KOYU, okunanCumle)}</div>
+            <div className="ai-mini-balon">{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>
           )}
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
           <button className={"ai-balon" + (aiKonusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "") + (maskotKizgin ? " kizgin" : "")}
@@ -5154,7 +5226,7 @@ export default function Anasayfa({ pro = false }) {
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
         <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")}>
-          {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{renkliCumleler(maskotMetni, RC_KOYU, okunanCumle)}</div>}
+          {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>}
           <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
             <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={132} rozet />
           </div>
