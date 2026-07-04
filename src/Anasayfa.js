@@ -1073,9 +1073,10 @@ export default function Anasayfa({ pro = false }) {
     })();
     try { localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
     setMaskotMetni(selam); setMaskotTanit(true); setMaskotMini(false); setYardimciMod("sohbet");
-    // KARŞILAMA sayfaya/transkripte YAZILMAZ (sadece sesli söyler). KENDİ KENDİNE KAPANMAZ — açık/hazır kalır,
-    // KAPATMAYI KULLANICI yapar (boşluğa dokun / ✕). (Kullanıcı: konuşunca kapatmasın, ben kapatacağım, beni beklesin.)
-    try { sesliOku(selam, undefined, maskotKaydir); } catch (e) {}
+    // İLK AÇILIŞ (oto) karşılaması SESLİ BİTİNCE maskot kendini KAPATIR (köşedeki yerine çekilir, ortada büyük durmaz).
+    // Kullanıcı KENDİSİ dokununca (oto değil) BÜYÜK kalır, kapatmayı kullanıcı yapar.
+    const bitince = oto ? () => { try { setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); } catch (e) {} } : undefined;
+    try { sesliOku(selam, bitince, maskotKaydir); } catch (e) {}
     if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
   };
   // BÜYÜK MASKOT canlı sohbet: karşılama sesi BİTİNCE mikrofonu açar, kullanıcıyı SABIRLA bekler (kendi konuşmaz, cevap dayatmaz),
@@ -2303,14 +2304,14 @@ export default function Anasayfa({ pro = false }) {
     sistem += `SEN DÜNYA ÇAPINDA SINIRSIZ BİLGİLİ BİR ASİSTANSIN — sen (Claude) ne biliyorsan KULLANICI için de o kadar bilirsin. Dünyanın HER ülkesi, şehri, ilçesi, kasabası; oteller, bankalar, postaneler, marketler, restoranlar, hastaneler, fabrikalar, üreticiler, markalar, üniversiteler, müzeler, tarihî yerler, güzergâhlar — bildiğin HER ŞEYİ söyle ve yardım et. "Bunu bilmiyorum", "veremiyorum", "yapamıyorum", "sadece yakını biliyorum", "elimde sadece şu şehirler var" gibi şeyleri ASLA deme; bilginle gerçek isimler ver. Kullanıcı bir güzergâh/yolculuk anlatırsa (örn "Vilnius'tan Mykolaiv/Nikolayev'e gideceğim, yolda otel"), o güzergâh ve VARIŞ şehri için GERÇEK otel/yer isimleri öner ve her biri için [HARITA: Yer adı | Şehir, Ülke] etiketi koy (UZAK/dünya yerlerinde koordinat yerine YER ADINI yaz, örn [HARITA: Hotel Reikartz Mykolaiv | Mykolaiv, Ukrayna]; yakın yerlerde yukarıdaki listenin koordinatını kullan). Birden çok yer için birden çok [HARITA:] koy. Bu platform TÜM DÜNYAYA hizmet eder, kimseye özel kısıt YOKTUR. Gerçek zamanlı/bugünkü anlık haber, futbol skoru, döviz-fiyat gibi şeyleri normalde tek başına bilemezsin AMA aşağıda "GÜNCEL HABER" verilmişse ONU kullanarak güncel yanıt ver (o veriler o an canlı çekildi). `;
     // CANLI HABER/FUTBOL — o an Google Haberler'den çekilen taze başlıklar (varsa): AI bunlarla GÜNCEL yanıtlar
     if (guncelHaber) sistem += `GÜNCEL HABER BAŞLIKLARI (ŞU AN, ${simdiStr} itibarıyla canlı haber kaynağından çekildi — GERÇEK ve TAZE): \n${guncelHaber}\nKullanıcının haber/futbol/güncel sorusunu BU BAŞLIKLARA dayanarak yanıtla: en alakalı 2-5 haberi doğal biçimde özetle/anlat, futbol ise skor/sonuç başlıkta varsa onu ver. "Canlı/güncel bilemem, bilgim eski" ASLA DEME — işte güncel başlıklar. Başlıkta olmayan ayrıntıyı UYDURMA; net bilgi başlıkta yoksa "şu an gelen başlıklarda bu kadarı var" de. Başlıklar hangi dildeyse özetini KULLANICININ diline (${dilAd}) çevirerek anlat. `;
-    else if (haberSoruldu) sistem += `ÇOK ÖNEMLİ — GÜNCEL VERİ GELMEDİ: Kullanıcı güncel bir şey (haber/futbol skoru/son dakika) sordu ama şu an canlı habere ULAŞILAMADI. Bu durumda SAKIN TAHMİN/UYDURMA yapma: hangi takım kazandı, kaç-kaç bitti, bugün ne oldu gibi GÜNCEL/DEĞİŞKEN bilgiyi UYDURMA, "muhtemelen/sanırım şu oldu" DEME, ESKİ bilgini GÜNCELMİŞ gibi sunma (örn geçmiş bir turnuvayı "şu an oluyor" DEME). Bunun yerine KISA ve dürüst ol: "Şu an güncel habere/skora ulaşamadım 🙏 Birkaç saniye sonra tekrar sorar mısın?" de. İsterse konuyla ilgili GENEL, DEĞİŞMEYEN bilgi verebilirsin (örn "X ligi genelde şöyledir") ama bunu güncel sonuç gibi SUNMA. `;
+    else if (haberSoruldu) sistem += `ÇOK ÖNEMLİ — GÜNCEL VERİ GELMEDİ: Kullanıcı güncel bir şey (haber/futbol skoru/son dakika) sordu ama şu an canlı habere ULAŞILAMADI. Bu durumda SADECE ŞUNU yap: ÇOK KISA ve dürüst, TEK cümle söyle → "Şu an güncel habere ulaşamadım 🙏 birkaç saniye sonra tekrar sorar mısın?" (kullanıcının dilinde). BAŞKA HİÇBİR ŞEY EKLEME: hangi takım kazandı/kaç-kaç/bugün ne oldu diye TAHMİN/UYDURMA yapma; geçmiş/eski bilgini ("2006'dan beri gidemedi", "en hızlı gol" vb.) GÜNCELMİŞ gibi ya da doldurma amaçlı ANLATMA; eski bir olayı "şu an oluyor" DEME. Konuyu UZATMA, sadece o tek cümleyle geç. `;
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
     sistem += `EN ÖNEMLİ KURAL — HAZIRLANAN METİN AYRI: Kullanıcı için bir paylaşım, gönderi, mesaj, şiir, kutlama, ilan, slogan, biyografi veya kopyalanabilir/paylaşılabilir HERHANGİ bir metin hazırladığında (kısa ya da uzun, KAÇINCI kez olursa olsun HER SEFERİNDE), o metni MUTLAKA ve SADECE şu etiketlerin arasına koy: [PAYLASIM]...sadece paylaşılacak metin...[/PAYLASIM]. Bu etiketlerin İÇİNE kendi sohbetini/açıklamanı ASLA yazma; etiket DIŞINDAki sözün en fazla TEK kısa cümle olsun. Hazırladığın metin ŞIK, canlı, SÜSLÜ olsun: bol emoji + çiçek/yıldız süsleri (🌸✨🌟💫🎉), sönük/düz değil. ÖRNEK: kullanıcı "bana doğum günü paylaşımı yaz" derse yanıtın TAM şöyle: Hazır! 🎉 [PAYLASIM]🎂✨ Nice mutlu yıllara! Bugün senin günün! 🥳🌸[/PAYLASIM]. UNUTMA: paylaşılacak/kopyalanacak metin SADECE [PAYLASIM][/PAYLASIM] arasında olur; etiketi koymayı ASLA unutma yoksa kullanıcı kopyalayamaz. `;
     // 2) TIKLANABİLİR ÖNERİLER (ayrı)
     // KULLANICI İSTEĞİ: kendiliğinden öneri/sonraki-adım YAĞDIRMA. [ONERILER] baloncukları KALDIRILDI —
     // kullanıcı istemediği "şunu da yapayım" tarzı önerilerden rahatsız oluyordu. Sadece sorulana cevap.
     // 3) KISA + biçimlendirme yasağı
-    sistem += `KISA ve net konuş, laf kalabalığı yapma (açıklaman 1-2 cümle). Yıldız (*), çift yıldız (**kalın**), kare (#), tire-liste, markdown ASLA kullanma — düz metin yaz; sesli konuşur gibi akıcı cümleler; ara sıra emoji serbest. SADECE kullanıcının sorduğu/istediği şeye cevap ver; kullanıcı istemeden kendiliğinden konu açma, ekstra bilgi/öneri YAĞDIRMA, "şunu da yapayım mı" diye üstüne gitme — kullanıcının ne isteyeceğini BEKLE. Resim/görsel ÇİZME, çizemezsin; istenirse kibarca metinle yardım et. KİŞİLİK: sıcak, samimi, neşeli ve CANLI bir dost gibi konuş; yeri gelince hafif şaka yap, espri yap, gül (😄😊); robot gibi soğuk olma — ama yine de KISA kal ve kullanıcı istemeden konuyu uzatma. `;
+    sistem += `KISA ve net konuş, laf kalabalığı yapma (açıklaman 1-2 cümle). Yıldız (*), çift yıldız (**kalın**), kare (#), tire-liste, markdown ASLA kullanma — düz metin yaz; sesli konuşur gibi akıcı cümleler; ara sıra emoji serbest. SADECE kullanıcının sorduğu/istediği şeye cevap ver; kullanıcı istemeden kendiliğinden konu açma, ekstra bilgi/öneri YAĞDIRMA, "şunu da yapayım mı" diye üstüne gitme — kullanıcının ne isteyeceğini BEKLE. Resim/görsel ÇİZME, çizemezsin; istenirse kibarca metinle yardım et. KİŞİLİK: sıcak, samimi, neşeli ve CANLI bir dost gibi konuş; yeri gelince hafif şaka yap, espri yap, gül (😄😊); robot gibi soğuk olma — ama yine de KISA kal ve kullanıcı istemeden konuyu uzatma. TEKRAR YOK: Önceki cevaplarında söylediğin cümleleri/kalıpları AYNEN TEKRARLAMA; her yanıt TAZE, kullanıcının SON mesajına ÖZEL ve farklı olsun. Bir şeyi bilmiyorsan ya da veri yoksa aynı klişeyi tekrar tekrar yazma; kısaca söyle ve geç. Kullanıcı seninle gerçek bir sohbet ediyor — papağan gibi değil, düşünen bir dost gibi cevap ver. `;
     // === ROL + BAĞLAM (daha az kritik — köprü kısaltırsa buradan kısalır) ===
     sistem += site
       ? `Sen Gloxoo'sun, GLOXORG sitesinin akıllı asistanı (lüks küresel profesyonel sosyal platform; bölümler: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar). SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
@@ -2479,7 +2480,7 @@ export default function Anasayfa({ pro = false }) {
     if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} await new Promise((r) => setTimeout(r, 200)); }
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr; sesParcaRef.current = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) sesParcaRef.current.push(e.data); };
@@ -2526,12 +2527,15 @@ export default function Anasayfa({ pro = false }) {
     if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     try {
-      // UZAK/DERİN SESLERİ ELE: gürültü engelleme + yankı iptali + oto-kazanç KAPALI (uzak sesler yükseltilmesin)
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      // YAKIN sesi al, UZAK/arka sesi (araba/rüzgar) ELE: gürültü+yankı bastır, oto-kazanç KAPALI (uzak sesleri yükseltmesin → yakın konuşma öne çıkar)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr; sesParcaRef.current = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) sesParcaRef.current.push(e.data); };
       let ac, raf, konustu = false, sessizBas = 0, yuksek = 0, ttsKesti = false; const basT = Date.now();
+      // ADAPTİF EŞİK: ilk ~450ms ortam/arka gürültü (araba/rüzgar sabit sesi) ölçülür; eşik ona göre ayarlanır →
+      // gürültülü ortamda eşik yükselir (sadece YAKIN konuşma geçer), sessizde düşer (hafif ses de yakalanır).
+      let taban = 0, tabanN = 0, esik = 0.055, kalibre = false;
       try {
         ac = new (window.AudioContext || window.webkitAudioContext)();
         const src = ac.createMediaStreamSource(stream); const an = ac.createAnalyser(); an.fftSize = 1024; src.connect(an);
@@ -2543,10 +2547,13 @@ export default function Anasayfa({ pro = false }) {
           an.getByteTimeDomainData(veri);
           let rms = 0; for (let i = 0; i < veri.length; i++) { const v = (veri[i] - 128) / 128; rms += v * v; } rms = Math.sqrt(rms / veri.length);
           const simdi = Date.now();
-          // KONUŞMA ALGILA: eşik makul (0.05) + 2 kare → normal/hafif ses de yakalanır (kullanıcı: konuştuğumda cevap vermiyordu). noiseSuppression arka gürültüyü baskılar.
-          if (rms > 0.05) { yuksek++; if (yuksek >= 2) { konustu = true; sessizBas = 0; } }
-          else { yuksek = 0; if (konustu && !sessizBas) sessizBas = simdi; else if (konustu && sessizBas && simdi - sessizBas > 1200) { try { mr.stop(); } catch (e) {} return; } } // 1.2sn SESSİZLİK → bitti (hızlı cevap), yarıda kesme yok
-          if (simdi - basT > 30000) { try { mr.stop(); } catch (e) {} return; } // en fazla 30sn (uzun konuşmaya izin)
+          // İLK ~450ms: arka/ortam gürültü tabanını ölç (henüz konuşma algılama yok)
+          if (simdi - basT < 450) { taban += rms; tabanN++; raf = requestAnimationFrame(izle); return; }
+          if (!kalibre) { kalibre = true; const ort = tabanN ? taban / tabanN : 0.02; esik = Math.max(0.05, Math.min(0.17, ort * 2.6 + 0.02)); } // arka gürültünün ~2.6 katı → yakın konuşma
+          // KONUŞMA = eşiği AŞAN (yakın) ses; sabit arka gürültü eşiğin ALTINDA kalır → yanlış tetiklenmez
+          if (rms > esik) { yuksek++; if (yuksek >= 2) { konustu = true; sessizBas = 0; } }
+          else { yuksek = 0; if (konustu && !sessizBas) sessizBas = simdi; else if (konustu && sessizBas && simdi - sessizBas > 1200) { try { mr.stop(); } catch (e) {} return; } } // 1.2sn SESSİZLİK → bitti
+          if (simdi - basT > 30000) { try { mr.stop(); } catch (e) {} return; } // en fazla 30sn
           raf = requestAnimationFrame(izle);
         };
         raf = requestAnimationFrame(izle);
