@@ -399,6 +399,15 @@ function MaskotYuz({ konusuyor = false, dinliyor = false, arastir = false, tur =
           <circle cx="18.7" cy="20.2" r="0.85" fill="#fff" /><circle cx="30.7" cy="20.2" r="0.85" fill="#fff" />
           <ellipse cx="24" cy="26" rx="2.6" ry="1.9" fill="#33210f" />
           <ellipse className="maskot-agiz" cx="24" cy="31" rx="3.4" ry="2.1" fill="#5b2d12" />
+          {/* AI ROZETİ — AYININ da kulakları arasında (Gloxoo gibi); boşta kırmızı, dinlerken yeşil, konuşurken mavi, araştırırken turuncu */}
+          {rozet && (
+            <g className="msvg-rozet" aria-hidden="true">
+              <rect className="msvg-rozet-bg" x="16.8" y="4.4" width="14.4" height="6.6" rx="3.3" />
+              <text className="msvg-rozet-ai" x="21.3" y="9.35" textAnchor="middle">AI</text>
+              <rect className="msvg-bar msvg-bar1" x="25.3" y="5.9" width="1.35" height="3.3" rx="0.6" />
+              <rect className="msvg-bar msvg-bar2" x="27.5" y="5.9" width="1.35" height="3.3" rx="0.6" />
+            </g>
+          )}
         </svg>
       ) : (
         /* GLOXORG — 3D TAM KARAKTER: kol, bacak, kulak, burun + büyük gözlü elmas; kollar/bacaklar/kulaklar oynar */
@@ -5314,7 +5323,7 @@ export default function Anasayfa({ pro = false }) {
         <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")}>
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>}
           <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={132} rozet />
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={96} rozet />
           </div>
           {/* Büyük maskot düğmeleri = KÜÇÜK maskotla AYNI ikonlar (Yaz kalem + ses aç/kapa) */}
           <div className="ai-mini-alt buyuk" onPointerDown={(e) => e.stopPropagation()}>
