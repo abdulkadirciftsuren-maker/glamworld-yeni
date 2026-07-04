@@ -911,6 +911,7 @@ export default function Anasayfa({ pro = false }) {
   const kameraPenRef = useRef(null);                   // self-view sarmalayıcı (sürükleme sınırı için)
   const yardimciAcikOnceRef = useRef(false);           // Gloxoo panelinin önceki açık/kapalı durumu (kapanışı yakalamak için)
   const recognitionRef = useRef(null);     // CANLI DİKTE (tarayıcı SpeechRecognition) — konuştukça şeride yazar
+  const dikteTabanRef = useRef("");        // dikte başlarken şeritte olan metin (üzerine eklenir, silinmez)
   const dikteBazRef = useRef("");          // dikte başlarken şeritte olan metin (üzerine eklenir)
   const dikteAcikRef = useRef(false);      // canlı dikte açık mı (onend'de yeniden başlat için)
   // DİL DEĞİŞİNCE çevirileri SIFIRLA: önceki dile (örn İngilizce) yapılan çeviri hafızada kalıp
@@ -2566,9 +2567,53 @@ export default function Anasayfa({ pro = false }) {
   };
   // Mikrofon = TEK SEFERLİK DİKTE (bas→konuş→tekrar bas): sesi KAYDEDER, Whisper ile BİR KEZ yazıya çevirir → ŞERİDE yazar.
   // Tarayıcının canlı tanıması (SpeechRecognition) kelimeleri TEKRARLIYORDU (Android 10x/100x) — KALDIRILDI; Whisper tek sefer, tekrar İMKANSIZ.
-  const sesleSor = async () => {
-    if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} } // eski canlı dikte kapalı kalsın
-    // 2. basış: kaydı DURDUR → çevrilir
+  // YAZI DİKTE = ŞERİDE KONUŞARAK YAZ: tarayıcının KENDİ ses tanıması (OpenAI GEREKMEZ). Bas→konuş, konuştukça
+  // kelimeler CANLI şeride yazılır (ne dediğini görürsün); tekrar bas→durur. Sen düzenler, ➤ ile gönderirsin.
+  const sesleSor = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // İKİNCİ BASIŞ → dikteyi durdur (yazı şeritte KALIR)
+    if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} return; }
+    if (SR) {
+      if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} }
+      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      dikteAcikRef.current = true; setDinliyor(true);
+      dikteTabanRef.current = (yardimciYazi || "").trim(); // mevcut yazı korunur, üstüne eklenir
+      // Her başlatmada TAZE tanıyıcı (Android'de sessizlikte durunca temiz yeniden başlar → kelime tekrarı olmaz)
+      const basla = () => {
+        let rec; try { rec = new SR(); } catch (e) { dikteAcikRef.current = false; setDinliyor(false); return; }
+        rec.lang = aiSesKodu(aiDilRef.current); rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+        recognitionRef.current = rec;
+        let kalici = ""; // bu oturumda KESİNLEŞEN metin
+        rec.onresult = (e) => {
+          let gecici = "";
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const tr = (e.results[i][0] && e.results[i][0].transcript) || "";
+            if (e.results[i].isFinal) kalici += tr + " "; else gecici += tr; // resultIndex ile SADECE yeni sonuçlar → tekrar YOK
+          }
+          const taban = dikteTabanRef.current;
+          const yeni = ((taban ? taban + " " : "") + kalici + gecici).replace(/\s+/g, " ").replace(/^\s+/, "");
+          setYardimciYazi(yeni);
+          try { const el = yardimciInputRef.current; if (el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 200) + "px"; } } catch (er) {}
+        };
+        rec.onerror = (ev) => {
+          if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { dikteAcikRef.current = false; recognitionRef.current = null; setDinliyor(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); }
+        };
+        rec.onend = () => {
+          if (kalici) dikteTabanRef.current = ((dikteTabanRef.current ? dikteTabanRef.current + " " : "") + kalici).replace(/\s+/g, " ").trim();
+          recognitionRef.current = null;
+          if (dikteAcikRef.current) basla(); // kullanıcı kapatana kadar dinlemeye devam (sessizlikte durunca yeniden başlat)
+          else setDinliyor(false);
+        };
+        try { rec.start(); } catch (e) {}
+      };
+      basla();
+      return;
+    }
+    // SpeechRecognition YOKSA → eski Whisper/worker yolu (OpenAI anahtarı varsa çalışır)
+    sesleSorWhisper();
+  };
+  // ESKİ YOL (yedek): sesi kaydedip worker/Whisper ile BİR KEZ yazıya çevirir → şeride yazar (OpenAI gerekir)
+  const sesleSorWhisper = async () => {
     if (dinliyor && mediaRecorderRef.current) { try { mediaRecorderRef.current.stop(); } catch (e) {} return; }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} await new Promise((r) => setTimeout(r, 200)); }
