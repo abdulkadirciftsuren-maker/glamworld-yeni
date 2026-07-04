@@ -9,7 +9,7 @@ import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Googl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -118,7 +118,7 @@ function kelimeSayisi(metin) {
 }
 // BEĞENEN AVATAR ŞERİDİ — gönderiyi beğenenlerin ufak profil resimleri, İSTİFLENMİŞ (öne doğru küçülerek).
 // Gerçek beğeni verisi Firestore'dan (begenenleriOku) çekilir; beğeni yoksa hiç görünmez.
-function BegenenlerSerit({ postId, sayi }) {
+function BegenenlerSerit({ postId, sayi, dil }) {
   const [liste, setListe] = useState(null);
   useEffect(() => {
     let iptal = false;
@@ -128,17 +128,33 @@ function BegenenlerSerit({ postId, sayi }) {
   }, [postId, sayi]);
   if (!liste || !liste.length) return null;
   const goster = liste.slice(0, 4);
-  const ilkAd = (goster[0].ad || "Biri").split(" ")[0];
+  const ilkAd = (goster[0].ad || "").split(" ")[0] || { tr: "Biri", en: "Someone", de: "Jemand", fr: "Quelqu'un", es: "Alguien", it: "Qualcuno", pt: "Alguém", ru: "Кто-то", uk: "Хтось", ar: "شخص ما", zh: "有人", ja: "誰か", hi: "कोई" }[dil] || "Someone";
+  const n = (sayi - 1).toLocaleString();
+  const T = {
+    tr: sayi > 1 ? `${ilkAd} ve ${n} kişi beğendi` : `${ilkAd} beğendi`,
+    en: sayi > 1 ? `${ilkAd} and ${n} others liked` : `${ilkAd} liked`,
+    de: sayi > 1 ? `${ilkAd} und ${n} weiteren gefällt das` : `${ilkAd} gefällt das`,
+    fr: sayi > 1 ? `${ilkAd} et ${n} autres ont aimé` : `${ilkAd} a aimé`,
+    es: sayi > 1 ? `A ${ilkAd} y ${n} más les gustó` : `A ${ilkAd} le gustó`,
+    it: sayi > 1 ? `Piace a ${ilkAd} e altri ${n}` : `Piace a ${ilkAd}`,
+    pt: sayi > 1 ? `${ilkAd} e mais ${n} gostaram` : `${ilkAd} gostou`,
+    ru: sayi > 1 ? `${ilkAd} и ещё ${n} оценили` : `${ilkAd} оценил`,
+    uk: sayi > 1 ? `${ilkAd} та ще ${n} вподобали` : `${ilkAd} вподобав`,
+    ar: sayi > 1 ? `أعجب ${ilkAd} و${n} آخرين` : `أعجب ${ilkAd}`,
+    zh: sayi > 1 ? `${ilkAd} 等 ${n} 人赞了` : `${ilkAd} 赞了`,
+    ja: sayi > 1 ? `${ilkAd} 他 ${n} 人がいいね` : `${ilkAd} がいいね`,
+    hi: sayi > 1 ? `${ilkAd} और ${n} अन्य को पसंद` : `${ilkAd} को पसंद`,
+  };
   return (
     <div className="begenen-serit">
       <div className="begenen-avlar">
         {goster.map((b, i) => (
           <span className="begenen-av" key={b.id || i} style={{ width: 26 - i * 3, height: 26 - i * 3, marginLeft: i === 0 ? 0 : -(9 - i), zIndex: 9 - i }}>
-            {b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : <span className="begenen-harf">{ilkAd.charAt(0).toUpperCase()}</span>}
+            {b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : <span className="begenen-harf">{(ilkAd || "?").charAt(0).toUpperCase()}</span>}
           </span>
         ))}
       </div>
-      <span className="begenen-yazi">{sayi > 1 ? `${ilkAd} ve ${(sayi - 1).toLocaleString()} kişi beğendi` : `${ilkAd} beğendi`}</span>
+      <span className="begenen-yazi">{T[dil] || T.en}</span>
     </div>
   );
 }
@@ -378,16 +394,40 @@ const NAV_RENK = { home: "mavi", elite: "altin", topluluk: "yesil", video: "mor"
 const GUN_RENK = ["#e0202c", "#2f7fd6", "#1ea64f", "#9b4fd6", "#f2a900", "#1fc2c2", "#e0608c"];
 // Öneri çipleri — her biri farklı CANLI renk (hepsi aynı/karanlık değil)
 const ONERI_RENK = ["#ff9d2e", "#34c98b", "#4aa3ff", "#d96bff", "#ff6b8f", "#39d0d0"];
-// 7 EKSEN EYLEM PLANI — GLOXORG Hakkında sayfasında gösterilir; Gloxoo da sistem promptundan bilir (istenince kişiye özel doldurur)
-const EKSEN_PLANI = [
-  { ik: "🧠", ad: "DÜŞÜN", ac: "Neredesin, ne istiyorsun? Kafanı netleştir, kendini tanı.", renk: "#4aa3ff" },
-  { ik: "🔭", ad: "GELECEĞİ GÖR", ac: "İleriyi ve fırsatı gör; nereye gittiğini bil, vizyon kur.", renk: "#9b6bff" },
-  { ik: "🎯", ad: "HEDEF SEÇ", ac: "Net, ölçülebilir tek bir hedef koy. Dağılma, odaklan.", renk: "#ff6b8f" },
-  { ik: "🛠️", ad: "ÜRET", ac: "Harekete geç, somut bir şey ortaya koy. Mükemmeli bekleme, başla.", renk: "#ff9d2e" },
-  { ik: "✨", ad: "FARK YARAT", ac: "Seni özel kılanı öne çıkar. Herkes gibi değil, 'sen' ol.", renk: "#ffd23f" },
-  { ik: "🤝", ad: "PAYLAŞ & BAĞ KUR", ac: "İşini paylaş, doğru insanlar ve müşterilerle bağ kur — GLOXORG'un kalbi.", renk: "#34c98b" },
-  { ik: "🚀", ad: "İLERLE", ac: "Düzenli ilerle, ölç, geliştir, durma. Her gün bir adım — ben yanındayım.", renk: "#1fc2c2" },
-];
+// 7 EKSEN EYLEM PLANI — ikon+renk sabit, METİN 13 dilde. GLOXORG Hakkında sayfasında gösterilir.
+const EKSEN_IKON = ["🧠", "🔭", "🎯", "🛠️", "✨", "🤝", "🚀"];
+const EKSEN_RENK = ["#4aa3ff", "#9b6bff", "#ff6b8f", "#ff9d2e", "#ffd23f", "#34c98b", "#1fc2c2"];
+const EKSEN_METIN = {
+  tr: [["DÜŞÜN", "Neredesin, ne istiyorsun? Kafanı netleştir, kendini tanı."], ["GELECEĞİ GÖR", "İleriyi ve fırsatı gör; nereye gittiğini bil, vizyon kur."], ["HEDEF SEÇ", "Net, ölçülebilir tek bir hedef koy. Dağılma, odaklan."], ["ÜRET", "Harekete geç, somut bir şey ortaya koy. Mükemmeli bekleme, başla."], ["FARK YARAT", "Seni özel kılanı öne çıkar. Herkes gibi değil, 'sen' ol."], ["PAYLAŞ & BAĞ KUR", "İşini paylaş, doğru insanlar ve müşterilerle bağ kur — GLOXORG'un kalbi."], ["İLERLE", "Düzenli ilerle, ölç, geliştir, durma. Her gün bir adım — ben yanındayım."]],
+  en: [["THINK", "Where are you, what do you want? Clear your mind, know yourself."], ["SEE THE FUTURE", "See ahead and the opportunity; know where you're going, build a vision."], ["CHOOSE A GOAL", "Set one clear, measurable goal. Don't scatter — focus."], ["CREATE", "Take action, make something real. Don't wait for perfect, start."], ["STAND OUT", "Show what makes you special. Be 'you', not like everyone."], ["SHARE & CONNECT", "Share your work, connect with the right people and clients — the heart of GLOXORG."], ["ADVANCE", "Progress steadily, measure, improve, never stop. One step a day — I'm with you."]],
+  de: [["DENK NACH", "Wo stehst du, was willst du? Kläre deinen Kopf, kenne dich."], ["SIEH DIE ZUKUNFT", "Sieh voraus und die Chance; wisse, wohin du gehst, bilde eine Vision."], ["ZIEL WÄHLEN", "Setze ein klares, messbares Ziel. Verzettle dich nicht — fokussiere."], ["ERSCHAFFE", "Handle, schaffe etwas Konkretes. Warte nicht auf perfekt, fang an."], ["HEB DICH AB", "Zeig, was dich besonders macht. Sei 'du', nicht wie alle."], ["TEILE & VERNETZE", "Teile deine Arbeit, vernetze dich mit den richtigen Leuten und Kunden — das Herz von GLOXORG."], ["MACH WEITER", "Schreite stetig voran, miss, verbessere, hör nie auf. Ein Schritt pro Tag — ich bin bei dir."]],
+  fr: [["RÉFLÉCHIS", "Où es-tu, que veux-tu ? Clarifie ton esprit, connais-toi."], ["VOIS L'AVENIR", "Vois plus loin et l'opportunité ; sache où tu vas, bâtis une vision."], ["CHOISIS UN BUT", "Fixe un objectif clair et mesurable. Ne te disperse pas — concentre-toi."], ["CRÉE", "Agis, fais quelque chose de concret. N'attends pas le parfait, commence."], ["DISTINGUE-TOI", "Montre ce qui te rend unique. Sois 'toi', pas comme tout le monde."], ["PARTAGE & CONNECTE", "Partage ton travail, connecte-toi aux bonnes personnes et clients — le cœur de GLOXORG."], ["AVANCE", "Progresse régulièrement, mesure, améliore, ne t'arrête jamais. Un pas par jour — je suis avec toi."]],
+  es: [["PIENSA", "¿Dónde estás, qué quieres? Aclara tu mente, conócete."], ["VE EL FUTURO", "Mira adelante y la oportunidad; sabe a dónde vas, crea una visión."], ["ELIGE UNA META", "Fija una meta clara y medible. No te disperses — enfócate."], ["CREA", "Actúa, haz algo real. No esperes lo perfecto, empieza."], ["DESTACA", "Muestra lo que te hace especial. Sé 'tú', no como todos."], ["COMPARTE & CONECTA", "Comparte tu trabajo, conecta con las personas y clientes correctos — el corazón de GLOXORG."], ["AVANZA", "Progresa constante, mide, mejora, nunca pares. Un paso al día — estoy contigo."]],
+  it: [["PENSA", "Dove sei, cosa vuoi? Schiarisci la mente, conosci te stesso."], ["VEDI IL FUTURO", "Guarda avanti e l'opportunità; sappi dove vai, crea una visione."], ["SCEGLI UN OBIETTIVO", "Fissa un obiettivo chiaro e misurabile. Non disperderti — concentrati."], ["CREA", "Agisci, fai qualcosa di concreto. Non aspettare il perfetto, inizia."], ["DISTINGUITI", "Mostra ciò che ti rende speciale. Sii 'te', non come tutti."], ["CONDIVIDI & CONNETTI", "Condividi il tuo lavoro, connettiti con le persone e i clienti giusti — il cuore di GLOXORG."], ["AVANZA", "Progredisci con costanza, misura, migliora, non fermarti. Un passo al giorno — sono con te."]],
+  pt: [["PENSA", "Onde estás, o que queres? Clareia a mente, conhece-te."], ["VÊ O FUTURO", "Olha em frente e a oportunidade; sabe para onde vais, cria uma visão."], ["ESCOLHE UMA META", "Define uma meta clara e mensurável. Não te disperses — foca."], ["CRIA", "Age, faz algo concreto. Não esperes o perfeito, começa."], ["DESTACA-TE", "Mostra o que te torna especial. Sê 'tu', não como todos."], ["PARTILHA & CONECTA", "Partilha o teu trabalho, conecta-te com as pessoas e clientes certos — o coração da GLOXORG."], ["AVANÇA", "Progride com constância, mede, melhora, nunca pares. Um passo por dia — estou contigo."]],
+  ru: [["ДУМАЙ", "Где ты, чего хочешь? Проясни мысли, познай себя."], ["ВИДЬ БУДУЩЕЕ", "Смотри вперёд и на возможность; знай, куда идёшь, создай видение."], ["ВЫБЕРИ ЦЕЛЬ", "Поставь одну ясную, измеримую цель. Не распыляйся — сосредоточься."], ["СОЗДАВАЙ", "Действуй, сделай что-то реальное. Не жди идеала, начни."], ["ВЫДЕЛЯЙСЯ", "Покажи, что делает тебя особенным. Будь 'собой', не как все."], ["ДЕЛИСЬ & СВЯЗЫВАЙСЯ", "Делись своей работой, связывайся с нужными людьми и клиентами — сердце GLOXORG."], ["ПРОДВИГАЙСЯ", "Двигайся стабильно, измеряй, улучшай, не останавливайся. Шаг в день — я с тобой."]],
+  uk: [["ДУМАЙ", "Де ти, чого хочеш? Проясни думки, пізнай себе."], ["БАЧ МАЙБУТНЄ", "Дивись уперед і на можливість; знай, куди йдеш, створи бачення."], ["ОБЕРИ ЦІЛЬ", "Постав одну чітку, вимірювану ціль. Не розпорошуйся — зосередься."], ["ТВОРИ", "Дій, зроби щось реальне. Не чекай ідеального, починай."], ["ВИДІЛЯЙСЯ", "Покажи, що робить тебе особливим. Будь 'собою', не як усі."], ["ДІЛИСЯ & З'ЄДНУЙСЯ", "Ділися своєю роботою, з'єднуйся з потрібними людьми та клієнтами — серце GLOXORG."], ["ПРОСУВАЙСЯ", "Рухайся стабільно, вимірюй, покращуй, не зупиняйся. Крок на день — я з тобою."]],
+  ar: [["فكّر", "أين أنت، وماذا تريد؟ صفِّ ذهنك، اعرف نفسك."], ["اُنظر إلى المستقبل", "انظر إلى الأمام وإلى الفرصة؛ اعرف إلى أين تذهب، اِبنِ رؤية."], ["اختر هدفًا", "حدد هدفًا واحدًا واضحًا وقابلًا للقياس. لا تتشتت — ركّز."], ["أنتج", "تحرّك، اصنع شيئًا ملموسًا. لا تنتظر الكمال، اِبدأ."], ["تميّز", "أظهر ما يجعلك مميزًا. كن 'أنت'، لا كالجميع."], ["شارك وتواصل", "شارك عملك، تواصل مع الأشخاص والعملاء المناسبين — قلب GLOXORG."], ["تقدّم", "تقدّم بثبات، قِس، طوّر، لا تتوقف. خطوة كل يوم — أنا معك."]],
+  zh: [["思考", "你在哪里，想要什么？理清思路，认识自己。"], ["看见未来", "看向前方与机会；知道去向，建立愿景。"], ["选择目标", "设定一个清晰、可衡量的目标。别分散——专注。"], ["创造", "行动起来，做出真实的东西。别等完美，开始吧。"], ["脱颖而出", "展现你的独特之处。做'你'，而非随大流。"], ["分享与连接", "分享你的作品，与对的人和客户连接——GLOXORG 的核心。"], ["前进", "稳步前进，衡量，改进，永不停止。每天一步——我与你同在。"]],
+  ja: [["考える", "今どこにいて、何を望む？頭を整理し、自分を知る。"], ["未来を見る", "先とチャンスを見よ。行き先を知り、ビジョンを描く。"], ["目標を選ぶ", "明確で測れる目標を一つ。散らばらず集中する。"], ["創る", "動いて、形あるものを作る。完璧を待たず、始める。"], ["際立つ", "あなたらしさを示す。皆と同じでなく『あなた』で。"], ["共有・つながる", "作品を共有し、正しい人や顧客とつながる——GLOXORG の心。"], ["前進する", "着実に進み、測り、改善し、止まらない。毎日一歩——そばにいる。"]],
+  hi: [["सोचो", "तुम कहाँ हो, क्या चाहते हो? मन साफ़ करो, ख़ुद को जानो।"], ["भविष्य देखो", "आगे और अवसर देखो; जानो कहाँ जा रहे हो, दृष्टि बनाओ।"], ["लक्ष्य चुनो", "एक स्पष्ट, मापने योग्य लक्ष्य रखो। बिखरो मत — केंद्रित रहो।"], ["बनाओ", "क़दम उठाओ, कुछ ठोस बनाओ। परफेक्ट का इंतज़ार मत करो, शुरू करो।"], ["अलग दिखो", "जो तुम्हें ख़ास बनाता है दिखाओ। सबके जैसे नहीं, 'तुम' बनो।"], ["साझा करो & जुड़ो", "अपना काम साझा करो, सही लोगों और ग्राहकों से जुड़ो — GLOXORG का दिल।"], ["आगे बढ़ो", "लगातार बढ़ो, मापो, सुधारो, रुको मत। रोज़ एक क़दम — मैं साथ हूँ।"]],
+};
+// GLOXORG HAKKINDA paneli metinleri — 13 dil
+const HAKKINDA_CEVIRI = {
+  tr: { menu: "GLOXORG Hakkında + 7 Eksen", alt: "Dünyanın lüks profesyonel sosyal platformu", b1h: "🌍 GLOXORG nedir?", b1p: "GLOXORG, dünyaya açık lüks bir profesyonel sosyal platformdur — paylaş, bağ kur, müşteri bul, mesleğini büyüt. Web: gloxorg.com", b2h: "💎 Gloxoo — akıllı kalp", b2p: "Ben Gloxoo, GLOXORG'un akıllı yardımcısıyım. Her sayfada yanındayım: yazarım, konuşurum, güncel bilgi veririm. Web: gloxoo.com", b3h: "🐻 Ekspert — sayfa uzmanı", b3p: "Ekspert ayı, bulunduğun sayfanın uzmanıdır. Üstteki ayı düğmesine dokun; o sayfada derin yardım eder ve seni dinler.", eh: "🎯 7 Eksen Eylem Planı", ea: 'İlerlemenin 7 temel ekseni. Gloxoo\'ya "bana eylem planı çıkar" de — sana özel doldursun.', pb: "🚀 Bana özel plan çıkar" },
+  en: { menu: "About GLOXORG + 7 Axes", alt: "The world's luxury professional social platform", b1h: "🌍 What is GLOXORG?", b1p: "GLOXORG is a global luxury professional social platform — share, connect, find clients, grow your profession. Web: gloxorg.com", b2h: "💎 Gloxoo — the smart heart", b2p: "I'm Gloxoo, GLOXORG's smart assistant. I'm with you on every page: I write, talk, and give up-to-date info. Web: gloxoo.com", b3h: "🐻 Ekspert — page expert", b3p: "Ekspert the bear is the expert of your current page. Tap the bear button above; it helps deeply on that page and listens to you.", eh: "🎯 7-Axis Action Plan", ea: 'The 7 core axes of progress. Tell Gloxoo "make me an action plan" — it fills them in just for you.', pb: "🚀 Make me a plan" },
+  de: { menu: "Über GLOXORG + 7 Achsen", alt: "Die luxuriöse berufliche Social-Plattform der Welt", b1h: "🌍 Was ist GLOXORG?", b1p: "GLOXORG ist eine globale, luxuriöse berufliche Social-Plattform — teilen, vernetzen, Kunden finden, deinen Beruf ausbauen. Web: gloxorg.com", b2h: "💎 Gloxoo — das kluge Herz", b2p: "Ich bin Gloxoo, der smarte Assistent von GLOXORG. Auf jeder Seite bei dir: ich schreibe, spreche und gebe aktuelle Infos. Web: gloxoo.com", b3h: "🐻 Ekspert — Seitenexperte", b3p: "Der Bär Ekspert ist der Experte deiner aktuellen Seite. Tippe oben auf den Bären; er hilft dort tiefgehend und hört dir zu.", eh: "🎯 7-Achsen-Aktionsplan", ea: 'Die 7 Kernachsen des Fortschritts. Sag Gloxoo „mach mir einen Aktionsplan" — er füllt sie für dich aus.', pb: "🚀 Erstelle mir einen Plan" },
+  fr: { menu: "À propos de GLOXORG + 7 axes", alt: "La plateforme sociale professionnelle de luxe du monde", b1h: "🌍 Qu'est-ce que GLOXORG ?", b1p: "GLOXORG est une plateforme sociale professionnelle de luxe mondiale — partage, connecte-toi, trouve des clients, développe ton métier. Web : gloxorg.com", b2h: "💎 Gloxoo — le cœur intelligent", b2p: "Je suis Gloxoo, l'assistant intelligent de GLOXORG. Je suis avec toi sur chaque page : j'écris, je parle, je donne des infos à jour. Web : gloxoo.com", b3h: "🐻 Ekspert — expert de la page", b3p: "L'ours Ekspert est l'expert de ta page actuelle. Touche l'ours en haut ; il aide en profondeur sur cette page et t'écoute.", eh: "🎯 Plan d'action à 7 axes", ea: 'Les 7 axes clés du progrès. Dis à Gloxoo « fais-moi un plan d\'action » — il les remplit rien que pour toi.', pb: "🚀 Fais-moi un plan" },
+  es: { menu: "Sobre GLOXORG + 7 ejes", alt: "La plataforma social profesional de lujo del mundo", b1h: "🌍 ¿Qué es GLOXORG?", b1p: "GLOXORG es una plataforma social profesional de lujo global — comparte, conecta, encuentra clientes, haz crecer tu profesión. Web: gloxorg.com", b2h: "💎 Gloxoo — el corazón inteligente", b2p: "Soy Gloxoo, el asistente inteligente de GLOXORG. Estoy contigo en cada página: escribo, hablo y doy información actual. Web: gloxoo.com", b3h: "🐻 Ekspert — experto de la página", b3p: "El oso Ekspert es el experto de tu página actual. Toca el oso de arriba; ayuda a fondo en esa página y te escucha.", eh: "🎯 Plan de acción de 7 ejes", ea: 'Los 7 ejes clave del progreso. Dile a Gloxoo "hazme un plan de acción" — los completa solo para ti.', pb: "🚀 Hazme un plan" },
+  it: { menu: "Su GLOXORG + 7 assi", alt: "La piattaforma sociale professionale di lusso del mondo", b1h: "🌍 Cos'è GLOXORG?", b1p: "GLOXORG è una piattaforma sociale professionale di lusso globale — condividi, connetti, trova clienti, fai crescere la tua professione. Web: gloxorg.com", b2h: "💎 Gloxoo — il cuore intelligente", b2p: "Sono Gloxoo, l'assistente intelligente di GLOXORG. Sono con te in ogni pagina: scrivo, parlo e do info aggiornate. Web: gloxoo.com", b3h: "🐻 Ekspert — esperto della pagina", b3p: "L'orso Ekspert è l'esperto della tua pagina attuale. Tocca l'orso in alto; aiuta a fondo su quella pagina e ti ascolta.", eh: "🎯 Piano d'azione a 7 assi", ea: 'I 7 assi chiave del progresso. Di\' a Gloxoo "fammi un piano d\'azione" — li compila apposta per te.', pb: "🚀 Fammi un piano" },
+  pt: { menu: "Sobre a GLOXORG + 7 eixos", alt: "A plataforma social profissional de luxo do mundo", b1h: "🌍 O que é a GLOXORG?", b1p: "A GLOXORG é uma plataforma social profissional de luxo global — partilha, conecta, encontra clientes, faz crescer a tua profissão. Web: gloxorg.com", b2h: "💎 Gloxoo — o coração inteligente", b2p: "Sou o Gloxoo, o assistente inteligente da GLOXORG. Estou contigo em cada página: escrevo, falo e dou info atual. Web: gloxoo.com", b3h: "🐻 Ekspert — especialista da página", b3p: "O urso Ekspert é o especialista da tua página atual. Toca no urso acima; ajuda a fundo nessa página e ouve-te.", eh: "🎯 Plano de ação de 7 eixos", ea: 'Os 7 eixos-chave do progresso. Diz ao Gloxoo "faz-me um plano de ação" — ele preenche só para ti.', pb: "🚀 Faz-me um plano" },
+  ru: { menu: "О GLOXORG + 7 осей", alt: "Мировая люксовая профессиональная соцплатформа", b1h: "🌍 Что такое GLOXORG?", b1p: "GLOXORG — глобальная люксовая профессиональная соцплатформа: делись, связывайся, находи клиентов, развивай профессию. Сайт: gloxorg.com", b2h: "💎 Gloxoo — умное сердце", b2p: "Я Gloxoo, умный помощник GLOXORG. Я с тобой на каждой странице: пишу, говорю, даю актуальную информацию. Сайт: gloxoo.com", b3h: "🐻 Ekspert — эксперт страницы", b3p: "Медведь Ekspert — эксперт твоей текущей страницы. Нажми на медведя вверху; он глубоко помогает на этой странице и слушает тебя.", eh: "🎯 План действий из 7 осей", ea: '7 ключевых осей прогресса. Скажи Gloxoo «составь мне план действий» — он заполнит их для тебя.', pb: "🚀 Составь мне план" },
+  uk: { menu: "Про GLOXORG + 7 осей", alt: "Світова люксова професійна соцплатформа", b1h: "🌍 Що таке GLOXORG?", b1p: "GLOXORG — глобальна люксова професійна соцплатформа: ділися, з'єднуйся, знаходь клієнтів, розвивай професію. Сайт: gloxorg.com", b2h: "💎 Gloxoo — розумне серце", b2p: "Я Gloxoo, розумний помічник GLOXORG. Я з тобою на кожній сторінці: пишу, говорю, даю актуальну інформацію. Сайт: gloxoo.com", b3h: "🐻 Ekspert — експерт сторінки", b3p: "Ведмідь Ekspert — експерт твоєї поточної сторінки. Натисни на ведмедя вгорі; він глибоко допомагає на цій сторінці й слухає тебе.", eh: "🎯 План дій із 7 осей", ea: '7 ключових осей прогресу. Скажи Gloxoo «склади мені план дій» — він заповнить їх для тебе.', pb: "🚀 Склади мені план" },
+  ar: { menu: "عن GLOXORG + 7 محاور", alt: "منصة العالم الاجتماعية المهنية الفاخرة", b1h: "🌍 ما هي GLOXORG؟", b1p: "GLOXORG منصة اجتماعية مهنية فاخرة عالمية — شارك، تواصل، اعثر على عملاء، طوّر مهنتك. الموقع: gloxorg.com", b2h: "💎 Gloxoo — القلب الذكي", b2p: "أنا Gloxoo، المساعد الذكي لـ GLOXORG. أنا معك في كل صفحة: أكتب، أتحدث، وأقدّم معلومات محدّثة. الموقع: gloxoo.com", b3h: "🐻 Ekspert — خبير الصفحة", b3p: "الدب Ekspert هو خبير صفحتك الحالية. اضغط على الدب في الأعلى؛ يساعدك بعمق في تلك الصفحة ويستمع إليك.", eh: "🎯 خطة عمل من 7 محاور", ea: 'المحاور السبعة الأساسية للتقدّم. قل لـ Gloxoo "اصنع لي خطة عمل" — يملؤها خصيصًا لك.', pb: "🚀 اصنع لي خطة" },
+  zh: { menu: "关于 GLOXORG + 7 轴", alt: "全球奢华专业社交平台", b1h: "🌍 GLOXORG 是什么？", b1p: "GLOXORG 是面向全球的奢华专业社交平台——分享、连接、寻找客户、发展你的职业。网址：gloxorg.com", b2h: "💎 Gloxoo — 智慧核心", b2p: "我是 Gloxoo，GLOXORG 的智能助手。每个页面都陪着你：我会写、会说、提供最新信息。网址：gloxoo.com", b3h: "🐻 Ekspert — 页面专家", b3p: "小熊 Ekspert 是你当前页面的专家。点击上方的小熊；它在该页面深入帮助并倾听你。", eh: "🎯 7 轴行动计划", ea: '进步的 7 大核心轴。对 Gloxoo 说"给我做个行动计划"——它会专为你填写。', pb: "🚀 给我做个计划" },
+  ja: { menu: "GLOXORG について + 7つの軸", alt: "世界のラグジュアリーなプロ向けソーシャル基盤", b1h: "🌍 GLOXORG とは？", b1p: "GLOXORG は世界に開かれたラグジュアリーなプロ向けソーシャル基盤です——共有し、つながり、顧客を見つけ、職業を伸ばす。Web: gloxorg.com", b2h: "💎 Gloxoo — 賢い心", b2p: "私は Gloxoo、GLOXORG の賢いアシスタント。どのページでもそばに：書き、話し、最新情報を届けます。Web: gloxoo.com", b3h: "🐻 Ekspert — ページの専門家", b3p: "クマの Ekspert は今のページの専門家。上のクマをタップ；そのページで深く助け、あなたに耳を傾けます。", eh: "🎯 7軸アクションプラン", ea: '前進の7つの核となる軸。Gloxoo に「行動計画を作って」と言えば、あなた専用に埋めます。', pb: "🚀 プランを作って" },
+  hi: { menu: "GLOXORG के बारे में + 7 अक्ष", alt: "दुनिया का लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म", b1h: "🌍 GLOXORG क्या है?", b1p: "GLOXORG एक वैश्विक लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म है — साझा करो, जुड़ो, ग्राहक पाओ, अपना पेशा बढ़ाओ। वेब: gloxorg.com", b2h: "💎 Gloxoo — स्मार्ट दिल", b2p: "मैं Gloxoo हूँ, GLOXORG का स्मार्ट सहायक। हर पेज पर तुम्हारे साथ: लिखता हूँ, बोलता हूँ, ताज़ा जानकारी देता हूँ। वेब: gloxoo.com", b3h: "🐻 Ekspert — पेज विशेषज्ञ", b3p: "भालू Ekspert तुम्हारे मौजूदा पेज का विशेषज्ञ है। ऊपर भालू पर टैप करो; वह उस पेज पर गहराई से मदद करता है और तुम्हें सुनता है।", eh: "🎯 7-अक्ष कार्य योजना", ea: 'प्रगति के 7 मुख्य अक्ष। Gloxoo से कहो "मेरे लिए कार्य योजना बनाओ" — वह तुम्हारे लिए भर देगा।', pb: "🚀 मेरे लिए योजना बनाओ" },
+};
 // Öneri çipinin ikonu — metindeki KONUYA göre renkli emoji (sadece yıldız değil; her şeye uygun ikon)
 function oneriIkon(metin) {
   const s = (metin || "").toLocaleLowerCase("tr");
@@ -1188,7 +1228,22 @@ export default function Anasayfa({ pro = false }) {
     setMaskotTur("grox");
     const ad = hitapAdi();
     const _ad = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
-    const selam = `Hoş geldin${_ad}! 👋 Ben Gloxoo 💎, GLOXORG'un akıllı kalbiyim. 🌍 GLOXORG, dünyanın lüks profesyonel sosyal platformu (gloxorg.com): paylaş, bağ kur, müşteri bul, mesleğini büyüt. Her sayfada yanındayım — 🗣️ konuşurum, ✍️ yazarım, 📰 güncel bilgi ve yol veririm (gloxoo.com). Üstteki 🐻 Ekspert ise bulunduğun sayfanın uzmanıdır. Menüden 💠 "GLOXORG Hakkında + 7 Eksen"e göz at, ya da bana "eylem planı çıkar" de — sana özel bir yol haritası çizeyim. Hadi başlayalım! 🚀`;
+    const YU = {
+      tr: `Hoş geldin${_ad}! 👋 Ben Gloxoo 💎, GLOXORG'un akıllı kalbiyim. 🌍 GLOXORG dünyanın lüks profesyonel sosyal platformu (gloxorg.com): paylaş, bağ kur, müşteri bul. Her sayfada yanındayım — 🗣️ konuşur, ✍️ yazar, 📰 güncel bilgi veririm (gloxoo.com). Üstteki 🐻 Ekspert bulunduğun sayfanın uzmanıdır. Menüden 💠 Hakkında'ya bak ya da "eylem planı çıkar" de. Hadi başlayalım! 🚀`,
+      en: `Welcome${_ad}! 👋 I'm Gloxoo 💎, the smart heart of GLOXORG. 🌍 GLOXORG is the world's luxury professional social platform (gloxorg.com): share, connect, find clients. I'm on every page — 🗣️ I talk, ✍️ I write, 📰 I give current info (gloxoo.com). The 🐻 Ekspert above is your page's expert. Check 💠 About in the menu or say "make me a plan". Let's begin! 🚀`,
+      de: `Willkommen${_ad}! 👋 Ich bin Gloxoo 💎, das kluge Herz von GLOXORG. 🌍 GLOXORG ist die luxuriöse berufliche Social-Plattform der Welt (gloxorg.com): teilen, vernetzen, Kunden finden. Auf jeder Seite bei dir — 🗣️ ich spreche, ✍️ schreibe, 📰 gebe aktuelle Infos (gloxoo.com). Der 🐻 Ekspert oben ist der Experte deiner Seite. Sieh 💠 Über im Menü oder sag „mach mir einen Plan". Los geht's! 🚀`,
+      fr: `Bienvenue${_ad}! 👋 Je suis Gloxoo 💎, le cœur intelligent de GLOXORG. 🌍 GLOXORG est la plateforme sociale professionnelle de luxe du monde (gloxorg.com) : partage, connecte, trouve des clients. Je suis sur chaque page — 🗣️ je parle, ✍️ j'écris, 📰 je donne des infos à jour (gloxoo.com). L'🐻 Ekspert en haut est l'expert de ta page. Vois 💠 À propos dans le menu ou dis « fais-moi un plan ». C'est parti ! 🚀`,
+      es: `¡Bienvenido${_ad}! 👋 Soy Gloxoo 💎, el corazón inteligente de GLOXORG. 🌍 GLOXORG es la plataforma social profesional de lujo del mundo (gloxorg.com): comparte, conecta, encuentra clientes. Estoy en cada página — 🗣️ hablo, ✍️ escribo, 📰 doy info actual (gloxoo.com). El 🐻 Ekspert de arriba es el experto de tu página. Mira 💠 Acerca en el menú o di "hazme un plan". ¡Empecemos! 🚀`,
+      it: `Benvenuto${_ad}! 👋 Sono Gloxoo 💎, il cuore intelligente di GLOXORG. 🌍 GLOXORG è la piattaforma sociale professionale di lusso del mondo (gloxorg.com): condividi, connetti, trova clienti. Sono su ogni pagina — 🗣️ parlo, ✍️ scrivo, 📰 do info aggiornate (gloxoo.com). L'🐻 Ekspert in alto è l'esperto della tua pagina. Vedi 💠 Info nel menu o di' "fammi un piano". Iniziamo! 🚀`,
+      pt: `Bem-vindo${_ad}! 👋 Sou o Gloxoo 💎, o coração inteligente da GLOXORG. 🌍 A GLOXORG é a plataforma social profissional de luxo do mundo (gloxorg.com): partilha, conecta, encontra clientes. Estou em cada página — 🗣️ falo, ✍️ escrevo, 📰 dou info atual (gloxoo.com). O 🐻 Ekspert acima é o especialista da tua página. Vê 💠 Sobre no menu ou diz "faz-me um plano". Vamos começar! 🚀`,
+      ru: `Добро пожаловать${_ad}! 👋 Я Gloxoo 💎, умное сердце GLOXORG. 🌍 GLOXORG — мировая люксовая профессиональная соцплатформа (gloxorg.com): делись, связывайся, находи клиентов. Я на каждой странице — 🗣️ говорю, ✍️ пишу, 📰 даю актуальную информацию (gloxoo.com). 🐻 Ekspert вверху — эксперт твоей страницы. Открой 💠 «О нас» в меню или скажи «составь мне план». Начнём! 🚀`,
+      uk: `Ласкаво просимо${_ad}! 👋 Я Gloxoo 💎, розумне серце GLOXORG. 🌍 GLOXORG — світова люксова професійна соцплатформа (gloxorg.com): ділися, з'єднуйся, знаходь клієнтів. Я на кожній сторінці — 🗣️ говорю, ✍️ пишу, 📰 даю актуальну інформацію (gloxoo.com). 🐻 Ekspert вгорі — експерт твоєї сторінки. Відкрий 💠 «Про нас» у меню або скажи «склади мені план». Почнімо! 🚀`,
+      ar: `أهلاً${_ad}! 👋 أنا Gloxoo 💎، القلب الذكي لـ GLOXORG. 🌍 GLOXORG منصة العالم الاجتماعية المهنية الفاخرة (gloxorg.com): شارك، تواصل، اعثر على عملاء. أنا في كل صفحة — 🗣️ أتحدث، ✍️ أكتب، 📰 أقدّم معلومات محدّثة (gloxoo.com). 🐻 Ekspert بالأعلى خبير صفحتك. افتح 💠 «حول» من القائمة أو قل «اصنع لي خطة». لنبدأ! 🚀`,
+      zh: `欢迎${_ad}！👋 我是 Gloxoo 💎，GLOXORG 的智慧核心。🌍 GLOXORG 是全球奢华专业社交平台（gloxorg.com）：分享、连接、寻找客户。我在每个页面——🗣️ 会说、✍️ 会写、📰 提供最新信息（gloxoo.com）。上方的 🐻 Ekspert 是你页面的专家。在菜单查看 💠「关于」或说"给我做个计划"。开始吧！🚀`,
+      ja: `ようこそ${_ad}！👋 私は Gloxoo 💎、GLOXORG の賢い心です。🌍 GLOXORG は世界のラグジュアリーなプロ向けソーシャル基盤（gloxorg.com）：共有、つながり、顧客探し。どのページにも——🗣️ 話し、✍️ 書き、📰 最新情報を届けます（gloxoo.com）。上の 🐻 Ekspert はあなたのページの専門家。メニューの 💠「概要」を見るか「プランを作って」と言ってね。始めよう！🚀`,
+      hi: `स्वागत है${_ad}! 👋 मैं Gloxoo 💎 हूँ, GLOXORG का स्मार्ट दिल। 🌍 GLOXORG दुनिया का लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म है (gloxorg.com): साझा करो, जुड़ो, ग्राहक पाओ। मैं हर पेज पर हूँ — 🗣️ बोलता, ✍️ लिखता, 📰 ताज़ा जानकारी देता हूँ (gloxoo.com)। ऊपर का 🐻 Ekspert तुम्हारे पेज का विशेषज्ञ है। मेन्यू में 💠 "बारे में" देखो या कहो "मेरे लिए योजना बनाओ"। चलो शुरू करें! 🚀`,
+    };
+    const selam = YU[aiDilRef.current] || YU.en;
     setMaskotMetni(selam); setMaskotTanit(true); setMaskotMini(false); setYardimciMod("sohbet");
     try { localStorage.setItem("groxSonSelamMs", String(Date.now())); localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
     try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {} // KAPANMAZ (bitince yok) → yeni üye rahat okur
@@ -1258,14 +1313,24 @@ export default function Anasayfa({ pro = false }) {
     // HANGİ SAYFA/PENCERE açık: önce üstteki açık pencereler, yoksa alt sekme (aktifKod) → ayı NEREDE olduğunu bilir
     const sayfaAd = ayarlarAcik ? "Ayarlar" : paylasAcik ? "Paylaşım (gönderi yazma)" : araAcik ? "Arama" : mesajAcik ? "Mesajlar" : bildirimAcik ? "Bildirimler"
       : ({ home: "Ana sayfa / Keşfet", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", konum: "Konum", akademi: "Akademi", profil: "Profil" }[aktifKodRef.current] || "Ana sayfa / Keşfet");
-    const ad = hitapAdi() || "dostum"; // e-posta değil, İSİM (yoksa "dostum")
+    const ad = hitapAdi(); const _ea = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
     setYardimciBaglam(`Kullanıcı şu an GLOXORG "${sayfaAd}" sayfasında; bu sayfanın eksperti gibi yardım et.`);
-    const havuz = [
-      `Selam ${ad}! Ben Ekspert ayı, bu sayfanın uzmanıyım. Şu an ${sayfaAd} sayfasındasın; burayla ilgili ne istersen sor!`,
-      `Hey ${ad}! Ekspert burada 🐻 ${sayfaAd} sayfasındayız, sana yardıma hazırım. Yazmak için kalem düğmesine dokun.`,
-      `Buyur ${ad}, ben sayfa ekspertin. ${sayfaAd} hakkında ne merak ediyorsan söyle, hallederiz!`,
-    ];
-    const selam = havuz[Math.floor(Math.random() * havuz.length)];
+    const EK = {
+      tr: `Selam${_ea}! Ben Ekspert 🐻, bu sayfanın uzmanıyım. Şu an "${sayfaAd}" sayfasındasın — burayla ilgili ne istersen sor, konuş ya da yaz!`,
+      en: `Hi${_ea}! I'm Ekspert 🐻, the expert of this page. You're on "${sayfaAd}" — ask me anything about it, talk or type!`,
+      de: `Hallo${_ea}! Ich bin Ekspert 🐻, der Experte dieser Seite. Du bist auf „${sayfaAd}" — frag mich alles dazu, sprich oder schreib!`,
+      fr: `Salut${_ea}! Je suis Ekspert 🐻, l'expert de cette page. Tu es sur « ${sayfaAd} » — demande-moi tout, parle ou écris !`,
+      es: `¡Hola${_ea}! Soy Ekspert 🐻, el experto de esta página. Estás en "${sayfaAd}" — pregúntame lo que quieras, habla o escribe.`,
+      it: `Ciao${_ea}! Sono Ekspert 🐻, l'esperto di questa pagina. Sei su "${sayfaAd}" — chiedimi qualsiasi cosa, parla o scrivi!`,
+      pt: `Olá${_ea}! Sou o Ekspert 🐻, o especialista desta página. Estás em "${sayfaAd}" — pergunta-me o que quiseres, fala ou escreve!`,
+      ru: `Привет${_ea}! Я Ekspert 🐻, эксперт этой страницы. Ты на «${sayfaAd}» — спрашивай что угодно, говори или пиши!`,
+      uk: `Привіт${_ea}! Я Ekspert 🐻, експерт цієї сторінки. Ти на «${sayfaAd}» — питай що завгодно, говори або пиши!`,
+      ar: `مرحبًا${_ea}! أنا Ekspert 🐻، خبير هذه الصفحة. أنت في "${sayfaAd}" — اسألني أي شيء، تحدث أو اكتب!`,
+      zh: `你好${_ea}！我是 Ekspert 🐻，本页的专家。你在"${sayfaAd}"——尽管问我，说话或打字都行！`,
+      ja: `やあ${_ea}！私は Ekspert 🐻、このページの専門家です。今「${sayfaAd}」にいます——何でも聞いて、話しても書いてもOK！`,
+      hi: `नमस्ते${_ea}! मैं Ekspert 🐻 हूँ, इस पेज का विशेषज्ञ। तुम "${sayfaAd}" पर हो — इसके बारे में कुछ भी पूछो, बोलो या लिखो!`,
+    };
+    const selam = EK[aiDilRef.current] || EK.en;
     setMaskotTur("ekspert"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
     // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
     try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
@@ -1364,6 +1429,16 @@ export default function Anasayfa({ pro = false }) {
   // Kullanıcı CANLI takip edilir — giriş çözülünce/foto gelince ekran güncellenir (yoksa foto boş kalıyordu).
   const [u, setU] = useState(auth.currentUser);
   useEffect(() => onAuthStateChanged(auth, setU), []);
+  // BEĞENİLERİM her cihazda DOLU görünsün: giriş yapınca backend'den (Firestore) beğendiğim gönderileri çek, begeniSet'e ekle
+  useEffect(() => {
+    if (!u || !u.uid) return;
+    let iptal = false;
+    benimBegenilerim(u.uid).then((ids) => {
+      if (iptal || !ids || !ids.length) return;
+      setBegeniSet((prev) => { const s = new Set(prev); ids.forEach((id) => s.add(id)); try { localStorage.setItem("groxBegeni", JSON.stringify([...s])); } catch (e) {} return s; });
+    }).catch(() => {});
+    return () => { iptal = true; };
+  }, [u]);
   // HESAP DEĞİŞİNCE AI SOHBETİNİ SIFIRLA — sohbet tarayıcıda global tutuluyordu (groxSohbet/groxSiteSohbet),
   // başka hesapla girince ESKİ konuşmalar görünüyordu. Artık sohbet sahibi uid'e bağlı; farklı kullanıcı → temiz balon.
   useEffect(() => {
@@ -4478,7 +4553,7 @@ export default function Anasayfa({ pro = false }) {
                     <button className="ana-post-btn ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                   </div>
                   {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
-                  <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} />
+                  <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} />
                 </article>
               );
             })}
@@ -5752,7 +5827,7 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-oge c-mor" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🎓</span>{t("navAkademi")} · {t("anaYakinda")}</button>
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); navigate("/profesyonel"); }}><span className="ana-menu-ik">💎</span>{t("anaProMisin")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
-            <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{t("menuHakkinda", "GLOXORG Hakkında + 7 Eksen")}</button>
+            <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{(HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en).menu}</button>
             {/* TELEFON BİLDİRİMLERİ — ayardan aç/durum göster */}
             <button className="ana-menu-oge ana-menu-bildirim c-pembe" onClick={bildirimIzniIste}>
               <span className="ana-menu-ik">🔔</span>{t("menuTelefonBildirim", "Telefon bildirimleri")}
@@ -5770,34 +5845,36 @@ export default function Anasayfa({ pro = false }) {
         <div className="hakkinda-fon" onClick={(e) => { if (e.target === e.currentTarget) setHakkindaAcik(false); }}>
           <div className="hakkinda-pencere">
             <button className="hakkinda-kapat" onClick={() => setHakkindaAcik(false)} aria-label="Kapat">&#10005;</button>
+            {(() => { const H = HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en; const EM = EKSEN_METIN[dil] || EKSEN_METIN.en; return (
             <div className="hakkinda-ic">
               <h1 className="hakkinda-baslik">💠 GLOXORG</h1>
-              <p className="hakkinda-alt">Dünyanın lüks profesyonel sosyal platformu</p>
+              <p className="hakkinda-alt">{H.alt}</p>
               <section className="hakkinda-blok">
-                <h2>🌍 GLOXORG nedir?</h2>
-                <p>GLOXORG, dünyaya açık lüks bir profesyonel sosyal platformdur — paylaş, bağ kur, müşteri bul, mesleğini büyüt. İnsanları, meslekleri ve fırsatları bir araya getirir. Web: <b>gloxorg.com</b></p>
+                <h2>{H.b1h}</h2>
+                <p>{H.b1p}</p>
               </section>
               <section className="hakkinda-blok">
-                <h2>💎 Gloxoo — akıllı kalp</h2>
-                <p>Ben <b>Gloxoo</b>, GLOXORG'un akıllı yardımcısıyım. Her sayfada yanındayım: paylaşım yazar, yol tarifi ve güncel bilgi/haber veririm, sana özel yardım ederim, konuşur ve dinlerim. Web: <b>gloxoo.com</b></p>
+                <h2>{H.b2h}</h2>
+                <p>{H.b2p}</p>
               </section>
               <section className="hakkinda-blok">
-                <h2>🐻 Ekspert — sayfa uzmanı</h2>
-                <p><b>Ekspert</b> ayı, bulunduğun sayfanın uzmanıdır. Üstteki ayı düğmesine dokun; o sayfada derinlemesine yardım eder, sana özel öneri verir ve seni dinler.</p>
+                <h2>{H.b3h}</h2>
+                <p>{H.b3p}</p>
               </section>
               <section className="hakkinda-blok hakkinda-eksen-blok">
-                <h2>🎯 7 Eksen Eylem Planı</h2>
-                <p className="hakkinda-eksen-alt">İlerlemenin 7 temel ekseni. Gloxoo'ya <b>"bana eylem planı çıkar"</b> de — bunları sana özel doldursun.</p>
-                {EKSEN_PLANI.map((e, i) => (
-                  <div className="hakkinda-eksen-oge" key={i} style={{ "--er": e.renk }}>
+                <h2>{H.eh}</h2>
+                <p className="hakkinda-eksen-alt">{H.ea}</p>
+                {EM.map((e, i) => (
+                  <div className="hakkinda-eksen-oge" key={i} style={{ "--er": EKSEN_RENK[i] }}>
                     <span className="hakkinda-eksen-no">{i + 1}</span>
-                    <span className="hakkinda-eksen-ik">{e.ik}</span>
-                    <div className="hakkinda-eksen-metin"><b>{e.ad}</b><span>{e.ac}</span></div>
+                    <span className="hakkinda-eksen-ik">{EKSEN_IKON[i]}</span>
+                    <div className="hakkinda-eksen-metin"><b>{e[0]}</b><span>{e[1]}</span></div>
                   </div>
                 ))}
-                <button className="hakkinda-plan-btn" onClick={() => { setHakkindaAcik(false); setYardimciMod("sohbet"); setYardimciAcik(true); setYardimciYazi("Bana özel bir eylem planı çıkar"); }}>🚀 Bana özel plan çıkar</button>
+                <button className="hakkinda-plan-btn" onClick={() => { setHakkindaAcik(false); setYardimciMod("sohbet"); setYardimciAcik(true); setYardimciYazi(H.pb.replace(/^🚀\s*/, "")); }}>{H.pb}</button>
               </section>
             </div>
+            ); })()}
           </div>
         </div>
       ), document.body)}

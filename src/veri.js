@@ -22,6 +22,15 @@ export async function begeniSilDoc(postId, uid) {
   if (!postId || !uid) return false;
   try { await deleteDoc(doc(db, "begeniler", postId + "_" + uid)); return true; } catch (e) { return false; }
 }
+// BENİM beğendiğim gönderilerin id'leri (her cihazda/yeni girişte kalp DOLU görünsün diye backend'den)
+export async function benimBegenilerim(uid, adet = 400) {
+  if (!uid) return [];
+  try {
+    const q = query(collection(db, "begeniler"), where("uid", "==", uid), fsLimit(adet));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => (d.data() || {}).postId).filter(Boolean);
+  } catch (e) { return []; }
+}
 export async function begenenleriOku(postId, adet = 100) {
   if (!postId) return [];
   try {
