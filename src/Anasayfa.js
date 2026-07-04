@@ -2528,8 +2528,9 @@ export default function Anasayfa({ pro = false }) {
     if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     try {
-      // YAKIN sesi al, UZAK/arka sesi (araba/rüzgar) ELE: gürültü+yankı bastır, oto-kazanç KAPALI (uzak sesleri yükseltmesin → yakın konuşma öne çıkar)
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
+      // SESİ NET AL: yankı+gürültü bastır, OTO-KAZANÇ AÇIK (sesi normal seviyeye getirir → Whisper net duyar).
+      // NOT: autoGainControl KAPALIYKEN yakın ses bile çok kısık kaydolup Whisper'ın duyamamasına (boş dönüş) yol açıyordu → AÇIK.
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
       const mr = new MediaRecorder(stream);
       mediaRecorderRef.current = mr; sesParcaRef.current = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) sesParcaRef.current.push(e.data); };
@@ -2550,7 +2551,7 @@ export default function Anasayfa({ pro = false }) {
           const simdi = Date.now();
           // İLK ~450ms: arka/ortam gürültü tabanını ölç (henüz konuşma algılama yok)
           if (simdi - basT < 450) { taban += rms; tabanN++; raf = requestAnimationFrame(izle); return; }
-          if (!kalibre) { kalibre = true; const ort = tabanN ? taban / tabanN : 0.02; esik = Math.max(0.05, Math.min(0.17, ort * 2.6 + 0.02)); } // arka gürültünün ~2.6 katı → yakın konuşma
+          if (!kalibre) { kalibre = true; const ort = tabanN ? taban / tabanN : 0.02; esik = Math.max(0.045, Math.min(0.12, ort * 1.9 + 0.015)); } // arka gürültünün ~1.9 katı → yakın konuşma net geçer (fazla yüksek eşikte ses takılmasın)
           // KONUŞMA = eşiği AŞAN (yakın) ses; sabit arka gürültü eşiğin ALTINDA kalır → yanlış tetiklenmez
           if (rms > esik) { yuksek++; if (yuksek >= 2) { konustu = true; sessizBas = 0; } }
           else { yuksek = 0; if (konustu && !sessizBas) sessizBas = simdi; else if (konustu && sessizBas && simdi - sessizBas > 1200) { try { mr.stop(); } catch (e) {} return; } } // 1.2sn SESSİZLİK → bitti
