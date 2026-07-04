@@ -2526,6 +2526,40 @@ export default function Anasayfa({ pro = false }) {
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
     // Konuşma bitince canliDevam otomatik tekrar dinlemeye geçirir (kullanıcının düğmesi otomatik açılır).
     if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
+    // ===== ÖNCE TARAYICININ KENDİ SES TANIMASI (OpenAI/Whisper GEREKMEZ, ÜCRETSİZ) =====
+    // Ses→yazı için OpenAI anahtarına ihtiyaç YOK: Chrome/Android'in yerleşik tanımasını kullanır.
+    // Android'in "kelime tekrarı" hatasına düşmemek için: continuous=false + interimResults=false + TEK final sonuç, sonra durur.
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SR) {
+      if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
+      try {
+        const rec = new SR();
+        rec.lang = aiSesKodu(aiDilRef.current); // SEÇİLİ AI dili — gürültüde İngilizce'ye kaymaz (dil kilidi)
+        rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
+        recognitionRef.current = rec;
+        let bitti = false;
+        const sonlan = (tekrarDinle) => {
+          if (bitti) return; bitti = true;
+          recognitionRef.current = null; setDinliyor(false);
+          if (tekrarDinle && canliSohbetRef.current && !aiKonusuyorRef.current && !(window.speechSynthesis && window.speechSynthesis.speaking)) canliDinle();
+        };
+        rec.onresult = (e) => {
+          if (bitti) return;
+          const son = e.results && e.results[e.results.length - 1];
+          const metin = ((son && son[0] && son[0].transcript) || "").trim();
+          if (metin && canliSohbetRef.current) { bitti = true; recognitionRef.current = null; setDinliyor(false); bosSesRef.current = 0; yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
+          else sonlan(true); // boş → tekrar dinle
+        };
+        rec.onerror = (ev) => {
+          if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; recognitionRef.current = null; setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
+          sonlan(true); // no-speech / aborted / network → tekrar dinle
+        };
+        rec.onend = () => sonlan(true);
+        setDinliyor(true);
+        rec.start();
+        return;
+      } catch (e) { try { recognitionRef.current = null; } catch (e2) {} /* başlatılamadı → aşağıdaki Whisper yoluna düş */ }
+    }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     try {
       // SESİ NET AL: yankı+gürültü bastır, OTO-KAZANÇ AÇIK (sesi normal seviyeye getirir → Whisper net duyar).
@@ -2697,6 +2731,7 @@ export default function Anasayfa({ pro = false }) {
       aiKarsiladiRef.current = false;
       try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
       try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
+      try { recognitionRef.current && recognitionRef.current.abort(); recognitionRef.current = null; } catch (e) {} // tarayıcı ses tanımasını da durdur
       // NOT: kamerayı burada KAPATMA — yazı kutusuna dokununca da canlı ses kapanıyor; kamera açık kalsın (sadece ✕ / kamera düğmesi kapatır)
       return;
     }
