@@ -69,7 +69,7 @@ const AIPANEL = {
   sus: { tr: "Sus", en: "Stop", de: "Aus", fr: "Stop", es: "Parar", it: "Basta", pt: "Parar", ru: "Стоп", uk: "Стоп", ar: "إسكات", zh: "停止", ja: "止める", hi: "बंद" },
 };
 function pl(dil, key) { const o = AIPANEL[key]; return (o && (o[dil] || o.en)) || ""; }
-function renkliCumleler(metin, palet) {
+function renkliCumleler(metin, palet, aktif) {
   if (!metin) return null;
   const p = palet || RC_ACIK;
   const parcalar = String(metin).match(/[^.!?…\n]+[.!?…]*/g) || [String(metin)];
@@ -77,8 +77,10 @@ function renkliCumleler(metin, palet) {
     const s = c.trim();
     if (!s) return null;
     const renk = p[i % p.length];
+    // ŞU AN okunan cümle (aktif===i) VURGULANIR (kalın + parıltı) → kullanıcı nerede okunduğunu görür
+    const kls = "rc-cumle" + (aktif === i ? " rc-aktif" : "");
     return (
-      <span key={i} data-ci={i} className="rc-cumle" style={{ color: renk }}>
+      <span key={i} data-ci={i} className={kls} style={{ color: renk }}>
         <span className="rc-ik" style={{ color: renk }} aria-hidden="true">◆</span>{s}{" "}
       </span>
     );
@@ -337,9 +339,11 @@ function oneriIkon(metin) {
 }
 
 // CANLI MASKOT YÜZÜ — konuşurken (konusuyor=true) ağzı açılıp kapanır + hafif zıplar. tur: "grox" (elmas) | "ekspert" (ayı).
-function MaskotYuz({ konusuyor = false, dinliyor = false, tur = "grox", boyut = 30, rozet = false, children }) {
+function MaskotYuz({ konusuyor = false, dinliyor = false, arastir = false, tur = "grox", boyut = 30, rozet = false, children }) {
+  // AI ROZET DURUMU (renk): dinliyor=YEŞİL, konuşuyor=MAVİ, araştırıyor(düşünüyor)=TURUNCU, boşta(kapalı)=KIRMIZI
+  const durumCls = dinliyor ? " dinliyor" : konusuyor ? " konusuyor" : arastir ? " arastir" : "";
   return (
-    <span className={"maskot-yuz" + (konusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "")} style={{ width: boyut, height: boyut }} aria-hidden="true">
+    <span className={"maskot-yuz" + durumCls} style={{ width: boyut, height: boyut }} aria-hidden="true">
       {tur === "ekspert" ? (
         /* EKSPERT — 3D TAM KARAKTER sevimli AYI: kol, bacak, kulak, burun; uzuvlar oynar */
         <svg viewBox="0 0 48 48" fill="none">
@@ -934,15 +938,22 @@ export default function Anasayfa({ pro = false }) {
   const miniEtiketZmn = useRef(null);
   const [maskotMetni, setMaskotMetni] = useState("");
   const maskotBalonRef = useRef(null); // BÜYÜK maskot balonu — okurken teleprompter gibi kaydırma
-  // Gloxoo konuşurken o cümleyi görünür alana kaydır (yazı konuşmayla beraber yukarı yürüsün, canlı ilerlesin)
+  const [okunanCumle, setOkunanCumle] = useState(-1); // ŞU AN okunan cümle indeksi (balonda VURGULANIR)
+  const elleKaydirRef = useRef(false);                // kullanıcı PARMAĞIYLA kaydırdıysa → oto-kaydırma DURUR (serbest)
+  // Gloxoo konuşurken: o cümleyi VURGULA + görünür alanın ORTASINA kaydır (alt yazı gibi yukarı yürüsün).
+  // Kullanıcı parmağıyla kaydırdıysa (elleKaydirRef) oto-kaydırma YAPMA — serbest bıraktık, kendi okur.
   const maskotKaydir = (idx) => {
+    setOkunanCumle(idx); // hangi cümle okunuyor → balonda vurgulanır
+    if (elleKaydirRef.current) return; // elle kaydırma açık → oto-kaydırma yok
     const b = maskotBalonRef.current; if (!b) return;
     const el = b.querySelector('[data-ci="' + idx + '"]'); if (!el) return;
-    const hedef = el.offsetTop - b.clientHeight / 2 + el.offsetHeight / 2;
+    const hedef = el.offsetTop - b.clientHeight / 2 + el.offsetHeight / 2; // OKUNAN cümle balonun ORTASINDA kalır
     try { b.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { b.scrollTop = Math.max(0, hedef); }
   };
-  // Yeni metin gelince (karşılama/AI cevabı) balonu EN BAŞA sar (üstten başlasın, kesik gelmesin)
-  useEffect(() => { const b = maskotBalonRef.current; if (b) b.scrollTop = 0; }, [maskotMetni]);
+  // Kullanıcı balona parmağıyla dokunup kaydırınca → oto-kaydırmayı bırak (serbest); yeni cevap gelince tekrar otomatiğe döner
+  const maskotElleKaydir = () => { elleKaydirRef.current = true; };
+  // Yeni metin gelince (karşılama/AI cevabı) balonu EN BAŞA sar + oto-kaydırmayı yeniden aç + vurguyu sıfırla
+  useEffect(() => { const b = maskotBalonRef.current; if (b) b.scrollTop = 0; elleKaydirRef.current = false; setOkunanCumle(-1); }, [maskotMetni]);
   const [maskotTur, setMaskotTur] = useState("grox"); // "grox" (yardımcı) | "ekspert" (ayı)
   const [maskotKizgin, setMaskotKizgin] = useState(false); // kötü/hata olunca KIRMIZILAŞIR
   const maskotTanitRef = useRef(false); // büyük maskot açık mı (async cevapta okumak için)
@@ -5103,12 +5114,12 @@ export default function Anasayfa({ pro = false }) {
           onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir}>
           {/* KÜÇÜKKEN KONUŞURKEN: üstte küçük konuşma balonu (istek: ufakken de konuşunca balon çıksın) */}
           {maskotMini && maskotMetni && (aiKonusuyor || aiDuraklat) && (
-            <div className="ai-mini-balon">{renkliCumleler(maskotMetni, RC_KOYU)}</div>
+            <div className="ai-mini-balon">{renkliCumleler(maskotMetni, RC_KOYU, okunanCumle)}</div>
           )}
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
           <button className={"ai-balon" + (aiKonusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "") + (maskotKizgin ? " kizgin" : "")}
             onClick={balonTik} aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur="grox" boyut={52} rozet />
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur="grox" boyut={52} rozet />
           </button>
           {/* KÜÇÜKKEN: maskotun ALTINDA renkli İKON düğmeler (kaybolmaz). Basınca üstünde ne olduğu yazar.
               Yaz = metin paneli; Ses = AÇ/KAPA (büyütmeden konuş/sus — yeşil konuş, kırmızı sus). */}
@@ -5132,9 +5143,9 @@ export default function Anasayfa({ pro = false }) {
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
         <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")}>
-          {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()}>{renkliCumleler(maskotMetni, RC_KOYU)}</div>}
+          {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{renkliCumleler(maskotMetni, RC_KOYU, okunanCumle)}</div>}
           <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} tur={maskotTur} boyut={132} rozet />
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={132} rozet />
           </div>
           {/* Büyük maskot düğmeleri = KÜÇÜK maskotla AYNI ikonlar (Yaz kalem + ses aç/kapa) */}
           <div className="ai-mini-alt buyuk" onPointerDown={(e) => e.stopPropagation()}>

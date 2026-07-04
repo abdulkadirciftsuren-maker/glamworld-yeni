@@ -2024,19 +2024,27 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* DİNLERKEN kulaklar biraz büyür */
 .maskot-yuz.dinliyor .maskot-kulak{ transform:scale(1.18); transform-box:fill-box; transform-origin:50% 90%; transition:transform .3s ease; }
 
-/* ====== AI ROZETİ (SVG içinde, kulakların ARASINA gömülü) — asla kopmaz, maskotla ölçeklenir ====== */
-.msvg-rozet-bg{ fill:#4a3a08; stroke:#ffe08c; stroke-width:.5; }
-.msvg-rozet-ai{ fill:#ffd700; font-family:'Cinzel',serif; font-weight:800; font-size:4.7px; letter-spacing:.15px; }
-.msvg-bar{ fill:#ffd700; transform-box:fill-box; transform-origin:50% 100%; animation:msvgBar .8s ease-in-out infinite; }
+/* ====== AI ROZETİ (SVG içinde, kulakların ARASINA gömülü) — asla kopmaz, maskotla ölçeklenir ======
+   DURUM RENKLERİ: KAPALI/boşta=KIRMIZI, DİNLERKEN=YEŞİL, KONUŞURKEN=MAVİ, ARAŞTIRIRKEN(düşünür)=TURUNCU. */
+/* BOŞTA / KAPALI = KIRMIZI (ikon artık SARI DEĞİL) */
+.msvg-rozet-bg{ fill:#5a1010; stroke:#ff9a9a; stroke-width:.5; }
+.msvg-rozet-ai{ fill:#ff8080; font-family:'Cinzel',serif; font-weight:800; font-size:4.7px; letter-spacing:.15px; }
+.msvg-bar{ fill:#ff6a6a; transform-box:fill-box; transform-origin:50% 100%; animation:msvgBar .8s ease-in-out infinite; }
 .msvg-bar2{ animation-delay:.28s; }
 @keyframes msvgBar{ 0%,100%{ transform:scaleY(.35); } 50%{ transform:scaleY(1); } }
-/* KONUŞURKEN kırmızı (+hızlı), DİNLERKEN yeşil */
-.maskot-yuz.konusuyor .msvg-rozet-bg{ fill:#6a0f0f; stroke:#ff9a9a; }
-.maskot-yuz.konusuyor .msvg-rozet-ai{ fill:#ff6a6a; }
-.maskot-yuz.konusuyor .msvg-bar{ fill:#ff4d4d; animation-duration:.42s; }
+/* DİNLERKEN = YEŞİL */
 .maskot-yuz.dinliyor .msvg-rozet-bg{ fill:#0c4a2a; stroke:#7cf0ac; }
 .maskot-yuz.dinliyor .msvg-rozet-ai{ fill:#57e08a; }
-.maskot-yuz.dinliyor .msvg-bar{ fill:#57e08a; }
+.maskot-yuz.dinliyor .msvg-bar{ fill:#57e08a; animation-duration:.9s; }
+/* KONUŞURKEN = MAVİ (kapalı kırmızısından ayrı görünsün) */
+.maskot-yuz.konusuyor .msvg-rozet-bg{ fill:#0d2a5a; stroke:#8ab4ff; }
+.maskot-yuz.konusuyor .msvg-rozet-ai{ fill:#7ab0ff; }
+.maskot-yuz.konusuyor .msvg-bar{ fill:#5a9aff; animation-duration:.5s; }
+/* ARAŞTIRIRKEN / DÜŞÜNÜRKEN = TURUNCU (konuşmam bitince AI çalışırken; kapalıdan FARKLI, canlı yanıp söner) */
+.maskot-yuz.arastir .msvg-rozet-bg{ fill:#5a3410; stroke:#ffc06a; animation:msvgArastir .7s ease-in-out infinite; }
+.maskot-yuz.arastir .msvg-rozet-ai{ fill:#ffb14d; }
+.maskot-yuz.arastir .msvg-bar{ fill:#ffa733; animation-duration:.32s; }
+@keyframes msvgArastir{ 0%,100%{ opacity:.72; } 50%{ opacity:1; } }
 
 /* Yaz / Kapat düğmeleri — maskotun BACAKLARININ yanında, KÜÇÜK ve bacağa yakın */
 .maskot-bacak-btn{ position:absolute; bottom:12%; display:inline-flex; align-items:center; gap:3px; border:none; border-radius:11px; padding:4px 8px; font-family:'Cormorant Garamond',serif; font-size:11.5px; font-weight:800; cursor:pointer; box-shadow:0 2px 7px rgba(0,0,0,.34); z-index:6; white-space:nowrap; }
@@ -2081,8 +2089,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-maskot-metin{ font-family:'Cormorant Garamond',serif; font-size:12.5px; line-height:1.36; font-weight:500; }
 .ai-maskot-metin b{ display:block; font-family:'Cinzel',serif; color:#8a5a12; font-size:13px; margin-bottom:3px; }
 /* Her cümle ayrı renk + küçük elmas ikonu (renkliCumleler) */
-.rc-cumle{ }
+.rc-cumle{ transition:background .2s ease, text-shadow .2s ease; border-radius:7px; padding:0 2px; }
 .rc-ik{ font-size:.72em; margin-right:3px; opacity:.9; vertical-align:1px; }
+/* ŞU AN OKUNAN CÜMLE — kalın + parıltı + hafif zemin (kullanıcı nerede okunduğunu görür, alt yazı gibi) */
+.rc-aktif{ font-weight:800 !important; text-shadow:0 0 10px rgba(255,255,255,.65); background:rgba(255,235,150,.20); box-shadow:0 0 0 2px rgba(255,235,150,.22); }
 .ai-maskot-kapat{ position:absolute; top:5px; right:7px; width:23px; height:23px; border:none; background:rgba(120,80,10,.12); color:#6a4a12; border-radius:50%; font-size:16px; line-height:1; cursor:pointer; padding:0; }
 @media(min-width:560px){ .ai-maskot-selam{ max-width:360px; bottom:150px; padding:15px 34px 16px 18px; } .ai-maskot-metin{ font-size:18px; } .ai-maskot-metin b{ font-size:17px; } .ai-maskot-kapat{ width:28px; height:28px; font-size:19px; } }
 /* CANLI MASKOT — konuşurken ağız açılıp kapanır + hafif zıplar; her zaman ara sıra göz kırpar */
@@ -2206,7 +2216,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-canli .mi-canli{ height:20px; }
 .ai-canli .mi-canli i{ background:#06331c; }
 /* GÖRÜNTÜLÜ SOHBET düğmesi — kapalı altın kamera, açık YEŞİL (kamera aktif) */
-.ai-kamera{ color:#FFD700; border-color:rgba(255,215,0,.5); }
+/* GÖRÜNTÜLÜ konuşma düğmesi: KAPALI=kırmızı, AÇIK=yeşil (canlı düğmesiyle aynı mantık) */
+.ai-kamera{ color:#ff5a5a; border-color:rgba(224,32,44,.55); background:linear-gradient(135deg,rgba(255,120,120,.16),rgba(224,32,44,.14)); }
 .ai-kamera.acik{ background:linear-gradient(135deg,#5fe08a,#1ea64f); color:#06160d; border-color:#7fe0a8; box-shadow:0 0 9px rgba(70,211,122,.5); }
 /* KENDİ GÖRÜNTÜN (self-view) — SÜRÜKLENEBİLİR küçük pencere (istediğin yere taşı), alt-tab üstünde */
 .kamera-self{ position:fixed; right:12px; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:100050; width:132px; height:176px; border-radius:16px; overflow:hidden;
