@@ -18,8 +18,9 @@
  * bir ücret). Sınırı MAX_ARAMA ile tutuyoruz (varsayılan 5 arama/cevap).
  */
 
-const MODEL = "claude-3-5-sonnet-latest"; // web aramayı destekleyen Claude modeli (gerekirse daha yeni bir modelle değiştir)
-const MAX_ARAMA = 5;                       // bir cevapta en fazla kaç web araması
+const MODEL = "claude-sonnet-5";          // EN SON Claude modeli (hızlı + akıllı + web arama). Daha da güçlü istersen: "claude-opus-4-8"
+const SES_MODEL = "gpt-4o-transcribe";    // EN SON OpenAI ses→yazı modeli (eski "whisper-1" yerine)
+const MAX_ARAMA = 6;                       // bir cevapta en fazla kaç web araması
 
 export default {
   async fetch(request, env) {
@@ -41,7 +42,7 @@ export default {
         const bin = Uint8Array.from(atob(body.ses), (c) => c.charCodeAt(0));
         const fd = new FormData();
         fd.append("file", new Blob([bin], { type: "audio/webm" }), "ses.webm");
-        fd.append("model", "whisper-1");
+        fd.append("model", SES_MODEL);
         if (body.dil) fd.append("language", String(body.dil).slice(0, 5));
         const wr = await fetch("https://api.openai.com/v1/audio/transcriptions", {
           method: "POST",
