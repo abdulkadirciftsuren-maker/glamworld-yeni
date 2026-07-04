@@ -1976,6 +1976,19 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .hakkinda-plan-btn{ width:100%; margin-top:16px; padding:13px; border:none; border-radius:14px; background:linear-gradient(135deg,#34c98b,#1ea6a0); color:#04140d; font-family:inherit; font-weight:800; font-size:16px; cursor:pointer; box-shadow:0 6px 18px rgba(52,201,139,.35); }
 .hakkinda-plan-btn:active{ transform:scale(.97); }
 @media(min-width:560px){ .hakkinda-baslik{ font-size:36px; } .hakkinda-blok h2{ font-size:19px; } .hakkinda-blok p{ font-size:16px; } }
+/* ===== DAVET ET / PAYLAŞ penceresi ===== */
+.davet-fon{ position:fixed; inset:0; z-index:4200; background:rgba(4,8,20,.75); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px; }
+.davet-pencere{ position:relative; width:100%; max-width:400px; background:linear-gradient(165deg,#0e1836,#0a1226 60%,#0c1730); border:1.5px solid rgba(184,134,11,.55); border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.6); padding:26px 20px 22px; text-align:center; }
+.davet-kapat{ position:absolute; top:12px; right:12px; width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.1); color:#e9eef7; font-size:16px; cursor:pointer; }
+.davet-kapat:active{ transform:scale(.9); }
+.davet-amblem{ font-size:40px; line-height:1; margin-bottom:6px; }
+.davet-baslik{ font-family:'Cinzel',serif; font-weight:800; font-size:22px; margin:0 0 6px; background:linear-gradient(120deg,#fff3c4,#ffd700,#ffe9a8,#ffd700); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.davet-aciklama{ color:#c3cfe8; font-size:14px; line-height:1.5; margin:0 0 16px; }
+.davet-link{ background:rgba(255,255,255,.06); border:1px dashed rgba(255,224,140,.5); border-radius:12px; padding:12px 14px; color:#ffe9a8; font-size:13.5px; word-break:break-all; cursor:pointer; margin-bottom:14px; }
+.davet-btn{ width:100%; border:none; border-radius:14px; padding:14px; font-family:inherit; font-weight:800; font-size:16px; cursor:pointer; margin-top:10px; }
+.davet-btn:active{ transform:scale(.97); }
+.davet-kopya{ background:linear-gradient(135deg,#7aa8ff,#2a5bd0); color:#fff; }
+.davet-gonder{ background:linear-gradient(135deg,#34c98b,#1ea6a0); color:#04140d; }
 /* ===== BEĞENEN AVATAR ŞERİDİ (istiflenmiş ufak profil resimleri) ===== */
 .begenen-serit{ display:flex; align-items:center; gap:8px; padding:2px 12px 8px; }
 .begenen-avlar{ display:flex; align-items:center; }

@@ -428,6 +428,22 @@ const HAKKINDA_CEVIRI = {
   ja: { menu: "GLOXORG について + 7つの軸", alt: "世界のラグジュアリーなプロ向けソーシャル基盤", b1h: "🌍 GLOXORG とは？", b1p: "GLOXORG は世界に開かれたラグジュアリーなプロ向けソーシャル基盤です——共有し、つながり、顧客を見つけ、職業を伸ばす。Web: gloxorg.com", b2h: "💎 Gloxoo — 賢い心", b2p: "私は Gloxoo、GLOXORG の賢いアシスタント。どのページでもそばに：書き、話し、最新情報を届けます。Web: gloxoo.com", b3h: "🐻 Ekspert — ページの専門家", b3p: "クマの Ekspert は今のページの専門家。上のクマをタップ；そのページで深く助け、あなたに耳を傾けます。", eh: "🎯 7軸アクションプラン", ea: '前進の7つの核となる軸。Gloxoo に「行動計画を作って」と言えば、あなた専用に埋めます。', pb: "🚀 プランを作って" },
   hi: { menu: "GLOXORG के बारे में + 7 अक्ष", alt: "दुनिया का लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म", b1h: "🌍 GLOXORG क्या है?", b1p: "GLOXORG एक वैश्विक लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म है — साझा करो, जुड़ो, ग्राहक पाओ, अपना पेशा बढ़ाओ। वेब: gloxorg.com", b2h: "💎 Gloxoo — स्मार्ट दिल", b2p: "मैं Gloxoo हूँ, GLOXORG का स्मार्ट सहायक। हर पेज पर तुम्हारे साथ: लिखता हूँ, बोलता हूँ, ताज़ा जानकारी देता हूँ। वेब: gloxoo.com", b3h: "🐻 Ekspert — पेज विशेषज्ञ", b3p: "भालू Ekspert तुम्हारे मौजूदा पेज का विशेषज्ञ है। ऊपर भालू पर टैप करो; वह उस पेज पर गहराई से मदद करता है और तुम्हें सुनता है।", eh: "🎯 7-अक्ष कार्य योजना", ea: 'प्रगति के 7 मुख्य अक्ष। Gloxoo से कहो "मेरे लिए कार्य योजना बनाओ" — वह तुम्हारे लिए भर देगा।', pb: "🚀 मेरे लिए योजना बनाओ" },
 };
+// "Davet Et / Paylaş" — kopyalanır/gönderilir link penceresi metinleri (13 dil)
+const DAVET_CEVIRI = {
+  tr: { menu: "Davet Et / Paylaş", baslik: "GLOXORG'a Davet Et", aciklama: "Bu bağlantıyı kopyala ya da gönder — açan herkes GLOXORG'a girer.", kopyala: "Bağlantıyı kopyala", kopyalandi: "Kopyalandı ✓", gonder: "Gönder / Paylaş", mesaj: "GLOXORG'a katıl — dünyanın lüks profesyonel sosyal platformu 💎" },
+  en: { menu: "Invite / Share", baslik: "Invite to GLOXORG", aciklama: "Copy or send this link — anyone who opens it enters GLOXORG.", kopyala: "Copy link", kopyalandi: "Copied ✓", gonder: "Send / Share", mesaj: "Join GLOXORG — the world's luxury professional social platform 💎" },
+  de: { menu: "Einladen / Teilen", baslik: "Zu GLOXORG einladen", aciklama: "Kopiere oder sende diesen Link — wer ihn öffnet, betritt GLOXORG.", kopyala: "Link kopieren", kopyalandi: "Kopiert ✓", gonder: "Senden / Teilen", mesaj: "Komm zu GLOXORG — die luxuriöse berufliche Social-Plattform der Welt 💎" },
+  fr: { menu: "Inviter / Partager", baslik: "Inviter sur GLOXORG", aciklama: "Copie ou envoie ce lien — quiconque l'ouvre entre sur GLOXORG.", kopyala: "Copier le lien", kopyalandi: "Copié ✓", gonder: "Envoyer / Partager", mesaj: "Rejoins GLOXORG — la plateforme sociale professionnelle de luxe du monde 💎" },
+  es: { menu: "Invitar / Compartir", baslik: "Invitar a GLOXORG", aciklama: "Copia o envía este enlace — quien lo abra entra en GLOXORG.", kopyala: "Copiar enlace", kopyalandi: "Copiado ✓", gonder: "Enviar / Compartir", mesaj: "Únete a GLOXORG — la plataforma social profesional de lujo del mundo 💎" },
+  it: { menu: "Invita / Condividi", baslik: "Invita su GLOXORG", aciklama: "Copia o invia questo link — chi lo apre entra in GLOXORG.", kopyala: "Copia link", kopyalandi: "Copiato ✓", gonder: "Invia / Condividi", mesaj: "Unisciti a GLOXORG — la piattaforma sociale professionale di lusso del mondo 💎" },
+  pt: { menu: "Convidar / Partilhar", baslik: "Convidar para a GLOXORG", aciklama: "Copia ou envia este link — quem o abrir entra na GLOXORG.", kopyala: "Copiar link", kopyalandi: "Copiado ✓", gonder: "Enviar / Partilhar", mesaj: "Junta-te à GLOXORG — a plataforma social profissional de luxo do mundo 💎" },
+  ru: { menu: "Пригласить / Поделиться", baslik: "Пригласить в GLOXORG", aciklama: "Скопируй или отправь эту ссылку — кто откроет, войдёт в GLOXORG.", kopyala: "Скопировать ссылку", kopyalandi: "Скопировано ✓", gonder: "Отправить / Поделиться", mesaj: "Присоединяйся к GLOXORG — мировая люксовая профессиональная соцплатформа 💎" },
+  uk: { menu: "Запросити / Поділитися", baslik: "Запросити в GLOXORG", aciklama: "Скопіюй або надішли це посилання — хто відкриє, увійде в GLOXORG.", kopyala: "Скопіювати посилання", kopyalandi: "Скопійовано ✓", gonder: "Надіслати / Поділитися", mesaj: "Приєднуйся до GLOXORG — світова люксова професійна соцплатформа 💎" },
+  ar: { menu: "دعوة / مشاركة", baslik: "ادعُ إلى GLOXORG", aciklama: "انسخ هذا الرابط أو أرسله — كل من يفتحه يدخل GLOXORG.", kopyala: "نسخ الرابط", kopyalandi: "تم النسخ ✓", gonder: "إرسال / مشاركة", mesaj: "انضم إلى GLOXORG — منصة العالم الاجتماعية المهنية الفاخرة 💎" },
+  zh: { menu: "邀请 / 分享", baslik: "邀请加入 GLOXORG", aciklama: "复制或发送此链接——打开的人即可进入 GLOXORG。", kopyala: "复制链接", kopyalandi: "已复制 ✓", gonder: "发送 / 分享", mesaj: "加入 GLOXORG——全球奢华专业社交平台 💎" },
+  ja: { menu: "招待 / 共有", baslik: "GLOXORG に招待", aciklama: "このリンクをコピーまたは送信——開いた人は GLOXORG に入れます。", kopyala: "リンクをコピー", kopyalandi: "コピーしました ✓", gonder: "送信 / 共有", mesaj: "GLOXORG に参加しよう——世界のラグジュアリーなプロ向けソーシャル基盤 💎" },
+  hi: { menu: "आमंत्रित करें / साझा करें", baslik: "GLOXORG में आमंत्रित करें", aciklama: "इस लिंक को कॉपी या भेजें — जो भी खोलेगा GLOXORG में आ जाएगा।", kopyala: "लिंक कॉपी करें", kopyalandi: "कॉपी हो गया ✓", gonder: "भेजें / साझा करें", mesaj: "GLOXORG में शामिल हों — दुनिया का लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म 💎" },
+};
 // Öneri çipinin ikonu — metindeki KONUYA göre renkli emoji (sadece yıldız değil; her şeye uygun ikon)
 function oneriIkon(metin) {
   const s = (metin || "").toLocaleLowerCase("tr");
@@ -836,6 +852,8 @@ export default function Anasayfa({ pro = false }) {
   // AYARLAR penceresi (X gibi tam ayarlar) — Profilim/menüden açılır
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
   const [hakkindaAcik, setHakkindaAcik] = useState(false); // GLOXORG Hakkında + 7 Eksen Eylem Planı sayfası
+  const [davetAcik, setDavetAcik] = useState(false);       // "Davet Et / Paylaş" — kopyalanır/gönderilir link
+  const [davetKopya, setDavetKopya] = useState(false);     // link kopyalandı geri bildirimi
   const [ayarBolum, setAyarBolum] = useState(null); // açık akordeon bölümü
   const [ekTelefon, setEkTelefon] = useState("");
   const [ek2Eposta, setEk2Eposta] = useState("");
@@ -5854,6 +5872,7 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); setUyelikKartAcik(true); }}><span className="ana-menu-ik">💎</span>{t("proOlBaslik", "Profesyonel Ol")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
             <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{(HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en).menu}</button>
+            <button className="ana-menu-oge c-yesil" onClick={() => { setMenuAcik(false); setDavetKopya(false); setDavetAcik(true); }}><span className="ana-menu-ik">🔗</span>{(DAVET_CEVIRI[dil] || DAVET_CEVIRI.en).menu}</button>
             {/* TELEFON BİLDİRİMLERİ — ayardan aç/durum göster */}
             <button className="ana-menu-oge ana-menu-bildirim c-pembe" onClick={bildirimIzniIste}>
               <span className="ana-menu-ik">🔔</span>{t("menuTelefonBildirim", "Telefon bildirimleri")}
@@ -5904,6 +5923,34 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       ), document.body)}
+
+      {/* DAVET ET / PAYLAŞ — kopyalanır/gönderilir link (insanlar açınca GLOXORG'a girer) */}
+      {davetAcik && createPortal((() => {
+        const D = DAVET_CEVIRI[dil] || DAVET_CEVIRI.en;
+        let link = "https://abdulkadirciftsuren-maker.github.io/glamworld-yeni/";
+        try { link = window.location.origin + window.location.pathname; } catch (e) {}
+        const kopyala = async () => {
+          try { await navigator.clipboard.writeText(link); setDavetKopya(true); setTimeout(() => setDavetKopya(false), 2000); }
+          catch (e) { try { const ta = document.createElement("textarea"); ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); setDavetKopya(true); setTimeout(() => setDavetKopya(false), 2000); } catch (e2) {} }
+        };
+        const gonder = async () => {
+          try { if (navigator.share) { await navigator.share({ title: "GLOXORG", text: D.mesaj, url: link }); return; } } catch (e) {}
+          try { const wa = "https://wa.me/?text=" + encodeURIComponent(D.mesaj + " " + link); window.open(wa, "_blank"); } catch (e) {}
+        };
+        return (
+          <div className="davet-fon" onClick={(e) => { if (e.target === e.currentTarget) setDavetAcik(false); }}>
+            <div className="davet-pencere">
+              <button className="davet-kapat" onClick={() => setDavetAcik(false)} aria-label="Kapat">&#10005;</button>
+              <div className="davet-amblem">💎</div>
+              <h2 className="davet-baslik">{D.baslik}</h2>
+              <p className="davet-aciklama">{D.aciklama}</p>
+              <div className="davet-link" onClick={kopyala} title={D.kopyala}>{link}</div>
+              <button className="davet-btn davet-kopya" onClick={kopyala}>{davetKopya ? D.kopyalandi : "🔗 " + D.kopyala}</button>
+              <button className="davet-btn davet-gonder" onClick={gonder}>📤 {D.gonder}</button>
+            </div>
+          </div>
+        );
+      })(), document.body)}
 
       {/* AYARLAR penceresi — X gibi tam ayarlar (Profilim/menüden) */}
       {ayarlarAcik && (() => {
