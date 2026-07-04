@@ -2328,13 +2328,26 @@ export default function Anasayfa({ pro = false }) {
     const meslek = meslekAd || (profilBilgi && profilBilgi.pro && profilBilgi.pro.meslek) || t("aiUzman", "uzman");
     const sehir = (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "";
     const tur = paylasTur || "";
-    const dilAd = { tr: "Türkçe", en: "İngilizce", de: "Almanca", fr: "Fransızca", es: "İspanyolca", ru: "Rusça", ar: "Arapça" }[dil] || "Türkçe";
-    const istek = `Meslek: ${meslek}. ${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}Bu kişi için sosyal medyada paylaşacağı, kısa, şık, zarif 3 farklı gönderi yazısı öner. ${dilAd} dilinde yaz. SADECE 3 satır ver, her satır bir öneri; numara/işaret/tırnak koyma.`;
+    const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" }[dil] || "Türkçe";
+    const mevcut = (paylasYazi || "").trim();
+    // FOTO seçiliyse Claude GÖRSÜN (vision) → fotoğrafa UYGUN, gerçekçi öneri (klişe değil)
+    let imgKaynak = null;
+    try {
+      if (paylasGorsel && paylasGorsel.indexOf("data:image") === 0) {
+        const vir = paylasGorsel.indexOf(",");
+        const mt = (paylasGorsel.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg";
+        if (vir > 0) imgKaynak = { type: "base64", media_type: mt, data: paylasGorsel.slice(vir + 1) };
+      }
+    } catch (e) {}
+    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi (konusu paylaşımla ilgili). " : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — buna uygun kal ya da geliştir. ' : ""}${imgKaynak ? "EKTEKİ FOTOĞRAFA DİKKATLİCE BAK; fotoğrafta ne varsa ONA UYGUN, gerçekçi ve o an çekilmiş gibi " : ""}bu kişi için sosyal medyada paylaşacağı KISA, şık, zarif ve GERÇEKÇİ 3 farklı gönderi yazısı öner (klişe/genel değil, foto/konu neyse ona dair). ${dilAd} dilinde yaz. SADECE 3 satır ver, her satır bir öneri; numara/işaret/tırnak koyma.`;
+    const mesajlar = imgKaynak
+      ? [{ role: "user", content: [{ type: "image", source: imgKaynak }, { type: "text", text: talimat }] }]
+      : [{ role: "user", content: talimat }];
     try {
       const r = await fetch(AI_KOPRU, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: istek, sistem: "Sen GLOXORG adli luks bir profesyonel sosyal platform icin yazi asistanisin. Kisa, sik, zarif ve samimi yaz." }),
+        body: JSON.stringify({ mesajlar, sistem: "Sen GLOXORG adli luks bir profesyonel sosyal platform icin yazi asistanisin. Foto varsa fotografa BAK ve tam ona uygun, gercekci yaz (uydurma/klise degil). Kisa, sik, zarif, samimi." }),
       });
       if (r.ok) {
         const veri = await r.json();
@@ -4907,6 +4920,8 @@ export default function Anasayfa({ pro = false }) {
               <textarea className="pyl-yaz" value={paylasYazi} onChange={(e) => { setPaylasYazi(e.target.value); setPaylasDurum(""); }} placeholder={t("paylasYaz2", "Ne paylaşmak istersin? (uzun yazı serbest)")} maxLength={20000}
                 style={(!paylasGorsel && !paylasVideo && (paylasZemin || paylasYaziRenk)) ? { background: paylasZemin || undefined, color: paylasYaziRenk || undefined, borderColor: "transparent" } : undefined} />
             </div>
+            {/* KAYAN AYARLAR — üstteki foto+yazı SABİT kalır, buradan aşağısı onun altından kayar */}
+            <div className="pyl-kaydir">
             {/* ✨ YAPAY ZEKA — yazı önerisi */}
             <div className="pyl-ai">
               <button className="pyl-ai-btn" onClick={aiYaziOner} disabled={aiYukleniyor}><span className="pyl-ai-pir" aria-hidden="true"><Elmas4 c="#7fe0ff" /></span>{aiYukleniyor ? t("aiDusunuyor", "Yapay zeka düşünüyor…") : t("aiOner", "Yapay zeka ile yazı öner")}</button>
@@ -4997,6 +5012,7 @@ export default function Anasayfa({ pro = false }) {
                 </div>
               </div>
             )}
+            </div>{/* /pyl-kaydir */}
             <button className="paylas-gonder" onClick={paylasGonder} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile)}>
               {paylasDurum === "video" ? (t("paylasVideoYuk", "Video yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (paylasDurum === "ok" ? t("paylasOk", "Paylaşıldı ✓") : t("paylasEt", "Paylaş"))}
             </button>
