@@ -457,6 +457,22 @@ const DAVET_CEVIRI = {
   ja: { menu: "招待 / 共有", baslik: "GLOXORG に招待", aciklama: "このリンクをコピーまたは送信——開いた人は GLOXORG に入れます。", kopyala: "リンクをコピー", kopyalandi: "コピーしました ✓", gonder: "送信 / 共有", mesaj: "GLOXORG に参加しよう——世界のラグジュアリーなプロ向けソーシャル基盤 💎", qr: "カメラで読み取る", kur: "アプリをインストール", kurIos: "iPhoneでは：下の共有 ⬆ →「ホーム画面に追加」", kurAndroid: "Androidでは：右上の ⋮ メニュー →「アプリをインストール」または「ホーム画面に追加」" },
   hi: { menu: "आमंत्रित करें / साझा करें", baslik: "GLOXORG में आमंत्रित करें", aciklama: "इस लिंक को कॉपी या भेजें — जो भी खोलेगा GLOXORG में आ जाएगा।", kopyala: "लिंक कॉपी करें", kopyalandi: "कॉपी हो गया ✓", gonder: "भेजें / साझा करें", mesaj: "GLOXORG में शामिल हों — दुनिया का लक्ज़री प्रोफेशनल सोशल प्लेटफ़ॉर्म 💎", qr: "कैमरे से स्कैन करें", kur: "ऐप इंस्टॉल करें", kurIos: "iPhone पर: नीचे शेयर ⬆ → 'होम स्क्रीन में जोड़ें'", kurAndroid: "Android पर: ऊपर-दाएँ ⋮ मेनू → 'ऐप इंस्टॉल करें' या 'होम स्क्रीन में जोड़ें'" },
 };
+// Mağaza rozetleri (Google Play / App Store) mikro-metni — 13 dil. Yayına çıkınca "yakinda" kalkar.
+const MAGAZA_CEVIRI = {
+  tr:{ ust:"Şuradan indir", yakinda:"Yakında", baslik:"Mağazadan indir" },
+  en:{ ust:"Get it on", yakinda:"Soon", baslik:"Download from store" },
+  de:{ ust:"Laden im", yakinda:"Bald", baslik:"Aus dem Store laden" },
+  fr:{ ust:"Disponible sur", yakinda:"Bientôt", baslik:"Télécharger depuis le store" },
+  es:{ ust:"Disponible en", yakinda:"Pronto", baslik:"Descargar de la tienda" },
+  it:{ ust:"Scaricalo su", yakinda:"Presto", baslik:"Scarica dallo store" },
+  pt:{ ust:"Baixe na", yakinda:"Em breve", baslik:"Baixar da loja" },
+  ru:{ ust:"Загрузите в", yakinda:"Скоро", baslik:"Скачать из магазина" },
+  uk:{ ust:"Завантажте в", yakinda:"Скоро", baslik:"Завантажити з магазину" },
+  ar:{ ust:"حمّله من", yakinda:"قريباً", baslik:"التنزيل من المتجر" },
+  zh:{ ust:"下载于", yakinda:"即将", baslik:"从商店下载" },
+  ja:{ ust:"入手する", yakinda:"近日", baslik:"ストアから入手" },
+  hi:{ ust:"पाएं", yakinda:"जल्द", baslik:"स्टोर से डाउनलोड करें" },
+};
 // Öneri çipinin ikonu — metindeki KONUYA göre renkli emoji (sadece yıldız değil; her şeye uygun ikon)
 function oneriIkon(metin) {
   const s = (metin || "").toLocaleLowerCase("tr");
@@ -5988,6 +6004,29 @@ export default function Anasayfa({ pro = false }) {
               ) : null}
               <button className="davet-btn davet-kopya" onClick={kopyala}>{davetKopya ? D.kopyalandi : "🔗 " + D.kopyala}</button>
               <button className="davet-btn davet-gonder" onClick={gonder}>📤 {D.gonder}</button>
+
+              {/* MAĞAZA ROZETLERİ — şimdilik "Yakında" (soluk + etiket); yayına çıkınca tam renkli + linkli olur */}
+              {(() => { const M = MAGAZA_CEVIRI[dil] || MAGAZA_CEVIRI.en; return (
+                <div className="davet-magaza">
+                  <div className="davet-magaza-bas">{M.baslik}</div>
+                  <div className="davet-rozet yakinda" aria-disabled="true">
+                    <span className="davet-rozet-yakinda">{M.yakinda}</span>
+                    <svg width="24" height="26" viewBox="0 0 60 66" aria-hidden="true">
+                      <polygon points="3,3 3,33 30,33" fill="#00A1F1"/><polygon points="3,33 3,63 30,33" fill="#00C853"/>
+                      <polygon points="3,3 30,33 57,33" fill="#FF3D2E"/><polygon points="3,63 30,33 57,33" fill="#FFC400"/>
+                    </svg>
+                    <span className="davet-rozet-yazi"><span className="davet-rozet-ust">{M.ust}</span><span className="davet-rozet-alt">Google Play</span></span>
+                  </div>
+                  <div className="davet-rozet yakinda" aria-disabled="true">
+                    <span className="davet-rozet-yakinda">{M.yakinda}</span>
+                    <svg width="22" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="#fff">
+                      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 8.72 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.2 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                    </svg>
+                    <span className="davet-rozet-yazi"><span className="davet-rozet-ust">{M.ust}</span><span className="davet-rozet-alt">App Store</span></span>
+                  </div>
+                </div>
+              ); })()}
+
               <button className="davet-btn davet-kur" onClick={uygulamaKur}>📲 {D.kur}</button>
               {kurIpucu ? <div className="davet-kur-ios">{kurIpucu}</div> : null}
             </div>
