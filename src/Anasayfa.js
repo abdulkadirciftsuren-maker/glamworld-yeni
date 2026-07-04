@@ -1277,6 +1277,14 @@ export default function Anasayfa({ pro = false }) {
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
+    // Yeni servis çalışan "güncellendi" haberi gönderince → sayfayı BİR KEZ yenile (kullanıcı hep güncel sürümü görür)
+    try {
+      navigator.serviceWorker.addEventListener("message", (ev) => {
+        if (ev && ev.data && ev.data.tip === "sw-guncellendi") {
+          try { if (!window.__groxYenilendi) { window.__groxYenilendi = true; window.location.reload(); } } catch (e) {}
+        }
+      });
+    } catch (e) {}
     navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js").then((reg) => {
       try { reg.update(); } catch (e) {}
       // Yeni surum hazir olunca (yeni servis calisan devralinca) sayfayi BIR KEZ yenile → kullanici hep guncel gorur
