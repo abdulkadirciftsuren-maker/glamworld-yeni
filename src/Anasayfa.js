@@ -1944,7 +1944,7 @@ export default function Anasayfa({ pro = false }) {
     try {
       if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
       const reg = (navigator.serviceWorker && (await navigator.serviceWorker.getRegistration() || await navigator.serviceWorker.ready)) || null;
-      if (reg && reg.showNotification) reg.showNotification("GLOXORG", { body: metin, icon: foto2 || "/glamworld-yeni/logo192.png", badge: "/glamworld-yeni/logo192.png", tag: "grox-bildirim" });
+      if (reg && reg.showNotification) reg.showNotification("GLOXORG", { body: metin, icon: foto2 || (process.env.PUBLIC_URL || "") + "/logo192.png", badge: (process.env.PUBLIC_URL || "") + "/logo192.png", tag: "grox-bildirim" });
       else if (typeof Notification === "function") new Notification("GLOXORG", { body: metin, icon: foto2 || undefined });
     } catch (e) {}
   }
@@ -5939,8 +5939,9 @@ export default function Anasayfa({ pro = false }) {
       {/* DAVET ET / PAYLAŞ — kopyalanır/gönderilir link (insanlar açınca GLOXORG'a girer) */}
       {davetAcik && createPortal((() => {
         const D = DAVET_CEVIRI[dil] || DAVET_CEVIRI.en;
-        let link = "https://abdulkadirciftsuren-maker.github.io/glamworld-yeni/";
-        try { link = window.location.origin + window.location.pathname; } catch (e) {}
+        // Davet linki DAİMA güzel alan adı (gloxorg.com) — dünyaya görünen isim bu olsun.
+        let link = "https://gloxorg.com/";
+        try { const o = window.location.origin || ""; if (o && !/github\.io/i.test(o)) link = o + window.location.pathname; } catch (e) {}
         const kopyala = async () => {
           try { await navigator.clipboard.writeText(link); setDavetKopya(true); setTimeout(() => setDavetKopya(false), 2000); }
           catch (e) { try { const ta = document.createElement("textarea"); ta.value = link; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); setDavetKopya(true); setTimeout(() => setDavetKopya(false), 2000); } catch (e2) {} }
