@@ -1977,8 +1977,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .hakkinda-plan-btn:active{ transform:scale(.97); }
 @media(min-width:560px){ .hakkinda-baslik{ font-size:36px; } .hakkinda-blok h2{ font-size:19px; } .hakkinda-blok p{ font-size:16px; } }
 /* ===== DAVET ET / PAYLAŞ penceresi ===== */
-.davet-fon{ position:fixed; inset:0; z-index:4200; background:rgba(4,8,20,.75); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px; }
-.davet-pencere{ position:relative; width:100%; max-width:400px; background:linear-gradient(165deg,#0e1836,#0a1226 60%,#0c1730); border:1.5px solid rgba(184,134,11,.55); border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.6); padding:26px 20px 22px; text-align:center; }
+/* SABİT DEĞİL: pencere tek parça, doğal kayar. Ekrandan uzunsa üstü kesilmez (overflow+margin:auto),
+   sığıyorsa ortalanır. Tarayıcı çubuğu olsun/olmasın (uygulama modu) doğru durur; güvenli alan (çentik) payı. */
+.davet-fon{ position:fixed; inset:0; z-index:4200; background:rgba(4,8,20,.75); backdrop-filter:blur(3px); display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom)); }
+.davet-pencere{ position:relative; width:100%; max-width:400px; margin:auto; background:linear-gradient(165deg,#0e1836,#0a1226 60%,#0c1730); border:1.5px solid rgba(184,134,11,.55); border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.6); padding:26px 20px 22px; text-align:center; }
 .davet-kapat{ position:absolute; top:12px; right:12px; width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.1); color:#e9eef7; font-size:16px; cursor:pointer; }
 .davet-kapat:active{ transform:scale(.9); }
 .davet-amblem{ font-size:40px; line-height:1; margin-bottom:6px; }
