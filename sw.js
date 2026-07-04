@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "B53";
+const SW_SURUM = "B70";
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
   // Eski onbellekleri temizle (kullanici bir daha ESKI surumde takilmasin)
@@ -29,8 +29,8 @@ self.addEventListener("push", (e) => {
   try { veri = e.data ? e.data.json() : {}; } catch (x) { veri = { title: "GLOXORG", body: e.data && e.data.text() }; }
   const baslik = veri.title || "GLOXORG";
   e.waitUntil(self.registration.showNotification(baslik, {
-    body: veri.body || "", icon: veri.icon || "/glamworld-yeni/logo192.png",
-    badge: "/glamworld-yeni/logo192.png", tag: "grox-bildirim",
+    body: veri.body || "", icon: veri.icon || "logo192.png",
+    badge: "logo192.png", tag: "grox-bildirim",
   }));
 });
 
@@ -39,6 +39,6 @@ self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((liste) => {
     for (const c of liste) { if ("focus" in c) return c.focus(); }
-    if (self.clients.openWindow) return self.clients.openWindow("/glamworld-yeni/");
+    if (self.clients.openWindow) return self.clients.openWindow("./");
   }));
 });
