@@ -116,6 +116,32 @@ function kelimeSayisi(metin) {
   if (!metin) return 0;
   return String(metin).trim().split(/\s+/).filter(Boolean).length;
 }
+// BEĞENEN AVATAR ŞERİDİ — gönderiyi beğenenlerin ufak profil resimleri, İSTİFLENMİŞ (öne doğru küçülerek).
+// Gerçek beğeni verisi Firestore'dan (begenenleriOku) çekilir; beğeni yoksa hiç görünmez.
+function BegenenlerSerit({ postId, sayi }) {
+  const [liste, setListe] = useState(null);
+  useEffect(() => {
+    let iptal = false;
+    if (!postId || !sayi) { setListe([]); return; }
+    begenenleriOku(postId, 8).then((l) => { if (!iptal) setListe(l || []); }).catch(() => { if (!iptal) setListe([]); });
+    return () => { iptal = true; };
+  }, [postId, sayi]);
+  if (!liste || !liste.length) return null;
+  const goster = liste.slice(0, 4);
+  const ilkAd = (goster[0].ad || "Biri").split(" ")[0];
+  return (
+    <div className="begenen-serit">
+      <div className="begenen-avlar">
+        {goster.map((b, i) => (
+          <span className="begenen-av" key={b.id || i} style={{ width: 26 - i * 3, height: 26 - i * 3, marginLeft: i === 0 ? 0 : -(9 - i), zIndex: 9 - i }}>
+            {b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : <span className="begenen-harf">{ilkAd.charAt(0).toUpperCase()}</span>}
+          </span>
+        ))}
+      </div>
+      <span className="begenen-yazi">{sayi > 1 ? `${ilkAd} ve ${(sayi - 1).toLocaleString()} kişi beğendi` : `${ilkAd} beğendi`}</span>
+    </div>
+  );
+}
 // Meslek → kendi rengi (ızgaradaki bg'nin ilk hex'i) — gönderi/etikette meslek kendi renginde yazılır.
 const MESLEK_RENK = {};
 try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; }); } catch (e) {}
@@ -4451,6 +4477,8 @@ export default function Anasayfa({ pro = false }) {
                     <button className={"ana-post-btn apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                     <button className="ana-post-btn ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                   </div>
+                  {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
+                  <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} />
                 </article>
               );
             })}
