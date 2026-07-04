@@ -1155,6 +1155,17 @@ export default function Anasayfa({ pro = false }) {
     try { sesliOku(selam, bitince, undefined, teleIlerleme); } catch (e) {}
     if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
   };
+  // YENİ ÜYE KARŞILAMASI — ilk kez kayıt olan kişi: Gloxoo BÜYÜK açılır, KAPANMAZ (okusun); kendini + GLOXORG + gloxorg.com
+  // + Gloxoo.com + 🐻 Ekspert'i İKONLU anlatır ve 7 Eksen / eylem planına yönlendirir.
+  const maskotYeniUyeKarsila = () => {
+    setMaskotTur("grox");
+    const ad = hitapAdi();
+    const _ad = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
+    const selam = `Hoş geldin${_ad}! 👋 Ben Gloxoo 💎, GLOXORG'un akıllı kalbiyim. 🌍 GLOXORG, dünyanın lüks profesyonel sosyal platformu (gloxorg.com): paylaş, bağ kur, müşteri bul, mesleğini büyüt. Her sayfada yanındayım — 🗣️ konuşurum, ✍️ yazarım, 📰 güncel bilgi ve yol veririm (gloxoo.com). Üstteki 🐻 Ekspert ise bulunduğun sayfanın uzmanıdır. Menüden 💠 "GLOXORG Hakkında + 7 Eksen"e göz at, ya da bana "eylem planı çıkar" de — sana özel bir yol haritası çizeyim. Hadi başlayalım! 🚀`;
+    setMaskotMetni(selam); setMaskotTanit(true); setMaskotMini(false); setYardimciMod("sohbet");
+    try { localStorage.setItem("groxSonSelamMs", String(Date.now())); localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
+    try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {} // KAPANMAZ (bitince yok) → yeni üye rahat okur
+  };
   // BÜYÜK MASKOT canlı sohbet: karşılama sesi BİTİNCE mikrofonu açar, kullanıcıyı SABIRLA bekler (kendi konuşmaz, cevap dayatmaz),
   // kullanıcı konuşunca AI cevap verir (sesli) ve TEKRAR dinler — maskot büyük kalır, kapanmaz, tekrar karşılamaz.
   const maskotCanliBaslat = () => {
@@ -1333,13 +1344,35 @@ export default function Anasayfa({ pro = false }) {
   // AÇILIŞ KARŞILAMASI: büyük Gloxoo ORTADA çıkıp SESLİ karşılar. AMA her yenilemede/tekrar girişte DEĞİL —
   // sadece YENİ oturumda (son karşılamadan 3 saatten fazla geçmişse). Böylece bir gün/2 gün sonra girince
   // yeniden karşılar (metin zamana göre "bir gün olmuş" vб.); aynı oturumda sayfa yenilenince tekrar etmez.
+  const karsilandiRef = useRef(false);
   useEffect(() => {
-    let selamla = true;
-    try { const son = parseInt(localStorage.getItem("groxSonSelamMs") || "0", 10); if (son > 0 && (Date.now() - son) < 3 * 3600 * 1000) selamla = false; } catch (e) {}
-    if (!selamla) return;
-    const ti = setTimeout(() => { try { maskotTanitYap(true); } catch (e) {} }, 700);
+    if (karsilandiRef.current) return;
+    // auth çözülsün diye kısa bekle; u değişince efekt yeniden kurulur (taze u ile)
+    const ti = setTimeout(() => {
+      if (karsilandiRef.current) return;
+      // YENİ ÜYE mi? Hesap ~15 dk içinde OLUŞTURULMUŞ (creationTime≈lastSignInTime) ve bu uid'e daha önce tanıtım YAPILMAMIŞ
+      let yeni = false;
+      try {
+        if (u && u.uid) {
+          const key = "groxTanistik_" + u.uid;
+          if (!localStorage.getItem(key)) {
+            const ct = u.metadata && u.metadata.creationTime ? Date.parse(u.metadata.creationTime) : 0;
+            const lt = u.metadata && u.metadata.lastSignInTime ? Date.parse(u.metadata.lastSignInTime) : 0;
+            if (ct && lt && Math.abs(lt - ct) < 15 * 60 * 1000) yeni = true;
+            localStorage.setItem(key, "1"); // bu uid için bir daha uzun tanıtım yapma
+          }
+        }
+      } catch (e) {}
+      if (yeni) { karsilandiRef.current = true; try { maskotYeniUyeKarsila(); } catch (e) {} return; }
+      // DÖNEN kullanıcı: 3 saat içinde selamlandıysa tekrar etme
+      let selamla = true;
+      try { const son = parseInt(localStorage.getItem("groxSonSelamMs") || "0", 10); if (son > 0 && (Date.now() - son) < 3 * 3600 * 1000) selamla = false; } catch (e) {}
+      if (!selamla) { karsilandiRef.current = true; return; }
+      karsilandiRef.current = true;
+      try { maskotTanitYap(true); } catch (e) {}
+    }, 1400);
     return () => clearTimeout(ti);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
