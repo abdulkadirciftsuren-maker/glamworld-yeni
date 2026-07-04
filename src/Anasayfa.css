@@ -1922,8 +1922,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* ===== GLOXORG YARDIMCISI — yapay zeka sohbet balonu + penceresi ===== */
 /* MASKOT BALONU — altın daire değil; maskot KARAKTERİN kendisi, hafifçe süzülür (yüzer) */
 /* SARMAL — konumlanan/sürüklenen kap (küçük maskot + mini düğmeler + balon birlikte durur/taşınır) */
-.ai-balon-sar{ position:fixed; left:12px; right:auto; bottom:80px; z-index:55; cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none;
-  display:flex; align-items:center; justify-content:center; }
+.ai-balon-sar{ position:fixed; left:12px; right:auto; bottom:104px; z-index:55; cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none;
+  display:flex; align-items:center; justify-content:center; } /* düğmeler HEP görünür olduğu için biraz yukarı (alt sekmeyle çakışmasın) */
 .ai-balon-sar.ust{ z-index:100013; } /* fotoğraf/video tam ekranda da ÜSTTE görünür (her yerde durur) */
 .ai-balon-sar:active{ cursor:grabbing; }
 .ai-balon{ position:relative; width:58px; height:58px; border:none; cursor:grab; padding:0;

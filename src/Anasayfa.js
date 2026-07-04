@@ -5311,11 +5311,11 @@ export default function Anasayfa({ pro = false }) {
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
           <button className={"ai-balon" + (aiKonusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "") + (maskotKizgin ? " kizgin" : "")}
             onClick={balonTik} aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur="grox" boyut={52} rozet />
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotMini ? maskotTur : "grox"} boyut={52} rozet />
           </button>
-          {/* KÜÇÜKKEN: maskotun ALTINDA renkli İKON düğmeler (kaybolmaz). Basınca üstünde ne olduğu yazar.
+          {/* Maskotun ALTINDA renkli İKON düğmeler — KAPALI/dinlenirken BİLE hep görünür (kullanıcı: hiç kaybolmasın).
               Yaz = metin paneli; Ses = AÇ/KAPA (büyütmeden konuş/sus — yeşil konuş, kırmızı sus). */}
-          {maskotMini && (
+          {(
             <div className="ai-mini-alt" onPointerDown={(e) => e.stopPropagation()}>
               {miniEtiket && <div className="ai-mini-etiket">{miniEtiket}</div>}
               <div className="ai-mini-btnlar">
