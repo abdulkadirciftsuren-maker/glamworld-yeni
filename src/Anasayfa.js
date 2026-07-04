@@ -3169,6 +3169,11 @@ export default function Anasayfa({ pro = false }) {
       return yeni;
     });
   };
+  // KONUŞMA SİL — kayıtlı konuşmayı listeden kaldırır (SADECE bu; günlük AI hakkı/sınırı ile İLGİSİ YOK, ona dokunmaz)
+  const oturumSil = (id) => {
+    try { if (!window.confirm(t("konusmaSilOnay", "Bu konuşmayı silmek istiyor musun? (Günlük hakkın etkilenmez.)"))) return; } catch (e) {}
+    setOturumlar((prev) => { const yeni = prev.filter((o) => o.id !== id); try { localStorage.setItem("groxOturumlar", JSON.stringify(yeni)); } catch (e) {} return yeni; });
+  };
   // YENİ KONUŞMA — mevcut konuşmayı KAYDEDER (Konuşmalarım'a), sonra görünümü temizler; canlı varsa kapatır (geçmiş silinmez)
   const yeniKonusma = () => {
     setAiDilAcik(false);
@@ -5194,14 +5199,19 @@ export default function Anasayfa({ pro = false }) {
                   const renk = GUN_RENK[i % GUN_RENK.length];
                   const d = new Date(o.zamanMs);
                   return (
-                    <button key={o.id} className="arsiv-kart" style={{ "--gr": renk }} onClick={() => oturumYukle(o)}>
-                      <span className="arsiv-kart-nokta" style={{ background: renk }} />
-                      <span className="arsiv-kart-ic">
-                        <b style={{ color: renk }}>{o.baslik}</b>
-                        <i>{d.toLocaleDateString(dil || "tr", { day: "numeric", month: "long", year: "numeric" })} · {(o.mesajlar || []).length} mesaj{o.mod === "site" ? " · site" : ""}</i>
-                      </span>
-                      <svg className="arsiv-kart-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5l7 7-7 7" /></svg>
-                    </button>
+                    <div key={o.id} className="arsiv-kart-sar">
+                      <button className="arsiv-kart" style={{ "--gr": renk }} onClick={() => oturumYukle(o)}>
+                        <span className="arsiv-kart-nokta" style={{ background: renk }} />
+                        <span className="arsiv-kart-ic">
+                          <b style={{ color: renk }}>{o.baslik}</b>
+                          <i>{d.toLocaleDateString(dil || "tr", { day: "numeric", month: "long", year: "numeric" })} · {(o.mesajlar || []).length} mesaj{o.mod === "site" ? " · site" : ""}</i>
+                        </span>
+                        <svg className="arsiv-kart-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5l7 7-7 7" /></svg>
+                      </button>
+                      <button className="arsiv-kart-sil" onClick={(e) => { e.stopPropagation(); oturumSil(o.id); }} aria-label={t("sil", "Sil")} title={t("sil", "Sil")}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6" /></svg>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -5825,7 +5835,7 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-oge c-mavi" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🏠</span>{t("navAnaSayfa")}</button>
             <button className="ana-menu-oge c-yesil" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🌍</span>{t("navTopluluk")} · {t("anaYakinda")}</button>
             <button className="ana-menu-oge c-mor" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🎓</span>{t("navAkademi")} · {t("anaYakinda")}</button>
-            <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); navigate("/profesyonel"); }}><span className="ana-menu-ik">💎</span>{t("anaProMisin")}</button>
+            <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); setUyelikKartAcik(true); }}><span className="ana-menu-ik">💎</span>{t("proOlBaslik", "Profesyonel Ol")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
             <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{(HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en).menu}</button>
             {/* TELEFON BİLDİRİMLERİ — ayardan aç/durum göster */}
