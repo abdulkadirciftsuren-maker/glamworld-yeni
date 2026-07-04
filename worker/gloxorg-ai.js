@@ -1,26 +1,35 @@
 /*
- * GLOXORG AI — Cloudflare Worker (Gloxoo'nun beyni)
- * ---------------------------------------------------
+ * GLOXORG AI — Cloudflare Worker (Gloxoo'nun beyni)  —  DAYANIKLI SÜRÜM
+ * ---------------------------------------------------------------------
  * Bu worker 3 şeyi yapar:
  *   1) SOHBET  : { sistem, mesajlar }  → Claude + CANLI WEB ARAMA → { metin }
  *   2) TEK ISTEK: { prompt, sistem }   → Claude + CANLI WEB ARAMA → { metin }
- *   3) SES→YAZI: { ses, dil }          → OpenAI Whisper           → { metin }
+ *   3) SES→YAZI: { ses, dil }          → OpenAI (ses→yazı)         → { metin }
  *
- * WEB ARAMA sayesinde Gloxoo artık GÜNCEL her şeyi bilir: haber, futbol skoru,
- * senin/müşterinin bulunduğu şehir-ilçe olayları, devlet daireleri, bankalar,
- * meslekler, "fabrika nasıl kurulur / malzeme nereden alınır" gibi araştırmalar.
+ * ✅ EN ÖNEMLİ YENİLİK — "kendi kendini kurtarma":
+ *    Yeni/güçlü model (claude-sonnet-5, gpt-4o-transcribe) senin anahtarında
+ *    KAPALIYSA worker BOŞ dönmez; otomatik olarak ÇALIŞAN eski modele düşer
+ *    (whisper-1 / claude-3-5-sonnet). Böylece Gloxoo HER ZAMAN cevap verir,
+ *    bir daha "dinliyor ama susuyor" olmaz.
  *
- * CLOUDFLARE'DE AYARLANACAK GİZLİ DEĞİŞKENLER (Settings > Variables > Secrets):
+ * CLOUDFLARE GİZLİ DEĞİŞKENLER (Settings > Variables and Secrets):
  *   ANTHROPIC_API_KEY  → Anthropic (Claude) API anahtarın   [ZORUNLU]
  *   OPENAI_API_KEY     → OpenAI API anahtarın (ses→yazı için) [ses kullanıyorsan]
- *
- * NOT: Web arama, Anthropic tarafında ÜCRETLİ bir özelliktir (arama başına küçük
- * bir ücret). Sınırı MAX_ARAMA ile tutuyoruz (varsayılan 5 arama/cevap).
  */
 
-const MODEL = "claude-sonnet-5";          // EN SON Claude modeli (hızlı + akıllı + web arama). Daha da güçlü istersen: "claude-opus-4-8"
-const SES_MODEL = "gpt-4o-transcribe";    // EN SON OpenAI ses→yazı modeli (eski "whisper-1" yerine)
-const MAX_ARAMA = 6;                       // bir cevapta en fazla kaç web araması
+// Cevap (sohbet) modelleri — SIRAYLA denenir; ilki çalışmazsa alttakine düşer.
+// En üstteki EN SON/EN GÜÇLÜ; alttakiler "her ihtimale karşı çalışan" yedekler.
+const SOHBET_MODELLERI = [
+  "claude-sonnet-5",            // EN SON (hızlı + akıllı + web arama)
+  "claude-opus-4-8",           // daha güçlü yedek
+  "claude-3-5-sonnet-latest",  // her hesapta neredeyse kesin çalışan güvenli yedek
+];
+// Ses→yazı modelleri — SIRAYLA denenir.
+const SES_MODELLERI = [
+  "gpt-4o-transcribe",  // EN SON
+  "whisper-1",          // her hesapta çalışan güvenli yedek
+];
+const MAX_ARAMA = 6;    // bir cevapta en fazla kaç web araması
 
 export default {
   async fetch(request, env) {
@@ -36,73 +45,88 @@ export default {
     try { body = await request.json(); } catch (e) {}
 
     try {
-      // ---- 1) SES → YAZI (OpenAI Whisper) ----
+      // ================= 1) SES → YAZI =================
       if (body.ses) {
         if (!env.OPENAI_API_KEY) return json({ metin: "", hata: "OPENAI_API_KEY yok" }, cors);
         const bin = Uint8Array.from(atob(body.ses), (c) => c.charCodeAt(0));
-        const fd = new FormData();
-        fd.append("file", new Blob([bin], { type: "audio/webm" }), "ses.webm");
-        fd.append("model", SES_MODEL);
-        if (body.dil) fd.append("language", String(body.dil).slice(0, 5));
-        const wr = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-          method: "POST",
-          headers: { Authorization: "Bearer " + env.OPENAI_API_KEY },
-          body: fd,
-        });
-        const wj = await wr.json().catch(() => ({}));
-        return json({ metin: (wj.text || "").trim() }, cors);
+        const dil = body.dil ? String(body.dil).slice(0, 5) : "";
+        let sonHata = "";
+        for (const model of SES_MODELLERI) {
+          try {
+            const fd = new FormData();
+            fd.append("file", new Blob([bin], { type: "audio/webm" }), "ses.webm");
+            fd.append("model", model);
+            if (dil) fd.append("language", dil);
+            const wr = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+              method: "POST",
+              headers: { Authorization: "Bearer " + env.OPENAI_API_KEY },
+              body: fd,
+            });
+            const wj = await wr.json().catch(() => ({}));
+            const metin = (wj.text || "").trim();
+            if (metin) return json({ metin }, cors);
+            // Model erişilemiyor/boş döndü → sonraki modele düş
+            sonHata = (wj.error && (wj.error.message || wj.error.code)) || ("HTTP " + wr.status);
+          } catch (e) { sonHata = String(e); }
+        }
+        // Hiçbir ses modeli metin veremedi (gerçekten sessizlik de olabilir) → boş metin + iz için hata
+        return json({ metin: "", hata: sonHata || "ses cozulemedi" }, cors);
       }
 
-      // ---- 2/3) SOHBET / TEK ISTEK (Claude + web arama) ----
+      // ================= 2/3) SOHBET / TEK ISTEK (Claude) =================
       if (!env.ANTHROPIC_API_KEY) return json({ metin: "", hata: "ANTHROPIC_API_KEY yok" }, cors);
 
       const sistem = body.sistem || "Sen Gloxoo'sun, GLOXORG'un yardımcı yapay zekasısın. Kısa, sıcak ve doğru konuş.";
       let mesajlar = Array.isArray(body.mesajlar) ? body.mesajlar : null;
       if (!mesajlar) mesajlar = [{ role: "user", content: String(body.prompt || "Merhaba") }];
 
-      const payload = {
-        model: MODEL,
-        max_tokens: 1600,
-        system: sistem,
-        messages: mesajlar,
-        // CANLI WEB ARAMA aracı — Claude gerektiğinde kendisi internette arar (haber/futbol/güncel her şey)
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: MAX_ARAMA }],
-      };
-
-      const ar = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify(payload),
-      });
-      const aj = await ar.json().catch(() => ({}));
-
-      // Cevap metnini topla (web arama sonucu araya girse bile sadece text blokları)
-      let metin = "";
-      if (aj && Array.isArray(aj.content)) {
-        metin = aj.content.filter((b) => b && b.type === "text").map((b) => b.text || "").join("").trim();
+      let sonHata = "";
+      // Her modeli SIRAYLA dene. Her model için ÖNCE web aramalı, olmazsa aramasız dene.
+      for (const model of SOHBET_MODELLERI) {
+        // a) web aramalı dene
+        const r1 = await claudeCagir(env, model, sistem, mesajlar, true);
+        if (r1.metin) return json({ metin: r1.metin }, cors);
+        if (r1.hata) sonHata = r1.hata;
+        // b) aynı modelle aramasız dene (web arama kapalı/desteklenmiyor olabilir)
+        const r2 = await claudeCagir(env, model, sistem, mesajlar, false);
+        if (r2.metin) return json({ metin: r2.metin }, cors);
+        if (r2.hata) sonHata = r2.hata;
+        // → sonraki modele düş
       }
-      // Model web aramayı desteklemiyorsa (tools hatası) → aramasız TEKRAR dene (yine de cevap gelsin)
-      if (!metin && aj && aj.error) {
-        const p2 = { model: MODEL, max_tokens: 1600, system: sistem, messages: mesajlar };
-        const ar2 = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-          body: JSON.stringify(p2),
-        });
-        const aj2 = await ar2.json().catch(() => ({}));
-        if (aj2 && Array.isArray(aj2.content)) metin = aj2.content.filter((b) => b && b.type === "text").map((b) => b.text || "").join("").trim();
-        return json({ metin: metin || "", hata: metin ? undefined : (aj.error && aj.error.message) }, cors);
-      }
-      return json({ metin: metin || "" }, cors);
+      // Hiçbir model cevap veremedi → hatayı geri ver (kullanıcı "susmuş" sanmasın, sebebi görünsün)
+      return json({ metin: "", hata: sonHata || "cevap alinamadi" }, cors);
     } catch (e) {
       return json({ metin: "", hata: String(e) }, cors);
     }
   },
 };
+
+// Tek bir Claude çağrısı — webArama true ise web_search aracını ekler.
+// Dönüş: { metin, hata }
+async function claudeCagir(env, model, sistem, mesajlar, webArama) {
+  try {
+    const payload = { model, max_tokens: 1600, system: sistem, messages: mesajlar };
+    if (webArama) payload.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: MAX_ARAMA }];
+    const ar = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(payload),
+    });
+    const aj = await ar.json().catch(() => ({}));
+    let metin = "";
+    if (aj && Array.isArray(aj.content)) {
+      metin = aj.content.filter((b) => b && b.type === "text").map((b) => b.text || "").join("").trim();
+    }
+    const hata = (aj && aj.error && (aj.error.message || aj.error.type)) || (metin ? "" : "HTTP " + ar.status);
+    return { metin, hata };
+  } catch (e) {
+    return { metin: "", hata: String(e) };
+  }
+}
 
 function json(obj, cors, status) {
   return new Response(JSON.stringify(obj), { status: status || 200, headers: { "content-type": "application/json", ...cors } });

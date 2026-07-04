@@ -850,6 +850,7 @@ export default function Anasayfa({ pro = false }) {
   const [dinliyor, setDinliyor] = useState(false);  // mikrofon o an dinliyor mu
   const [canliSohbet, setCanliSohbet] = useState(false); // DÜĞMESİZ canlı sohbet: konuş-dinle döngüsü
   const canliSohbetRef = useRef(false);
+  const bosSesRef = useRef(0); // üst üste kaç kez "konuştu ama yazıya çevrilemedi" (worker/ses modeli sorunu) — üst üste olunca kullanıcıyı uyar
   const [aiDil, setAiDil] = useState(() => { try { return localStorage.getItem("gw_aiDil") || dil; } catch (e) { return dil; } }); // AI SES + yanıt dili (site dilinden AYRI seçilebilir)
   const aiDilRef = useRef(aiDil); useEffect(() => { aiDilRef.current = aiDil; try { localStorage.setItem("gw_aiDil", aiDil); } catch (e) {} }, [aiDil]);
   // SAYFA DİLİ değişince AI dili de OTOMATİK o dile geçer (kullanıcı: site Rusça ise AI da Rusça konuşsun/dinlesin). Sonra istenirse AI dili elle değiştirilebilir.
@@ -2581,8 +2582,13 @@ export default function Anasayfa({ pro = false }) {
           const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ses: b64, dil: aiDilRef.current }) });
           const veri2 = await r.json(); setYardimciYukleniyor(false);
           const metin = ((veri2 && veri2.metin) || "").trim();
-          if (metin) yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); // görüntülü modda o anki kareyi ekle (Gloxoo seni görür); cevap sesli okunur → bitince tekrar dinler
-          else if (canliSohbetRef.current) canliDinle();
+          if (metin) { bosSesRef.current = 0; yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); } // görüntülü modda o anki kareyi ekle (Gloxoo seni görür); cevap sesli okunur → bitince tekrar dinler
+          else if (canliSohbetRef.current) {
+            // Kullanıcı KONUŞTU (blob geldi) ama yazıya çevrilemedi → sonsuz sessiz döngü OLMASIN: üst üste 2 kez olunca AÇIKÇA uyar (ses modeli/worker sorunu)
+            bosSesRef.current++;
+            if (bosSesRef.current >= 2) { bosSesRef.current = 0; try { setKucukMesaj(t("sesCevrilemedi", "Sesini yazıya çeviremedim 🙏 Worker/ses ayarını kontrol et ya da yazarak dene.")); } catch (e) {} }
+            canliDinle();
+          }
         } catch (e) { setYardimciYukleniyor(false); if (canliSohbetRef.current) canliDinle(); }
       };
       mr.start(); setDinliyor(true);
