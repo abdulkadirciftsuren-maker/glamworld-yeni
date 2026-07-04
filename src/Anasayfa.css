@@ -2401,7 +2401,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-tema-musteri .ai-giris{ border-top-color:rgba(150,100,30,.4); }
 .ai-tema-musteri .ai-input{ background:#fffdf8; color:#2a2008; border-color:rgba(150,100,30,.55); box-shadow:0 2px 10px rgba(110,70,15,.16); }
 .ai-tema-musteri .ai-input::placeholder{ color:rgba(110,80,25,.7); }
-.ai-tema-musteri .ai-ses{ background:#fff7e6; border-color:rgba(150,100,30,.5); } /* renk per-buton kuralindan gelir */
+/* Müşteri teması SADECE nötr düğmelere krem zemin verir; RENKLİ düğmeler (canlı/kamera/mikrofon/hoparlör) KENDİ renklerini korur (kapalı kırmızı/açık yeşil kaybolmasın) */
+.ai-tema-musteri .ai-ses:not(.ai-canli):not(.ai-kamera):not(.ai-mik):not(.ai-hoparlor){ background:#fff7e6; border-color:rgba(150,100,30,.5); }
 .ai-tema-musteri .ai-paylasim-kart{ background:linear-gradient(150deg,#fff4ec,#fbeefb 50%,#ecf9ff); border-color:rgba(200,120,60,.6); box-shadow:0 6px 18px rgba(120,70,15,.18); }
 .ai-tema-musteri .ai-paylasim-metin{ color:#352712; }
 .ai-tema-musteri .ai-paylasim-btn.kopya{ background:rgba(150,100,30,.14); color:#7a5410; border-color:rgba(150,100,30,.5); }
