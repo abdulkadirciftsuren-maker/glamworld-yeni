@@ -2585,9 +2585,17 @@ export default function Anasayfa({ pro = false }) {
           const metin = ((veri2 && veri2.metin) || "").trim();
           if (metin) { bosSesRef.current = 0; yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); } // görüntülü modda o anki kareyi ekle (Gloxoo seni görür); cevap sesli okunur → bitince tekrar dinler
           else if (canliSohbetRef.current) {
-            // Kullanıcı KONUŞTU (blob geldi) ama yazıya çevrilemedi → sonsuz sessiz döngü OLMASIN: üst üste 2 kez olunca AÇIKÇA uyar (ses modeli/worker sorunu)
+            // Kullanıcı KONUŞTU (blob geldi) ama yazıya çevrilemedi → sonsuz sessiz döngü OLMASIN: üst üste 2 kez olunca AÇIKÇA uyar.
+            // TEŞHİS: worker'ın gerçek ses hatasını (OPENAI_API_KEY yok / HTTP 401 / model hatası) EKRANA yaz ki sebep tek fotoğrafta görünsün.
             bosSesRef.current++;
-            if (bosSesRef.current >= 2) { bosSesRef.current = 0; try { setKucukMesaj(t("sesCevrilemedi", "Sesini yazıya çeviremedim 🙏 Worker/ses ayarını kontrol et ya da yazarak dene.")); } catch (e) {} }
+            const sesHata = (veri2 && veri2.hata) ? String(veri2.hata) : "";
+            if (bosSesRef.current >= 2) {
+              bosSesRef.current = 0;
+              const mesaj = sesHata ? ("Sesi yazıya çeviremedim. Worker'ın verdiği sebep: " + sesHata) : "Sesini duydum ama yazıya çeviremedim (ses çok kısık/kısa olabilir). Biraz daha yüksek ve net konuş.";
+              try { setKucukMesaj(mesaj); } catch (e) {}
+              try { setMaskotMetni(mesaj); } catch (e) {}
+              try { setYardimciMesajlar((s) => [...s, { rol: "ai", metin: mesaj, zamanMs: Date.now() }]); } catch (e) {}
+            }
             canliDinle();
           }
         } catch (e) { setYardimciYukleniyor(false); if (canliSohbetRef.current) canliDinle(); }
