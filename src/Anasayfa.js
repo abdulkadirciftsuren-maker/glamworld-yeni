@@ -972,9 +972,10 @@ export default function Anasayfa({ pro = false }) {
   function balonTik() {
     if (balonSur.current.moved) return;
     maskotSelamKapat();
+    setMaskotTur("grox"); // KÖŞE MASKOTU = HER ZAMAN GLOXOO (ayı DEĞİL — ikisi ayrı)
     // KÜÇÜLTÜLMÜŞ (mini) maskota dokun = BÜYÜT (yeniden karşılama YOK — kaldığı yerden devam). KAPATMAZ.
     if (maskotMini || canliSohbetRef.current) {
-      setMaskotMini(false); setMaskotTanit(true);
+      setMaskotMini(false); setMaskotTanit(true); setYardimciMod("sohbet");
       if (!canliSohbetRef.current) { try { maskotCanliBaslat(); } catch (e) {} } // KAPALIYSA büyürken SES AÇ (istek)
       return;
     }
@@ -1183,7 +1184,16 @@ export default function Anasayfa({ pro = false }) {
   // KAYDIR (parmakla sağa/sola çek): BÜYÜK maskot köşesine iner AMA canlı dinleme SÜRER — kapatma yok, kullanıcı kapatana kadar dinler (istek #5)
   const maskotKucult = () => {
     setAiDuraklat(false);
-    setMaskotTanit(false); setMaskotMini(true); // köşeye in AMA KAPANMA: mini modda (Yaz/✕ düğmeleri görünür, sohbet açık)
+    // AYI (Ekspert) AYRIDIR: küçülünce TAMAMEN KAPANIR (Gloxoo gibi köşede kalmaz, karışmaz).
+    if (maskotTur === "ekspert") {
+      canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
+      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
+      try { recognitionRef.current && recognitionRef.current.abort(); recognitionRef.current = null; } catch (e) {}
+      setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); setMaskotTur("grox");
+      return;
+    }
+    setMaskotTanit(false); setMaskotMini(true); // GLOXOO: köşeye in AMA KAPANMA (Yaz/Ses düğmeleri görünür, sohbet açık)
     if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // canlı dinleme sürer
   };
   // Mini ikon düğmeye basınca ÜSTÜNDE kısa etiket göster (buton üzerinde sürekli yazı DURMAZ — istek)
@@ -4071,7 +4081,7 @@ export default function Anasayfa({ pro = false }) {
           </span>
         </div>
         {/* SİTE ASİSTANI — Google profilinin yanında; komutla pencere açar (balondan ayrı) */}
-        <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit) { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}>
+        <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit && maskotTur === "ekspert") { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}>
           {/* MASKOT 2 — Ekspert: bilge AYI (altın çerçeve marka olarak korunur) */}
           <svg className="ana-site-ai-pusula" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="9.7" fill="#0c1730" stroke="#FFD700" strokeWidth="1.2" />
@@ -5344,7 +5354,7 @@ export default function Anasayfa({ pro = false }) {
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
           <button className={"ai-balon" + (aiKonusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "") + (maskotKizgin ? " kizgin" : "")}
             onClick={balonTik} aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotMini ? maskotTur : "grox"} boyut={52} rozet />
+            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur="grox" boyut={52} rozet />
           </button>
           {/* Maskotun ALTINDA renkli İKON düğmeler — KAPALI/dinlenirken BİLE hep görünür (kullanıcı: hiç kaybolmasın).
               Yaz = metin paneli; Ses = AÇ/KAPA (büyütmeden konuş/sus — yeşil konuş, kırmızı sus). */}
