@@ -982,6 +982,8 @@ export default function Anasayfa({ pro = false }) {
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasYukleme, setPaylasYukleme] = useState(0);        // video yükleme ilerlemesi %
   const [paylasDosya, setPaylasDosya] = useState(null);         // eklenen DOSYA (belge) {file, ad, boyut}
+  const [medyaMenu, setMedyaMenu] = useState("");               // "" | "foto" | "video" — çek/galeri mini menüsü
+  const [turSecAcik, setTurSecAcik] = useState(false);          // Paylaş'a basınca çıkan "ne olarak?" seçimi
   // FOTO/VİDEO ÜZERİNE YAZI — metin + renk + boyut + konum (üst/orta/alt). Görselin üstünde katman olarak gösterilir.
   const [ustYazi, setUstYazi] = useState("");
   const [ustRenk, setUstRenk] = useState("#ffffff");
@@ -1399,6 +1401,8 @@ export default function Anasayfa({ pro = false }) {
   const paylasFotoRef = useRef(null);
   const paylasVideoRef = useRef(null);
   const paylasDosyaRef = useRef(null);     // DOSYA (belge) seç
+  const paylasFotoKamRef = useRef(null);   // FOTO — kamera (capture)
+  const paylasVideoKamRef = useRef(null);  // VİDEO — kamera (capture)
   const [tamFoto, setTamFoto] = useState("");          // fotoğrafa basınca TAM EKRAN görüntü
   const [tamYatay, setTamYatay] = useState(false);     // açılan görsel YATAY/geniş mi (fill mi contain mi)
   // TAM EKRAN parmakla ZOOM (pinch / çift dokunma / fare tekeri) — kullanıcı KENDİSİ yakınlaştırır
@@ -2430,7 +2434,7 @@ export default function Anasayfa({ pro = false }) {
     else if (k === "ara" || k === "arama") setAraAcik(true);
     else if (k === "bildirim" || k === "bildirimler") setBildirimAcik(true);
     else if (k === "mesaj" || k === "mesajlar") setMesajAcik(true);
-    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasDosya(null); setPaylasDurum(""); setPaylasAcik(true); }
+    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasAcik(true); }
     else if (k === "ayar" || k === "ayarlar") setAyarlarAcik(true);
   }
   // Asistana FOTOĞRAF ekle — küçült (max 1024px) + base64'e çevir (Claude vision için)
@@ -3415,9 +3419,10 @@ export default function Anasayfa({ pro = false }) {
     // karıştır, 3 tane al
     return havuz.sort(() => Math.random() - 0.5).slice(0, 3);
   }
-  async function paylasGonder() {
+  async function paylasGonder(turOverride) {
     const uu = auth.currentUser;
     if (!uu || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya)) return;
+    setTurSecAcik(false);
     setPaylasDurum("gonderiliyor");
     // VİDEO varsa ÖNCE Storage'a yükle, linkini al (büyük video Firestore'a sığmaz)
     let videoURL = "";
@@ -3439,7 +3444,7 @@ export default function Anasayfa({ pro = false }) {
     }
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     const yeni = {
-      uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: paylasTur || "", pro: proUye,
+      uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye,
       sehir: (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
       ulke: (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
@@ -3468,8 +3473,9 @@ export default function Anasayfa({ pro = false }) {
   // Paylaş fotoğraf seç → küçült → ekle
   function paylasFotoSec(e) {
     const f = e.target.files && e.target.files[0]; if (!f) return;
+    setMedyaMenu("");
     const r = new FileReader();
-    r.onload = (ev) => { const img = new Image(); img.onload = () => { setPaylasGorsel(imgKucult(img, 1000)); setPaylasVideo(""); }; img.src = ev.target.result; };
+    r.onload = (ev) => { const img = new Image(); img.onload = () => { setPaylasGorsel(imgKucult(img, 1000)); setPaylasVideo(""); setPaylasDosya(null); }; img.src = ev.target.result; };
     r.readAsDataURL(f); e.target.value = "";
   }
   // Paylaş VİDEO seç (albümden/Google'dan) — Firebase Storage'a yüklenir (Paylaş'a basınca).
@@ -3477,6 +3483,7 @@ export default function Anasayfa({ pro = false }) {
   function paylasVideoSec(e) {
     const f = e.target.files && e.target.files[0]; if (!f) { return; }
     if (f.size > 80 * 1024 * 1024) { setPaylasDurum("buyuk"); e.target.value = ""; return; }
+    setMedyaMenu("");
     setPaylasVideoFile(f);
     setPaylasVideo(URL.createObjectURL(f)); // yerel önizleme (yüklemeden de görünür)
     setPaylasGorsel(""); setPaylasDosya(null); setPaylasDurum(""); setPaylasYukleme(0);
@@ -5031,7 +5038,7 @@ export default function Anasayfa({ pro = false }) {
           <div className="msj-pencere paylas" onPointerDown={klavyeKapatDokun}>
             <div className="msj-bas">
               <span className="msj-baslik">{duzenlenen ? t("paylasDuzenle", "Paylaşımı Düzenle") : t("paylasBaslik", "Paylaş")}</span>
-              <button className="msj-kapat" onClick={() => { setPaylasAcik(false); setDuzenlenen(null); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDosya(null); setPaylasDurum(""); }} aria-label="Kapat">✕</button>
+              <button className="msj-kapat" onClick={() => { setPaylasAcik(false); setDuzenlenen(null); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); }} aria-label="Kapat">✕</button>
             </div>
             <div className="pyl-ust">
               <div className="pyl-ust-satir">
@@ -5068,13 +5075,12 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {/* KAYAN AYARLAR — üstteki foto+yazı SABİT kalır, buradan aşağısı onun altından kayar */}
             <div className="pyl-kaydir">
-            {/* ✨ GLOXOO — foto/videoya bakıp yazı önerir */}
+            {/* ✨ GLOXOO — tek satır: yüz + kısa yazı, foto/videoya bakıp öneri */}
             <div className="pyl-ai">
-              <div className="pyl-ai-baslik">
-                <span className="pyl-ai-yuz"><MaskotYuz tur="grox" boyut={38} arastir={aiYukleniyor} konusuyor={false} dinliyor={false} /></span>
-                <span className="pyl-ai-not">{(paylasGorsel || paylasVideo) ? t("gloxooBakar", "Gloxoo fotoğrafına/videona bakıp yazı önerir") : t("gloxooYardim", "Gloxoo sana güzel bir yazı önersin")}</span>
-              </div>
-              <button className="pyl-ai-btn" onClick={aiYaziOner} disabled={aiYukleniyor}><span className="pyl-ai-pir" aria-hidden="true"><Elmas4 c="#7fe0ff" /></span>{aiYukleniyor ? t("gloxooDusunuyor", "Gloxoo bakıyor…") : t("gloxooOner", "Gloxoo yazı önersin")}</button>
+              <button className="pyl-ai-btn tek" onClick={aiYaziOner} disabled={aiYukleniyor}>
+                <span className="pyl-ai-yuz"><MaskotYuz tur="grox" boyut={30} arastir={aiYukleniyor} konusuyor={false} dinliyor={false} /></span>
+                {aiYukleniyor ? t("gloxooDusunuyor", "Gloxoo bakıyor…") : ((paylasGorsel || paylasVideo) ? t("gloxooOner2", "Gloxoo yazı önersin (fotoğrafına bakar)") : t("gloxooOner", "Gloxoo yazı önersin"))}
+              </button>
               {aiOneriler.length > 0 && (
                 <div className="pyl-ai-liste">
                   {aiOneriler.map((o, k) => (
@@ -5105,23 +5111,27 @@ export default function Anasayfa({ pro = false }) {
             )}
             <input ref={paylasFotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={paylasFotoSec} />
             <input ref={paylasVideoRef} type="file" accept="video/*" style={{ display: "none" }} onChange={paylasVideoSec} />
+            <input ref={paylasFotoKamRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={paylasFotoSec} />
+            <input ref={paylasVideoKamRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={paylasVideoSec} />
             <input ref={paylasDosyaRef} type="file" style={{ display: "none" }} onChange={paylasDosyaSec} />
             {paylasDurum === "buyuk" && <div className="adm-durum hata">{t("paylasVideoBuyuk3", "Bu video çok büyük (en fazla 80 MB). Daha kısa bir video seç.")}</div>}
             {paylasDurum === "video" && <div className="adm-durum">{t("paylasVideoYuk", "Video yükleniyor…")} %{paylasYukleme}</div>}
             {paylasDurum === "videohata" && <div className="adm-durum hata">{t("paylasVideoHata2", "Video yüklenemedi, tekrar dene (internet/dosya boyutu).")}</div>}
-            <div className="pyl-secenek">
-              {PAYLAS_TURLER.map((s) => (
-                <button key={s.ad} className={"pyl-chip" + (((s.foto && paylasGorsel) || (s.video && (paylasVideo || paylasVideoFile)) || (s.dosya && paylasDosya) || (!s.foto && !s.video && !s.dosya && paylasTur === s.ad)) ? " secili" : "")} style={{ "--c": s.renk }}
-                  onClick={() => {
-                    if (s.foto) { if (paylasFotoRef.current) paylasFotoRef.current.click(); }       /* FOTOĞRAF/VİDEO/DOSYA sadece medya EKLER, türü DEĞİŞTİRMEZ (Etkinlik vb. korunur) */
-                    else if (s.video) { if (paylasVideoRef.current) paylasVideoRef.current.click(); }
-                    else if (s.dosya) { if (paylasDosyaRef.current) paylasDosyaRef.current.click(); }
-                    else { setPaylasTur(s.ad); }                                                    /* diğerleri TÜRÜ seçer */
-                  }}>
-                  <span className="pyl-ik" style={{ color: s.renk }} aria-hidden="true"><TurAmblem tip={s.tip} /></span>{t(s.cev, s.ad)}
-                </button>
-              ))}
+            {/* MEDYA EKLE — Fotoğraf / Video (basınca Çek/Galeri seçtirir) / Dosya */}
+            <div className="pyl-medya2">
+              <button className={"pyl-medya2-btn" + (medyaMenu === "foto" ? " acik" : "") + (paylasGorsel ? " dolu" : "")} style={{ "--c": "#2ecc71" }} onClick={() => setMedyaMenu(medyaMenu === "foto" ? "" : "foto")}>
+                <span className="pyl-ik" style={{ color: "#2ecc71" }} aria-hidden="true"><TurAmblem tip="foto" /></span>{t("turFoto", "Fotoğraf")}</button>
+              <button className={"pyl-medya2-btn" + (medyaMenu === "video" ? " acik" : "") + ((paylasVideo || paylasVideoFile) ? " dolu" : "")} style={{ "--c": "#e74c3c" }} onClick={() => setMedyaMenu(medyaMenu === "video" ? "" : "video")}>
+                <span className="pyl-ik" style={{ color: "#e74c3c" }} aria-hidden="true"><TurAmblem tip="video" /></span>{t("turVideo", "Video")}</button>
+              <button className={"pyl-medya2-btn" + (paylasDosya ? " dolu" : "")} style={{ "--c": "#7fb0ff" }} onClick={() => { setMedyaMenu(""); if (paylasDosyaRef.current) paylasDosyaRef.current.click(); }}>
+                <span className="pyl-ik" style={{ color: "#7fb0ff" }} aria-hidden="true"><TurAmblem tip="dosya" /></span>{t("dosya", "Dosya")}</button>
             </div>
+            {(medyaMenu === "foto" || medyaMenu === "video") && (
+              <div className="pyl-medya-menu">
+                <button className="pyl-mm-btn" onClick={() => { const r = medyaMenu === "foto" ? paylasFotoKamRef : paylasVideoKamRef; setMedyaMenu(""); if (r.current) r.current.click(); }}>📷 {t("kamerayla", "Kamerayla çek")}</button>
+                <button className="pyl-mm-btn" onClick={() => { const r = medyaMenu === "foto" ? paylasFotoRef : paylasVideoRef; setMedyaMenu(""); if (r.current) r.current.click(); }}>🖼️ {t("galeriden", "Galeriden seç")}</button>
+              </div>
+            )}
             {/* ZEMİN + YAZI RENGİ — yazılı gönderiye (medya yokken) renk şeridi (her türe) */}
             {!paylasGorsel && !paylasVideo && (
               <div className="pyl-zemin">
@@ -5151,11 +5161,29 @@ export default function Anasayfa({ pro = false }) {
               </div>
             )}
             </div>{/* /pyl-kaydir */}
-            <button className="paylas-gonder" onClick={paylasGonder} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya)}>
+            <button className="paylas-gonder" onClick={() => { if (duzenlenen && duzenlenen.id) { paylasGonder(); } else { setMedyaMenu(""); setTurSecAcik(true); } }} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya)}>
               {paylasDurum === "video" ? (t("paylasVideoYuk", "Video yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "dosya" ? (t("dosyaYukleniyor", "Dosya yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (paylasDurum === "ok" ? t("paylasOk", "Paylaşıldı ✓") : t("paylasEt", "Paylaş"))}
             </button>
             {paylasDurum === "dosyahata" && <div className="adm-durum hata">{t("dosyaHata", "Dosya yüklenemedi, tekrar dene.")}</div>}
             {paylasDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}</div>}
+
+            {/* PAYLAŞ'a basınca: NE OLARAK paylaşayım? (kategori) → seçince otomatik paylaşır */}
+            {turSecAcik && (
+              <div className="pyl-turfon" onClick={(e) => { if (e.target === e.currentTarget) setTurSecAcik(false); }}>
+                <div className="pyl-tursec">
+                  <div className="pyl-tursec-bas">{t("neOlarak", "Bunu ne olarak paylaşayım?")}<button className="pyl-tursec-kapat" onClick={() => setTurSecAcik(false)} aria-label="Kapat">✕</button></div>
+                  <div className="pyl-tursec-liste">
+                    <button className="pyl-tursec-btn" style={{ "--c": "#FFD700" }} onClick={() => paylasGonder("")}>
+                      <span className="pyl-ik" style={{ color: "#FFD700" }} aria-hidden="true"><TurAmblem tip="yazi" /></span>{t("turNormal", "Normal paylaşım")}</button>
+                    {PAYLAS_TURLER.filter((s) => !s.foto && !s.video && !s.dosya).map((s) => (
+                      <button key={s.ad} className="pyl-tursec-btn" style={{ "--c": s.renk }} onClick={() => paylasGonder(s.ad)}>
+                        <span className="pyl-ik" style={{ color: s.renk }} aria-hidden="true"><TurAmblem tip={s.tip} /></span>{t(s.cev, s.ad)}</button>
+                    ))}
+                  </div>
+                  <div className="pyl-tursec-not">{t("secinceOtomatik", "Seçtiğin an otomatik paylaşılır.")}</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
