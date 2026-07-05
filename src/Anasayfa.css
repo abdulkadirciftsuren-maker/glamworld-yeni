@@ -1844,10 +1844,47 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   font-size:13px; font-weight:700; font-family:'Cormorant Garamond',serif;
   background:linear-gradient(135deg,rgba(127,224,255,.16),rgba(127,140,255,.16)); color:#bfe9ff; border:1px solid rgba(127,224,255,.4); }
 .pyl-ai-pir{ width:16px; height:16px; line-height:0; display:inline-flex; }
-.pyl-ai-liste{ display:flex; flex-direction:column; gap:7px; margin-top:8px; }
-.pyl-ai-oneri{ text-align:left; padding:10px 13px; border-radius:12px; cursor:pointer; font-size:14px; line-height:1.4;
-  font-family:'Cormorant Garamond',serif; color:#f0e8d0; background:rgba(255,255,255,.05); border:1px solid rgba(255,215,0,.18); }
-.pyl-ai-oneri:active{ background:rgba(255,215,0,.12); }
+.pyl-ai-liste{ display:flex; flex-direction:column; gap:9px; margin-top:9px; }
+/* R1 — öneri KARTI: renkli, ikonlu, altta beğen/beğenme */
+.pyl-ai-oneri-kart{ border-radius:13px; overflow:hidden; border:1px solid rgba(255,215,0,.22); background:linear-gradient(135deg,rgba(127,224,255,.08),rgba(255,215,0,.05)); }
+.pyl-ai-oneri-kart.renk-0{ border-color:rgba(127,224,255,.4); background:linear-gradient(135deg,rgba(127,224,255,.14),rgba(90,156,255,.08)); }
+.pyl-ai-oneri-kart.renk-1{ border-color:rgba(255,215,0,.4); background:linear-gradient(135deg,rgba(255,215,0,.13),rgba(255,150,80,.07)); }
+.pyl-ai-oneri-kart.renk-2{ border-color:rgba(180,140,255,.4); background:linear-gradient(135deg,rgba(180,140,255,.14),rgba(127,224,255,.07)); }
+.pyl-ai-oneri{ width:100%; display:flex; gap:9px; align-items:flex-start; text-align:left; padding:11px 12px; cursor:pointer;
+  background:none; border:none; font-family:'Cormorant Garamond',serif; }
+.pyl-ai-oneri:active{ background:rgba(255,255,255,.06); }
+.pyl-ai-oneri-elmas{ width:18px; height:18px; flex:none; line-height:0; margin-top:2px; }
+.pyl-ai-oneri-metin{ flex:1; min-width:0; color:#f4eeda; font-size:14.5px; line-height:1.42; white-space:pre-wrap; }
+.pyl-ai-imza{ display:block; margin-top:6px; font-size:12px; font-weight:700; color:#ffd54a; opacity:.92; letter-spacing:.01em; }
+/* R4 — beğen/beğenme satırı */
+.pyl-ai-geri{ display:flex; align-items:center; gap:8px; padding:6px 12px 9px; }
+.pyl-ai-geri-et{ flex:1; font-size:11.5px; color:#9fb0c8; font-family:inherit; }
+.pyl-ai-geri-btn{ width:32px; height:29px; display:inline-flex; align-items:center; justify-content:center; border-radius:9px; cursor:pointer;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); padding:0; }
+.pyl-ai-geri-btn svg{ width:17px; height:17px; }
+.pyl-ai-geri-btn.begen{ color:#46d37a; } .pyl-ai-geri-btn.begen:active{ background:rgba(70,211,122,.2); }
+.pyl-ai-geri-btn.begenme{ color:#ff6b7a; } .pyl-ai-geri-btn.begenme:active,.pyl-ai-geri-btn.begenme.aktif{ background:rgba(255,107,122,.22); border-color:rgba(255,107,122,.5); }
+/* R4 — "neyi beğenmedin" kutusu */
+.pyl-ai-yorum{ padding:0 12px 11px; }
+.pyl-ai-yorum-in{ width:100%; box-sizing:border-box; background:rgba(4,12,28,.7); border:1px solid rgba(255,107,122,.4); border-radius:10px; padding:8px 10px; color:#f0e8d0; font-size:13px; font-family:inherit; line-height:1.4; resize:none; outline:none; }
+.pyl-ai-yorum-in::placeholder{ color:#9a8b8e; }
+.pyl-ai-yorum-alt{ display:flex; gap:7px; margin-top:7px; }
+.pyl-ai-yorum-gonder{ padding:7px 14px; border-radius:9px; border:none; cursor:pointer; font-weight:800; font-size:12.5px; font-family:inherit; background:linear-gradient(135deg,#ff8a95,#e0202c); color:#fff; }
+.pyl-ai-yorum-yeni{ padding:7px 12px; border-radius:9px; cursor:pointer; font-weight:700; font-size:12.5px; font-family:inherit; background:rgba(127,224,255,.14); border:1px solid rgba(127,224,255,.4); color:#eaf6ff; }
+/* YÖNETİCİ — geri bildirim paneli */
+.gb-pencere{ display:flex; flex-direction:column; width:min(560px,96vw); height:90vh; }
+.gb-ozet{ display:flex; gap:10px; padding:10px 14px; border-bottom:1px solid rgba(255,215,0,.15); }
+.gb-ozet-oge{ font-size:14px; font-weight:800; color:#e8eefb; background:rgba(255,255,255,.06); border-radius:10px; padding:5px 12px; }
+.gb-ozet-oge.begen{ color:#46d37a; } .gb-ozet-oge.begenme{ color:#ff6b7a; }
+.gb-liste{ flex:1; min-height:0; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:9px; }
+.gb-bos{ color:#9fb0c8; text-align:center; padding:24px 8px; font-size:14px; }
+.gb-kart{ border-radius:12px; padding:10px 12px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.1); border-left-width:4px; }
+.gb-kart.begen{ border-left-color:#46d37a; } .gb-kart.begenme{ border-left-color:#ff6b7a; }
+.gb-kart-ust{ display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+.gb-kart-ik{ font-size:15px; } .gb-kart-ad{ font-weight:800; font-size:13.5px; color:#eaf1ff; }
+.gb-kart-tarih{ margin-left:auto; font-size:11.5px; color:#8ea0ba; }
+.gb-kart-oneri{ font-size:13.5px; color:#d9e6f7; font-style:italic; line-height:1.4; }
+.gb-kart-yorum{ margin-top:6px; font-size:13.5px; color:#ffd8b0; line-height:1.4; }
 /* Gloxoo TEK satır düğme (yüz + kısa yazı) */
 .pyl-ai-btn.tek{ width:100%; justify-content:flex-start; gap:9px; padding:8px 12px; }
 .pyl-ai-btn.tek .pyl-ai-yuz{ width:30px; height:30px; flex:none; line-height:0; }

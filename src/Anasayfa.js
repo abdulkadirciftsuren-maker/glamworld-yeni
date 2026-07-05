@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -1171,6 +1171,11 @@ export default function Anasayfa({ pro = false }) {
   const [paylasDosya, setPaylasDosya] = useState(null);         // eklenen DOSYA (belge) {file, ad, boyut}
   const [aiIstek, setAiIstek] = useState("");                   // kullanıcı Gloxoo'ya ne yazmasını istediğini yazar
   const [aiIstekDinliyor, setAiIstekDinliyor] = useState(false); // Gloxoo'ya konuşarak söyleme (mikrofon aktif mi)
+  const [aiYorumAcik, setAiYorumAcik] = useState(-1);           // beğenmedim → "neyi beğenmedin" kutusu açık öneri indeksi (-1 kapalı)
+  const [aiYorum, setAiYorum] = useState("");                   // beğenmeme yorumu metni
+  const [geriBildirimAcik, setGeriBildirimAcik] = useState(false); // YÖNETİCİ geri bildirim paneli açık mı
+  const [geriBildirimListe, setGeriBildirimListe] = useState([]);  // toplanan geri bildirimler
+  const [gbYukleniyor, setGbYukleniyor] = useState(false);
   const [medyaMenu, setMedyaMenu] = useState("");               // "" | "foto" | "video" — çek/galeri mini menüsü
   const [turSecAcik, setTurSecAcik] = useState(false);          // Paylaş'a basınca çıkan "ne olarak?" seçimi
   // FOTO/VİDEO ÜZERİNE YAZI — metin + renk + boyut + konum (üst/orta/alt). Görselin üstünde katman olarak gösterilir.
@@ -1983,6 +1988,51 @@ export default function Anasayfa({ pro = false }) {
   const imgKucult = (img, max) => {
     try { const c = document.createElement("canvas"); const r = Math.min(1, max / Math.max(img.width, img.height)); c.width = Math.max(1, Math.round(img.width * r)); c.height = Math.max(1, Math.round(img.height * r)); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); return c.toDataURL("image/jpeg", 0.82); } catch (e) { return ""; }
   };
+  // GLOXORG FİLİGRANI — foto'ya KALICI göm (indirince/paylaşınca/WhatsApp'ta KAYBOLMAZ). Sağ-alta konturlu+gölgeli "◈ GLOXORG".
+  const fotoFiligranla = (dataURL) => new Promise((resolve) => {
+    if (!dataURL || dataURL.indexOf("data:image") !== 0) { resolve(dataURL); return; }
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+          const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+          const fs = Math.max(15, Math.round(Math.min(c.width, c.height) * 0.045)); // ölçeğe göre
+          const pad = Math.round(fs * 0.7); const metin = "◈ GLOXORG";
+          x.font = "700 " + fs + "px Georgia, 'Times New Roman', serif";
+          x.textAlign = "right"; x.textBaseline = "bottom";
+          x.shadowColor = "rgba(0,0,0,.75)"; x.shadowBlur = Math.round(fs * 0.35); x.shadowOffsetY = 1;
+          x.lineWidth = Math.max(2, fs * 0.14); x.strokeStyle = "rgba(0,0,0,.55)";
+          x.strokeText(metin, c.width - pad, c.height - pad);
+          x.shadowColor = "transparent";
+          x.fillStyle = "rgba(255,215,0,.95)"; // altın
+          x.fillText(metin, c.width - pad, c.height - pad);
+          resolve(c.toDataURL("image/jpeg", 0.85));
+        } catch (e) { resolve(dataURL); }
+      };
+      img.onerror = () => resolve(dataURL);
+      img.src = dataURL;
+    } catch (e) { resolve(dataURL); }
+  });
+  // GLOXORG FİLİGRANI — Cloudinary video URL'ine metin overlay ekle (sunucu tarafı, yeniden kodlama yok)
+  const videoFiligranUrl = (url) => {
+    try {
+      if (!url || url.indexOf("res.cloudinary.com") < 0 || url.indexOf("/upload/") < 0) return url;
+      if (url.indexOf("l_text:") >= 0) return url; // zaten var
+      const tr = "l_text:Arial_40_bold:GLOXORG,co_white,o_75,g_south_east,x_30,y_30";
+      return url.replace("/upload/", "/upload/" + tr + "/");
+    } catch (e) { return url; }
+  };
+  // AI yazısına kısa MARKALI tanıtım imzası (ikonlu; içeriğe/rastgele göre) — kabul edilen yazının sonuna eklenir
+  const markaImza = () => {
+    const havuz = [
+      "✨ GloxorgLife · gloxorg.com",
+      "💎 gloxorg.com",
+      "🌍 gloxoo.com'da buluşalım",
+      "🤖 " + t("gloxooYazdi", "Bu yazı Gloxoo yapay zekâsı tarafından yazıldı"),
+    ];
+    return havuz[Math.floor(Math.random() * havuz.length)];
+  };
   const katmanSerile = (ks) => ks.map((k) => (k.tip === "yazi"
     ? { tip: "yazi", metin: k.metin, x: k.x, y: k.y, boy: k.boy, renk: k.renk, font: k.font, rot: k.rot || 0 }
     : { tip: "foto", src: imgKucult(k.img, 420), x: k.x, y: k.y, scale: k.scale, rot: k.rot || 0, parlak: k.parlak, kontrast: k.kontrast, gri: k.gri })).filter((k) => k.tip === "yazi" || k.src);
@@ -2523,11 +2573,27 @@ export default function Anasayfa({ pro = false }) {
     setUyeSayfa({ uid: hedef, ad: p.ad || "—", foto: p.foto || "", meslek: p.meslek || "", sehir: p.sehir || "", ulke: p.ulke || "", pro: !!p.pro, amblem: p.amblem, renk: p.renk });
     gonderilerimOku(hedef).then((l) => setUyePostlar(l || [])).catch(() => setUyePostlar([]));
   }
-  // PAYLAŞ — telefonun yerel paylaş menüsü (yoksa bağlantıyı kopyala)
-  function paylasNative(p) {
+  // PAYLAŞ — telefonun yerel paylaş menüsü. FOTO/VİDEO varsa DOSYA olarak paylaş (filigranlı GLOXORG karşı platforma/WhatsApp'a gider); yoksa link.
+  async function paylasNative(p) {
+    const metin = (p && (p.yazi || p.baslik || p.ad)) || "";
+    const link = window.location.href;
     try {
-      if (navigator.share) navigator.share({ title: "GLOXORG", text: (p && (p.yazi || p.ad)) || "", url: window.location.href }).catch(() => {});
-      else if (navigator.clipboard) { navigator.clipboard.writeText(window.location.href); bilgiBalonu(t("baglantiKopyalandi", "Bağlantı kopyalandı")); }
+      // 1) FİLİGRANLI MEDYAYI DOSYA olarak paylaşmayı dene (WhatsApp vb. filigranlı görseli gösterir)
+      const medyaUrl = p && (p.gorsel || p.video);
+      if (medyaUrl && navigator.canShare && navigator.share) {
+        try {
+          const resp = await fetch(medyaUrl); const blob = await resp.blob();
+          const uzanti = (blob.type && blob.type.split("/")[1]) || (p.video ? "mp4" : "jpg");
+          const dosya = new File([blob], "GLOXORG." + uzanti, { type: blob.type || (p.video ? "video/mp4" : "image/jpeg") });
+          if (navigator.canShare({ files: [dosya] })) {
+            await navigator.share({ files: [dosya], title: "GLOXORG", text: metin ? (metin + "\n" + link) : link });
+            return;
+          }
+        } catch (e) { /* dosya paylaşımı olmadı → linke düş */ }
+      }
+      // 2) Link paylaşımı
+      if (navigator.share) { navigator.share({ title: "GLOXORG", text: metin, url: link }).catch(() => {}); }
+      else if (navigator.clipboard) { navigator.clipboard.writeText(link); bilgiBalonu(t("baglantiKopyalandi", "Bağlantı kopyalandı")); }
     } catch (e) {}
   }
   // ÜÇ NOKTA (daha fazla) — paylaştan FARKLI seçenekler
@@ -2621,11 +2687,35 @@ export default function Anasayfa({ pro = false }) {
         const txt = (veri && veri.metin) || "";
         const ham = txt.indexOf("|||") >= 0 ? txt.split("|||") : txt.split("\n");
         const satirlar = ham.map((s) => s.replace(/^["'\d.)\-•*\s]+/, "").replace(/["']+$/, "").trim()).filter((s) => s.length > 8).slice(0, 3);
-        if (satirlar.length) { setAiOneriler(satirlar); setAiYukleniyor(false); return; }
+        if (satirlar.length) { setAiOneriler(satirlar.map((s) => s + "\n\n" + markaImza())); setAiYukleniyor(false); return; }
       }
     } catch (e) {}
-    setAiOneriler(yerelAiOneriler()); setAiYukleniyor(false);
+    setAiOneriler(yerelAiOneriler().map((s) => s + "\n\n" + markaImza())); setAiYukleniyor(false);
   }
+  // Gloxoo önerisi BEĞENİLDİ 👍 → benzer ama daha iyi varyasyonlar öner + olumlu kayıt (yönetici sayfası)
+  const aiBegen = (oneri) => {
+    const saf = (oneri || "").split("\n\n")[0];
+    try { geriBildirimEkle({ uid: (auth.currentUser && auth.currentUser.uid) || "", ad: adTam || "", oneri: saf, begendi: true, sayfa: "paylas-ai" }); } catch (e) {}
+    const s = t("gloxooBenzer", "Şuna benzer ama daha iyi ve farklı bir paylaşım yazısı yaz: ") + saf;
+    setAiYorumAcik(-1); setAiIstek(s); aiYaziOner(s);
+  };
+  // BEĞENİLMEDİ 👎 → "neyi beğenmedin" kutusunu aç (isteğe bağlı yaz)
+  const aiBegenmeAc = (k) => { setAiYorumAcik(aiYorumAcik === k ? -1 : k); setAiYorum(""); };
+  // Beğenmeme kaydı (yorumlu ya da yorumsuz) → Firebase + yeni öneriler
+  const aiBegenmeGonder = (oneri, yorumlu) => {
+    const saf = (oneri || "").split("\n\n")[0];
+    try { geriBildirimEkle({ uid: (auth.currentUser && auth.currentUser.uid) || "", ad: adTam || "", oneri: saf, begendi: false, yorum: yorumlu ? aiYorum.trim() : "", sayfa: "paylas-ai" }); } catch (e) {}
+    setAiYorumAcik(-1); setAiYorum("");
+    try { bilgiBalonu(t("geriBildirimTesekkur", "Teşekkürler! Geri bildirimin bize ulaştı 💎")); } catch (e) {}
+    aiYaziOner(); // yeni öneriler üret
+  };
+  // SADECE SAHİP (yönetici) — geri bildirim sayfasını görebilir
+  const yoneticiMi = () => { try { return !!(auth.currentUser && auth.currentUser.email === "abdulkadirciftsuren@gmail.com"); } catch (e) { return false; } };
+  const geriBildirimAc = async () => {
+    setMenuAcik(false); setGeriBildirimAcik(true); setGbYukleniyor(true);
+    try { const l = await geriBildirimOku(300); setGeriBildirimListe(l || []); } catch (e) { setGeriBildirimListe([]); }
+    setGbYukleniyor(false);
+  };
   // SİTE ASİSTANI KOMUTU → pencere aç (asistanı kapat ki açılan görünsün)
   function komutAc(k) {
     setYardimciAcik(false);
@@ -3644,12 +3734,15 @@ export default function Anasayfa({ pro = false }) {
       } catch (e) { setPaylasDurum("dosyahata"); return; }
     }
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    // GLOXORG FİLİGRANI: yeni gönderide foto'ya KALICI göm (düzenlemede tekrar damgalama), video URL'ine overlay ekle
+    const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? await fotoFiligranla(paylasGorsel) : "");
+    const videoSon = videoFiligranUrl(videoURL || "");
     const yeni = {
       uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye,
       sehir: (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
       ulke: (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
-      baslik: paylasBaslik.trim().slice(0, 200), gorsel: paylasGorsel || "", video: videoURL || "", dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
+      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
       duzen: paylasDuzen || null,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
@@ -5341,9 +5434,35 @@ export default function Anasayfa({ pro = false }) {
               </div>
               {aiOneriler.length > 0 && (
                 <div className="pyl-ai-liste">
-                  {aiOneriler.map((o, k) => (
-                    <button key={k} className="pyl-ai-oneri" onClick={() => { setPaylasYazi(o); setAiOneriler([]); }}>{o}</button>
-                  ))}
+                  {aiOneriler.map((o, k) => {
+                    const par = (o || "").split("\n\n"); const govde = par[0]; const imza = par.slice(1).join(" ");
+                    return (
+                      <div key={k} className={"pyl-ai-oneri-kart renk-" + (k % 3)}>
+                        <button className="pyl-ai-oneri" onClick={() => { setPaylasYazi(o); setAiOneriler([]); setAiYorumAcik(-1); }}>
+                          <span className="pyl-ai-oneri-elmas" aria-hidden="true"><Elmas4 c="#7fe0ff" /></span>
+                          <span className="pyl-ai-oneri-metin">{govde}{imza && <span className="pyl-ai-imza">{imza}</span>}</span>
+                        </button>
+                        <div className="pyl-ai-geri">
+                          <span className="pyl-ai-geri-et">{t("gloxooNasil", "Bu yazı nasıl?")}</span>
+                          <button className="pyl-ai-geri-btn begen" onClick={() => aiBegen(o)} aria-label={t("begendim", "Beğendim")} title={t("begendim", "Beğendim")}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v11" /><path d="M7 10l4-7a2 2 0 0 1 3 1.7V9h4.5a2 2 0 0 1 2 2.4l-1.4 7A2 2 0 0 1 19 20H7" /></svg>
+                          </button>
+                          <button className={"pyl-ai-geri-btn begenme" + (aiYorumAcik === k ? " aktif" : "")} onClick={() => aiBegenmeAc(k)} aria-label={t("begenmedim", "Beğenmedim")} title={t("begenmedim", "Beğenmedim")}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 14V3" /><path d="M17 14l-4 7a2 2 0 0 1-3-1.7V15H5.5a2 2 0 0 1-2-2.4l1.4-7A2 2 0 0 1 7 4h10" /></svg>
+                          </button>
+                        </div>
+                        {aiYorumAcik === k && (
+                          <div className="pyl-ai-yorum">
+                            <textarea className="pyl-ai-yorum-in" value={aiYorum} rows={2} onChange={(e) => setAiYorum(e.target.value)} placeholder={t("neyiBegenmedin", "Neyi beğenmedin? (isteğe bağlı) — düzeltelim")} maxLength={600} />
+                            <div className="pyl-ai-yorum-alt">
+                              <button className="pyl-ai-yorum-gonder" onClick={() => aiBegenmeGonder(o, true)}>{t("gonder", "Gönder")}</button>
+                              <button className="pyl-ai-yorum-yeni" onClick={() => aiBegenmeGonder(o, false)}>{t("yeniOner", "Yeni öner")}</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -6278,6 +6397,7 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-oge c-mor" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🎓</span>{t("navAkademi")} · {t("anaYakinda")}</button>
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); setUyelikKartAcik(true); }}><span className="ana-menu-ik">💎</span>{t("proOlBaslik", "Profesyonel Ol")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
+            {yoneticiMi() && <button className="ana-menu-oge c-mor" onClick={geriBildirimAc}><span className="ana-menu-ik">📊</span>{t("geriBildirimBaslik", "Geri Bildirimler")}</button>}
             <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{(HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en).menu}</button>
             <button className="ana-menu-oge c-yesil" onClick={() => { setMenuAcik(false); setDavetKopya(false); setDavetAcik(true); }}><span className="ana-menu-ik">🔗</span>{(DAVET_CEVIRI[dil] || DAVET_CEVIRI.en).menu}</button>
             {/* TELEFON BİLDİRİMLERİ — ayardan aç/durum göster */}
@@ -6290,6 +6410,44 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-cikis" onClick={cikisYap}>{t("cikisYap")}</button>
           </div>
         </>
+      ), document.body)}
+
+      {/* YÖNETİCİ — GERİ BİLDİRİM SAYFASI (sadece sahip): Gloxoo beğen/beğenme + yorumlar */}
+      {geriBildirimAcik && createPortal((
+        <div className="msj-fon gb-fon" onClick={(e) => { if (e.target === e.currentTarget) setGeriBildirimAcik(false); }}>
+          <div className="msj-pencere gb-pencere">
+            <div className="msj-bas">
+              <span className="msj-baslik">📊 {t("geriBildirimBaslik", "Geri Bildirimler")}</span>
+              <button className="msj-kapat" onClick={() => setGeriBildirimAcik(false)} aria-label="Kapat">✕</button>
+            </div>
+            {(() => {
+              const begeni = geriBildirimListe.filter((g) => g.begendi).length;
+              const begenme = geriBildirimListe.filter((g) => !g.begendi).length;
+              return (
+                <div className="gb-ozet">
+                  <span className="gb-ozet-oge begen">👍 {begeni}</span>
+                  <span className="gb-ozet-oge begenme">👎 {begenme}</span>
+                  <span className="gb-ozet-oge">Σ {geriBildirimListe.length}</span>
+                </div>
+              );
+            })()}
+            <div className="gb-liste">
+              {gbYukleniyor ? <div className="gb-bos">{t("yukleniyor", "Yükleniyor")}…</div>
+                : geriBildirimListe.length === 0 ? <div className="gb-bos">{t("geriBildirimYok", "Henüz geri bildirim yok.")}</div>
+                : geriBildirimListe.map((g) => (
+                  <div key={g.id} className={"gb-kart" + (g.begendi ? " begen" : " begenme")}>
+                    <div className="gb-kart-ust">
+                      <span className="gb-kart-ik">{g.begendi ? "👍" : "👎"}</span>
+                      <span className="gb-kart-ad">{g.ad || t("gbAnonim", "Kullanıcı")}</span>
+                      <span className="gb-kart-tarih">{g.zamanMs ? new Date(g.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                    </div>
+                    {g.oneri && <div className="gb-kart-oneri">"{g.oneri}"</div>}
+                    {g.yorum && <div className="gb-kart-yorum">💬 {g.yorum}</div>}
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
       ), document.body)}
 
       {/* GLOXORG HAKKINDA + 7 EKSEN EYLEM PLANI — görünür "hakkımızda" sayfası */}

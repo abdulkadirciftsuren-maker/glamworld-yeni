@@ -201,6 +201,30 @@ export async function mesajlariOku(uid, adet = 60) {
   } catch (e) { return []; }
 }
 
+// ---------- GERİ BİLDİRİM (Gloxoo öneri beğen/beğenme + yorum → yönetici sayfası) ----------
+export async function geriBildirimEkle(b) {
+  if (!b) return null;
+  try {
+    const ref = doc(collection(db, "geriBildirim"));
+    await setDoc(ref, {
+      uid: b.uid || "", ad: (b.ad || "").slice(0, 80),
+      oneri: (b.oneri || "").slice(0, 600), yorum: (b.yorum || "").slice(0, 600),
+      begendi: !!b.begendi, sayfa: b.sayfa || "paylas-ai",
+      zamanMs: Date.now(), olusturma: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (e) { return null; }
+}
+export async function geriBildirimOku(adet = 200) {
+  try {
+    const q = query(collection(db, "geriBildirim"), fsLimit(adet));
+    const snap = await getDocs(q);
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+    return liste;
+  } catch (e) { return []; }
+}
+
 // ---------- GÖNDERİLER (akış — FAZ 2'de kullanılacak, temel hazır) ----------
 export async function gonderiEkle(veri) {
   try {
