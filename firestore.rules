@@ -53,6 +53,14 @@ service cloud.firestore {
       allow delete: if girisli() && resource.data.uid == request.auth.uid;
     }
 
+    // Geri bildirimler (AI önerisi 👍/👎 + müşteri yorumu) — giriş yapan HERKES yazar;
+    // SADECE yönetici (sahip e-posta) OKUR (yönetici konsolundaki "Geri Bildirimler" sekmesi).
+    match /geriBildirim/{id} {
+      allow create: if girisli();
+      allow read: if girisli() && request.auth.token.email == "abdulkadirciftsuren@gmail.com";
+      allow update, delete: if false;
+    }
+
     // Takipler — herkes okur (takipçi/takip sayısı için); sadece takip EDEN kendi takibini ekler/siler
     match /takipler/{id} {
       allow read: if girisli();
