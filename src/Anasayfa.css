@@ -575,7 +575,7 @@
 .tf-ic.tf-indir{ color:#2fd1c4; text-decoration:none; } .tf-ic.tf-daha{ color:#ffe9a8; }
 /* tam ekran GLOXORG amblemi — sağ-alt köşe, şeffaf */
 /* GLOXORG amblemi indirme/3 nokta ve ikon şeridinin ÜZERİNDE (üstünde) durur, üstlerine binmez */
-.tf-amblem{ display:none !important; position:absolute; right:14px; top:62px; bottom:auto; z-index:6; align-items:center; gap:5px; font-family:'Cinzel',serif; font-size:10px; font-weight:700; letter-spacing:.06em; color:#FFD700; background:rgba(0,0,0,.25); border:1px solid rgba(255,215,0,.3); padding:3px 9px; border-radius:9px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+.tf-amblem{ display:inline-flex !important; position:absolute; right:14px; top:62px; bottom:auto; z-index:6; align-items:center; gap:5px; font-family:'Cinzel',serif; font-size:11px; font-weight:700; letter-spacing:.06em; color:#FFD700; background:rgba(0,0,0,.32); border:1px solid rgba(255,215,0,.4); padding:3px 9px; border-radius:9px; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); pointer-events:none; }
 /* 3 nokta yerine UFAK ÇERÇEVESİZ SİYAH pırlanta (sadece taş; koyu zeminde görünsün diye ince ışık kenarı) */
 .tf-daha .daha-tas{ width:22px; height:22px; display:block; filter:drop-shadow(0 0 1px rgba(255,255,255,.55)) drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 .tf-daha{ background:none; border:none; }
@@ -593,7 +593,7 @@
 .tamfoto-fon.tf-metin-fon{ background:linear-gradient(180deg,#22304f,#1a2742 70%,#162038); display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; }
 .tf-metin-fon .tf-ust{ position:static; order:-1; padding:14px 58px 10px 14px; flex:none; } /* order:-1 → başlık ÜSTE (DOM'da yazıdan sonra geliyor) */
 .tf-metin-fon .tf-metin-sar{ position:static; inset:auto; flex:1; min-height:0; padding:18px 24px 92px; }
-.tf-metin-fon .tf-amblem{ display:none; } /* watermark üstte karışıklık yapıyordu — yazı okuyucuda gizli */
+.tf-metin-fon .tf-amblem{ display:inline-flex !important; top:auto; bottom:14px; right:14px; } /* yazı okuyucuda GLOXORG rozeti alt-sağ köşede (sabit marka) */
 /* Tam ekran YAZI okuyucu — yazı ORTADA, dengeli boşluk (sola yapışmaz), Çevir düğmesi ALTTA (yan değil) */
 /* Tam ekran YAZI okuyucu — NORMAL AKIŞ + kaydırma: yazının TAMAMI baştan sona görünür, hiçbir yeri kesilmez (flex ortalama metni kırpıyordu). Üstte başlığa binmesin diye bol üst boşluk. */
 .tf-metin-sar{ position:absolute; inset:0; z-index:1; display:block; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:96px 30px 110px; box-sizing:border-box; }
@@ -1885,6 +1885,30 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .gb-kart-tarih{ margin-left:auto; font-size:11.5px; color:#8ea0ba; }
 .gb-kart-oneri{ font-size:13.5px; color:#d9e6f7; font-style:italic; line-height:1.4; }
 .gb-kart-yorum{ margin-top:6px; font-size:13.5px; color:#ffd8b0; line-height:1.4; }
+/* YÖNETİCİ konsol sekmeleri */
+.gb-sekmeler{ display:flex; gap:4px; padding:8px 10px; border-bottom:1px solid rgba(255,215,0,.15); overflow-x:auto; }
+.gb-sekme{ flex:0 0 auto; padding:7px 11px; border-radius:10px; cursor:pointer; font-size:12.5px; font-weight:700; font-family:inherit; white-space:nowrap; color:#cdd9ee; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); }
+.gb-sekme.aktif{ color:#0c1530; background:linear-gradient(180deg,#FFE9A8,#FFD700); border-color:transparent; }
+/* İstatistik kutuları */
+.gb-ist-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.gb-ist-kutu{ background:rgba(127,224,255,.08); border:1px solid rgba(127,224,255,.25); border-radius:13px; padding:14px 12px; text-align:center; }
+.gb-ist-kutu b{ display:block; font-size:24px; font-weight:800; color:#7fe0ff; font-family:'Cinzel',serif; }
+.gb-ist-kutu span{ font-size:12.5px; color:#aeb9cd; }
+/* Kullanıcı satırı */
+.gb-kul{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:11px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+.gb-kul-av{ width:38px; height:38px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; font-weight:800; color:#0c1530; background:linear-gradient(145deg,#cfe0ff,#8fb0e8); }
+.gb-kul-av img{ width:100%; height:100%; object-fit:cover; }
+.gb-kul-bilgi{ min-width:0; display:flex; flex-direction:column; }
+.gb-kul-bilgi b{ font-size:13.5px; color:#eaf1ff; }
+.gb-kul-bilgi span{ font-size:12px; color:#9fb0c8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* Gönderi satırı (moderasyon) */
+.gb-gon{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:11px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+.gb-gon-mini{ width:44px; height:44px; flex:none; border-radius:9px; object-fit:cover; display:flex; align-items:center; justify-content:center; font-size:20px; background:rgba(0,0,0,.3); }
+.gb-gon-bilgi{ flex:1; min-width:0; display:flex; flex-direction:column; }
+.gb-gon-bilgi b{ font-size:13px; color:#eaf1ff; }
+.gb-gon-bilgi span{ font-size:12px; color:#c3cede; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gb-gon-bilgi i{ font-size:11.5px; color:#8ea0ba; }
+.gb-gon-sil{ flex:none; width:34px; height:34px; border-radius:9px; cursor:pointer; background:rgba(224,32,44,.15); border:1px solid rgba(224,32,44,.4); font-size:15px; }
 /* Gloxoo TEK satır düğme (yüz + kısa yazı) */
 .pyl-ai-btn.tek{ width:100%; justify-content:flex-start; gap:9px; padding:8px 12px; }
 .pyl-ai-btn.tek .pyl-ai-yuz{ width:30px; height:30px; flex:none; line-height:0; }

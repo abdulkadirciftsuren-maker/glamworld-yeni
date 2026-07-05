@@ -223,11 +223,11 @@ export default function Giris({ zorunluUye }) {
     if (!sifreEp.trim() || sifreEp.indexOf("@") === -1) { setSifreMsg(t("sifreEpostaGir")); return; }
     setSifreMsg("");
     try {
-      await sendPasswordResetEmail(auth, sifreEp.trim());
-      // Başarılı: pencereyi kapat, ekranda bildirim göster.
+      await sendPasswordResetEmail(auth, sifreEp.trim(), { url: "https://gloxorg.com/", handleCodeInApp: false });
+      // Başarılı: pencereyi kapat, ekranda NET yönlendirme göster.
       setSifreModal(false);
-      setToast(t("sifreSifirlandi"));
-      setTimeout(() => setToast(""), 6000);
+      setToast(t("sifreSifirlandi2", "E-postana bağlantı gönderdik ✓ → e-postanı aç, bağlantıya dokun, YENİ şifreni yaz ve kaydet. Gelmezse Spam/Önemsiz klasörüne bak."));
+      setTimeout(() => setToast(""), 9000);
     } catch (e) {
       setSifreMsg(t(hataKey(e.code)));
     }

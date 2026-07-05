@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -1073,6 +1073,7 @@ export default function Anasayfa({ pro = false }) {
   const [kurIpucu, setKurIpucu] = useState("");            // yerel yükleme sinyali yoksa gösterilen elle yükleme ipucu
   const [ayarBolum, setAyarBolum] = useState(null); // açık akordeon bölümü
   const [ekTelefon, setEkTelefon] = useState("");
+  const [ekTelefon2, setEkTelefon2] = useState("");   // İKİNCİ telefon numarası (isteğe bağlı)
   const [ek2Eposta, setEk2Eposta] = useState("");
   // CİNSİYET + DOĞUM TARİHİ (Ayarlar) — Gloxoo hitabı (Bey/Hanım) ve yaşı buradan bilir
   const [cinsiyet, setCinsiyet] = useState(""); // "bayan" | "erkek" | "belirtme" | ""
@@ -1173,9 +1174,12 @@ export default function Anasayfa({ pro = false }) {
   const [aiIstekDinliyor, setAiIstekDinliyor] = useState(false); // Gloxoo'ya konuşarak söyleme (mikrofon aktif mi)
   const [aiYorumAcik, setAiYorumAcik] = useState(-1);           // beğenmedim → "neyi beğenmedin" kutusu açık öneri indeksi (-1 kapalı)
   const [aiYorum, setAiYorum] = useState("");                   // beğenmeme yorumu metni
-  const [geriBildirimAcik, setGeriBildirimAcik] = useState(false); // YÖNETİCİ geri bildirim paneli açık mı
+  const [geriBildirimAcik, setGeriBildirimAcik] = useState(false); // YÖNETİCİ konsolu açık mı
   const [geriBildirimListe, setGeriBildirimListe] = useState([]);  // toplanan geri bildirimler
   const [gbYukleniyor, setGbYukleniyor] = useState(false);
+  const [gbSekme, setGbSekme] = useState("geri");                 // geri | istatistik | kullanici | gonderi
+  const [gbKullanicilar, setGbKullanicilar] = useState([]);
+  const [gbGonderiler, setGbGonderiler] = useState([]);
   const [medyaMenu, setMedyaMenu] = useState("");               // "" | "foto" | "video" — çek/galeri mini menüsü
   const [turSecAcik, setTurSecAcik] = useState(false);          // Paylaş'a basınca çıkan "ne olarak?" seçimi
   // FOTO/VİDEO ÜZERİNE YAZI — metin + renk + boyut + konum (üst/orta/alt). Görselin üstünde katman olarak gösterilir.
@@ -2229,7 +2233,7 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     if (!ayarlarAcik) return;
     const b = profilBilgi || {};
-    setEkTelefon(b.telefon || ""); setEk2Eposta(b.eposta2 || "");
+    setEkTelefon(b.telefon || ""); setEkTelefon2(b.telefon2 || ""); setEk2Eposta(b.eposta2 || "");
     setCinsiyet(b.cinsiyet || ""); const dg = b.dogum || {}; setDogumGun(dg.gun ? String(dg.gun) : ""); setDogumAy(dg.ay ? String(dg.ay) : ""); setDogumYil(dg.yil ? String(dg.yil) : "");
     setKurumTur((b.kurum && b.kurum.tur) || ""); setKurumAd((b.kurum && b.kurum.ad) || "");
     const k = b.konum || {};
@@ -2488,7 +2492,7 @@ export default function Anasayfa({ pro = false }) {
   // İletişim (2. e-posta + telefon) kaydet
   function ayarIletisimKaydet() {
     const uu = auth.currentUser; if (!uu) return;
-    const veri = { telefon: (ekTelefon || "").trim(), eposta2: (ek2Eposta || "").trim(), telefonKodu: (telKodu || "").trim() };
+    const veri = { telefon: (ekTelefon || "").trim(), telefon2: (ekTelefon2 || "").trim(), eposta2: (ek2Eposta || "").trim(), telefonKodu: (telKodu || "").trim() };
     setProfilBilgi((p) => ({ ...(p || {}), ...veri }));
     profilKaydet(uu.uid, veri).then(() => { setAyarMsg(t("ayarKaydedildi", "Kaydedildi ✓")); setTimeout(() => setAyarMsg(""), 2500); }).catch(() => setAyarMsg(t("ayarHata", "Kaydedilemedi")));
   }
@@ -2520,7 +2524,8 @@ export default function Anasayfa({ pro = false }) {
   function ayarSifreSifirla() {
     const eposta = (u && u.email) || "";
     if (!eposta) { setAyarMsg(t("ayarEpostaYok", "E-posta bulunamadı (Google ile girdiysen şifre Google'da değişir).")); return; }
-    sendPasswordResetEmail(auth, eposta).then(() => { setAyarMsg(t("ayarSifreGonderildi", "Şifre sıfırlama bağlantısı e-postana gönderildi ✓")); setTimeout(() => setAyarMsg(""), 4000); }).catch(() => setAyarMsg(t("ayarHata", "Gönderilemedi")));
+    const acs = { url: "https://gloxorg.com/", handleCodeInApp: false };
+    sendPasswordResetEmail(auth, eposta, acs).then(() => { setAyarMsg(t("ayarSifreGonderildi2", "E-postana bağlantı gönderdik ✓ → e-postanı aç, bağlantıya dokun, YENİ şifreni yaz ve kaydet, sonra yeni şifrenle gir. Gelmezse Spam/Önemsiz klasörüne bak.")); setTimeout(() => setAyarMsg(""), 9000); }).catch(() => setAyarMsg(t("ayarHata", "Gönderilemedi")));
   }
   // Ayarlardan telefon bildirimi izni iste
   async function bildirimIzniIste() {
@@ -2672,25 +2677,45 @@ export default function Anasayfa({ pro = false }) {
         if (vir > 0) imgKaynak = { type: "base64", media_type: mt, data: gors.slice(vir + 1) };
       }
     } catch (e) {}
-    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki görsel videodan alınmış bir karedir, videonun içeriğini gösterir)" : "") + ". " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yazılar üret. ' : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "EKTEKİ GÖRSELE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar DOLU ve ANLAMLI olsun: 1-3 cümle, akıcı, sıcak, kişisel; gerekiyorsa 1-2 uygun emoji ve birkaç hashtag ekle. Tek kelimelik/çok kısa/saçma öneri VERME. ${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
-    const mesajlar = imgKaynak
-      ? [{ role: "user", content: [{ type: "image", source: imgKaynak }, { type: "text", text: talimat }] }]
-      : [{ role: "user", content: talimat }];
+    // KİMLİK: sahip adı + cinsiyet + yaş (yüz tanıma referansı için)
+    const sahipAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    const sahipCins = (profilBilgi && profilBilgi.cinsiyet) || "";
+    let sahipYas = "";
+    try { const d = profilBilgi && profilBilgi.dogum; if (d && d.yil) { const y = new Date().getFullYear() - Number(d.yil); if (y > 0 && y < 120) sahipYas = String(y); } } catch (e) {}
+    // C: profil fotoğrafını REFERANS görsel olarak ekle (yalnız paylaşımda görsel/video varsa)
+    let refImg = null;
+    try {
+      if (imgKaynak && foto) {
+        if (foto.indexOf("data:image") === 0) { const v = foto.indexOf(","); const mt = (foto.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg"; if (v > 0) refImg = { type: "base64", media_type: mt, data: foto.slice(v + 1) }; }
+        else if (/^https?:\/\//.test(foto)) refImg = { type: "url", url: foto };
+      }
+    } catch (e) {}
+    const kimlik = (imgKaynak && refImg)
+      ? `KİMLİK REFERANSI: Ekteki İLK görsel hesap sahibinin PROFİL fotoğrafı (sahip: ${sahipAd || "kullanıcı"}${sahipCins ? ", " + sahipCins : ""}${sahipYas ? ", ~" + sahipYas + " yaş" : ""}); İKİNCİ görsel paylaşılacak içeriktir. İkinci görseldeki kişi AÇIKÇA sahiple AYNI kişiyse ona adıyla/uygun hitapla yaz; FARKLI biriyse (yaş/cinsiyet uymuyorsa, ör. çocuk ya da başka cinsiyet) sahibin adını KULLANMA — gördüğün kişinin yaş/cinsiyetini (çocuk/genç/kadın/erkek/kız) tahmin edip ona göre yaz. EMİN DEĞİLSEN ad kullanma. `
+      : (imgKaynak ? `Görseldeki kişi belirsizse/sahibin dışında biriyse sahip adını kullanma; yaş/cinsiyetini tahmin edip ona göre yaz. ` : "");
+    const markaKapanis = `Her yazıyı, içeriğe/bölüme uygun KISA markalı bir kapanışla bitir — yazıya AKICI GÖMÜLÜ olsun, ayrı satır/etiket gibi DURMASIN: örn "Gloxorg life", "Gloxorg farkı", "Gloxorg.com'da buluşalım", "gloxoo.com". Uzun yazı paylaşımlarında sona doğal bir dokunuşla "(Gloxoo yapay zekâ ile hazırlandı)" ekleyebilirsin. Marka HER ZAMAN "Gloxorg" yazılır. `;
+    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki içerik görseli videodan alınmış bir karedir)" : "") + ". " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yazılar üret. ' : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "İÇERİK GÖRSELİNE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}${kimlik}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar DOLU ve ANLAMLI olsun: 1-3 cümle, akıcı, sıcak, kişisel; gerekiyorsa 1-2 uygun emoji ve birkaç hashtag ekle. Tek kelimelik/çok kısa/saçma öneri VERME. ${markaKapanis}${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
+    const parcalar = [];
+    if (refImg) parcalar.push({ type: "image", source: refImg });
+    if (imgKaynak) parcalar.push({ type: "image", source: imgKaynak });
+    parcalar.push({ type: "text", text: talimat });
+    const mesajlar = parcalar.length > 1 ? [{ role: "user", content: parcalar }] : [{ role: "user", content: talimat }];
     try {
       const r = await fetch(AI_KOPRU, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG luks profesyonel sosyal platformun yazi asistani. Ekte gorsel/video karesi varsa DIKKATLICE BAK ve SADECE gordugune dayanarak, o ana ozel, gercek ve inandirici yaz (uydurma/klise/tek-kelime YOK). Oneriler dolu ve anlamli olsun: 1-3 cumle, akici, sicak, kisisel; uygunsa 1-2 emoji ve birkac hashtag. Istenen dilde yaz." }),
+        body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG luks profesyonel sosyal platformun yazi asistani. Ekte gorsel/video karesi varsa DIKKATLICE BAK ve SADECE gordugune dayanarak, o ana ozel, gercek ve inandirici yaz (uydurma/klise/tek-kelime YOK). Iki gorsel varsa ILKI hesap sahibinin profil fotosu, IKINCISI icerik; icerikteki kisi sahiple ayni degilse sahibin adini KULLANMA, gordugun kisinin yas/cinsiyetine gore yaz. Her yaziyi kisa markali bir kapanisla (Gloxorg life / Gloxorg farki / Gloxorg.com'da bulusalim gibi) yaziya GOMULU bitir; marka hep 'Gloxorg'. Oneriler dolu ve anlamli olsun: 1-3 cumle; uygunsa 1-2 emoji ve birkac hashtag. Istenen dilde yaz." }),
       });
       if (r.ok) {
         const veri = await r.json();
         const txt = (veri && veri.metin) || "";
         const ham = txt.indexOf("|||") >= 0 ? txt.split("|||") : txt.split("\n");
         const satirlar = ham.map((s) => s.replace(/^["'\d.)\-•*\s]+/, "").replace(/["']+$/, "").trim()).filter((s) => s.length > 8).slice(0, 3);
-        if (satirlar.length) { setAiOneriler(satirlar.map((s) => s + "\n\n" + markaImza())); setAiYukleniyor(false); return; }
+        if (satirlar.length) { setAiOneriler(satirlar); setAiYukleniyor(false); return; }
       }
     } catch (e) {}
-    setAiOneriler(yerelAiOneriler().map((s) => s + "\n\n" + markaImza())); setAiYukleniyor(false);
+    // AI ulaşılamazsa yerel öneriler — bunlara marka kapanışı EKLE (AI kendi gömemedi)
+    setAiOneriler(yerelAiOneriler().map((s) => s + " " + markaImza())); setAiYukleniyor(false);
   }
   // Gloxoo önerisi BEĞENİLDİ 👍 → benzer ama daha iyi varyasyonlar öner + olumlu kayıt (yönetici sayfası)
   const aiBegen = (oneri) => {
@@ -2712,9 +2737,17 @@ export default function Anasayfa({ pro = false }) {
   // SADECE SAHİP (yönetici) — geri bildirim sayfasını görebilir
   const yoneticiMi = () => { try { return !!(auth.currentUser && auth.currentUser.email === "abdulkadirciftsuren@gmail.com"); } catch (e) { return false; } };
   const geriBildirimAc = async () => {
-    setMenuAcik(false); setGeriBildirimAcik(true); setGbYukleniyor(true);
-    try { const l = await geriBildirimOku(300); setGeriBildirimListe(l || []); } catch (e) { setGeriBildirimListe([]); }
+    setMenuAcik(false); setGeriBildirimAcik(true); setGbSekme("geri"); setGbYukleniyor(true);
+    try {
+      const [gb, kl, gn] = await Promise.all([geriBildirimOku(300), tumKullanicilar(400), tumGonderiler(300)]);
+      setGeriBildirimListe(gb || []); setGbKullanicilar(kl || []); setGbGonderiler(gn || []);
+    } catch (e) { setGeriBildirimListe([]); setGbKullanicilar([]); setGbGonderiler([]); }
     setGbYukleniyor(false);
+  };
+  // YÖNETİCİ — gönderi sil (moderasyon)
+  const gbGonderiSil = async (id) => {
+    if (!id) return;
+    try { await gonderiSil(id); setGbGonderiler((a) => a.filter((g) => g.id !== id)); setGercekAkis((a) => a.filter((g) => g.id !== id)); } catch (e) {}
   };
   // SİTE ASİSTANI KOMUTU → pencere aç (asistanı kapat ki açılan görünsün)
   function komutAc(k) {
@@ -4959,6 +4992,8 @@ export default function Anasayfa({ pro = false }) {
                       <button className={"apr-ic apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                       <button className="apr-ic ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                     </div>
+                    {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
+                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} />
                   </article>
                 );
               }
@@ -5923,6 +5958,8 @@ export default function Anasayfa({ pro = false }) {
                 <button className={"tf-ic tf-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                 <button className="tf-ic ape-mesaj" onClick={() => { setTamFoto(""); if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); }}>{Ikon.mesaj}</button>
               </div>
+              {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
+              <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} />
             </div>
             {/* SAĞ-ALT — GLOXORG amblemi (şeffaf) — dip'in ÜSTÜNDE */}
             <span className="tf-amblem notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
@@ -6412,39 +6449,76 @@ export default function Anasayfa({ pro = false }) {
         </>
       ), document.body)}
 
-      {/* YÖNETİCİ — GERİ BİLDİRİM SAYFASI (sadece sahip): Gloxoo beğen/beğenme + yorumlar */}
+      {/* YÖNETİCİ KONSOLU (sadece sahip): Geri bildirim · İstatistik · Kullanıcılar · Gönderiler */}
       {geriBildirimAcik && createPortal((
         <div className="msj-fon gb-fon" onClick={(e) => { if (e.target === e.currentTarget) setGeriBildirimAcik(false); }}>
           <div className="msj-pencere gb-pencere">
             <div className="msj-bas">
-              <span className="msj-baslik">📊 {t("geriBildirimBaslik", "Geri Bildirimler")}</span>
+              <span className="msj-baslik">📊 {t("yoneticiKonsol", "Yönetim")}</span>
               <button className="msj-kapat" onClick={() => setGeriBildirimAcik(false)} aria-label="Kapat">✕</button>
             </div>
-            {(() => {
-              const begeni = geriBildirimListe.filter((g) => g.begendi).length;
-              const begenme = geriBildirimListe.filter((g) => !g.begendi).length;
-              return (
-                <div className="gb-ozet">
-                  <span className="gb-ozet-oge begen">👍 {begeni}</span>
-                  <span className="gb-ozet-oge begenme">👎 {begenme}</span>
-                  <span className="gb-ozet-oge">Σ {geriBildirimListe.length}</span>
-                </div>
-              );
-            })()}
+            <div className="gb-sekmeler">
+              <button className={"gb-sekme" + (gbSekme === "geri" ? " aktif" : "")} onClick={() => setGbSekme("geri")}>💬 {t("gbSekGeri", "Geri Bildirim")}</button>
+              <button className={"gb-sekme" + (gbSekme === "istatistik" ? " aktif" : "")} onClick={() => setGbSekme("istatistik")}>📈 {t("gbSekIst", "İstatistik")}</button>
+              <button className={"gb-sekme" + (gbSekme === "kullanici" ? " aktif" : "")} onClick={() => setGbSekme("kullanici")}>👥 {t("gbSekKul", "Kullanıcılar")}</button>
+              <button className={"gb-sekme" + (gbSekme === "gonderi" ? " aktif" : "")} onClick={() => setGbSekme("gonderi")}>🗂️ {t("gbSekGon", "Gönderiler")}</button>
+            </div>
             <div className="gb-liste">
               {gbYukleniyor ? <div className="gb-bos">{t("yukleniyor", "Yükleniyor")}…</div>
-                : geriBildirimListe.length === 0 ? <div className="gb-bos">{t("geriBildirimYok", "Henüz geri bildirim yok.")}</div>
-                : geriBildirimListe.map((g) => (
-                  <div key={g.id} className={"gb-kart" + (g.begendi ? " begen" : " begenme")}>
-                    <div className="gb-kart-ust">
-                      <span className="gb-kart-ik">{g.begendi ? "👍" : "👎"}</span>
-                      <span className="gb-kart-ad">{g.ad || t("gbAnonim", "Kullanıcı")}</span>
-                      <span className="gb-kart-tarih">{g.zamanMs ? new Date(g.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
-                    </div>
-                    {g.oneri && <div className="gb-kart-oneri">"{g.oneri}"</div>}
-                    {g.yorum && <div className="gb-kart-yorum">💬 {g.yorum}</div>}
+                : gbSekme === "geri" ? (
+                  geriBildirimListe.length === 0 ? <div className="gb-bos">{t("geriBildirimYok", "Henüz geri bildirim yok.")}</div>
+                  : <>
+                      <div className="gb-ozet">
+                        <span className="gb-ozet-oge begen">👍 {geriBildirimListe.filter((g) => g.begendi).length}</span>
+                        <span className="gb-ozet-oge begenme">👎 {geriBildirimListe.filter((g) => !g.begendi).length}</span>
+                        <span className="gb-ozet-oge">Σ {geriBildirimListe.length}</span>
+                      </div>
+                      {geriBildirimListe.map((g) => (
+                        <div key={g.id} className={"gb-kart" + (g.begendi ? " begen" : " begenme")}>
+                          <div className="gb-kart-ust">
+                            <span className="gb-kart-ik">{g.begendi ? "👍" : "👎"}</span>
+                            <span className="gb-kart-ad">{g.ad || t("gbAnonim", "Kullanıcı")}</span>
+                            <span className="gb-kart-tarih">{g.zamanMs ? new Date(g.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                          </div>
+                          {g.oneri && <div className="gb-kart-oneri">"{g.oneri}"</div>}
+                          {g.yorum && <div className="gb-kart-yorum">💬 {g.yorum}</div>}
+                        </div>
+                      ))}
+                    </>
+                ) : gbSekme === "istatistik" ? (
+                  <div className="gb-ist-grid">
+                    <div className="gb-ist-kutu"><b>{gbKullanicilar.length.toLocaleString(dil || "tr")}</b><span>{t("gbIstKullanici", "Kullanıcı")}</span></div>
+                    <div className="gb-ist-kutu"><b>{gbGonderiler.length.toLocaleString(dil || "tr")}</b><span>{t("gbIstGonderi", "Gönderi")}</span></div>
+                    <div className="gb-ist-kutu"><b>{gbGonderiler.reduce((s, g) => s + (g.begeni || 0), 0).toLocaleString(dil || "tr")}</b><span>{t("gbIstBegeni", "Beğeni")}</span></div>
+                    <div className="gb-ist-kutu"><b>{gbGonderiler.reduce((s, g) => s + (g.yorumSayisi || 0), 0).toLocaleString(dil || "tr")}</b><span>{t("gbIstYorum", "Yorum")}</span></div>
+                    <div className="gb-ist-kutu"><b>{geriBildirimListe.length.toLocaleString(dil || "tr")}</b><span>{t("gbSekGeri", "Geri Bildirim")}</span></div>
+                    <div className="gb-ist-kutu"><b>{gbGonderiler.filter((g) => g.video).length.toLocaleString(dil || "tr")}</b><span>{t("gbIstVideo", "Video")}</span></div>
                   </div>
-                ))}
+                ) : gbSekme === "kullanici" ? (
+                  gbKullanicilar.length === 0 ? <div className="gb-bos">{t("gbYok", "Kayıt yok.")}</div>
+                  : gbKullanicilar.map((k) => (
+                    <div key={k.id} className="gb-kul">
+                      <span className="gb-kul-av">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : ((k.isim || k.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+                      <div className="gb-kul-bilgi">
+                        <b>{[k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || t("gbAnonim", "Kullanıcı")}</b>
+                        <span>{[mc((k.pro && k.pro.meslek) || k.meslek, dil), (k.konum && k.konum.sehir) || k.sehir, (k.konum && k.konum.ulke) || k.ulke].filter(Boolean).join(" · ")}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  gbGonderiler.length === 0 ? <div className="gb-bos">{t("gbYok", "Kayıt yok.")}</div>
+                  : gbGonderiler.map((g) => (
+                    <div key={g.id} className="gb-gon">
+                      {g.gorsel ? <img className="gb-gon-mini" src={g.gorsel} alt="" referrerPolicy="no-referrer" /> : g.video ? <span className="gb-gon-mini gb-gon-vid">🎬</span> : <span className="gb-gon-mini gb-gon-yazi">✍️</span>}
+                      <div className="gb-gon-bilgi">
+                        <b>{g.ad || "—"}</b>
+                        <span>{(g.baslik || g.yazi || "—").slice(0, 60)}</span>
+                        <i>❤ {(g.begeni || 0)} · 💬 {(g.yorumSayisi || 0)}</i>
+                      </div>
+                      <button className="gb-gon-sil" onClick={() => { if (window.confirm(t("gbSilOnay", "Bu gönderiyi silmek istediğine emin misin?"))) gbGonderiSil(g.id); }} aria-label={t("sil", "Sil")}>🗑</button>
+                    </div>
+                  ))
+                )}
             </div>
           </div>
         </div>
@@ -6582,11 +6656,13 @@ export default function Anasayfa({ pro = false }) {
                   <div className="ayar-bilgi"><b>{adTam}</b><span>{(u && u.email) || "—"}</span></div>
                   <label className="ayar-et">{t("ayar2Eposta", "2. e-posta (iletişim)")} <BilgiBtn metin={t("aciklama2Eposta", "Bu, İSTEĞE BAĞLI ikinci bir İLETİŞİM e-postasıdır — müşteriler sana ulaşsın diye profiline eklenir. Giriş/şifre kurtarma e-postan DEĞİLDİR (o, hesabını açtığın ana e-postandır). Boş bırakabilirsin; istersen ikinci bir e-posta yazıp Kaydet'e bas.")} onAc={setAciklama} /></label>
                   <input className="ayar-input" type="email" value={ek2Eposta} onChange={(e) => setEk2Eposta(e.target.value)} placeholder={t("epostaOrnek", "ornek@gloxorg.com")} />
-                  <label className="ayar-et">{t("ayarTelefon", "Telefon")} <BilgiBtn metin={t("aciklamaTelKod", "Ülke kodunu 3 yolla ayarlayabilirsin: (1) soldaki kutuya kendin yaz (örn +90), (2) ülke adı yazınca kod gelir, (3) 'Konumumdan otomatik al' bulunduğun ülkenin kodunu koyar, ya da haritadan ülkene dokun. Sonra numaranı yaz ve Kaydet.")} onAc={setAciklama} /></label>
+                  <label className="ayar-et">{t("ayarTelefon", "Telefon")} <BilgiBtn metin={t("aciklamaTelefonNeden", "Telefon numaran müşterilerin sana ulaşması, hesabını kurtarman ve güvenlik için profiline eklenir — istersen boş bırakabilirsin. Önce ülke kodunu seç (soldaki kutuya yaz, ülke adı yaz ya da 'Konumumdan al'), sonra numaranı yaz. İkinci bir numaran varsa (iş / WhatsApp) onu da alttaki '2. numara' kutusuna ekleyebilirsin. Bitince Kaydet'e bas.")} onAc={setAciklama} /></label>
                   <div className="ayar-tel-satir">
                     <input className="ayar-input ayar-telkod-input" type="text" value={telKodu} onChange={(e) => setTelKodu(e.target.value)} placeholder="+90" aria-label={t("ayarTelKodu", "Ülke kodu")} />
                     <input className="ayar-input ayar-tel-input" type="tel" value={ekTelefon} onChange={(e) => setEkTelefon(e.target.value)} placeholder={t("ayarTelPh", "Numara")} />
                   </div>
+                  <label className="ayar-et ayar-et-ikinci">{t("ayarTelefon2", "2. numara (isteğe bağlı)")} <BilgiBtn metin={t("aciklamaTelefon2", "İkinci bir telefon numarası ekleyebilirsin — örneğin iş numaran ya da WhatsApp hattın. İsteğe bağlıdır, boş bırakabilirsin.")} onAc={setAciklama} /></label>
+                  <input className="ayar-input ayar-tel-input" type="tel" value={ekTelefon2} onChange={(e) => setEkTelefon2(e.target.value)} placeholder={t("ayarTel2Ph", "İkinci numara")} />
                   <button className="ayar-btn ayar-konumkod-btn" onClick={() => { const k = isoToTelKod[(myKod || "tr").toLowerCase()]; if (k) { ayarTelKodSec(k); setAyarMsg(t("ayarKodAlindi", "Konumundan kod alındı ✓")); setTimeout(() => setAyarMsg(""), 2000); } }}>📍 {t("ayarKonumdanKod", "Konumumdan otomatik al")}</button>
                   <div className="ayar-telkod-yollar">
                     <input className="ayar-input" type="text" value={telKodAra} onChange={(e) => setTelKodAra(e.target.value)} placeholder={t("ayarUlkeYaz", "Ülke adı yaz, kod gelsin...")} />

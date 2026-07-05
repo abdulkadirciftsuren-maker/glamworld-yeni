@@ -224,6 +224,26 @@ export async function geriBildirimOku(adet = 200) {
     return liste;
   } catch (e) { return []; }
 }
+// YÖNETİCİ — tüm kullanıcılar / tüm gönderiler (sahip konsolu için)
+export async function tumKullanicilar(adet = 400) {
+  try {
+    const q = query(collection(db, KULLANICILAR), fsLimit(adet));
+    const snap = await getDocs(q);
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    liste.sort((a, b) => {
+      const ta = (a.guncelleme && a.guncelleme.seconds) || 0, tb = (b.guncelleme && b.guncelleme.seconds) || 0;
+      return tb - ta;
+    });
+    return liste;
+  } catch (e) { return []; }
+}
+export async function tumGonderiler(adet = 300) {
+  try {
+    const q = query(collection(db, "gonderiler"), orderBy("olusturma", "desc"), fsLimit(adet));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (e) { return []; }
+}
 
 // ---------- GÖNDERİLER (akış — FAZ 2'de kullanılacak, temel hazır) ----------
 export async function gonderiEkle(veri) {

@@ -1,6 +1,6 @@
-/* SIFIRDAN SADE SÜRÜM ROZETİ — sol-alt, taşınır, dokununca geçmiş */
+/* SÜRÜM ROZETİ — SAĞ-ÜST köşe (en üstte, kimseyi rahatsız etmez), taşınır, dokununca geçmiş */
 .sr{
-  position:fixed; right:10px; bottom:calc(74px + env(safe-area-inset-bottom)); top:auto; left:auto; z-index:2147483647;
+  position:fixed; right:6px; top:calc(6px + env(safe-area-inset-top)); bottom:auto; left:auto; z-index:2147483647;
   display:flex; align-items:center; gap:8px;
   padding:8px 14px; border-radius:30px;
   background:rgba(14,12,8,.96); border:1.5px solid rgba(255,215,0,.7);
@@ -13,7 +13,7 @@
 .sr-ver{ font-weight:700; font-size:14px; color:#FFD700; letter-spacing:.04em; white-space:nowrap; }
 
 .sr-list{
-  position:absolute; right:0; left:auto; bottom:calc(100% + 8px); top:auto; width:280px; max-height:300px; overflow-y:auto;
+  position:absolute; right:0; left:auto; top:calc(100% + 8px); bottom:auto; width:280px; max-height:300px; overflow-y:auto;
   background:rgba(14,12,8,.98); border:1.5px solid rgba(201,162,39,.6); border-radius:14px; padding:10px 12px;
   box-shadow:0 10px 40px rgba(0,0,0,.8); cursor:auto; scrollbar-width:none;
 }
