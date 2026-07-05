@@ -236,7 +236,28 @@
 .ana-post-avatar-img{ width:100%; height:100%; object-fit:cover; border-radius:inherit; }
 /* ZENGİN PAYLAŞ EKRANI (avatar + soru + renkli seçenekler) */
 /* Foto+yazı kutusu = ÜSTTE SABİT (ayarlar altından kayar, bununla yükselmez) */
-.pyl-ust{ display:flex; gap:11px; flex:none; margin:12px 16px 0; padding-bottom:12px; border-bottom:1px solid rgba(255,215,0,.16); }
+.pyl-ust{ display:flex; flex-direction:column; gap:10px; flex:none; margin:12px 16px 0; padding-bottom:12px; border-bottom:1px solid rgba(255,215,0,.16); max-height:52vh; overflow-y:auto; }
+.pyl-ust-satir{ display:flex; gap:11px; }
+/* MEDYA ARAÇLARI — kamera/galeri/dosya */
+.pyl-medya{ display:flex; flex-wrap:wrap; gap:8px; }
+.pyl-medya-btn{ flex:1 1 46%; min-width:130px; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:11px 10px; border-radius:13px; cursor:pointer;
+  font-size:13.5px; font-weight:700; font-family:inherit; color:#ffe9a8; background:rgba(255,215,0,.1); border:1.4px solid rgba(255,215,0,.4); }
+.pyl-medya-btn:active{ transform:scale(.97); }
+/* DOSYA çipi (composer) */
+.pyl-dosya-chip{ display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:13px; background:rgba(126,224,255,.1); border:1px solid rgba(126,224,255,.4); }
+.pyl-dosya-ik{ font-size:18px; }
+.pyl-dosya-ad{ flex:1; min-width:0; color:#dff0ff; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pyl-dosya-sil{ width:28px; height:28px; flex:none; border-radius:50%; border:none; background:rgba(0,0,0,.5); color:#fff; font-size:14px; cursor:pointer; }
+/* GLOXOO başlığı (AI önerisi) */
+.pyl-ai-baslik{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.pyl-ai-yuz{ width:38px; height:38px; flex:none; }
+.pyl-ai-not{ color:#bfe6ff; font-size:12.5px; font-weight:600; line-height:1.3; }
+/* AKIŞTA paylaşılan DOSYA — indirilebilir çip */
+.ana-post-dosya{ display:flex; align-items:center; gap:10px; margin:8px 12px 0; padding:11px 14px; border-radius:13px; text-decoration:none;
+  background:linear-gradient(135deg,rgba(126,224,255,.14),rgba(90,166,224,.1)); border:1px solid rgba(126,224,255,.4); }
+.ana-post-dosya-ik{ font-size:19px; }
+.ana-post-dosya-ad{ flex:1; min-width:0; color:#e7f4ff; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ana-post-dosya-in{ flex:none; color:#0c1530; background:linear-gradient(135deg,#bfe9ff,#7fc4ff); font-weight:800; font-size:12px; padding:5px 12px; border-radius:20px; }
 .pyl-avatar{ width:46px; height:46px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-weight:800; font-size:19px; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); box-shadow:0 0 0 2px rgba(255,215,0,.4); }
 .pyl-avatar img{ width:100%; height:100%; object-fit:cover; }

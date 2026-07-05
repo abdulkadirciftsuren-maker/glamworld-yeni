@@ -68,6 +68,30 @@ export function videoYukle(file, uid, onProgress) {
   });
 }
 
+// ---------- DOSYA YÜKLEME (Cloudinary auto/upload — her tür dosya) ----------
+// Fotoğraf/video dışı belge (pdf, word, zip vб.) paylaşımı için: dosyayı Cloudinary'e yükler,
+// {url, ad, boyut} döner. Post'a dosya:{url,ad,boyut} olarak saklanır, akışta indirilebilir çip çıkar.
+export function dosyaYukle(file, uid, onProgress) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error("eksik"));
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("upload_preset", CLOUDINARY_PRESET);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD + "/auto/upload");
+    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+    xhr.onload = () => {
+      try {
+        const r = JSON.parse(xhr.responseText || "{}");
+        if (xhr.status >= 200 && xhr.status < 300 && r.secure_url) resolve({ url: r.secure_url, ad: file.name || "dosya", boyut: file.size || 0 });
+        else reject(new Error((r.error && r.error.message) || "yukleme"));
+      } catch (e) { reject(e); }
+    };
+    xhr.onerror = () => reject(new Error("ag"));
+    xhr.send(fd);
+  });
+}
+
 const KULLANICILAR = "kullanicilar";
 
 // ---------- KULLANICI / PROFİL ----------
