@@ -324,26 +324,28 @@ export default function Giris({ zorunluUye }) {
                 <div><label className="giris-label">{t('isim', 'İsim')}</label><input className="giris-input" type="text" name="gw-ad" autoComplete="given-name" placeholder={t('isimPh', 'İsminiz')} value={isim} onChange={(e) => { setIsim(e.target.value); setBilgi(""); }} /></div>
                 <div><label className="giris-label">{t('soyisim', 'Soyisim')}</label><input className="giris-input" type="text" name="gw-soyad" autoComplete="family-name" placeholder={t('soyisimPh', 'Soyisminiz')} value={soyad} onChange={(e) => { setSoyad(e.target.value); setBilgi(""); }} /></div>
               </div>
+              <form className="giris-form" onSubmit={(e) => { e.preventDefault(); if (!yuk) uyeOl(); }}>
               <label className="giris-label">{t('eposta')}</label>
-              <input className="giris-input" type="email" inputMode="email" name="gw-uye-mail" autoComplete="email" readOnly={kilit} onFocus={kilitAc} placeholder="ornek@gloxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
+              <input className="giris-input" type="email" inputMode="email" name="gw-uye-mail" autoComplete="username" placeholder="ornek@gloxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
               <div className="uye-ikili-alan uye-sifre-alan">
                 <div>
                   <label className="giris-label">{t('sifre')}</label>
                   <div className={"giris-sifre" + ((sifreHata || sifreUyumsuz) ? " hatali" : "")}>
-                    <input className={"giris-input" + ((sifreHata || sifreUyumsuz) ? " hatali" : "")} type={goz ? "text" : "password"} name="gw-uye-pw" autoComplete="new-password" readOnly={kilit} onFocus={kilitAc} placeholder={t('sifrenPh')} value={sifre} onChange={(e) => { setSifre(e.target.value); setBilgi(""); setSifreHata(false); }} />
+                    <input className={"giris-input" + ((sifreHata || sifreUyumsuz) ? " hatali" : "")} type={goz ? "text" : "password"} name="gw-uye-pw" autoComplete="new-password" placeholder={t('sifrenPh')} value={sifre} onChange={(e) => { setSifre(e.target.value); setBilgi(""); setSifreHata(false); }} />
                     <button type="button" className="sifre-maskot" onClick={() => setGoz(g => !g)} aria-label={goz ? t('sifreGizle', 'Gizle') : t('sifreGoster', 'Göster')}><MiniMaskot acik={goz} hata={sifreHata} /></button>
                   </div>
                 </div>
                 <div>
                   <label className="giris-label">{t('sifreTekrar', 'Şifre (tekrar)')}</label>
                   <div className={"giris-sifre" + ((sifreHata || sifreUyumsuz) ? " hatali" : "")}>
-                    <input className={"giris-input" + ((sifreHata || sifreUyumsuz) ? " hatali" : "")} type={goz ? "text" : "password"} name="gw-uye-pw2" autoComplete="new-password" readOnly={kilit} onFocus={kilitAc} placeholder={t('sifreTekrarPh', 'Tekrar')} value={sifre2} onChange={(e) => { setSifre2(e.target.value); setBilgi(""); setSifreHata(false); }} />
+                    <input className={"giris-input" + ((sifreHata || sifreUyumsuz) ? " hatali" : "")} type={goz ? "text" : "password"} name="gw-uye-pw2" autoComplete="new-password" placeholder={t('sifreTekrarPh', 'Tekrar')} value={sifre2} onChange={(e) => { setSifre2(e.target.value); setBilgi(""); setSifreHata(false); }} />
                     <button type="button" className="sifre-maskot" onClick={() => setGoz(g => !g)} aria-label={goz ? t('sifreGizle', 'Gizle') : t('sifreGoster', 'Göster')}><MiniMaskot acik={goz} hata={sifreHata} /></button>
                   </div>
                 </div>
               </div>
               {(bilgi || sifreUyumsuz) && <div className="giris-bilgi">{bilgi || t('ghSifreUyusmuyor', 'İki şifre aynı değil.')}</div>}
-              <button className="btn btn-uye" style={{ marginTop: "14px" }} onClick={uyeOl} disabled={yuk}>{yuk ? t('girisYapiliyor') : t('uyeolBaslik', 'Üye Ol')}</button>
+              <button type="submit" className="btn btn-uye" style={{ marginTop: "14px" }} disabled={yuk}>{yuk ? t('girisYapiliyor') : t('uyeolBaslik', 'Üye Ol')}</button>
+              </form>
               {!zorunluUye && <div className="alt-not">{t('zatenHesap')} <b onClick={() => modGec("giris")}>{t('girisYapLink')}</b></div>}
               {zorunluUye && (
                 <div className="zorunlu-cikis">
@@ -382,16 +384,18 @@ export default function Giris({ zorunluUye }) {
 
               <div className="ayrac"><div className="cizgi"></div><span>{t('veya')}</span><div className="cizgi"></div></div>
 
+              <form className="giris-form" onSubmit={(e) => { e.preventDefault(); if (!yuk) epGiris(); }}>
               <label className="giris-label">{t('eposta')}</label>
-              <input className="giris-input" type="email" inputMode="email" name="gw-giris-mail" autoComplete="email" readOnly={kilit} onFocus={kilitAc} placeholder="ornek@gloxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
+              <input className="giris-input" type="email" inputMode="email" name="gw-giris-mail" autoComplete="username" placeholder="ornek@gloxorg.com" value={ep} onChange={(e) => { setEp(e.target.value); setBilgi(""); }} />
               <label className="giris-label">{t('sifre')}</label>
               <div className={"giris-sifre" + (sifreHata ? " hatali" : "")}>
-                <input className={"giris-input" + (sifreHata ? " hatali" : "")} type={goz ? "text" : "password"} name="gw-giris-pw" autoComplete="current-password" readOnly={kilit} onFocus={kilitAc} placeholder={t('sifrenPh')} value={sifre} onChange={(e) => { setSifre(e.target.value); setBilgi(""); setSifreHata(false); }} />
+                <input className={"giris-input" + (sifreHata ? " hatali" : "")} type={goz ? "text" : "password"} name="gw-giris-pw" autoComplete="current-password" placeholder={t('sifrenPh')} value={sifre} onChange={(e) => { setSifre(e.target.value); setBilgi(""); setSifreHata(false); }} />
                 <button type="button" className="sifre-maskot" onClick={() => setGoz(g => !g)} aria-label={goz ? t('sifreGizle', 'Gizle') : t('sifreGoster', 'Göster')}><MiniMaskot acik={goz} hata={sifreHata} /></button>
               </div>
               <div className="sifremi-unuttum" onClick={sifreModalAc}>{t('sifremiUnuttum')}</div>
               {bilgi && <div className="giris-bilgi">{bilgi}</div>}
-              <button className="btn btn-uye" style={{ marginTop: "14px" }} onClick={epGiris} disabled={yuk}>{yuk ? t('girisYapiliyor') : t('girisyap')}</button>
+              <button type="submit" className="btn btn-uye" style={{ marginTop: "14px" }} disabled={yuk}>{yuk ? t('girisYapiliyor') : t('girisyap')}</button>
+              </form>
             </>
           )}
 

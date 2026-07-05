@@ -429,3 +429,6 @@
 .giris-eposta:focus-within .giris-eposta-sonek{border-color:#FFD700;}
 @media (min-width:560px){ .giris-eposta-sonek{font-size:22px;padding:0 16px;} }
 @media (min-width:1100px){ .giris-eposta-sonek{font-size:25px;} }
+
+/* form sarmalayıcı düzeni bozmasın (Chrome şifre kaydı için form) */
+.giris-form{ display:contents; }

@@ -131,7 +131,7 @@ function latinYap(s) {
 }
 // BEĞENEN AVATAR ŞERİDİ — gönderiyi beğenenlerin ufak profil resimleri, İSTİFLENMİŞ (öne doğru küçülerek).
 // Gerçek beğeni verisi Firestore'dan (begenenleriOku) çekilir; beğeni yoksa hiç görünmez.
-function BegenenlerSerit({ postId, sayi, dil }) {
+function BegenenlerSerit({ postId, sayi, dil, onAc }) {
   const [liste, setListe] = useState(null);
   useEffect(() => {
     let iptal = false;
@@ -141,33 +141,17 @@ function BegenenlerSerit({ postId, sayi, dil }) {
   }, [postId, sayi]);
   if (!liste || !liste.length) return null;
   const goster = liste.slice(0, 4);
-  const ilkAd = (goster[0].ad || "").split(" ")[0] || { tr: "Biri", en: "Someone", de: "Jemand", fr: "Quelqu'un", es: "Alguien", it: "Qualcuno", pt: "Alguém", ru: "Кто-то", uk: "Хтось", ar: "شخص ما", zh: "有人", ja: "誰か", hi: "कोई" }[dil] || "Someone";
-  const n = (sayi - 1).toLocaleString();
-  const T = {
-    tr: sayi > 1 ? `${ilkAd} ve ${n} kişi beğendi` : `${ilkAd} beğendi`,
-    en: sayi > 1 ? `${ilkAd} and ${n} others liked` : `${ilkAd} liked`,
-    de: sayi > 1 ? `${ilkAd} und ${n} weiteren gefällt das` : `${ilkAd} gefällt das`,
-    fr: sayi > 1 ? `${ilkAd} et ${n} autres ont aimé` : `${ilkAd} a aimé`,
-    es: sayi > 1 ? `A ${ilkAd} y ${n} más les gustó` : `A ${ilkAd} le gustó`,
-    it: sayi > 1 ? `Piace a ${ilkAd} e altri ${n}` : `Piace a ${ilkAd}`,
-    pt: sayi > 1 ? `${ilkAd} e mais ${n} gostaram` : `${ilkAd} gostou`,
-    ru: sayi > 1 ? `${ilkAd} и ещё ${n} оценили` : `${ilkAd} оценил`,
-    uk: sayi > 1 ? `${ilkAd} та ще ${n} вподобали` : `${ilkAd} вподобав`,
-    ar: sayi > 1 ? `أعجب ${ilkAd} و${n} آخرين` : `أعجب ${ilkAd}`,
-    zh: sayi > 1 ? `${ilkAd} 等 ${n} 人赞了` : `${ilkAd} 赞了`,
-    ja: sayi > 1 ? `${ilkAd} 他 ${n} 人がいいね` : `${ilkAd} がいいね`,
-    hi: sayi > 1 ? `${ilkAd} और ${n} अन्य को पसंद` : `${ilkAd} को पसंद`,
-  };
+  const ilkHarf = ((goster[0].ad || "?").trim()[0] || "?").toUpperCase();
+  // YAZI KALDIRILDI (kullanıcı) — sadece ufak fotoğraflar; dokununca beğenen/yorum yapan LİSTESİ açılır
   return (
-    <div className="begenen-serit">
+    <div className="begenen-serit" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); if (onAc) onAc(postId); }}>
       <div className="begenen-avlar">
         {goster.map((b, i) => (
-          <span className="begenen-av" key={b.id || i} style={{ width: 26 - i * 3, height: 26 - i * 3, marginLeft: i === 0 ? 0 : -(9 - i), zIndex: 9 - i }}>
-            {b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : <span className="begenen-harf">{(ilkAd || "?").charAt(0).toUpperCase()}</span>}
+          <span className="begenen-av" key={b.id || i} style={{ width: 27 - i * 2, height: 27 - i * 2, marginLeft: i === 0 ? 0 : -(9 - i), zIndex: 9 - i }}>
+            {b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : <span className="begenen-harf">{((b.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
           </span>
         ))}
       </div>
-      <span className="begenen-yazi">{T[dil] || T.en}</span>
     </div>
   );
 }
@@ -1180,6 +1164,10 @@ export default function Anasayfa({ pro = false }) {
   const [gbSekme, setGbSekme] = useState("geri");                 // geri | istatistik | kullanici | gonderi
   const [gbKullanicilar, setGbKullanicilar] = useState([]);
   const [gbGonderiler, setGbGonderiler] = useState([]);
+  const [begenenModal, setBegenenModal] = useState(null);         // BEĞENENLER/YORUMCULAR listesi açık post id
+  const [begenenModalListe, setBegenenModalListe] = useState([]);
+  const [yorumcuModalListe, setYorumcuModalListe] = useState([]);
+  const [begenenModalYuk, setBegenenModalYuk] = useState(false);
   const [medyaMenu, setMedyaMenu] = useState("");               // "" | "foto" | "video" — çek/galeri mini menüsü
   const [turSecAcik, setTurSecAcik] = useState(false);          // Paylaş'a basınca çıkan "ne olarak?" seçimi
   // FOTO/VİDEO ÜZERİNE YAZI — metin + renk + boyut + konum (üst/orta/alt). Görselin üstünde katman olarak gösterilir.
@@ -2743,6 +2731,20 @@ export default function Anasayfa({ pro = false }) {
       setGeriBildirimListe(gb || []); setGbKullanicilar(kl || []); setGbGonderiler(gn || []);
     } catch (e) { setGeriBildirimListe([]); setGbKullanicilar([]); setGbGonderiler([]); }
     setGbYukleniyor(false);
+  };
+  // BEĞENEN + YORUM YAPAN listesini aç (akıştaki ufak fotolara dokununca)
+  const begenenlerAc = async (postId) => {
+    if (!postId) return;
+    setBegenenModal(postId); setBegenenModalYuk(true); setBegenenModalListe([]); setYorumcuModalListe([]);
+    try {
+      const [bl, yl] = await Promise.all([begenenleriOku(postId, 120), yorumlariOku(postId)]);
+      setBegenenModalListe(bl || []);
+      // yorumcular: benzersiz kişiler (uid/isim), foto+ad
+      const gorulen = new Set(); const yc = [];
+      (yl || []).forEach((y) => { const k = y.uid || y.ad; if (k && !gorulen.has(k)) { gorulen.add(k); yc.push({ id: y.id || k, uid: y.uid, ad: y.ad, foto: y.foto }); } });
+      setYorumcuModalListe(yc);
+    } catch (e) {}
+    setBegenenModalYuk(false);
   };
   // YÖNETİCİ — gönderi sil (moderasyon)
   const gbGonderiSil = async (id) => {
@@ -4993,7 +4995,7 @@ export default function Anasayfa({ pro = false }) {
                       <button className="apr-ic ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
-                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} />
+                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
                   </article>
                 );
               }
@@ -5069,7 +5071,7 @@ export default function Anasayfa({ pro = false }) {
                     <button className="ana-post-btn ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                   </div>
                   {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
-                  <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} />
+                  <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
                 </article>
               );
             })}
@@ -5959,7 +5961,7 @@ export default function Anasayfa({ pro = false }) {
                 <button className="tf-ic ape-mesaj" onClick={() => { setTamFoto(""); if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); }}>{Ikon.mesaj}</button>
               </div>
               {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
-              <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} />
+              <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
             </div>
             {/* SAĞ-ALT — GLOXORG amblemi (şeffaf) — dip'in ÜSTÜNDE */}
             <span className="tf-amblem notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
@@ -6519,6 +6521,40 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                   ))
                 )}
+            </div>
+          </div>
+        </div>
+      ), document.body)}
+
+      {/* BEĞENENLER + YORUM YAPANLAR listesi (akıştaki ufak fotolara dokununca) */}
+      {begenenModal && createPortal((
+        <div className="msj-fon bgm-fon" onClick={(e) => { if (e.target === e.currentTarget) setBegenenModal(null); }}>
+          <div className="msj-pencere bgm-pencere">
+            <div className="msj-bas">
+              <span className="msj-baslik">💙 {t("begenenlerBaslik", "Beğenenler ve Yorumlar")}</span>
+              <button className="msj-kapat" onClick={() => setBegenenModal(null)} aria-label="Kapat">✕</button>
+            </div>
+            <div className="bgm-liste">
+              {begenenModalYuk ? <div className="gb-bos">{t("yukleniyor", "Yükleniyor")}…</div> : (
+                <>
+                  <div className="bgm-bolum-bas">❤ {t("begenenlerBolum", "Beğenenler")} ({begenenModalListe.length})</div>
+                  {begenenModalListe.length === 0 ? <div className="bgm-bos-mini">{t("begenenYok", "Henüz beğenen yok.")}</div>
+                    : begenenModalListe.map((b) => (
+                      <div className="bgm-kisi" key={"b" + (b.id || b.uid)}>
+                        <span className="bgm-av">{b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : ((b.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+                        <span className="bgm-ad">{b.ad || t("gbAnonim", "Kullanıcı")}</span>
+                      </div>
+                    ))}
+                  <div className="bgm-bolum-bas">💬 {t("yorumcularBolum", "Yorum yapanlar")} ({yorumcuModalListe.length})</div>
+                  {yorumcuModalListe.length === 0 ? <div className="bgm-bos-mini">{t("yorumYokMini", "Henüz yorum yok.")}</div>
+                    : yorumcuModalListe.map((y) => (
+                      <div className="bgm-kisi" key={"y" + (y.id || y.uid)}>
+                        <span className="bgm-av">{y.foto ? <img src={y.foto} alt="" referrerPolicy="no-referrer" /> : ((y.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+                        <span className="bgm-ad">{y.ad || t("gbAnonim", "Kullanıcı")}</span>
+                      </div>
+                    ))}
+                </>
+              )}
             </div>
           </div>
         </div>
