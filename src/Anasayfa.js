@@ -5317,10 +5317,13 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {/* KAYAN AYARLAR — üstteki foto+yazı SABİT kalır, buradan aşağısı onun altından kayar */}
             <div className="pyl-kaydir">
-            {/* ✨ GLOXOO — tek satır: yüz + "ne yazayım söyle" (yaz/konuş) + Öner */}
+            {/* ✨ GLOXOO — BÜYÜK şerit: üstte yüz + açıklama (uzun → parmakla yana kayar), altta yaz/konuş + küçük düğmeler */}
             <div className="pyl-ai">
+              <div className="pyl-ai-ust">
+                <span className="pyl-ai-yuz"><MaskotYuz tur="grox" boyut={34} arastir={aiYukleniyor || aiIstekDinliyor} konusuyor={false} dinliyor={aiIstekDinliyor} /></span>
+                <div className="pyl-ai-aciklama">{t("gloxooAciklama", "Gloxoo senin için paylaşım yazısı yazar. Fotoğraf/videona bakar ya da aşağıya ne istediğini yaz veya 🎤 ile söyle — sana hazır bir metin önersin. Beğenmezsen tekrar Öner'e bas.")}</div>
+              </div>
               <div className="pyl-ai-satir">
-                <span className="pyl-ai-yuz"><MaskotYuz tur="grox" boyut={32} arastir={aiYukleniyor || aiIstekDinliyor} konusuyor={false} dinliyor={aiIstekDinliyor} /></span>
                 <input className="pyl-ai-istek" value={aiIstek} onChange={(e) => setAiIstek(e.target.value)}
                   placeholder={(paylasGorsel || paylasVideo) ? t("gloxooNe2", "Ne yazsın? (boş = görselden yazar)") : t("gloxooNe", "Gloxoo'ya ne yazayım de…")} />
                 <button className={"pyl-ai-mik" + (aiIstekDinliyor ? " dinliyor" : "")} onClick={aiIstekDinle} aria-label={t("konus", "Konuş")}>🎤</button>
