@@ -155,6 +155,35 @@ function BegenenlerSerit({ postId, sayi, dil, onAc }) {
     </div>
   );
 }
+// YORUM YAPANLAR şeridi — yorum ikonunun altında ufak fotolar; dokununca yorum penceresi açılır
+function YorumcuSerit({ postId, sayi, onAc }) {
+  const [liste, setListe] = useState(null);
+  useEffect(() => {
+    let iptal = false;
+    if (!postId || !sayi) { setListe([]); return; }
+    yorumlariOku(postId).then((yl) => {
+      if (iptal) return;
+      const g = new Set(); const out = [];
+      (yl || []).forEach((y) => { const k = y.uid || y.ad; if (k && !g.has(k)) { g.add(k); out.push(y); } });
+      setListe(out);
+    }).catch(() => { if (!iptal) setListe([]); });
+    return () => { iptal = true; };
+  }, [postId, sayi]);
+  if (!liste || !liste.length) return null;
+  const goster = liste.slice(0, 4);
+  return (
+    <div className="begenen-serit yorumcu-serit" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); if (onAc) onAc(); }}>
+      <span className="serit-ik" aria-hidden="true">💬</span>
+      <div className="begenen-avlar">
+        {goster.map((b, i) => (
+          <span className="begenen-av" key={b.id || i} style={{ width: 27 - i * 2, height: 27 - i * 2, marginLeft: i === 0 ? 0 : -(9 - i), zIndex: 9 - i }}>
+            {b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : <span className="begenen-harf">{((b.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 // Meslek → kendi rengi (ızgaradaki bg'nin ilk hex'i) — gönderi/etikette meslek kendi renginde yazılır.
 const MESLEK_RENK = {};
 try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; }); } catch (e) {}
@@ -2732,20 +2761,32 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) { setGeriBildirimListe([]); setGbKullanicilar([]); setGbGonderiler([]); }
     setGbYukleniyor(false);
   };
-  // BEĞENEN + YORUM YAPAN listesini aç (akıştaki ufak fotolara dokununca)
+  // BEĞENENLER listesini aç (kalp altındaki ufak fotolara dokununca)
   const begenenlerAc = async (postId) => {
     if (!postId) return;
-    setBegenenModal(postId); setBegenenModalYuk(true); setBegenenModalListe([]); setYorumcuModalListe([]);
-    try {
-      const [bl, yl] = await Promise.all([begenenleriOku(postId, 120), yorumlariOku(postId)]);
-      setBegenenModalListe(bl || []);
-      // yorumcular: benzersiz kişiler (uid/isim), foto+ad
-      const gorulen = new Set(); const yc = [];
-      (yl || []).forEach((y) => { const k = y.uid || y.ad; if (k && !gorulen.has(k)) { gorulen.add(k); yc.push({ id: y.id || k, uid: y.uid, ad: y.ad, foto: y.foto }); } });
-      setYorumcuModalListe(yc);
-    } catch (e) {}
+    setBegenenModal(postId); setBegenenModalYuk(true); setBegenenModalListe([]);
+    try { const bl = await begenenleriOku(postId, 150); setBegenenModalListe(bl || []); } catch (e) {}
     setBegenenModalYuk(false);
   };
+  // KİŞİYE MESAJ (beğenen/yorumcuya karşılık) → DM aç
+  const kisiyeMesaj = (k) => {
+    if (!k || !k.uid) return;
+    setBegenenModal(null); setYorumAcik(null);
+    setAraSecili({ uid: k.uid, isim: k.ad, pro: { meslek: k.meslek || "" }, konum: {}, isFoto: k.foto });
+  };
+  // KARŞILIK ikonları (Takip + Mesaj) — beğenen/yorumcuya karşılık ver
+  const kisiKarsilik = (k) => (
+    <>
+      <button className={"kars-ik kars-takip" + (takipSet.has(k.uid) ? " ediliyor" : "")} onClick={(e) => { e.stopPropagation(); takipToggle(k); }} aria-label={takipSet.has(k.uid) ? t("takipEdiliyor", "Takip ✓") : t("takipEt", "+ Takip")} title={takipSet.has(k.uid) ? t("takipEdiliyor", "Takip ✓") : t("takipEt", "+ Takip")}>
+        {takipSet.has(k.uid)
+          ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+          : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20c0-3.2 2.5-5 5.5-5s5.5 1.8 5.5 5" /><path d="M19 8v6M22 11h-6" /></svg>}
+      </button>
+      <button className="kars-ik kars-mesaj" onClick={(e) => { e.stopPropagation(); kisiyeMesaj(k); }} aria-label={t("mesajGonderKisa", "Mesaj")} title={t("mesajGonderKisa", "Mesaj")}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5h16v12H7l-3 3z" /></svg>
+      </button>
+    </>
+  );
   // YÖNETİCİ — gönderi sil (moderasyon)
   const gbGonderiSil = async (id) => {
     if (!id) return;
@@ -4995,7 +5036,7 @@ export default function Anasayfa({ pro = false }) {
                       <button className="apr-ic ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
-                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
+                    <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                   </article>
                 );
               }
@@ -5071,7 +5112,7 @@ export default function Anasayfa({ pro = false }) {
                     <button className="ana-post-btn ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                   </div>
                   {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
-                  <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
+                  <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                 </article>
               );
             })}
@@ -5710,6 +5751,7 @@ export default function Anasayfa({ pro = false }) {
                       <div className="msj-ust"><b className="notranslate" translate="no">{y.ad || "—"}</b><i>{ne}</i></div>
                       <div className="msj-metin">{y.metin}</div>
                     </div>
+                    {y.uid && u && y.uid !== u.uid && <span className="bgm-karsilik msj-karsilik">{kisiKarsilik(y)}</span>}
                   </div>
                 );
               })}
@@ -5961,7 +6003,7 @@ export default function Anasayfa({ pro = false }) {
                 <button className="tf-ic ape-mesaj" onClick={() => { setTamFoto(""); if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); }}>{Ikon.mesaj}</button>
               </div>
               {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
-              <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
+              <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
             </div>
             {/* SAĞ-ALT — GLOXORG amblemi (şeffaf) — dip'in ÜSTÜNDE */}
             <span className="tf-amblem notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
@@ -6526,35 +6568,24 @@ export default function Anasayfa({ pro = false }) {
         </div>
       ), document.body)}
 
-      {/* BEĞENENLER + YORUM YAPANLAR listesi (akıştaki ufak fotolara dokununca) */}
+      {/* BEĞENENLER listesi (kalp altındaki fotolara dokununca) — her kişiye TAKİP + MESAJ karşılık ikonları */}
       {begenenModal && createPortal((
         <div className="msj-fon bgm-fon" onClick={(e) => { if (e.target === e.currentTarget) setBegenenModal(null); }}>
           <div className="msj-pencere bgm-pencere">
             <div className="msj-bas">
-              <span className="msj-baslik">💙 {t("begenenlerBaslik", "Beğenenler ve Yorumlar")}</span>
+              <span className="msj-baslik">❤ {t("begenenlerBolum", "Beğenenler")}{begenenModalListe.length ? " (" + begenenModalListe.length + ")" : ""}</span>
               <button className="msj-kapat" onClick={() => setBegenenModal(null)} aria-label="Kapat">✕</button>
             </div>
             <div className="bgm-liste">
-              {begenenModalYuk ? <div className="gb-bos">{t("yukleniyor", "Yükleniyor")}…</div> : (
-                <>
-                  <div className="bgm-bolum-bas">❤ {t("begenenlerBolum", "Beğenenler")} ({begenenModalListe.length})</div>
-                  {begenenModalListe.length === 0 ? <div className="bgm-bos-mini">{t("begenenYok", "Henüz beğenen yok.")}</div>
-                    : begenenModalListe.map((b) => (
-                      <div className="bgm-kisi" key={"b" + (b.id || b.uid)}>
-                        <span className="bgm-av">{b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : ((b.ad || "?").trim()[0] || "?").toUpperCase()}</span>
-                        <span className="bgm-ad">{b.ad || t("gbAnonim", "Kullanıcı")}</span>
-                      </div>
-                    ))}
-                  <div className="bgm-bolum-bas">💬 {t("yorumcularBolum", "Yorum yapanlar")} ({yorumcuModalListe.length})</div>
-                  {yorumcuModalListe.length === 0 ? <div className="bgm-bos-mini">{t("yorumYokMini", "Henüz yorum yok.")}</div>
-                    : yorumcuModalListe.map((y) => (
-                      <div className="bgm-kisi" key={"y" + (y.id || y.uid)}>
-                        <span className="bgm-av">{y.foto ? <img src={y.foto} alt="" referrerPolicy="no-referrer" /> : ((y.ad || "?").trim()[0] || "?").toUpperCase()}</span>
-                        <span className="bgm-ad">{y.ad || t("gbAnonim", "Kullanıcı")}</span>
-                      </div>
-                    ))}
-                </>
-              )}
+              {begenenModalYuk ? <div className="gb-bos">{t("yukleniyor", "Yükleniyor")}…</div>
+                : begenenModalListe.length === 0 ? <div className="bgm-bos-mini">{t("begenenYok", "Henüz beğenen yok.")}</div>
+                : begenenModalListe.map((b) => (
+                  <div className="bgm-kisi" key={"b" + (b.id || b.uid)}>
+                    <span className="bgm-av" onClick={() => b.uid && uyeyiAc({ uid: b.uid, ad: b.ad, foto: b.foto })}>{b.foto ? <img src={b.foto} alt="" referrerPolicy="no-referrer" /> : ((b.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+                    <span className="bgm-ad">{b.ad || t("gbAnonim", "Kullanıcı")}</span>
+                    {b.uid && u && b.uid !== u.uid && <span className="bgm-karsilik">{kisiKarsilik(b)}</span>}
+                  </div>
+                ))}
             </div>
           </div>
         </div>

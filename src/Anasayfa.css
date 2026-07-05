@@ -1921,6 +1921,18 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .bgm-ad{ font-size:14.5px; color:#eaf1ff; font-weight:600; }
 /* beğenen şeridi artık tıklanır (yazı kaldırıldı) */
 .begenen-serit{ cursor:pointer; display:inline-flex; align-items:center; }
+/* beğenen + yorumcu şeritleri YAN YANA (ayrı düğmeler) */
+.serit-grup{ display:inline-flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.serit-ik{ font-size:13px; margin-right:2px; opacity:.85; }
+.yorumcu-serit{ cursor:pointer; }
+/* KARŞILIK ikonları (takip / mesaj) — beğenen/yorumcu satırında */
+.bgm-kisi{ position:relative; }
+.bgm-karsilik{ margin-left:auto; display:inline-flex; gap:7px; flex:none; }
+.kars-ik{ width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:9px; cursor:pointer; padding:0; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); }
+.kars-ik svg{ width:18px; height:18px; }
+.kars-takip{ color:#46d37a; } .kars-takip.ediliyor{ background:rgba(70,211,122,.2); border-color:rgba(70,211,122,.5); }
+.kars-mesaj{ color:#7fb0ff; } .kars-mesaj:active{ background:rgba(127,176,255,.2); }
+.msj-karsilik{ margin-left:8px; align-self:center; }
 /* Gloxoo TEK satır düğme (yüz + kısa yazı) */
 .pyl-ai-btn.tek{ width:100%; justify-content:flex-start; gap:9px; padding:8px 12px; }
 .pyl-ai-btn.tek .pyl-ai-yuz{ width:30px; height:30px; flex:none; line-height:0; }
