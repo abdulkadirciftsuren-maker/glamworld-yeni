@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -2791,6 +2791,12 @@ export default function Anasayfa({ pro = false }) {
   const gbGonderiSil = async (id) => {
     if (!id) return;
     try { await gonderiSil(id); setGbGonderiler((a) => a.filter((g) => g.id !== id)); setGercekAkis((a) => a.filter((g) => g.id !== id)); } catch (e) {}
+  };
+  const gbKullaniciSil = async (id) => {
+    if (!id) return;
+    const ok = await kullaniciSil(id);
+    if (ok) setGbKullanicilar((a) => a.filter((k) => k.id !== id));
+    else bilgiBalonu(t("gbSilHata", "Silinemedi. Firebase kurallarında kullanıcı silme izni gerekiyor."));
   };
   // SİTE ASİSTANI KOMUTU → pencere aç (asistanı kapat ki açılan görünsün)
   function komutAc(k) {
@@ -6545,8 +6551,10 @@ export default function Anasayfa({ pro = false }) {
                       <span className="gb-kul-av">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : ((k.isim || k.ad || "?").trim()[0] || "?").toUpperCase()}</span>
                       <div className="gb-kul-bilgi">
                         <b>{[k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || t("gbAnonim", "Kullanıcı")}</b>
+                        <span className="gb-kul-eposta">✉️ {k.eposta || k.email || t("gbEpostaYok", "e-posta yok")}</span>
                         <span>{[mc((k.pro && k.pro.meslek) || k.meslek, dil), (k.konum && k.konum.sehir) || k.sehir, (k.konum && k.konum.ulke) || k.ulke].filter(Boolean).join(" · ")}</span>
                       </div>
+                      <button className="gb-gon-sil" onClick={() => { if (window.confirm(t("gbKulSilOnay", "Bu kullanıcıyı listeden silmek istediğine emin misin?"))) gbKullaniciSil(k.id); }} aria-label={t("sil", "Sil")}>🗑</button>
                     </div>
                   ))
                 ) : (

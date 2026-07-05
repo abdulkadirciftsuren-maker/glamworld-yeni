@@ -237,6 +237,11 @@ export async function tumKullanicilar(adet = 400) {
     return liste;
   } catch (e) { return []; }
 }
+// Kullanıcı (profil) belgesini sil — SADECE yönetici (Firestore kuralında sahip e-posta) — hayalet/eski kayıtları temizlemek için
+export async function kullaniciSil(uid) {
+  if (!uid) return false;
+  try { await deleteDoc(doc(db, KULLANICILAR, uid)); return true; } catch (e) { return false; }
+}
 export async function tumGonderiler(adet = 300) {
   try {
     const q = query(collection(db, "gonderiler"), orderBy("olusturma", "desc"), fsLimit(adet));

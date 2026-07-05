@@ -11,7 +11,8 @@ service cloud.firestore {
     match /kullanicilar/{uid} {
       allow read: if true;
       allow create, update: if sahip(uid);
-      allow delete: if false;
+      // Yönetici (sahip e-posta) hayalet/eski kayıtları silebilir; başka kimse silemez
+      allow delete: if request.auth != null && request.auth.token.email == "abdulkadirciftsuren@gmail.com";
     }
 
     // Gönderiler (akış) — herkes okur; giriş yapan oluşturur; SAHİBİ her şeyi düzenler/siler.
