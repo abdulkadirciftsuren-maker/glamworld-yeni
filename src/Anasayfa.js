@@ -982,6 +982,8 @@ export default function Anasayfa({ pro = false }) {
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasYukleme, setPaylasYukleme] = useState(0);        // video yükleme ilerlemesi %
   const [paylasDosya, setPaylasDosya] = useState(null);         // eklenen DOSYA (belge) {file, ad, boyut}
+  const [aiIstek, setAiIstek] = useState("");                   // kullanıcı Gloxoo'ya ne yazmasını istediğini yazar
+  const [aiIstekDinliyor, setAiIstekDinliyor] = useState(false); // Gloxoo'ya konuşarak söyleme (mikrofon aktif mi)
   const [medyaMenu, setMedyaMenu] = useState("");               // "" | "foto" | "video" — çek/galeri mini menüsü
   const [turSecAcik, setTurSecAcik] = useState(false);          // Paylaş'a basınca çıkan "ne olarak?" seçimi
   // FOTO/VİDEO ÜZERİNE YAZI — metin + renk + boyut + konum (üst/orta/alt). Görselin üstünde katman olarak gösterilir.
@@ -2385,6 +2387,21 @@ export default function Anasayfa({ pro = false }) {
   }
   // PAYLAŞ — yeni gönderi oluştur
   // ✨ YAPAY ZEKA YAZI ÖNERİSİ — GERÇEK CLAUDE (güvenli köprü; anahtar köprüde gizli); olmazsa yerel öneri
+  // Gloxoo'ya KONUŞARAK "ne yazsın" söyle → aiIstek kutusuna yazar (tarayıcı ses tanıma)
+  function aiIstekDinle() {
+    try {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { setPaylasDurum("sesyok"); return; }
+      const rec = new SR();
+      rec.lang = aiSesKodu(aiDilRef.current);
+      rec.continuous = false; rec.interimResults = false;
+      setAiIstekDinliyor(true);
+      rec.onresult = (e) => { try { const tx = (e.results[0][0].transcript || "").trim(); if (tx) setAiIstek((p) => (p ? p + " " : "") + tx); } catch (x) {} };
+      rec.onend = () => setAiIstekDinliyor(false);
+      rec.onerror = () => setAiIstekDinliyor(false);
+      rec.start();
+    } catch (e) { setAiIstekDinliyor(false); }
+  }
   async function aiYaziOner() {
     if (aiYukleniyor) return;
     setAiYukleniyor(true); setAiOneriler([]);
@@ -2393,6 +2410,7 @@ export default function Anasayfa({ pro = false }) {
     const tur = paylasTur || "";
     const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" }[dil] || "Türkçe";
     const mevcut = (paylasYazi || "").trim();
+    const istek = (aiIstek || "").trim(); // kullanıcının Gloxoo'ya söylediği ne yazmak istediği
     // FOTO ya da VİDEO KARESİ ile Claude GÖRSÜN (vision) → içeriğe UYGUN, gerçekçi öneri
     let imgKaynak = null;
     try {
@@ -2405,7 +2423,7 @@ export default function Anasayfa({ pro = false }) {
         if (vir > 0) imgKaynak = { type: "base64", media_type: mt, data: gors.slice(vir + 1) };
       }
     } catch (e) {}
-    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki görsel videodan alınmış bir karedir, videonun içeriğini gösterir)" : "") + ". " : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "EKTEKİ GÖRSELE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar DOLU ve ANLAMLI olsun: 1-3 cümle, akıcı, sıcak, kişisel; gerekiyorsa 1-2 uygun emoji ve birkaç hashtag ekle. Tek kelimelik/çok kısa/saçma öneri VERME. ${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
+    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki görsel videodan alınmış bir karedir, videonun içeriğini gösterir)" : "") + ". " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yazılar üret. ' : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "EKTEKİ GÖRSELE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar DOLU ve ANLAMLI olsun: 1-3 cümle, akıcı, sıcak, kişisel; gerekiyorsa 1-2 uygun emoji ve birkaç hashtag ekle. Tek kelimelik/çok kısa/saçma öneri VERME. ${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
     const mesajlar = imgKaynak
       ? [{ role: "user", content: [{ type: "image", source: imgKaynak }, { type: "text", text: talimat }] }]
       : [{ role: "user", content: talimat }];
@@ -5075,12 +5093,15 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {/* KAYAN AYARLAR — üstteki foto+yazı SABİT kalır, buradan aşağısı onun altından kayar */}
             <div className="pyl-kaydir">
-            {/* ✨ GLOXOO — tek satır: yüz + kısa yazı, foto/videoya bakıp öneri */}
+            {/* ✨ GLOXOO — tek satır: yüz + "ne yazayım söyle" (yaz/konuş) + Öner */}
             <div className="pyl-ai">
-              <button className="pyl-ai-btn tek" onClick={aiYaziOner} disabled={aiYukleniyor}>
-                <span className="pyl-ai-yuz"><MaskotYuz tur="grox" boyut={30} arastir={aiYukleniyor} konusuyor={false} dinliyor={false} /></span>
-                {aiYukleniyor ? t("gloxooDusunuyor", "Gloxoo bakıyor…") : ((paylasGorsel || paylasVideo) ? t("gloxooOner2", "Gloxoo yazı önersin (fotoğrafına bakar)") : t("gloxooOner", "Gloxoo yazı önersin"))}
-              </button>
+              <div className="pyl-ai-satir">
+                <span className="pyl-ai-yuz"><MaskotYuz tur="grox" boyut={32} arastir={aiYukleniyor || aiIstekDinliyor} konusuyor={false} dinliyor={aiIstekDinliyor} /></span>
+                <input className="pyl-ai-istek" value={aiIstek} onChange={(e) => setAiIstek(e.target.value)}
+                  placeholder={(paylasGorsel || paylasVideo) ? t("gloxooNe2", "Ne yazsın? (boş = görselden yazar)") : t("gloxooNe", "Gloxoo'ya ne yazayım de…")} />
+                <button className={"pyl-ai-mik" + (aiIstekDinliyor ? " dinliyor" : "")} onClick={aiIstekDinle} aria-label={t("konus", "Konuş")}>🎤</button>
+                <button className="pyl-ai-btn2" onClick={aiYaziOner} disabled={aiYukleniyor}>{aiYukleniyor ? "…" : t("gloxooOner3", "Öner")}</button>
+              </div>
               {aiOneriler.length > 0 && (
                 <div className="pyl-ai-liste">
                   {aiOneriler.map((o, k) => (
@@ -6276,9 +6297,13 @@ export default function Anasayfa({ pro = false }) {
                       <div className="ayar-anameslek-bas"><span>{t("ayarProfildeGorunen", "Profilde / paylaşımda görünecek meslek")}</span><BilgiBtn metin={t("aciklamaAnaMeslek", "Aramada tüm mesleklerin çıkar. Ama profilinde ve paylaşımlarında SADECE BİR meslek görünür (pencereye hepsi sığmaz). Aşağıdan hangisinin görüneceğini seç — üzerine dokun, yıldızlı olan profilinde görünür.")} onAc={setAciklama} /></div>
                       <div className="ayar-anameslek-cipler">
                         {secm.map((x) => (
-                          <button key={x} className={"ayar-anameslek-cip" + (x === ana ? " ana" : "")} onClick={() => ayarAnaMeslek(x)}>{x === ana ? "⭐ " : ""}{mc(x, dil)}</button>
+                          <span key={x} className={"ayar-anameslek-cip" + (x === ana ? " ana" : "")}>
+                            <button className="ayar-anameslek-ad" onClick={() => ayarAnaMeslek(x)}>{x === ana ? "⭐ " : ""}{mc(x, dil)}</button>
+                            <button className="ayar-anameslek-sil" onClick={() => meslekToggle(x)} aria-label={t("sil", "Sil")} title={t("meslekSil", "Bu mesleği kaldır")}>✕</button>
+                          </span>
                         ))}
                       </div>
+                      <div className="ayar-anameslek-ipucu">{t("meslekSilIpucu", "Bir mesleği kaldırmak için yanındaki ✕'e bas.")}</div>
                     </div>
                   ); })()}
                   <p className="ayar-not">{t("ayarSektorNot", "Hangi bölümdesin? Bir kategori seç, ara, dokun. Birden fazla seçebilirsin (aramalarda hepsi çıkar). Listede yoksa kendin yaz, ekle.")}</p>
