@@ -204,6 +204,7 @@ function TurAmblem({ tip }) {
     case "duyuru": return w(<><path d="M4 10.5v3a1 1 0 0 0 1 1h2l5.5 4v-13L7 9.5H5a1 1 0 0 0-1 1z" /><path d="M16.5 8.5a5 5 0 0 1 0 7" /></>);
     case "soru": return w(<><circle cx="12" cy="12" r="9" /><path d="M9.3 9.4a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.2-2.7 4" /><circle cx="12" cy="17.2" r=".7" fill="currentColor" stroke="none" /></>);
     case "yazi": return w(<><path d="M5 6h14M5 10h14M5 14h10M5 18h7" /></>);
+    case "dosya": return w(<><path d="M3.5 7a2 2 0 0 1 2-2h3.2l2 2.2H18.5a2 2 0 0 1 2 2v7.3a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7z" /></>);
     default: return w(<rect x="3" y="6" width="18" height="14" rx="2" />);
   }
 }
@@ -1397,8 +1398,6 @@ export default function Anasayfa({ pro = false }) {
   const YAZI_SECENEK = ["", "#ffffff", "#f2e9d8", "#FFD700", "#FFA62B", "#ff5d68", "#c0303d", "#ff8fc7", "#a06bff", "#7fe0ff", "#5aa6e0", "#46d37a", "#9be29b", "#111111"];
   const paylasFotoRef = useRef(null);
   const paylasVideoRef = useRef(null);
-  const paylasKamFotoRef = useRef(null);   // KAMERA ile foto çek (capture)
-  const paylasKamVideoRef = useRef(null);  // KAMERA ile video çek (capture)
   const paylasDosyaRef = useRef(null);     // DOSYA (belge) seç
   const [tamFoto, setTamFoto] = useState("");          // fotoğrafa basınca TAM EKRAN görüntü
   const [tamYatay, setTamYatay] = useState(false);     // açılan görsel YATAY/geniş mi (fill mi contain mi)
@@ -3522,6 +3521,7 @@ export default function Anasayfa({ pro = false }) {
   const PAYLAS_TURLER = [
     { ad: "Fotoğraf", cev: "turFoto", tip: "foto", renk: "#2ecc71", foto: true },
     { ad: "Video", cev: "turVideo", tip: "video", renk: "#e74c3c", video: true },
+    { ad: "Dosya", cev: "turDosya", tip: "dosya", renk: "#7fb0ff", dosya: true },
     { ad: "İş İlanı", cev: "turIsIlani", tip: "is", renk: "#9b59b6" },
     { ad: "Ürün / Hizmet", cev: "turUrun", tip: "urun", renk: "#1fc2c2" },
     { ad: "Tavsiye", cev: "turTavsiye", tip: "tavsiye", renk: "#f2a900" },
@@ -5065,13 +5065,6 @@ export default function Anasayfa({ pro = false }) {
                   <button className="pyl-dosya-sil" onClick={() => setPaylasDosya(null)} aria-label="Kaldır">✕</button>
                 </div>
               )}
-              {/* MEDYA ARAÇLARI — kamera/galeri/dosya (hemen çek & gönder) */}
-              <div className="pyl-medya">
-                <button className="pyl-medya-btn" onClick={() => paylasKamFotoRef.current && paylasKamFotoRef.current.click()}>📷 {t("fotoCek", "Fotoğraf çek")}</button>
-                <button className="pyl-medya-btn" onClick={() => paylasKamVideoRef.current && paylasKamVideoRef.current.click()}>🎥 {t("videoCek", "Video çek")}</button>
-                <button className="pyl-medya-btn" onClick={() => paylasFotoRef.current && paylasFotoRef.current.click()}>🖼️ {t("galeri", "Galeri")}</button>
-                <button className="pyl-medya-btn" onClick={() => paylasDosyaRef.current && paylasDosyaRef.current.click()}>📁 {t("dosya", "Dosya")}</button>
-              </div>
             </div>
             {/* KAYAN AYARLAR — üstteki foto+yazı SABİT kalır, buradan aşağısı onun altından kayar */}
             <div className="pyl-kaydir">
@@ -5112,18 +5105,17 @@ export default function Anasayfa({ pro = false }) {
             )}
             <input ref={paylasFotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={paylasFotoSec} />
             <input ref={paylasVideoRef} type="file" accept="video/*" style={{ display: "none" }} onChange={paylasVideoSec} />
-            <input ref={paylasKamFotoRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={paylasFotoSec} />
-            <input ref={paylasKamVideoRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={paylasVideoSec} />
             <input ref={paylasDosyaRef} type="file" style={{ display: "none" }} onChange={paylasDosyaSec} />
             {paylasDurum === "buyuk" && <div className="adm-durum hata">{t("paylasVideoBuyuk3", "Bu video çok büyük (en fazla 80 MB). Daha kısa bir video seç.")}</div>}
             {paylasDurum === "video" && <div className="adm-durum">{t("paylasVideoYuk", "Video yükleniyor…")} %{paylasYukleme}</div>}
             {paylasDurum === "videohata" && <div className="adm-durum hata">{t("paylasVideoHata2", "Video yüklenemedi, tekrar dene (internet/dosya boyutu).")}</div>}
             <div className="pyl-secenek">
               {PAYLAS_TURLER.map((s) => (
-                <button key={s.ad} className={"pyl-chip" + (((s.foto && paylasGorsel) || (s.video && (paylasVideo || paylasVideoFile)) || (!s.foto && !s.video && paylasTur === s.ad)) ? " secili" : "")} style={{ "--c": s.renk }}
+                <button key={s.ad} className={"pyl-chip" + (((s.foto && paylasGorsel) || (s.video && (paylasVideo || paylasVideoFile)) || (s.dosya && paylasDosya) || (!s.foto && !s.video && !s.dosya && paylasTur === s.ad)) ? " secili" : "")} style={{ "--c": s.renk }}
                   onClick={() => {
-                    if (s.foto) { if (paylasFotoRef.current) paylasFotoRef.current.click(); }       /* FOTOĞRAF/VİDEO sadece medya EKLER, türü DEĞİŞTİRMEZ (Etkinlik vb. korunur) */
+                    if (s.foto) { if (paylasFotoRef.current) paylasFotoRef.current.click(); }       /* FOTOĞRAF/VİDEO/DOSYA sadece medya EKLER, türü DEĞİŞTİRMEZ (Etkinlik vb. korunur) */
                     else if (s.video) { if (paylasVideoRef.current) paylasVideoRef.current.click(); }
+                    else if (s.dosya) { if (paylasDosyaRef.current) paylasDosyaRef.current.click(); }
                     else { setPaylasTur(s.ad); }                                                    /* diğerleri TÜRÜ seçer */
                   }}>
                   <span className="pyl-ik" style={{ color: s.renk }} aria-hidden="true"><TurAmblem tip={s.tip} /></span>{t(s.cev, s.ad)}
