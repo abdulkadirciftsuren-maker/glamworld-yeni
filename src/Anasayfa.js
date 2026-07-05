@@ -490,6 +490,71 @@ function oneriIkon(metin) {
   return "✨";
 }
 
+// HER SAYFANIN NE İŞE YARADIĞINI anlatan açıklama — Ekspert (🐻) sayfaya İLK girişte konuşarak+yazarak söyler,
+// sonra istenirse üstteki Ekspert düğmesiyle tekrar dinlenir. (Dil yoksa en'e düşer; 13 dil çevirisi sonraki adım.)
+const SAYFA_ACIKLAMA = {
+  home: {
+    tr: "Burası Keşfet — ana akış. Profesyonellerin paylaşımlarını görürsün; beğenir, yorum yapar, kaydeder ve paylaşabilirsin. Yeni bir şey paylaşmak için alttaki artı (＋) düğmesine bas. Bir yazıya sorumu sormak için üstümdeki elmasa dokun.",
+    en: "This is Discover — the main feed. You see professionals' posts; you can like, comment, save and share. Tap the plus (＋) button below to post something new. Tap the diamond to ask me about any post.",
+    de: "Das ist Entdecken — der Hauptfeed. Du siehst Beiträge von Profis; du kannst liken, kommentieren, speichern und teilen. Tippe unten auf Plus (＋), um etwas Neues zu posten.",
+  },
+  ara: {
+    tr: "Burası Arama. Meslek, isim ya da şehir yazarak profesyonelleri ve gönderileri bulursun. Aradığını yaz, sana en uygun sonuçları getireyim.",
+    en: "This is Search. Type a profession, name or city to find professionals and posts. Type what you're looking for and I'll bring the best matches.",
+    de: "Das ist die Suche. Tippe Beruf, Name oder Stadt ein, um Profis und Beiträge zu finden. Schreib, was du suchst.",
+  },
+  konum: {
+    tr: "Burası Konum. Yakınındaki profesyonelleri ve işleri haritada görürsün. İzin verirsen sana en yakın olanları gösteririm.",
+    en: "This is Location. See professionals and jobs near you on the map. Allow location and I'll show the closest ones.",
+    de: "Das ist Standort. Sieh Profis und Jobs in deiner Nähe auf der Karte. Erlaube den Standort und ich zeige die nächsten.",
+  },
+  mesaj: {
+    tr: "Burası Mesajlar. Bağ kurduğun kişilerle özel yazışırsın. Bir sohbete dokun ya da yeni bir mesaj başlat.",
+    en: "This is Messages. Chat privately with your connections. Tap a conversation or start a new message.",
+    de: "Das sind Nachrichten. Schreibe privat mit deinen Kontakten. Tippe auf einen Chat oder starte eine neue Nachricht.",
+  },
+  profil: {
+    tr: "Burası Profilin — vitrinin. Fotoğrafın, mesleğin ve paylaşımların burada. Düzenle düğmesiyle bilgilerini güncelleyebilirsin.",
+    en: "This is your Profile — your showcase. Your photo, profession and posts are here. Use Edit to update your details.",
+    de: "Das ist dein Profil — deine Visitenkarte. Foto, Beruf und Beiträge sind hier. Mit Bearbeiten aktualisierst du deine Angaben.",
+  },
+  paylas: {
+    tr: "Burası Paylaşım. Fotoğraf, video, dosya ya da yazı paylaşabilirsin. İstersen üstteki başlığı yaz; kararsızsan Gloxoo sana ne yazacağını önersin. Hazır olunca Paylaş'a bas, kategoriyi seç.",
+    en: "This is Sharing. Post a photo, video, file or text. Add a title on top; if unsure, let Gloxoo suggest what to write. When ready press Share and pick a category.",
+    de: "Das ist Teilen. Poste Foto, Video, Datei oder Text. Gib oben einen Titel ein; unsicher? Gloxoo schlägt dir etwas vor. Dann Teilen drücken und Kategorie wählen.",
+  },
+  ayarlar: {
+    tr: "Burası Ayarlar. Dilini, mesleklerini, bildirimlerini ve hesabınla ilgili her şeyi buradan değiştirebilirsin.",
+    en: "These are Settings. Change your language, professions, notifications and everything about your account here.",
+    de: "Das sind Einstellungen. Ändere hier Sprache, Berufe, Benachrichtigungen und alles rund um dein Konto.",
+  },
+  bildirim: {
+    tr: "Burası Bildirimler. Beğeni, yorum, takip ve mesajların burada birikir. Birine dokununca seni ilgili yere götürürüm.",
+    en: "These are Notifications. Likes, comments, follows and messages gather here. Tap one and I'll take you there.",
+    de: "Das sind Benachrichtigungen. Likes, Kommentare, Follows und Nachrichten sammeln sich hier. Tippe darauf, ich bringe dich hin.",
+  },
+  elite: {
+    tr: "Burası Elite Pazar — seçkin ürün ve hizmetler. Yakında dolacak, hazırlanıyoruz.",
+    en: "This is Elite Market — premium products and services. Coming soon, we're preparing it.",
+    de: "Das ist der Elite-Markt — erlesene Produkte und Dienste. Kommt bald.",
+  },
+  topluluk: {
+    tr: "Burası Topluluk — meslektaşlarınla buluşma alanı. Yakında açılıyor.",
+    en: "This is Community — a space to meet peers. Coming soon.",
+    de: "Das ist die Community — ein Ort für den Austausch. Kommt bald.",
+  },
+  video: {
+    tr: "Burası Canlı Akış — kısa videolar. Yukarı kaydırarak izler, beğenir ve paylaşırsın.",
+    en: "This is Live Feed — short videos. Swipe up to watch, like and share.",
+    de: "Das ist der Live-Feed — kurze Videos. Nach oben wischen zum Ansehen, Liken und Teilen.",
+  },
+  akademi: {
+    tr: "Burası Akademi — öğrenme ve eğitim içerikleri. Yakında.",
+    en: "This is Academy — learning and training content. Coming soon.",
+    de: "Das ist die Akademie — Lern- und Schulungsinhalte. Kommt bald.",
+  },
+};
+
 // CANLI MASKOT YÜZÜ — konuşurken (konusuyor=true) ağzı açılıp kapanır + hafif zıplar. tur: "grox" (elmas) | "ekspert" (ayı).
 function MaskotYuz({ konusuyor = false, dinliyor = false, arastir = false, tur = "grox", boyut = 30, rozet = false, children }) {
   // AI ROZET DURUMU (renk): dinliyor=YEŞİL, konuşuyor=MAVİ, araştırıyor(düşünüyor)=TURUNCU, boşta(kapalı)=KIRMIZI
@@ -1112,6 +1177,9 @@ export default function Anasayfa({ pro = false }) {
   const [miniEtiket, setMiniEtiket] = useState(""); // ikon düğmeye basınca ÜSTÜNDE ne olduğu yazar (kısa süre)
   const miniEtiketZmn = useRef(null);
   const [maskotMetni, setMaskotMetni] = useState("");
+  // GEZİLEN SAYFALAR — Ekspert her sayfayı yalnız İLK girişte otomatik anlatır (kalıcı: cihazda saklanır).
+  const [gezilenSayfa, setGezilenSayfa] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("gloxGezilenSayfa") || "[]")); } catch (e) { return new Set(); } });
+  const gezilenSayfaRef = useRef(gezilenSayfa); useEffect(() => { gezilenSayfaRef.current = gezilenSayfa; }, [gezilenSayfa]);
   const maskotBalonRef = useRef(null); // BÜYÜK maskot balonu — okurken teleprompter gibi kaydırma
   const [okunanKelime, setOkunanKelime] = useState(-1); // ŞU AN okunan KELİME indeksi (balonda vurgulanır + ▸ imleç)
   const okunanKelimeRef = useRef(-1);
@@ -1365,33 +1433,26 @@ export default function Anasayfa({ pro = false }) {
   };
   const maskotTanitTik = () => { if (maskotSwipeYapildi.current) { maskotSwipeYapildi.current = false; return; } maskotKucult(); }; // büyük maskota/boşluğa dokun = KÜÇÜL (kapatma DEĞİL — sadece ✕ kapatır)
   const maskotSohbetAc = () => { setMaskotTanit(false); setYardimciMod(maskotTur === "ekspert" ? "site" : "sohbet"); setYardimciAcik(true); }; // "Yaz" → tam panel (Ekspert=site, GLOXORG=sohbet). KONUŞMAYI KESME: kullanıcı yazıları görmek için açtı, karşılama sesli devam etsin (B-AI: "yazıyı açtım, o konuşma devam edecek")
-  // EKSPERT (ayı) maskotuna dokun → büyür + sayfa uzmanı gibi konuşur, bitince çekilir
-  const eksperTanitYap = () => {
-    // HANGİ SAYFA/PENCERE açık: önce üstteki açık pencereler, yoksa alt sekme (aktifKod) → ayı NEREDE olduğunu bilir
-    const sayfaAd = ayarlarAcik ? "Ayarlar" : paylasAcik ? "Paylaşım (gönderi yazma)" : araAcik ? "Arama" : mesajAcik ? "Mesajlar" : bildirimAcik ? "Bildirimler"
-      : ({ home: "Ana sayfa / Keşfet", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", konum: "Konum", akademi: "Akademi", profil: "Profil" }[aktifKodRef.current] || "Ana sayfa / Keşfet");
-    const ad = hitapAdi(); const _ea = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
+  // ŞU AN AÇIK olan sayfa/pencere kodu — Ekspert NEREDE olduğunu bilir (üst pencereler öncelikli, yoksa alt sekme)
+  const mevcutSayfaKodu = () =>
+    ayarlarAcikRef.current ? "ayarlar" : paylasAcikRef.current ? "paylas" : araAcikRef.current ? "ara" : mesajAcikRef.current ? "mesaj" : bildirimAcikRef.current ? "bildirim" : (aktifKodRef.current || "home");
+  // EKSPERT (ayı) maskotuna dokun (veya sayfaya İLK giriş) → büyür + O SAYFANIN NE İŞE YARADIĞINI konuşarak+yazarak anlatır.
+  // otomatik=true → ilk-giriş otomatik anlatımı: mikrofonu ZORLA açmaz (kullanıcıyı boğmaz); düğmeyle açılınca canlı dinler.
+  const eksperTanitYap = (otomatik) => {
+    const ak = mevcutSayfaKodu();
+    const sayfaAdlar = { home: "Ana sayfa / Keşfet", ara: "Arama", konum: "Konum", mesaj: "Mesajlar", profil: "Profil", paylas: "Paylaşım", ayarlar: "Ayarlar", bildirim: "Bildirimler", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", akademi: "Akademi" };
+    const sayfaAd = sayfaAdlar[ak] || "Ana sayfa / Keşfet";
     setYardimciBaglam(`Kullanıcı şu an GLOXORG "${sayfaAd}" sayfasında; bu sayfanın eksperti gibi yardım et.`);
-    const EK = {
-      tr: `Selam${_ea}! Ben Ekspert 🐻, bu sayfanın uzmanıyım. Şu an "${sayfaAd}" sayfasındasın — burayla ilgili ne istersen sor, konuş ya da yaz!`,
-      en: `Hi${_ea}! I'm Ekspert 🐻, the expert of this page. You're on "${sayfaAd}" — ask me anything about it, talk or type!`,
-      de: `Hallo${_ea}! Ich bin Ekspert 🐻, der Experte dieser Seite. Du bist auf „${sayfaAd}" — frag mich alles dazu, sprich oder schreib!`,
-      fr: `Salut${_ea}! Je suis Ekspert 🐻, l'expert de cette page. Tu es sur « ${sayfaAd} » — demande-moi tout, parle ou écris !`,
-      es: `¡Hola${_ea}! Soy Ekspert 🐻, el experto de esta página. Estás en "${sayfaAd}" — pregúntame lo que quieras, habla o escribe.`,
-      it: `Ciao${_ea}! Sono Ekspert 🐻, l'esperto di questa pagina. Sei su "${sayfaAd}" — chiedimi qualsiasi cosa, parla o scrivi!`,
-      pt: `Olá${_ea}! Sou o Ekspert 🐻, o especialista desta página. Estás em "${sayfaAd}" — pergunta-me o que quiseres, fala ou escreve!`,
-      ru: `Привет${_ea}! Я Ekspert 🐻, эксперт этой страницы. Ты на «${sayfaAd}» — спрашивай что угодно, говори или пиши!`,
-      uk: `Привіт${_ea}! Я Ekspert 🐻, експерт цієї сторінки. Ти на «${sayfaAd}» — питай що завгодно, говори або пиши!`,
-      ar: `مرحبًا${_ea}! أنا Ekspert 🐻، خبير هذه الصفحة. أنت في "${sayfaAd}" — اسألني أي شيء، تحدث أو اكتب!`,
-      zh: `你好${_ea}！我是 Ekspert 🐻，本页的专家。你在"${sayfaAd}"——尽管问我，说话或打字都行！`,
-      ja: `やあ${_ea}！私は Ekspert 🐻、このページの専門家です。今「${sayfaAd}」にいます——何でも聞いて、話しても書いてもOK！`,
-      hi: `नमस्ते${_ea}! मैं Ekspert 🐻 हूँ, इस पेज का विशेषज्ञ। तुम "${sayfaAd}" पर हो — इसके बारे में कुछ भी पूछो, बोलो या लिखो!`,
-    };
-    const selam = EK[aiDilRef.current] || EK.en;
+    const ad = hitapAdi(); const _ea = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
+    const INTRO = { tr: `Selam${_ea}! Ben Ekspert 🐻.`, en: `Hi${_ea}! I'm Ekspert 🐻.`, de: `Hallo${_ea}! Ich bin Ekspert 🐻.` };
+    const intro = INTRO[aiDilRef.current] || INTRO.en;
+    const ack = SAYFA_ACIKLAMA[ak] || SAYFA_ACIKLAMA.home;
+    const aciklama = ack[aiDilRef.current] || ack.en;
+    const selam = intro + " " + aciklama;
     setMaskotTur("ekspert"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
     // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
     try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
-    maskotCanliBaslat(); // ekspert de karşılamadan sonra mikrofonu açıp seni bekler, sohbete devam eder
+    if (!otomatik) maskotCanliBaslat(); // düğmeyle açılınca: karşılamadan sonra mikrofonu açıp seni bekler
   };
   const [paylasDuzen, setPaylasDuzen] = useState(null); // paylaşım fotoğrafının katman hafızası (yeniden düzenle)
   const [paylasZemin, setPaylasZemin] = useState(""); // yazılı gönderi ZEMİN (arka plan) rengi/gradyanı
@@ -4106,6 +4167,26 @@ export default function Anasayfa({ pro = false }) {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ───────── EKSPERT İLK-GİRİŞ ANLATIMI (#2) ─────────
+  // Kullanıcı bir sayfaya/pencereye İLK kez girdiğinde Ekspert (🐻) O sayfanın ne işe yaradığını KONUŞARAK+YAZARAK
+  // bir kez anlatır (kalıcı: gloxGezilenSayfa). Sonra istenirse üstteki Ekspert düğmesiyle tekrar dinlenir.
+  // Otomatik anlatımda mikrofon ZORLA açılmaz (kullanıcıyı boğmaz). Başka konuşma/karşılama açıkken bekler.
+  useEffect(() => {
+    if (!u) return; // giriş yapmadan anlatma
+    const ak = mevcutSayfaKodu();
+    if (ak === "home" || ak === "paylas") return; // Ana sayfa: Gloxoo karşılaması anlatır. Paylaş: kendi Gloxoo yardımı var (bear kapatmasın). İkisi de Ekspert düğmesiyle istenince anlatır.
+    if (gezilenSayfaRef.current.has(ak)) return;
+    if (maskotTanit || maskotSelam || yardimciAcik || tamFoto || uyeSayfa) return; // başka konuşma/tam ekran varken bekle
+    const zmn = setTimeout(() => {
+      const ak2 = mevcutSayfaKodu();
+      if (!ak2 || ak2 === "home" || gezilenSayfaRef.current.has(ak2)) return;
+      if (maskotTanitRef.current || yardimciAcikRef.current) return; // arada bir konuşma başladıysa iptal
+      setGezilenSayfa((s) => { const n = new Set(s); n.add(ak2); try { localStorage.setItem("gloxGezilenSayfa", JSON.stringify([...n])); } catch (e) {} return n; });
+      try { eksperTanitYap(true); } catch (e) {}
+    }, 850); // sayfa otursun + kullanıcı yerleşsin
+    return () => clearTimeout(zmn);
+  }, [u, aktifKod, ayarlarAcik, paylasAcik, mesajAcik, araAcik, bildirimAcik, maskotTanit, maskotSelam, yardimciAcik, tamFoto, uyeSayfa]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Parmak kaydırma takibi (pencere değiştirme) için başlangıç noktası
   const dokunRef = useRef(null);
