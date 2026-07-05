@@ -2170,7 +2170,7 @@ export default function Anasayfa({ pro = false }) {
   // (kullanıcı: ayarlarda konsantrasyon vb. ayarlarken klavye çıkmasın — sadece yazı şeridine basınca çıksın)
   function klavyeKapatDokun(e) {
     try {
-      if (e.target && e.target.closest && e.target.closest('textarea, input[type="text"], input[type="search"]')) return;
+      if (e.target && e.target.closest && e.target.closest('textarea, input[type="text"], input[type="search"], input:not([type])')) return;
       const a = document.activeElement;
       if (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && /^(text|search|)$/.test(a.type || "")))) a.blur();
     } catch (x) {}
@@ -2585,7 +2585,7 @@ export default function Anasayfa({ pro = false }) {
       rec.start();
     } catch (e) { setAiIstekDinliyor(false); }
   }
-  async function aiYaziOner() {
+  async function aiYaziOner(istekOverride) {
     if (aiYukleniyor) return;
     setAiYukleniyor(true); setAiOneriler([]);
     const meslek = meslekAd || (profilBilgi && profilBilgi.pro && profilBilgi.pro.meslek) || t("aiUzman", "uzman");
@@ -2593,7 +2593,7 @@ export default function Anasayfa({ pro = false }) {
     const tur = paylasTur || "";
     const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" }[dil] || "Türkçe";
     const mevcut = (paylasYazi || "").trim();
-    const istek = (aiIstek || "").trim(); // kullanıcının Gloxoo'ya söylediği ne yazmak istediği
+    const istek = ((typeof istekOverride === "string" ? istekOverride : aiIstek) || "").trim(); // kullanıcının Gloxoo'ya söylediği ne yazmak istediği (düğmeden hazır istek de gelebilir)
     // FOTO ya da VİDEO KARESİ ile Claude GÖRSÜN (vision) → içeriğe UYGUN, gerçekçi öneri
     let imgKaynak = null;
     try {
@@ -5319,15 +5319,25 @@ export default function Anasayfa({ pro = false }) {
             <div className="pyl-kaydir">
             {/* ✨ GLOXOO — BÜYÜK şerit: üstte yüz + açıklama (uzun → parmakla yana kayar), altta yaz/konuş + küçük düğmeler */}
             <div className="pyl-ai">
+              {/* ÜST: Gloxoo ikonu + KONUŞMA BALONU (açıklama uzun → parmakla YANA kayar, sabit değil) */}
               <div className="pyl-ai-ust">
                 <span className="pyl-ai-yuz"><MaskotYuz tur="grox" boyut={34} arastir={aiYukleniyor || aiIstekDinliyor} konusuyor={false} dinliyor={aiIstekDinliyor} /></span>
-                <div className="pyl-ai-aciklama">{t("gloxooAciklama", "Gloxoo senin için paylaşım yazısı yazar. Fotoğraf/videona bakar ya da aşağıya ne istediğini yaz veya 🎤 ile söyle — sana hazır bir metin önersin. Beğenmezsen tekrar Öner'e bas.")}</div>
+                <div className="pyl-ai-balon"><div className="pyl-ai-aciklama">{t("gloxooAciklama", "Gloxoo senin için paylaşım yazısı yazar. Fotoğraf/videona bakar ya da aşağıya ne istediğini yaz veya 🎤 ile söyle — sana hazır bir metin önersin. Beğenmezsen tekrar Öner'e bas.")}</div></div>
               </div>
+              {/* FOTO/VİDEO yüklüyse: yazmadan tek dokunuşla sorma DÜĞMELERİ */}
+              {(paylasGorsel || paylasVideo) && (
+                <div className="pyl-ai-hizli">
+                  <button className="pyl-ai-hiz" onClick={() => { const s = t("gloxooHiz1", "Bu görselde ne görüyorsun? Buna uygun güzel bir paylaşım yazısı yaz."); setAiIstek(s); aiYaziOner(s); }} disabled={aiYukleniyor}>🔍 {t("gloxooHiz1e", "Ne görüyorsun?")}</button>
+                  <button className="pyl-ai-hiz" onClick={() => { const s = t("gloxooHiz2", "Bu görsele uygun kısa, akılda kalıcı bir paylaşım yazısı öner."); setAiIstek(s); aiYaziOner(s); }} disabled={aiYukleniyor}>✍️ {t("gloxooHiz2e", "Yazı öner")}</button>
+                  <button className="pyl-ai-hiz" onClick={() => { const s = t("gloxooHiz3", "Bu görsele uygun eğlenceli, samimi bir paylaşım yazısı yaz (emoji kullan)."); setAiIstek(s); aiYaziOner(s); }} disabled={aiYukleniyor}>😊 {t("gloxooHiz3e", "Eğlenceli yaz")}</button>
+                </div>
+              )}
+              {/* ALT: çok satırlı yaz kutusu (ne yazdığını gör) + KÜÇÜK mikrofon + Öner */}
               <div className="pyl-ai-satir">
-                <input className="pyl-ai-istek" value={aiIstek} onChange={(e) => setAiIstek(e.target.value)}
+                <textarea className="pyl-ai-istek" value={aiIstek} rows={2} onChange={(e) => setAiIstek(e.target.value)}
                   placeholder={(paylasGorsel || paylasVideo) ? t("gloxooNe2", "Ne yazsın? (boş = görselden yazar)") : t("gloxooNe", "Gloxoo'ya ne yazayım de…")} />
                 <button className={"pyl-ai-mik" + (aiIstekDinliyor ? " dinliyor" : "")} onClick={aiIstekDinle} aria-label={t("konus", "Konuş")}>🎤</button>
-                <button className="pyl-ai-btn2" onClick={aiYaziOner} disabled={aiYukleniyor}>{aiYukleniyor ? "…" : t("gloxooOner3", "Öner")}</button>
+                <button className="pyl-ai-btn2" onClick={() => aiYaziOner()} disabled={aiYukleniyor}>{aiYukleniyor ? "…" : t("gloxooOner3", "Öner")}</button>
               </div>
               {aiOneriler.length > 0 && (
                 <div className="pyl-ai-liste">

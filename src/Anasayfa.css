@@ -366,8 +366,8 @@
 .apr-kategori-ik{ width:12px; height:12px; flex:none; display:flex; }
 .apr-kategori-ik svg{ width:100%; height:100%; }
 .apr-kategori-ad{ font-family:'Cinzel',serif; font-size:9.5px; font-weight:800; color:#1a1206; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em; }
-@media (min-width:560px){ .apr-kategori{ gap:5px; padding:3px 10px 3px 7px; } .apr-kategori-ik{ width:15px; height:15px; } .apr-kategori-ad{ font-size:12.5px; } }
-@media (min-width:1100px){ .apr-kategori-ik{ width:17px; height:17px; } .apr-kategori-ad{ font-size:14px; } }
+@media (min-width:560px) and (min-height:600px){ .apr-kategori{ gap:5px; padding:3px 10px 3px 7px; } .apr-kategori-ik{ width:15px; height:15px; } .apr-kategori-ad{ font-size:12.5px; } }
+@media (min-width:1100px) and (min-height:600px){ .apr-kategori-ik{ width:17px; height:17px; } .apr-kategori-ad{ font-size:14px; } }
 /* sağ dikey ikon raili — fotoğrafın ÜZERİNDE, DİKEY ORTADA (üstteki tür ikonu ve alttaki yazıyla ÇAKIŞMAZ) */
 /* İKON ŞERİDİ: fotoğrafın/videonun ALTINDA AYRI şerit; ZEMİN = PENCERENİN RENGİ (--pc), siyah değil */
 .apr-rail{ position:static; display:flex; flex-direction:row; align-items:center; justify-content:space-around; gap:0; padding:6px 8px;
@@ -494,7 +494,7 @@
 .tf-dip .tf-vid-bar{ width:100%; }
 .tf-dip .tf-alt{ background:none; }
 .tf-ustarac .tf-ic{ height:24px; } .tf-ustarac .tf-ic svg{ width:24px; height:24px; }
-@media (min-width:560px){ .tf-ustarac{ bottom:54px; } .tf-ustarac .tf-ic{ height:30px; } .tf-ustarac .tf-ic svg{ width:30px; height:30px; } }
+@media (min-width:560px) and (min-height:600px){ .tf-ustarac{ bottom:54px; } .tf-ustarac .tf-ic{ height:30px; } .tf-ustarac .tf-ic svg{ width:30px; height:30px; } }
 .tf-vid-dugme{ flex:none; width:32px; height:32px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#1a1206; background:linear-gradient(180deg,#ffe9a8,#ffd700); box-shadow:0 2px 7px rgba(0,0,0,.5); }
 .tf-vid-dugme svg{ width:16px; height:16px; }
 .tf-vid-zaman{ flex:none; font-size:11px; font-weight:700; color:#FFE9A8; font-variant-numeric:tabular-nums; text-shadow:0 1px 3px rgba(0,0,0,.95); min-width:68px; }
@@ -502,7 +502,7 @@
   background:linear-gradient(90deg,#ffd700 var(--ilerle,0%), rgba(255,255,255,.28) var(--ilerle,0%)); }
 .tf-vid-seek::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:17px; height:17px; border-radius:50%; border:none; cursor:pointer; background:radial-gradient(circle at 38% 32%,#fff,#ffd700 60%,#b8860b); box-shadow:0 1px 4px rgba(0,0,0,.6); }
 .tf-vid-seek::-moz-range-thumb{ width:17px; height:17px; border:none; border-radius:50%; background:#ffd700; }
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   .tf-vid-buyuk{ width:84px; height:84px; } .tf-vid-buyuk .gercek-pir{ width:48px; height:48px; }
   .tf-vid-dugme{ width:54px; height:54px; } .tf-vid-dugme svg{ width:28px; height:28px; }
   .tf-vid-zaman{ font-size:16px; min-width:108px; } .tf-vid-seek{ height:8px; }
@@ -538,9 +538,14 @@
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)); }
 .tf-ic svg{ width:20px; height:20px; }
 .tf-ic span{ display:none; } /* sayı gizli → simetrik */
-@media (max-height:560px){ .tf-rail{ gap:9px; } .tf-ic, .tf-ic svg{ height:20px; width:20px; } } /* yatay/kısa ekran: rail küçük, sığar */
+@media (max-height:560px){ .tf-rail{ gap:9px; } .tf-ic, .tf-ic svg{ height:20px; width:20px; }
+  /* YATAY/kısa ekran (telefon yan): fotoğraf ekranı DOLDURUR (kullanıcı isteği) — yanlarda boşluk kalmasın, kenardan az kırpılır */
+  .tamfoto-img{ object-fit:cover; }
+  /* foto üstü yazı yatayda küçülsün (dev+kesik olmasın) */
+  .tf-ustyazi.boy-kucuk{ font-size:15px; } .tf-ustyazi.boy-orta{ font-size:20px; } .tf-ustyazi.boy-buyuk{ font-size:26px; }
+} /* yatay/kısa ekran: rail küçük, sığar */
 /* BİLGİSAYAR/iPAD: dikey ikonlar BÜYÜK + aralıklı + pencereden UZAK (telefon boyutu sızmasın) */
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   .tf-rail{ padding:8px 6vw; } /* alt ikon şeridi dikey AZALT (bilgisayar) */
   .tf-ic{ height:36px; } .tf-ic svg{ width:36px; height:36px; }
   .tamfoto-kapat{ width:48px; height:48px; font-size:24px; top:18px; right:22px; }
@@ -556,7 +561,7 @@
   .tf-ai .apr-ai-tas{ width:20px; height:20px; }
 }
 /* iPad/tablet tam ekran da büyük (telefon base'inde kalmasın) */
-@media (min-width:560px) and (max-width:1099px){
+@media (min-width:560px) and (max-width:1099px) and (min-height:600px){
   .tf-rail{ padding:8px 5vw; } /* alt ikon şeridi dikey AZALT (iPad/tablet) */
   .tf-ic{ height:36px; } .tf-ic svg{ width:36px; height:36px; }
   .tf-avatar{ width:52px; height:52px; } .tf-kim b{ font-size:19px; } .tf-kim i{ font-size:15px; }
@@ -626,7 +631,7 @@
 .apf-bolum:nth-child(-n+2).aktif .apf-bolum-ad{ left:0; transform:none; }
 .apf-bolum:nth-child(-n+2).aktif .apf-bolum-ad::after{ left:13px; transform:none; }
 /* Bilgisayar/tablet: daha büyük ama yine TEK SIRA yan yana */
-@media (min-width:560px){ .apf-bolumler{ gap:4px; } .apf-bolum{ max-width:62px; border-radius:12px; } .apf-bolum-ik{ width:27px; height:27px; } .apf-bolum-ad{ font-size:13px; } }
+@media (min-width:560px) and (min-height:600px){ .apf-bolumler{ gap:4px; } .apf-bolum{ max-width:62px; border-radius:12px; } .apf-bolum-ik{ width:27px; height:27px; } .apf-bolum-ad{ font-size:13px; } }
 .apf-pay-yazi{ font-size:13.5px; color:#e6ecf5; line-height:1.35; overflow-wrap:break-word; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .apf-pay-zaman{ font-size:11px; color:#8fa0b8; margin-top:4px; }
 .apf-pay-islem{ display:flex; flex-direction:column; gap:6px; flex:none; }
@@ -716,7 +721,7 @@
 .hdr-ust{ top:0; } .hdr-alt{ bottom:0; } .hdr-sol{ left:0; } .hdr-sag{ right:0; }
 .hdr-tas-bir{ width:8px; height:8px; display:block; flex:none; filter:drop-shadow(0 1px 1px rgba(80,55,8,.6)); }
 /* iPad/tablet (≥760): çerçeve+taş+profil BÜYÜK (telefon base'inde kalmasın = bilgisayarda küçük olmasın) */
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   /* .ana-header padding ASIL aşağıdaki media bloğunda (1401) — burada vermek EZİLİYOR */
   .hdr-tas-row{ height:15px; padding:0 24px; } .hdr-tas-col{ width:15px; padding:24px 0; }
   .hdr-tas-bir{ width:12px; height:12px; }
@@ -724,7 +729,7 @@
   .apr-yazan-ust b{ font-size:16.5px; line-height:1.1; } .apr-yazan-ust .apr-meslek{ font-size:13px; line-height:1.1; }
 }
 /* Bilgisayar (≥1100): daha da BÜYÜK */
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   /* .ana-header padding ASIL aşağıdaki media bloğunda (1461) — burada vermek EZİLİYOR */
   .hdr-tas-row{ height:18px; padding:0 30px; } .hdr-tas-col{ width:18px; padding:30px 0; }
   .hdr-tas-bir{ width:15px; height:15px; }
@@ -1171,7 +1176,7 @@
 .apf-meslek-oge.secili{ outline:2.5px solid #FFD700; outline-offset:1px; box-shadow:0 0 16px rgba(255,215,0,.55); }
 .apf-mo-ik{ font-size:24px; line-height:1; filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .apf-mo-ad{ font-size:10.5px; font-weight:700; line-height:1.15; text-align:center; text-shadow:0 1px 3px rgba(0,0,0,.6); overflow-wrap:break-word; }
-@media (min-width:560px){ .apf-meslek-grid{ grid-template-columns:repeat(4,1fr); } .apf-mo-ad{ font-size:12px; } .apf-mo-ik{ font-size:28px; } }
+@media (min-width:560px) and (min-height:600px){ .apf-meslek-grid{ grid-template-columns:repeat(4,1fr); } .apf-mo-ad{ font-size:12px; } .apf-mo-ik{ font-size:28px; } }
 /* konsantrat — kendi rengini seç (renk seçici) */
 .apf-konsantrat{ width:26px; height:26px; border-radius:50%; overflow:hidden; border:2px solid rgba(255,215,0,.55); cursor:pointer; position:relative; background:conic-gradient(red,#ff0,#0f0,#0ff,#00f,#f0f,red); }
 .apf-konsantrat input{ position:absolute; inset:-6px; width:200%; height:200%; border:none; padding:0; cursor:pointer; opacity:0; }
@@ -1374,10 +1379,10 @@
 .ana-sehir-rozet span{ font-family:'Cormorant Garamond',serif; font-size:12px; font-weight:700; color:#5a4410; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ana-sehir-rozet svg{ width:13px; height:13px; color:#b8860b; flex:none; }
 /* Şehir etiketi + asistan düğmeleri — BİLGİSAYAR/iPad'de telefondan büyük (media query eksikti) */
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   .ana-sehir-rozet span{ font-size:16.5px; } .ana-sehir-rozet img{ width:30px; height:21px; } .ana-sehir-rozet svg{ width:15px; height:15px; }
 }
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   .ana-sehir-rozet span{ font-size:18.5px; } .ana-sehir-rozet img{ width:34px; height:24px; } .ana-sehir-rozet svg{ width:16px; height:16px; }
 }
 /* Günün şehri — tam ekran NET görüntüleyici */
@@ -1480,7 +1485,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 
 /* ---- TABLET / NOTEBOOK / iPAD (>=760px): TELEFON GİBİ DEĞİL — isim/amblem/çip/arama BÜYÜR,
    içerik ortalı ferah, çipler kenardan uzak ---- */
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   .ana-kok{ padding-bottom:110px; }
   /* AKIŞ kenarlara YAKIN (yan boşluk az) */
   .ana-nav, .ana-akis, .ana-cta{
@@ -1581,7 +1586,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 
 /* ---- BİLGİSAYAR (>=1100px): TAM EKRAN düzen — başlık/isim BÜYÜK ve geniş,
    çipler/arama büyük + kenardan uzak sistematik, AKIŞ 2 SÜTUN ---- */
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   /* başlık BANDI tam ekran genişler (kesik değil), içerik ortada */
   .ana-header{ padding:48px 6vw; gap:18px; min-height:128px; } /* bilgisayar: isim bandı DİKEY UZUN (telefondan belirgin büyük) */
   .ana-zil{ margin-left:10px; } .ana-site-ai{ margin-right:26px; } /* büyük ekran: ikonlar DAHA ferah, pusula profilden iyice uzak */
@@ -1683,7 +1688,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 }
 
 /* ---- GENİŞ MASAÜSTÜ (>=1500px): daha geniş + AKIŞ 3 SÜTUN ---- */
-@media (min-width:1500px){
+@media (min-width:1500px) and (min-height:600px){
   .ana-logo{ font-size:60px !important; }
   .ana-nav, .ana-ara-sar{ max-width:1400px; }
   /* GENİŞ EKRAN: AKIŞ sütunu enden DARALTILDI (B379, kullanıcı: geniş ekranı biraz ufalt) — KİLİTLİ */
@@ -1691,7 +1696,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 }
 
 /* ---- PROFİLİM penceresi CİHAZA GÖRE BÜYÜR (ANAYASA 430) ---- */
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   .apf-pencere{ padding:40px 20px 100px; gap:13px; }
   .apf-foto{ width:150px; height:150px; font-size:58px; }
   .apf-foto-btn{ font-size:15px; padding:11px 22px; }
@@ -1718,7 +1723,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .apf-pay-bas{ font-size:19px; } .apf-pay-say{ font-size:13px; }
   .apf-pay-yazi{ font-size:16.5px; } .apf-pay-tur{ font-size:12.5px; } .apf-pay-zaman{ font-size:13px; }
 }
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   .apf-is-kare{ width:290px; height:150px; }
   .apf-oniz{ max-height:200px; }
   .apf-ust{ max-width:820px; gap:14px; grid-template-columns:1.25fr 2.1fr 1.25fr; }
@@ -1734,7 +1739,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 }
 
 /* Köşe taşı bilgisayar/tablette biraz daha görünür (telefonda çok küçük kalır) */
-@media (min-width:560px){ .ana-nav-rozet{ width:9px; height:9px; top:-4px; right:-4px; } }
+@media (min-width:560px) and (min-height:600px){ .ana-nav-rozet{ width:9px; height:9px; top:-4px; right:-4px; } }
 
 /* ÜÇ NOKTA (daha fazla) menüsü — alttan açılan sayfa, paylaştan FARKLI seçenekler */
 .daha-fon{ position:fixed; inset:0; z-index:100016; display:flex; align-items:flex-end; justify-content:center; padding:14px;
@@ -1815,15 +1820,26 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .pyl-ai{ margin:6px 0 10px; padding:11px 12px; border-radius:16px;
   background:linear-gradient(135deg,rgba(127,224,255,.13),rgba(127,140,255,.10));
   border:1px solid rgba(127,224,255,.32); }
-/* ÜST satır: Gloxoo yüzü + açıklama (uzun → parmakla YANA kaydırılır) */
-.pyl-ai-ust{ display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+/* ÜST satır: Gloxoo yüzü + KONUŞMA BALONU (açıklama uzun → parmakla YANA kaydırılır) */
+.pyl-ai-ust{ display:flex; align-items:center; gap:8px; margin-bottom:9px; }
 .pyl-ai-ust .pyl-ai-yuz{ width:34px; height:34px; flex:none; line-height:0; }
-.pyl-ai-aciklama{ flex:1; min-width:0; white-space:nowrap; overflow-x:auto; overflow-y:hidden;
+/* konuşma balonu — sol kenarında küçük kuyruk (Gloxoo'ya bakar) */
+.pyl-ai-balon{ position:relative; flex:1; min-width:0; background:rgba(6,16,36,.72); border:1px solid rgba(127,224,255,.4);
+  border-radius:13px; padding:8px 11px; }
+.pyl-ai-balon::before{ content:""; position:absolute; left:-6px; top:13px; width:11px; height:11px; background:rgba(6,16,36,.72);
+  border-left:1px solid rgba(127,224,255,.4); border-bottom:1px solid rgba(127,224,255,.4); transform:rotate(45deg); }
+.pyl-ai-aciklama{ min-width:0; white-space:nowrap; overflow-x:auto; overflow-y:hidden;
   -webkit-overflow-scrolling:touch; touch-action:pan-x; overscroll-behavior-x:contain;
-  color:#d3efff; font-size:13px; font-weight:600; line-height:1.4; padding-bottom:3px;
-  -webkit-mask-image:linear-gradient(90deg,#000 92%,transparent); mask-image:linear-gradient(90deg,#000 92%,transparent); }
+  color:#d3efff; font-size:13px; font-weight:600; line-height:1.4; padding-bottom:2px;
+  -webkit-mask-image:linear-gradient(90deg,#000 90%,transparent); mask-image:linear-gradient(90deg,#000 90%,transparent); }
 .pyl-ai-aciklama::-webkit-scrollbar{ height:3px; }
 .pyl-ai-aciklama::-webkit-scrollbar-thumb{ background:rgba(127,224,255,.5); border-radius:3px; }
+/* FOTO/VİDEO yüklüyken hızlı sorma düğmeleri (yazmadan) */
+.pyl-ai-hizli{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:9px; }
+.pyl-ai-hiz{ flex:1 1 auto; min-width:0; padding:7px 10px; border-radius:10px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit;
+  white-space:nowrap; color:#eaf6ff; background:rgba(127,224,255,.14); border:1px solid rgba(127,224,255,.38); }
+.pyl-ai-hiz:active{ background:rgba(127,224,255,.26); }
+.pyl-ai-hiz:disabled{ opacity:.55; }
 .pyl-ai-btn{ display:inline-flex; align-items:center; gap:7px; padding:8px 14px; border-radius:18px; cursor:pointer;
   font-size:13px; font-weight:700; font-family:'Cormorant Garamond',serif;
   background:linear-gradient(135deg,rgba(127,224,255,.16),rgba(127,140,255,.16)); color:#bfe9ff; border:1px solid rgba(127,224,255,.4); }
@@ -1836,9 +1852,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .pyl-ai-btn.tek{ width:100%; justify-content:flex-start; gap:9px; padding:8px 12px; }
 .pyl-ai-btn.tek .pyl-ai-yuz{ width:30px; height:30px; flex:none; line-height:0; }
 /* Gloxoo YAZ/KONUŞ satırı — ne yazmasını iste */
-.pyl-ai-satir{ display:flex; align-items:center; gap:6px; }
+.pyl-ai-satir{ display:flex; align-items:flex-end; gap:6px; }
 .pyl-ai-satir .pyl-ai-yuz{ width:32px; height:32px; flex:none; line-height:0; }
-.pyl-ai-istek{ flex:1; min-width:0; background:rgba(4,12,28,.7); border:1px solid rgba(127,224,255,.4); border-radius:11px; padding:9px 11px; color:#eaf6ff; font-size:13.5px; font-family:inherit; outline:none; }
+/* ÇOK SATIRLI yaz kutusu — ne yazdığını gör (min ~3, max ~5 satır sonra kaydırır) */
+.pyl-ai-istek{ flex:1; min-width:0; background:rgba(4,12,28,.7); border:1px solid rgba(127,224,255,.4); border-radius:11px; padding:9px 11px; color:#eaf6ff; font-size:13.5px; font-family:inherit; outline:none;
+  line-height:1.4; resize:none; min-height:66px; max-height:112px; overflow-y:auto; }
 .pyl-ai-istek::placeholder{ color:#7f93b0; }
 /* düğmeler KÜÇÜK (kullanıcı isteği) */
 .pyl-ai-mik{ flex:none; width:32px; height:32px; border-radius:9px; border:1px solid rgba(127,224,255,.4); background:rgba(127,224,255,.12); font-size:14px; cursor:pointer; padding:0; }
@@ -1955,7 +1973,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Tür amblemi YAZARIN yanında (isim hizasında) — sağ raile binmez */
 .apr-tur-mini{ display:inline-flex; width:15px; height:15px; vertical-align:-2px; margin-left:3px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
 .apr-tur-mini svg{ width:100%; height:100%; }
-@media (min-width:560px){ .apr-tur-mini{ width:20px; height:20px; vertical-align:-3px; } }
+@media (min-width:560px) and (min-height:600px){ .apr-tur-mini{ width:20px; height:20px; vertical-align:-3px; } }
 
 /* Yazı şeridi editörü düğmesi (composer, yazılı gönderi) — turkuaz */
 .pyl-yazi-editor{ background:linear-gradient(135deg,#bfe9ff,#7fe0ff 55%,#3aa8d4) !important; color:#08243a !important; margin:0 0 4px !important; }
@@ -1997,10 +2015,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   opacity:0; pointer-events:none; transition:opacity .16s ease, transform .16s ease; z-index:5; }
 .apf-islem-balon::after{ content:""; position:absolute; top:100%; left:auto; right:14px; transform:none; border:5px solid transparent; border-top-color:#162038; }
 .apf-islem-ik:active .apf-islem-balon, .apf-islem-ik:focus .apf-islem-balon{ opacity:1; transform:translateY(0) scale(1); }
-@media (min-width:560px){ .apf-islem-ik:hover .apf-islem-balon{ opacity:1; transform:translateY(0) scale(1); } }
+@media (min-width:560px) and (min-height:600px){ .apf-islem-ik:hover .apf-islem-balon{ opacity:1; transform:translateY(0) scale(1); } }
 /* BİLGİSAYAR/TABLET: alt sekme ikonları BÜYÜK (telefona dokunulmaz) */
-@media (min-width:560px){ .ana-tab-oge svg{ width:32px !important; height:32px !important; } .ana-tab-oge span{ font-size:13.5px; } }
-@media (min-width:1100px){ .ana-tab-oge svg{ width:37px !important; height:37px !important; } .ana-tab-oge span{ font-size:15px; } }
+@media (min-width:560px) and (min-height:600px){ .ana-tab-oge svg{ width:32px !important; height:32px !important; } .ana-tab-oge span{ font-size:13.5px; } }
+@media (min-width:1100px) and (min-height:600px){ .ana-tab-oge svg{ width:37px !important; height:37px !important; } .ana-tab-oge span{ font-size:15px; } }
 
 /* SİTE ASİSTANI başlık ikonu — RENKLİ PUSULA (altın halka + kırmızı/beyaz iğne) */
 .ana-site-ai{ padding:0; display:flex; align-items:center; justify-content:center; background:none !important; border:none; } /* boyut 693'te + media bloklarında (50/58px) */
@@ -2571,7 +2589,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 @keyframes konumNokta{ 0%,100%{ opacity:1; box-shadow:0 0 0 rgba(37,211,102,.6); } 50%{ opacity:.6; box-shadow:0 0 7px rgba(37,211,102,.9); } }
 @media(min-width:560px){ .ai-bas-konum{ width:42px; height:42px; } .ai-bas-konum svg{ width:26px; height:26px; } }
 /* ===== ASİSTAN BİLGİSAYAR/iPad BÜYÜTME — TÜM .ai- kurallarından SONRA (kaynak sırası kazansın; eskiden temel kurallar eziyordu, o yüzden küçük kalıyordu) ===== */
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   .ai-pencere{ max-width:560px; } /* pencere DAR (eski) — yazı ayrı büyütülür */
   .ai-ses, .ai-gonder{ width:54px !important; height:54px !important; } .ai-ses svg{ width:27px; height:27px; } .ai-gonder svg{ width:26px; height:26px; }
   .ai-arsiv-btn{ width:42px; height:42px; } .ai-arsiv-btn svg{ width:26px; height:26px; }
@@ -2584,7 +2602,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ai-ekle-oge{ font-size:18px !important; padding:13px 16px; } .ai-ekle-oge svg{ width:26px; height:26px; } .ai-ekle-menu{ min-width:200px; }
   .ai-msj-video{ max-width:320px; } .ai-msj-dosya{ font-size:15px; } .ai-ek-ad{ font-size:15px; }
 }
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   .ai-pencere{ max-width:640px; } /* TÜM pencereler bilgisayarda AYNI genişlik (640px) */
   .ai-ses, .ai-gonder{ width:60px !important; height:60px !important; } .ai-ses svg{ width:30px; height:30px; } .ai-gonder svg{ width:29px; height:29px; }
   .ai-arsiv-btn{ width:46px; height:46px; } .ai-arsiv-btn svg{ width:29px; height:29px; }
@@ -2628,7 +2646,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-gun-ayrac span{ width:9px; height:9px; border-radius:50%; flex:none; box-shadow:0 0 7px 1px var(--gr); }
 .ai-gun-ayrac b{ font-family:'Cinzel',serif; font-size:12.5px; font-weight:700; text-transform:capitalize; }
 .ai-gun-ayrac i{ font-style:normal; font-size:11.5px; color:#9c8f6b; }
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   /* NOT: eski .ai-balon 52px / svg 28px kuralları KALDIRILDI — maskotu bilgisayarda küçük tutan buydu (maskot boyutu artık yukarıda 128/164px) */
   /* BİLGİSAYAR: panel GÖRÜNÜR yüksekliği (--gercek-vh) tam doldurur; klavye açılınca alan küçülür, ŞERİT hep klavyenin ÜSTÜNDE kalır */
   .ai-pencere{ height:var(--gercek-vh,100vh); border-radius:0; border:none; }
@@ -2645,7 +2663,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ana-basa-ok svg{ width:24px; height:24px; }
 .ana-basa-ok:active{ transform:translate(-50%,0) scale(.92); }
 @keyframes basaOkNabiz{ 0%,100%{ box-shadow:0 6px 22px rgba(0,0,0,.4), 0 0 16px rgba(255,215,0,.35); } 50%{ box-shadow:0 6px 26px rgba(0,0,0,.45), 0 0 26px rgba(255,215,0,.65); } }
-@media (min-width:560px){ .ana-basa-ok{ width:56px; height:56px; bottom:96px; } .ana-basa-ok svg{ width:28px; height:28px; } }
+@media (min-width:560px) and (min-height:600px){ .ana-basa-ok{ width:56px; height:56px; bottom:96px; } .ana-basa-ok svg{ width:28px; height:28px; } }
 
 /* ===== ÜYE SAYFASI — başka birinin paylaşımları (profilden ayrı, kendi sayfası) ===== */
 .uye-ac{ cursor:pointer; }
@@ -2668,12 +2686,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .uye-icerik{ padding:0 12px; }
 /* Üye paylaşımları = Profilim ile AYNI kart düzeni (apf-pay-kart): pencere fotoğrafa göre dik/yatay, sabit kare YOK */
 .uye-liste{ display:flex; flex-direction:column; gap:9px; }
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   .uye-sayfa{ max-width:680px; }
   .uye-av{ width:78px; height:78px; font-size:30px; }
   .uye-kim b{ font-size:21px; }
 }
-@media (min-width:1100px){ .uye-sayfa{ max-width:640px; } }
+@media (min-width:1100px) and (min-height:600px){ .uye-sayfa{ max-width:640px; } }
 
 /* ===== AYARLAR PENCERESİ (X gibi tam ayarlar) ===== */
 /* ⚡ PARLAMA: backdrop-filter:blur KALDIRILDI — arkadaki hareketli/renkli içeriği (feed/şerit/elmas animasyonu/video) sürekli
@@ -2769,7 +2787,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ayar-cikis{ width:100%; margin-top:14px; background:transparent; border:1.5px solid rgba(224,32,44,.5); color:#ff8a93; border-radius:12px; padding:13px; font-family:'Cinzel',serif; font-size:15px; cursor:pointer; }
 /* BİLGİSAYAR (560+): Ayarlar'daki HER yazı (başlık, açıklama, etiket, input, düğme, bölüm başlığı, ikon) TELEFONDAN BELİRGİN BÜYÜK.
    Kullanıcı: "bilgisayarda telefonla aynı, sadece düğmeler uzun, yazı/ikon küçük" → çok daha büyük yap. */
-@media (min-width:560px){
+@media (min-width:560px) and (min-height:600px){
   .ayar-fon{ align-items:center; }
   .ayar-pencere{ height:auto; max-height:92vh; max-width:620px; border-radius:20px; }
   .ayar-baslik{ font-size:27px; } .ayar-bolum-bas{ font-size:23px; }
@@ -2778,7 +2796,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ayar-bilgi b{ font-size:22px; } .ayar-bilgi span{ font-size:18px; } .ayar-not{ font-size:18px; } .ayar-tur{ font-size:19px; } .ayar-cikis{ font-size:21px; } .ayar-kapat{ width:44px; height:44px; font-size:21px; }
   .ayar-msg{ font-size:19px; } .ayar-telkod{ font-size:21px; } .ayar-meslek-oge{ font-size:20px; }
 }
-@media (min-width:1100px){
+@media (min-width:1100px) and (min-height:600px){
   .ayar-pencere{ max-width:640px; } /* TÜM pencereler bilgisayarda AYNI genişlik (640px) — kullanıcı: pencereler aynı en olsun */
   .ayar-baslik{ font-size:34px; } .ayar-bolum-bas{ font-size:28px; } .ayar-bolum-ik{ font-size:33px; width:54px; height:54px; } .ayar-bolum-ok{ font-size:26px; width:48px; height:48px; }
   .ayar-input{ font-size:26px; padding:17px 20px; } .ayar-btn{ font-size:25px; padding:16px 30px; } .ayar-not{ font-size:21px; } .ayar-et{ font-size:21px; }
