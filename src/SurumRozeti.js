@@ -1,15 +1,34 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
 import { buildGecmisi, sonBuild } from "./buildGecmisi";
 import "./SurumRozeti.css";
 
+// Sürüm rozetini SADECE yönetici görür (müşterilere gizli).
+const YONETICI_EPOSTA = "abdulkadirciftsuren@gmail.com";
+
 // SIFIRDAN SADE SÜRÜM ROZETİ — sol-altta küçük pill, parmakla taşınır,
-// dokununca geçmiş açılır. Her sayfada görünür (z-index en üst).
+// dokununca geçmiş açılır. SADECE yönetici (sahip e-posta) için görünür.
 export default function SurumRozeti() {
   const el = useRef(null);
   const s = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const [acik, setAcik] = useState(false);
+  const [yonetici, setYonetici] = useState(false);
+
+  useEffect(() => {
+    try {
+      const cur = auth.currentUser;
+      if (cur && cur.email && cur.email.toLowerCase() === YONETICI_EPOSTA) setYonetici(true);
+    } catch (_) {}
+    const off = onAuthStateChanged(auth, (u) => {
+      setYonetici(!!(u && u.email && u.email.toLowerCase() === YONETICI_EPOSTA));
+    });
+    return () => { try { off(); } catch (_) {} };
+  }, []);
 
   const surum = `${sonBuild.surum}.B${sonBuild.build}`;
+
+  if (!yonetici) return null;
 
   function bas(e) {
     if (e.target.closest(".sr-list")) return;
