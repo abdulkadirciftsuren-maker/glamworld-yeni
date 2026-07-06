@@ -539,8 +539,8 @@
 .tf-ic svg{ width:20px; height:20px; }
 .tf-ic span{ display:none; } /* sayı gizli → simetrik */
 @media (max-height:560px){ .tf-rail{ gap:9px; } .tf-ic, .tf-ic svg{ height:20px; width:20px; }
-  /* YATAY/kısa ekran (telefon yan): fotoğraf ekranı DOLDURUR (kullanıcı isteği) — yanlarda boşluk kalmasın, kenardan az kırpılır */
-  .tamfoto-img{ object-fit:cover; }
+  /* YATAY/kısa ekran (telefon yan): fotoğraf TAM görünür, ASLA kırpılmaz (kullanıcı isteği: yatay foto eksik/kesik çıkmasın) — kenarlarda altın boşluk kalabilir, önemli olan fotonun tümünün görünmesi */
+  .tamfoto-img{ object-fit:contain; }
   /* foto üstü yazı yatayda küçülsün (dev+kesik olmasın) */
   .tf-ustyazi.boy-kucuk{ font-size:15px; } .tf-ustyazi.boy-orta{ font-size:20px; } .tf-ustyazi.boy-buyuk{ font-size:26px; }
 } /* yatay/kısa ekran: rail küçük, sığar */
