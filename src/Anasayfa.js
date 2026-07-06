@@ -18,8 +18,11 @@ import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
-import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = kullanıcının gerçek yakut pırlanta fotoğrafı
-import gloxWordmark from "./gloxWordmark.png"; // PRO üye: bannerdaki nakışlı-pırlantalı GLOXORG yazısı (harfler orijinalden, kesilmedi)
+import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
+import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
+import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
+import gloxWordmark from "./gloxWordmark.png";   // PRO: nakışlı GLOXORG (yakut zeminli blob — kırmızıda en zengin)
+import gloxWordmarkT from "./gloxWordmarkT.png"; // MÜŞTERİ/ALTIN: nakışlı GLOXORG (şeffaf — mavi/yeşil zeminde temiz)
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -1861,6 +1864,10 @@ export default function Anasayfa({ pro = false }) {
   const [meslekFiltre, setMeslekFiltre] = useState(""); // meslek arama kutusu
   const proUye = !!(profilBilgi && profilBilgi.tip === "profesyonel"); // kırmızı pırlanta + PRO ÜYE
   const uyelik = (profilBilgi && profilBilgi.uyelik) || ""; // "" | "kirmizi" (GLOXORG Kırmızı Pırlanta) | "altin" (GLOXORG Altın Pırlanta) — günlük AI sınırını kaldırır
+  // ÜSTBAR PIRLANTA TEMASI: Altın Pırlanta üyeliği (max) = YEŞİL; Profesyonel = YAKUT (kırmızı); Müşteri = MAVİ.
+  const uyeTema = uyelik === "altin" ? "altin" : (proUye ? "pro" : "musteri");
+  const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? yakutZemin : maviZemin;
+  const uyeWordmark = uyeTema === "pro" ? gloxWordmark : gloxWordmarkT; // pro=yakut zeminli blob; diğerleri=şeffaf
   // ÇOKLU meslek: pro.meslekler (dizi) ana kaynak; geriye uyum için pro.meslek = ilk meslek.
   // pro.meslekler ANA kaynak; yoksa pro.meslek; yoksa ÜST düzey meslekler/meslek (eski ayarMeslekSec kayıtları için geriye uyum)
   const proMeslekDizi = (profilBilgi && profilBilgi.pro && Array.isArray(profilBilgi.pro.meslekler) && profilBilgi.pro.meslekler.length)
@@ -4708,10 +4715,10 @@ export default function Anasayfa({ pro = false }) {
       </div>
       </div>
 
-      {/* Üst başlık — PRO (kırmızı) üyede alt zemin = kullanıcının GERÇEK yakut pırlanta fotoğrafı (rengi sabit, olduğu gibi).
-          Sadece zemin değişir; çerçeve/taşlar/GLOXORG/düğmeler/ayı/profil AYNEN kalır. Müşteri mavi zeminde kalır. */}
-      <header className={"ana-header" + (proUye ? " ana-header-yakut" : "")}
-        style={proUye ? { backgroundImage: `url(${yakutZemin})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
+      {/* Üst başlık — üyelik pırlantası alt zemin: Altın üye=YEŞİL, Profesyonel=YAKUT, Müşteri=MAVİ pırlanta (rengi sabit).
+          Çerçeve/taşlar/GLOXORG(nakışlı görsel)/düğmeler/ayı/profil AYNEN. Sadece zemin+yazı görseli tema ile değişir. */}
+      <header className={"ana-header ana-header-elmas ana-header-" + uyeTema}
+        style={{ backgroundImage: `url(${uyeZemin})`, backgroundSize: "cover", backgroundPosition: "center" }}>
         {/* ÇERÇEVE = GERÇEK pırlanta taşları (renk renk, yüzük gibi), altın bant üzerinde */}
         <span className="hdr-cerceve" aria-hidden="true">
           <span className="hdr-tas-row hdr-ust"><CerceveTas n={9} /></span>
@@ -4728,18 +4735,9 @@ export default function Anasayfa({ pro = false }) {
         <span className="header-dil"><DilSecici /></span>
         {/* MARKA her pencerede O SAYFANIN renginde: pırlanta + GLOXORG + sayfanın adı (ANAYASA 6.15) */}
         <div className="ana-logo-sar">
-          {proUye ? (
-            /* PRO (kırmızı) üye: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi). Mavi pırlanta/düz yazı yok. */
-            <span className="ana-logo-yazi ana-logo-yazi-pro"><img className="ana-logo-img" src={gloxWordmark} alt="GLOXORG" /></span>
-          ) : (
-            <span className="ana-logo-yazi">
-              <MarkaCizgi konum="sol" />
-              <AmblemMavi konum="sol" renk={temaRenk} />
-              <span className="ana-logo notranslate" translate="no">GLO<b>X</b>ORG</span>
-              <AmblemMavi konum="sag" renk={temaRenk} />
-              <MarkaCizgi konum="sag" />
-            </span>
-          )}
+          {/* Tüm üyeler: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi).
+              Pro=yakut zeminli, Müşteri/Altın=şeffaf (mavi/yeşil zemine oturur). Eski düz yazı + mavi elmas kaldırıldı. */}
+          <span className="ana-logo-yazi ana-logo-yazi-pro"><img className="ana-logo-img" src={uyeWordmark} alt="GLOXORG" /></span>
           <span className="ana-alt-sar">
             <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)}</span>
             {aktifKod === "home" && <DunyaKure />}
