@@ -3169,7 +3169,7 @@ export default function Anasayfa({ pro = false }) {
         // İlerleme 0→1 hesaplanır: onboundary VARSA gerçek karakter konumundan (kesin), YOKSA zamana göre (tahmin).
         // Böylece Android onboundary desteklemese bile yazı kelime kelime akmaya DEVAM eder (sonuna kadar).
         const toplamChar = temiz.length || 1;
-        const tahminMs = Math.max(1200, toplamChar * 62); // ~62ms/karakter (rate 1) → toplam süre tahmini
+        const tahminMs = Math.max(1400, toplamChar * 90); // ~90ms/karakter (rate 1): gerçek TTS'e yakın. 62 ÇOK HIZLIYDI → yazı imleci sesten ÖNCE sona varıyordu (kullanıcı: "ok sona geliyor ama konuşma devam ediyor")
         let basMs = Date.now(), duraklaTop = 0, duraklaBas = 0, boundaryChar = -1, ilerTimer = null, ilerBitti = false;
         const durdurIler = () => { if (ilerTimer) { clearInterval(ilerTimer); ilerTimer = null; } if (!ilerBitti) { ilerBitti = true; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } } };
         if (typeof onIlerleme === "function") {
@@ -3184,7 +3184,13 @@ export default function Anasayfa({ pro = false }) {
             if (!ss.speaking && !ss.pending) return;                                 // henüz başlamadı
             if (ss.paused) { if (!duraklaBas) duraklaBas = Date.now(); return; }      // DURAKLAT → ilerleme dursun
             if (duraklaBas) { duraklaTop += Date.now() - duraklaBas; duraklaBas = 0; }
-            let frac = boundaryChar >= 0 ? (boundaryChar / toplamChar) : ((Date.now() - basMs - duraklaTop) / tahminMs);
+            let frac;
+            if (boundaryChar >= 0) {
+              frac = boundaryChar / toplamChar;                    // GERÇEK konuşma konumu (onboundary) — kesin, sınırlama yok
+            } else {
+              frac = (Date.now() - basMs - duraklaTop) / tahminMs; // zaman tahmini
+              if (frac > 0.9) frac = 0.9;                          // TAHMİNDE: imleç SESTEN ÖNCE sona VARMASIN → 0.9'da bekler; ses gerçekten bitince durdurIler() 1 yapar (imleç tam o an sona gelir, senkron)
+            }
             if (frac < 0) frac = 0; if (frac > 1) frac = 1;
             try { onIlerleme(frac); } catch (e) {}
           }, 90);
