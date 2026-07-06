@@ -19,6 +19,7 @@ import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
 import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = kullanıcının gerçek yakut pırlanta fotoğrafı
+import gloxWordmark from "./gloxWordmark.png"; // PRO üye: bannerdaki nakışlı-pırlantalı GLOXORG yazısı (harfler orijinalden, kesilmedi)
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -4727,13 +4728,18 @@ export default function Anasayfa({ pro = false }) {
         <span className="header-dil"><DilSecici /></span>
         {/* MARKA her pencerede O SAYFANIN renginde: pırlanta + GLOXORG + sayfanın adı (ANAYASA 6.15) */}
         <div className="ana-logo-sar">
-          <span className="ana-logo-yazi">
-            <MarkaCizgi konum="sol" />
-            <AmblemMavi konum="sol" renk={temaRenk} />
-            <span className="ana-logo notranslate" translate="no">GLO<b>X</b>ORG</span>
-            <AmblemMavi konum="sag" renk={temaRenk} />
-            <MarkaCizgi konum="sag" />
-          </span>
+          {proUye ? (
+            /* PRO (kırmızı) üye: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi). Mavi pırlanta/düz yazı yok. */
+            <span className="ana-logo-yazi ana-logo-yazi-pro"><img className="ana-logo-img" src={gloxWordmark} alt="GLOXORG" /></span>
+          ) : (
+            <span className="ana-logo-yazi">
+              <MarkaCizgi konum="sol" />
+              <AmblemMavi konum="sol" renk={temaRenk} />
+              <span className="ana-logo notranslate" translate="no">GLO<b>X</b>ORG</span>
+              <AmblemMavi konum="sag" renk={temaRenk} />
+              <MarkaCizgi konum="sag" />
+            </span>
+          )}
           <span className="ana-alt-sar">
             <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)}</span>
             {aktifKod === "home" && <DunyaKure />}
