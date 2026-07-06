@@ -6137,7 +6137,10 @@ export default function Anasayfa({ pro = false }) {
       )}
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
-        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "")}>
+        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "") + (maskotTur === "ekspert" ? " ekspert-kose" : "")}>
+          {maskotTur === "ekspert" && (
+            <button className="maskot-tanit-kapat" onClick={(e) => { e.stopPropagation(); maskotKucult(); }} aria-label={t("kapat", "Kapat")}>&#10005;</button>
+          )}
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>}
           <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
             <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={96} rozet />
@@ -6479,13 +6482,14 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-kapat" onClick={() => setMenuAcik(false)} aria-label="Kapat">&#10005;</button>
             <h2 className="ana-menu-ad">{t("menuBaslik")}</h2>
             <p className="ana-menu-kul">{adTam}</p>
+            {/* GLOXORG EYLEM PLANI (Hakkında + 7 Eksen) — kullanıcı isteği: menüde EN ÜSTTE */}
+            <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{(HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en).menu}</button>
             <button className="ana-menu-oge c-mavi" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🏠</span>{t("navAnaSayfa")}</button>
             <button className="ana-menu-oge c-yesil" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🌍</span>{t("navTopluluk")} · {t("anaYakinda")}</button>
             <button className="ana-menu-oge c-mor" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🎓</span>{t("navAkademi")} · {t("anaYakinda")}</button>
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); setUyelikKartAcik(true); }}><span className="ana-menu-ik">💎</span>{t("proOlBaslik", "Profesyonel Ol")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
             {yoneticiMi() && <button className="ana-menu-oge c-mor" onClick={geriBildirimAc}><span className="ana-menu-ik">📊</span>{t("geriBildirimBaslik", "Geri Bildirimler")}</button>}
-            <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{(HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en).menu}</button>
             <button className="ana-menu-oge c-yesil" onClick={() => { setMenuAcik(false); setDavetKopya(false); setDavetAcik(true); }}><span className="ana-menu-ik">🔗</span>{(DAVET_CEVIRI[dil] || DAVET_CEVIRI.en).menu}</button>
             {/* TELEFON BİLDİRİMLERİ — ayardan aç/durum göster */}
             <button className="ana-menu-oge ana-menu-bildirim c-pembe" onClick={bildirimIzniIste}>
