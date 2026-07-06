@@ -1,20 +1,21 @@
 {
   "files": {
     "main.css": "./static/css/main.1cf74bd5.css",
-    "main.js": "./static/js/main.705fa225.js",
+    "main.js": "./static/js/main.c04459b0.js",
     "static/js/453.36eff997.chunk.js": "./static/js/453.36eff997.chunk.js",
+    "static/media/gloxWordmarkMavi.png": "./static/media/gloxWordmarkMavi.4b073088743801573dbc.png",
+    "static/media/gloxWordmarkYesil.png": "./static/media/gloxWordmarkYesil.56ce76348ee8305df315.png",
     "static/media/gloxWordmark.png": "./static/media/gloxWordmark.ff35d18499225e1d28bc.png",
-    "static/media/gloxWordmarkT.png": "./static/media/gloxWordmarkT.2c8f2937002dce85fc76.png",
     "static/media/yesilZemin.jpg": "./static/media/yesilZemin.90484b7493deaf473a8c.jpg",
     "static/media/maviZemin.jpg": "./static/media/maviZemin.7d30738f2c97292f839d.jpg",
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "index.html": "./index.html",
     "main.1cf74bd5.css.map": "./static/css/main.1cf74bd5.css.map",
-    "main.705fa225.js.map": "./static/js/main.705fa225.js.map",
+    "main.c04459b0.js.map": "./static/js/main.c04459b0.js.map",
     "453.36eff997.chunk.js.map": "./static/js/453.36eff997.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.1cf74bd5.css",
-    "static/js/main.705fa225.js"
+    "static/js/main.c04459b0.js"
   ]
 }
