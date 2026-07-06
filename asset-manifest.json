@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "./static/css/main.1f1691db.css",
-    "main.js": "./static/js/main.d109dff9.js",
+    "main.js": "./static/js/main.974f1cf9.js",
     "static/js/453.36eff997.chunk.js": "./static/js/453.36eff997.chunk.js",
-    "static/media/yakutZemin.jpg": "./static/media/yakutZemin.9718264cddc56aba0e68.jpg",
+    "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "index.html": "./index.html",
     "main.1f1691db.css.map": "./static/css/main.1f1691db.css.map",
-    "main.d109dff9.js.map": "./static/js/main.d109dff9.js.map",
+    "main.974f1cf9.js.map": "./static/js/main.974f1cf9.js.map",
     "453.36eff997.chunk.js.map": "./static/js/453.36eff997.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.1f1691db.css",
-    "static/js/main.d109dff9.js"
+    "static/js/main.974f1cf9.js"
   ]
 }
