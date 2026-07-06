@@ -718,6 +718,10 @@
   transform:translateZ(0); will-change:transform; /* sabit GPU katmanı → taşlar kaybolmaz */
   border:none; box-shadow:0 8px 26px rgba(0,0,0,.4);
 }
+/* PRO (kırmızı) üye: üstbar zemini kullanıcının GERÇEK yakut fotoğrafı (JS inline background-image).
+   Yakutun RENGİNE DOKUNULMAZ; yazı/ikonlar parlak yüzeyde de okunsun diye SADECE gölge güçlendirilir. */
+.ana-header-yakut .ana-logo, .ana-header-yakut .ana-alt{ text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 7px rgba(0,0,0,.45); }
+.ana-header-yakut .ana-menu-btn, .ana-header-yakut .ana-zil, .ana-header-yakut .ana-site-ai, .ana-header-yakut .ana-ara-btn{ filter:drop-shadow(0 1px 3px rgba(0,0,0,.75)); }
 /* MÜCEVHER ÇERÇEVE: her kenarda İNCE ALTIN şerit + İÇİNE gömülü renkli gerçek pırlanta taşları (altın+taş TEK PARÇA) */
 .hdr-cerceve{ position:absolute; inset:4px; pointer-events:none; z-index:4; } /* kenardan İÇERİ → bilgisayarda taşlar pencereden kaçmaz */
 .hdr-tas-row, .hdr-tas-col{ position:absolute; display:flex; align-items:center; box-sizing:border-box;

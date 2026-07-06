@@ -18,6 +18,7 @@ import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
+import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = kullanıcının gerçek yakut pırlanta fotoğrafı
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -4706,8 +4707,10 @@ export default function Anasayfa({ pro = false }) {
       </div>
       </div>
 
-      {/* Üst başlık */}
-      <header className="ana-header">
+      {/* Üst başlık — PRO (kırmızı) üyede alt zemin = kullanıcının GERÇEK yakut pırlanta fotoğrafı (rengi sabit, olduğu gibi).
+          Sadece zemin değişir; çerçeve/taşlar/GLOXORG/düğmeler/ayı/profil AYNEN kalır. Müşteri mavi zeminde kalır. */}
+      <header className={"ana-header" + (proUye ? " ana-header-yakut" : "")}
+        style={proUye ? { backgroundImage: `url(${yakutZemin})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
         {/* ÇERÇEVE = GERÇEK pırlanta taşları (renk renk, yüzük gibi), altın bant üzerinde */}
         <span className="hdr-cerceve" aria-hidden="true">
           <span className="hdr-tas-row hdr-ust"><CerceveTas n={9} /></span>
