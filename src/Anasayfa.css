@@ -538,11 +538,18 @@
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)); }
 .tf-ic svg{ width:20px; height:20px; }
 .tf-ic span{ display:none; } /* sayı gizli → simetrik */
+/* İKON ŞERİDİ + BEĞENENLER kapsayıcı — DİKEY: alt alta (beğenenler altta, yer müsait) */
+.tf-dip .tf-rail-satir{ display:flex; flex-direction:column; align-items:stretch; }
 @media (max-height:560px){ .tf-rail{ gap:9px; } .tf-ic, .tf-ic svg{ height:20px; width:20px; }
   /* YATAY/kısa ekran (telefon yan): fotoğraf TAM görünür, ASLA kırpılmaz (kullanıcı isteği: yatay foto eksik/kesik çıkmasın) — kenarlarda altın boşluk kalabilir, önemli olan fotonun tümünün görünmesi */
   .tamfoto-img{ object-fit:contain; }
   /* foto üstü yazı yatayda küçülsün (dev+kesik olmasın) */
   .tf-ustyazi.boy-kucuk{ font-size:15px; } .tf-ustyazi.boy-orta{ font-size:20px; } .tf-ustyazi.boy-buyuk{ font-size:26px; }
+  /* YATAY: beğenen/yorumcu fotoğrafları ALT ŞERİT DEĞİL → ikonların SAĞINA (yan yana), yer müsait, pencereyi kapatmaz (kullanıcı isteği) */
+  .tf-dip .tf-rail-satir{ flex-direction:row; align-items:center; gap:12px; }
+  .tf-dip .tf-rail-satir .tf-rail{ flex:0 0 auto; width:auto; justify-content:flex-start; gap:16px; }
+  .tf-dip .tf-rail-satir .serit-grup{ flex:1 1 auto; min-width:0; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .tf-dip .tf-rail-satir .serit-grup::-webkit-scrollbar{ display:none; }
 } /* yatay/kısa ekran: rail küçük, sığar */
 /* BİLGİSAYAR/iPAD: dikey ikonlar BÜYÜK + aralıklı + pencereden UZAK (telefon boyutu sızmasın) */
 @media (min-width:1100px) and (min-height:600px){
