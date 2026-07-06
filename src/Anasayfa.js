@@ -1263,6 +1263,9 @@ export default function Anasayfa({ pro = false }) {
   const [kameraYer, setKameraYer] = useState(null);   // self-view penceresinin sürüklenmiş konumu {x,y} (null=varsayılan sağ-alt)
   const kameraSurRef = useRef({ on: false });          // self-view sürükleme durumu
   const kameraPenRef = useRef(null);                   // self-view sarmalayıcı (sürükleme sınırı için)
+  const [eksperYer, setEksperYer] = useState(null);    // EKSPERT (🐻) köşe kartının parmakla taşınmış konumu {x,y} (null=varsayılan sağ-alt)
+  const eksperSurRef = useRef({ on: false, moved: false }); // ekspert sürükleme durumu
+  const eksperPenRef = useRef(null);                   // ekspert köşe kartı (sürükleme sınırı için)
   const yardimciAcikOnceRef = useRef(false);           // Gloxoo panelinin önceki açık/kapalı durumu (kapanışı yakalamak için)
   const recognitionRef = useRef(null);     // CANLI DİKTE (tarayıcı SpeechRecognition) — konuştukça şeride yazar
   const dikteTabanRef = useRef("");        // dikte başlarken şeritte olan metin (üzerine eklenir, silinmez)
@@ -3524,6 +3527,23 @@ export default function Anasayfa({ pro = false }) {
     setKameraYer({ x, y });
   };
   const kameraSurBitir = () => { kameraSurRef.current.on = false; };
+  // EKSPERT (🐻) köşe kartını PARMAKLA TAŞI — istediğin yere sürükle (sabit değil). Ayının yüzü tutamaç.
+  const eksperSurBas = (e) => {
+    if (!eksperPenRef.current) return;
+    const r = eksperPenRef.current.getBoundingClientRect();
+    eksperSurRef.current = { on: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+  };
+  const eksperSurGit = (e) => {
+    const d = eksperSurRef.current; if (!d.on || !eksperPenRef.current) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) d.moved = true;
+    const w = eksperPenRef.current.offsetWidth, h = eksperPenRef.current.offsetHeight;
+    const x = Math.max(6, Math.min(d.ox + dx, window.innerWidth - w - 6));
+    const y = Math.max(6, Math.min(d.oy + dy, window.innerHeight - h - 6));
+    setEksperYer({ x, y });
+  };
+  const eksperSurBitir = () => { eksperSurRef.current.on = false; };
   const canliSohbetToggle = () => {
     if (canliSohbetRef.current) { // KAPAT
       canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
@@ -6137,14 +6157,26 @@ export default function Anasayfa({ pro = false }) {
       )}
       {/* MASKOT DOKUNUNCA: BÜYÜK halde konuşur (ağzı oynar), bitince KÖŞESİNE çekilir (panel AÇMAZ). Dokun=sus. "Yaz" = sohbet paneli. */}
       {maskotTanit && !uyeSayfa && (
-        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "") + (maskotTur === "ekspert" ? " ekspert-kose" : "")}>
+        <div className={"maskot-tanit" + (maskotKizgin ? " kizgin" : "") + (maskotTur === "ekspert" ? " ekspert-kose" : "")}
+          ref={maskotTur === "ekspert" ? eksperPenRef : undefined}
+          style={maskotTur === "ekspert" && eksperYer ? { left: eksperYer.x, top: eksperYer.y, right: "auto", bottom: "auto" } : undefined}>
           {maskotTur === "ekspert" && (
             <button className="maskot-tanit-kapat" onClick={(e) => { e.stopPropagation(); maskotKucult(); }} aria-label={t("kapat", "Kapat")}>&#10005;</button>
           )}
           {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>}
-          <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
-            <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={96} rozet />
-          </div>
+          {maskotTur === "ekspert" ? (
+            /* EKSPERT ayı: yüz = TAŞIMA TUTAMACI (parmakla sürükle → istediğin yere). Taşınırken kapanmaz. */
+            <div className={"maskot-tanit-yuz tasinir" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")}
+              onPointerDown={eksperSurBas} onPointerMove={eksperSurGit} onPointerUp={eksperSurBitir} onPointerCancel={eksperSurBitir}
+              onClick={() => { if (eksperSurRef.current.moved) { eksperSurRef.current.moved = false; return; } }}>
+              <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={96} rozet />
+              <span className="maskot-tasi-ipucu">✥</span>
+            </div>
+          ) : (
+            <div className={"maskot-tanit-yuz" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")} onClick={maskotTanitTik} onTouchStart={maskotDokunBas} onTouchEnd={maskotDokunBit}>
+              <MaskotYuz konusuyor={aiKonusuyor} dinliyor={dinliyor} arastir={yardimciYukleniyor} tur={maskotTur} boyut={96} rozet />
+            </div>
+          )}
           {/* Büyük maskot düğmeleri = KÜÇÜK maskotla AYNI ikonlar (Yaz kalem + ses aç/kapa) */}
           <div className="ai-mini-alt buyuk" onPointerDown={(e) => e.stopPropagation()}>
             {miniEtiket && <div className="ai-mini-etiket">{miniEtiket}</div>}
