@@ -804,9 +804,18 @@
 .ana-logo-yazi{ position:relative; display:inline-block; margin:0 38px; }
 /* PRO üye GLOXORG GÖRSELİ (bannerdaki nakışlı yazı) — mavi elmas/düz yazı yok; yan boşluk yok, görsel geniş durur */
 .ana-logo-yazi-pro{ margin:0; }
-.ana-logo-img{ display:block; height:35px; width:auto; max-width:min(64vw,340px); object-fit:contain; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
-/* TELEFON YATAY (geniş+kısa ekran): yazı BÜYÜR/genişler (kullanıcı: yatayda dikten büyük olsun). Çerçeve kalınlığı SABİT (inline border-width). */
-@media (orientation:landscape) and (max-height:560px){ .ana-logo-img{ height:46px; max-width:min(52vw,560px); } }
+.ana-logo-img{ display:block; height:35px; width:auto; max-width:min(64vw,340px); object-fit:contain; transform:scaleX(1.12); transform-origin:center; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); } /* enine biraz genişletildi (kullanıcı: yükseklik değil enine) */
+/* TELEFON YATAY (geniş+kısa ekran): ikonlar BÜYÜR + ARALARı AÇILIR + yazı enine GENİŞLER (kullanıcı: yatayda ikonlar ufak/sıkışık kalıyordu). Çerçeve kalınlığı SABİT (inline border-width). */
+@media (orientation:landscape) and (max-height:560px){
+  .ana-logo-img{ height:46px; max-width:min(64vw,640px); transform:scaleX(1.3); }
+  .ana-header{ gap:14px; padding:6px 12px; }
+  .ana-menu-btn{ width:44px; height:44px; min-width:44px; } .ana-menu-btn svg{ width:27px; height:27px; }
+  .ana-zil{ margin-left:12px; }
+  .ana-site-ai{ width:40px; height:40px; min-width:40px; margin-left:16px; margin-right:12px; } .ana-site-ai .ana-site-ai-pusula{ width:27px; height:27px; }
+  .ana-profil{ width:52px; height:52px; }
+  .ana-dunya{ width:24px; height:24px; }
+  .ana-alt{ font-size:12px; }
+}
 @media (min-width:560px) and (min-height:600px){ .ana-logo-img{ height:50px; max-width:min(56vw,470px); } }
 @media (min-width:1100px) and (min-height:600px){ .ana-logo-img{ height:66px; } }
 .ana-amblem{ position:absolute; top:50%; transform:translateY(-50%);
