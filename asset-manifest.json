@@ -1,8 +1,9 @@
 {
   "files": {
-    "main.css": "./static/css/main.18a955d0.css",
-    "main.js": "./static/js/main.6092d4b0.js",
+    "main.css": "./static/css/main.168fd84c.css",
+    "main.js": "./static/js/main.83fece41.js",
     "static/js/453.36eff997.chunk.js": "./static/js/453.36eff997.chunk.js",
+    "static/media/ikonCerceve.png": "./static/media/ikonCerceve.406daf911f7602325daa.png",
     "static/media/ayiCerceve.png": "./static/media/ayiCerceve.48a88250b2ebd3687381.png",
     "static/media/cerceve.png": "./static/media/cerceve.638f573a7d751de8b881.png",
     "static/media/gloxWordmarkKirmizi.png": "./static/media/gloxWordmarkKirmizi.e8624a8df2bcf4e535fc.png",
@@ -12,12 +13,12 @@
     "static/media/maviZemin.jpg": "./static/media/maviZemin.7d30738f2c97292f839d.jpg",
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "index.html": "./index.html",
-    "main.18a955d0.css.map": "./static/css/main.18a955d0.css.map",
-    "main.6092d4b0.js.map": "./static/js/main.6092d4b0.js.map",
+    "main.168fd84c.css.map": "./static/css/main.168fd84c.css.map",
+    "main.83fece41.js.map": "./static/js/main.83fece41.js.map",
     "453.36eff997.chunk.js.map": "./static/js/453.36eff997.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.18a955d0.css",
-    "static/js/main.6092d4b0.js"
+    "static/css/main.168fd84c.css",
+    "static/js/main.83fece41.js"
   ]
 }
