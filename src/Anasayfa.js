@@ -24,7 +24,9 @@ import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üs
 import gloxWordmark from "./gloxWordmark.png";                 // PRO(mavi)/ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
 import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (olduğu gibi kesildi, kırmızı zemine karışır)
 import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (Gemini, ortası şeffaf) — border-image (9-slice)
-import profilCerceveResim from "./profilCerceve.png";         // PROFİL yuvarlak pırlanta çerçevesi (kod çizimi) — foto merkezi kapatır
+import profilCerceveResim from "./profilCerceve.png";         // PROFİL (müşteri=KIRMIZI yakut) yuvarlak pırlanta çerçevesi
+import profilCerceveMaviResim from "./profilCerceveMavi.png"; // PROFİL (pro=MAVİ safir)
+import profilCerceveYesilResim from "./profilCerceveYesil.png"; // PROFİL (altın=YEŞİL zümrüt)
 import ayiCerceveResim from "./ayiCerceve.png";               // EKSPERT (ayı) üst düğmesi — yuvarlak MAVİ safir çerçeve (kod çizimi)
 import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvarlak YEŞİL zümrüt çerçeve (kod çizimi, lacivert madalyon)
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
@@ -1874,6 +1876,8 @@ export default function Anasayfa({ pro = false }) {
   const uyeTema = uyelik === "altin" ? "altin" : (proUye ? "pro" : "musteri");
   const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? maviZemin : yakutZemin;
   const uyeWordmark = uyeTema === "musteri" ? gloxWordmarkKirmizi : gloxWordmark; // müşteri=tüm blok kırmızı; pro/altın=koyu içli
+  // PROFİL çerçevesi ÜYEYE göre: müşteri=KIRMIZI(yakut), pro=MAVİ(safir), altın=YEŞİL(zümrüt) — ortası o rengin taşı, halka beyaz pırlanta+altın
+  const uyeProfilCerceve = uyeTema === "altin" ? profilCerceveYesilResim : uyeTema === "pro" ? profilCerceveMaviResim : profilCerceveResim;
   // ÇOKLU meslek: pro.meslekler (dizi) ana kaynak; geriye uyum için pro.meslek = ilk meslek.
   // pro.meslekler ANA kaynak; yoksa pro.meslek; yoksa ÜST düzey meslekler/meslek (eski ayarMeslekSec kayıtları için geriye uyum)
   const proMeslekDizi = (profilBilgi && profilBilgi.pro && Array.isArray(profilBilgi.pro.meslekler) && profilBilgi.pro.meslekler.length)
@@ -4768,7 +4772,7 @@ export default function Anasayfa({ pro = false }) {
         {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon */}
         {aktifKod === "home" ? (
           <div className="ana-profil ana-profil-yuvarlak" onClick={() => setProfilAcik((a) => !a)}
-            style={{ backgroundImage: `url(${profilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+            style={{ backgroundImage: `url(${uyeProfilCerceve})`, backgroundSize: "cover", backgroundPosition: "center" }}>
             {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
           </div>
         ) : (
