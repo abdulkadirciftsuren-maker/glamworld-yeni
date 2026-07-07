@@ -29,7 +29,8 @@ import proCerceveResim from "./proCerceve.png";               // PRO üstbar: YE
 import profilCerceveResim from "./profilCerceve.png";         // PROFİL (müşteri=KIRMIZI yakut) yuvarlak pırlanta çerçevesi
 import profilCerceveMaviResim from "./profilCerceveMavi.png"; // PROFİL (pro=MAVİ safir)
 import profilCerceveYesilResim from "./profilCerceveYesil.png"; // PROFİL (altın=YEŞİL zümrüt)
-import ayiCerceveResim from "./ayiCerceve.png";               // EKSPERT (ayı) üst düğmesi — yuvarlak MAVİ safir çerçeve (kod çizimi)
+import ayiCerceveResim from "./ayiCerceve.png";               // EKSPERT (ayı) üst düğmesi — yuvarlak MAVİ safir çerçeve (müşteri/altın)
+import ayiCervevoProResim from "./ayiCervevePro.png";          // EKSPERT (ayı) PRO — MOR ametist çerçeve (pro profili mavi olduğu için ayı farklı renk)
 import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvarlak YEŞİL zümrüt çerçeve (kod çizimi, lacivert madalyon)
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
@@ -1884,6 +1885,8 @@ export default function Anasayfa({ pro = false }) {
     : { borderWidth: "15px 14px", borderImage: `url(${cerceveResim}) 91 85 96 86 / 15px 14px / 0 stretch` };
   // PROFİL çerçevesi ÜYEYE göre: müşteri=KIRMIZI(yakut), pro=MAVİ(safir), altın=YEŞİL(zümrüt) — ortası o rengin taşı, halka beyaz pırlanta+altın
   const uyeProfilCerceve = uyeTema === "altin" ? profilCerceveYesilResim : uyeTema === "pro" ? profilCerceveMaviResim : profilCerceveResim;
+  // AYI (Ekspert) düğmesi: PRO'da profil mavi olduğu için ayı MOR (farklı renk, profile benzemesin); müşteri/altın=mavi
+  const uyeAyiCerceve = uyeTema === "pro" ? ayiCervevoProResim : ayiCerceveResim;
   // ÇOKLU meslek: pro.meslekler (dizi) ana kaynak; geriye uyum için pro.meslek = ilk meslek.
   // pro.meslekler ANA kaynak; yoksa pro.meslek; yoksa ÜST düzey meslekler/meslek (eski ayarMeslekSec kayıtları için geriye uyum)
   const proMeslekDizi = (profilBilgi && profilBilgi.pro && Array.isArray(profilBilgi.pro.meslekler) && profilBilgi.pro.meslekler.length)
@@ -4761,7 +4764,7 @@ export default function Anasayfa({ pro = false }) {
         </div>
         {/* SİTE ASİSTANI — Google profilinin yanında; komutla pencere açar (balondan ayrı) */}
         <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit && maskotTur === "ekspert") { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}
-          style={{ backgroundImage: `url(${ayiCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+          style={{ backgroundImage: `url(${uyeAyiCerceve})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
           {/* MASKOT 2 — Ekspert: bilge AYI (yuvarlak pırlanta çerçeve içinde madalyon; dış altın halka çerçeveden gelir) */}
           <svg className="ana-site-ai-pusula" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="9.7" fill="#0c1730" />
