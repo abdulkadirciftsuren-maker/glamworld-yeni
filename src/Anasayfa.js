@@ -4742,14 +4742,17 @@ export default function Anasayfa({ pro = false }) {
           borderStyle: "solid", borderColor: "transparent",
           ...uyeCerceveStyle,
         }}>
-        {/* ÇERÇEVE artık border-image (işlemeli altın Gemini çerçevesi); eski tek-taş şeridi kaldırıldı */}
-        <button className="ana-menu-btn" onClick={() => setMenuAcik(true)} aria-label="Menü"
-          style={{ backgroundImage: `url(${ikonCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>{Ikon.menu}</button>
-        <button className="ana-menu-btn ana-zil" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}
-          style={{ backgroundImage: `url(${bildirimListe.some((b) => !b.okundu) ? zilCerceveKirmiziResim : zilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
-          {Ikon.bildirim}
-          {bildirimListe.some((b) => !b.okundu) && <span className="ana-zil-rozet">{Math.min(99, bildirimListe.filter((b) => !b.okundu).length)}</span>}
-        </button>
+        {/* ÇERÇEVE artık border-image (işlemeli altın çerçeve); eski tek-taş şeridi kaldırıldı.
+            SOL KOLON: bildirim (üstte) + menü (altta) — DİKEYde üst üste (kullanıcı: yer açılsın, orta yazı büyüsün); YATAY/geniş ekranda yan yana (row-reverse → menü|zil, eskisi gibi) */}
+        <div className="ana-ikon-kol ana-kol-sol">
+          <button className="ana-menu-btn ana-zil" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}
+            style={{ backgroundImage: `url(${bildirimListe.some((b) => !b.okundu) ? zilCerceveKirmiziResim : zilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+            {Ikon.bildirim}
+            {bildirimListe.some((b) => !b.okundu) && <span className="ana-zil-rozet">{Math.min(99, bildirimListe.filter((b) => !b.okundu).length)}</span>}
+          </button>
+          <button className="ana-menu-btn" onClick={() => setMenuAcik(true)} aria-label="Menü"
+            style={{ backgroundImage: `url(${ikonCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>{Ikon.menu}</button>
+        </div>
         {/* DİL — SADECE geniş ekranda (bilgisayar/iPad/notebook) header'da görünür; telefonda menüdedir (yer dar). CSS: .header-dil telefonda display:none, >=760px görünür */}
         <span className="header-dil"><DilSecici /></span>
         {/* MARKA her pencerede O SAYFANIN renginde: pırlanta + GLOXORG + sayfanın adı (ANAYASA 6.15) */}
@@ -4762,31 +4765,34 @@ export default function Anasayfa({ pro = false }) {
             {aktifKod === "home" && <DunyaKure />}
           </span>
         </div>
-        {/* SİTE ASİSTANI — Google profilinin yanında; komutla pencere açar (balondan ayrı) */}
-        <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit && maskotTur === "ekspert") { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}
-          style={{ backgroundImage: `url(${uyeAyiCerceve})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
-          {/* MASKOT 2 — Ekspert: bilge AYI (yuvarlak pırlanta çerçeve içinde madalyon; dış altın halka çerçeveden gelir) */}
-          <svg className="ana-site-ai-pusula" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9.7" fill="#0c1730" />
-            <circle cx="7.7" cy="7.8" r="2.1" fill="#a9743f" /><circle cx="16.3" cy="7.8" r="2.1" fill="#a9743f" />
-            <circle cx="7.7" cy="7.8" r="0.95" fill="#5b3a1c" /><circle cx="16.3" cy="7.8" r="0.95" fill="#5b3a1c" />
-            <circle cx="12" cy="12.4" r="5.1" fill="#c08a4e" />
-            <ellipse cx="12" cy="13.9" rx="2.5" ry="1.9" fill="#ecd6b0" />
-            <circle cx="10.1" cy="11.2" r="0.78" fill="#241608" /><circle cx="13.9" cy="11.2" r="0.78" fill="#241608" />
-            <ellipse cx="12" cy="13.1" rx="0.95" ry="0.68" fill="#33210f" />
-            <path d="M12 13.8 V14.8 M12 14.8 Q11 15.3 10.3 14.8 M12 14.8 Q13 15.3 13.7 14.8" stroke="#33210f" strokeWidth="0.45" fill="none" strokeLinecap="round" />
-            <path d="M18.6 4 l.55 1.5 1.5.55 -1.5.55 -.55 1.5 -.55-1.5 -1.5-.55 1.5-.55z" fill="#7fe0ff" />
-          </svg>
-        </button>
-        {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon */}
-        {aktifKod === "home" ? (
-          <div className="ana-profil ana-profil-yuvarlak" onClick={() => setProfilAcik((a) => !a)}
-            style={{ backgroundImage: `url(${uyeProfilCerceve})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-            {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
-          </div>
-        ) : (
-          <button className="ana-ara-btn" aria-label={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
-        )}
+        {/* SAĞ KOLON: profil (üstte) + ayı/Ekspert (altta) — DİKEYde üst üste (kullanıcı); YATAY/geniş ekranda yan yana (row-reverse → ayı|profil, eskisi gibi) */}
+        <div className="ana-ikon-kol ana-kol-sag">
+          {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon */}
+          {aktifKod === "home" ? (
+            <div className="ana-profil ana-profil-yuvarlak" onClick={() => setProfilAcik((a) => !a)}
+              style={{ backgroundImage: `url(${uyeProfilCerceve})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+              {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
+            </div>
+          ) : (
+            <button className="ana-ara-btn" aria-label={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
+          )}
+          {/* SİTE ASİSTANI — Ekspert ayı; komutla pencere açar (balondan ayrı) */}
+          <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit && maskotTur === "ekspert") { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}
+            style={{ backgroundImage: `url(${uyeAyiCerceve})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+            {/* MASKOT 2 — Ekspert: bilge AYI (yuvarlak pırlanta çerçeve içinde madalyon; dış altın halka çerçeveden gelir) */}
+            <svg className="ana-site-ai-pusula" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9.7" fill="#0c1730" />
+              <circle cx="7.7" cy="7.8" r="2.1" fill="#a9743f" /><circle cx="16.3" cy="7.8" r="2.1" fill="#a9743f" />
+              <circle cx="7.7" cy="7.8" r="0.95" fill="#5b3a1c" /><circle cx="16.3" cy="7.8" r="0.95" fill="#5b3a1c" />
+              <circle cx="12" cy="12.4" r="5.1" fill="#c08a4e" />
+              <ellipse cx="12" cy="13.9" rx="2.5" ry="1.9" fill="#ecd6b0" />
+              <circle cx="10.1" cy="11.2" r="0.78" fill="#241608" /><circle cx="13.9" cy="11.2" r="0.78" fill="#241608" />
+              <ellipse cx="12" cy="13.1" rx="0.95" ry="0.68" fill="#33210f" />
+              <path d="M12 13.8 V14.8 M12 14.8 Q11 15.3 10.3 14.8 M12 14.8 Q13 15.3 13.7 14.8" stroke="#33210f" strokeWidth="0.45" fill="none" strokeLinecap="round" />
+              <path d="M18.6 4 l.55 1.5 1.5.55 -1.5.55 -.55 1.5 -.55-1.5 -1.5-.55 1.5-.55z" fill="#7fe0ff" />
+            </svg>
+          </button>
+        </div>
       </header>
 
       {/* Profil penceresi (menüden AYRI) — foto + ad + e-posta + Çıkış */}
