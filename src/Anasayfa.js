@@ -23,9 +23,11 @@ import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstb
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
 import gloxWordmark from "./gloxWordmark.png";                 // ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
 import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (kesildi, kırmızı zemine karışır)
-import gloxWordmarkMavi from "./gloxWordmarkMavi.png";         // PRO(mavi): TÜM BLOK — GLOXORG mavi safir banner'dan kesildi, mavi zemine karışır
+import gloxWordmarkMavi from "./gloxWordmarkMavi.png";         // PRO(mavi): GLOXORG harfleri mavi safir banner'dan ŞEFFAF kesildi
+import gloxWordmarkYesil from "./gloxWordmarkYesil.png";       // ALTIN(yeşil): GLOXORG harfleri yeşil emerald banner'dan ŞEFFAF kesildi
 import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (müşteri/altın) — border-image (9-slice)
-import proCerceveResim from "./proCerceve.png";               // PRO üstbar: YENİ işlemeli altın+mücevher çerçeve (kullanıcı) — border-image
+import proCerceveResim from "./proCerceve.png";               // PRO üstbar: işlemeli altın+mücevher çerçeve — border-image
+import yesilCerceveResim from "./yesilCerceve.png";           // ALTIN(yeşil) üstbar: işlemeli altın+mücevher çerçeve (kullanıcı) — border-image
 import profilCerceveResim from "./profilCerceve.png";         // PROFİL (müşteri=KIRMIZI yakut) yuvarlak pırlanta çerçevesi
 import profilCerceveMaviResim from "./profilCerceveMavi.png"; // PROFİL (pro=MAVİ safir)
 import profilCerceveYesilResim from "./profilCerceveYesil.png"; // PROFİL (altın=YEŞİL zümrüt)
@@ -1878,10 +1880,12 @@ export default function Anasayfa({ pro = false }) {
   // ÜSTBAR PIRLANTA TEMASI (kullanıcı): Müşteri = KIRMIZI (yakut); Profesyonel = MAVİ (safir); Altın/Tam üye = YEŞİL (zümrüt).
   const uyeTema = uyelik === "altin" ? "altin" : (proUye ? "pro" : "musteri");
   const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? maviZemin : yakutZemin;
-  const uyeWordmark = uyeTema === "musteri" ? gloxWordmarkKirmizi : uyeTema === "pro" ? gloxWordmarkMavi : gloxWordmark; // müşteri=kırmızı blok; pro=mavi blok (banner'dan kesildi); altın=koyu içli
-  // PRO üstbar ÇERÇEVESİ farklı (kullanıcının verdiği yeni işlemeli çerçeve); müşteri/altın eski çerçeve
+  const uyeWordmark = uyeTema === "musteri" ? gloxWordmarkKirmizi : uyeTema === "pro" ? gloxWordmarkMavi : gloxWordmarkYesil; // müşteri=kırmızı blok; pro=mavi harfler; altın=yeşil harfler (banner'dan kesildi)
+  // ÜSTBAR ÇERÇEVESİ üyeye göre AYRI: pro=mavi banner işlemeli çerçeve, altın=yeşil banner işlemeli çerçeve, müşteri=eski çerçeve
   const uyeCerceveStyle = uyeTema === "pro"
     ? { borderWidth: "17px 16px", borderImage: `url(${proCerceveResim}) 71 74 57 74 / 17px 16px / 0 stretch` }
+    : uyeTema === "altin"
+    ? { borderWidth: "18px 17px", borderImage: `url(${yesilCerceveResim}) 88 97 87 97 / 18px 17px / 0 stretch` }
     : { borderWidth: "15px 14px", borderImage: `url(${cerceveResim}) 91 85 96 86 / 15px 14px / 0 stretch` };
   // PROFİL çerçevesi ÜYEYE göre: müşteri=KIRMIZI(yakut), pro=MAVİ(safir), altın=YEŞİL(zümrüt) — ortası o rengin taşı, halka beyaz pırlanta+altın
   const uyeProfilCerceve = uyeTema === "altin" ? profilCerceveYesilResim : uyeTema === "pro" ? profilCerceveMaviResim : profilCerceveResim;
@@ -4759,7 +4763,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="ana-logo-sar">
           {/* Tüm üyeler: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi).
               Pro=yakut zeminli, Müşteri/Altın=şeffaf (mavi/yeşil zemine oturur). Eski düz yazı + mavi elmas kaldırıldı. */}
-          <span className="ana-logo-yazi ana-logo-yazi-pro"><img className={"ana-logo-img" + (uyeTema === "pro" ? " ana-logo-img-mavi" : "")} src={uyeWordmark} alt="GLOXORG" /></span>
+          <span className="ana-logo-yazi ana-logo-yazi-pro"><img className={"ana-logo-img" + ((uyeTema === "pro" || uyeTema === "altin") ? " ana-logo-img-mavi" : "")} src={uyeWordmark} alt="GLOXORG" /></span>
           <span className="ana-alt-sar">
             <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)}</span>
             {aktifKod === "home" && <DunyaKure />}
