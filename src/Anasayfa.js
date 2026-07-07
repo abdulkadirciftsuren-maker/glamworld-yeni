@@ -23,6 +23,7 @@ import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstb
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
 import gloxWordmark from "./gloxWordmark.png";                 // PRO(mavi)/ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
 import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (olduğu gibi kesildi, kırmızı zemine karışır)
+import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (Gemini üretti, ortası şeffaf) — border-image (9-slice)
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -4718,14 +4719,12 @@ export default function Anasayfa({ pro = false }) {
       {/* Üst başlık — üyelik pırlantası alt zemin: Altın üye=YEŞİL, Profesyonel=YAKUT, Müşteri=MAVİ pırlanta (rengi sabit).
           Çerçeve/taşlar/GLOXORG(nakışlı görsel)/düğmeler/ayı/profil AYNEN. Sadece zemin+yazı görseli tema ile değişir. */}
       <header className={"ana-header ana-header-elmas ana-header-" + uyeTema}
-        style={{ backgroundImage: `url(${uyeZemin})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-        {/* ÇERÇEVE = GERÇEK pırlanta taşları (renk renk, yüzük gibi), altın bant üzerinde */}
-        <span className="hdr-cerceve" aria-hidden="true">
-          <span className="hdr-tas-row hdr-ust"><CerceveTas n={9} /></span>
-          <span className="hdr-tas-row hdr-alt"><CerceveTas n={9} /></span>
-          <span className="hdr-tas-col hdr-sol"><CerceveTas n={3} /></span>
-          <span className="hdr-tas-col hdr-sag"><CerceveTas n={3} /></span>
-        </span>
+        style={{
+          backgroundImage: `url(${uyeZemin})`, backgroundSize: "cover", backgroundPosition: "center",
+          borderStyle: "solid", borderWidth: "15px 14px", borderColor: "transparent",
+          borderImage: `url(${cerceveResim}) 91 85 96 86 / 15px 14px / 0 stretch`,
+        }}>
+        {/* ÇERÇEVE artık border-image (işlemeli altın Gemini çerçevesi); eski tek-taş şeridi kaldırıldı */}
         <button className="ana-menu-btn" onClick={() => setMenuAcik(true)} aria-label="Menü">{Ikon.menu}</button>
         <button className="ana-menu-btn ana-zil" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}>
           {Ikon.bildirim}

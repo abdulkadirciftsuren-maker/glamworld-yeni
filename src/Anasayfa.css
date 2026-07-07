@@ -711,7 +711,7 @@
 /* ---- Üst başlık ---- */
 .ana-header{
   position:relative;
-  display:flex; align-items:center; gap:5px; padding:18px 19px;
+  display:flex; align-items:center; gap:5px; padding:7px 6px; /* işlemeli çerçeve (border-image) eklendi → ikonlar çerçeveye YAKIN (kullanıcı) */
   /* İsim/amblem bandı ÖZEL GECE MAVİSİ — çerçeve: kalın altın çizgi YOK, ince altın şerit + İÇİNE gömülü gerçek taşlar (tek parça) */
   background:linear-gradient(180deg,#17357e,#0c1d4e); /* ÖZEL gece mavisi (GLOXORG) */
   /* backdrop-filter KALDIRILDI: kaydırınca çerçeve taşları/şerit KAYBOLUYORDU (repaint hatası). Zemin opak. */
@@ -801,9 +801,11 @@
 .ana-logo-yazi{ position:relative; display:inline-block; margin:0 38px; }
 /* PRO üye GLOXORG GÖRSELİ (bannerdaki nakışlı yazı) — mavi elmas/düz yazı yok; yan boşluk yok, görsel geniş durur */
 .ana-logo-yazi-pro{ margin:0; }
-.ana-logo-img{ display:block; height:31px; width:auto; max-width:min(60vw,320px); object-fit:contain; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
-@media (min-width:560px) and (min-height:600px){ .ana-logo-img{ height:48px; max-width:min(56vw,470px); } }
-@media (min-width:1100px) and (min-height:600px){ .ana-logo-img{ height:64px; } }
+.ana-logo-img{ display:block; height:35px; width:auto; max-width:min(64vw,340px); object-fit:contain; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+/* TELEFON YATAY (geniş+kısa ekran): yazı BÜYÜR/genişler (kullanıcı: yatayda dikten büyük olsun). Çerçeve kalınlığı SABİT (inline border-width). */
+@media (orientation:landscape) and (max-height:560px){ .ana-logo-img{ height:46px; max-width:min(52vw,560px); } }
+@media (min-width:560px) and (min-height:600px){ .ana-logo-img{ height:50px; max-width:min(56vw,470px); } }
+@media (min-width:1100px) and (min-height:600px){ .ana-logo-img{ height:66px; } }
 .ana-amblem{ position:absolute; top:50%; transform:translateY(-50%);
   width:13px; height:13px; display:block; pointer-events:none; }
 .ana-amblem.sag{ left:100%; margin-left:3px; }
