@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.15630c84.css",
-    "main.js": "./static/js/main.0ba2d526.js",
+    "main.css": "./static/css/main.52c829fb.css",
+    "main.js": "./static/js/main.b01ed7c1.js",
     "static/js/453.36eff997.chunk.js": "./static/js/453.36eff997.chunk.js",
     "static/media/cerceve.png": "./static/media/cerceve.638f573a7d751de8b881.png",
     "static/media/gloxWordmarkKirmizi.png": "./static/media/gloxWordmarkKirmizi.86c7f9384003c68d3a3c.png",
@@ -9,13 +9,14 @@
     "static/media/yesilZemin.jpg": "./static/media/yesilZemin.90484b7493deaf473a8c.jpg",
     "static/media/maviZemin.jpg": "./static/media/maviZemin.7d30738f2c97292f839d.jpg",
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
+    "static/media/profilCerceve.png": "./static/media/profilCerceve.45a2e217a2f2fce2ad01.png",
     "index.html": "./index.html",
-    "main.15630c84.css.map": "./static/css/main.15630c84.css.map",
-    "main.0ba2d526.js.map": "./static/js/main.0ba2d526.js.map",
+    "main.52c829fb.css.map": "./static/css/main.52c829fb.css.map",
+    "main.b01ed7c1.js.map": "./static/js/main.b01ed7c1.js.map",
     "453.36eff997.chunk.js.map": "./static/js/453.36eff997.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.15630c84.css",
-    "static/js/main.0ba2d526.js"
+    "static/css/main.52c829fb.css",
+    "static/js/main.b01ed7c1.js"
   ]
 }
