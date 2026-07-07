@@ -1,21 +1,21 @@
 {
   "files": {
-    "main.css": "./static/css/main.48df103d.css",
-    "main.js": "./static/js/main.67734bbf.js",
+    "main.css": "./static/css/main.8459c8bf.css",
+    "main.js": "./static/js/main.d0c7dbbb.js",
     "static/js/453.36eff997.chunk.js": "./static/js/453.36eff997.chunk.js",
-    "static/media/gloxWordmarkMavi.png": "./static/media/gloxWordmarkMavi.46cb0f795a0b3cddcf0f.png",
-    "static/media/gloxWordmarkYesil.png": "./static/media/gloxWordmarkYesil.99accb5ab4ebe628a99b.png",
+    "static/media/gloxWordmarkMavi.png": "./static/media/gloxWordmarkMavi.7064f58d241e77d0c742.png",
+    "static/media/gloxWordmarkYesil.png": "./static/media/gloxWordmarkYesil.c6151e4faead38794634.png",
     "static/media/gloxWordmark.png": "./static/media/gloxWordmark.ff35d18499225e1d28bc.png",
     "static/media/yesilZemin.jpg": "./static/media/yesilZemin.90484b7493deaf473a8c.jpg",
     "static/media/maviZemin.jpg": "./static/media/maviZemin.7d30738f2c97292f839d.jpg",
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "index.html": "./index.html",
-    "main.48df103d.css.map": "./static/css/main.48df103d.css.map",
-    "main.67734bbf.js.map": "./static/js/main.67734bbf.js.map",
+    "main.8459c8bf.css.map": "./static/css/main.8459c8bf.css.map",
+    "main.d0c7dbbb.js.map": "./static/js/main.d0c7dbbb.js.map",
     "453.36eff997.chunk.js.map": "./static/js/453.36eff997.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.48df103d.css",
-    "static/js/main.67734bbf.js"
+    "static/css/main.8459c8bf.css",
+    "static/js/main.d0c7dbbb.js"
   ]
 }
