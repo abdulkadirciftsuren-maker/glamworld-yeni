@@ -720,7 +720,7 @@
 }
 /* PIRLANTA ZEMİN (üyelik teması: yakut/mavi/yeşil) üstbar — JS inline background-image; pırlantanın RENGİNE dokunulmaz.
    Yazı/ikonlar parlak yüzeyde de okunsun diye SADECE gölge güçlendirilir. */
-.ana-header-elmas .ana-alt{ text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 7px rgba(0,0,0,.45); }
+.ana-header-elmas .ana-alt{ color:#ffe9b0; text-shadow:0 1px 2px #000, 0 0 6px rgba(0,0,0,.85), 0 1px 5px rgba(0,0,0,.7); }
 .ana-header-elmas .ana-menu-btn, .ana-header-elmas .ana-zil, .ana-header-elmas .ana-site-ai, .ana-header-elmas .ana-ara-btn{ filter:drop-shadow(0 1px 3px rgba(0,0,0,.75)); }
 /* MÜCEVHER ÇERÇEVE: her kenarda İNCE ALTIN şerit + İÇİNE gömülü renkli gerçek pırlanta taşları (altın+taş TEK PARÇA) */
 .hdr-cerceve{ position:absolute; inset:4px; pointer-events:none; z-index:4; } /* kenardan İÇERİ → bilgisayarda taşlar pencereden kaçmaz */
@@ -756,7 +756,7 @@
   color:#FFD700; display:flex; align-items:center; filter:drop-shadow(0 0 4px rgba(255,215,0,.4));
 }
 /* İkonlar EŞİT boy (menü = zil = pusula) */
-.ana-menu-btn svg, .ana-ara-btn svg{ width:23px; height:23px; }
+.ana-menu-btn svg, .ana-ara-btn svg{ width:28px; height:28px; } /* telefon ikonları büyütüldü (kullanıcı) */
 /* DİL SEÇİCİ MENÜDE — tam satır (globe + dil adı), diğer menü ögeleri gibi */
 .menu-dil{ margin:2px 0; }
 .menu-dil .dil-kose{ position:static; inset:auto; top:auto; right:auto; left:auto; bottom:auto; z-index:auto;
@@ -772,8 +772,8 @@
 .header-dil .dil-etiket{ display:none; }
 .header-dil .dil-dugme{ width:auto; height:auto; background:none; border:none; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
 /* Pusula da AYNI boy (önceki .ana-ara-btn svg kuralı ufaltıyordu) + profile yakın */
-.ana-site-ai .ana-site-ai-pusula{ width:23px; height:23px; }
-.ana-site-ai{ margin-right:-2px; width:34px; height:34px; min-width:34px; } /* base boyut BURADA (media blokları sonra gelip büyütebilsin); 1844'teki boyut kaldırıldı */
+.ana-site-ai .ana-site-ai-pusula{ width:30px; height:30px; } /* ayı büyütüldü (kullanıcı) */
+.ana-site-ai{ margin-right:-2px; width:42px; height:42px; min-width:42px; } /* base boyut BURADA (media blokları sonra gelip büyütebilsin) */
 .ana-zil{ margin-left:-3px; }
 .ana-logo-sar{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:0; margin-top:-5px; }
 .ana-logo-sat{ display:flex; align-items:center; justify-content:center; gap:9px; }
@@ -801,9 +801,9 @@
 .ana-logo-yazi{ position:relative; display:inline-block; margin:0 38px; }
 /* PRO üye GLOXORG GÖRSELİ (bannerdaki nakışlı yazı) — mavi elmas/düz yazı yok; yan boşluk yok, görsel geniş durur */
 .ana-logo-yazi-pro{ margin:0; }
-.ana-logo-img{ display:block; height:34px; width:auto; max-width:min(66vw,340px); object-fit:contain; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
-@media (min-width:560px) and (min-height:600px){ .ana-logo-img{ height:54px; max-width:min(60vw,520px); } }
-@media (min-width:1100px) and (min-height:600px){ .ana-logo-img{ height:74px; } }
+.ana-logo-img{ display:block; height:27px; width:auto; max-width:min(56vw,290px); object-fit:contain; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+@media (min-width:560px) and (min-height:600px){ .ana-logo-img{ height:44px; max-width:min(54vw,440px); } }
+@media (min-width:1100px) and (min-height:600px){ .ana-logo-img{ height:60px; } }
 .ana-amblem{ position:absolute; top:50%; transform:translateY(-50%);
   width:13px; height:13px; display:block; pointer-events:none; }
 .ana-amblem.sag{ left:100%; margin-left:3px; }
@@ -839,14 +839,14 @@
 @keyframes amYuvaParla{ 0%,100%{ filter:drop-shadow(0 0 0 rgba(255,215,0,0)); } 50%{ filter:drop-shadow(0 0 2.5px rgba(255,215,0,.9)); } }
 /* Alt yazı ORTALI kalır; dünya da AYRI (akış-dışı) — hizayı BOZMAZ */
 .ana-alt-sar{ position:relative; display:inline-block; margin-top:1px; }
-.ana-alt{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:10px; color:#9c8f6b; letter-spacing:.2px; }
+.ana-alt{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:11.5px; font-weight:700; color:#ffe6ac; letter-spacing:.2px; } /* pırlanta zeminde okunsun: parlak altın + kalın (kullanıcı: soluktu) */
 /* 3D DÜNYA küre (SVG) — net renkli kıtalar yatay döner; küresel ışık/gölge svg içinde */
 .ana-dunya{ position:absolute; left:100%; top:50%; transform:translateY(-50%); margin-left:5px;
   width:15px; height:15px; display:block; pointer-events:none; } /* UFAK — pırlantaya DEĞMEZ */
 .ana-dunya svg{ display:block; width:100%; height:100%; filter:drop-shadow(0 0 4px rgba(120,200,255,.6)); }
 .ana-profil-foto{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
 .ana-profil{ overflow:hidden;
-  width:26px; height:26px; border-radius:50%; flex:none; cursor:pointer;
+  width:33px; height:33px; border-radius:50%; flex:none; cursor:pointer;
   background:radial-gradient(circle at 50% 35%, #2a2010, #0c0905);
   border:1.5px solid rgba(255,215,0,.6); display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-weight:700; color:#FFD700; font-size:11.5px;
@@ -2124,7 +2124,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 
 /* SİTE ASİSTANI başlık ikonu — RENKLİ PUSULA (altın halka + kırmızı/beyaz iğne) */
 .ana-site-ai{ padding:0; display:flex; align-items:center; justify-content:center; background:none !important; border:none; } /* boyut 693'te + media bloklarında (50/58px) */
-.ana-site-ai-pusula{ width:28px; height:28px; filter:drop-shadow(0 0 5px rgba(255,215,0,.5)); }
+.ana-site-ai-pusula{ width:34px; height:34px; filter:drop-shadow(0 0 5px rgba(255,215,0,.5)); }
 .ana-site-ai:active{ transform:scale(.9); }
 
 /* ===== GLOXORG YARDIMCISI — yapay zeka sohbet balonu + penceresi ===== */
