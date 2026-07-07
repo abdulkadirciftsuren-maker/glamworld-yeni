@@ -24,7 +24,8 @@ import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üs
 import gloxWordmark from "./gloxWordmark.png";                 // PRO(mavi)/ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
 import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (olduğu gibi kesildi, kırmızı zemine karışır)
 import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (Gemini, ortası şeffaf) — border-image (9-slice)
-import profilCerceveResim from "./profilCerceve.png";         // PROFİL yuvarlak pırlanta çerçevesi (Gemini) — foto merkezi kapatır
+import profilCerceveResim from "./profilCerceve.png";         // PROFİL yuvarlak pırlanta çerçevesi (kod çizimi) — foto merkezi kapatır
+import ayiCerceveResim from "./ayiCerceve.png";               // EKSPERT (ayı) üst düğmesi — yuvarlak pırlanta çerçeve (kod çizimi, merkez şeffaf)
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -4744,10 +4745,11 @@ export default function Anasayfa({ pro = false }) {
           </span>
         </div>
         {/* SİTE ASİSTANI — Google profilinin yanında; komutla pencere açar (balondan ayrı) */}
-        <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit && maskotTur === "ekspert") { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}>
-          {/* MASKOT 2 — Ekspert: bilge AYI (altın çerçeve marka olarak korunur) */}
+        <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit && maskotTur === "ekspert") { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}
+          style={{ backgroundImage: `url(${ayiCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+          {/* MASKOT 2 — Ekspert: bilge AYI (yuvarlak pırlanta çerçeve içinde madalyon; dış altın halka çerçeveden gelir) */}
           <svg className="ana-site-ai-pusula" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9.7" fill="#0c1730" stroke="#FFD700" strokeWidth="1.2" />
+            <circle cx="12" cy="12" r="9.7" fill="#0c1730" />
             <circle cx="7.7" cy="7.8" r="2.1" fill="#a9743f" /><circle cx="16.3" cy="7.8" r="2.1" fill="#a9743f" />
             <circle cx="7.7" cy="7.8" r="0.95" fill="#5b3a1c" /><circle cx="16.3" cy="7.8" r="0.95" fill="#5b3a1c" />
             <circle cx="12" cy="12.4" r="5.1" fill="#c08a4e" />
