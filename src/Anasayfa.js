@@ -26,7 +26,9 @@ import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kı
 import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (Gemini, ortası şeffaf) — border-image (9-slice)
 import profilCerceveResim from "./profilCerceve.png";         // PROFİL yuvarlak pırlanta çerçevesi (kod çizimi) — foto merkezi kapatır
 import ayiCerceveResim from "./ayiCerceve.png";               // EKSPERT (ayı) üst düğmesi — yuvarlak MAVİ safir çerçeve (kod çizimi)
-import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ + ZİL (sol ikonlar) — yuvarlak YEŞİL zümrüt çerçeve (kod çizimi, lacivert madalyon)
+import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvarlak YEŞİL zümrüt çerçeve (kod çizimi, lacivert madalyon)
+import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
+import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -4731,7 +4733,7 @@ export default function Anasayfa({ pro = false }) {
         <button className="ana-menu-btn" onClick={() => setMenuAcik(true)} aria-label="Menü"
           style={{ backgroundImage: `url(${ikonCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>{Ikon.menu}</button>
         <button className="ana-menu-btn ana-zil" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}
-          style={{ backgroundImage: `url(${ikonCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+          style={{ backgroundImage: `url(${bildirimListe.some((b) => !b.okundu) ? zilCerceveKirmiziResim : zilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
           {Ikon.bildirim}
           {bildirimListe.some((b) => !b.okundu) && <span className="ana-zil-rozet">{Math.min(99, bildirimListe.filter((b) => !b.okundu).length)}</span>}
         </button>

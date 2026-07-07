@@ -847,7 +847,7 @@
 .ana-alt{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:10px; font-weight:700; color:#ffe6ac; letter-spacing:.2px; white-space:nowrap; } /* TEK SATIR (alt alta kaymaz); GLOXORG ile ortalı-simetrik */
 /* 3D DÜNYA küre (SVG) — net renkli kıtalar yatay döner; küresel ışık/gölge svg içinde */
 .ana-dunya{ position:absolute; left:100%; top:50%; transform:translateY(-50%); margin-left:7px;
-  width:16px; height:16px; display:block; pointer-events:none; } /* küre küçültüldü + yazıdan AYRI sağda; absolute → alt yazıyı kaydırmaz (simetrik) (kullanıcı) */
+  width:18px; height:18px; display:block; pointer-events:none; } /* küre biraz büyütüldü + yazıdan AYRI sağda; absolute → alt yazıyı kaydırmaz (simetrik) (kullanıcı) */
 .ana-dunya svg{ display:block; width:100%; height:100%; filter:drop-shadow(0 0 4px rgba(120,200,255,.6)); }
 .ana-profil-foto{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
 .ana-profil{ position:relative; overflow:visible;
@@ -1557,7 +1557,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ana-amblem.sag{ margin-left:5px; } .ana-amblem.sol{ margin-right:5px; }
   .marka-cizgi{ width:26px; height:8px; }
   .marka-cizgi.sag{ margin-left:24px; } .marka-cizgi.sol{ margin-right:24px; }
-  .ana-dunya{ width:18px; height:18px; }
+  .ana-dunya{ width:20px; height:20px; }
   .ana-alt{ font-size:16.5px; }
   .ana-menu-btn svg, .ana-ara-btn svg{ width:34px; height:34px; }
   .ana-menu-btn{ width:44px; height:44px; min-width:44px; } .ana-menu-btn svg{ width:26px; height:26px; } /* yeşil çerçeveli menü/zil (iPad) */
@@ -1620,7 +1620,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ana-amblem.sag{ margin-left:6px; } .ana-amblem.sol{ margin-right:6px; }
   .marka-cizgi{ width:28px; height:9px; }
   .marka-cizgi.sag{ margin-left:27px; } .marka-cizgi.sol{ margin-right:27px; }
-  .ana-dunya{ width:20px; height:20px; }
+  .ana-dunya{ width:22px; height:22px; }
   .ana-alt{ font-size:17.5px; }
   .ana-menu-btn svg, .ana-ara-btn svg{ width:40px; height:40px; }
   .ana-menu-btn{ width:50px; height:50px; min-width:50px; } .ana-menu-btn svg{ width:30px; height:30px; } /* yeşil çerçeveli menü/zil (bilgisayar) */
