@@ -4759,7 +4759,8 @@ export default function Anasayfa({ pro = false }) {
         </button>
         {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon */}
         {aktifKod === "home" ? (
-          <div className="ana-profil" onClick={() => setProfilAcik((a) => !a)}>
+          <div className="ana-profil" onClick={() => setProfilAcik((a) => !a)}
+            style={{ borderStyle: "solid", borderWidth: "7px", borderColor: "transparent", borderImage: `url(${cerceveResim}) 91 85 96 86 / 7px / 0 stretch` }}>
             {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : harf}
           </div>
         ) : (
