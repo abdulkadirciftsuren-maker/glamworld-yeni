@@ -841,7 +841,7 @@
 @keyframes amYuvaParla{ 0%,100%{ filter:drop-shadow(0 0 0 rgba(255,215,0,0)); } 50%{ filter:drop-shadow(0 0 2.5px rgba(255,215,0,.9)); } }
 /* Alt yazı ORTALI kalır; dünya da AYRI (akış-dışı) — hizayı BOZMAZ */
 .ana-alt-sar{ position:relative; display:inline-flex; align-items:center; vertical-align:middle; margin-top:1px; } /* küre artık AKIŞTA (altyazının yanında) — ayıya taşmaz */
-.ana-alt{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:10px; font-weight:700; color:#ffe6ac; letter-spacing:.2px; } /* pırlanta zeminde okunsun: parlak altın + kalın; boyut küçültüldü (kullanıcı: çok büyüktü) */
+.ana-alt{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:10px; font-weight:700; color:#ffe6ac; letter-spacing:.2px; white-space:nowrap; flex:none; } /* pırlanta zeminde okunsun; TEK SATIR (alt alta kaymaz) — küre ile yan yana (kullanıcı) */
 /* 3D DÜNYA küre (SVG) — net renkli kıtalar yatay döner; küresel ışık/gölge svg içinde */
 .ana-dunya{ position:static; flex:none; margin-left:5px;
   width:20px; height:20px; display:block; pointer-events:none; } /* AKIŞTA — altyazının yanında, ayıya binmez (kullanıcı) */
