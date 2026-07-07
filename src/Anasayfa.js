@@ -23,7 +23,8 @@ import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstb
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
 import gloxWordmark from "./gloxWordmark.png";                 // PRO(mavi)/ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
 import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (olduğu gibi kesildi, kırmızı zemine karışır)
-import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (Gemini üretti, ortası şeffaf) — border-image (9-slice)
+import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (Gemini, ortası şeffaf) — border-image (9-slice)
+import profilCerceveResim from "./profilCerceve.png";         // PROFİL yuvarlak pırlanta çerçevesi (Gemini) — foto merkezi kapatır
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -4759,9 +4760,9 @@ export default function Anasayfa({ pro = false }) {
         </button>
         {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon */}
         {aktifKod === "home" ? (
-          <div className="ana-profil" onClick={() => setProfilAcik((a) => !a)}
-            style={{ borderStyle: "solid", borderWidth: "7px", borderColor: "transparent", borderImage: `url(${cerceveResim}) 91 85 96 86 / 7px / 0 stretch` }}>
-            {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : harf}
+          <div className="ana-profil ana-profil-yuvarlak" onClick={() => setProfilAcik((a) => !a)}
+            style={{ backgroundImage: `url(${profilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+            {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
           </div>
         ) : (
           <button className="ana-ara-btn" aria-label={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
@@ -4841,7 +4842,8 @@ export default function Anasayfa({ pro = false }) {
           /* PROFİL = kendi PENCERESİ (diğer bölümler gibi: üstte ikonlar + sağ üstte kalem,
              içerik yakında dolacak) — kullanıcının istediği asıl profil sayfası budur */
           <button key={n.k} className={"ana-nav-oge" + (n.k === aktifKod ? " aktif" : "")} onClick={() => setAktifKod(n.k)}>
-            <span className={"ana-nav-kutu" + (n.k === "profil" ? " yuv" : "")}>
+            <span className={"ana-nav-kutu" + (n.k === "profil" ? " nav-cerceveli" : "")}
+              style={n.k === "profil" ? { borderStyle: "solid", borderWidth: "6px", borderColor: "transparent", borderImage: `url(${cerceveResim}) 91 85 96 86 / 6px / 0 stretch`, borderRadius: "8px" } : undefined}>
               {n.k === "profil" && foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : Ikon[n.k]}
               {/* Köşe rozeti: SADE mini gömülü taş — kendi renginde, içten yanar, tam köşede.
                   Profil taşı KİMLİĞE göre: profesyonel=KIRMIZI, müşteri=BEYAZ (beyaz müşteri taşıdır) */}

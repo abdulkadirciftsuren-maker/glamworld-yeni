@@ -847,14 +847,13 @@
   width:20px; height:20px; display:block; pointer-events:none; } /* dünya ikonu büyütüldü (kullanıcı) */
 .ana-dunya svg{ display:block; width:100%; height:100%; filter:drop-shadow(0 0 4px rgba(120,200,255,.6)); }
 .ana-profil-foto{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
-.ana-profil{ overflow:visible;
-  width:44px; height:44px; border-radius:9px; flex:none; cursor:pointer; box-sizing:border-box;
-  background:radial-gradient(circle at 50% 35%, #2a2010, #0c0905) padding-box;
+.ana-profil{ position:relative; overflow:visible;
+  width:46px; height:46px; flex:none; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  font-family:'Cinzel',serif; font-weight:700; color:#FFD700; font-size:11.5px;
-  transition:filter .2s;
-} /* etrafında işlemeli altın çerçeve (border-image inline; kullanıcı isteği: profil etrafına pırlanta çerçeve) */
-.ana-profil .ana-profil-foto{ border-radius:4px; }
+  background-repeat:no-repeat; transition:filter .2s;
+} /* YUVARLAK pırlanta çerçeve zeminde (Gemini); foto/harf merkezi kapatır (kullanıcı isteği) */
+.ana-profil-yuvarlak .ana-profil-foto{ position:absolute; top:14%; left:14%; width:72%; height:72%; border-radius:50%; object-fit:cover; z-index:1; } /* foto merkez beyazı tamamen kapatsın */
+.ana-profil-harf{ position:relative; z-index:1; font-family:'Cinzel',serif; font-weight:700; color:#FFD700; font-size:13px; text-shadow:0 1px 3px #000; }
 .ana-profil:hover{ filter:brightness(1.08); }
 /* pırlanta GLOXORG markası */
 .apm-marka{ display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
@@ -955,6 +954,9 @@
 /* Profil = YUVARLAK; fotoğraf varsa içini doldurur */
 .ana-nav-kutu.yuv{ border-radius:50%; }
 .ana-nav-kutu.yuv img{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
+/* PROFİL nav düğmesi: işlemeli altın çerçeve (header ile aynı, kare); foto içi doldurur (kullanıcı: kare çerçeveyi alttaki profile koy) */
+.ana-nav-kutu.nav-cerceveli{ box-sizing:border-box; width:46px; height:46px; background:radial-gradient(circle at 50% 35%,#2a2010,#0c0905) padding-box !important; box-shadow:0 4px 12px rgba(120,95,30,.28); }
+.ana-nav-kutu.nav-cerceveli img{ width:100%; height:100%; border-radius:3px; object-fit:cover; }
 /* her düğme kendi renginde (fotoğraftaki gibi içleri renkli) */
 /* AYDINLIK temada CANLI dolu renkli nav ikonları + beyaz ikon (soluk cam yerine doygun renk) */
 .ana-nav-oge:nth-child(1) .ana-nav-kutu{ background:linear-gradient(150deg,#3f8aff,#1e4a9e); color:#fff; border-color:rgba(30,74,158,.6); }
