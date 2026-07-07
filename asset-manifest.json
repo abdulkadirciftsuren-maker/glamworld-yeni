@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.c5c54715.css",
-    "main.js": "./static/js/main.b9b3d19d.js",
+    "main.css": "./static/css/main.babfd6d0.css",
+    "main.js": "./static/js/main.3bf13fc7.js",
     "static/js/453.36eff997.chunk.js": "./static/js/453.36eff997.chunk.js",
     "static/media/profilCerceveMavi.png": "./static/media/profilCerceveMavi.0b25c849ca29eb692e24.png",
     "static/media/profilCerceveYesil.png": "./static/media/profilCerceveYesil.634920b132be92e49644.png",
@@ -9,6 +9,7 @@
     "static/media/ikonCerceve.png": "./static/media/ikonCerceve.406daf911f7602325daa.png",
     "static/media/zilCerceve.png": "./static/media/zilCerceve.04038de7f93800d17d6a.png",
     "static/media/gloxWordmarkMavi.png": "./static/media/gloxWordmarkMavi.6332ff6d51d7102872ca.png",
+    "static/media/ayiCervevePro.png": "./static/media/ayiCervevePro.b2d95c1c61be8f88abe0.png",
     "static/media/ayiCerceve.png": "./static/media/ayiCerceve.48a88250b2ebd3687381.png",
     "static/media/cerceve.png": "./static/media/cerceve.638f573a7d751de8b881.png",
     "static/media/gloxWordmarkKirmizi.png": "./static/media/gloxWordmarkKirmizi.e8624a8df2bcf4e535fc.png",
@@ -19,12 +20,12 @@
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "static/media/maviZemin.jpg": "./static/media/maviZemin.8972609c9f7e5841e2d4.jpg",
     "index.html": "./index.html",
-    "main.c5c54715.css.map": "./static/css/main.c5c54715.css.map",
-    "main.b9b3d19d.js.map": "./static/js/main.b9b3d19d.js.map",
+    "main.babfd6d0.css.map": "./static/css/main.babfd6d0.css.map",
+    "main.3bf13fc7.js.map": "./static/js/main.3bf13fc7.js.map",
     "453.36eff997.chunk.js.map": "./static/js/453.36eff997.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.c5c54715.css",
-    "static/js/main.b9b3d19d.js"
+    "static/css/main.babfd6d0.css",
+    "static/js/main.3bf13fc7.js"
   ]
 }
