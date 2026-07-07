@@ -21,9 +21,7 @@ import DilSecici from "./DilSecici";
 import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
 import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
-import gloxWordmark from "./gloxWordmark.png";           // PRO: nakışlı GLOXORG — yakut zeminli (kırmızı iç)
-import gloxWordmarkMavi from "./gloxWordmarkMavi.png";   // MÜŞTERİ: aynı temiz dolu harfler, içi MAVİ (mavi pırlantaya uyumlu)
-import gloxWordmarkYesil from "./gloxWordmarkYesil.png"; // ALTIN: aynı temiz dolu harfler, içi YEŞİL (yeşil pırlantaya uyumlu)
+import gloxWordmark from "./gloxWordmark.png";           // TEK nakışlı GLOXORG — KOYU içli (zemin rengiyle aynı değil) → her renkli pırlantada belli
 import "./Anasayfa.css";
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
@@ -1865,10 +1863,10 @@ export default function Anasayfa({ pro = false }) {
   const [meslekFiltre, setMeslekFiltre] = useState(""); // meslek arama kutusu
   const proUye = !!(profilBilgi && profilBilgi.tip === "profesyonel"); // kırmızı pırlanta + PRO ÜYE
   const uyelik = (profilBilgi && profilBilgi.uyelik) || ""; // "" | "kirmizi" (GLOXORG Kırmızı Pırlanta) | "altin" (GLOXORG Altın Pırlanta) — günlük AI sınırını kaldırır
-  // ÜSTBAR PIRLANTA TEMASI: Altın Pırlanta üyeliği (max) = YEŞİL; Profesyonel = YAKUT (kırmızı); Müşteri = MAVİ.
+  // ÜSTBAR PIRLANTA TEMASI (kullanıcı): Müşteri = KIRMIZI (yakut); Profesyonel = MAVİ (safir); Altın/Tam üye = YEŞİL (zümrüt).
   const uyeTema = uyelik === "altin" ? "altin" : (proUye ? "pro" : "musteri");
-  const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? yakutZemin : maviZemin;
-  const uyeWordmark = uyeTema === "altin" ? gloxWordmarkYesil : uyeTema === "pro" ? gloxWordmark : gloxWordmarkMavi; // temiz DOLU harfler; içi temaya göre kırmızı/mavi/yeşil
+  const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? maviZemin : yakutZemin;
+  const uyeWordmark = gloxWordmark; // TEK yazı (koyu içli) — zemin rengiyle aynı değil, her zeminde belli
   // ÇOKLU meslek: pro.meslekler (dizi) ana kaynak; geriye uyum için pro.meslek = ilk meslek.
   // pro.meslekler ANA kaynak; yoksa pro.meslek; yoksa ÜST düzey meslekler/meslek (eski ayarMeslekSec kayıtları için geriye uyum)
   const proMeslekDizi = (profilBilgi && profilBilgi.pro && Array.isArray(profilBilgi.pro.meslekler) && profilBilgi.pro.meslekler.length)
