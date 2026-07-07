@@ -21,9 +21,11 @@ import DilSecici from "./DilSecici";
 import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
 import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
-import gloxWordmark from "./gloxWordmark.png";                 // PRO(mavi)/ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
-import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (olduğu gibi kesildi, kırmızı zemine karışır)
-import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (Gemini, ortası şeffaf) — border-image (9-slice)
+import gloxWordmark from "./gloxWordmark.png";                 // ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
+import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (kesildi, kırmızı zemine karışır)
+import gloxWordmarkMavi from "./gloxWordmarkMavi.png";         // PRO(mavi): TÜM BLOK — GLOXORG mavi safir banner'dan kesildi, mavi zemine karışır
+import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (müşteri/altın) — border-image (9-slice)
+import proCerceveResim from "./proCerceve.png";               // PRO üstbar: YENİ işlemeli altın+mücevher çerçeve (kullanıcı) — border-image
 import profilCerceveResim from "./profilCerceve.png";         // PROFİL (müşteri=KIRMIZI yakut) yuvarlak pırlanta çerçevesi
 import profilCerceveMaviResim from "./profilCerceveMavi.png"; // PROFİL (pro=MAVİ safir)
 import profilCerceveYesilResim from "./profilCerceveYesil.png"; // PROFİL (altın=YEŞİL zümrüt)
@@ -1875,7 +1877,11 @@ export default function Anasayfa({ pro = false }) {
   // ÜSTBAR PIRLANTA TEMASI (kullanıcı): Müşteri = KIRMIZI (yakut); Profesyonel = MAVİ (safir); Altın/Tam üye = YEŞİL (zümrüt).
   const uyeTema = uyelik === "altin" ? "altin" : (proUye ? "pro" : "musteri");
   const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? maviZemin : yakutZemin;
-  const uyeWordmark = uyeTema === "musteri" ? gloxWordmarkKirmizi : gloxWordmark; // müşteri=tüm blok kırmızı; pro/altın=koyu içli
+  const uyeWordmark = uyeTema === "musteri" ? gloxWordmarkKirmizi : uyeTema === "pro" ? gloxWordmarkMavi : gloxWordmark; // müşteri=kırmızı blok; pro=mavi blok (banner'dan kesildi); altın=koyu içli
+  // PRO üstbar ÇERÇEVESİ farklı (kullanıcının verdiği yeni işlemeli çerçeve); müşteri/altın eski çerçeve
+  const uyeCerceveStyle = uyeTema === "pro"
+    ? { borderWidth: "17px 16px", borderImage: `url(${proCerceveResim}) 71 74 57 74 / 17px 16px / 0 stretch` }
+    : { borderWidth: "15px 14px", borderImage: `url(${cerceveResim}) 91 85 96 86 / 15px 14px / 0 stretch` };
   // PROFİL çerçevesi ÜYEYE göre: müşteri=KIRMIZI(yakut), pro=MAVİ(safir), altın=YEŞİL(zümrüt) — ortası o rengin taşı, halka beyaz pırlanta+altın
   const uyeProfilCerceve = uyeTema === "altin" ? profilCerceveYesilResim : uyeTema === "pro" ? profilCerceveMaviResim : profilCerceveResim;
   // ÇOKLU meslek: pro.meslekler (dizi) ana kaynak; geriye uyum için pro.meslek = ilk meslek.
@@ -4730,8 +4736,8 @@ export default function Anasayfa({ pro = false }) {
       <header className={"ana-header ana-header-elmas ana-header-" + uyeTema}
         style={{
           backgroundImage: `url(${uyeZemin})`, backgroundSize: "cover", backgroundPosition: "center",
-          borderStyle: "solid", borderWidth: "15px 14px", borderColor: "transparent",
-          borderImage: `url(${cerceveResim}) 91 85 96 86 / 15px 14px / 0 stretch`,
+          borderStyle: "solid", borderColor: "transparent",
+          ...uyeCerceveStyle,
         }}>
         {/* ÇERÇEVE artık border-image (işlemeli altın Gemini çerçevesi); eski tek-taş şeridi kaldırıldı */}
         <button className="ana-menu-btn" onClick={() => setMenuAcik(true)} aria-label="Menü"
@@ -4747,7 +4753,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="ana-logo-sar">
           {/* Tüm üyeler: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi).
               Pro=yakut zeminli, Müşteri/Altın=şeffaf (mavi/yeşil zemine oturur). Eski düz yazı + mavi elmas kaldırıldı. */}
-          <span className="ana-logo-yazi ana-logo-yazi-pro"><img className="ana-logo-img" src={uyeWordmark} alt="GLOXORG" /></span>
+          <span className="ana-logo-yazi ana-logo-yazi-pro"><img className={"ana-logo-img" + (uyeTema === "pro" ? " ana-logo-img-mavi" : "")} src={uyeWordmark} alt="GLOXORG" /></span>
           <span className="ana-alt-sar">
             <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)}</span>
             {aktifKod === "home" && <DunyaKure />}

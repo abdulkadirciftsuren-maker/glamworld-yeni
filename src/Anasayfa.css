@@ -805,6 +805,8 @@
 /* PRO üye GLOXORG GÖRSELİ (bannerdaki nakışlı yazı) — mavi elmas/düz yazı yok; yan boşluk yok, görsel geniş durur */
 .ana-logo-yazi-pro{ margin:0; }
 .ana-logo-img{ display:block; height:35px; width:auto; max-width:min(64vw,340px); object-fit:contain; transform:scaleX(1.12); transform-origin:center; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); } /* enine biraz genişletildi (kullanıcı: yükseklik değil enine) */
+.ana-logo-img-mavi{ transform:scaleX(1); max-width:min(44vw,300px); } /* PRO mavi yazı zaten geniş (banner) → scaleX yok + dar ekranda sınırlı, ikonlara taşmaz */
+@media (min-width:560px) and (min-height:600px){ .ana-logo-img-mavi{ max-width:min(50vw,420px); } } /* tablet/pc: pro yazı daha geniş */
 /* TELEFON YATAY (geniş+kısa ekran): ikonlar BÜYÜR + ARALARı AÇILIR + yazı enine GENİŞLER (kullanıcı: yatayda ikonlar ufak/sıkışık kalıyordu). Çerçeve kalınlığı SABİT (inline border-width). */
 @media (orientation:landscape) and (max-height:560px){
   .ana-logo-img{ height:46px; max-width:min(64vw,640px); transform:scaleX(1.3); }
