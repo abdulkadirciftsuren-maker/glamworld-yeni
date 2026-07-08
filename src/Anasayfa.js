@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -2166,11 +2166,20 @@ export default function Anasayfa({ pro = false }) {
       const duzenVeri = { zemin: zeminRenk, kat: katmanSerile(katmanlar) }; // KATMAN HAFIZASI: silinmez
       setProfilBilgi((p) => ({ ...(p || {}), [alan]: data, [duzenAlan]: duzenVeri }));
       const uu = auth.currentUser; if (uu) profilKaydet(uu.uid, { [alan]: data, [duzenAlan]: duzenVeri }).catch(() => {});
+      // PROFİL avatarı değiştiyse: ESKİ paylaşımlardaki avatarı da YENİLE (kullanıcı: paylaşımlarda eski foto kalıyordu)
+      if (alan === "avatarFoto") avatariHerYereYay(data);
     }
     setDuzenAcik(false); setAcikBolum(null); // okey/kaydet sonrası ayarlar OTOMATİK kapanır
   };
+  // Yeni profil avatarını KENDİ tüm gönderilerime yay: hem yerel akış (anında görünsün) hem Firestore (herkes yeni görsün).
+  const avatariHerYereYay = (yeniFotoData) => {
+    const uu = auth.currentUser; if (!uu) return;
+    const guncelle = (a) => a.map((g) => ((g.uid === uu.uid || g.sahipUid === uu.uid) && !g.amblem) ? { ...g, foto: yeniFotoData } : g);
+    setGercekAkis((a) => guncelle(a)); setGonderilerim((a) => guncelle(a));
+    gonderiAvatarGuncelle(uu.uid, yeniFotoData).catch(() => {});
+  };
   // Galeri: bir fotoğrafı ANA avatar yap / sil
-  function galeriAnaYap(d) { setProfilBilgi((p) => ({ ...(p || {}), avatarFoto: d })); const uu = auth.currentUser; if (uu) profilKaydet(uu.uid, { avatarFoto: d }).catch(() => {}); }
+  function galeriAnaYap(d) { setProfilBilgi((p) => ({ ...(p || {}), avatarFoto: d })); const uu = auth.currentUser; if (uu) profilKaydet(uu.uid, { avatarFoto: d }).catch(() => {}); avatariHerYereYay(d); }
   function galeriSil(i) { setProfilBilgi((p) => { const g = ((p && p.galeri) || []).filter((_, j) => j !== i); const uu = auth.currentUser; if (uu) profilKaydet(uu.uid, { galeri: g }).catch(() => {}); return { ...(p || {}), galeri: g }; }); }
   // ÇOKLU MESLEK seç/çıkar → pro.meslekler dizisi (2-3 meslek olabilir) + pro.meslek=ilk; aramada hepsiyle bulunur.
   function meslekToggle(ad) {
@@ -5045,11 +5054,13 @@ export default function Anasayfa({ pro = false }) {
               // KENDİ gönderimde temam anında bilinir (benimTasHex); başkasında gönderide saklı pro/uyelik alanları.
               const kendiPost = p.uid && u && p.uid === u.uid;
               const rozRenk = kendiPost ? benimTasHex : uyeTasHex(p);
+              // KENDİ gönderimde avatar HER ZAMAN GÜNCEL profil fotom (eski paylaşımda eski foto kalmasın); amblemli gönderi hariç
+              const postFoto = (kendiPost && !p.amblem && foto) ? foto : p.foto;
               const meslekRenk = MESLEK_RENK[p.meslek] || "#FFD700"; // meslek kendi renginde
               const mesajAc = () => { if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, tip: p.pro ? "profesyonel" : "", uyelik: p.uyelik || "", konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); };
               const yazan = (
                 <span className="apr-yazan apr-yazan-ust">
-                  <span className={"apr-av uye-ac" + (p.amblem ? " amblem" : "")} style={{ background: p.renk || ("linear-gradient(145deg," + pc + ",#0d1b3a)") }} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>{p.foto ? <img src={p.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
+                  <span className={"apr-av uye-ac" + (p.amblem ? " amblem" : "")} style={{ background: p.renk || ("linear-gradient(145deg," + pc + ",#0d1b3a)") }} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>{postFoto ? <img src={postFoto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
                   <span className="apr-bil">
                     <b className="notranslate" translate="no">{ad} <span className="ana-post-rozet"><Elmas4 c={rozRenk} /></span></b>
                     <i><span className="apr-meslek" style={{ color: meslekRenk }}>{mc(p.meslek, dil)}</span>{(p.sehir || zaman) && <span className="apr-zaman"> · {[p.sehir, zaman].filter(Boolean).join(" · ")}</span>}</i>
@@ -5133,7 +5144,7 @@ export default function Anasayfa({ pro = false }) {
                       tür zaten ismin yanında "ana-post-tur" rozetinde yazılı (çakışma giderildi). */}
                   <div className="ana-post-bas">
                     <span className={"ana-post-avatar uye-ac" + (p.amblem ? " amblem" : "")} style={{ background: p.renk || ("linear-gradient(145deg," + pc + ",#0d1b3a)") }} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>
-                      {p.foto ? <img className="ana-post-avatar-img" src={p.foto} alt="" referrerPolicy="no-referrer" /> : (p.h || bas)}
+                      {postFoto ? <img className="ana-post-avatar-img" src={postFoto} alt="" referrerPolicy="no-referrer" /> : (p.h || bas)}
                     </span>
                     <div className="ana-post-kim">
                       <div className="ana-post-ad">{ad} <span className="ana-post-rozet"><Elmas4 c={rozRenk} /></span></div>
@@ -5979,6 +5990,7 @@ export default function Anasayfa({ pro = false }) {
         const altbil = [mc(p.meslek, dil), p.sehir, (p.zaman || zamanOnce(p.zamanMs))].filter(Boolean).join(" · ");
         const tfKendi = p.uid && u && p.uid === u.uid;
         const tfRoz = tfKendi ? benimTasHex : uyeTasHex(p); // isim yanı pırlanta = yazarın üyeliği (mavi/kırmızı/yeşil)
+        const tfFoto = (tfKendi && !p.amblem && foto) ? foto : p.foto; // kendi gönderimde güncel avatar
         // TAM EKRAN kategori rozeti (feed'deki gibi: nereden geldiği — Duyuru/Foto/Video/Tavsiye...)
         const tfAmb = postAmblem(p);
         const tfKatAd = p.tur ? turGoster(p.tur) : ({ foto: "Fotoğraf", video: "Video", is: "İş İlanı", urun: "Ürün/Hizmet", tavsiye: "Tavsiye", etkinlik: "Etkinlik", duyuru: "Duyuru", soru: "Soru/Yardım", yazi: "Paylaşım" }[tfAmb.tip] || "Paylaşım");
@@ -6043,7 +6055,7 @@ export default function Anasayfa({ pro = false }) {
             <button className="tamfoto-kapat" onClick={() => setTamFoto("")} aria-label="Kapat">✕</button>
             {/* ÜST — yazan (şeffaf) */}
             <div className="tf-ust" onClick={(e) => e.stopPropagation()}>
-              <span className={"tf-avatar uye-ac" + (p.amblem ? " amblem" : "")} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>{p.foto ? <img src={p.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
+              <span className={"tf-avatar uye-ac" + (p.amblem ? " amblem" : "")} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>{tfFoto ? <img src={tfFoto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
               <div className="tf-kim">
                 <b className="notranslate" translate="no">{ad} <span className="ana-post-rozet"><Elmas4 c={tfRoz} /></span></b>
                 {altbil && <i>{altbil}</i>}

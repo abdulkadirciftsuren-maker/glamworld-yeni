@@ -278,6 +278,26 @@ export async function gonderilerimOku(uid, adet = 60) {
     return liste;
   } catch (e) { return []; }
 }
+// PROFİL FOTOĞRAFI/ADI DEĞİŞİNCE kullanıcının TÜM gönderilerindeki avatar+ad GÜNCELLENİR
+// (kullanıcı: "profili değiştirdim ama paylaşımlarımda eski fotoğraf duruyor"). AMBLEM'li gönderiler
+// (kendi iş amblemini avatar yapanlar) korunur — onların foto'su amblemdir, ezilmez. Kaç gönderi güncellendiğini döndürür.
+export async function gonderiAvatarGuncelle(uid, foto, ad) {
+  if (!uid) return 0;
+  try {
+    const q = query(collection(db, "gonderiler"), where("sahipUid", "==", uid), fsLimit(500));
+    const snap = await getDocs(q);
+    let n = 0;
+    await Promise.all(snap.docs.map(async (d) => {
+      const p = d.data() || {};
+      if (p.amblem) return; // amblemli gönderi = iş amblemi, avatarla değiştirme
+      const yama = {};
+      if (typeof foto === "string" && p.foto !== foto) yama.foto = foto;
+      if (typeof ad === "string" && ad && p.ad !== ad) yama.ad = ad;
+      if (Object.keys(yama).length) { try { await updateDoc(d.ref, yama); n++; } catch (e) {} }
+    }));
+    return n;
+  } catch (e) { return 0; }
+}
 // Gönderi sil (sadece sahibi — kural zaten korur) + MEDYASINI depodan OTOMATİK sil (boşuna yer/masraf kalmasın)
 export async function gonderiSil(id) {
   if (!id) return false;
