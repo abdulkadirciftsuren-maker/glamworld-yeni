@@ -1201,6 +1201,7 @@ export default function Anasayfa({ pro = false }) {
   const [filigranEkle, setFiligranEkle] = useState(true); // GLOXORG filigranı eklensin mi (foto zaten GLOXORG'luysa kapat → çift olmasın)
   const [paylasKonum, setPaylasKonum] = useState(null); // CANLI konum: { enlem, boylam, yer, sehir, ulke, tam } — "nereden paylaşıldı" (hastane/havalimanı/otogar...)
   const [konumDurum, setKonumDurum] = useState(""); // "" | "aliniyor" | "hata"
+  const [onizGaleri, setOnizGaleri] = useState(null); // TAM EKRAN foto/video gezici: { liste:[{tip,src,poster}], i } — tek tek gez
   const [paylasVideo, setPaylasVideo] = useState("");   // video ÖNİZLEME linki (yerel) veya kaydedilen URL
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasVideoPoster, setPaylasVideoPoster] = useState(""); // video KAPAK resmi (ilk kare) — "ekranı yok" sorununu çözer
@@ -4786,7 +4787,7 @@ export default function Anasayfa({ pro = false }) {
     // Parmak ne yapıyorsa ORADA kalsın, alt sayfa görülmesin.
     if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || aktifKod === "profil") { dokunRef.current = null; return; }
     try {
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -5195,9 +5196,9 @@ export default function Anasayfa({ pro = false }) {
                     )}
                     <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " galeri-sar" : "")} onClick={() => setTamFoto(p)}>
                       {postMedyalar
-                        ? (<div className="apr-galeri" onClick={(e) => e.stopPropagation()}>
+                        ? (<div className="apr-galeri" onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                             {postMedyalar.map((m, mi) => (
-                              <div className="apr-galeri-oge" key={mi} onClick={() => setTamFoto(p)}>
+                              <div className="apr-galeri-oge" key={mi} onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster })), i: mi }); }}>
                                 {m.tip === "video"
                                   ? <video src={videoSade(m.url)} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
                                   : <img src={m.data || m.url} alt="" referrerPolicy="no-referrer" />}
@@ -5665,27 +5666,25 @@ export default function Anasayfa({ pro = false }) {
                 <span className="pyl-serit-et">📌 {t("paylasBaslikEt", "Başlık")}</span>
                 <input className="pyl-baslik" value={paylasBaslik} onChange={(e) => setPaylasBaslik(e.target.value)} placeholder={t("paylasBaslikPh", "Başlık (isteğe bağlı) — kısa ve dikkat çekici")} maxLength={200} />
               </div>
-              {/* 2) MEDYA — foto/video penceresi (başlık ile yazı arasında) */}
-              {paylasGorsel && (
-                <div className="pyl-gorsel pyl-gorsel-orta">
-                  <img src={paylasGorsel} alt="" />
-                  {paylasEkFotolar.length > 0 && <span className="pyl-foto-sayac">🖼 1/{1 + paylasEkFotolar.length}</span>}
-                  {ustYazi.trim() && <span className={"pyl-ustyazi yer-" + ustYer + " boy-" + ustBoyut} style={{ color: ustRenk }}>{ustYazi}</span>}
-                  <button className="pyl-gorsel-sil" onClick={() => { const ilk = paylasEkFotolar[0] || ""; setPaylasGorsel(ilk); setPaylasEkFotolar((a) => a.slice(1)); }} aria-label="Kaldır">✕</button>
-                </div>
-              )}
-              {/* EK FOTOĞRAFLAR — çok fotoğraflı gönderi küçük önizleme şeridi (parmakla yana kayar) */}
-              {paylasGorsel && paylasEkFotolar.length > 0 && (
-                <div className="pyl-ekfotolar">
-                  {paylasEkFotolar.map((f, i) => (
-                    <span className="pyl-ekfoto" key={i}>
-                      <img src={f} alt="" />
-                      <button className="pyl-ekfoto-sil" onClick={() => setPaylasEkFotolar((a) => a.filter((_, j) => j !== i))} aria-label="Kaldır">✕</button>
-                    </span>
-                  ))}
-                  <button className="pyl-ekfoto-ekle" onClick={() => { setMedyaMenu(""); if (paylasFotoRef.current) paylasFotoRef.current.click(); }} aria-label={t("fotoEkle", "Fotoğraf ekle")}>＋</button>
-                </div>
-              )}
+              {/* 2) MEDYA — FOTOĞRAFLAR küçük KARE ızgara (tek pencerede hepsi; dokununca tek tek gezilir), + ile ekle */}
+              {(paylasGorsel || paylasEkFotolar.length > 0) && (() => {
+                const hepsi = [paylasGorsel, ...paylasEkFotolar].filter(Boolean);
+                return (
+                  <div className="pyl-foto-grid">
+                    {hepsi.map((f, i) => (
+                      <span className={"pyl-gk" + (i === 0 ? " ana" : "")} key={i}
+                        onClick={() => setOnizGaleri({ liste: hepsi.map((x) => ({ tip: "foto", src: x })), i })}>
+                        <img src={f} alt="" />
+                        {i === 0 && <span className="pyl-gk-rozet">{t("anaFoto", "1")}</span>}
+                        <button className="pyl-gk-sil" onClick={(e) => { e.stopPropagation(); if (i === 0) { const ilk = paylasEkFotolar[0] || ""; setPaylasGorsel(ilk); setPaylasEkFotolar((a) => a.slice(1)); } else { setPaylasEkFotolar((a) => a.filter((_, j) => j !== i - 1)); } }} aria-label="Kaldır">✕</button>
+                      </span>
+                    ))}
+                    {hepsi.length < 10 && (
+                      <button className="pyl-gk-ekle" onClick={() => { setMedyaMenu(""); if (paylasFotoRef.current) paylasFotoRef.current.click(); }} aria-label={t("fotoEkle", "Fotoğraf ekle")}>＋</button>
+                    )}
+                  </div>
+                );
+              })()}
               {paylasVideo && (
                 <div className="pyl-gorsel pyl-gorsel-orta">
                   <video src={paylasVideo} poster={paylasVideoPoster || undefined} controls playsInline style={{ width: "100%", maxHeight: "240px", display: "block" }} />
@@ -7307,6 +7306,34 @@ export default function Anasayfa({ pro = false }) {
             <button className={"aciklama-ses" + (sesliOkunan ? " calar" : "")} onClick={() => seslendir(aciklama)}>{sesliOkunan ? "⏸ " + t("sesDurdur", "Durdur") : "🔊 " + t("sesDinle", "Sesli dinle")}</button>
             <button className="ayar-btn aciklama-tamam" onClick={() => { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {} setSesliOkunan(false); setAciklama(""); }}>{t("anladim", "Anladım")}</button>
           </div>
+        </div>
+      ), document.body)}
+
+      {/* TAM EKRAN FOTO/VİDEO GEZİCİ (lightbox) — çok fotoğraflı gönderide tek tek gez (‹ ›, kaydır, ✕) */}
+      {onizGaleri && onizGaleri.liste && onizGaleri.liste.length > 0 && createPortal((
+        <div className="oniz-fon" onClick={() => setOnizGaleri(null)}
+          onTouchStart={(e) => { onizGaleri._x = (e.touches[0] || {}).clientX; }}
+          onTouchEnd={(e) => {
+            const x0 = onizGaleri._x, x1 = (e.changedTouches[0] || {}).clientX;
+            if (typeof x0 === "number" && typeof x1 === "number") {
+              const dx = x1 - x0;
+              if (Math.abs(dx) > 45) { e.stopPropagation(); setOnizGaleri((g) => { if (!g) return g; const n = g.liste.length; const yeni = dx < 0 ? Math.min(g.i + 1, n - 1) : Math.max(g.i - 1, 0); return { ...g, i: yeni }; }); }
+            }
+          }}>
+          {(() => { const it = onizGaleri.liste[onizGaleri.i] || {}; return (
+            <div className="oniz-govde" onClick={(e) => e.stopPropagation()}>
+              {it.tip === "video"
+                ? <video src={it.src} poster={it.poster || undefined} controls autoPlay playsInline className="oniz-medya" />
+                : <img src={it.src} alt="" referrerPolicy="no-referrer" className="oniz-medya" />}
+            </div>
+          ); })()}
+          <button className="oniz-kapat" onClick={(e) => { e.stopPropagation(); setOnizGaleri(null); }} aria-label="Kapat">✕</button>
+          {onizGaleri.liste.length > 1 && <>
+            <span className="oniz-say">{onizGaleri.i + 1} / {onizGaleri.liste.length}</span>
+            {onizGaleri.i > 0 && <button className="oniz-ok oniz-sol" onClick={(e) => { e.stopPropagation(); setOnizGaleri((g) => ({ ...g, i: Math.max(g.i - 1, 0) })); }} aria-label="Önceki">‹</button>}
+            {onizGaleri.i < onizGaleri.liste.length - 1 && <button className="oniz-ok oniz-sag" onClick={(e) => { e.stopPropagation(); setOnizGaleri((g) => ({ ...g, i: Math.min(g.i + 1, g.liste.length - 1) })); }} aria-label="Sonraki">›</button>}
+            <span className="oniz-noktalar">{onizGaleri.liste.map((_, di) => <i key={di} className={di === onizGaleri.i ? "on" : ""} />)}</span>
+          </>}
         </div>
       ), document.body)}
 
