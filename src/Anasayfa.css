@@ -1000,13 +1000,17 @@
 .begenen-av, .begenen-av img,
 .uye-av, .uye-av img,
 .ayar-avatar-foto, .ayar-avatar-foto img,
-.ana-nav-kutu.nav-cerceveli img, .ana-nav-kutu.yuv img {
+.ana-nav-kutu.yuv img {
   border-radius: 22% !important;
 }
 /* İç fotoğraf konteyneri TAM kaplasın (köşede boşluk/yuvarlak kesik kalmasın) — kullanıcı: "içindeki foto yuvarlak kesiliyor" */
 .ana-post-avatar, .apr-av, .tf-avatar, .msj-foto, .pyl-avatar, .pyl-avsec-foto,
 .abm-foto, .gb-kul-av, .bgm-av, .begenen-av, .uye-av, .apm-foto, .apf-foto,
 .ara-kart-foto, .ara-detay-foto { overflow: hidden !important; }
+/* ALT "PROFİL" DÜĞMESİ — fotoğraf İŞLEMELİ KARE ÇERÇEVEYİ TAM DOLDURUR (kullanıcı: "kare pencerede yuvarlak gösteriyor").
+   Çerçeve kare olduğu için içteki foto da KARE olmalı (küçük radius) → köşede boşluk/yuvarlak kesik KALMAZ. */
+.ana-nav-kutu.nav-cerceveli{ overflow:hidden; }
+.ana-nav-kutu.nav-cerceveli img{ border-radius:3px !important; width:100%; height:100%; object-fit:cover; }
 /* her düğme kendi renginde (fotoğraftaki gibi içleri renkli) */
 /* AYDINLIK temada CANLI dolu renkli nav ikonları + beyaz ikon (soluk cam yerine doygun renk) */
 .ana-nav-oge:nth-child(1) .ana-nav-kutu{ background:linear-gradient(150deg,#3f8aff,#1e4a9e); color:#fff; border-color:rgba(30,74,158,.6); }
