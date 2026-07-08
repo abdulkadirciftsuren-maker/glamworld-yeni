@@ -259,12 +259,11 @@ export async function tumGonderiler(adet = 300) {
 
 // ---------- GÖNDERİLER (akış — FAZ 2'de kullanılacak, temel hazır) ----------
 export async function gonderiEkle(veri) {
-  try {
-    const ref = doc(collection(db, "gonderiler"));
-    // sahipUid ZORUNLU (güvenlik kuralı bunu ister) — veri.uid'den alınır.
-    await setDoc(ref, { ...veri, sahipUid: veri.uid || "", olusturma: serverTimestamp(), begeni: 0, yorumSayisi: 0 });
-    return ref.id;
-  } catch (e) { return null; }
+  // NOT: hata artık YUTULMUYOR → FIRLATIYOR (çağıran gerçek sebebi görebilsin: doc çok büyük / izin / ağ).
+  const ref = doc(collection(db, "gonderiler"));
+  // sahipUid ZORUNLU (güvenlik kuralı bunu ister) — veri.uid'den alınır.
+  await setDoc(ref, { ...veri, sahipUid: veri.uid || "", olusturma: serverTimestamp(), begeni: 0, yorumSayisi: 0 });
+  return ref.id;
 }
 
 // Kullanıcının KENDİ gönderileri (Profilim'de listeler) — where-only, istemcide sıralanır.

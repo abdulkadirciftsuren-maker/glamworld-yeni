@@ -1200,6 +1200,7 @@ export default function Anasayfa({ pro = false }) {
   const [paylasVideo, setPaylasVideo] = useState("");   // video ÖNİZLEME linki (yerel) veya kaydedilen URL
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasVideoPoster, setPaylasVideoPoster] = useState(""); // video KAPAK resmi (ilk kare) — "ekranı yok" sorununu çözer
+  const [paylasHataDetay, setPaylasHataDetay] = useState(""); // paylaşım/video hatasının GERÇEK sebebi (kullanıcıya gösterilir)
   const [paylasYukleme, setPaylasYukleme] = useState(0);        // video yükleme ilerlemesi %
   const [paylasDosya, setPaylasDosya] = useState(null);         // eklenen DOSYA (belge) {file, ad, boyut}
   const [aiIstek, setAiIstek] = useState("");                   // kullanıcı Gloxoo'ya ne yazmasını istediğini yazar
@@ -2771,7 +2772,7 @@ export default function Anasayfa({ pro = false }) {
       ? `KİMLİK REFERANSI: Ekteki İLK görsel hesap sahibinin PROFİL fotoğrafı (sahip: ${sahipAd || "kullanıcı"}${sahipCins ? ", " + sahipCins : ""}${sahipYas ? ", ~" + sahipYas + " yaş" : ""}); İKİNCİ görsel paylaşılacak içeriktir. İkinci görseldeki kişi AÇIKÇA sahiple AYNI kişiyse ona adıyla/uygun hitapla yaz; FARKLI biriyse (yaş/cinsiyet uymuyorsa, ör. çocuk ya da başka cinsiyet) sahibin adını KULLANMA — gördüğün kişinin yaş/cinsiyetini (çocuk/genç/kadın/erkek/kız) tahmin edip ona göre yaz. EMİN DEĞİLSEN ad kullanma. `
       : (imgKaynak ? `Görseldeki kişi belirsizse/sahibin dışında biriyse sahip adını kullanma; yaş/cinsiyetini tahmin edip ona göre yaz. ` : "");
     const markaKapanis = `Her yazıyı, içeriğe/bölüme uygun KISA markalı bir kapanışla bitir — yazıya AKICI GÖMÜLÜ olsun, ayrı satır/etiket gibi DURMASIN: örn "Gloxorg life", "Gloxorg farkı", "Gloxorg.com'da buluşalım", "gloxoo.com". Uzun yazı paylaşımlarında sona doğal bir dokunuşla "(Gloxoo yapay zekâ ile hazırlandı)" ekleyebilirsin. Marka HER ZAMAN "Gloxorg" yazılır. `;
-    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki içerik görseli videodan alınmış bir karedir)" : "") + ". " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yazılar üret. ' : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "İÇERİK GÖRSELİNE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}${kimlik}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar DOLU ve ANLAMLI olsun: 1-3 cümle, akıcı, sıcak, kişisel; gerekiyorsa 1-2 uygun emoji ve birkaç hashtag ekle. Tek kelimelik/çok kısa/saçma öneri VERME. ${markaKapanis}${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
+    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki içerik görseli videodan alınmış bir karedir)" : "") + ". " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yazılar üret. ' : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "İÇERİK GÖRSELİNE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}${kimlik}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar RENKLİ, CANLI ve ÇARPICI olsun (sade/kuru DEĞİL): 1-3 cümle, akıcı, sıcak, kişisel, enerjik; HER yazıya 2-3 UYGUN emoji serpiştir (başına/içine/sonuna) ve 2-3 ilgili hashtag ekle. Duyguyu hissettir, davet edici ol. Tek kelimelik/çok kısa/kuru/saçma öneri VERME. ${markaKapanis}${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
     const parcalar = [];
     if (refImg) parcalar.push({ type: "image", source: refImg });
     if (imgKaynak) parcalar.push({ type: "image", source: imgKaynak });
@@ -3857,30 +3858,30 @@ export default function Anasayfa({ pro = false }) {
     const tur = paylasTur || "";
     let havuz;
     if (tur === "İş İlanı") havuz = [
-      `Ekibime yetenekli bir ${meslek} arıyorum. Detaylar için yazın${se}.`,
-      `${meslek} alanında birlikte çalışacağım kişiyi arıyorum — sen olabilir misin?${se}`,
-      `Yeni bir fırsat: ${meslek} pozisyonu açık. İlgilenenler mesaj atsın${se}.`,
+      `🌟 Ekibime yetenekli bir ${meslek} arıyorum! Birlikte büyümeye var mısın?${se} 🤝 #fırsat #kariyer`,
+      `🚀 Yeni bir yol açılıyor: ${meslek} pozisyonu seni bekliyor! İlgilenen mesaj atsın${se} ✨ #işilanı`,
+      `💼 ${meslek} tutkusuyla çalışan bir yol arkadaşı arıyorum — sen olabilir misin?${se} 🔥 #ekiparkadaşı`,
     ];
     else if (tur === "Ürün / Hizmet") havuz = [
-      `${meslek} hizmetimle tanışın — kalite ve zarafet bir arada${se}.`,
-      `Sizin için özenle hazırladım. ${meslek}${se}.`,
-      `Yeni hizmetim yayında ✦ ${meslek}. Detay için mesaj${se}.`,
+      `✨ ${meslek} hizmetimle tanış — kalite, emek ve zarafet bir arada!${se} 💎 #kalite #zarafet`,
+      `💛 Senin için tek tek, özenle hazırladım. Detaylar için bir mesaj yeter!${se} 🌟 ${meslek}`,
+      `🔥 Yeni hizmetim yayında! ${meslek} ile fark yarat${se} ✦ #yeni #hizmet`,
     ];
     else if (tur === "Tavsiye") havuz = [
-      `Bugünün önerisi: işini sevenden hizmet al. ${meslek}${se}.`,
-      `Küçük bir tavsiye, büyük fark yaratır ✦ ${meslek}${se}.`,
-      `Deneyimle gelen öneri: ${meslek}${se}.`,
+      `💡 Günün önerisi: işini yürekten sevenden hizmet al! ${meslek}${se} 🌟 #tavsiye`,
+      `✨ Küçük bir dokunuş, kocaman bir fark yaratır 💎 ${meslek}${se} #ipucu`,
+      `🙌 Deneyimle gelen samimi bir öneri: ${meslek}${se} 🔥 #tavsiye #kalite`,
     ];
     else if (tur === "Duyuru") havuz = [
-      `Önemli duyuru ✦ ${meslek}${se}. Takipte kalın.`,
-      `Sizinle güzel bir haber paylaşmak istiyorum${se}.`,
-      `Yeni bir başlangıç! ${meslek}${se}.`,
+      `📣 Önemli duyuru! ${meslek}${se} 🎉 Takipte kalın, güzel şeyler geliyor ✨`,
+      `🎊 Sizinle çok güzel bir haber paylaşmak istiyorum${se} 💛 #müjde`,
+      `🚀 Yeni bir başlangıç! ${meslek}${se} 🌟 Bu yolculukta yanımda olun #yeni`,
     ];
     else havuz = [
-      `${meslek} tutkusuyla, her detay özenle işlendi${se}.`,
-      `Yeni çalışmamı sizinle paylaşıyorum ✦ ${meslek}${se}.`,
-      `Kalite, emek ve zarafet bir arada. ${meslek}${se}.`,
-      `İşimi seviyorum, bu da sonucu ✦${se}.`,
+      `✨ ${meslek} tutkusuyla, her detay yürekten işlendi 💎${se} #emek #zarafet`,
+      `🌟 Yeni çalışmamı sizinle paylaşıyorum! Umarım beğenirsiniz${se} 💛 ${meslek}`,
+      `🔥 Kalite, emek ve zarafet bir arada — ${meslek}${se} ✦ #kalite`,
+      `💛 İşimi çok seviyorum, bu da o sevginin sonucu!${se} ✨ #tutku`,
     ];
     // karıştır, 3 tane al
     return havuz.sort(() => Math.random() - 0.5).slice(0, 3);
@@ -3889,7 +3890,7 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser;
     if (!uu || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya)) return;
     setTurSecAcik(false);
-    setPaylasDurum("gonderiliyor");
+    setPaylasDurum("gonderiliyor"); setPaylasHataDetay("");
     // VİDEO varsa ÖNCE Storage'a yükle, linkini al (büyük video Firestore'a sığmaz)
     let videoURL = "";
     if (paylasVideoFile) {
@@ -3897,7 +3898,7 @@ export default function Anasayfa({ pro = false }) {
         setPaylasDurum("video"); setPaylasYukleme(0);
         videoURL = await videoYukle(paylasVideoFile, uu.uid, (y) => setPaylasYukleme(y));
         setPaylasDurum("gonderiliyor");
-      } catch (e) { setPaylasDurum("videohata"); return; }
+      } catch (e) { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("videohata"); return; }
     }
     // DOSYA (belge) varsa yükle → {url, ad, boyut}
     let dosyaObj = null;
@@ -3919,7 +3920,7 @@ export default function Anasayfa({ pro = false }) {
       sehir: (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
       ulke: (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
-      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", videoPoster: (videoSon ? (paylasVideoPoster || "") : ""), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
+      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
       duzen: paylasDuzen || null,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
@@ -3938,8 +3939,8 @@ export default function Anasayfa({ pro = false }) {
     }
     gonderiEkle(yeni).then((id) => {
       if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
-      else setPaylasDurum("hata");
-    }).catch(() => setPaylasDurum("hata"));
+      else { setPaylasHataDetay("bilinmiyor"); setPaylasDurum("hata"); }
+    }).catch((e) => { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("hata"); });
   }
   // Paylaş fotoğraf seç → küçült → ekle
   function paylasFotoSec(e) {
@@ -3985,9 +3986,10 @@ export default function Anasayfa({ pro = false }) {
           if (bitti) return; bitti = true;
           try {
             const c = document.createElement("canvas");
-            const w = Math.min(720, v.videoWidth || 720), h = Math.round((v.videoHeight || 720) * w / (v.videoWidth || 720));
+            // 480px yeter (hem AI görme hem video KAPAK) → küçük dosya, Firestore dokümanını şişirmez.
+            const w = Math.min(480, v.videoWidth || 480), h = Math.round((v.videoHeight || 480) * w / (v.videoWidth || 480));
             c.width = w; c.height = h; c.getContext("2d").drawImage(v, 0, 0, w, h);
-            resolve(c.toDataURL("image/jpeg", 0.8));
+            resolve(c.toDataURL("image/jpeg", 0.72));
           } catch (e) { resolve(null); }
         };
         v.onloadeddata = () => { try { v.currentTime = Math.min(0.3, (v.duration || 1) / 3); } catch (e) { cek(); } };
@@ -5685,7 +5687,7 @@ export default function Anasayfa({ pro = false }) {
             <input ref={paylasDosyaRef} type="file" style={{ display: "none" }} onChange={paylasDosyaSec} />
             {paylasDurum === "buyuk" && <div className="adm-durum hata">{t("paylasVideoBuyuk3", "Bu video çok büyük (en fazla 80 MB). Daha kısa bir video seç.")}</div>}
             {paylasDurum === "video" && <div className="adm-durum">{t("paylasVideoYuk", "Video yükleniyor…")} %{paylasYukleme}</div>}
-            {paylasDurum === "videohata" && <div className="adm-durum hata">{t("paylasVideoHata2", "Video yüklenemedi, tekrar dene (internet/dosya boyutu).")}</div>}
+            {paylasDurum === "videohata" && <div className="adm-durum hata">{t("paylasVideoHata2", "Video yüklenemedi, tekrar dene (internet/dosya boyutu).")}{paylasHataDetay ? " — " + paylasHataDetay : ""}</div>}
             {/* MEDYA EKLE — Fotoğraf / Video (basınca Çek/Galeri seçtirir) / Dosya */}
             <div className="pyl-medya2">
               <button className={"pyl-medya2-btn" + (medyaMenu === "foto" ? " acik" : "") + (paylasGorsel ? " dolu" : "")} style={{ "--c": "#2ecc71" }} onClick={() => setMedyaMenu(medyaMenu === "foto" ? "" : "foto")}>
@@ -5734,7 +5736,7 @@ export default function Anasayfa({ pro = false }) {
               {paylasDurum === "video" ? (t("paylasVideoYuk", "Video yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "dosya" ? (t("dosyaYukleniyor", "Dosya yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (paylasDurum === "ok" ? t("paylasOk", "Paylaşıldı ✓") : t("paylasEt", "Paylaş"))}
             </button>
             {paylasDurum === "dosyahata" && <div className="adm-durum hata">{t("dosyaHata", "Dosya yüklenemedi, tekrar dene.")}</div>}
-            {paylasDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}</div>}
+            {paylasDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}{paylasHataDetay ? " — " + paylasHataDetay : ""}</div>}
 
             {/* PAYLAŞ'a basınca: NE OLARAK paylaşayım? (kategori) → seçince otomatik paylaşır */}
             {turSecAcik && (
