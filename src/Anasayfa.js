@@ -2070,14 +2070,11 @@ export default function Anasayfa({ pro = false }) {
       img.src = dataURL;
     } catch (e) { resolve(dataURL); }
   });
-  // GLOXORG FİLİGRANI — Cloudinary video URL'ine metin overlay ekle (sunucu tarafı, yeniden kodlama yok)
-  const videoFiligranUrl = (url) => {
-    try {
-      if (!url || url.indexOf("res.cloudinary.com") < 0 || url.indexOf("/upload/") < 0) return url;
-      if (url.indexOf("l_text:") >= 0) return url; // zaten var
-      const tr = "l_text:Arial_40_bold:GLOXORG,co_white,o_75,g_south_east,x_30,y_30";
-      return url.replace("/upload/", "/upload/" + tr + "/");
-    } catch (e) { return url; }
+  // VİDEO URL SADELEŞTİR — Cloudinary video overlay (l_text:...GLOXORG...) dönüşümünü ÇIKAR → ORİJİNAL video servis edilir.
+  // Neden: video dönüşümü Cloudinary'de türev dosya üretip kredi/depolama yakıyordu (ücretsiz kota aşımı). Hem yeni kayıtta hem
+  // eski videoların gösteriminde uygulanır → mevcut videolar da orijinal (dönüşümsüz) oynar, kredi harcanmaz.
+  const videoSade = (url) => {
+    try { return (url || "").replace(/\/upload\/l_text:[^/]*\//, "/upload/"); } catch (e) { return url || ""; }
   };
   // AI yazısına kısa MARKALI tanıtım imzası (ikonlu; içeriğe/rastgele göre) — kabul edilen yazının sonuna eklenir
   const markaImza = () => {
@@ -3874,9 +3871,11 @@ export default function Anasayfa({ pro = false }) {
       } catch (e) { setPaylasDurum("dosyahata"); return; }
     }
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
-    // GLOXORG FİLİGRANI: yeni gönderide foto'ya KALICI göm (düzenlemede tekrar damgalama), video URL'ine overlay ekle
+    // GLOXORG FİLİGRANI: foto'ya KALICI göm (istemci tarafı, ücretsiz). VİDEO filigranı KALDIRILDI:
+    // Cloudinary video overlay'i videoyu YENİDEN İŞLİYOR (türev dosya) → kredi/depolama yakıyordu (kota aşımı).
+    // Artık video ORİJİNAL URL ile saklanır (dönüşüm yok) → Cloudinary kredisi korunur.
     const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? await fotoFiligranla(paylasGorsel) : "");
-    const videoSon = videoFiligranUrl(videoURL || "");
+    const videoSon = videoSade(videoURL || "");
     const yeni = {
       uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye,
       sehir: (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
@@ -5071,7 +5070,7 @@ export default function Anasayfa({ pro = false }) {
                     )}
                     <div className={"apr-medya" + (p.video ? " video" : "")} onClick={() => setTamFoto(p)}>
                       {p.video
-                        ? <video src={p.video} preload="metadata" muted loop playsInline tabIndex={-1} />
+                        ? <video src={videoSade(p.video)} preload="metadata" muted loop playsInline tabIndex={-1} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
@@ -5350,7 +5349,7 @@ export default function Anasayfa({ pro = false }) {
                           {g.gorsel
                             ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setTamFoto(g)} />
                             : g.video
-                              ? <span className="apf-pay-foto apf-pay-vid" onClick={() => setTamFoto(g)}><video src={g.video} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
+                              ? <span className="apf-pay-foto apf-pay-vid" onClick={() => setTamFoto(g)}><video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
                           <div className="apf-pay-icerik">
                             {(g.tur || ga) && <span className="apf-pay-tur" style={{ background: gk }}>{ga && <span className="apf-pay-turik"><TurAmblem tip={ga.tip} /></span>}{g.tur ? turGoster(g.tur) : (g.video ? t("paylasVideoTur", "Video") : t("paylasFotoTur", "Fotoğraf"))}</span>}
@@ -6004,8 +6003,8 @@ export default function Anasayfa({ pro = false }) {
             {/* TAM AÇILIŞ = ORİJİNAL: video ise kontrollü oynat; fotoğraf ise galeri gibi tam + parmakla zoom */}
             {p.video
               ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()}>
-                  <video ref={tamVideoRef} className="tamfoto-video" src={p.video} autoPlay muted playsInline preload="auto"
-                    poster={p.video && /\.(mp4|webm|mov|m4v)$/i.test(p.video) ? p.video.replace(/\.(mp4|webm|mov|m4v)$/i, ".jpg") : undefined}
+                  <video ref={tamVideoRef} className="tamfoto-video" src={videoSade(p.video)} autoPlay muted playsInline preload="auto"
+                    poster={p.video && /\.(mp4|webm|mov|m4v)$/i.test(videoSade(p.video)) ? videoSade(p.video).replace(/\.(mp4|webm|mov|m4v)$/i, ".jpg") : undefined}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
                     onLoadedMetadata={(e) => setVidSure(e.currentTarget.duration || 0)}
@@ -6146,7 +6145,7 @@ export default function Anasayfa({ pro = false }) {
                           {g.gorsel
                             ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" onClick={ac} />
                             : g.video
-                              ? <span className="apf-pay-foto apf-pay-vid" onClick={ac}><video src={g.video} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
+                              ? <span className="apf-pay-foto apf-pay-vid" onClick={ac}><video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
                           <div className="apf-pay-icerik" onClick={ac}>
                             {(g.tur || ga) && <span className="apf-pay-tur" style={{ background: gk }}>{ga && <span className="apf-pay-turik"><TurAmblem tip={ga.tip} /></span>}{g.tur ? turGoster(g.tur) : (g.video ? t("paylasVideoTur", "Video") : t("paylasFotoTur", "Fotoğraf"))}</span>}
