@@ -983,26 +983,30 @@
 /* ===== PROFİL FOTOĞRAFLARI HER YERDE KARE (yuvarlak köşeli, keskin değil) — kullanıcı isteği =====
    SADECE kişi fotoğrafları/avatarlar kare olur. Pırlanta ÇERÇEVELER, ikonlar, düğmeler, rozetler AYNEN yuvarlak kalır.
    İSTİSNA: ÜSTTEKİ (Google/hesap) profil düğmesi (.ana-profil-foto) YUVARLAK kalır — kullanıcı: "Google profilime dokunma". */
-.ara-kart-foto,
+.ara-kart-foto, .ara-kart-foto img,
 .ara-detay-foto, .ara-detay-foto img,
-.msj-foto,
-.pyl-avatar,
-.pyl-avsec-foto,
-.apr-av,
-.tf-avatar,
+.msj-foto, .msj-foto img,
+.pyl-avatar, .pyl-avatar img,
+.pyl-avsec-foto, .pyl-avsec-foto img,
+.apr-av, .apr-av img,
+.tf-avatar, .tf-avatar img,
 .apm-foto, .apm-foto img,
 .apf-foto, .apf-foto img,
 .apf-oniz.yuvarlak,
-.ana-post-avatar,
-.abm-foto,
-.gb-kul-av,
-.bgm-av,
-.begenen-av,
-.uye-av,
+.ana-post-avatar, .ana-post-avatar-img,
+.abm-foto, .abm-foto img,
+.gb-kul-av, .gb-kul-av img,
+.bgm-av, .bgm-av img,
+.begenen-av, .begenen-av img,
+.uye-av, .uye-av img,
 .ayar-avatar-foto, .ayar-avatar-foto img,
 .ana-nav-kutu.nav-cerceveli img, .ana-nav-kutu.yuv img {
   border-radius: 22% !important;
 }
+/* İç fotoğraf konteyneri TAM kaplasın (köşede boşluk/yuvarlak kesik kalmasın) — kullanıcı: "içindeki foto yuvarlak kesiliyor" */
+.ana-post-avatar, .apr-av, .tf-avatar, .msj-foto, .pyl-avatar, .pyl-avsec-foto,
+.abm-foto, .gb-kul-av, .bgm-av, .begenen-av, .uye-av, .apm-foto, .apf-foto,
+.ara-kart-foto, .ara-detay-foto { overflow: hidden !important; }
 /* her düğme kendi renginde (fotoğraftaki gibi içleri renkli) */
 /* AYDINLIK temada CANLI dolu renkli nav ikonları + beyaz ikon (soluk cam yerine doygun renk) */
 .ana-nav-oge:nth-child(1) .ana-nav-kutu{ background:linear-gradient(150deg,#3f8aff,#1e4a9e); color:#fff; border-color:rgba(30,74,158,.6); }

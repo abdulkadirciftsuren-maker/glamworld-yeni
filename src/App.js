@@ -81,7 +81,7 @@ function App() {
       // Üyelik kaydı (profil) var mı?
       getDoc(doc(db, "kullanicilar", u.uid))
         .then((snap) => {
-          if (snap.exists()) { setProfil("var"); const d = snap.data() || {}; setTip(d.tip || ""); try { localStorage.setItem("gw_profilVar", "1"); localStorage.setItem("gw_tip", d.tip || ""); } catch (e) {} }
+          if (snap.exists()) { setProfil("var"); const d = snap.data() || {}; setTip(d.tip || ""); try { localStorage.setItem("gw_profilVar", "1"); localStorage.setItem("gw_tip", d.tip || ""); localStorage.setItem("gw_uyelik", d.uyelik || ""); } catch (e) {} }
           else {
             // YENİ kayıt olduysa (son 15 sn) bu okuma yarış olabilir → kullanıcıyı geri ATMA, profili VAR say.
             let yeniKayit = false;
@@ -94,7 +94,7 @@ function App() {
     } else {
       setProfil("yok"); setTip("");
       // Oturum YOK → kendi bayrağımızı da temizle (bir daha açılışta yükleniyor takılmasın, giriş kartı gelsin)
-      try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_oturum"); } catch (e) {}
+      try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_uyelik"); localStorage.removeItem("gw_oturum"); } catch (e) {}
     }
   }), []);
 
@@ -103,7 +103,7 @@ function App() {
     const onProfil = () => {
       setProfil("var"); try { localStorage.setItem("gw_profilVar", "1"); } catch (e) {}
       const uu = auth.currentUser;
-      if (uu) getDoc(doc(db, "kullanicilar", uu.uid)).then((s) => { if (s.exists()) { const d = s.data() || {}; setTip(d.tip || ""); try { localStorage.setItem("gw_tip", d.tip || ""); } catch (e) {} } }).catch(() => {});
+      if (uu) getDoc(doc(db, "kullanicilar", uu.uid)).then((s) => { if (s.exists()) { const d = s.data() || {}; setTip(d.tip || ""); try { localStorage.setItem("gw_tip", d.tip || ""); localStorage.setItem("gw_uyelik", d.uyelik || ""); } catch (e) {} } }).catch(() => {});
     };
     window.addEventListener("gwProfilVar", onProfil);
     return () => window.removeEventListener("gwProfilVar", onProfil);

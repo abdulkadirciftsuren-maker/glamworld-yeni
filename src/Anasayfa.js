@@ -1875,10 +1875,21 @@ export default function Anasayfa({ pro = false }) {
   const [yardimGizli, setYardimGizli] = useState(false); // açıklama kutusu × ile kapatılabilir
   const [meslekSecAcik, setMeslekSecAcik] = useState(false); // meslek seçici ızgarası açık mı
   const [meslekFiltre, setMeslekFiltre] = useState(""); // meslek arama kutusu
-  const proUye = !!(profilBilgi && profilBilgi.tip === "profesyonel"); // kırmızı pırlanta + PRO ÜYE
-  const uyelik = (profilBilgi && profilBilgi.uyelik) || ""; // "" | "kirmizi" (GLOXORG Kırmızı Pırlanta) | "altin" (GLOXORG Altın Pırlanta) — günlük AI sınırını kaldırır
+  // İLK YÜKLEMEDE FLAŞ OLMASIN (kullanıcı: sayfa açılınca önce KIRMIZI çıkıp sonra maviye dönüyordu):
+  // profilBilgi Firestore'dan gelene kadar App'ten gelen `pro` prop'u + önbellekteki gw_uyelik ile
+  // DOĞRU temayı (mavi/yeşil) ANINDA kur → kırmızı flaş yok.
+  const uyelikOnbellek = (() => { try { return localStorage.getItem("gw_uyelik") || ""; } catch (e) { return ""; } })();
+  const proUye = profilBilgi ? (profilBilgi.tip === "profesyonel") : !!pro; // kırmızı pırlanta + PRO ÜYE
+  const uyelik = profilBilgi ? (profilBilgi.uyelik || "") : uyelikOnbellek; // "" | "kirmizi" (GLOXORG Kırmızı Pırlanta) | "altin" (GLOXORG Altın Pırlanta) — günlük AI sınırını kaldırır
   // ÜSTBAR PIRLANTA TEMASI (kullanıcı): Müşteri = KIRMIZI (yakut); Profesyonel = MAVİ (safir); Altın/Tam üye = YEŞİL (zümrüt).
   const uyeTema = uyelik === "altin" ? "altin" : (proUye ? "pro" : "musteri");
+  // KİŞİYE GÖRE PIRLANTA RENGİ (kullanıcı: mavi ise mavi, kırmızı ise kırmızı, yeşil ise yeşil — HER YERDE profiline göre).
+  //   uyeTasAd/Hex(kişi): altın üye=YEŞİL, profesyonel=MAVİ, müşteri=KIRMIZI (uyeTema ile birebir).
+  const uyeTasAd = (o) => (o && o.uyelik === "altin") ? "yesil" : (o && (o.pro === true || o.tip === "profesyonel")) ? "mavi" : "kirmizi";
+  const uyeTasHex = (o) => TEMA_HEX[uyeTasAd(o)];
+  // KENDİ taşımın rengi (üstbar/nav/profil penceresi) — kendi temama göre.
+  const benimTasAd = uyeTema === "altin" ? "yesil" : uyeTema === "pro" ? "mavi" : "kirmizi";
+  const benimTasHex = TEMA_HEX[benimTasAd];
   const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? maviZemin : yakutZemin;
   const uyeWordmark = uyeTema === "musteri" ? gloxWordmarkKirmizi : uyeTema === "pro" ? gloxWordmarkMavi : gloxWordmarkYesil; // müşteri=kırmızı blok; pro=mavi harfler; altın=yeşil harfler (banner'dan kesildi)
   // ÜSTBAR ÇERÇEVESİ üyeye göre AYRI: pro=mavi banner işlemeli çerçeve, altın=yeşil banner işlemeli çerçeve, müşteri=eski çerçeve
@@ -2626,7 +2637,7 @@ export default function Anasayfa({ pro = false }) {
     setTamFoto("");
     setUyeFiltre("hepsi");
     setUyePostlar(null);
-    setUyeSayfa({ uid: hedef, ad: p.ad || "—", foto: p.foto || "", meslek: p.meslek || "", sehir: p.sehir || "", ulke: p.ulke || "", pro: !!p.pro, amblem: p.amblem, renk: p.renk });
+    setUyeSayfa({ uid: hedef, ad: p.ad || "—", foto: p.foto || "", meslek: p.meslek || "", sehir: p.sehir || "", ulke: p.ulke || "", pro: !!p.pro, uyelik: p.uyelik || "", amblem: p.amblem, renk: p.renk });
     gonderilerimOku(hedef).then((l) => setUyePostlar(l || [])).catch(() => setUyePostlar([]));
   }
   // PAYLAŞ — telefonun yerel paylaş menüsü. FOTO/VİDEO varsa DOSYA olarak paylaş (filigranlı GLOXORG karşı platforma/WhatsApp'a gider); yoksa link.
@@ -3879,7 +3890,7 @@ export default function Anasayfa({ pro = false }) {
     const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? await fotoFiligranla(paylasGorsel) : "");
     const videoSon = videoSade(videoURL || "");
     const yeni = {
-      uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye,
+      uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye, uyelik: uyelik || "",
       sehir: (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
       ulke: (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
@@ -4878,7 +4889,7 @@ export default function Anasayfa({ pro = false }) {
               {n.k === "profil" && foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : Ikon[n.k]}
               {/* Köşe rozeti: SADE mini gömülü taş — kendi renginde, içten yanar, tam köşede.
                   Profil taşı KİMLİĞE göre: profesyonel=KIRMIZI, müşteri=BEYAZ (beyaz müşteri taşıdır) */}
-              <span className="ana-nav-rozet"><MiniTas renk={n.k === "profil" ? (pro ? "kirmizi" : "beyaz") : (NAV_RENK[n.k] || "mavi")} /></span>
+              <span className="ana-nav-rozet"><MiniTas renk={n.k === "profil" ? benimTasAd : (NAV_RENK[n.k] || "mavi")} /></span>
             </span>
             <span className="ana-nav-ad">{n.et}</span>
           </button>
@@ -4958,7 +4969,7 @@ export default function Anasayfa({ pro = false }) {
             const sehir = p.konum && p.konum.sehir;
             const ulke = p.konum && p.konum.ulke ? ulkeAdiCevir(p.konum.ulke, dil) : "";
             const konum = [sehir, ulke].filter(Boolean).join(", ");
-            const proRenk = p.tip === "profesyonel" ? "kirmizi" : "beyaz";
+            const proRenk = uyeTasAd(p); // kişinin üyeliğine göre taş: müşteri=kırmızı, pro=mavi, altın=yeşil
             return (
               <div className="ara-detay-fon" onClick={(e) => { if (e.target === e.currentTarget) setAraSecili(null); }}>
                 <div className="ara-detay">
@@ -4971,7 +4982,7 @@ export default function Anasayfa({ pro = false }) {
                       : <span>{bas}</span>}
                     <span className="ara-detay-tas"><MiniTas renk={proRenk} /></span>
                   </div>
-                  <div className="ara-detay-ad notranslate" translate="no">{ad} <span className="ara-detay-rozet"><Elmas4 c={p.tip === "profesyonel" ? "#e0202c" : "#cfe8ff"} /></span></div>
+                  <div className="ara-detay-ad notranslate" translate="no">{ad} <span className="ara-detay-rozet"><Elmas4 c={uyeTasHex(p)} /></span></div>
                   <div className="ara-detay-meslek">{meslek}</div>
                   {konum && (
                     <div className="ara-detay-konum">
@@ -5030,11 +5041,12 @@ export default function Anasayfa({ pro = false }) {
               const uzun = p.yazi && p.yazi.length > 120;
               const acik = !!acikYazi[anahtar];
               const medyaVar = !!(p.gorsel || p.video);
-              // profesyonel = KIRMIZI pırlanta; kendi pro gönderim eski olsa da kırmızı görünsün
-              const proPost = p.pro || (p.uid && u && p.uid === u.uid && proUye);
-              const rozRenk = proPost ? "#e0202c" : "#cfe8ff";
+              // PIRLANTA RENGİ = yazarın ÜYELİĞİ (kullanıcı: her yerde profiline göre). Müşteri=kırmızı, pro=mavi, altın=yeşil.
+              // KENDİ gönderimde temam anında bilinir (benimTasHex); başkasında gönderide saklı pro/uyelik alanları.
+              const kendiPost = p.uid && u && p.uid === u.uid;
+              const rozRenk = kendiPost ? benimTasHex : uyeTasHex(p);
               const meslekRenk = MESLEK_RENK[p.meslek] || "#FFD700"; // meslek kendi renginde
-              const mesajAc = () => { if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); };
+              const mesajAc = () => { if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, tip: p.pro ? "profesyonel" : "", uyelik: p.uyelik || "", konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); };
               const yazan = (
                 <span className="apr-yazan apr-yazan-ust">
                   <span className={"apr-av uye-ac" + (p.amblem ? " amblem" : "")} style={{ background: p.renk || ("linear-gradient(145deg," + pc + ",#0d1b3a)") }} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>{p.foto ? <img src={p.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
@@ -5296,7 +5308,7 @@ export default function Anasayfa({ pro = false }) {
                   <span className="apf-bol-ayar"><AyarIkon /></span>
                   <div className="apf-foto">{foto ? <img src={foto} alt="" /> : harf}</div>
                   <span className={"apf-pro-rozet" + (proUye ? " pro" : "")}>
-                    <span className="apf-pro-tas"><MiniTas renk={proUye ? "kirmizi" : "beyaz"} /></span>
+                    <span className="apf-pro-tas"><MiniTas renk={benimTasAd} /></span>
                     {proUye ? t("profProUye", "PRO ÜYE") : t("profUye", "ÜYE")}
                   </span>
                   <div className="apf-ad">{adTam}</div>
@@ -5965,8 +5977,8 @@ export default function Anasayfa({ pro = false }) {
         const p = tamFoto;
         const ad = p.ad || "—"; const bas = (String(ad).trim()[0] || "?").toUpperCase();
         const altbil = [mc(p.meslek, dil), p.sehir, (p.zaman || zamanOnce(p.zamanMs))].filter(Boolean).join(" · ");
-        const tfProPost = p.pro || (p.uid && u && p.uid === u.uid && proUye); // profesyonel = KIRMIZI pırlanta
-        const tfRoz = tfProPost ? "#e0202c" : "#cfe8ff";
+        const tfKendi = p.uid && u && p.uid === u.uid;
+        const tfRoz = tfKendi ? benimTasHex : uyeTasHex(p); // isim yanı pırlanta = yazarın üyeliği (mavi/kırmızı/yeşil)
         // TAM EKRAN kategori rozeti (feed'deki gibi: nereden geldiği — Duyuru/Foto/Video/Tavsiye...)
         const tfAmb = postAmblem(p);
         const tfKatAd = p.tur ? turGoster(p.tur) : ({ foto: "Fotoğraf", video: "Video", is: "İş İlanı", urun: "Ürün/Hizmet", tavsiye: "Tavsiye", etkinlik: "Etkinlik", duyuru: "Duyuru", soru: "Soru/Yardım", yazi: "Paylaşım" }[tfAmb.tip] || "Paylaşım");
@@ -6012,7 +6024,7 @@ export default function Anasayfa({ pro = false }) {
                     onLoadedMetadata={(e) => setVidSure(e.currentTarget.duration || 0)}
                     onPlay={() => setVidOyn(true)} onPause={() => setVidOyn(false)} />
                   {!vidOyn && (
-                    <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c={tfRoz} /></button>
+                    <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c="#e0202c" /></button>
                   )}
                 </div>
               : metinPost
@@ -6091,7 +6103,7 @@ export default function Anasayfa({ pro = false }) {
       {uyeSayfa && (() => {
         const us = uyeSayfa;
         const harf = (String(us.ad || "?").trim()[0] || "?").toUpperCase();
-        const rozRenk = us.pro ? "#e0202c" : "#cfe8ff";
+        const rozRenk = uyeTasHex(us); // kişinin üyeliğine göre: müşteri=kırmızı, pro=mavi, altın=yeşil
         const meslekRenk = MESLEK_RENK[us.meslek] || "#FFD700";
         const altbil = [mc(us.meslek, dil), us.sehir].filter(Boolean).join(" · ");
         const tumLer = uyePostlar || [];
