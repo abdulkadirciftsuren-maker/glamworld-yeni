@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -1196,7 +1196,8 @@ export default function Anasayfa({ pro = false }) {
   const [baslikAcikSet, setBaslikAcikSet] = useState(() => new Set()); // akışta başlığı "devamını oku" ile açılan gönderiler
   const [paylasDurum, setPaylasDurum] = useState("");
   const [paylasTur, setPaylasTur] = useState("");     // Fotoğraf | Video | İş İlanı | Ürün/Hizmet | Tavsiye | Duyuru
-  const [paylasGorsel, setPaylasGorsel] = useState(""); // eklenen fotoğraf (dataURL)
+  const [paylasGorsel, setPaylasGorsel] = useState(""); // eklenen fotoğraf (dataURL) — 1. (ANA) fotoğraf
+  const [paylasEkFotolar, setPaylasEkFotolar] = useState([]); // EK fotoğraflar (dataURL dizisi) — çok fotoğraflı gönderi; Storage'a yüklenir
   const [filigranEkle, setFiligranEkle] = useState(true); // GLOXORG filigranı eklensin mi (foto zaten GLOXORG'luysa kapat → çift olmasın)
   const [paylasKonum, setPaylasKonum] = useState(null); // CANLI konum: { enlem, boylam, yer, sehir, ulke, tam } — "nereden paylaşıldı" (hastane/havalimanı/otogar...)
   const [konumDurum, setKonumDurum] = useState(""); // "" | "aliniyor" | "hata"
@@ -2882,7 +2883,7 @@ export default function Anasayfa({ pro = false }) {
     else if (k === "ara" || k === "arama") setAraAcik(true);
     else if (k === "bildirim" || k === "bildirimler") setBildirimAcik(true);
     else if (k === "mesaj" || k === "mesajlar") setMesajAcik(true);
-    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasKonum(null); setKonumDurum(""); setPaylasAcik(true); }
+    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasKonum(null); setKonumDurum(""); setPaylasAcik(true); }
     else if (k === "ayar" || k === "ayarlar") setAyarlarAcik(true);
   }
   // Asistana FOTOĞRAF ekle — küçült (max 1024px) + base64'e çevir (Claude vision için)
@@ -3698,7 +3699,7 @@ export default function Anasayfa({ pro = false }) {
   const paylasimaTasi = (metin) => {
     if (!metin) return;
     try { setDuzenlenen(null); } catch (e) {}
-    setPaylasYazi(metin); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDurum("");
+    setPaylasYazi(metin); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum("");
     setYardimciAcik(false); setPaylasAcik(true);
   };
   // Mevcut konuşmayı KAYITLI KONUŞMALAR (oturumlar) listesine kaydet — sonra üstteki "Konuşmalarım"dan bulunur
@@ -3921,6 +3922,25 @@ export default function Anasayfa({ pro = false }) {
     // Artık video ORİJİNAL URL ile saklanır (dönüşüm yok) → Cloudinary kredisi korunur.
     const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? (filigranEkle ? await fotoFiligranla(paylasGorsel) : paylasGorsel) : "");
     const videoSon = videoSade(videoURL || "");
+    // ÇOK FOTOĞRAF: ek fotoğrafları Storage'a yükle (Firestore 1MB'a sığmaz) → URL dizisi.
+    let ekFotoUrller = [];
+    if (!(duzenlenen && duzenlenen.id) && paylasEkFotolar.length > 0) {
+      try {
+        setPaylasDurum("dosya"); setPaylasYukleme(0);
+        for (let i = 0; i < paylasEkFotolar.length; i++) {
+          const wm = filigranEkle ? await fotoFiligranla(paylasEkFotolar[i]) : paylasEkFotolar[i];
+          const url = await gorselYukle(wm, uu.uid, () => {});
+          if (url) ekFotoUrller.push(url);
+          setPaylasYukleme(Math.round(((i + 1) / paylasEkFotolar.length) * 100));
+        }
+        setPaylasDurum("gonderiliyor");
+      } catch (e) { /* ek foto yüklenemezse ana gönderi yine gitsin */ }
+    }
+    // MEDYALAR dizisi (birden çok görsel/video tek gönderide). 1'den fazla öğe varsa kaydedilir.
+    const medyalar = [];
+    if (gorselSon) medyalar.push({ tip: "foto", data: gorselSon });
+    ekFotoUrller.forEach((u2) => medyalar.push({ tip: "foto", url: u2 }));
+    if (videoSon) medyalar.push({ tip: "video", url: videoSon, poster: ((paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : "") });
     const yeni = {
       uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye, uyelik: uyelik || "",
       // CANLI konum varsa şehir/ülke ONDAN (nerede paylaşıldıysa), yoksa profil konumundan
@@ -3928,7 +3948,7 @@ export default function Anasayfa({ pro = false }) {
       ulke: (paylasKonum && paylasKonum.ulke) || (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       konum: paylasKonum ? { yer: paylasKonum.yer || "", sehir: paylasKonum.sehir || "", ulke: paylasKonum.ulke || "", tam: paylasKonum.tam || "", enlem: paylasKonum.enlem, boylam: paylasKonum.boylam } : null,
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
-      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
+      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
       duzen: paylasDuzen || null,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
@@ -3942,14 +3962,14 @@ export default function Anasayfa({ pro = false }) {
           // EN ÜSTE taşı: eski konumundan çıkar, güncel haliyle başa ekle (hem akış hem profil).
           const bumpla = (a) => { const eski = a.find((g) => g.id === duzenlenen.id) || {}; const kalan = a.filter((g) => g.id !== duzenlenen.id); return [{ ...eski, ...degisiklik }, ...kalan]; };
           setGercekAkis(bumpla); setGonderilerim(bumpla);
-          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setPaylasDurum("ok");
+          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setPaylasDurum("ok");
           setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800);
         } else setPaylasDurum("hata");
       }).catch(() => setPaylasDurum("hata"));
       return;
     }
     gonderiEkle(yeni).then((id) => {
-      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
+      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
       else { setPaylasHataDetay("bilinmiyor"); setPaylasDurum("hata"); }
     }).catch((e) => { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("hata"); });
   }
@@ -3979,13 +3999,24 @@ export default function Anasayfa({ pro = false }) {
       } catch (e) { setKonumDurum("hata"); }
     }, () => setKonumDurum("hata"), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
   };
-  // Paylaş fotoğraf seç → küçült → ekle
+  // Paylaş fotoğraf seç → küçült → ekle. ÇOK FOTOĞRAF: ilki ANA fotoğraf, kalanı EK fotoğraflar (tek gönderide birden çok).
   function paylasFotoSec(e) {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const dosyalar = Array.from((e.target.files || []));
+    if (!dosyalar.length) return;
     setMedyaMenu("");
-    const r = new FileReader();
-    r.onload = (ev) => { const img = new Image(); img.onload = () => { setPaylasGorsel(imgKucult(img, 1000)); setFiligranEkle(true); setPaylasVideo(""); setPaylasDosya(null); }; img.src = ev.target.result; };
-    r.readAsDataURL(f); e.target.value = "";
+    const kucultVadesi = (f) => new Promise((resolve) => {
+      const r = new FileReader();
+      r.onload = (ev) => { const img = new Image(); img.onload = () => resolve(imgKucult(img, 1000)); img.onerror = () => resolve(""); img.src = ev.target.result; };
+      r.onerror = () => resolve(""); r.readAsDataURL(f);
+    });
+    Promise.all(dosyalar.slice(0, 10).map(kucultVadesi)).then((hepsi) => {
+      const gecerli = hepsi.filter(Boolean);
+      if (!gecerli.length) return;
+      setFiligranEkle(true); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasDosya(null);
+      if (!paylasGorsel) { setPaylasGorsel(gecerli[0]); setPaylasEkFotolar((a) => [...a, ...gecerli.slice(1)].slice(0, 9)); }
+      else { setPaylasEkFotolar((a) => [...a, ...gecerli].slice(0, 9)); }
+    });
+    e.target.value = "";
   }
   // Paylaş VİDEO seç (albümden/Google'dan) — Firebase Storage'a yüklenir (Paylaş'a basınca).
   // Burada SADECE dosyayı tutar + yerel önizleme gösterir (yükleme gönderide olur). Sınır ~80MB.
@@ -3998,7 +4029,7 @@ export default function Anasayfa({ pro = false }) {
     setPaylasVideo(yerel); // yerel önizleme (yüklemeden de görünür)
     setPaylasVideoPoster("");
     videoKareYakala(yerel).then((k) => { if (k) setPaylasVideoPoster(k); }).catch(() => {}); // ilk kareyi KAPAK yap
-    setPaylasGorsel(""); setPaylasDosya(null); setPaylasDurum(""); setPaylasYukleme(0);
+    setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasDosya(null); setPaylasDurum(""); setPaylasYukleme(0);
     e.target.value = "";
   }
   // DOSYA (belge) seç — resimse foto, videoysa video olarak yönlendir; değilse belge olarak ekle
@@ -4009,7 +4040,7 @@ export default function Anasayfa({ pro = false }) {
     if (t2.indexOf("video/") === 0) { paylasVideoSec(e); return; }
     if (f.size > 80 * 1024 * 1024) { setPaylasDurum("buyuk"); e.target.value = ""; return; }
     setPaylasDosya({ file: f, ad: f.name || "dosya", boyut: f.size || 0 });
-    setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDurum("");
+    setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDurum("");
     e.target.value = "";
   }
   // VİDEO'dan tek KARE yakala (AI'nin videoyu "görmesi" için) → dataURL (jpeg) veya null
@@ -5077,7 +5108,7 @@ export default function Anasayfa({ pro = false }) {
           {/* AKIŞ (feed) — aşağı indikçe dünyadan yeni paylaşımlar */}
           <div className="ana-akis">
             {/* PAYLAŞ kutusu — kendi gönderini ekle (gerçek veri) */}
-            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
+            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
             </button>
             {/* AKIŞ FİLTRESİ — Hepsi / Takip Ettiklerim (kişiselleşmiş akış) */}
@@ -5116,6 +5147,8 @@ export default function Anasayfa({ pro = false }) {
               const postFoto = (kendiPost && !p.amblem && foto) ? foto : p.foto;
               const meslekRenk = MESLEK_RENK[p.meslek] || "#FFD700"; // meslek kendi renginde
               const mesajAc = () => { if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, tip: p.pro ? "profesyonel" : "", uyelik: p.uyelik || "", konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); };
+              // ÇOK MEDYALI gönderi → galeri (parmakla yana kaydır); tek medyalı → eski tekli görünüm
+              const postMedyalar = (p.medyalar && p.medyalar.length > 1) ? p.medyalar : null;
               // CANLI KONUM ROZETİ — "nereden paylaşıldı" (üstte, renkli, belirgin)
               const konumRozet = (p.konum && p.konum.tam) ? (
                 <div className="apr-konum notranslate" translate="no">
@@ -5160,8 +5193,19 @@ export default function Anasayfa({ pro = false }) {
                         )}
                       </div>
                     )}
-                    <div className={"apr-medya" + (p.video ? " video" : "")} onClick={() => setTamFoto(p)}>
-                      {p.video
+                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " galeri-sar" : "")} onClick={() => setTamFoto(p)}>
+                      {postMedyalar
+                        ? (<div className="apr-galeri" onClick={(e) => e.stopPropagation()}>
+                            {postMedyalar.map((m, mi) => (
+                              <div className="apr-galeri-oge" key={mi} onClick={() => setTamFoto(p)}>
+                                {m.tip === "video"
+                                  ? <video src={videoSade(m.url)} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
+                                  : <img src={m.data || m.url} alt="" referrerPolicy="no-referrer" />}
+                              </div>
+                            ))}
+                            <span className="apr-galeri-say" aria-hidden="true">🖼 {postMedyalar.length}</span>
+                          </div>)
+                        : p.video
                         ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
@@ -5413,7 +5457,7 @@ export default function Anasayfa({ pro = false }) {
               {/* PAYLAŞIMLARIM — kendi gönderilerim (düzenle / sil); yayınladıkça otomatik gelir */}
               <div className="apf-paylasimlar">
                 {/* Bir şeyler paylaş — Profilim'den de gönderi ekle */}
-                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
+                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
                   <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
                 </button>
                 {/* BÖLÜM FİLTRELERİ — her tür kendi amblemi+rengiyle */}
@@ -5613,7 +5657,7 @@ export default function Anasayfa({ pro = false }) {
           <div className="msj-pencere paylas" onPointerDown={klavyeKapatDokun}>
             <div className="msj-bas">
               <span className="msj-baslik">{duzenlenen ? t("paylasDuzenle", "Paylaşımı Düzenle") : t("paylasBaslik", "Paylaş")}</span>
-              <button className="msj-kapat" onClick={() => { setPaylasAcik(false); setDuzenlenen(null); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); }} aria-label="Kapat">✕</button>
+              <button className="msj-kapat" onClick={() => { setPaylasAcik(false); setDuzenlenen(null); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); }} aria-label="Kapat">✕</button>
             </div>
             <div className="pyl-ust">
               {/* 1) ÜST BAŞLIK ŞERİDİ — medyanın HEMEN ÜSTÜNDE, renkli/belirgin (kullanıcı: sırayla, yakın, müşteri anlasın) */}
@@ -5625,8 +5669,21 @@ export default function Anasayfa({ pro = false }) {
               {paylasGorsel && (
                 <div className="pyl-gorsel pyl-gorsel-orta">
                   <img src={paylasGorsel} alt="" />
+                  {paylasEkFotolar.length > 0 && <span className="pyl-foto-sayac">🖼 1/{1 + paylasEkFotolar.length}</span>}
                   {ustYazi.trim() && <span className={"pyl-ustyazi yer-" + ustYer + " boy-" + ustBoyut} style={{ color: ustRenk }}>{ustYazi}</span>}
-                  <button className="pyl-gorsel-sil" onClick={() => setPaylasGorsel("")} aria-label="Kaldır">✕</button>
+                  <button className="pyl-gorsel-sil" onClick={() => { const ilk = paylasEkFotolar[0] || ""; setPaylasGorsel(ilk); setPaylasEkFotolar((a) => a.slice(1)); }} aria-label="Kaldır">✕</button>
+                </div>
+              )}
+              {/* EK FOTOĞRAFLAR — çok fotoğraflı gönderi küçük önizleme şeridi (parmakla yana kayar) */}
+              {paylasGorsel && paylasEkFotolar.length > 0 && (
+                <div className="pyl-ekfotolar">
+                  {paylasEkFotolar.map((f, i) => (
+                    <span className="pyl-ekfoto" key={i}>
+                      <img src={f} alt="" />
+                      <button className="pyl-ekfoto-sil" onClick={() => setPaylasEkFotolar((a) => a.filter((_, j) => j !== i))} aria-label="Kaldır">✕</button>
+                    </span>
+                  ))}
+                  <button className="pyl-ekfoto-ekle" onClick={() => { setMedyaMenu(""); if (paylasFotoRef.current) paylasFotoRef.current.click(); }} aria-label={t("fotoEkle", "Fotoğraf ekle")}>＋</button>
                 </div>
               )}
               {paylasVideo && (
@@ -5750,7 +5807,7 @@ export default function Anasayfa({ pro = false }) {
                 <span>{filigranEkle ? t("filigranAcik", "◈ GLOXORG filigranı eklenecek") : t("filigranKapali", "Filigran KAPALI (fotoğrafta zaten GLOXORG varsa böyle kalsın)")}</span>
               </button>
             )}
-            <input ref={paylasFotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={paylasFotoSec} />
+            <input ref={paylasFotoRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={paylasFotoSec} />
             <input ref={paylasVideoRef} type="file" accept="video/*" style={{ display: "none" }} onChange={paylasVideoSec} />
             <input ref={paylasFotoKamRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={paylasFotoSec} />
             <input ref={paylasVideoKamRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={paylasVideoSec} />

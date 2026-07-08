@@ -313,6 +313,23 @@
 .apr-konum-ik{ flex:none; font-size:15px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .apr-konum-yer{ font-size:13px; font-weight:800; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .apr-konum-alt{ font-size:11.5px; font-weight:600; color:#d6ffe4; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ÇOK MEDYALI gönderi GALERİSİ (akış) — parmakla yana kaydır, sayaç rozeti */
+.apr-medya.galeri-sar{ padding:0; }
+.apr-galeri{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; position:relative; scrollbar-width:none; }
+.apr-galeri::-webkit-scrollbar{ display:none; }
+.apr-galeri-oge{ flex:0 0 100%; scroll-snap-align:center; }
+.apr-galeri-oge img, .apr-galeri-oge video{ width:100%; display:block; object-fit:cover; max-height:74vh; }
+.apr-galeri-say{ position:absolute; top:10px; right:10px; background:rgba(0,0,0,.62); color:#fff; font-size:12px; font-weight:800; padding:3px 11px; border-radius:99px; z-index:2; pointer-events:none; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+
+/* COMPOSER — ek fotoğraflar (çok fotoğraflı gönderi) */
+.pyl-foto-sayac{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; z-index:2; }
+.pyl-ekfotolar{ display:flex; gap:7px; overflow-x:auto; padding:2px 0; margin:4px 0; scrollbar-width:none; }
+.pyl-ekfotolar::-webkit-scrollbar{ display:none; }
+.pyl-ekfoto{ position:relative; flex:0 0 auto; width:60px; height:60px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,215,0,.3); }
+.pyl-ekfoto img{ width:100%; height:100%; object-fit:cover; }
+.pyl-ekfoto-sil{ position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%; border:none; background:rgba(0,0,0,.62); color:#fff; font-size:11px; line-height:1; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; }
+.pyl-ekfoto-ekle{ flex:0 0 auto; width:60px; height:60px; border-radius:10px; border:1.5px dashed rgba(255,215,0,.5); background:rgba(255,215,0,.06); color:#ffd700; font-size:24px; line-height:1; cursor:pointer; }
 .pyl-secenek{ display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
 .pyl-chip{ display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border-radius:18px; cursor:pointer; font-size:12px; font-weight:700;
   color:var(--c,#FFD700); background:color-mix(in srgb, var(--c,#FFD700) 14%, transparent); border:1.3px solid color-mix(in srgb, var(--c,#FFD700) 45%, transparent); }

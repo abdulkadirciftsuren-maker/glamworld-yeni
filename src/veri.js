@@ -75,6 +75,15 @@ export async function dosyaYukle(file, uid, onProgress) {
   const url = await _depoyaYukle(file, uid, onProgress, "application/octet-stream");
   return { url, ad: (file && file.name) || "dosya", boyut: (file && file.size) || 0 };
 }
+// base64 (dataURL) FOTOĞRAF → Firebase Depolama'ya yükle, indirilebilir URL döner.
+// ÇOK fotoğraflı gönderilerde her foto Firestore'a (1MB) sığmaz → Storage'a yüklenir, post'ta URL saklanır.
+export async function gorselYukle(dataURL, uid, onProgress) {
+  if (!dataURL || dataURL.indexOf("data:") !== 0) return "";
+  // dataURL → Blob
+  const blob = await (await fetch(dataURL)).blob();
+  const dosya = new File([blob], "foto.jpg", { type: blob.type || "image/jpeg" });
+  return _depoyaYukle(dosya, uid, onProgress, "image/jpeg");
+}
 // MEDYA SİL — Firebase Depolama'daki dosyayı indirilebilir URL'inden siler.
 // Eski Cloudinary URL'leri (veya boş) atlanır (istemciden silinemez, hata vermez).
 export async function medyaSil(url) {
