@@ -979,6 +979,30 @@
 /* PROFİL nav düğmesi: işlemeli altın çerçeve (header ile aynı, kare); foto içi doldurur (kullanıcı: kare çerçeveyi alttaki profile koy) */
 .ana-nav-kutu.nav-cerceveli{ box-sizing:border-box; width:46px; height:46px; background:radial-gradient(circle at 50% 35%,#2a2010,#0c0905) padding-box !important; box-shadow:0 4px 12px rgba(120,95,30,.28); }
 .ana-nav-kutu.nav-cerceveli img{ width:100%; height:100%; border-radius:3px; object-fit:cover; }
+
+/* ===== PROFİL FOTOĞRAFLARI HER YERDE KARE (yuvarlak köşeli, keskin değil) — kullanıcı isteği =====
+   SADECE kişi fotoğrafları/avatarlar kare olur. Pırlanta ÇERÇEVELER, ikonlar, düğmeler, rozetler AYNEN yuvarlak kalır. */
+.ara-kart-foto,
+.ara-detay-foto, .ara-detay-foto img,
+.msj-foto,
+.pyl-avatar,
+.pyl-avsec-foto,
+.apr-av,
+.tf-avatar,
+.ana-profil-foto,
+.apm-foto, .apm-foto img,
+.apf-foto, .apf-foto img,
+.apf-oniz.yuvarlak,
+.ana-post-avatar,
+.abm-foto,
+.gb-kul-av,
+.bgm-av,
+.begenen-av,
+.uye-av,
+.ayar-avatar-foto, .ayar-avatar-foto img,
+.ana-nav-kutu.nav-cerceveli img, .ana-nav-kutu.yuv img {
+  border-radius: 22% !important;
+}
 /* her düğme kendi renginde (fotoğraftaki gibi içleri renkli) */
 /* AYDINLIK temada CANLI dolu renkli nav ikonları + beyaz ikon (soluk cam yerine doygun renk) */
 .ana-nav-oge:nth-child(1) .ana-nav-kutu{ background:linear-gradient(150deg,#3f8aff,#1e4a9e); color:#fff; border-color:rgba(30,74,158,.6); }
