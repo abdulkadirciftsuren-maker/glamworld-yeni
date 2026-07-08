@@ -1933,7 +1933,9 @@ export default function Anasayfa({ pro = false }) {
       ctx.lineTo(r, bh); ctx.arcTo(0, bh, 0, bh - r, r);
       ctx.lineTo(0, r); ctx.arcTo(0, 0, r, 0, r); ctx.closePath();
     } else {
-      ctx.arc(bw / 2, bh / 2, Math.min(bw, bh) / 2, 0, Math.PI * 2);
+      // PROFİL/galeri: DÜZ KARE kırpma (daire DEĞİL) — fotoğraf kareyi TAM doldurur, köşeler boş kalmaz.
+      // Yuvarlak köşe görünümü gösterimde CSS ile gelir (her yerde kare foto). (kullanıcı: kare içinde yuvarlak kesilmesin)
+      ctx.rect(0, 0, bw, bh);
     }
   }
   const yaziPx = (kat, bw, bh) => Math.min(bw, bh) * 0.16 * (kat.boy || 1); // yazı punto
