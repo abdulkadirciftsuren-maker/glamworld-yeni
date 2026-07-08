@@ -1198,6 +1198,8 @@ export default function Anasayfa({ pro = false }) {
   const [paylasTur, setPaylasTur] = useState("");     // Fotoğraf | Video | İş İlanı | Ürün/Hizmet | Tavsiye | Duyuru
   const [paylasGorsel, setPaylasGorsel] = useState(""); // eklenen fotoğraf (dataURL)
   const [filigranEkle, setFiligranEkle] = useState(true); // GLOXORG filigranı eklensin mi (foto zaten GLOXORG'luysa kapat → çift olmasın)
+  const [paylasKonum, setPaylasKonum] = useState(null); // CANLI konum: { enlem, boylam, yer, sehir, ulke, tam } — "nereden paylaşıldı" (hastane/havalimanı/otogar...)
+  const [konumDurum, setKonumDurum] = useState(""); // "" | "aliniyor" | "hata"
   const [paylasVideo, setPaylasVideo] = useState("");   // video ÖNİZLEME linki (yerel) veya kaydedilen URL
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasVideoPoster, setPaylasVideoPoster] = useState(""); // video KAPAK resmi (ilk kare) — "ekranı yok" sorununu çözer
@@ -2740,6 +2742,7 @@ export default function Anasayfa({ pro = false }) {
     setAiYukleniyor(true); setAiOneriler([]);
     const meslek = meslekAd || (profilBilgi && profilBilgi.pro && profilBilgi.pro.meslek) || t("aiUzman", "uzman");
     const sehir = (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "";
+    const canliKonum = (paylasKonum && paylasKonum.tam) || ""; // CANLI konum → Gloxoo o yere göre başlık/yazı hazırlar
     const tur = paylasTur || "";
     const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" }[dil] || "Türkçe";
     const mevcut = (paylasYazi || "").trim();
@@ -2773,7 +2776,7 @@ export default function Anasayfa({ pro = false }) {
       ? `KİMLİK REFERANSI: Ekteki İLK görsel hesap sahibinin PROFİL fotoğrafı (sahip: ${sahipAd || "kullanıcı"}${sahipCins ? ", " + sahipCins : ""}${sahipYas ? ", ~" + sahipYas + " yaş" : ""}); İKİNCİ görsel paylaşılacak içeriktir. İkinci görseldeki kişi AÇIKÇA sahiple AYNI kişiyse ona adıyla/uygun hitapla yaz; FARKLI biriyse (yaş/cinsiyet uymuyorsa, ör. çocuk ya da başka cinsiyet) sahibin adını KULLANMA — gördüğün kişinin yaş/cinsiyetini (çocuk/genç/kadın/erkek/kız) tahmin edip ona göre yaz. EMİN DEĞİLSEN ad kullanma. `
       : (imgKaynak ? `Görseldeki kişi belirsizse/sahibin dışında biriyse sahip adını kullanma; yaş/cinsiyetini tahmin edip ona göre yaz. ` : "");
     const markaKapanis = `Her yazıyı, içeriğe/bölüme uygun KISA markalı bir kapanışla bitir — yazıya AKICI GÖMÜLÜ olsun, ayrı satır/etiket gibi DURMASIN: örn "Gloxorg life", "Gloxorg farkı", "Gloxorg.com'da buluşalım", "gloxoo.com". Uzun yazı paylaşımlarında sona doğal bir dokunuşla "(Gloxoo yapay zekâ ile hazırlandı)" ekleyebilirsin. Marka HER ZAMAN "Gloxorg" yazılır. `;
-    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki içerik görseli videodan alınmış bir karedir)" : "") + ". " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yazılar üret. ' : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "İÇERİK GÖRSELİNE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}${kimlik}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar RENKLİ, CANLI ve ÇARPICI olsun (sade/kuru DEĞİL): 1-3 cümle, akıcı, sıcak, kişisel, enerjik; HER yazıya 2-3 UYGUN emoji serpiştir (başına/içine/sonuna) ve 2-3 ilgili hashtag ekle. Duyguyu hissettir, davet edici ol. Tek kelimelik/çok kısa/kuru/saçma öneri VERME. ${markaKapanis}${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
+    const talimat = `${meslek ? "Meslek: " + meslek + ". " : ""}${sehir ? "Şehir: " + sehir + ". " : ""}${canliKonum ? "CANLI KONUM: Bu içerik ŞU AN şuradan paylaşılıyor → '" + canliKonum + "'. Başlığı/yazıyı bu YERE UYGUN, oranın havasını/duygusunu yansıtacak şekilde yaz (ör. hastanedeyse geçmiş olsun/şifa/moral; havalimanı/otogar ise yolculuk/heyecan; sahil/park ise huzur). Yeri doğal bir dille an. " : ""}${tur ? "Gönderi türü: " + tur + ". " : ""}${paylasVideo ? "Kullanıcı bir VİDEO ekledi" + (imgKaynak ? " (ekteki içerik görseli videodan alınmış bir karedir)" : "") + ". " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yazılar üret. ' : ""}${mevcut ? 'Kullanıcının yazdığı taslak: "' + mevcut + '" — anlamını koru, güzelleştir ve zenginleştir. ' : ""}${imgKaynak ? "İÇERİK GÖRSELİNE DİKKATLİCE BAK: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak, o ana özel, GERÇEK ve inandırıcı yaz (uydurma/klişe/genel geçer laf YOK). " : "Konuya uygun, "}${kimlik}bu kişi için sosyal medyada paylaşacağı 3 farklı gönderi yazısı öner. Yazılar RENKLİ, CANLI ve ÇARPICI olsun (sade/kuru DEĞİL): 1-3 cümle, akıcı, sıcak, kişisel, enerjik; HER yazıya 2-3 UYGUN emoji serpiştir (başına/içine/sonuna) ve 2-3 ilgili hashtag ekle. Duyguyu hissettir, davet edici ol. Tek kelimelik/çok kısa/kuru/saçma öneri VERME. ${markaKapanis}${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
     const parcalar = [];
     if (refImg) parcalar.push({ type: "image", source: refImg });
     if (imgKaynak) parcalar.push({ type: "image", source: imgKaynak });
@@ -2879,7 +2882,7 @@ export default function Anasayfa({ pro = false }) {
     else if (k === "ara" || k === "arama") setAraAcik(true);
     else if (k === "bildirim" || k === "bildirimler") setBildirimAcik(true);
     else if (k === "mesaj" || k === "mesajlar") setMesajAcik(true);
-    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasAcik(true); }
+    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasKonum(null); setKonumDurum(""); setPaylasAcik(true); }
     else if (k === "ayar" || k === "ayarlar") setAyarlarAcik(true);
   }
   // Asistana FOTOĞRAF ekle — küçült (max 1024px) + base64'e çevir (Claude vision için)
@@ -3920,8 +3923,10 @@ export default function Anasayfa({ pro = false }) {
     const videoSon = videoSade(videoURL || "");
     const yeni = {
       uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye, uyelik: uyelik || "",
-      sehir: (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
-      ulke: (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
+      // CANLI konum varsa şehir/ülke ONDAN (nerede paylaşıldıysa), yoksa profil konumundan
+      sehir: (paylasKonum && paylasKonum.sehir) || (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
+      ulke: (paylasKonum && paylasKonum.ulke) || (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
+      konum: paylasKonum ? { yer: paylasKonum.yer || "", sehir: paylasKonum.sehir || "", ulke: paylasKonum.ulke || "", tam: paylasKonum.tam || "", enlem: paylasKonum.enlem, boylam: paylasKonum.boylam } : null,
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
       baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
@@ -3929,22 +3934,51 @@ export default function Anasayfa({ pro = false }) {
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
     };
     if (duzenlenen && duzenlenen.id) {
-      // DÜZENLEME → mevcut gönderiyi güncelle
-      gonderiGuncelle(duzenlenen.id, { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, ustYazi: yeni.ustYazi, duzen: yeni.duzen, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk }).then((ok) => {
+      // DÜZENLEME → mevcut gönderiyi güncelle. Kullanıcı: düzenleyip tekrar paylaşınca AKIŞTA EN ÜSTE gelsin + TARİH yenilensin.
+      const yeniZaman = Date.now();
+      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, ustYazi: yeni.ustYazi, duzen: yeni.duzen, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, zamanMs: yeniZaman, zaman: "" };
+      gonderiGuncelle(duzenlenen.id, degisiklik).then((ok) => {
         if (ok) {
-          const guncel = (g) => g.id === duzenlenen.id ? { ...g, baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, ustYazi: yeni.ustYazi, duzen: yeni.duzen, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk } : g;
-          setGercekAkis((a) => a.map(guncel)); setGonderilerim((a) => a.map(guncel));
-          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setDuzenlenen(null); setPaylasDurum("ok");
+          // EN ÜSTE taşı: eski konumundan çıkar, güncel haliyle başa ekle (hem akış hem profil).
+          const bumpla = (a) => { const eski = a.find((g) => g.id === duzenlenen.id) || {}; const kalan = a.filter((g) => g.id !== duzenlenen.id); return [{ ...eski, ...degisiklik }, ...kalan]; };
+          setGercekAkis(bumpla); setGonderilerim(bumpla);
+          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setPaylasDurum("ok");
           setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800);
         } else setPaylasDurum("hata");
       }).catch(() => setPaylasDurum("hata"));
       return;
     }
     gonderiEkle(yeni).then((id) => {
-      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
+      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
       else { setPaylasHataDetay("bilinmiyor"); setPaylasDurum("hata"); }
     }).catch((e) => { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("hata"); });
   }
+  // CANLI KONUM aç/kapa — açınca telefonun GPS'inden yerini alır, yer adına çevirir (hastane/havalimanı/otogar/şehir).
+  // Kullanıcı: "konum kullan dersem fotoğraf/video/yazı nereden paylaşıldı üstte görünsün; Gloxoo o yere göre başlık yazsın."
+  const konumAl = () => {
+    if (paylasKonum) { setPaylasKonum(null); setKonumDurum(""); return; } // ikinci basış → kapat
+    if (typeof navigator === "undefined" || !navigator.geolocation) { setKonumDurum("hata"); return; }
+    setKonumDurum("aliniyor");
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const enlem = pos.coords.latitude, boylam = pos.coords.longitude;
+        let yer = "", sehir = "", ulke = "";
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${enlem}&lon=${boylam}&accept-language=${dil}&zoom=18`, { headers: { Accept: "application/json" } });
+          if (r.ok) {
+            const d = await r.json(); const a = d.address || {};
+            // EN belirgin yer adı (hastane, havalimanı, otogar, AVM, otel, cami, park, mahalle...) → yoksa cadde/semt
+            yer = d.name || a.amenity || a.aeroway || a.building || a.tourism || a.leisure || a.shop || a.office || a.hospital || a.road || a.neighbourhood || a.suburb || "";
+            sehir = a.city || a.town || a.village || a.municipality || a.county || a.state || "";
+            ulke = a.country || "";
+          }
+        } catch (x) {}
+        const tam = [yer, sehir, ulke].filter(Boolean).join(", ") || (t("konumBulundu", "Konum bulundu"));
+        setPaylasKonum({ enlem, boylam, yer, sehir, ulke, tam });
+        setKonumDurum("");
+      } catch (e) { setKonumDurum("hata"); }
+    }, () => setKonumDurum("hata"), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  };
   // Paylaş fotoğraf seç → küçült → ekle
   function paylasFotoSec(e) {
     const f = e.target.files && e.target.files[0]; if (!f) return;
@@ -5043,7 +5077,7 @@ export default function Anasayfa({ pro = false }) {
           {/* AKIŞ (feed) — aşağı indikçe dünyadan yeni paylaşımlar */}
           <div className="ana-akis">
             {/* PAYLAŞ kutusu — kendi gönderini ekle (gerçek veri) */}
-            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasAcik(true); }}>
+            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
             </button>
             {/* AKIŞ FİLTRESİ — Hepsi / Takip Ettiklerim (kişiselleşmiş akış) */}
@@ -5082,6 +5116,14 @@ export default function Anasayfa({ pro = false }) {
               const postFoto = (kendiPost && !p.amblem && foto) ? foto : p.foto;
               const meslekRenk = MESLEK_RENK[p.meslek] || "#FFD700"; // meslek kendi renginde
               const mesajAc = () => { if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, tip: p.pro ? "profesyonel" : "", uyelik: p.uyelik || "", konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); };
+              // CANLI KONUM ROZETİ — "nereden paylaşıldı" (üstte, renkli, belirgin)
+              const konumRozet = (p.konum && p.konum.tam) ? (
+                <div className="apr-konum notranslate" translate="no">
+                  <span className="apr-konum-ik" aria-hidden="true">📍</span>
+                  <span className="apr-konum-yer">{p.konum.yer || p.konum.tam}</span>
+                  {p.konum.yer && (p.konum.sehir || p.konum.ulke) && <span className="apr-konum-alt">{[p.konum.sehir, p.konum.ulke].filter(Boolean).join(", ")}</span>}
+                </div>
+              ) : null;
               const yazan = (
                 <span className="apr-yazan apr-yazan-ust">
                   <span className={"apr-av uye-ac" + (p.amblem ? " amblem" : "")} style={{ background: p.renk || ("linear-gradient(145deg," + pc + ",#0d1b3a)") }} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>{postFoto ? <img src={postFoto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
@@ -5107,6 +5149,7 @@ export default function Anasayfa({ pro = false }) {
                   <article className={"ana-post ana-post-im " + (p.video ? "post-video" : "post-foto")} key={anahtar} style={{ "--pc": pc, "--sep": p.video ? "#e0202c" : "#0d0a05" }}>
                     {/* PROFİL/İSİM/MESLEK — fotoğrafın DIŞINDA, ÜSTTE ayrı şerit (ANA SAYFADA HEP AYRI — bozma) */}
                     {yazan}
+                    {konumRozet}
                     {p.baslik && (
                       <div className={"ana-post-baslik" + (baslikAcikSet.has(p.id) ? " acik" : "")} onClick={(e) => e.stopPropagation()}>
                         <span className="ana-post-baslik-metin">{p.baslik}</span>
@@ -5185,6 +5228,7 @@ export default function Anasayfa({ pro = false }) {
                     {katRozet}
                     {p.puan && <span className="ana-post-puan">★ {p.puan}</span>}
                   </div>
+                  {konumRozet}
                   {p.baslik && (
                     <div className={"ana-post-baslik ust" + (baslikAcikSet.has(p.id) ? " acik" : "")} onClick={(e) => e.stopPropagation()}>
                       <span className="ana-post-baslik-metin">{p.baslik}</span>
@@ -5369,7 +5413,7 @@ export default function Anasayfa({ pro = false }) {
               {/* PAYLAŞIMLARIM — kendi gönderilerim (düzenle / sil); yayınladıkça otomatik gelir */}
               <div className="apf-paylasimlar">
                 {/* Bir şeyler paylaş — Profilim'den de gönderi ekle */}
-                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasAcik(true); }}>
+                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
                   <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
                 </button>
                 {/* BÖLÜM FİLTRELERİ — her tür kendi amblemi+rengiyle */}
@@ -5729,6 +5773,17 @@ export default function Anasayfa({ pro = false }) {
                 <button className="pyl-mm-btn" onClick={() => { const r = medyaMenu === "foto" ? paylasFotoRef : paylasVideoRef; setMedyaMenu(""); if (r.current) r.current.click(); }}>🖼️ {t("galeriden", "Galeriden seç")}</button>
               </div>
             )}
+            {/* CANLI KONUM — foto/video/yazı hepsine: "nereden paylaşıldı" (hastane/havalimanı/otogar/şehir); Gloxoo o yere göre yazar */}
+            <button className={"pyl-konum-btn" + (paylasKonum ? " acik" : "") + (konumDurum === "aliniyor" ? " yukleniyor" : "")} onClick={konumAl} disabled={konumDurum === "aliniyor"}>
+              <span className="pyl-konum-ik" aria-hidden="true">📍</span>
+              <span className="pyl-konum-metin">
+                {konumDurum === "aliniyor" ? t("konumAliniyor", "Konum alınıyor…")
+                  : paylasKonum ? (paylasKonum.tam || t("konumEklendi", "Konum eklendi"))
+                  : konumDurum === "hata" ? t("konumHata", "Konum alınamadı — izni aç, tekrar dene")
+                  : t("konumEkle", "📍 Konum ekle (nereden paylaşıyorsun?)")}
+              </span>
+              {paylasKonum && <span className="pyl-konum-sil" aria-hidden="true">✕</span>}
+            </button>
             {/* ZEMİN + YAZI RENGİ — yazılı gönderiye (medya yokken) renk şeridi (her türe) */}
             {!paylasGorsel && !paylasVideo && (
               <div className="pyl-zemin">
