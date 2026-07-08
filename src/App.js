@@ -51,6 +51,9 @@ function App() {
   //   null = oturum yok (direkt giriş kartı)   |   obje = gerçek kullanıcı
   const [kullanici, setKullanici] = useState(() => {
     try {
+      // KENDİ güvenilir bayrağımız (oturum açılınca yazarız) → Firebase IndexedDB'de saklasa bile
+      // dönen üyeyi ANINDA tanırız, giriş kartı FLAŞ etmez (direkt yükleniyor ekranı).
+      if (localStorage.getItem("gw_oturum") === "1" || localStorage.getItem("gw_profilVar") === "1") return "yukleniyor";
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
         if (k && k.indexOf("firebase:authUser:") === 0) return "yukleniyor";
@@ -69,7 +72,9 @@ function App() {
   useEffect(() => onAuthStateChanged(auth, (u) => {
     setKullanici(u);
     if (u) {
-      // Oturum doğrulandı → sosyal giriş yükleme ekranını (#gw-yuk) gizle ve bayrağı temizle.
+      // Oturum doğrulandı → KENDİ bayrağımızı yaz (bir sonraki açılışta giriş kartı flaş etmesin).
+      try { localStorage.setItem("gw_oturum", "1"); } catch (e) {}
+      // Sosyal giriş yükleme ekranını (#gw-yuk) gizle ve bayrağı temizle.
       try { sessionStorage.removeItem("gwYukMetin"); } catch (e) {}
       const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
       if (el) el.style.display = "none";
@@ -88,7 +93,8 @@ function App() {
         .catch(() => { setProfil("var"); }); // okuma hatasında kullanıcıyı KİLİTLEME
     } else {
       setProfil("yok"); setTip("");
-      try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); } catch (e) {}
+      // Oturum YOK → kendi bayrağımızı da temizle (bir daha açılışta yükleniyor takılmasın, giriş kartı gelsin)
+      try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_oturum"); } catch (e) {}
     }
   }), []);
 
