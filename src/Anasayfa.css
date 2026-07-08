@@ -981,7 +981,8 @@
 .ana-nav-kutu.nav-cerceveli img{ width:100%; height:100%; border-radius:3px; object-fit:cover; }
 
 /* ===== PROFİL FOTOĞRAFLARI HER YERDE KARE (yuvarlak köşeli, keskin değil) — kullanıcı isteği =====
-   SADECE kişi fotoğrafları/avatarlar kare olur. Pırlanta ÇERÇEVELER, ikonlar, düğmeler, rozetler AYNEN yuvarlak kalır. */
+   SADECE kişi fotoğrafları/avatarlar kare olur. Pırlanta ÇERÇEVELER, ikonlar, düğmeler, rozetler AYNEN yuvarlak kalır.
+   İSTİSNA: ÜSTTEKİ (Google/hesap) profil düğmesi (.ana-profil-foto) YUVARLAK kalır — kullanıcı: "Google profilime dokunma". */
 .ara-kart-foto,
 .ara-detay-foto, .ara-detay-foto img,
 .msj-foto,
@@ -989,7 +990,6 @@
 .pyl-avsec-foto,
 .apr-av,
 .tf-avatar,
-.ana-profil-foto,
 .apm-foto, .apm-foto img,
 .apf-foto, .apf-foto img,
 .apf-oniz.yuvarlak,
