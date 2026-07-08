@@ -251,9 +251,12 @@ export async function kullaniciSil(uid) {
 }
 export async function tumGonderiler(adet = 300) {
   try {
-    const q = query(collection(db, "gonderiler"), orderBy("olusturma", "desc"), fsLimit(adet));
+    // orderBy("olusturma") KULLANMIYORUZ — o alanı olmayan eski gönderiler dışlanıp yönetici listesinde de kaybolmasın.
+    const q = query(collection(db, "gonderiler"), fsLimit(adet));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+    return liste;
   } catch (e) { return []; }
 }
 
@@ -398,13 +401,18 @@ export async function takipEttiklerimOku(uid, adet = 200) {
   } catch (e) { return []; }
 }
 
-export async function gonderileriOku({ ulke, meslek } = {}, adet = 30) {
+export async function gonderileriOku({ ulke, meslek } = {}, adet = 150) {
   try {
     const kosullar = [];
     if (ulke) kosullar.push(where("ulke", "==", ulke));
     if (meslek) kosullar.push(where("meslek", "==", meslek));
-    const q = query(collection(db, "gonderiler"), ...kosullar, orderBy("olusturma", "desc"), fsLimit(adet));
+    // ÖNEMLİ: orderBy("olusturma") KULLANMIYORUZ — o alanı OLMAYAN (eski) gönderileri Firestore
+    // tamamen DIŞLIYORDU → akışta "kayboluyorlar" sanılıyordu (aslında silinmemişler). Artık tüm
+    // gönderileri çekip İSTEMCİDE zamanMs'e göre sıralıyoruz → hiçbir gönderi kaybolmaz.
+    const q = query(collection(db, "gonderiler"), ...kosullar, fsLimit(adet));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+    return liste;
   } catch (e) { return []; }
 }

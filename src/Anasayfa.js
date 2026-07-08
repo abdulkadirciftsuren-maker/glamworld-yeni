@@ -2225,7 +2225,7 @@ export default function Anasayfa({ pro = false }) {
   }, [mesajAcik]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   useEffect(() => {
-    gonderileriOku({}, 40).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
+    gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
   }, []);
   // TAKİP ETTİKLERİM — giriş yapınca yükle (akış filtresi + düğme durumu için)
   useEffect(() => {
