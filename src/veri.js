@@ -1,12 +1,13 @@
 // GLOXORG VERİ ERİŞİM KATMANI (FAZ 0) — ANAYASA 6.16/M
 // TÜM Firestore okuma/yazma BURADAN geçer. Bileşenler doğrudan db kullanmaz.
 // Böylece arka yüz tek yerden yönetilir, modüler kalır, çökerse tek parça çökmez.
-import { db } from "./firebase";
+import { db, storage } from "./firebase";
 import {
   doc, getDoc, setDoc, deleteDoc, updateDoc,
   collection, query, where, limit as fsLimit, orderBy, getDocs, onSnapshot,
   serverTimestamp, increment,
 } from "firebase/firestore";
+import { ref as depoRef, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 
 // BEĞENİ / YORUM SAYACI — ATOMİK artır/azalt (oku-yaz YOK → farklı kişiler aynı anda beğenince üst üste yazmaz, doğru toplanır)
 export async function sayacDegistir(postId, alan, delta) {
@@ -42,54 +43,47 @@ export async function begenenleriOku(postId, adet = 100) {
   } catch (e) { return []; }
 }
 
-// ---------- VİDEO YÜKLEME (Cloudinary — ÜCRETSİZ, kartsız) ----------
-// Büyük video Firestore'a sığmaz → Cloudinary'e yüklenir, sadece güvenli URL saklanır.
-// İmzasız (unsigned) yükleme: tarayıcıdan doğrudan; gizli anahtar gerekmez.
-const CLOUDINARY_CLOUD = "dqtclc035";   // Bulut adı (public)
-const CLOUDINARY_PRESET = "GLOXORG";    // İmzasız yükleme ön ayarı
-export function videoYukle(file, uid, onProgress) {
+// ---------- VİDEO / DOSYA YÜKLEME (FIREBASE DEPOLAMA) ----------
+// Cloudinary'den TAŞINDI (ücretsiz kota aşımı + hesap kapanma riski). Artık videolar/dosyalar
+// Firebase Depolama'ya yüklenir: tek çatı (Firebase), silince OTOMATİK silinir (medyaSil), şeffaf
+// kullandıkça-öde. Dosya yolu: medya/{uid}/{zaman}_{ad} → sadece o kullanıcı yazar/siler (kural).
+// Fotoğraflar eskisi gibi Firestore'da (base64) — burada değil.
+function _guvenliAd(file, varsayilan) {
+  const ad = (file && file.name) || varsayilan;
+  return String(ad).replace(/[^\w.\-]+/g, "_").slice(-60) || varsayilan;
+}
+function _depoyaYukle(file, uid, onProgress, tipVarsayilan) {
   return new Promise((resolve, reject) => {
     if (!file) return reject(new Error("eksik"));
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("upload_preset", CLOUDINARY_PRESET);
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD + "/video/upload");
-    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
-    xhr.onload = () => {
-      try {
-        const r = JSON.parse(xhr.responseText || "{}");
-        if (xhr.status >= 200 && xhr.status < 300 && r.secure_url) resolve(r.secure_url);
-        else reject(new Error((r.error && r.error.message) || "yukleme"));
-      } catch (e) { reject(e); }
-    };
-    xhr.onerror = () => reject(new Error("ag"));
-    xhr.send(fd);
+    try {
+      const yol = "medya/" + (uid || "anon") + "/" + Date.now() + "_" + _guvenliAd(file, "medya");
+      const gorev = uploadBytesResumable(depoRef(storage, yol), file, { contentType: file.type || tipVarsayilan });
+      gorev.on("state_changed",
+        (s) => { if (onProgress && s.totalBytes) onProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)); },
+        (e) => reject(e),
+        async () => { try { resolve(await getDownloadURL(gorev.snapshot.ref)); } catch (e) { reject(e); } }
+      );
+    } catch (e) { reject(e); }
   });
 }
-
-// ---------- DOSYA YÜKLEME (Cloudinary auto/upload — her tür dosya) ----------
-// Fotoğraf/video dışı belge (pdf, word, zip vб.) paylaşımı için: dosyayı Cloudinary'e yükler,
-// {url, ad, boyut} döner. Post'a dosya:{url,ad,boyut} olarak saklanır, akışta indirilebilir çip çıkar.
-export function dosyaYukle(file, uid, onProgress) {
-  return new Promise((resolve, reject) => {
-    if (!file) return reject(new Error("eksik"));
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("upload_preset", CLOUDINARY_PRESET);
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD + "/auto/upload");
-    xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
-    xhr.onload = () => {
-      try {
-        const r = JSON.parse(xhr.responseText || "{}");
-        if (xhr.status >= 200 && xhr.status < 300 && r.secure_url) resolve({ url: r.secure_url, ad: file.name || "dosya", boyut: file.size || 0 });
-        else reject(new Error((r.error && r.error.message) || "yukleme"));
-      } catch (e) { reject(e); }
-    };
-    xhr.onerror = () => reject(new Error("ag"));
-    xhr.send(fd);
-  });
+// Büyük video → Firebase Depolama; güvenli indirilebilir URL döner (post'ta video:URL saklanır).
+export function videoYukle(file, uid, onProgress) {
+  return _depoyaYukle(file, uid, onProgress, "video/mp4");
+}
+// Belge (pdf/word/zip vb.) → Firebase Depolama; {url, ad, boyut} döner (post'ta dosya:{...}).
+export async function dosyaYukle(file, uid, onProgress) {
+  const url = await _depoyaYukle(file, uid, onProgress, "application/octet-stream");
+  return { url, ad: (file && file.name) || "dosya", boyut: (file && file.size) || 0 };
+}
+// MEDYA SİL — Firebase Depolama'daki dosyayı indirilebilir URL'inden siler.
+// Eski Cloudinary URL'leri (veya boş) atlanır (istemciden silinemez, hata vermez).
+export async function medyaSil(url) {
+  try {
+    if (!url || typeof url !== "string") return false;
+    if (url.indexOf("firebasestorage.googleapis.com") < 0 && url.indexOf("firebasestorage.app") < 0) return false;
+    await deleteObject(depoRef(storage, url));
+    return true;
+  } catch (e) { return false; } // zaten yok/silinmişse sorun değil
 }
 
 const KULLANICILAR = "kullanicilar";
@@ -238,9 +232,22 @@ export async function tumKullanicilar(adet = 400) {
   } catch (e) { return []; }
 }
 // Kullanıcı (profil) belgesini sil — SADECE yönetici (Firestore kuralında sahip e-posta) — hayalet/eski kayıtları temizlemek için
+// Hesap sil → o kullanıcının TÜM gönderileri + medyaları (video/dosya) da silinir (silinen hesabın paylaşımları kalmasın)
 export async function kullaniciSil(uid) {
   if (!uid) return false;
-  try { await deleteDoc(doc(db, KULLANICILAR, uid)); return true; } catch (e) { return false; }
+  try {
+    try {
+      const q = query(collection(db, "gonderiler"), where("sahipUid", "==", uid), fsLimit(500));
+      const snap = await getDocs(q);
+      for (const d of snap.docs) {
+        const p = d.data() || {};
+        try { if (p.video) await medyaSil(p.video); if (p.dosya && p.dosya.url) await medyaSil(p.dosya.url); } catch (e) {}
+        try { await deleteDoc(d.ref); } catch (e) {}
+      }
+    } catch (e) {}
+    await deleteDoc(doc(db, KULLANICILAR, uid));
+    return true;
+  } catch (e) { return false; }
 }
 export async function tumGonderiler(adet = 300) {
   try {
@@ -271,10 +278,17 @@ export async function gonderilerimOku(uid, adet = 60) {
     return liste;
   } catch (e) { return []; }
 }
-// Gönderi sil (sadece sahibi — kural zaten korur)
+// Gönderi sil (sadece sahibi — kural zaten korur) + MEDYASINI depodan OTOMATİK sil (boşuna yer/masraf kalmasın)
 export async function gonderiSil(id) {
   if (!id) return false;
-  try { await deleteDoc(doc(db, "gonderiler", id)); return true; } catch (e) { return false; }
+  try {
+    try {
+      const s = await getDoc(doc(db, "gonderiler", id));
+      if (s.exists()) { const p = s.data() || {}; if (p.video) await medyaSil(p.video); if (p.dosya && p.dosya.url) await medyaSil(p.dosya.url); }
+    } catch (e) {}
+    await deleteDoc(doc(db, "gonderiler", id));
+    return true;
+  } catch (e) { return false; }
 }
 // Gönderi güncelle (yazı/görsel/tür değiştir)
 export async function gonderiGuncelle(id, veri) {
