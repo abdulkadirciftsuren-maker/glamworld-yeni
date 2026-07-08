@@ -4,7 +4,7 @@
 import { db, storage } from "./firebase";
 import {
   doc, getDoc, setDoc, deleteDoc, updateDoc,
-  collection, query, where, limit as fsLimit, orderBy, getDocs, onSnapshot,
+  collection, collectionGroup, query, where, limit as fsLimit, orderBy, getDocs, onSnapshot,
   serverTimestamp, increment,
 } from "firebase/firestore";
 import { ref as depoRef, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
@@ -290,6 +290,41 @@ export async function gonderiAvatarGuncelle(uid, foto, ad) {
     await Promise.all(snap.docs.map(async (d) => {
       const p = d.data() || {};
       if (p.amblem) return; // amblemli gönderi = iş amblemi, avatarla değiştirme
+      const yama = {};
+      if (typeof foto === "string" && p.foto !== foto) yama.foto = foto;
+      if (typeof ad === "string" && ad && p.ad !== ad) yama.ad = ad;
+      if (Object.keys(yama).length) { try { await updateDoc(d.ref, yama); n++; } catch (e) {} }
+    }));
+    return n;
+  } catch (e) { return 0; }
+}
+// Profil fotoğrafı/adı değişince BEĞENİLERDEKİ (beğenenler şeridindeki) avatar+ad da yenilenir.
+export async function begeniAvatarGuncelle(uid, foto, ad) {
+  if (!uid) return 0;
+  try {
+    const q = query(collection(db, "begeniler"), where("uid", "==", uid), fsLimit(600));
+    const snap = await getDocs(q);
+    let n = 0;
+    await Promise.all(snap.docs.map(async (d) => {
+      const p = d.data() || {};
+      const yama = {};
+      if (typeof foto === "string" && p.foto !== foto) yama.foto = foto;
+      if (typeof ad === "string" && ad && p.ad !== ad) yama.ad = ad;
+      if (Object.keys(yama).length) { try { await updateDoc(d.ref, yama); n++; } catch (e) {} }
+    }));
+    return n;
+  } catch (e) { return 0; }
+}
+// Profil fotoğrafı/adı değişince YORUMLARDAKİ avatar+ad da yenilenir (tüm gönderilerin yorumlar alt-koleksiyonu).
+// collectionGroup index yoksa sessizce 0 döner (çökmez) — Firestore konsolunda "yorumlar" için index istenebilir.
+export async function yorumAvatarGuncelle(uid, foto, ad) {
+  if (!uid) return 0;
+  try {
+    const q = query(collectionGroup(db, "yorumlar"), where("uid", "==", uid), fsLimit(600));
+    const snap = await getDocs(q);
+    let n = 0;
+    await Promise.all(snap.docs.map(async (d) => {
+      const p = d.data() || {};
       const yama = {};
       if (typeof foto === "string" && p.foto !== foto) yama.foto = foto;
       if (typeof ad === "string" && ad && p.ad !== ad) yama.ad = ad;

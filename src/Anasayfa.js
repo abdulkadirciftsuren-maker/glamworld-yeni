@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -2171,12 +2171,16 @@ export default function Anasayfa({ pro = false }) {
     }
     setDuzenAcik(false); setAcikBolum(null); // okey/kaydet sonrası ayarlar OTOMATİK kapanır
   };
-  // Yeni profil avatarını KENDİ tüm gönderilerime yay: hem yerel akış (anında görünsün) hem Firestore (herkes yeni görsün).
+  // Yeni profil avatarını KENDİ tüm izlerime yay: gönderiler + BEĞENİLER + YORUMLAR.
+  // Hem yerel akış (anında görünsün) hem Firestore (herkes/her yerde yeni görsün).
   const avatariHerYereYay = (yeniFotoData) => {
     const uu = auth.currentUser; if (!uu) return;
+    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     const guncelle = (a) => a.map((g) => ((g.uid === uu.uid || g.sahipUid === uu.uid) && !g.amblem) ? { ...g, foto: yeniFotoData } : g);
     setGercekAkis((a) => guncelle(a)); setGonderilerim((a) => guncelle(a));
-    gonderiAvatarGuncelle(uu.uid, yeniFotoData).catch(() => {});
+    gonderiAvatarGuncelle(uu.uid, yeniFotoData, benimAd).catch(() => {});
+    begeniAvatarGuncelle(uu.uid, yeniFotoData, benimAd).catch(() => {}); // beğenenler şeridindeki fotom
+    yorumAvatarGuncelle(uu.uid, yeniFotoData, benimAd).catch(() => {});  // yorumlardaki fotom
   };
   // Galeri: bir fotoğrafı ANA avatar yap / sil
   function galeriAnaYap(d) { setProfilBilgi((p) => ({ ...(p || {}), avatarFoto: d })); const uu = auth.currentUser; if (uu) profilKaydet(uu.uid, { avatarFoto: d }).catch(() => {}); avatariHerYereYay(d); }

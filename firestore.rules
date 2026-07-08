@@ -47,10 +47,15 @@ service cloud.firestore {
       allow update, delete: if girisli() && (request.auth.uid == resource.data.musteriUid || request.auth.uid == resource.data.profesyonelUid);
     }
 
-    // Beğeniler — kim neyi beğendi (kalbe uzun basınca liste); herkes okur, sadece kişi kendi beğenisini ekler/siler
+    // Beğeniler — kim neyi beğendi (kalbe uzun basınca liste); herkes okur, sadece kişi kendi beğenisini ekler/siler.
+    // GÜNCELLEME: kişi KENDİ beğenisindeki foto/ad'ı yenileyebilir (profil fotosu değişince beğenenler şeridi güncel kalsın);
+    // kimlik (uid/postId) DEĞİŞTİRİLEMEZ.
     match /begeniler/{id} {
       allow read: if girisli();
       allow create: if girisli() && request.resource.data.uid == request.auth.uid;
+      allow update: if girisli() && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.postId == resource.data.postId;
       allow delete: if girisli() && resource.data.uid == request.auth.uid;
     }
 
