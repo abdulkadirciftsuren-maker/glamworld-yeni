@@ -1212,6 +1212,7 @@ export default function Anasayfa({ pro = false }) {
   const [gbSekme, setGbSekme] = useState("geri");                 // geri | istatistik | kullanici | gonderi
   const [gbKullanicilar, setGbKullanicilar] = useState([]);
   const [gbGonderiler, setGbGonderiler] = useState([]);
+  const [gbEpostaKopya, setGbEpostaKopya] = useState(""); // yöneticide kopyalanan e-postanın kullanıcı id'si (geri bildirim)
   const [begenenModal, setBegenenModal] = useState(null);         // BEĞENENLER/YORUMCULAR listesi açık post id
   const [begenenModalListe, setBegenenModalListe] = useState([]);
   const [yorumcuModalListe, setYorumcuModalListe] = useState([]);
@@ -2812,13 +2813,23 @@ export default function Anasayfa({ pro = false }) {
   };
   // SADECE SAHİP (yönetici) — geri bildirim sayfasını görebilir
   const yoneticiMi = () => { try { return !!(auth.currentUser && auth.currentUser.email === "abdulkadirciftsuren@gmail.com"); } catch (e) { return false; } };
-  const geriBildirimAc = async () => {
-    setMenuAcik(false); setGeriBildirimAcik(true); setGbSekme("geri"); setGbYukleniyor(true);
+  const yoneticiVeriYukle = async () => {
+    setGbYukleniyor(true);
     try {
       const [gb, kl, gn] = await Promise.all([geriBildirimOku(300), tumKullanicilar(400), tumGonderiler(300)]);
       setGeriBildirimListe(gb || []); setGbKullanicilar(kl || []); setGbGonderiler(gn || []);
     } catch (e) { setGeriBildirimListe([]); setGbKullanicilar([]); setGbGonderiler([]); }
     setGbYukleniyor(false);
+  };
+  const geriBildirimAc = async () => {
+    setMenuAcik(false); setGeriBildirimAcik(true); setGbSekme("geri");
+    yoneticiVeriYukle();
+  };
+  // Yöneticide bir kullanıcının e-postasını panoya kopyala (tam adres — kesilmeden)
+  const gbEpostaKopyala = (k) => {
+    const e = k.eposta || k.email || ""; if (!e) return;
+    try { navigator.clipboard.writeText(e); } catch (x) {}
+    setGbEpostaKopya(k.id); setTimeout(() => setGbEpostaKopya((v) => (v === k.id ? "" : v)), 1500);
   };
   // BEĞENENLER listesini aç (kalp altındaki ufak fotolara dokununca)
   const begenenlerAc = async (postId) => {
@@ -6622,6 +6633,7 @@ export default function Anasayfa({ pro = false }) {
           <div className="msj-pencere gb-pencere">
             <div className="msj-bas">
               <span className="msj-baslik">📊 {t("yoneticiKonsol", "Yönetim")}</span>
+              <button className="gb-yenile" onClick={() => { if (!gbYukleniyor) yoneticiVeriYukle(); }} disabled={gbYukleniyor} aria-label={t("yenile", "Yenile")} title={t("yenile", "Yenile")}>🔄</button>
               <button className="msj-kapat" onClick={() => setGeriBildirimAcik(false)} aria-label="Kapat">✕</button>
             </div>
             <div className="gb-sekmeler">
@@ -6668,7 +6680,16 @@ export default function Anasayfa({ pro = false }) {
                       <span className="gb-kul-av">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : ((k.isim || k.ad || "?").trim()[0] || "?").toUpperCase()}</span>
                       <div className="gb-kul-bilgi">
                         <b>{[k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || t("gbAnonim", "Kullanıcı")}</b>
-                        <span className="gb-kul-eposta">✉️ {k.eposta || k.email || t("gbEpostaYok", "e-posta yok")}</span>
+                        {(k.eposta || k.email) ? (
+                          <span className="gb-kul-eposta-sar">
+                            <span className="gb-kul-eposta" translate="no">✉️ {k.eposta || k.email}</span>
+                            <button className="gb-eposta-kopya" onClick={() => gbEpostaKopyala(k)} aria-label={t("kopyala", "Kopyala")}>
+                              {gbEpostaKopya === k.id ? "✓" : "📋"}
+                            </button>
+                          </span>
+                        ) : (
+                          <span className="gb-kul-eposta">✉️ {t("gbEpostaYok", "e-posta yok")}</span>
+                        )}
                         <span>{[mc((k.pro && k.pro.meslek) || k.meslek, dil), (k.konum && k.konum.sehir) || k.sehir, (k.konum && k.konum.ulke) || k.ulke].filter(Boolean).join(" · ")}</span>
                       </div>
                       <button className="gb-gon-sil" onClick={() => { if (window.confirm(t("gbKulSilOnay", "Bu kullanıcıyı listeden silmek istediğine emin misin?"))) gbKullaniciSil(k.id); }} aria-label={t("sil", "Sil")}>🗑</button>
