@@ -1197,6 +1197,7 @@ export default function Anasayfa({ pro = false }) {
   const [paylasDurum, setPaylasDurum] = useState("");
   const [paylasTur, setPaylasTur] = useState("");     // Fotoğraf | Video | İş İlanı | Ürün/Hizmet | Tavsiye | Duyuru
   const [paylasGorsel, setPaylasGorsel] = useState(""); // eklenen fotoğraf (dataURL)
+  const [filigranEkle, setFiligranEkle] = useState(true); // GLOXORG filigranı eklensin mi (foto zaten GLOXORG'luysa kapat → çift olmasın)
   const [paylasVideo, setPaylasVideo] = useState("");   // video ÖNİZLEME linki (yerel) veya kaydedilen URL
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasVideoPoster, setPaylasVideoPoster] = useState(""); // video KAPAK resmi (ilk kare) — "ekranı yok" sorununu çözer
@@ -3915,7 +3916,7 @@ export default function Anasayfa({ pro = false }) {
     // GLOXORG FİLİGRANI: foto'ya KALICI göm (istemci tarafı, ücretsiz). VİDEO filigranı KALDIRILDI:
     // Cloudinary video overlay'i videoyu YENİDEN İŞLİYOR (türev dosya) → kredi/depolama yakıyordu (kota aşımı).
     // Artık video ORİJİNAL URL ile saklanır (dönüşüm yok) → Cloudinary kredisi korunur.
-    const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? await fotoFiligranla(paylasGorsel) : "");
+    const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? (filigranEkle ? await fotoFiligranla(paylasGorsel) : paylasGorsel) : "");
     const videoSon = videoSade(videoURL || "");
     const yeni = {
       uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye, uyelik: uyelik || "",
@@ -3949,7 +3950,7 @@ export default function Anasayfa({ pro = false }) {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     setMedyaMenu("");
     const r = new FileReader();
-    r.onload = (ev) => { const img = new Image(); img.onload = () => { setPaylasGorsel(imgKucult(img, 1000)); setPaylasVideo(""); setPaylasDosya(null); }; img.src = ev.target.result; };
+    r.onload = (ev) => { const img = new Image(); img.onload = () => { setPaylasGorsel(imgKucult(img, 1000)); setFiligranEkle(true); setPaylasVideo(""); setPaylasDosya(null); }; img.src = ev.target.result; };
     r.readAsDataURL(f); e.target.value = "";
   }
   // Paylaş VİDEO seç (albümden/Google'dan) — Firebase Storage'a yüklenir (Paylaş'a basınca).
@@ -5571,28 +5572,31 @@ export default function Anasayfa({ pro = false }) {
               <button className="msj-kapat" onClick={() => { setPaylasAcik(false); setDuzenlenen(null); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasVideo(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); }} aria-label="Kapat">✕</button>
             </div>
             <div className="pyl-ust">
-              <input className="pyl-baslik" value={paylasBaslik} onChange={(e) => setPaylasBaslik(e.target.value)} placeholder={t("paylasBaslikPh", "Başlık (isteğe bağlı) — kısa ve dikkat çekici")} maxLength={200} />
-              <div className="pyl-ust-satir">
-                <span className={"pyl-avatar" + (paylasAvatar === "amblem" && isFoto ? " amblem" : "")}>
-                  {paylasAvatar === "amblem" && isFoto ? <img src={isFoto} alt="" referrerPolicy="no-referrer" />
-                    : foto ? <img src={foto} alt="" referrerPolicy="no-referrer" />
-                    : ((adTam && adTam.trim()[0]) || "?").toUpperCase()}
-                </span>
-                <textarea className="pyl-yaz" value={paylasYazi} onChange={(e) => { setPaylasYazi(e.target.value); setPaylasDurum(""); }} placeholder={t("paylasYaz2", "Ne paylaşmak istersin? (uzun yazı serbest)")} maxLength={20000}
-                  style={(!paylasGorsel && !paylasVideo && (paylasZemin || paylasYaziRenk)) ? { background: paylasZemin || undefined, color: paylasYaziRenk || undefined, borderColor: "transparent" } : undefined} />
+              {/* 1) ÜST BAŞLIK ŞERİDİ — medyanın HEMEN ÜSTÜNDE, renkli/belirgin (kullanıcı: sırayla, yakın, müşteri anlasın) */}
+              <div className="pyl-serit pyl-serit-baslik">
+                <span className="pyl-serit-et">📌 {t("paylasBaslikEt", "Başlık")}</span>
+                <input className="pyl-baslik" value={paylasBaslik} onChange={(e) => setPaylasBaslik(e.target.value)} placeholder={t("paylasBaslikPh", "Başlık (isteğe bağlı) — kısa ve dikkat çekici")} maxLength={200} />
               </div>
-              {/* SEÇİLEN MEDYA — YÜKLER YÜKLEMEZ EN ÜSTTE GÖRÜNÜR */}
+              {/* 2) MEDYA — foto/video penceresi (başlık ile yazı arasında) */}
               {paylasGorsel && (
-                <div className="pyl-gorsel">
+                <div className="pyl-gorsel pyl-gorsel-orta">
                   <img src={paylasGorsel} alt="" />
                   {ustYazi.trim() && <span className={"pyl-ustyazi yer-" + ustYer + " boy-" + ustBoyut} style={{ color: ustRenk }}>{ustYazi}</span>}
                   <button className="pyl-gorsel-sil" onClick={() => setPaylasGorsel("")} aria-label="Kaldır">✕</button>
                 </div>
               )}
               {paylasVideo && (
-                <div className="pyl-gorsel">
+                <div className="pyl-gorsel pyl-gorsel-orta">
                   <video src={paylasVideo} poster={paylasVideoPoster || undefined} controls playsInline style={{ width: "100%", maxHeight: "240px", display: "block" }} />
                   {ustYazi.trim() && <span className={"pyl-ustyazi yer-" + ustYer + " boy-" + ustBoyut} style={{ color: ustRenk }}>{ustYazi}</span>}
+                  {/* YÜKLEME YÜZDESİ — video penceresinin İÇİNDE (kullanıcı: yüzdelik video penceresinde görünsün) */}
+                  {paylasDurum === "video" && (
+                    <span className="pyl-yuk-oran" aria-live="polite">
+                      <span className="pyl-yuk-halka" style={{ "--yuzde": paylasYukleme }}></span>
+                      <b>↑ %{paylasYukleme}</b>
+                      <i>{t("paylasVideoYuk", "Video yükleniyor…")}</i>
+                    </span>
+                  )}
                   <button className="pyl-gorsel-sil" onClick={() => { setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); }} aria-label="Kaldır">✕</button>
                 </div>
               )}
@@ -5603,6 +5607,19 @@ export default function Anasayfa({ pro = false }) {
                   <button className="pyl-dosya-sil" onClick={() => setPaylasDosya(null)} aria-label="Kaldır">✕</button>
                 </div>
               )}
+              {/* 3) ALT YAZI ŞERİDİ — medyanın HEMEN ALTINDA, bitişik, renkli */}
+              <div className="pyl-serit pyl-serit-yazi">
+                <span className="pyl-serit-et">✍️ {t("paylasYaziEt", "Yazı")}</span>
+                <div className="pyl-ust-satir">
+                  <span className={"pyl-avatar" + (paylasAvatar === "amblem" && isFoto ? " amblem" : "")}>
+                    {paylasAvatar === "amblem" && isFoto ? <img src={isFoto} alt="" referrerPolicy="no-referrer" />
+                      : foto ? <img src={foto} alt="" referrerPolicy="no-referrer" />
+                      : ((adTam && adTam.trim()[0]) || "?").toUpperCase()}
+                  </span>
+                  <textarea className="pyl-yaz" value={paylasYazi} onChange={(e) => { setPaylasYazi(e.target.value); setPaylasDurum(""); }} placeholder={t("paylasYaz2", "Ne paylaşmak istersin? (uzun yazı serbest)")} maxLength={20000}
+                    style={(!paylasGorsel && !paylasVideo && (paylasZemin || paylasYaziRenk)) ? { background: paylasZemin || undefined, color: paylasYaziRenk || undefined, borderColor: "transparent" } : undefined} />
+                </div>
+              </div>
             </div>
             {/* KAYAN AYARLAR — üstteki foto+yazı SABİT kalır, buradan aşağısı onun altından kayar */}
             <div className="pyl-kaydir">
@@ -5680,6 +5697,13 @@ export default function Anasayfa({ pro = false }) {
               <button className="pyl-editor-ac" onClick={paylasEditorAc}>
                 <span className="pyl-editor-pir" aria-hidden="true"><Elmas4 c="#FFD700" /></span>
                 {t("fotoDuzenle", "Düzenle: üzerine yazı & fotoğraf ekle, parmakla taşı")}
+              </button>
+            )}
+            {/* GLOXORG FİLİGRANI aç/kapa — fotoğrafta ZATEN GLOXORG varsa kapat (çift yazı olmasın) */}
+            {paylasGorsel && (
+              <button className={"pyl-filigran-tog" + (filigranEkle ? " acik" : "")} onClick={() => setFiligranEkle((v) => !v)}>
+                <span className="pyl-filigran-kutu">{filigranEkle ? "✓" : ""}</span>
+                <span>{filigranEkle ? t("filigranAcik", "◈ GLOXORG filigranı eklenecek") : t("filigranKapali", "Filigran KAPALI (fotoğrafta zaten GLOXORG varsa böyle kalsın)")}</span>
               </button>
             )}
             <input ref={paylasFotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={paylasFotoSec} />
