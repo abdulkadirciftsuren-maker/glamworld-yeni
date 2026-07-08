@@ -3888,8 +3888,10 @@ export default function Anasayfa({ pro = false }) {
   }
   async function paylasGonder(turOverride) {
     const uu = auth.currentUser;
-    if (!uu || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya)) return;
     setTurSecAcik(false);
+    // İÇERİK YOKSA sessizce çıkma → NET uyarı ver (kullanıcı: "bastım paylaşmıyor"). Başlık da içerik sayılır.
+    if (!uu) { setPaylasHataDetay("oturum yok — çıkış yapıp tekrar gir"); setPaylasDurum("hata"); return; }
+    if (!paylasYazi.trim() && !paylasBaslik.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya) { setPaylasDurum("bosicerik"); return; }
     setPaylasDurum("gonderiliyor"); setPaylasHataDetay("");
     // VİDEO varsa ÖNCE Storage'a yükle, linkini al (büyük video Firestore'a sığmaz)
     let videoURL = "";
@@ -5737,6 +5739,7 @@ export default function Anasayfa({ pro = false }) {
             </button>
             {paylasDurum === "dosyahata" && <div className="adm-durum hata">{t("dosyaHata", "Dosya yüklenemedi, tekrar dene.")}</div>}
             {paylasDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}{paylasHataDetay ? " — " + paylasHataDetay : ""}</div>}
+            {paylasDurum === "bosicerik" && <div className="adm-durum hata">{t("paylasBosIcerik", "Önce bir şeyler yaz ya da foto/video ekle 👇")}</div>}
 
             {/* PAYLAŞ'a basınca: NE OLARAK paylaşayım? (kategori) → seçince otomatik paylaşır */}
             {turSecAcik && (
