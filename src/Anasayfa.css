@@ -329,7 +329,8 @@
 .apr-kolaj-yan .apr-kolaj-oge{ flex:1 1 0; height:100%; min-width:0; }
 .apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1120; }
 /* ARKA plan: aynı fotoğraf BULANIK + cover → boşluğu doldurur (siyah bar yok). ÖN foto contain → TAM görünür, kesilmez. */
-.apr-kolaj-bg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:cover !important; filter:blur(16px) brightness(.55); transform:scale(1.12); z-index:0; }
+/* ARKA çok GÜÇLÜ bulanık + koyu → ikinci fotoğraf gibi durmaz, sadece o fotonun rengiyle yumuşak dolgu (kullanıcı: "foto üzerine foto bindi") */
+.apr-kolaj-bg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:cover !important; filter:blur(34px) brightness(.42) saturate(1.3) !important; transform:scale(1.35); z-index:0; }
 .apr-kolaj-fg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:contain !important; z-index:1; display:block !important; }
 .apr-kolaj-fazla{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
 .apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.85); color:#c0303d; display:flex; align-items:center; justify-content:center; font-size:18px; pointer-events:none; }
