@@ -285,6 +285,10 @@
 .pyl-serit-yazi .pyl-serit-et{ color:#eaf2ff; background:linear-gradient(180deg,#5b8def,#2f6fd6); }
 .pyl-serit .pyl-baslik{ margin:0; }
 .pyl-serit .pyl-ust-satir{ margin:0; }
+/* Düzenleyicideki şeritler (composer ile aynı görünüm) — başlık/yazı bağlamı */
+.apf-serit{ margin:0 8px 5px; }
+.apf-serit.pyl-serit-yazi{ margin:6px 8px 0; }
+.apf-serit-metin{ display:block; margin-top:4px; font-size:12.5px; color:#e6eefb; line-height:1.35; overflow-wrap:anywhere; }
 /* medyayı şeritlere YAKLAŞTIR — üstteki başlık ve alttaki yazı şeridine bitişik dursun */
 .pyl-ust{ gap:5px !important; }
 .pyl-gorsel-orta{ margin:3px 0 !important; }
@@ -319,8 +323,8 @@
 .apr-medya.kolaj-sar{ padding:0; }
 .apr-kolaj{ position:relative; display:flex; flex-direction:column; gap:3px; width:100%; --koran:1.55; }
 .apr-kolaj-buyuk{ width:100%; }
-.apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:64vh; }
-.apr-kolaj.n2 > .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:52vh; }
+.apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:48vh; }
+.apr-kolaj.n2 > .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:40vh; }
 .apr-kolaj-yan{ width:100%; display:flex; flex-direction:row; gap:3px; }
 .apr-kolaj-yan .apr-kolaj-oge{ flex:1 1 0; aspect-ratio:1; min-width:0; }
 .apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1120; }

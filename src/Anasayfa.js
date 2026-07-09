@@ -5922,6 +5922,11 @@ export default function Anasayfa({ pro = false }) {
           <div className="ana-pencere apf-pencere paylas-editor-pencere">
             <input ref={editorFotoInputRef} type="file" accept="image/*" onChange={editorFotoEkle} style={{ display: "none" }} />
             <div className="apf-duzen">
+              {/* ŞERİT DÜZENİ (composer ile aynı): ÜST BAŞLIK ŞERİDİ → FOTO(önizleme) → ALT YAZI ŞERİDİ → araçlar. İnsanlar sırayı bilsin. */}
+              <div className="pyl-serit pyl-serit-baslik apf-serit">
+                <span className="pyl-serit-et">📌 {t("paylasBaslikEt", "Başlık")}</span>
+                <span className="apf-serit-metin">{paylasBaslik ? paylasBaslik : t("baslikBosEditor", "(başlık yok — Paylaş penceresinde yazabilirsin)")}</span>
+              </div>
               <div className="apf-oniz-sar">
                 <canvas ref={onizRef} className={"apf-oniz " + sekil} width={ONIZ_W} height={ONIZ_H}
                   onPointerDown={duzenSurukBas} onPointerMove={duzenSurukHar} onPointerUp={duzenSurukBit} onPointerCancel={duzenSurukBit} />
@@ -5938,6 +5943,10 @@ export default function Anasayfa({ pro = false }) {
                   <button className="apf-kat-ekle yazi" onClick={yaziEkle} title={t("profYaziEkle", "Yazı Ekle")}>+T</button>
                 </div>
                 <div className="apf-ipucu">{t("profSurukleTumu", "Bir öğeye dokun, parmağınla taşı · sil için ×")}</div>
+              </div>
+              <div className="pyl-serit pyl-serit-yazi apf-serit">
+                <span className="pyl-serit-et">✍️ {t("paylasYaziEt", "Yazı")}</span>
+                <span className="apf-serit-metin">{paylasYazi ? paylasYazi.slice(0, 70) : t("yaziAltEditor", "(paylaşımda fotoğrafın altına gelir)")}</span>
               </div>
               <div className="apf-arac-akis" onPointerDown={klavyeKapatDokun}>
                 {aktifK && aktifK.tip === "yazi" && (
