@@ -5201,16 +5201,20 @@ export default function Anasayfa({ pro = false }) {
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
                             const ac = (idx) => setOnizGaleri({ liste, i: idx });
-                            // BÜYÜK karenin oranını GERÇEK fotoğrafa göre ayarla → yatay foto yatay gelir, kesilmez (tam oturur).
+                            // BÜYÜK karenin oranını GERÇEK fotoğrafa göre ayarla → boşluk azalır (foto zaten TAM görünür).
                             const oranAyarla = (e) => { try { const r = e.target.naturalWidth / e.target.naturalHeight; const k = e.target.closest(".apr-kolaj"); if (k && r > 0) k.style.setProperty("--koran", r.toFixed(3)); } catch (x) {} };
-                            const oge = (m, idx, fazla, ana) => (
-                              <div className="apr-kolaj-oge" key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
-                                {m.tip === "video"
-                                  ? <><video src={videoSade(m.url)} poster={m.poster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
-                                  : <img src={m.data || m.url} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} />}
-                                {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
-                              </div>
-                            );
+                            // Her kare: ARKA bulanık (cover, boşluğu doldurur) + ÖN foto TAM (contain, KESİLMEZ). Siyah bar yok.
+                            const oge = (m, idx, fazla, ana) => {
+                              const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
+                              return (
+                                <div className="apr-kolaj-oge" key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
+                                  {m.tip === "video"
+                                    ? <><img className="apr-kolaj-bg" src={m.poster || undefined} alt="" aria-hidden="true" /><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
+                                    : <><img className="apr-kolaj-bg" src={src} alt="" aria-hidden="true" referrerPolicy="no-referrer" /><img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} /></>}
+                                  {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
+                                </div>
+                              );
+                            };
                             const n = postMedyalar.length;
                             return (
                               <div className={"apr-kolaj n" + Math.min(n, 3)} onClick={(e) => e.stopPropagation()}>
