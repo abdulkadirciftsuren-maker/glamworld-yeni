@@ -5256,8 +5256,8 @@ export default function Anasayfa({ pro = false }) {
                               return (
                                 <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
-                                    : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={yonAyarla} />}
+                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={ana ? yonAyarla : undefined} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
+                                    : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={ana ? yonAyarla : undefined} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
                               );
@@ -5266,12 +5266,13 @@ export default function Anasayfa({ pro = false }) {
                             return (
                               <div className={"apr-kolaj n" + Math.min(n, 3)} onClick={(e) => e.stopPropagation()}>
                                 {n === 2
-                                  ? postMedyalar.map((m, i) => oge(m, i, 0, i === 0))
+                                  ? postMedyalar.map((m, i) => oge(m, i, 0, true)) /* 2'li: iki kare de eşit → ikisi de yöne göre */
                                   : <>
+                                      {/* 3+: BÜYÜK kare yöne göre (geniş yatay tam görünür); YAN küçük kareler HER ZAMAN dolu+ortalı (cover) → siyah bant/ortalanmama YOK */}
                                       <div className="apr-kolaj-buyuk">{oge(postMedyalar[0], 0, 0, true)}</div>
                                       <div className="apr-kolaj-yan">
-                                        {oge(postMedyalar[1], 1, 0)}
-                                        {oge(postMedyalar[2], 2, n > 3 ? n - 3 : 0)}
+                                        {oge(postMedyalar[1], 1, 0, false)}
+                                        {oge(postMedyalar[2], 2, n > 3 ? n - 3 : 0, false)}
                                       </div>
                                     </>}
                                 <span className="apr-galeri-say" aria-hidden="true">🖼 {n}</span>
