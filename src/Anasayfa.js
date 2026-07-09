@@ -1205,6 +1205,7 @@ export default function Anasayfa({ pro = false }) {
   const [paylasVideo, setPaylasVideo] = useState("");   // video ÖNİZLEME linki (yerel) veya kaydedilen URL
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasVideoPoster, setPaylasVideoPoster] = useState(""); // video KAPAK resmi (ilk kare) — "ekranı yok" sorununu çözer
+  const [videoBasta, setVideoBasta] = useState(false); // VİDEO ilk mi seçildi → medyalarda video BAŞA (kullanıcı: "video ilk seçmişsem ilk planda olsun")
   const [paylasHataDetay, setPaylasHataDetay] = useState(""); // paylaşım/video hatasının GERÇEK sebebi (kullanıcıya gösterilir)
   const [paylasYukleme, setPaylasYukleme] = useState(0);        // video yükleme ilerlemesi %
   const [paylasDosya, setPaylasDosya] = useState(null);         // eklenen DOSYA (belge) {file, ad, boyut}
@@ -2261,6 +2262,7 @@ export default function Anasayfa({ pro = false }) {
       setPaylasEkFotolar(fotolar.slice(1));
       setPaylasVideo(vid ? (vid.url || "") : (g.video || ""));
       setPaylasVideoPoster(vid ? (vid.poster || "") : (g.videoPoster || ""));
+      setVideoBasta(meds[0] && meds[0].tip === "video"); // düzenlemede sıra korunur
     } else {
       setPaylasGorsel(g.gorsel || "");
       setPaylasEkFotolar([]);
@@ -3913,9 +3915,9 @@ export default function Anasayfa({ pro = false }) {
     setTurSecAcik(false);
     // İÇERİK YOKSA sessizce çıkma → NET uyarı ver (kullanıcı: "bastım paylaşmıyor"). Başlık da içerik sayılır.
     if (!uu) { setPaylasHataDetay("oturum yok — çıkış yapıp tekrar gir"); setPaylasDurum("hata"); return; }
-    if (!paylasYazi.trim() && !paylasBaslik.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya) { setPaylasDurum("bosicerik"); return; }
+    if (!paylasYazi.trim() && !paylasBaslik.trim() && !paylasGorsel && !paylasVideoFile && !paylasVideo && !paylasDosya) { setPaylasDurum("bosicerik"); return; }
     setPaylasDurum("gonderiliyor"); setPaylasHataDetay("");
-    // VİDEO varsa ÖNCE Storage'a yükle, linkini al (büyük video Firestore'a sığmaz)
+    // VİDEO: YENİ dosya varsa Storage'a yükle; YOKSA mevcut video URL'i (düzenlemede) KORU.
     let videoURL = "";
     if (paylasVideoFile) {
       try {
@@ -3923,6 +3925,8 @@ export default function Anasayfa({ pro = false }) {
         videoURL = await videoYukle(paylasVideoFile, uu.uid, (y) => setPaylasYukleme(y));
         setPaylasDurum("gonderiliyor");
       } catch (e) { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("videohata"); return; }
+    } else if (paylasVideo && /^https?:/.test(paylasVideo)) {
+      videoURL = paylasVideo; // mevcut (yüklü) video — düzenlemede korunur
     }
     // DOSYA (belge) varsa yükle → {url, ad, boyut}
     let dosyaObj = null;
@@ -3939,25 +3943,28 @@ export default function Anasayfa({ pro = false }) {
     // Artık video ORİJİNAL URL ile saklanır (dönüşüm yok) → Cloudinary kredisi korunur.
     const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? (filigranEkle ? await fotoFiligranla(paylasGorsel) : paylasGorsel) : "");
     const videoSon = videoSade(videoURL || "");
-    // ÇOK FOTOĞRAF: ek fotoğrafları Storage'a yükle (Firestore 1MB'a sığmaz) → URL dizisi.
+    // ÇOK FOTOĞRAF: ek fotoğrafları Storage'a yükle (Firestore 1MB'a sığmaz). MEVCUT (http) URL'ler yeniden yüklenmez.
     let ekFotoUrller = [];
-    if (!(duzenlenen && duzenlenen.id) && paylasEkFotolar.length > 0) {
+    if (paylasEkFotolar.length > 0) {
       try {
         setPaylasDurum("dosya"); setPaylasYukleme(0);
         for (let i = 0; i < paylasEkFotolar.length; i++) {
-          const wm = filigranEkle ? await fotoFiligranla(paylasEkFotolar[i]) : paylasEkFotolar[i];
-          const url = await gorselYukle(wm, uu.uid, () => {});
-          if (url) ekFotoUrller.push(url);
+          const ef = paylasEkFotolar[i];
+          if (/^https?:/.test(ef)) { ekFotoUrller.push(ef); } // zaten yüklü (düzenlemede)
+          else { const wm = filigranEkle ? await fotoFiligranla(ef) : ef; const url = await gorselYukle(wm, uu.uid, () => {}); if (url) ekFotoUrller.push(url); }
           setPaylasYukleme(Math.round(((i + 1) / paylasEkFotolar.length) * 100));
         }
         setPaylasDurum("gonderiliyor");
       } catch (e) { /* ek foto yüklenemezse ana gönderi yine gitsin */ }
     }
-    // MEDYALAR dizisi (birden çok görsel/video tek gönderide). 1'den fazla öğe varsa kaydedilir.
+    // MEDYALAR dizisi. VİDEO ilk seçildiyse BAŞA (kullanıcı: "video ilk seçmişsem ilk planda olsun"), değilse fotoğraflardan sonra.
+    const fotoOgeleri = [];
+    if (gorselSon) fotoOgeleri.push({ tip: "foto", data: gorselSon });
+    ekFotoUrller.forEach((u2) => fotoOgeleri.push({ tip: "foto", url: u2 }));
+    const videoOgesi = videoSon ? { tip: "video", url: videoSon, poster: ((paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : "") } : null;
     const medyalar = [];
-    if (gorselSon) medyalar.push({ tip: "foto", data: gorselSon });
-    ekFotoUrller.forEach((u2) => medyalar.push({ tip: "foto", url: u2 }));
-    if (videoSon) medyalar.push({ tip: "video", url: videoSon, poster: ((paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : "") });
+    if (videoOgesi && videoBasta) { medyalar.push(videoOgesi); medyalar.push(...fotoOgeleri); }
+    else { medyalar.push(...fotoOgeleri); if (videoOgesi) medyalar.push(videoOgesi); }
     const yeni = {
       uid: uu.uid, ad: benimAd, meslek: meslekAd || "", tur: (typeof turOverride === "string" ? turOverride : (paylasTur || "")), pro: proUye, uyelik: uyelik || "",
       // CANLI konum varsa şehir/ülke ONDAN (nerede paylaşıldıysa), yoksa profil konumundan
@@ -3973,20 +3980,21 @@ export default function Anasayfa({ pro = false }) {
     if (duzenlenen && duzenlenen.id) {
       // DÜZENLEME → mevcut gönderiyi güncelle. Kullanıcı: düzenleyip tekrar paylaşınca AKIŞTA EN ÜSTE gelsin + TARİH yenilensin.
       const yeniZaman = Date.now();
-      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, ustYazi: yeni.ustYazi, duzen: yeni.duzen, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, zamanMs: yeniZaman, zaman: "" };
+      // DÜZENLEMEDE MEDYA da kaydedilir (silinen/eklenen foto/video kalıcı olsun — kullanıcı: "düzenlerken silip kaydedeyim").
+      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, video: yeni.video, videoPoster: yeni.videoPoster, medyalar: yeni.medyalar, ustYazi: yeni.ustYazi, duzen: yeni.duzen, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, zamanMs: yeniZaman, zaman: "" };
       gonderiGuncelle(duzenlenen.id, degisiklik).then((ok) => {
         if (ok) {
           // EN ÜSTE taşı: eski konumundan çıkar, güncel haliyle başa ekle (hem akış hem profil).
           const bumpla = (a) => { const eski = a.find((g) => g.id === duzenlenen.id) || {}; const kalan = a.filter((g) => g.id !== duzenlenen.id); return [{ ...eski, ...degisiklik }, ...kalan]; };
           setGercekAkis(bumpla); setGonderilerim(bumpla);
-          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setPaylasDurum("ok");
+          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setPaylasDurum("ok");
           setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800);
         } else setPaylasDurum("hata");
       }).catch(() => setPaylasDurum("hata"));
       return;
     }
     gonderiEkle(yeni).then((id) => {
-      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
+      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
       else { setPaylasHataDetay("bilinmiyor"); setPaylasDurum("hata"); }
     }).catch((e) => { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("hata"); });
   }
@@ -4030,6 +4038,7 @@ export default function Anasayfa({ pro = false }) {
       const gecerli = hepsi.filter(Boolean);
       if (!gecerli.length) return;
       setFiligranEkle(true); setPaylasDosya(null); // VİDEO KORUNUR — foto + video AYNI gönderide olabilir
+      if (!paylasGorsel && !paylasVideo) setVideoBasta(false); // foto İLK seçildi → foto başta
       if (!paylasGorsel) { setPaylasGorsel(gecerli[0]); setPaylasEkFotolar((a) => [...a, ...gecerli.slice(1)].slice(0, 9)); }
       else { setPaylasEkFotolar((a) => [...a, ...gecerli].slice(0, 9)); }
     });
@@ -4046,6 +4055,7 @@ export default function Anasayfa({ pro = false }) {
     setPaylasVideo(yerel); // yerel önizleme (yüklemeden de görünür)
     setPaylasVideoPoster("");
     videoKareYakala(yerel).then((k) => { if (k) setPaylasVideoPoster(k); }).catch(() => {}); // ilk kareyi KAPAK yap
+    if (!paylasGorsel && paylasEkFotolar.length === 0) setVideoBasta(true); // video İLK seçildi → başa gelsin
     setPaylasDosya(null); setPaylasDurum(""); setPaylasYukleme(0); // FOTOĞRAFLAR KORUNUR — foto + video aynı gönderide
     e.target.value = "";
   }

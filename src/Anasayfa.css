@@ -321,13 +321,14 @@
 /* ÇOK MEDYALI gönderi KOLAJI (akış) — ÜSTTE büyük (fotoğrafın GERÇEK oranında → yatay foto yatay, kesilmez),
    ALTTA küçük kareler (biri büyük + ikisi küçük + fazlası "+N"); dokununca tam ekran gezer. */
 .apr-medya.kolaj-sar{ padding:0; }
-.apr-kolaj{ position:relative; display:flex; flex-direction:column; gap:3px; width:100%; --koran:1.55; }
-.apr-kolaj-buyuk{ width:100%; }
-/* BÜYÜK kare fotoğrafın GERÇEK oranında (--koran) → foto TAM oturur, boşluk yok; gerekirse büyür (net olsun) */
-.apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:58vh; }
-.apr-kolaj.n2 > .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:50vh; }
-.apr-kolaj-yan{ width:100%; height:104px; display:flex; flex-direction:row; gap:3px; }
-.apr-kolaj-yan .apr-kolaj-oge{ flex:1 1 0; height:100%; min-width:0; }
+/* YAN düzen (kullanıcı: "büyük sol, küçükler YANDA olsun, altta değil → sayfa uzamasın"): SOL büyük + SAĞ 2 küçük stackli.
+   SABİT yükseklik → kompakt, sayfayı uzatmaz. Foto TAM (contain) → kesilmez, net; boşluk düz koyu zemin. */
+.apr-kolaj{ position:relative; display:flex; flex-direction:row; gap:3px; width:100%; height:300px; max-height:42vh; }
+.apr-kolaj.n2 > .apr-kolaj-oge{ flex:1 1 50%; height:100%; min-width:0; }
+.apr-kolaj-buyuk{ flex:1.55 1 0; height:100%; min-width:0; }
+.apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; height:100%; }
+.apr-kolaj-yan{ flex:1 1 0; height:100%; display:flex; flex-direction:column; gap:3px; min-width:0; }
+.apr-kolaj-yan .apr-kolaj-oge{ flex:1 1 0; min-height:0; }
 /* DÜZ koyu zemin (alta bulanık foto YOK — kullanıcı: "alta fotoğraf gösterme") + foto TAM (contain, kesilmez, net) */
 .apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1322; }
 .apr-kolaj-fg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:contain !important; z-index:1; display:block !important; }
