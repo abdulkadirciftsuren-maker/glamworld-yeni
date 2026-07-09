@@ -5260,7 +5260,7 @@ export default function Anasayfa({ pro = false }) {
                                 const a0 = ilk ? Number(ilk.dataset.oran) : 0;
                                 if (!(a0 > 0)) return; // temel medya daha yüklenmedi → bekle (yüklenince tekrar çağrılır)
                                 let R = (n0 === 2) ? (2 * a0) : (a0 * 1.645); // 2'li: ilk kare %50 → R=2*oran; 3+: büyük kare 1.55/2.55 → R=oran*1.645
-                                R = Math.max(0.62, Math.min(1.4, R)); // kullanıcı: pencere UZUN olsun (kısa kalmasın) → geniş kolaj bile en fazla 1.4 oran (yani UZUN/dikeyimsi)
+                                R = Math.max(0.62, Math.min(2.4, R)); // aşırı uzun/geniş güvenlik sınırı
                                 k.style.aspectRatio = R.toFixed(3);
                               } catch (x) {}
                             };
