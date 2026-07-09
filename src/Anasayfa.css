@@ -341,15 +341,6 @@
   radial-gradient(circle at 74% 82%, rgba(255,214,96,.24), transparent 60%),
   linear-gradient(135deg, #6f5a2b, #46381c); }
 .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:contain !important; }
-/* ===== TELEFON/TABLET YATAY (geniş ekran) — DİKEYE DOKUNMAZ, ALTIN TOZUNA DOKUNMAZ =====
-   Kullanıcı: "dikey harika, dokunma; siyah/krem kenar İSTEMİYORUM; telefon yatayken içindeki medya YATAY (geniş) container'da COVER ile TAM DOLSUN (dikey videolar bile kırpılıp dolsun, galeri gibi); pencereyi genişletme, kompakt kalsın; altın tozuna dokunma."
-   Dokunmatik cihaz + yatay (pointer:coarse → masaüstü/laptop HARİÇ; her telefonda tutar). Medya container YATAY (geniş, kompakt) + object-fit:COVER (siyah/letterbox bant YOK). */
-@media (orientation: landscape) and (pointer: coarse) {
-  .apr-kolaj{ aspect-ratio:auto !important; height:62vh !important; max-height:62vh; } /* YATAY geniş kutu (kompakt), altın tozu zemin AYNEN kalır */
-  .apr-kolaj-fg, .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:cover !important; } /* COVER → kareyi TAM doldurur, siyah/krem bant YOK (dikey medya kırpılır) */
-  .apr-medya.video, .apr-medya.uzun, .apr-medya:not(.uzun):not(.video){ aspect-ratio:auto !important; height:62vh !important; max-height:62vh; min-height:0 !important; } /* içerik YATAY geniş, pencere kompakt */
-  .apr-medya.video video, .apr-medya.uzun img, .apr-medya:not(.uzun):not(.video) img{ width:100% !important; height:100% !important; object-fit:cover !important; display:block; } /* COVER → geniş ekranı tam doldurur */
-}
 .apr-kolaj-fazla{ position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
 /* VİDEO oynat düğmesi — KÜÇÜK + ALTIN SARISI (kullanıcı), videonun üstünde (z-index) */
 .apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.42); border:2px solid #ffd700; color:#ffd700; display:flex; align-items:center; justify-content:center; font-size:15px; padding-left:3px; pointer-events:none; box-shadow:0 2px 10px rgba(0,0,0,.5); }
@@ -447,9 +438,10 @@
    DIŞINDA olduğu için min-height kaldırmak ikonları bozmaz. */
 .apr-medya:not(.uzun):not(.video){ min-height:0; display:block; background:transparent; }
 .apr-medya:not(.uzun):not(.video) img{ width:100%; height:auto; display:block; }
-/* VİDEO → AYRI zoom: daha YAKIN (kenarlar tam otursun); fotodan farklı */
-.apr-medya.video{ aspect-ratio:3/4; padding:0; background:transparent; }
-.apr-medya.video video{ width:100%; height:100%; object-fit:cover; display:block; }
+/* VİDEO → pencere VİDEONUN KENDİ ORANINA oturur (JS ölçer, aspect-ratio'yu ayarlar) → YATAY video YATAY gelir, DİKEY dikey;
+   contain → video TAM görünür (ne kesilir ne zoomlanır ne bant kalır, çünkü pencere = videonun oranı). Kullanıcı: "galeride nasılsa öyle, yatay yatay, kesme/zoomlama". */
+.apr-medya.video{ aspect-ratio:3/4; padding:0; background:transparent; } /* 3/4 sadece yüklenene kadar varsayılan; JS gerçek orana çevirir */
+.apr-medya.video video{ width:100%; height:100%; object-fit:contain; display:block; }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
 .apr-medya.video .apr-yazan{ background:transparent; }
 .apr-medya.video .apr-alt{ background:transparent; }
