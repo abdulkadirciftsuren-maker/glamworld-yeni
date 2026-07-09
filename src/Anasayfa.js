@@ -5248,8 +5248,9 @@ export default function Anasayfa({ pro = false }) {
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
                             const ac = (idx) => setOnizGaleri({ liste, i: idx });
-                            // Medya YÖNÜNÜ yüklenince ölç → YATAY ise .yatay sınıfı ekle (contain=kırpılmaz); DİKEY ise cover (doldurur).
-                            const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { if (w > h * 1.05) el.classList.add("yatay"); else el.classList.remove("yatay"); } } catch (x) {} };
+                            // Medya YÖNÜNÜ yüklenince ölç → SADECE GERÇEKTEN GENİŞ (yatay, oran>1.4) ise .yatay (contain=kırpılmaz);
+                            // KARE ve DİKEY (oran<=1.4) → cover (kareyi DOLDURUR, siyah bant YOK). Kullanıcı: kare/dikey dolsun, geniş yatay kırpılmasın.
+                            const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { if (w > h * 1.4) el.classList.add("yatay"); else el.classList.remove("yatay"); } } catch (x) {} };
                             const oge = (m, idx, fazla, ana) => {
                               const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
                               return (
