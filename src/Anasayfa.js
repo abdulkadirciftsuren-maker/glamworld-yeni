@@ -1655,6 +1655,7 @@ export default function Anasayfa({ pro = false }) {
   const [vidOyn, setVidOyn] = useState(false);   // oynuyor mu
   const [vidT, setVidT] = useState(0);           // anlık saniye
   const [vidSure, setVidSure] = useState(0);     // toplam saniye
+  const [tfMini, setTfMini] = useState(false);   // TAM EKRAN video KÜÇÜLTÜLDÜ mü → köşede oynar, sayfa kayar
   function vidTikla(e) { if (e) e.stopPropagation(); const v = tamVideoRef.current; if (!v) return; if (v.muted) v.muted = false; /* dokununca SESİ AÇ (sessiz autoplay'den sonra) */ if (v.paused) v.play(); else v.pause(); }
   const vidSn = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
   const [acikYazi, setAcikYazi] = useState({});        // uzun açıklamalar: id->true açıldı
@@ -4540,13 +4541,18 @@ export default function Anasayfa({ pro = false }) {
   const onizGaleriRef = useRef(onizGaleri); useEffect(() => { onizGaleriRef.current = onizGaleri; }, [onizGaleri]);
   // Tam ekran AÇIKKEN sayfa kaydırması KİLİTLİ → adres çubuğu çıkıp ✕'i oynatmaz (sabit kalır)
   useEffect(() => {
-    if (!tamFoto) return;
-    const onceki = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (!tamFoto) { setTfMini(false); return; }
+    setTfMini(false); // her yeni açılışta TAM ekran (mini değil)
     setZoom({ s: 1, x: 0, y: 0 }); // her açılışta NORMAL (yakınlaştırılmamış); kullanıcı kendi büyütür
     setVidOyn(false); setVidT(0); setVidSure(0); // video oynatıcı sıfırla
-    return () => { document.body.style.overflow = onceki; };
   }, [tamFoto]);
+  // KİLİT ayrı efekt: mini modda sayfa KAYSIN (kilit yok) → video köşede oynarken aşağı gezilebilir
+  useEffect(() => {
+    if (!tamFoto || tfMini) return;
+    const onceki = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = onceki; };
+  }, [tamFoto, tfMini]);
   // --- TAM EKRAN parmakla ZOOM jestleri ---
   const _mesafe = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   function fotoTouchStart(e) {
@@ -6260,7 +6266,7 @@ export default function Anasayfa({ pro = false }) {
           </div>
         ) : null;
         return (
-          <div className={"tamfoto-fon" + (metinPost ? " tf-metin-fon" : "") + (p.video ? " tf-video-fon" : "")} style={metinPost && p.zemin ? { background: p.zemin } : undefined} onClick={() => setTamFoto("")}>
+          <div className={"tamfoto-fon" + (metinPost ? " tf-metin-fon" : "") + (p.video ? " tf-video-fon" : "") + (tfMini ? " tf-mini" : "")} style={metinPost && p.zemin ? { background: p.zemin } : undefined} onClick={() => { if (!tfMini) setTamFoto(""); }}>
             {/* TAM AÇILIŞ = ORİJİNAL: video ise kontrollü oynat; fotoğraf ise galeri gibi tam + parmakla zoom */}
             {p.video
               ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()}>
@@ -6271,7 +6277,18 @@ export default function Anasayfa({ pro = false }) {
                     onLoadedMetadata={(e) => setVidSure(e.currentTarget.duration || 0)}
                     onPlay={() => setVidOyn(true)} onPause={() => setVidOyn(false)} />
                   {!vidOyn && (
-                    <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c="#e0202c" /></button>
+                    <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c="#ffd700" /></button>
+                  )}
+                  {/* KÜÇÜLT / BÜYÜT — video oynarken köşeye küçült, sayfada gez; tekrar büyüt */}
+                  {!tfMini
+                    ? <button className="tf-kucult" onClick={(e) => { e.stopPropagation(); setTfMini(true); }} aria-label="Küçült" title="Küçült">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4v5H4M20 9h-5V4M4 15h5v5M15 20v-5h5" /></svg>
+                      </button>
+                    : <button className="tf-buyut" onClick={(e) => { e.stopPropagation(); setTfMini(false); }} aria-label="Büyüt" title="Büyüt">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+                      </button>}
+                  {tfMini && (
+                    <button className="tf-mini-kapat" onClick={(e) => { e.stopPropagation(); setTamFoto(""); }} aria-label="Kapat">✕</button>
                   )}
                 </div>
               : metinPost
