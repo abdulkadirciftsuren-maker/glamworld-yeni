@@ -5199,11 +5199,13 @@ export default function Anasayfa({ pro = false }) {
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
                             const ac = (idx) => setOnizGaleri({ liste, i: idx });
-                            const oge = (m, idx, fazla) => (
+                            // BÜYÜK karenin oranını GERÇEK fotoğrafa göre ayarla → yatay foto yatay gelir, kesilmez (tam oturur).
+                            const oranAyarla = (e) => { try { const r = e.target.naturalWidth / e.target.naturalHeight; const k = e.target.closest(".apr-kolaj"); if (k && r > 0) k.style.setProperty("--koran", r.toFixed(3)); } catch (x) {} };
+                            const oge = (m, idx, fazla, ana) => (
                               <div className="apr-kolaj-oge" key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                 {m.tip === "video"
                                   ? <><video src={videoSade(m.url)} poster={m.poster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
-                                  : <img src={m.data || m.url} alt="" referrerPolicy="no-referrer" />}
+                                  : <img src={m.data || m.url} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} />}
                                 {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                               </div>
                             );
@@ -5211,9 +5213,9 @@ export default function Anasayfa({ pro = false }) {
                             return (
                               <div className={"apr-kolaj n" + Math.min(n, 3)} onClick={(e) => e.stopPropagation()}>
                                 {n === 2
-                                  ? postMedyalar.map((m, i) => oge(m, i, 0))
+                                  ? postMedyalar.map((m, i) => oge(m, i, 0, i === 0))
                                   : <>
-                                      <div className="apr-kolaj-buyuk">{oge(postMedyalar[0], 0, 0)}</div>
+                                      <div className="apr-kolaj-buyuk">{oge(postMedyalar[0], 0, 0, true)}</div>
                                       <div className="apr-kolaj-yan">
                                         {oge(postMedyalar[1], 1, 0)}
                                         {oge(postMedyalar[2], 2, n > 3 ? n - 3 : 0)}

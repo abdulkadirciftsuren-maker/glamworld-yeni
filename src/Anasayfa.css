@@ -314,14 +314,15 @@
 .apr-konum-yer{ font-size:13px; font-weight:800; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .apr-konum-alt{ font-size:11.5px; font-weight:600; color:#d6ffe4; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* ÇOK MEDYALI gönderi KOLAJI (akış) — biri BÜYÜK + ikisi küçük + fazlası "+N"; dokununca tam ekran gezer */
+/* ÇOK MEDYALI gönderi KOLAJI (akış) — ÜSTTE büyük (fotoğrafın GERÇEK oranında → yatay foto yatay, kesilmez),
+   ALTTA küçük kareler (biri büyük + ikisi küçük + fazlası "+N"); dokununca tam ekran gezer. */
 .apr-medya.kolaj-sar{ padding:0; }
-.apr-kolaj{ position:relative; display:flex; gap:3px; width:100%; height:320px; max-height:56vh; }
-.apr-kolaj.n2 > .apr-kolaj-oge{ flex:1 1 50%; height:100%; }
-.apr-kolaj-buyuk{ flex:1.7 1 0; min-width:0; }
-.apr-kolaj-yan{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:3px; }
-.apr-kolaj-buyuk .apr-kolaj-oge, .apr-kolaj-yan .apr-kolaj-oge{ height:100%; }
-.apr-kolaj-yan .apr-kolaj-oge{ flex:1; }
+.apr-kolaj{ position:relative; display:flex; flex-direction:column; gap:3px; width:100%; --koran:1.55; }
+.apr-kolaj-buyuk{ width:100%; }
+.apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:64vh; }
+.apr-kolaj.n2 > .apr-kolaj-oge{ width:100%; aspect-ratio:var(--koran); max-height:52vh; }
+.apr-kolaj-yan{ width:100%; display:flex; flex-direction:row; gap:3px; }
+.apr-kolaj-yan .apr-kolaj-oge{ flex:1 1 0; aspect-ratio:1; min-width:0; }
 .apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1120; }
 /* !important: .apr-medya:not(.uzun):not(.video) img kuralı height:auto veriyordu → altı siyah kalıyordu. Kolaj kareyi TAM doldur. */
 .apr-kolaj-oge img, .apr-kolaj-oge video{ width:100% !important; height:100% !important; object-fit:cover !important; display:block !important; }
