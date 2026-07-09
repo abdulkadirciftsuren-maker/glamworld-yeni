@@ -333,10 +333,12 @@
 .apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1322; }
 .apr-kolaj-fg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:contain !important; z-index:1; display:block !important; }
 .apr-kolaj-fazla{ position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
-/* VİDEO oynat düğmesi — videonun ÜSTÜNDE (z-index) ve BÜYÜK/BELİRGİN: video olduğu net anlaşılsın (kullanıcı) */
-.apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4; width:56px; height:56px; border-radius:50%; background:rgba(0,0,0,.5); border:2.5px solid rgba(255,255,255,.9); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; padding-left:4px; pointer-events:none; box-shadow:0 2px 12px rgba(0,0,0,.6); }
-/* VİDEO rozeti (köşede) — çalışırken bile video olduğu belli olsun */
-.apr-kolaj-oge.vid::after{ content:"● CANLI"; position:absolute; top:7px; left:7px; z-index:4; font-size:9.5px; font-weight:800; letter-spacing:.04em; color:#fff; background:rgba(200,20,40,.85); padding:2px 7px; border-radius:99px; pointer-events:none; }
+/* VİDEO oynat düğmesi — KÜÇÜK + ALTIN SARISI (kullanıcı), videonun üstünde (z-index) */
+.apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.42); border:2px solid #ffd700; color:#ffd700; display:flex; align-items:center; justify-content:center; font-size:15px; padding-left:3px; pointer-events:none; box-shadow:0 2px 10px rgba(0,0,0,.5); }
+/* Video köşe İKONU (yazı YOK, sadece ikon — kullanıcı: "canlı yazma ikon koy") — küçük film/video ikonu */
+.apr-kolaj-oge.vid::after{ content:"🎬"; position:absolute; top:6px; left:6px; z-index:4; font-size:14px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)); pointer-events:none; }
+/* Video sağ-altta GLOXORG filigranı (altın) */
+.apr-kolaj-glox{ position:absolute; right:7px; bottom:6px; z-index:4; font-size:10.5px; font-weight:800; letter-spacing:.03em; color:#ffd700; text-shadow:0 1px 3px rgba(0,0,0,.85); pointer-events:none; }
 .apr-galeri-say{ position:absolute; top:10px; right:10px; background:rgba(0,0,0,.62); color:#fff; font-size:12px; font-weight:800; padding:3px 11px; border-radius:99px; z-index:2; pointer-events:none; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
 
 /* COMPOSER — ek fotoğraflar (çok fotoğraflı gönderi) */
@@ -512,6 +514,11 @@
 .apr-tur{ display:inline-block; font-size:11px; font-weight:700; color:#0c1530; padding:2px 10px; border-radius:11px; margin-bottom:6px; }
 .apr-altyazi{ font-size:14px; color:#fff; line-height:1.4; text-shadow:0 1px 4px rgba(0,0,0,.95); overflow-wrap:break-word; cursor:pointer; }
 .apr-altyazi.kisa{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; } /* feed'de foto üstü yazı EN FAZLA 2 satır (fotoğrafı kapatmaz); devamı tam ekranda */
+/* YAZI AYRI ŞERİT (varsayılan) — medyanın ALTINDA ayrı blok, onu KAPATMAZ (kullanıcı: "yazı medyanın üzerinde çıkmasın, ayrı şeritte 2 satır + devamı"). */
+.apr-yazi-serit{ position:static; margin:2px 0 0; padding:9px 12px 10px; background:linear-gradient(135deg, rgba(47,111,214,.14), rgba(20,40,80,.12)); border-top:1px solid rgba(120,180,255,.28); }
+.apr-yazi-serit .apr-altyazi{ color:#eaf2ff; text-shadow:none; }
+.apr-yazi-serit .apr-altyazi.kisa{ -webkit-line-clamp:2; }
+.apr-yazi-serit .ana-post-devam{ color:#7fb0ff; }
 .msj-yanitla{ margin-top:4px; font-size:12px; font-weight:700; color:#FFD700; }
 /* İSİM + PIRLANTA fotoğrafın ÜZERİNDE (üst-sol, şeffaf) — kullanıcı isteği */
 .ana-post-resim{ position:relative; }

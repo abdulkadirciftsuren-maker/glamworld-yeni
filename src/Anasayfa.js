@@ -1206,6 +1206,7 @@ export default function Anasayfa({ pro = false }) {
   const [paylasVideoFile, setPaylasVideoFile] = useState(null); // yüklenecek gerçek video dosyası (Storage'a)
   const [paylasVideoPoster, setPaylasVideoPoster] = useState(""); // video KAPAK resmi (ilk kare) — "ekranı yok" sorununu çözer
   const [videoBasta, setVideoBasta] = useState(false); // VİDEO ilk mi seçildi → medyalarda video BAŞA (kullanıcı: "video ilk seçmişsem ilk planda olsun")
+  const [yaziMedyaUstunde, setYaziMedyaUstunde] = useState(false); // yazı medyanın ÜZERİNDE mi (varsayılan HAYIR → ayrı şerit; kullanıcı isterse üstüne)
   const [paylasHataDetay, setPaylasHataDetay] = useState(""); // paylaşım/video hatasının GERÇEK sebebi (kullanıcıya gösterilir)
   const [paylasYukleme, setPaylasYukleme] = useState(0);        // video yükleme ilerlemesi %
   const [paylasDosya, setPaylasDosya] = useState(null);         // eklenen DOSYA (belge) {file, ad, boyut}
@@ -2270,6 +2271,7 @@ export default function Anasayfa({ pro = false }) {
       setPaylasVideoPoster(g.videoPoster || "");
     }
     setPaylasVideoFile(null); // yeni dosya yok; mevcut video URL'i korunur
+    setYaziMedyaUstunde(!!g.yaziUstunde);
     const uy = g.ustYazi || {}; setUstYazi(uy.metin || ""); setUstRenk(uy.renk || "#ffffff"); setUstBoyut(uy.boyut || "orta"); setUstYer(uy.yer || "alt"); setAiOneriler([]); setPaylasDuzen(g.duzen || null); setPaylasZemin(g.zemin || ""); setPaylasYaziRenk(g.yaziRenk || "");
     setPaylasAcik(true);
   }
@@ -2902,7 +2904,7 @@ export default function Anasayfa({ pro = false }) {
     else if (k === "ara" || k === "arama") setAraAcik(true);
     else if (k === "bildirim" || k === "bildirimler") setBildirimAcik(true);
     else if (k === "mesaj" || k === "mesajlar") setMesajAcik(true);
-    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasKonum(null); setKonumDurum(""); setPaylasAcik(true); }
+    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasKonum(null); setKonumDurum(""); setYaziMedyaUstunde(false); setPaylasAcik(true); }
     else if (k === "ayar" || k === "ayarlar") setAyarlarAcik(true);
   }
   // Asistana FOTOĞRAF ekle — küçült (max 1024px) + base64'e çevir (Claude vision için)
@@ -3974,14 +3976,14 @@ export default function Anasayfa({ pro = false }) {
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
       baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
-      duzen: paylasDuzen || null,
+      duzen: paylasDuzen || null, yaziUstunde: !!yaziMedyaUstunde,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
     };
     if (duzenlenen && duzenlenen.id) {
       // DÜZENLEME → mevcut gönderiyi güncelle. Kullanıcı: düzenleyip tekrar paylaşınca AKIŞTA EN ÜSTE gelsin + TARİH yenilensin.
       const yeniZaman = Date.now();
       // DÜZENLEMEDE MEDYA da kaydedilir (silinen/eklenen foto/video kalıcı olsun — kullanıcı: "düzenlerken silip kaydedeyim").
-      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, video: yeni.video, videoPoster: yeni.videoPoster, medyalar: yeni.medyalar, ustYazi: yeni.ustYazi, duzen: yeni.duzen, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, zamanMs: yeniZaman, zaman: "" };
+      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, video: yeni.video, videoPoster: yeni.videoPoster, medyalar: yeni.medyalar, ustYazi: yeni.ustYazi, duzen: yeni.duzen, yaziUstunde: yeni.yaziUstunde, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, zamanMs: yeniZaman, zaman: "" };
       gonderiGuncelle(duzenlenen.id, degisiklik).then((ok) => {
         if (ok) {
           // EN ÜSTE taşı: eski konumundan çıkar, güncel haliyle başa ekle (hem akış hem profil).
@@ -5137,7 +5139,7 @@ export default function Anasayfa({ pro = false }) {
           {/* AKIŞ (feed) — aşağı indikçe dünyadan yeni paylaşımlar */}
           <div className="ana-akis">
             {/* PAYLAŞ kutusu — kendi gönderini ekle (gerçek veri) */}
-            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
+            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
             </button>
             {/* AKIŞ FİLTRESİ — Hepsi / Takip Ettiklerim (kişiselleşmiş akış) */}
@@ -5207,6 +5209,19 @@ export default function Anasayfa({ pro = false }) {
               );
               if (medyaVar) {
                 // İMMERSİF MEDYA KARTI — her şey fotoğrafın ÜZERİNDE (TikTok gibi), çerçeve yok
+                // YAZI BLOĞU — varsayılan AYRI şerit (medyayı kapatmaz); p.yaziUstunde ise medyanın üzerinde.
+                const yaziBlokIc = p.yazi ? (
+                  <>
+                    <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{(ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>
+                    <span className="apr-alt-arac">
+                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
+                        {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
+                      </button>
+                      <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
+                    </span>
+                  </>
+                ) : null;
                 return (
                   <article className={"ana-post ana-post-im " + (p.video ? "post-video" : "post-foto")} key={anahtar} style={{ "--pc": pc, "--sep": p.video ? "#e0202c" : "#0d0a05" }}>
                     {/* PROFİL/İSİM/MESLEK — fotoğrafın DIŞINDA, ÜSTTE ayrı şerit (ANA SAYFADA HEP AYRI — bozma) */}
@@ -5235,7 +5250,7 @@ export default function Anasayfa({ pro = false }) {
                               return (
                                 <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
+                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
                                     : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
@@ -5262,22 +5277,18 @@ export default function Anasayfa({ pro = false }) {
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
-                      {p.yazi && (
-                        <div className="apr-alt" onClick={(e) => e.stopPropagation()}>
-                          <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{(ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>
-                          <span className="apr-alt-arac">
-                            <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
-                              {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
-                            </button>
-                            <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
-                          </span>
-                        </div>
+                      {/* YAZI medyanın ÜZERİNDE — yalnız kullanıcı öyle istediyse (p.yaziUstunde) */}
+                      {yaziBlokIc && p.yaziUstunde && (
+                        <div className="apr-alt" onClick={(e) => e.stopPropagation()}>{yaziBlokIc}</div>
                       )}
                       {/* Tür amblemi artık YAZARIN yanında (isim hizasında) — sağ raile binmiyor */}
                       {/* Sağ-ALT: GLOXORG amblemi (şeffaf) */}
                       <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
                     </div>
+                    {/* YAZI AYRI ŞERİT (varsayılan) — medyanın ALTINDA, onu KAPATMAZ; 2 satır + devamını oku (tam ekranda hepsi) */}
+                    {yaziBlokIc && !p.yaziUstunde && (
+                      <div className="apr-yazi-serit" onClick={(e) => e.stopPropagation()}>{yaziBlokIc}</div>
+                    )}
                     {p.dosya && p.dosya.url && (
                       <a className="ana-post-dosya" href={p.dosya.url} target="_blank" rel="noreferrer">
                         <span className="ana-post-dosya-ik">📎</span>
@@ -5509,7 +5520,7 @@ export default function Anasayfa({ pro = false }) {
               {/* PAYLAŞIMLARIM — kendi gönderilerim (düzenle / sil); yayınladıkça otomatik gelir */}
               <div className="apf-paylasimlar">
                 {/* Bir şeyler paylaş — Profilim'den de gönderi ekle */}
-                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setPaylasAcik(true); }}>
+                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setPaylasAcik(true); }}>
                   <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
                 </button>
                 {/* BÖLÜM FİLTRELERİ — her tür kendi amblemi+rengiyle */}
@@ -5853,6 +5864,13 @@ export default function Anasayfa({ pro = false }) {
               <button className={"pyl-filigran-tog" + (filigranEkle ? " acik" : "")} onClick={() => setFiligranEkle((v) => !v)}>
                 <span className="pyl-filigran-kutu">{filigranEkle ? "✓" : ""}</span>
                 <span>{filigranEkle ? t("filigranAcik", "◈ GLOXORG filigranı eklenecek") : t("filigranKapali", "Filigran KAPALI (fotoğrafta zaten GLOXORG varsa böyle kalsın)")}</span>
+              </button>
+            )}
+            {/* YAZI KONUMU — varsayılan AYRI ŞERİT (medyayı kapatmaz); istersen medyanın ÜZERİNE koy */}
+            {(paylasGorsel || paylasVideo) && paylasYazi.trim() && (
+              <button className={"pyl-filigran-tog" + (yaziMedyaUstunde ? " acik" : "")} onClick={() => setYaziMedyaUstunde((v) => !v)}>
+                <span className="pyl-filigran-kutu">{yaziMedyaUstunde ? "✓" : ""}</span>
+                <span>{yaziMedyaUstunde ? t("yaziUstunde", "Yazı fotoğraf/videonun ÜZERİNDE") : t("yaziAyri", "Yazı AYRI şeritte (medyayı kapatmaz) — üstüne koymak için dokun")}</span>
               </button>
             )}
             <input ref={paylasFotoRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={paylasFotoSec} />
