@@ -314,12 +314,18 @@
 .apr-konum-yer{ font-size:13px; font-weight:800; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .apr-konum-alt{ font-size:11.5px; font-weight:600; color:#d6ffe4; text-shadow:0 1px 2px rgba(0,0,0,.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* ÇOK MEDYALI gönderi GALERİSİ (akış) — parmakla yana kaydır, sayaç rozeti */
-.apr-medya.galeri-sar{ padding:0; }
-.apr-galeri{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; position:relative; scrollbar-width:none; }
-.apr-galeri::-webkit-scrollbar{ display:none; }
-.apr-galeri-oge{ flex:0 0 100%; scroll-snap-align:center; }
-.apr-galeri-oge img, .apr-galeri-oge video{ width:100%; display:block; object-fit:cover; max-height:74vh; }
+/* ÇOK MEDYALI gönderi KOLAJI (akış) — biri BÜYÜK + ikisi küçük + fazlası "+N"; dokununca tam ekran gezer */
+.apr-medya.kolaj-sar{ padding:0; }
+.apr-kolaj{ position:relative; display:flex; gap:3px; width:100%; height:320px; max-height:56vh; }
+.apr-kolaj.n2 > .apr-kolaj-oge{ flex:1 1 50%; height:100%; }
+.apr-kolaj-buyuk{ flex:1.7 1 0; min-width:0; }
+.apr-kolaj-yan{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.apr-kolaj-buyuk .apr-kolaj-oge, .apr-kolaj-yan .apr-kolaj-oge{ height:100%; }
+.apr-kolaj-yan .apr-kolaj-oge{ flex:1; }
+.apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1120; }
+.apr-kolaj-oge img, .apr-kolaj-oge video{ width:100%; height:100%; object-fit:cover; display:block; }
+.apr-kolaj-fazla{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
+.apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.85); color:#c0303d; display:flex; align-items:center; justify-content:center; font-size:18px; pointer-events:none; }
 .apr-galeri-say{ position:absolute; top:10px; right:10px; background:rgba(0,0,0,.62); color:#fff; font-size:12px; font-weight:800; padding:3px 11px; border-radius:99px; z-index:2; pointer-events:none; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
 
 /* COMPOSER — ek fotoğraflar (çok fotoğraflı gönderi) */
@@ -346,8 +352,9 @@
 .oniz-medya{ max-width:100vw; max-height:88vh; object-fit:contain; display:block; }
 .oniz-kapat{ position:fixed; top:max(12px,env(safe-area-inset-top)); right:14px; width:42px; height:42px; border-radius:50%; border:none; background:rgba(0,0,0,.5); color:#fff; font-size:20px; cursor:pointer; z-index:2; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
 .oniz-say{ position:fixed; top:max(16px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55); color:#fff; font-size:13px; font-weight:800; padding:4px 13px; border-radius:99px; }
-.oniz-ok{ position:fixed; top:50%; transform:translateY(-50%); width:48px; height:48px; border-radius:50%; border:none; background:rgba(0,0,0,.45); color:#fff; font-size:30px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
-.oniz-sol{ left:12px; } .oniz-sag{ right:12px; }
+/* Oklar: ZEMİN YOK (fotoğrafın yazısını kapatmasın), tam KENARDA, gölge+altın kenarlıkla BELİRGİN */
+.oniz-ok{ position:fixed; top:50%; transform:translateY(-50%); width:38px; height:64px; border:none; background:transparent; color:#fff; font-size:52px; font-weight:400; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; text-shadow:0 0 3px #000, 0 2px 10px rgba(0,0,0,.95), 0 0 14px rgba(0,0,0,.8); z-index:3; -webkit-text-stroke:1px rgba(255,215,0,.7); }
+.oniz-sol{ left:0; } .oniz-sag{ right:0; }
 .oniz-noktalar{ position:fixed; bottom:max(18px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); display:flex; gap:7px; }
 .oniz-noktalar i{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.4); }
 .oniz-noktalar i.on{ background:#ffd700; width:10px; height:10px; }

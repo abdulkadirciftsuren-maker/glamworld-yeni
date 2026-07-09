@@ -5194,18 +5194,35 @@ export default function Anasayfa({ pro = false }) {
                         )}
                       </div>
                     )}
-                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " galeri-sar" : "")} onClick={() => setTamFoto(p)}>
+                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "")} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
                       {postMedyalar
-                        ? (<div className="apr-galeri" onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
-                            {postMedyalar.map((m, mi) => (
-                              <div className="apr-galeri-oge" key={mi} onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster })), i: mi }); }}>
+                        ? (() => {
+                            const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
+                            const ac = (idx) => setOnizGaleri({ liste, i: idx });
+                            const oge = (m, idx, fazla) => (
+                              <div className="apr-kolaj-oge" key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                 {m.tip === "video"
-                                  ? <video src={videoSade(m.url)} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
+                                  ? <><video src={videoSade(m.url)} poster={m.poster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
                                   : <img src={m.data || m.url} alt="" referrerPolicy="no-referrer" />}
+                                {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                               </div>
-                            ))}
-                            <span className="apr-galeri-say" aria-hidden="true">🖼 {postMedyalar.length}</span>
-                          </div>)
+                            );
+                            const n = postMedyalar.length;
+                            return (
+                              <div className={"apr-kolaj n" + Math.min(n, 3)} onClick={(e) => e.stopPropagation()}>
+                                {n === 2
+                                  ? postMedyalar.map((m, i) => oge(m, i, 0))
+                                  : <>
+                                      <div className="apr-kolaj-buyuk">{oge(postMedyalar[0], 0, 0)}</div>
+                                      <div className="apr-kolaj-yan">
+                                        {oge(postMedyalar[1], 1, 0)}
+                                        {oge(postMedyalar[2], 2, n > 3 ? n - 3 : 0)}
+                                      </div>
+                                    </>}
+                                <span className="apr-galeri-say" aria-hidden="true">🖼 {n}</span>
+                              </div>
+                            );
+                          })()
                         : p.video
                         ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
