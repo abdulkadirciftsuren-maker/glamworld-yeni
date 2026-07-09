@@ -4013,7 +4013,7 @@ export default function Anasayfa({ pro = false }) {
     Promise.all(dosyalar.slice(0, 10).map(kucultVadesi)).then((hepsi) => {
       const gecerli = hepsi.filter(Boolean);
       if (!gecerli.length) return;
-      setFiligranEkle(true); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasDosya(null);
+      setFiligranEkle(true); setPaylasDosya(null); // VİDEO KORUNUR — foto + video AYNI gönderide olabilir
       if (!paylasGorsel) { setPaylasGorsel(gecerli[0]); setPaylasEkFotolar((a) => [...a, ...gecerli.slice(1)].slice(0, 9)); }
       else { setPaylasEkFotolar((a) => [...a, ...gecerli].slice(0, 9)); }
     });
@@ -4030,7 +4030,7 @@ export default function Anasayfa({ pro = false }) {
     setPaylasVideo(yerel); // yerel önizleme (yüklemeden de görünür)
     setPaylasVideoPoster("");
     videoKareYakala(yerel).then((k) => { if (k) setPaylasVideoPoster(k); }).catch(() => {}); // ilk kareyi KAPAK yap
-    setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasDosya(null); setPaylasDurum(""); setPaylasYukleme(0);
+    setPaylasDosya(null); setPaylasDurum(""); setPaylasYukleme(0); // FOTOĞRAFLAR KORUNUR — foto + video aynı gönderide
     e.target.value = "";
   }
   // DOSYA (belge) seç — resimse foto, videoysa video olarak yönlendir; değilse belge olarak ekle
@@ -4509,6 +4509,7 @@ export default function Anasayfa({ pro = false }) {
   const mesajAcikRef = useRef(mesajAcik); useEffect(() => { mesajAcikRef.current = mesajAcik; }, [mesajAcik]);
   const paylasAcikRef = useRef(paylasAcik); useEffect(() => { paylasAcikRef.current = paylasAcik; }, [paylasAcik]);
   const tamFotoRef = useRef(tamFoto); useEffect(() => { tamFotoRef.current = tamFoto; }, [tamFoto]);
+  const onizGaleriRef = useRef(onizGaleri); useEffect(() => { onizGaleriRef.current = onizGaleri; }, [onizGaleri]);
   // Tam ekran AÇIKKEN sayfa kaydırması KİLİTLİ → adres çubuğu çıkıp ✕'i oynatmaz (sabit kalır)
   useEffect(() => {
     if (!tamFoto) return;
@@ -4595,7 +4596,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -4603,7 +4604,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -4614,6 +4615,7 @@ export default function Anasayfa({ pro = false }) {
       else if (ayarHaritaAcikRef.current) { ayarHaritaAcikRef.current = false; setAyarHaritaAcik(false); }
       else if (sehirAcikRef.current) { sehirAcikRef.current = false; setSehirAcik(false); }
       else if (yardimciAcikRef.current) { yardimciAcikRef.current = false; setYardimciAcik(false); }
+      else if (onizGaleriRef.current) { onizGaleriRef.current = null; setOnizGaleri(null); }
       else if (uyeSayfaRef.current) { uyeSayfaRef.current = null; setUyeSayfa(null); }
       else if (tamFotoRef.current) { tamFotoRef.current = ""; setTamFoto(""); }
       else if (paylasAcikRef.current) { paylasAcikRef.current = false; setPaylasAcik(false); }
