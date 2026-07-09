@@ -5248,8 +5248,22 @@ export default function Anasayfa({ pro = false }) {
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
                             const ac = (idx) => setOnizGaleri({ liste, i: idx });
-                            // Medya YÖNÜNÜ yüklenince ölç → YATAY ise .yatay sınıfı ekle (contain=kırpılmaz); DİKEY ise cover (doldurur).
-                            const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { if (w > h * 1.05) el.classList.add("yatay"); else el.classList.remove("yatay"); } } catch (x) {} };
+                            // PENCERE FOTOĞRAFA GÖRE AYARLANIR: her medyanın oranını ölç → kolaj kutusunun EN-BOY oranını ona göre kur
+                            // (pencere büyür/kısalır, alt-üst SİYAH BANT olmaz, medya cover ile doldurur → net). Kullanıcı: "pencere fotoğraflara göre büyüsün kısalsın".
+                            const n0 = postMedyalar.length;
+                            const kolajGuncelle = (k) => {
+                              try {
+                                if (!k) return;
+                                const or = Array.from(k.querySelectorAll(".apr-kolaj-fg")).map((m) => Number(m.dataset.oran)).filter((x) => x > 0);
+                                if (!or.length) return;
+                                let R;
+                                if (n0 === 2) { const ort = or.reduce((s, x) => s + x, 0) / or.length; R = 2 * ort; } // 2'li yan yana: ikisinin ortalama oranı
+                                else { R = (or[0] > 0 ? or[0] : 1.2) * 1.62; } // 3+: BÜYÜK (ilk) fotoğrafın oranına göre kutu
+                                R = Math.max(0.8, Math.min(2.2, R)); // aşırı uzun/geniş sınırı
+                                k.style.aspectRatio = R.toFixed(3);
+                              } catch (x) {}
+                            };
+                            const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { el.dataset.oran = (w / h).toFixed(4); kolajGuncelle(el.closest(".apr-kolaj")); } } catch (x) {} };
                             const oge = (m, idx, fazla, ana) => {
                               const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
                               return (
