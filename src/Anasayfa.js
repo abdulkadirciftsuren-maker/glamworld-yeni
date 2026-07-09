@@ -5260,7 +5260,7 @@ export default function Anasayfa({ pro = false }) {
                                 const a0 = ilk ? Number(ilk.dataset.oran) : 0;
                                 if (!(a0 > 0)) return; // temel medya daha yüklenmedi → bekle (yüklenince tekrar çağrılır)
                                 let R = (n0 === 2) ? (2 * a0) : (a0 * 1.645); // 2'li: ilk kare %50 → R=2*oran; 3+: büyük kare 1.55/2.55 → R=oran*1.645
-                                R = Math.max(0.7, Math.min(1.6, R)); // kullanıcı: kolaj BÜYÜK/uzun olsun → geniş kolajlar da yeterince UZUN (max oran 1.6)
+                                R = Math.max(0.62, Math.min(2.4, R)); // aşırı uzun/geniş güvenlik sınırı
                                 k.style.aspectRatio = R.toFixed(3);
                               } catch (x) {}
                             };
@@ -5294,8 +5294,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1}
-                            onLoadedMetadata={(e) => { try { const w = e.target.videoWidth, h = e.target.videoHeight; if (w && h) { let r = w / h; r = Math.max(0.42, Math.min(2.4, r)); const par = e.target.closest(".apr-medya.video"); if (par) par.style.aspectRatio = r.toFixed(3); } } catch (x) {} }} />
+                        ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}

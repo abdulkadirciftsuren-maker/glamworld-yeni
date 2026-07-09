@@ -324,22 +324,23 @@
 /* YAN düzen (kullanıcı: "büyük sol, küçükler YANDA olsun, altta değil → sayfa uzamasın"): SOL büyük + SAĞ 2 küçük stackli.
    SABİT yükseklik → kompakt, sayfayı uzatmaz. Foto TAM (contain) → kesilmez, net; boşluk düz koyu zemin. */
 /* Kutu EN-BOY oranı JS'ten gelir (fotoğrafların oranına göre) → pencere büyür/kısalır, sabit yükseklik YOK, alt-üst siyah bant YOK */
-.apr-kolaj{ position:relative; display:flex; flex-direction:row; gap:3px; width:100%; aspect-ratio:1.15; max-height:92vh; } /* kullanıcı: kolaj penceresini BÜYÜT (daha uzun/büyük) */
+.apr-kolaj{ position:relative; display:flex; flex-direction:row; gap:3px; width:100%; aspect-ratio:1.4; max-height:82vh; }
 .apr-kolaj.n2 > .apr-kolaj-oge{ flex:1 1 50%; height:100%; min-width:0; }
 .apr-kolaj-buyuk{ flex:1.55 1 0; height:100%; min-width:0; }
 .apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; height:100%; }
 .apr-kolaj-yan{ flex:1 1 0; height:100%; display:flex; flex-direction:column; gap:3px; min-width:0; }
 .apr-kolaj-yan .apr-kolaj-oge{ flex:1 1 0; min-height:0; }
-/* Kullanıcı ONAYLADI (Option A): kolaj medyası FULL/DOLU (cover) → büyük, tam ekranı doldurur, "dik/küçük" durmaz. */
+/* DÜZ koyu zemin + medya YÖNÜNE GÖRE (kullanıcı: "dikey ise ekranı doldursun, yatay ise orijinal/kırpılmasın").
+   DİKEY foto/video → cover (kareyi doldurur). YATAY foto/video → contain (kırpılmaz, tam görünür — .yatay sınıfı JS'ten yüklenince eklenir). */
 .apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1322; }
 .apr-kolaj-fg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:cover !important; object-position:center !important; z-index:1; display:block !important; }
-.apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:cover !important; }
-/* TELEFON YATAY: SADECE KOLAJ (2-3'lü) geniş ekranı doldursun (wide + cover) → fotoğraf/video FULL/BÜYÜK, "dik/küçük" durmaz.
-   Tek paylaşımlara DOKUNMAZ (yalnız .apr-kolaj). Onaylanan Option A düzeni. */
-@media (orientation: landscape) and (pointer: coarse) {
-  .apr-kolaj{ aspect-ratio:auto !important; height:86vh !important; max-height:86vh; }
-  .apr-kolaj-fg, .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:cover !important; }
-}
+.apr-kolaj-fg.yatay{ object-fit:contain !important; } /* YATAY medya → kırpma yok, tam görünür */
+/* YAN kareler (2., 3. medya): kendi yönünde TAM (contain, kesilmez) + boşluk ALTIN TOZU (siyah değil). Kullanıcı: "yatay yatay gelsin, boş yerler altın tozu". */
+.apr-kolaj-oge.yan-oge{ background:
+  radial-gradient(circle at 28% 24%, rgba(255,228,160,.32), transparent 55%),
+  radial-gradient(circle at 74% 82%, rgba(255,214,96,.24), transparent 60%),
+  linear-gradient(135deg, #6f5a2b, #46381c); }
+.apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:contain !important; }
 .apr-kolaj-fazla{ position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
 /* VİDEO oynat düğmesi — KÜÇÜK + ALTIN SARISI (kullanıcı), videonun üstünde (z-index) */
 .apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.42); border:2px solid #ffd700; color:#ffd700; display:flex; align-items:center; justify-content:center; font-size:15px; padding-left:3px; pointer-events:none; box-shadow:0 2px 10px rgba(0,0,0,.5); }
@@ -437,11 +438,9 @@
    DIŞINDA olduğu için min-height kaldırmak ikonları bozmaz. */
 .apr-medya:not(.uzun):not(.video){ min-height:0; display:block; background:transparent; }
 .apr-medya:not(.uzun):not(.video) img{ width:100%; height:auto; display:block; }
-/* VİDEO → pencere SERBEST: videonun KENDİ oranına açılır (JS onLoadedMetadata ile aspect-ratio ayarlanır) →
-   YATAY video YATAY/geniş, DİKEY dikey; contain → video TAM görünür (pencere=video oranı olduğu için ne kesilir ne bant kalır).
-   Kullanıcı: "pencereyi serbest bırak, içindeki yatay gelsin, her şey gözüksün, dik/kesik gelmesin". */
-.apr-medya.video{ aspect-ratio:3/4; padding:0; background:#0a1322; } /* 3/4 sadece yüklenene kadar; JS gerçek orana çevirir */
-.apr-medya.video video{ width:100%; height:100%; object-fit:contain; display:block; }
+/* VİDEO → AYRI zoom: daha YAKIN (kenarlar tam otursun); fotodan farklı */
+.apr-medya.video{ aspect-ratio:3/4; padding:0; background:transparent; }
+.apr-medya.video video{ width:100%; height:100%; object-fit:cover; display:block; }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
 .apr-medya.video .apr-yazan{ background:transparent; }
 .apr-medya.video .apr-alt{ background:transparent; }
