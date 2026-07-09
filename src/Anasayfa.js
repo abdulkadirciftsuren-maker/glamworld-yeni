@@ -5265,6 +5265,8 @@ export default function Anasayfa({ pro = false }) {
                                 let R = (n0 === 2) ? (2 * a0) : (a0 * 1.645); // 2'li: ilk kare %50 → R=2*oran; 3+: büyük kare 1.55/2.55 → R=oran*1.645
                                 R = Math.max(0.62, Math.min(1.4, R)); // kullanıcı: pencere UZUN olsun (kısa kalmasın) → geniş kolaj bile en fazla 1.4 oran (yani UZUN/dikeyimsi)
                                 k.style.aspectRatio = R.toFixed(3);
+                                // VİDEOLU kolaj → max-height SINIRINI KALDIR (yatay telefonda pencereyi kısaltıp videoyu küçültmesin) → pencere videoya göre açılır, video BÜYÜK+TAM
+                                k.style.maxHeight = vidFg ? "none" : "";
                               } catch (x) {}
                             };
                             const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { el.dataset.oran = (w / h).toFixed(4); kolajGuncelle(el.closest(".apr-kolaj")); } } catch (x) {} };
