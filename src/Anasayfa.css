@@ -330,14 +330,16 @@
 .apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; height:100%; }
 .apr-kolaj-yan{ flex:1 1 0; height:100%; display:flex; flex-direction:column; gap:3px; min-width:0; }
 .apr-kolaj-yan .apr-kolaj-oge{ flex:1 1 0; min-height:0; }
-/* Kullanıcı: "2-3'lü kolajda medya TAM gözüksün (şu anda tam gözükmüyor)". Her kare → medya TAM (contain, kesilmez),
-   boş kalan yer ALTIN TOZU (siyah değil). Pencere de büyütüldü (aşağıda kolajGuncelle + max-height). */
-.apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:
-  radial-gradient(circle at 28% 24%, rgba(255,228,160,.32), transparent 55%),
-  radial-gradient(circle at 74% 82%, rgba(255,214,96,.24), transparent 60%),
-  linear-gradient(135deg, #6f5a2b, #46381c); }
-.apr-kolaj-fg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:contain !important; object-position:center !important; z-index:1; display:block !important; } /* TAM görünür (kırpma yok) */
-.apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:contain !important; }
+/* Kullanıcı ONAYLADI (Option A): kolaj medyası FULL/DOLU (cover) → büyük, tam ekranı doldurur, "dik/küçük" durmaz. */
+.apr-kolaj-oge{ position:relative; overflow:hidden; cursor:pointer; background:#0a1322; }
+.apr-kolaj-fg{ position:absolute !important; inset:0; width:100% !important; height:100% !important; object-fit:cover !important; object-position:center !important; z-index:1; display:block !important; }
+.apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:cover !important; }
+/* TELEFON YATAY: SADECE KOLAJ (2-3'lü) geniş ekranı doldursun (wide + cover) → fotoğraf/video FULL/BÜYÜK, "dik/küçük" durmaz.
+   Tek paylaşımlara DOKUNMAZ (yalnız .apr-kolaj). Onaylanan Option A düzeni. */
+@media (orientation: landscape) and (pointer: coarse) {
+  .apr-kolaj{ aspect-ratio:auto !important; height:86vh !important; max-height:86vh; }
+  .apr-kolaj-fg, .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:cover !important; }
+}
 .apr-kolaj-fazla{ position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
 /* VİDEO oynat düğmesi — KÜÇÜK + ALTIN SARISI (kullanıcı), videonun üstünde (z-index) */
 .apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.42); border:2px solid #ffd700; color:#ffd700; display:flex; align-items:center; justify-content:center; font-size:15px; padding-left:3px; pointer-events:none; box-shadow:0 2px 10px rgba(0,0,0,.5); }
