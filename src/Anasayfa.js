@@ -2251,7 +2251,23 @@ export default function Anasayfa({ pro = false }) {
   }
   // Paylaşımı DÜZENLE → composer'ı doldurup aç (paylasGonder güncelleme yapar)
   function gonderiDuzenle(g) {
-    setDuzenlenen(g); setPaylasYazi(g.yazi || ""); setPaylasBaslik(g.baslik || ""); setPaylasTur(g.tur || ""); setPaylasGorsel(g.gorsel || ""); setPaylasDurum("");
+    setDuzenlenen(g); setPaylasYazi(g.yazi || ""); setPaylasBaslik(g.baslik || ""); setPaylasTur(g.tur || ""); setPaylasDurum("");
+    // ÇOK MEDYALI gönderi: ana foto + EK fotolar + VİDEO hepsini composer'a yükle (kullanıcı hepsini GÖRSÜN — düzenlerken de).
+    const meds = Array.isArray(g.medyalar) ? g.medyalar : null;
+    if (meds && meds.length) {
+      const fotolar = meds.filter((m) => m.tip === "foto").map((m) => m.data || m.url).filter(Boolean);
+      const vid = meds.find((m) => m.tip === "video");
+      setPaylasGorsel(fotolar[0] || g.gorsel || "");
+      setPaylasEkFotolar(fotolar.slice(1));
+      setPaylasVideo(vid ? (vid.url || "") : (g.video || ""));
+      setPaylasVideoPoster(vid ? (vid.poster || "") : (g.videoPoster || ""));
+    } else {
+      setPaylasGorsel(g.gorsel || "");
+      setPaylasEkFotolar([]);
+      setPaylasVideo(g.video || "");
+      setPaylasVideoPoster(g.videoPoster || "");
+    }
+    setPaylasVideoFile(null); // yeni dosya yok; mevcut video URL'i korunur
     const uy = g.ustYazi || {}; setUstYazi(uy.metin || ""); setUstRenk(uy.renk || "#ffffff"); setUstBoyut(uy.boyut || "orta"); setUstYer(uy.yer || "alt"); setAiOneriler([]); setPaylasDuzen(g.duzen || null); setPaylasZemin(g.zemin || ""); setPaylasYaziRenk(g.yaziRenk || "");
     setPaylasAcik(true);
   }
@@ -5203,14 +5219,14 @@ export default function Anasayfa({ pro = false }) {
                             const ac = (idx) => setOnizGaleri({ liste, i: idx });
                             // BÜYÜK karenin oranını GERÇEK fotoğrafa göre ayarla → boşluk azalır (foto zaten TAM görünür).
                             const oranAyarla = (e) => { try { const r = e.target.naturalWidth / e.target.naturalHeight; const k = e.target.closest(".apr-kolaj"); if (k && r > 0) k.style.setProperty("--koran", r.toFixed(3)); } catch (x) {} };
-                            // Her kare: ARKA bulanık (cover, boşluğu doldurur) + ÖN foto TAM (contain, KESİLMEZ). Siyah bar yok.
+                            // Her kare: DÜZ koyu zemin + foto TAM (contain, KESİLMEZ). Alta bulanık foto YOK (kullanıcı: "alta fotoğraf gösterme").
                             const oge = (m, idx, fazla, ana) => {
                               const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
                               return (
                                 <div className="apr-kolaj-oge" key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><img className="apr-kolaj-bg" src={m.poster || undefined} alt="" aria-hidden="true" /><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
-                                    : <><img className="apr-kolaj-bg" src={src} alt="" aria-hidden="true" referrerPolicy="no-referrer" /><img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} /></>}
+                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
+                                    : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
                               );
