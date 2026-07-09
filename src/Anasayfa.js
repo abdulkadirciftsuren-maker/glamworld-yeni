@@ -4048,7 +4048,7 @@ export default function Anasayfa({ pro = false }) {
   // Burada SADECE dosyayı tutar + yerel önizleme gösterir (yükleme gönderide olur). Sınır ~80MB.
   function paylasVideoSec(e) {
     const f = e.target.files && e.target.files[0]; if (!f) { return; }
-    if (f.size > 80 * 1024 * 1024) { setPaylasDurum("buyuk"); e.target.value = ""; return; }
+    if (f.size > 200 * 1024 * 1024) { setPaylasDurum("buyuk"); e.target.value = ""; return; }
     setMedyaMenu("");
     setPaylasVideoFile(f);
     const yerel = URL.createObjectURL(f);
@@ -4065,7 +4065,7 @@ export default function Anasayfa({ pro = false }) {
     const t2 = (f.type || "");
     if (t2.indexOf("image/") === 0) { paylasFotoSec(e); return; }
     if (t2.indexOf("video/") === 0) { paylasVideoSec(e); return; }
-    if (f.size > 80 * 1024 * 1024) { setPaylasDurum("buyuk"); e.target.value = ""; return; }
+    if (f.size > 200 * 1024 * 1024) { setPaylasDurum("buyuk"); e.target.value = ""; return; }
     setPaylasDosya({ file: f, ad: f.name || "dosya", boyut: f.size || 0 });
     setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDurum("");
     e.target.value = "";
@@ -4507,7 +4507,7 @@ export default function Anasayfa({ pro = false }) {
   const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik;
   useEffect(() => {
     if (aktifKod !== "home") return;
-    const vids = Array.from(document.querySelectorAll(".ana-akis .apr-medya.video video"));
+    const vids = Array.from(document.querySelectorAll(".ana-akis .apr-medya.video video, .ana-akis .apr-kolaj-oge video"));
     if (!vids.length) return;
     if (ustPencereVar) { vids.forEach((v) => { try { v.pause(); } catch (e) {} }); return; } // pencere açıkken oynatma (parlama önlenir)
     const io = new IntersectionObserver((girisler) => {
@@ -5233,9 +5233,9 @@ export default function Anasayfa({ pro = false }) {
                             const oge = (m, idx, fazla, ana) => {
                               const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
                               return (
-                                <div className="apr-kolaj-oge" key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
+                                <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
+                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span></>
                                     : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
@@ -5717,40 +5717,38 @@ export default function Anasayfa({ pro = false }) {
                 <span className="pyl-serit-et">📌 {t("paylasBaslikEt", "Başlık")}</span>
                 <input className="pyl-baslik" value={paylasBaslik} onChange={(e) => setPaylasBaslik(e.target.value)} placeholder={t("paylasBaslikPh", "Başlık (isteğe bağlı) — kısa ve dikkat çekici")} maxLength={200} />
               </div>
-              {/* 2) MEDYA — FOTOĞRAFLAR küçük KARE ızgara (tek pencerede hepsi; dokununca tek tek gezilir), + ile ekle */}
-              {(paylasGorsel || paylasEkFotolar.length > 0) && (() => {
-                const hepsi = [paylasGorsel, ...paylasEkFotolar].filter(Boolean);
+              {/* 2) MEDYA — FOTOĞRAF + VİDEO küçük KARE ızgara (hepsi TEK pencerede görünür; dokununca tek tek gezilir), + ile ekle.
+                  Video de kare olarak görünür (▶ + yükleme %). İlk sıradaki (büyük olacak) "1" rozetli. */}
+              {(paylasGorsel || paylasEkFotolar.length > 0 || paylasVideo) && (() => {
+                const fotolar = [paylasGorsel, ...paylasEkFotolar].filter(Boolean);
+                const toplam = fotolar.length + (paylasVideo ? 1 : 0);
+                const videoKare = paylasVideo ? (
+                  <span className={"pyl-gk pyl-gk-vid" + (videoBasta ? " ana" : "")} key="vid"
+                    onClick={() => setOnizGaleri({ liste: [{ tip: "video", src: paylasVideo, poster: paylasVideoPoster }], i: 0 })}>
+                    {paylasVideoPoster ? <img src={paylasVideoPoster} alt="" /> : <video src={paylasVideo} muted preload="metadata" playsInline tabIndex={-1} />}
+                    <span className="pyl-gk-oynat" aria-hidden="true">▶</span>
+                    {paylasDurum === "video" && <span className="pyl-gk-yuk">%{paylasYukleme}</span>}
+                    {videoBasta && <span className="pyl-gk-rozet">{t("anaFoto", "1")}</span>}
+                    <button className="pyl-gk-sil" onClick={(e) => { e.stopPropagation(); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasYukleme(0); }} aria-label="Kaldır">✕</button>
+                  </span>
+                ) : null;
+                const fotoKareleri = fotolar.map((f, i) => (
+                  <span className={"pyl-gk" + (i === 0 && !videoBasta ? " ana" : "")} key={"f" + i}
+                    onClick={() => setOnizGaleri({ liste: fotolar.map((x) => ({ tip: "foto", src: x })), i })}>
+                    <img src={f} alt="" />
+                    {i === 0 && !videoBasta && <span className="pyl-gk-rozet">{t("anaFoto", "1")}</span>}
+                    <button className="pyl-gk-sil" onClick={(e) => { e.stopPropagation(); if (i === 0) { const ilk = paylasEkFotolar[0] || ""; setPaylasGorsel(ilk); setPaylasEkFotolar((a) => a.slice(1)); } else { setPaylasEkFotolar((a) => a.filter((_, j) => j !== i - 1)); } }} aria-label="Kaldır">✕</button>
+                  </span>
+                ));
                 return (
                   <div className="pyl-foto-grid">
-                    {hepsi.map((f, i) => (
-                      <span className={"pyl-gk" + (i === 0 ? " ana" : "")} key={i}
-                        onClick={() => setOnizGaleri({ liste: hepsi.map((x) => ({ tip: "foto", src: x })), i })}>
-                        <img src={f} alt="" />
-                        {i === 0 && <span className="pyl-gk-rozet">{t("anaFoto", "1")}</span>}
-                        <button className="pyl-gk-sil" onClick={(e) => { e.stopPropagation(); if (i === 0) { const ilk = paylasEkFotolar[0] || ""; setPaylasGorsel(ilk); setPaylasEkFotolar((a) => a.slice(1)); } else { setPaylasEkFotolar((a) => a.filter((_, j) => j !== i - 1)); } }} aria-label="Kaldır">✕</button>
-                      </span>
-                    ))}
-                    {hepsi.length < 10 && (
+                    {videoBasta ? [videoKare, ...fotoKareleri] : [...fotoKareleri, videoKare]}
+                    {toplam < 10 && (
                       <button className="pyl-gk-ekle" onClick={() => { setMedyaMenu(""); if (paylasFotoRef.current) paylasFotoRef.current.click(); }} aria-label={t("fotoEkle", "Fotoğraf ekle")}>＋</button>
                     )}
                   </div>
                 );
               })()}
-              {paylasVideo && (
-                <div className="pyl-gorsel pyl-gorsel-orta">
-                  <video src={paylasVideo} poster={paylasVideoPoster || undefined} controls playsInline style={{ width: "100%", maxHeight: "240px", display: "block" }} />
-                  {ustYazi.trim() && <span className={"pyl-ustyazi yer-" + ustYer + " boy-" + ustBoyut} style={{ color: ustRenk }}>{ustYazi}</span>}
-                  {/* YÜKLEME YÜZDESİ — video penceresinin İÇİNDE (kullanıcı: yüzdelik video penceresinde görünsün) */}
-                  {paylasDurum === "video" && (
-                    <span className="pyl-yuk-oran" aria-live="polite">
-                      <span className="pyl-yuk-halka" style={{ "--yuzde": paylasYukleme }}></span>
-                      <b>↑ %{paylasYukleme}</b>
-                      <i>{t("paylasVideoYuk", "Video yükleniyor…")}</i>
-                    </span>
-                  )}
-                  <button className="pyl-gorsel-sil" onClick={() => { setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasYukleme(0); }} aria-label="Kaldır">✕</button>
-                </div>
-              )}
               {paylasDosya && (
                 <div className="pyl-dosya-chip">
                   <span className="pyl-dosya-ik">📎</span>
@@ -5862,7 +5860,7 @@ export default function Anasayfa({ pro = false }) {
             <input ref={paylasFotoKamRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={paylasFotoSec} />
             <input ref={paylasVideoKamRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={paylasVideoSec} />
             <input ref={paylasDosyaRef} type="file" style={{ display: "none" }} onChange={paylasDosyaSec} />
-            {paylasDurum === "buyuk" && <div className="adm-durum hata">{t("paylasVideoBuyuk3", "Bu video çok büyük (en fazla 80 MB). Daha kısa bir video seç.")}</div>}
+            {paylasDurum === "buyuk" && <div className="adm-durum hata">{t("paylasVideoBuyuk4", "Bu video çok büyük (en fazla 200 MB). Daha kısa bir video seç.")}</div>}
             {paylasDurum === "video" && <div className="adm-durum">{t("paylasVideoYuk", "Video yükleniyor…")} %{paylasYukleme}</div>}
             {paylasDurum === "videohata" && <div className="adm-durum hata">{t("paylasVideoHata2", "Video yüklenemedi, tekrar dene (internet/dosya boyutu).")}{paylasHataDetay ? " — " + paylasHataDetay : ""}</div>}
             {/* MEDYA EKLE — Fotoğraf / Video (basınca Çek/Galeri seçtirir) / Dosya */}
