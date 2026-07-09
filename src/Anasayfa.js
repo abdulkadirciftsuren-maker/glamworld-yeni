@@ -5256,7 +5256,10 @@ export default function Anasayfa({ pro = false }) {
                             const kolajGuncelle = (k) => {
                               try {
                                 if (!k) return;
-                                const ilk = k.querySelector(".apr-kolaj-fg"); // DOM'da ilk = TEMEL medya (büyük/ilk)
+                                // Kullanıcı: "pencereyi VİDEOYA göre ayarla (fotoğrafı referans alma), yoksa video kesiliyor."
+                                // Kolajda VİDEO varsa onun oranını referans al; yoksa ilk (temel) medya.
+                                const vidFg = k.querySelector(".apr-kolaj-oge.vid .apr-kolaj-fg");
+                                const ilk = vidFg || k.querySelector(".apr-kolaj-fg");
                                 const a0 = ilk ? Number(ilk.dataset.oran) : 0;
                                 if (!(a0 > 0)) return; // temel medya daha yüklenmedi → bekle (yüklenince tekrar çağrılır)
                                 let R = (n0 === 2) ? (2 * a0) : (a0 * 1.645); // 2'li: ilk kare %50 → R=2*oran; 3+: büyük kare 1.55/2.55 → R=oran*1.645
