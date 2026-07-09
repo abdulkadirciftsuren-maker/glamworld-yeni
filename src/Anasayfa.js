@@ -5251,15 +5251,16 @@ export default function Anasayfa({ pro = false }) {
                             // PENCERE FOTOĞRAFA GÖRE AYARLANIR: her medyanın oranını ölç → kolaj kutusunun EN-BOY oranını ona göre kur
                             // (pencere büyür/kısalır, alt-üst SİYAH BANT olmaz, medya cover ile doldurur → net). Kullanıcı: "pencere fotoğraflara göre büyüsün kısalsın".
                             const n0 = postMedyalar.length;
+                            // Kutu EN-BOY oranı = SADECE İLK (temel/büyük) medyanın oranına göre (kullanıcı: "dikeyi baz al, yataya göre kısaltma").
+                            // Böylece ilk dikey video/foto TAM dik gelir; yanındaki yatay medya kendi yönünde (contain) + boşluk ALTIN TOZU.
                             const kolajGuncelle = (k) => {
                               try {
                                 if (!k) return;
-                                const or = Array.from(k.querySelectorAll(".apr-kolaj-fg")).map((m) => Number(m.dataset.oran)).filter((x) => x > 0);
-                                if (!or.length) return;
-                                let R;
-                                if (n0 === 2) { const ort = or.reduce((s, x) => s + x, 0) / or.length; R = 2 * ort; } // 2'li yan yana: ikisinin ortalama oranı
-                                else { R = (or[0] > 0 ? or[0] : 1.2) * 1.62; } // 3+: BÜYÜK (ilk) fotoğrafın oranına göre kutu
-                                R = Math.max(0.8, Math.min(2.2, R)); // aşırı uzun/geniş sınırı
+                                const ilk = k.querySelector(".apr-kolaj-fg"); // DOM'da ilk = TEMEL medya (büyük/ilk)
+                                const a0 = ilk ? Number(ilk.dataset.oran) : 0;
+                                if (!(a0 > 0)) return; // temel medya daha yüklenmedi → bekle (yüklenince tekrar çağrılır)
+                                let R = (n0 === 2) ? (2 * a0) : (a0 * 1.645); // 2'li: ilk kare %50 → R=2*oran; 3+: büyük kare 1.55/2.55 → R=oran*1.645
+                                R = Math.max(0.62, Math.min(2.4, R)); // aşırı uzun/geniş güvenlik sınırı
                                 k.style.aspectRatio = R.toFixed(3);
                               } catch (x) {}
                             };
@@ -5267,7 +5268,8 @@ export default function Anasayfa({ pro = false }) {
                             const oge = (m, idx, fazla, ana) => {
                               const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
                               return (
-                                <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
+                                // TEMEL (ilk/büyük) kare → cover (pencereyi doldurur, o zaten baz); YAN kareler → contain + ALTIN TOZU zemin (kendi yönünde tam, kesilmez)
+                                <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "") + (ana ? " temel" : " yan-oge")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
                                     ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
                                     : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={yonAyarla} />}
