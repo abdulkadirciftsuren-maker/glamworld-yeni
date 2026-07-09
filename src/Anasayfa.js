@@ -5248,16 +5248,15 @@ export default function Anasayfa({ pro = false }) {
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
                             const ac = (idx) => setOnizGaleri({ liste, i: idx });
-                            // BÜYÜK karenin oranını GERÇEK fotoğrafa göre ayarla → boşluk azalır (foto zaten TAM görünür).
-                            const oranAyarla = (e) => { try { const r = e.target.naturalWidth / e.target.naturalHeight; const k = e.target.closest(".apr-kolaj"); if (k && r > 0) k.style.setProperty("--koran", r.toFixed(3)); } catch (x) {} };
-                            // Her kare: DÜZ koyu zemin + foto TAM (contain, KESİLMEZ). Alta bulanık foto YOK (kullanıcı: "alta fotoğraf gösterme").
+                            // Medya YÖNÜNÜ yüklenince ölç → YATAY ise .yatay sınıfı ekle (contain=kırpılmaz); DİKEY ise cover (doldurur).
+                            const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { if (w > h * 1.05) el.classList.add("yatay"); else el.classList.remove("yatay"); } } catch (x) {} };
                             const oge = (m, idx, fazla, ana) => {
                               const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
                               return (
                                 <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
-                                    : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={ana ? oranAyarla : undefined} />}
+                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
+                                    : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={yonAyarla} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
                               );
