@@ -341,16 +341,6 @@
   radial-gradient(circle at 74% 82%, rgba(255,214,96,.24), transparent 60%),
   linear-gradient(135deg, #6f5a2b, #46381c); }
 .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:contain !important; }
-/* ===== TELEFON YATAY (geniş ekran) — DİKEYE DOKUNMAZ =====
-   Kullanıcı ONAYLADI (Seçenek A): "yatayken her şey YATAY + AYNI EBAT + tam dolu gelsin; siyah/krem/altın bant istemiyorum; galeride nasıl yatay görüyorsam öyle."
-   Dokunmatik + yatay (pointer:coarse → masaüstü/laptop HARİÇ). TÜM medya (video/foto/kolaj) AYNI EBAT (tam genişlik × 86vh) + object-fit:COVER → geniş ekranı tam doldurur, bant YOK. */
-@media (orientation: landscape) and (pointer: coarse) {
-  .apr-medya.video, .apr-medya.uzun, .apr-medya:not(.uzun):not(.video), .apr-kolaj{
-    aspect-ratio:auto !important; height:86vh !important; max-height:86vh; min-height:0 !important; background:#0a1322; }
-  .apr-medya.video video, .apr-medya.uzun img, .apr-medya:not(.uzun):not(.video) img,
-  .apr-kolaj-fg, .apr-kolaj-oge.yan-oge .apr-kolaj-fg{
-    width:100% !important; height:100% !important; object-fit:cover !important; display:block; }
-}
 .apr-kolaj-fazla{ position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
 /* VİDEO oynat düğmesi — KÜÇÜK + ALTIN SARISI (kullanıcı), videonun üstünde (z-index) */
 .apr-kolaj-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.42); border:2px solid #ffd700; color:#ffd700; display:flex; align-items:center; justify-content:center; font-size:15px; padding-left:3px; pointer-events:none; box-shadow:0 2px 10px rgba(0,0,0,.5); }
