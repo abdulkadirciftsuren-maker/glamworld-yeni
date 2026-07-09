@@ -341,16 +341,14 @@
   radial-gradient(circle at 74% 82%, rgba(255,214,96,.24), transparent 60%),
   linear-gradient(135deg, #6f5a2b, #46381c); }
 .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:contain !important; }
-/* ===== TELEFON/TABLET YATAY (geniş ekran) — DİKEYE DOKUNMAZ =====
-   Kullanıcı: "dikey harika, dokunma; ama telefon yatayken medya GALERİ gibi ekrana sığıp TAM görünsün, boşluklar krem değil koyu olsun, dikey sayfayı uzatmasın."
-   Dokunmatik cihaz + yatay (pointer:coarse → masaüstü/laptop HARİÇ; yükseklik eşiğine bağlı DEĞİL → her telefonda tutar).
-   Medya ekran yüksekliğine sığar (max ~%88), TAM görünür (contain), boşluk KOYU (galeri gibi). */
+/* ===== TELEFON/TABLET YATAY (geniş ekran) — DİKEYE DOKUNMAZ, ALTIN TOZUNA DOKUNMAZ =====
+   Kullanıcı: "dikey harika, dokunma; siyah/krem kenar İSTEMİYORUM; telefon yatayken içindeki medya YATAY (geniş) container'da COVER ile TAM DOLSUN (dikey videolar bile kırpılıp dolsun, galeri gibi); pencereyi genişletme, kompakt kalsın; altın tozuna dokunma."
+   Dokunmatik cihaz + yatay (pointer:coarse → masaüstü/laptop HARİÇ; her telefonda tutar). Medya container YATAY (geniş, kompakt) + object-fit:COVER (siyah/letterbox bant YOK). */
 @media (orientation: landscape) and (pointer: coarse) {
-  .apr-kolaj{ aspect-ratio:auto !important; height:88vh !important; max-height:88vh; background:#05070e; }
-  .apr-kolaj-oge, .apr-kolaj-oge.yan-oge{ background:#05070e !important; } /* boşluk KOYU (krem değil) */
-  .apr-kolaj-fg, .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:contain !important; } /* yatayda hepsi TAM görünür, ekrana sığar */
-  .apr-medya.video, .apr-medya.uzun, .apr-medya:not(.uzun):not(.video){ aspect-ratio:auto !important; height:88vh !important; max-height:88vh; min-height:0 !important; background:#05070e !important; }
-  .apr-medya.video video, .apr-medya.uzun img, .apr-medya:not(.uzun):not(.video) img{ width:100% !important; height:100% !important; object-fit:contain !important; display:block; }
+  .apr-kolaj{ aspect-ratio:auto !important; height:62vh !important; max-height:62vh; } /* YATAY geniş kutu (kompakt), altın tozu zemin AYNEN kalır */
+  .apr-kolaj-fg, .apr-kolaj-oge.yan-oge .apr-kolaj-fg{ object-fit:cover !important; } /* COVER → kareyi TAM doldurur, siyah/krem bant YOK (dikey medya kırpılır) */
+  .apr-medya.video, .apr-medya.uzun, .apr-medya:not(.uzun):not(.video){ aspect-ratio:auto !important; height:62vh !important; max-height:62vh; min-height:0 !important; } /* içerik YATAY geniş, pencere kompakt */
+  .apr-medya.video video, .apr-medya.uzun img, .apr-medya:not(.uzun):not(.video) img{ width:100% !important; height:100% !important; object-fit:cover !important; display:block; } /* COVER → geniş ekranı tam doldurur */
 }
 .apr-kolaj-fazla{ position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; background:rgba(6,10,20,.58); color:#fff; font-size:30px; font-weight:800; text-shadow:0 2px 6px rgba(0,0,0,.6); }
 /* VİDEO oynat düğmesi — KÜÇÜK + ALTIN SARISI (kullanıcı), videonun üstünde (z-index) */
