@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.b6e98fe6.css",
-    "main.js": "./static/js/main.82b1f230.js",
+    "main.css": "./static/css/main.af442d30.css",
+    "main.js": "./static/js/main.879ca8ed.js",
     "static/js/453.d745a41a.chunk.js": "./static/js/453.d745a41a.chunk.js",
     "static/media/profilCerceveMavi.png": "./static/media/profilCerceveMavi.0b25c849ca29eb692e24.png",
     "static/media/profilCerceveYesil.png": "./static/media/profilCerceveYesil.634920b132be92e49644.png",
@@ -22,12 +22,12 @@
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
     "index.html": "./index.html",
-    "main.b6e98fe6.css.map": "./static/css/main.b6e98fe6.css.map",
-    "main.82b1f230.js.map": "./static/js/main.82b1f230.js.map",
+    "main.af442d30.css.map": "./static/css/main.af442d30.css.map",
+    "main.879ca8ed.js.map": "./static/js/main.879ca8ed.js.map",
     "453.d745a41a.chunk.js.map": "./static/js/453.d745a41a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.b6e98fe6.css",
-    "static/js/main.82b1f230.js"
+    "static/css/main.af442d30.css",
+    "static/js/main.879ca8ed.js"
   ]
 }
