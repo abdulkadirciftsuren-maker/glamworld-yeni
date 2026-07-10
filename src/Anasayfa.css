@@ -386,7 +386,8 @@
   background: radial-gradient(circle at 50% 42%, #10182c, #05070e 92%); /* KOYU/NÖTR — altın tozu KALDIRILDI; medya doğrudan görünür */
   box-shadow: inset 0 0 0 2px rgba(217,182,74,.7); } /* ALTIN çember (çerçeve) korunur */
 @media (min-width:540px) and (min-height:620px){ .hik-pencere{ max-height:94vh; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.6); } }
-.hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(30px) brightness(.5); opacity:.55; transform:scale(1.2); z-index:0; } /* yatay medya boşluğu = medyanın KENDİ bulanık koyu hâli (altın tozu KALDIRILDI) */
+/* Yatay medya boşluğu (şerit) = ALTIN TOZU — AMA sadece medya yüklenince görünür (pencere zemini KOYU, yüklemeden önce sarı perde YOK) */
+.hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(28px) brightness(.9) sepia(.8) saturate(2) hue-rotate(4deg); opacity:.62; transform:scale(1.2); z-index:0; }
 .hik-medya{ position:relative; width:100%; height:100%; object-fit:contain; display:block; z-index:1; }
 /* CANLI FOTOĞRAF — yavaş sinema (yakınlaşma + hafif kayma) → fotoğraf "canlı" görünür (7 sn, ekranda daha uzun kalır) */
 @keyframes hikCanli { 0%{ transform:scale(1.04) translate(1.5%, 1.5%);} 100%{ transform:scale(1.18) translate(-2.5%, -3.5%);} }
@@ -422,10 +423,11 @@
 .hik-duzen-ust b{ font-size:16px; font-weight:800; }
 .hik-duzen-kapat{ width:34px; height:34px; border:none; background:rgba(255,255,255,.12); color:#fff; border-radius:9px; font-size:17px; cursor:pointer; }
 /* Medya önizleme — altın tozu boşluk + çember */
-.hik-duzen-medya{ position:relative; flex:1; min-height:0; overflow:hidden;
-  background: radial-gradient(circle at 50% 42%, #10182c, #05070e 92%); /* KOYU/NÖTR — altın tozu KALDIRILDI; medya büyük ve doğrudan görünür */
+/* Medya SABİT üstte (yukarı-aşağı oynamaz); sadece alttaki düğmeler kayar */
+.hik-duzen-medya{ position:relative; flex:0 0 52%; min-height:0; overflow:hidden;
+  background: radial-gradient(circle at 50% 42%, #10182c, #05070e 92%);
   box-shadow: inset 0 0 0 2px rgba(217,182,74,.6); }
-.hik-duzen-alt{ padding:11px 13px calc(12px + env(safe-area-inset-bottom)); background:#0c1020; display:flex; flex-direction:column; gap:9px; }
+.hik-duzen-alt{ flex:1 1 0; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:11px 13px calc(12px + env(safe-area-inset-bottom)); background:#0c1020; display:flex; flex-direction:column; gap:9px; }
 /* Gloxoo'ya sor */
 .hik-ai-btn{ display:flex; align-items:center; justify-content:center; gap:7px; width:100%; padding:11px; border:none; border-radius:12px; cursor:pointer;
   background:linear-gradient(135deg,#7b3ff2,#b14bd8); color:#fff; font-size:14.5px; font-weight:800; box-shadow:0 3px 12px rgba(123,63,242,.35); }
@@ -445,7 +447,36 @@
 .hik-renk-btn.aktif{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.5); }
 /* Paylaş */
 .hik-duzen-paylas{ width:100%; padding:13px; border:none; border-radius:13px; cursor:pointer; background:linear-gradient(180deg,#ffe680,#f0c419); color:#2a2000; font-size:16px; font-weight:800; box-shadow:0 3px 12px rgba(240,196,25,.35); }
-.hik-duzen-paylas:disabled{ opacity:.75; }
+.hik-duzen-paylas:disabled{ opacity:.85; }
+.hik-yuzde-cubuk{ height:6px; border-radius:6px; background:rgba(255,255,255,.15); overflow:hidden; margin-top:-2px; }
+.hik-yuzde-cubuk i{ display:block; height:100%; background:linear-gradient(90deg,#ffe680,#f0c419); border-radius:6px; transition:width .2s ease; }
+.hik-yazi-zemin{ position:absolute; inset:0; z-index:0; }
+/* ⋯ menü düğmesi (görüntüleyici üst bar) */
+.hik-menu-ac{ width:34px; height:34px; border:none; background:rgba(0,0,0,.42); color:#fff; border-radius:9px; font-size:20px; line-height:1; cursor:pointer; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+/* Küçük bildirim (toast) */
+.hik-toast{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9; background:rgba(0,0,0,.82); color:#fff; font-size:14px; font-weight:700; padding:12px 18px; border-radius:14px; max-width:80%; text-align:center; box-shadow:0 6px 20px rgba(0,0,0,.5); }
+/* ⋯ menü sayfası */
+.hik-menu-fon{ position:absolute; inset:0; z-index:8; background:rgba(0,0,0,.5); display:flex; align-items:flex-end; }
+.hik-menu-kutu{ width:100%; background:#12151d; border-radius:18px 18px 0 0; padding:10px 8px calc(12px + env(safe-area-inset-bottom)); max-height:80%; overflow-y:auto; box-shadow:0 -6px 24px rgba(0,0,0,.5); }
+.hik-menu-sat{ display:flex; align-items:center; gap:13px; width:100%; text-align:left; padding:12px 12px; border:none; background:transparent; color:#fff; cursor:pointer; border-radius:12px; }
+.hik-menu-sat:active{ background:rgba(255,255,255,.06); }
+.hik-menu-sat .hmi{ flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:19px; background:rgba(255,255,255,.08); border-radius:10px; }
+.hik-menu-sat span:last-child{ display:flex; flex-direction:column; gap:2px; }
+.hik-menu-sat b{ font-size:15px; font-weight:800; }
+.hik-menu-sat i{ font-size:12.5px; font-style:normal; color:#9aa3b8; }
+.hms-sil b{ color:#ff6b6b; }
+.hik-menu-vazgec{ width:100%; margin-top:6px; padding:13px; border:none; border-radius:12px; background:rgba(255,255,255,.08); color:#fff; font-size:15px; font-weight:800; cursor:pointer; }
+/* HİKÂYE OLUŞTUR — seçenek ekranı (Foto/Video/Yazı) */
+.hik-secim-fon{ position:fixed; inset:0; z-index:100055; background:rgba(6,8,16,.72); display:flex; align-items:flex-end; justify-content:center; animation:adFon .2s ease; }
+.hik-secim-kutu{ width:100%; max-width:520px; background:#12151d; border-radius:20px 20px 0 0; padding:12px 14px calc(16px + env(safe-area-inset-bottom)); box-shadow:0 -8px 30px rgba(0,0,0,.55); }
+.hik-secim-bas{ display:flex; align-items:center; justify-content:space-between; color:#ffd700; margin-bottom:12px; }
+.hik-secim-bas b{ font-size:17px; font-weight:800; }
+.hik-secim-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.hik-secim-kart{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 8px; border:none; border-radius:15px; color:#fff; font-size:14px; font-weight:800; cursor:pointer; }
+.hik-secim-ik{ font-size:26px; line-height:1; font-weight:800; }
+.hsk-foto{ background:linear-gradient(150deg,#2b7cff,#1552c9); } .hsk-video{ background:linear-gradient(150deg,#e0407a,#a01e6b); } .hsk-yazi{ background:linear-gradient(150deg,#7b3ff2,#b14bd8); }
+.hik-secim-not{ margin:12px 2px 0; color:#8a90a6; font-size:12.5px; font-weight:600; text-align:center; }
+@media (min-width:560px){ .hik-secim-kart{ font-size:16px; padding:26px 8px; } .hik-secim-ik{ font-size:30px; } .hik-secim-bas b{ font-size:20px; } }
 
 /* COMPOSER — ek fotoğraflar (çok fotoğraflı gönderi) */
 .pyl-foto-sayac{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; z-index:2; }
