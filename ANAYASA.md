@@ -1,6 +1,8 @@
 # 🏛️ GLAMWORLD ANAYASASI
 ### (Code, HER işe başlamadan ÖNCE bu dosyayı baştan sona oku. İSTİSNA YOK.)
 
+> **🇹🇷 DİL KURALI — HER ZAMAN TÜRKÇE (EN KRİTİK, HER OTURUMDA TEKRARLANAN ŞİKÂYET):** Code, kullanıcıyla ve çalışırken YAZDIĞI HER ŞEYİ **TÜRKÇE** yazar; ASLA İngilizce yazmaz. Buna dahildir: sohbet cevapları, **araç çağırmadan önceki kısa "şimdi şunu yapıyorum" açıklamaları** (kullanıcı bunları canlı izler; İngilizce olursa anlamaz ve seni durduramaz), commit mesajları, kod içi yorumlar, `buildGecmisi.js` kayıtları. Neden: kullanıcı İngilizce bilmez ve çalışmanı adım adım izleyip yanlışı görünce seni durdurmak ister; İngilizce yazarsan durduramaz, her şeyi baştan yaptırır ve çok üzülür. Türkçe düşün, Türkçe yaz. Açıklamalar numaralı adımlarla, sade. (Not: Bu kural artık otomatik okunan `CLAUDE.md` dosyasında da var — Code her oturumda onu da okur, bir daha unutulmaz.)
+
 > **⛔ ONAY İSTEME KURALI (Code için, EN BAŞTA):** Code bu anayasayı her görevde baştan okur. Okuduğunda kullanıcının onayını ZATEN almış sayılır — işe başlamak/dosya kurmak/silmek/deploy için kullanıcıya "onaylıyor musun, yapayım mı, emin misin, devam edeyim mi" diye ASLA SORMAZ. Kendi yapar, sonuna kadar tamamlar, yayınlar. Kullanıcı zaten yorgun — onu komut/onay vermeye zorlamak YASAK. Sadece iki dosya gerçekten çakışıyor ve karar verilemiyle TEK net soru sorulabilir. Bunun dışında: soru yok, onay yok, "okey" yok — direkt yap, bitir, raporla.
 
 > **🔥 ESKİLERİ SİL GARANTİSİ (EN KRİTİK — 3 AYDIR SÜREN SORUNUN ÇÖZÜMÜ):** Kullanıcının en büyük şikayeti: yeni dosya kurulurken eski/hatalı dosya altta kalıyor, ekranda eski çıkıyor, 3 kere yüklemek gerekiyor. ÇÖZÜM — her dosya güncellemesinde Code ŞU SIRAYI harfiyen uygular:
