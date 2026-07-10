@@ -72,6 +72,16 @@ const POST_RENK = ["#2f7fd6", "#1fc2c2", "#9b59b6", "#1ea64f", "#f2a900", "#ff7a
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
 // Uygulama sürümü (Gloxoo SADECE yeni sürümde/güncelleme sonrası ilk açılışta selamlar)
 const AKTIF_SURUM = (buildGecmisi && buildGecmisi[0]) ? (buildGecmisi[0].surum + ".B" + buildGecmisi[0].build) : "";
+// Hikâye YAZI STİLLERİ (Facebook gibi) — seçili yazıya uygulanır
+const HIK_FONTLAR = [
+  { k: "sade", ad: "Sade", css: "-apple-system,'Segoe UI',Roboto,sans-serif" },
+  { k: "klasik", ad: "Klasik", css: "Georgia,'Times New Roman',serif" },
+  { k: "kalin", ad: "Kalın", css: "'Arial Black','Trebuchet MS',sans-serif" },
+  { k: "daktilo", ad: "Daktilo", css: "'Courier New',monospace" },
+  { k: "elyazi", ad: "El yazısı", css: "'Segoe Script','Bradley Hand','Brush Script MT',cursive" },
+  { k: "zarif", ad: "Zarif", css: "'Palatino Linotype','Book Antiqua',Palatino,serif" },
+];
+const hikFontCss = (k) => (HIK_FONTLAR.find((f) => f.k === k) || HIK_FONTLAR[0]).css;
 
 // HER CÜMLE FARKLI RENK + küçük elmas ikonu (kullanıcı isteği: renkli, ikonlu, her cümle bir renk).
 // RC_KOYU = AÇIK zeminde okunur (karşılama balonu); RC_ACIK = KOYU zeminde okunur (Gloxoo sohbeti).
@@ -2055,7 +2065,7 @@ export default function Anasayfa({ pro = false }) {
     ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.shadowColor = "rgba(0,0,0,.5)"; ctx.shadowBlur = 8;
     hikYazilar.forEach((y) => {
       const metin = (y.metin || "").trim(); if (!metin) return;
-      ctx.fillStyle = y.renk || "#fff"; const fs = Math.round(W * 0.085 * (y.boyut || 1)); ctx.font = "800 " + fs + "px sans-serif";
+      ctx.fillStyle = y.renk || "#fff"; const fs = Math.round(W * 0.085 * (y.boyut || 1)); ctx.font = "800 " + fs + "px " + hikFontCss(y.font);
       const maxW = W * 0.86; const kelimeler = metin.split(" "); let satir = ""; const satirlar = [];
       kelimeler.forEach((k) => { const dene = satir ? satir + " " + k : k; if (ctx.measureText(dene).width > maxW && satir) { satirlar.push(satir); satir = k; } else satir = dene; });
       if (satir) satirlar.push(satir);
@@ -2068,7 +2078,7 @@ export default function Anasayfa({ pro = false }) {
   const hikYaziEkle = (metin) => {
     const id = "y" + Date.now() + "_" + Math.round(performance.now());
     const n = hikYazilar.length;
-    setHikYazilar((l) => [...l, { id, metin: metin || t("hikYeniYazi", "Yazı"), xr: 0.5, yr: 0.28 + Math.min(0.4, n * 0.12), renk: hikYaziRenk, boyut: 1 }]);
+    setHikYazilar((l) => [...l, { id, metin: metin || t("hikYeniYazi", "Yazı"), xr: 0.5, yr: 0.28 + Math.min(0.4, n * 0.12), renk: hikYaziRenk, boyut: 1, font: "sade" }]);
     setHikSeciliYazi(id);
     return id;
   };
@@ -2076,6 +2086,7 @@ export default function Anasayfa({ pro = false }) {
   const hikYaziMetin = (id, metin) => setHikYazilar((l) => l.map((y) => (y.id === id ? { ...y, metin } : y)));
   const hikYaziRenkVer = (id, renk) => { setHikYaziRenk(renk); setHikYazilar((l) => l.map((y) => (y.id === id ? { ...y, renk } : y))); };
   const hikYaziBoyut = (id, d) => setHikYazilar((l) => l.map((y) => (y.id === id ? { ...y, boyut: Math.max(0.55, Math.min(2.4, (y.boyut || 1) + d)) } : y)));
+  const hikYaziFont = (id, k) => setHikYazilar((l) => l.map((y) => (y.id === id ? { ...y, font: k } : y)));
   // Yazıyı parmakla İSTEDİĞİN YERE sürükle
   const hikYaziSurukleBas = (e, id) => {
     setHikSeciliYazi(id);
@@ -2104,7 +2115,7 @@ export default function Anasayfa({ pro = false }) {
       else url = await gorselYukle(hikTaslak.url, u.uid, (p) => setHikPaylasYuzde(p));
       if (url) {
         // Yazı hikâyesinde yazılar zaten görsele GÖMÜLDÜ → tekrar üste koyma
-        const yazilar = yaziTip ? [] : hikYazilar.map((y) => ({ metin: (y.metin || "").trim(), xr: y.xr, yr: y.yr, renk: y.renk, boyut: y.boyut || 1 })).filter((y) => y.metin);
+        const yazilar = yaziTip ? [] : hikYazilar.map((y) => ({ metin: (y.metin || "").trim(), xr: y.xr, yr: y.yr, renk: y.renk, boyut: y.boyut || 1, font: y.font || "sade" })).filter((y) => y.metin);
         await hikayeEkle(benimHikayeKisi, { tip: yaziTip ? "foto" : hikTaslak.tip, url, poster, yazilar, yer: (hikKonum && hikKonum.tam) || "" });
         if (hikTaslak.tip === "video" && hikTaslak.url) { try { URL.revokeObjectURL(hikTaslak.url); } catch (x) {} }
         setHikTaslak(null); setHikYazilar([]); setHikSeciliYazi(null); setHikAiOneriler([]); setHikAiIstek("");
@@ -7868,7 +7879,7 @@ export default function Anasayfa({ pro = false }) {
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
             {/* HİKÂYENİN ÜSTÜNDEKİ YAZILAR (paylaşırken konmuş yer/renk ile) */}
             {Array.isArray(oge.yazilar) && oge.yazilar.map((y, i) => (
-              <div key={i} className="hik-yazi-tas hik-yazi-goster" style={{ left: ((y.xr != null ? y.xr : 0.5) * 100) + "%", top: ((y.yr != null ? y.yr : 0.85) * 100) + "%", color: y.renk || "#ffd700" }}><span style={{ fontSize: Math.round(23 * (y.boyut || 1)) + "px" }}>{y.metin}</span></div>
+              <div key={i} className="hik-yazi-tas hik-yazi-goster" style={{ left: ((y.xr != null ? y.xr : 0.5) * 100) + "%", top: ((y.yr != null ? y.yr : 0.85) * 100) + "%", color: y.renk || "#ffd700" }}><span style={{ fontSize: Math.round(23 * (y.boyut || 1)) + "px", fontFamily: hikFontCss(y.font) }}>{y.metin}</span></div>
             ))}
             {/* Tüm yüzey: DOKUN = durdur/devam, KAYDIR = hikaye değiştir (sola=sonraki, sağa=önceki) */}
             <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} />
@@ -7935,7 +7946,7 @@ export default function Anasayfa({ pro = false }) {
                 <div key={y.id} className={"hik-yazi-tas" + (hikSeciliYazi === y.id ? " secili" : "")}
                   style={{ left: (y.xr * 100) + "%", top: (y.yr * 100) + "%", color: y.renk }}
                   onPointerDown={(e) => hikYaziSurukleBas(e, y.id)}>
-                  <span style={{ fontSize: Math.round(23 * (y.boyut || 1)) + "px" }}>{y.metin}</span>
+                  <span style={{ fontSize: Math.round(23 * (y.boyut || 1)) + "px", fontFamily: hikFontCss(y.font) }}>{y.metin}</span>
                   {hikSeciliYazi === y.id && <button className="hik-yazi-sil" onPointerDown={(e) => { e.stopPropagation(); }} onClick={(e) => { e.stopPropagation(); hikYaziSil(y.id); }} aria-label={t("sil", "Sil")}>×</button>}
                 </div>
               ))}
@@ -7964,6 +7975,14 @@ export default function Anasayfa({ pro = false }) {
                   <input className="hik-duzen-input" autoFocus value={sy.metin} onChange={(e) => hikYaziMetin(sy.id, e.target.value.slice(0, 300))} placeholder={t("hikayeYaziYaz", "Yazını yaz…")} maxLength={300} />
                 ); })()}
               </div>
+              {/* YAZI STİLİ (font) — seçili yazıya uygulanır (Facebook gibi) */}
+              {hikSeciliYazi && (() => { const sy = hikYazilar.find((y) => y.id === hikSeciliYazi); if (!sy) return null; return (
+                <div className="hik-font-satir">
+                  {HIK_FONTLAR.map((f) => (
+                    <button key={f.k} className={"hik-font-btn" + ((sy.font || "sade") === f.k ? " aktif" : "")} style={{ fontFamily: f.css }} onClick={() => hikYaziFont(sy.id, f.k)}>Aa<i>{f.ad}</i></button>
+                  ))}
+                </div>
+              ); })()}
               {/* Renk + BOYUT (seçili yazıya uygulanır) */}
               <div className="hik-renk-satir">
                 <div className="hik-renk-grup">
