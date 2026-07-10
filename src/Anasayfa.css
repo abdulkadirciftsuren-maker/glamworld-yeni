@@ -354,7 +354,7 @@
 .hik-serit{ display:flex; gap:8px; overflow-x:auto; padding:10px 12px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .hik-serit::-webkit-scrollbar{ display:none; }
 /* Facebook gibi DİKEY KART — içinde seçilen foto/video görünür */
-.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:2px solid #d9b64a; padding:0; box-shadow:0 2px 8px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,235,150,.35); -webkit-tap-highlight-color:transparent; }
+.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:2px solid #d9b64a; padding:0; box-shadow:0 0 0 1px rgba(255,235,150,.4) inset, 0 0 7px rgba(0,0,0,.18); -webkit-tap-highlight-color:transparent; } /* ALTIN ÇEMBER HER YERDE EŞİT — yönlü gölge kaldırıldı, simetrik */
 /* Medya sarmalı: ALTIN TOZU arka + ÖNDE TAM medya (contain) → yatay/dikey HİÇ KESİLMEZ, boşluk ALTIN */
 .hik-kart-medyasar{ position:absolute; inset:0; overflow:hidden; background:
   radial-gradient(circle at 30% 22%, rgba(255,231,168,.55), transparent 58%),
@@ -463,6 +463,12 @@
 .hik-renk-btn{ width:24px; height:24px; border-radius:7px; border:2px solid rgba(255,255,255,.35); cursor:pointer; padding:0; }
 .hik-renk-btn.aktif{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.5); }
 /* Paylaş */
+/* Ayarlar — Haber/İlgi konumları */
+.ayar-haber-yer{ border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:10px; margin-bottom:10px; background:rgba(255,255,255,.03); display:flex; flex-direction:column; gap:7px; }
+.ayar-haber-bas{ display:flex; align-items:center; justify-content:space-between; }
+.ayar-haber-bas b{ color:#7be0b0; font-size:13.5px; font-weight:800; }
+.ayar-haber-sil{ width:26px; height:26px; border:none; border-radius:8px; background:rgba(255,80,80,.2); color:#ff8a8a; font-size:13px; cursor:pointer; }
+.ayar-haber-ekle{ background:rgba(30,158,106,.18) !important; }
 .hik-konum-btn{ width:100%; padding:10px 12px; border:1px solid rgba(255,215,0,.5); border-radius:11px; background:rgba(255,215,0,.1); color:#ffe680; font-size:13.5px; font-weight:700; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hik-konum-btn.aktif{ background:rgba(47,224,138,.15); border-color:rgba(47,224,138,.55); color:#c9ffe4; }
 .hik-konum-kaldir{ opacity:.8; font-weight:800; }

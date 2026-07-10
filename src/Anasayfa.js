@@ -1112,6 +1112,8 @@ export default function Anasayfa({ pro = false }) {
   // AD / SOYAD (Ayarlar) — ilk girişte yazılan ad; buradan düzeltilir, Gloxoo yeni adı bilir
   const [ayarIsim, setAyarIsim] = useState("");
   const [ayarSoyisim, setAyarSoyisim] = useState("");
+  // HABER / İLGİ KONUMLARI (Ayarlar — adresten AYRI): Gloxoo bu yerlerin haber/spor/gündemini bilir
+  const [haberYerler, setHaberYerler] = useState([]); // [{ulke, sehir, ilce}] — en çok 3
   // CİNSİYET + DOĞUM TARİHİ (Ayarlar) — Gloxoo hitabı (Bey/Hanım) ve yaşı buradan bilir
   const [cinsiyet, setCinsiyet] = useState(""); // "bayan" | "erkek" | "belirtme" | ""
   const [dogumGun, setDogumGun] = useState(""); const [dogumAy, setDogumAy] = useState(""); const [dogumYil, setDogumYil] = useState("");
@@ -2662,6 +2664,7 @@ export default function Anasayfa({ pro = false }) {
     const b = profilBilgi || {};
     setEkTelefon(b.telefon || ""); setEkTelefon2(b.telefon2 || ""); setEk2Eposta(b.eposta2 || "");
     setAyarIsim(b.isim || ""); setAyarSoyisim(b.soyisim || "");
+    setHaberYerler(Array.isArray(b.haberKonumlari) ? b.haberKonumlari : []);
     setCinsiyet(b.cinsiyet || ""); const dg = b.dogum || {}; setDogumGun(dg.gun ? String(dg.gun) : ""); setDogumAy(dg.ay ? String(dg.ay) : ""); setDogumYil(dg.yil ? String(dg.yil) : "");
     setKurumTur((b.kurum && b.kurum.tur) || ""); setKurumAd((b.kurum && b.kurum.ad) || "");
     const k = b.konum || {};
@@ -2939,6 +2942,16 @@ export default function Anasayfa({ pro = false }) {
     const veri = { isim, soyisim };
     setProfilBilgi((p) => ({ ...(p || {}), isim, soyisim }));
     profilKaydet(uu.uid, veri).then(() => { setAyarMsg(t("ayarAdKaydedildi", "Adın kaydedildi ✓ — Gloxoo artık yeni adını biliyor")); setTimeout(() => setAyarMsg(""), 3200); }).catch(() => setAyarMsg(t("ayarHata", "Kaydedilemedi")));
+  }
+  // HABER / İLGİ KONUMLARI (adresten ayrı) — Gloxoo bu yerlerin haber/spor/gündemini bilir
+  function haberYerEkle() { setHaberYerler((l) => (l.length >= 3 ? l : [...l, { ulke: "", sehir: "", ilce: "" }])); }
+  function haberYerSil(i) { setHaberYerler((l) => l.filter((_, j) => j !== i)); }
+  function haberYerGuncelle(i, alan, deger) { setHaberYerler((l) => l.map((y, j) => (j === i ? { ...y, [alan]: deger } : y))); }
+  function haberYerlerKaydet() {
+    const uu = auth.currentUser; if (!uu) return;
+    const temiz = haberYerler.map((y) => ({ ulke: (y.ulke || "").trim(), sehir: (y.sehir || "").trim(), ilce: (y.ilce || "").trim() })).filter((y) => y.ulke || y.sehir || y.ilce).slice(0, 3);
+    setProfilBilgi((p) => ({ ...(p || {}), haberKonumlari: temiz }));
+    profilKaydet(uu.uid, { haberKonumlari: temiz }).then(() => { setAyarMsg(t("ayarHaberKaydedildi", "Haber konumların kaydedildi ✓ — Gloxoo bu yerleri biliyor")); setTimeout(() => setAyarMsg(""), 3200); }).catch(() => setAyarMsg(t("ayarHata", "Kaydedilemedi")));
   }
   // DOĞUM TARİHİ kaydet (gün/ay/yıl) → Gloxoo yaşı bilir
   function dogumKaydet() {
@@ -3477,7 +3490,10 @@ export default function Anasayfa({ pro = false }) {
     if (yardimciBaglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${yardimciBaglam} Soruları büyük olasılıkla bununla ilgili.`;
     const kadi = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     const konumTam = (profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir, profilBilgi.konum.ulke].filter(Boolean).join(", ")) || myTamKonum || konum.kod || "";
-    sistem += ` KULLANICI BİLGİSİ: ${kadi ? "adı " + kadi + ", " : ""}${proUye ? "Profesyonel (kırmızı pırlanta) üye" : "Müşteri (beyaz pırlanta) üye"}${meslekAd ? ", meslek " + meslekAd : ""}${konumTam ? ", konum " + konumTam : ""}${u && u.email ? ", e-posta " + u.email : ""}. Kullanıcıya uygun olduğunda adıyla hitap et. Nerede olduğu, şehri/ilçesi, oradaki haber/spor/gündem sorulursa BU KONUMU kullanarak yardımcı ol; ASLA kuru "bilmiyorum" deme, saçma/alakasız konuşma — bildiğini net söyle, canlı/anlık veri gerekiyorsa nasıl bulacağını göster ama yanlış/uydurma bilgi verme.`;
+    const haberY = (profilBilgi && Array.isArray(profilBilgi.haberKonumlari) ? profilBilgi.haberKonumlari : []).map((h) => [h.ilce, h.sehir, h.ulke].filter(Boolean).join(", ")).filter(Boolean);
+    sistem += ` KULLANICI BİLGİSİ: ${kadi ? "adı " + kadi + ", " : ""}${proUye ? "Profesyonel (kırmızı pırlanta) üye" : "Müşteri (beyaz pırlanta) üye"}${meslekAd ? ", meslek " + meslekAd : ""}${konumTam ? ", konum " + konumTam : ""}${u && u.email ? ", e-posta " + u.email : ""}. Kullanıcıya uygun olduğunda adıyla hitap et. Nerede olduğu, şehri/ilçesi sorulursa BU KONUMU kullan.`;
+    if (haberY.length) sistem += ` KULLANICININ HABER/İLGİ KONUMLARI (adresinden ayrı, takip etmek istediği yerler): ${haberY.join("; ")}. "Şehrimde bugün ne haber var", "takımım ne yaptı", oradaki gündem/spor gibi sorularda BU YERLERİ baz al.`;
+    sistem += ` ASLA kuru "bilmiyorum" deme, saçma/alakasız konuşma — bildiğini net söyle, yardımcı ol; canlı/anlık veri (bugünkü haber/skor) gerekiyorsa elindeki bilgiyle yardım et ve nasıl güncel bakılacağını göster, ama yanlış/uydurma bilgi verme.`;
     const sonIdx = yeniListe.length - 1;
     // GÖRÜNTÜLÜ SOHBET: kamera açıksa (sesli ya da yazılı fark etmez) O ANKİ kareyi al — kullanıcının son mesajına eklenir
     const kk = (opt && opt.kameraKare) ? opt.kameraKare : (kameraModRef.current ? kameraKare() : null);
@@ -7708,6 +7724,20 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                   )}
                   <button className="ayar-btn" onClick={ayarKonumKaydet}>{t("kaydet", "Kaydet")}</button>
+                </AyarBolum>
+
+                {/* HABER / İLGİ KONUMLARI — ADRESTEN AYRI: Gloxoo bu yerlerin haber/spor/gündemini bilir */}
+                <AyarBolum acik={ayarBolum==="haber"} onTik={()=>setAyarBolum(b=>b==="haber"?null:"haber")} renk="#1e9e6a" ad={t("ayarHaberKonum", "Haber & İlgi Konumları")} ikon="📰" onAcBilgi={setAciklama} bilgi={t("aciklamaHaberKonum", "Burası ADRESİNDEN AYRIDIR. Haberini/sporunu/gündemini takip etmek istediğin yerleri (ülke, şehir, ilçe) buraya yaz — en çok 3 yer. Gloxoo'ya 'şehrimde bugün ne haber var', 'takımım ne yaptı' diye sorduğunda BU yerleri baz alır. İstediğin zaman değiştirebilirsin.")}>
+                  {haberYerler.map((y, i) => (
+                    <div key={i} className="ayar-haber-yer">
+                      <div className="ayar-haber-bas"><b>{t("ayarHaberYer", "Yer")} {i + 1}</b><button className="ayar-haber-sil" onClick={() => haberYerSil(i)} aria-label={t("sil", "Sil")}>✕</button></div>
+                      <input className="ayar-input" type="text" value={y.ulke} onChange={(e) => haberYerGuncelle(i, "ulke", e.target.value)} placeholder={t("ayarUlkePh", "Ülke")} />
+                      <input className="ayar-input" type="text" value={y.sehir} onChange={(e) => haberYerGuncelle(i, "sehir", e.target.value)} placeholder={t("ayarSehirPh", "Şehir")} />
+                      <input className="ayar-input" type="text" value={y.ilce} onChange={(e) => haberYerGuncelle(i, "ilce", e.target.value)} placeholder={t("ayarIlcePh", "İlçe")} />
+                    </div>
+                  ))}
+                  {haberYerler.length < 3 && <button className="ayar-btn ayar-haber-ekle" onClick={haberYerEkle}>＋ {t("ayarHaberYerEkle", "Yer ekle")}</button>}
+                  <button className="ayar-btn" onClick={haberYerlerKaydet}>{t("kaydet", "Kaydet")}</button>
                 </AyarBolum>
 
                 <AyarBolum acik={ayarBolum==="bildirim"} onTik={()=>setAyarBolum(b=>b==="bildirim"?null:"bildirim")} renk="#ff7ab0" ad={t("ayarBildirimler", "Bildirimler")} ikon="🔔" onAcBilgi={setAciklama} bilgi={t("aciklamaBildirim", "Telefon bildirimlerini açarsan beğeni, yorum ve mesajları anında alırsın. İstediğin zaman kapatabilirsin.")}>
