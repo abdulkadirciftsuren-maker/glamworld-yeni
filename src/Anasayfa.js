@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
@@ -1180,6 +1180,13 @@ export default function Anasayfa({ pro = false }) {
   const [takipBalon, setTakipBalon] = useState(null);   // takip düğmesi yanında kısa etiket (uid; 1.6sn sonra kaybolur)
   const takipBalonZmnRef = useRef(null);
   const [feedFiltre, setFeedFiltre] = useState("hepsi"); // "hepsi" | "takip" — akış filtresi
+  // ---- HİKÂYELER (Stories) ----
+  const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
+  const [hikayeAcik, setHikayeAcik] = useState(null);     // görüntüleyici: {gi:grupIndex, oi:ögeIndex}
+  const [hikayeYuk, setHikayeYuk] = useState(false);      // hikaye yükleniyor mu (oluşturma)
+  const [hikayeIlerle, setHikayeIlerle] = useState(0);    // 0..100 aktif hikayenin ilerleme yüzdesi
+  const hikayeInputRef = useRef(null);                    // hikaye foto/video seçici
+  const hikayeGorulenRef = useRef(null);                  // localStorage görülen id kümesi
   const [kalpPatla, setKalpPatla] = useState(null);    // beğeni animasyonu için (o an patlayan gönderi id)
   const [begeniListeAcik, setBegeniListeAcik] = useState(null); // "kim beğendi" penceresi açık gönderi
   const [begeniListe, setBegeniListe] = useState(null);         // beğenenler listesi (null=yükleniyor)
@@ -1899,6 +1906,91 @@ export default function Anasayfa({ pro = false }) {
   //   uyeTasAd/Hex(kişi): altın üye=YEŞİL, profesyonel=MAVİ, müşteri=KIRMIZI (uyeTema ile birebir).
   const uyeTasAd = (o) => (o && o.uyelik === "altin") ? "yesil" : (o && (o.pro === true || o.tip === "profesyonel")) ? "mavi" : "kirmizi";
   const uyeTasHex = (o) => TEMA_HEX[uyeTasAd(o)];
+
+  // ================= HİKÂYELER (Stories) =================
+  const benimHikayeKisi = { uid: (u && u.uid) || "", ad: (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "Ben", foto: foto || "", amblem: !!foto };
+  // localStorage: görülen hikaye id kümesi
+  const hikayeGorulenSet = () => {
+    if (!hikayeGorulenRef.current) { try { hikayeGorulenRef.current = new Set(JSON.parse(localStorage.getItem("gw_hikaye_gorulen") || "[]")); } catch (e) { hikayeGorulenRef.current = new Set(); } }
+    return hikayeGorulenRef.current;
+  };
+  const hikayeGoruldu = (id) => {
+    if (!id) return;
+    const s = hikayeGorulenSet(); if (s.has(id)) return;
+    s.add(id); try { localStorage.setItem("gw_hikaye_gorulen", JSON.stringify(Array.from(s).slice(-500))); } catch (e) {}
+    hikayeGorulduSay(id);
+  };
+  // Hikâyeleri oku + kişiye göre grupla + "yeni" işaretle (kendi grubun en başta)
+  const hikayeleriYukle = async () => {
+    const l = await hikayeleriOku(300);
+    const gor = hikayeGorulenSet();
+    const harita = new Map();
+    l.forEach((h) => { if (!harita.has(h.uid)) harita.set(h.uid, { uid: h.uid, ad: h.ad, foto: h.foto, amblem: h.amblem, ogeler: [] }); harita.get(h.uid).ogeler.push(h); });
+    const gruplar = Array.from(harita.values());
+    gruplar.forEach((g) => { g.yeni = g.ogeler.some((o) => !gor.has(o.id)); });
+    const benim = u && u.uid;
+    gruplar.sort((a, b) => {
+      if (benim) { if (a.uid === benim && b.uid !== benim) return -1; if (b.uid === benim && a.uid !== benim) return 1; }
+      if (a.yeni !== b.yeni) return a.yeni ? -1 : 1;
+      return (b.ogeler[b.ogeler.length - 1].zamanMs || 0) - (a.ogeler[a.ogeler.length - 1].zamanMs || 0);
+    });
+    setHikayeGruplar(gruplar);
+  };
+  // + ile foto/video seç → yükle → hikaye ekle
+  const hikayeSecildi = async (e) => {
+    const f = e.target.files && e.target.files[0]; if (e.target) e.target.value = "";
+    if (!f || !u) return;
+    const video = (f.type || "").indexOf("video") === 0;
+    if (video && f.size > 60 * 1024 * 1024) { alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 60 MB olmalı.")); return; }
+    setHikayeYuk(true);
+    try {
+      let url = "";
+      if (video) { url = await videoYukle(f, u.uid, () => {}); }
+      else { const dataURL = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); url = await gorselYukle(dataURL, u.uid, () => {}); }
+      if (url) { await hikayeEkle(benimHikayeKisi, { tip: video ? "video" : "foto", url }); await hikayeleriYukle(); }
+    } catch (x) {}
+    setHikayeYuk(false);
+  };
+  // Görüntüleyici: grup aç / gez / kapat
+  const hikayeAc = (gi) => { if (!hikayeGruplar[gi]) return; setHikayeIlerle(0); setHikayeAcik({ gi, oi: 0 }); };
+  const hikayeKapat = () => { setHikayeAcik(null); setHikayeIlerle(0); hikayeleriYukle(); };
+  const hikayeGec = (yon) => {
+    setHikayeAcik((h) => {
+      if (!h) return h;
+      const grup = hikayeGruplar[h.gi]; if (!grup) return null;
+      let oi = h.oi + yon;
+      if (oi >= 0 && oi < grup.ogeler.length) { setHikayeIlerle(0); return { gi: h.gi, oi }; }
+      // grup bitti → sonraki/önceki grup
+      let gi = h.gi + yon;
+      while (gi >= 0 && gi < hikayeGruplar.length && (!hikayeGruplar[gi].ogeler || !hikayeGruplar[gi].ogeler.length)) gi += yon;
+      if (gi < 0 || gi >= hikayeGruplar.length) { setHikayeIlerle(0); return null; } // hepsi bitti → kapat
+      setHikayeIlerle(0);
+      return { gi, oi: yon > 0 ? 0 : hikayeGruplar[gi].ogeler.length - 1 };
+    });
+  };
+  const hikayemSil = async (id) => { if (!id) return; if (!window.confirm(t("hikayeSilSor", "Bu hikâyeyi silmek istiyor musun?"))) return; await hikayeSil(id); setHikayeAcik(null); hikayeleriYukle(); };
+  // Giriş yapınca hikâyeleri yükle (+ 3 dk'da bir tazele)
+  useEffect(() => {
+    if (!u) { setHikayeGruplar([]); return; }
+    hikayeleriYukle();
+    const z = setInterval(() => { if (!hikayeAcik) hikayeleriYukle(); }, 180000);
+    return () => clearInterval(z);
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Görüntüleyici açıkken: aktif hikâyeyi görüldü işaretle + FOTO ise 5 sn'de otomatik ilerle
+  useEffect(() => {
+    if (!hikayeAcik) return;
+    const grup = hikayeGruplar[hikayeAcik.gi]; const oge = grup && grup.ogeler[hikayeAcik.oi];
+    if (!oge) { setHikayeAcik(null); return; }
+    hikayeGoruldu(oge.id);
+    const onceki = document.body.style.overflow; document.body.style.overflow = "hidden";
+    let raf, sil = false;
+    if (oge.tip !== "video") {
+      const sure = 5000, bas = Date.now();
+      const tik = () => { if (sil) return; const g = Math.min(100, ((Date.now() - bas) / sure) * 100); setHikayeIlerle(g); if (g >= 100) { hikayeGec(1); return; } raf = requestAnimationFrame(tik); };
+      raf = requestAnimationFrame(tik);
+    }
+    return () => { sil = true; if (raf) cancelAnimationFrame(raf); document.body.style.overflow = onceki; };
+  }, [hikayeAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   // KENDİ taşımın rengi (üstbar/nav/profil penceresi) — kendi temama göre.
   const benimTasAd = uyeTema === "altin" ? "yesil" : uyeTema === "pro" ? "mavi" : "kirmizi";
   const benimTasHex = TEMA_HEX[benimTasAd];
@@ -4508,7 +4600,7 @@ export default function Anasayfa({ pro = false }) {
   // FEED VİDEOLARI: ekrana gelince KENDİ oynar (sessiz, döngü), çıkınca durur — düğmeye basmaya gerek yok.
   // ⚡ PARLAMA: ana sayfa ÜZERİNDE bir pencere açıkken (menü/ayarlar/panel...) feed videosu arkada oynamaya devam ederse
   // telefonda pencere açılışında PARLAMA yapıyordu → pencere açıkken TÜM feed videoları DURDUR; pencere kapanınca yeniden oynar.
-  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik;
+  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik;
   useEffect(() => {
     if (aktifKod !== "home") return;
     const vids = Array.from(document.querySelectorAll(".ana-akis .apr-medya.video video, .ana-akis .apr-kolaj-oge video"));
@@ -4540,6 +4632,7 @@ export default function Anasayfa({ pro = false }) {
   const paylasAcikRef = useRef(paylasAcik); useEffect(() => { paylasAcikRef.current = paylasAcik; }, [paylasAcik]);
   const tamFotoRef = useRef(tamFoto); useEffect(() => { tamFotoRef.current = tamFoto; }, [tamFoto]);
   const onizGaleriRef = useRef(onizGaleri); useEffect(() => { onizGaleriRef.current = onizGaleri; }, [onizGaleri]);
+  const hikayeAcikRef = useRef(hikayeAcik); useEffect(() => { hikayeAcikRef.current = hikayeAcik; }, [hikayeAcik]);
   // Tam ekran AÇIKKEN sayfa kaydırması KİLİTLİ → adres çubuğu çıkıp ✕'i oynatmaz (sabit kalır)
   useEffect(() => {
     if (!tamFoto) { setTfMini(false); return; }
@@ -4631,7 +4724,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -4639,7 +4732,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -4650,6 +4743,7 @@ export default function Anasayfa({ pro = false }) {
       else if (ayarHaritaAcikRef.current) { ayarHaritaAcikRef.current = false; setAyarHaritaAcik(false); }
       else if (sehirAcikRef.current) { sehirAcikRef.current = false; setSehirAcik(false); }
       else if (yardimciAcikRef.current) { yardimciAcikRef.current = false; setYardimciAcik(false); }
+      else if (hikayeAcikRef.current) { hikayeAcikRef.current = null; setHikayeAcik(null); }
       else if (onizGaleriRef.current) { onizGaleriRef.current = null; setOnizGaleri(null); }
       else if (uyeSayfaRef.current) { uyeSayfaRef.current = null; setUyeSayfa(null); }
       else if (tamFotoRef.current) { tamFotoRef.current = ""; setTamFoto(""); }
@@ -5145,6 +5239,30 @@ export default function Anasayfa({ pro = false }) {
 
           {/* AKIŞ (feed) — aşağı indikçe dünyadan yeni paylaşımlar */}
           <div className="ana-akis">
+            {/* HİKÂYELER — akış üstünde yatay halka şeridi (24 saatte kaybolur). Medya/akış düzenine dokunmaz, ayrı modül. */}
+            <div className="hik-serit">
+              <input ref={hikayeInputRef} type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={hikayeSecildi} />
+              {/* SENİN hikayen — varsa aç, yoksa + ile ekle */}
+              <button className="hik-oge hik-benim" onClick={() => { const bi = hikayeGruplar.findIndex((g) => g.uid === (u && u.uid)); if (bi >= 0) hikayeAc(bi); else if (hikayeInputRef.current) hikayeInputRef.current.click(); }}>
+                <span className="hik-halka hik-benim-halka">
+                  <span className={"hik-av" + (foto ? "" : " harf")}>{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>
+                  <span className="hik-arti" onClick={(e) => { e.stopPropagation(); if (!hikayeYuk && hikayeInputRef.current) hikayeInputRef.current.click(); }}>{hikayeYuk ? "…" : "+"}</span>
+                </span>
+                <span className="hik-ad">{t("hikayenSenin", "Hikâyen")}</span>
+              </button>
+              {/* BAŞKALARININ hikâyeleri */}
+              {hikayeGruplar.filter((g) => g.uid !== (u && u.uid)).map((g) => {
+                const gi = hikayeGruplar.indexOf(g);
+                return (
+                  <button className="hik-oge" key={g.uid} onClick={() => hikayeAc(gi)}>
+                    <span className={"hik-halka" + (g.yeni ? " yeni" : " gorulen")}>
+                      <span className={"hik-av" + (g.amblem ? " amblem" : "") + (g.foto ? "" : " harf")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?")[0] || "?").toUpperCase()}</span>
+                    </span>
+                    <span className="hik-ad">{((g.ad || "").split(" ")[0]) || "—"}</span>
+                  </button>
+                );
+              })}
+            </div>
             {/* PAYLAŞ kutusu — kendi gönderini ekle (gerçek veri) */}
             <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
@@ -7429,6 +7547,31 @@ export default function Anasayfa({ pro = false }) {
       ), document.body)}
 
       {/* TAM EKRAN FOTO/VİDEO GEZİCİ (lightbox) — çok fotoğraflı gönderide tek tek gez (‹ ›, kaydır, ✕) */}
+      {/* HİKÂYE GÖRÜNTÜLEYİCİ — tam ekran, ilerleme çubuğu, sol/sağ dokun, otomatik ilerler */}
+      {hikayeAcik && hikayeGruplar[hikayeAcik.gi] && (() => { const grup = hikayeGruplar[hikayeAcik.gi]; const oge = grup.ogeler[hikayeAcik.oi]; if (!oge) return null; const benimki = grup.uid === (u && u.uid); return createPortal((
+        <div className="hik-fon" onClick={hikayeKapat}>
+          <div className="hik-pencere" onClick={(e) => e.stopPropagation()}>
+            <div className="hik-ilerle-satir">
+              {grup.ogeler.map((o, oi) => (<span className="hik-ilerle" key={o.id}><i style={{ width: oi < hikayeAcik.oi ? "100%" : (oi === hikayeAcik.oi ? hikayeIlerle + "%" : "0%") }} /></span>))}
+            </div>
+            <div className="hik-ust">
+              <span className={"hik-ust-av" + (grup.amblem ? " amblem" : "")}>{grup.foto ? <img src={grup.foto} alt="" referrerPolicy="no-referrer" /> : ((grup.ad || "?")[0] || "?").toUpperCase()}</span>
+              <b className="notranslate" translate="no">{grup.ad || "—"}</b>
+              <i>{zamanOnce(oge.zamanMs)}</i>
+              {benimki && <button className="hik-sil" onClick={(e) => { e.stopPropagation(); hikayemSil(oge.id); }} aria-label="Sil">🗑</button>}
+              <button className="hik-kapat" onClick={(e) => { e.stopPropagation(); hikayeKapat(); }} aria-label="Kapat">✕</button>
+            </div>
+            {oge.tip === "video"
+              ? <video className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline
+                  onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
+                  onEnded={() => hikayeGec(1)} />
+              : <img className="hik-medya" src={oge.url} alt="" referrerPolicy="no-referrer" />}
+            <button className="hik-dok hik-sol" onClick={(e) => { e.stopPropagation(); hikayeGec(-1); }} aria-label="Önceki" />
+            <button className="hik-dok hik-sag" onClick={(e) => { e.stopPropagation(); hikayeGec(1); }} aria-label="Sonraki" />
+          </div>
+        </div>
+      ), document.body); })()}
+
       {onizGaleri && onizGaleri.liste && onizGaleri.liste.length > 0 && createPortal((
         <div className="oniz-fon" onClick={() => setOnizGaleri(null)}
           onTouchStart={(e) => { onizGaleri._x = (e.touches[0] || {}).clientX; }}

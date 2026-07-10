@@ -95,6 +95,42 @@ export async function medyaSil(url) {
   } catch (e) { return false; } // zaten yok/silinmişse sorun değil
 }
 
+// ---------- HİKÂYELER (Stories) — 24 saatte kaybolan foto/video ----------
+const HIKAYELER = "hikayeler";
+// Hikâye ekle. k={uid,ad,foto,amblem}, medya={tip:'foto'|'video', url, poster, yer}. id döner.
+export async function hikayeEkle(k, medya) {
+  if (!k || !k.uid || !medya || !medya.url) return false;
+  try {
+    const id = k.uid + "_" + Date.now();
+    await setDoc(doc(db, HIKAYELER, id), {
+      uid: k.uid, ad: k.ad || "", foto: k.foto || "", amblem: !!k.amblem,
+      tip: medya.tip || "foto", url: medya.url, poster: medya.poster || "",
+      yer: medya.yer || "", zamanMs: Date.now(), gorulme: 0,
+    });
+    return id;
+  } catch (e) { return false; }
+}
+// Son 24 saatin hikâyeleri (eskiler otomatik düşer), zamana göre eskiden yeniye sıralı.
+export async function hikayeleriOku(adet = 300) {
+  try {
+    const snap = await getDocs(query(collection(db, HIKAYELER), fsLimit(adet)));
+    const esik = Date.now() - 24 * 60 * 60 * 1000;
+    const l = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((h) => (h.zamanMs || 0) > esik);
+    l.sort((a, b) => (a.zamanMs || 0) - (b.zamanMs || 0));
+    return l;
+  } catch (e) { return []; }
+}
+// Kendi hikâyeni sil.
+export async function hikayeSil(id) {
+  if (!id) return false;
+  try { await deleteDoc(doc(db, HIKAYELER, id)); return true; } catch (e) { return false; }
+}
+// Görülme sayacını 1 artır (atomik).
+export async function hikayeGorulduSay(id) {
+  if (!id) return false;
+  try { await updateDoc(doc(db, HIKAYELER, id), { gorulme: increment(1) }); return true; } catch (e) { return false; }
+}
+
 const KULLANICILAR = "kullanicilar";
 
 // ---------- KULLANICI / PROFİL ----------

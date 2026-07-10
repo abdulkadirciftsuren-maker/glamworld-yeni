@@ -59,6 +59,18 @@ service cloud.firestore {
       allow delete: if girisli() && resource.data.uid == request.auth.uid;
     }
 
+    // Hikâyeler (Stories) — 24 saatte kaybolan foto/video. HERKES okur (izler); giriş yapan KENDİ hikâyesini oluşturur/siler.
+    // Görülme sayacını (gorulme) HERKES 1 artırabilir (başkasının hikâyesini izleyince de sayılsın); kimlik alanları değişmez.
+    match /hikayeler/{id} {
+      allow read: if true;
+      allow create: if girisli() && request.resource.data.uid == request.auth.uid;
+      allow update: if girisli() && (
+        resource.data.uid == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gorulme'])
+      );
+      allow delete: if girisli() && resource.data.uid == request.auth.uid;
+    }
+
     // Geri bildirimler (AI önerisi 👍/👎 + müşteri yorumu) — giriş yapan HERKES yazar;
     // SADECE yönetici (sahip e-posta) OKUR (yönetici konsolundaki "Geri Bildirimler" sekmesi).
     match /geriBildirim/{id} {
