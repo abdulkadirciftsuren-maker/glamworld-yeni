@@ -354,10 +354,13 @@
 .hik-serit{ display:flex; gap:8px; overflow-x:auto; padding:10px 12px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .hik-serit::-webkit-scrollbar{ display:none; }
 /* Facebook gibi DİKEY KART — içinde seçilen foto/video görünür */
-.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:1px solid rgba(255,215,0,.6); padding:0; box-shadow:0 2px 8px rgba(0,0,0,.22); -webkit-tap-highlight-color:transparent; }
-/* Medya sarmalı: BULANIK arka (cover) + ÖNDE TAM medya (contain) → yatay/dikey HİÇ KESİLMEZ */
-.hik-kart-medyasar{ position:absolute; inset:0; overflow:hidden; background:#0d1b3a; }
-.hik-kart-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scale(1.25); filter:blur(16px) brightness(.6); z-index:0; }
+.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:2px solid #d9b64a; padding:0; box-shadow:0 2px 8px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,235,150,.35); -webkit-tap-highlight-color:transparent; }
+/* Medya sarmalı: ALTIN TOZU arka + ÖNDE TAM medya (contain) → yatay/dikey HİÇ KESİLMEZ, boşluk ALTIN */
+.hik-kart-medyasar{ position:absolute; inset:0; overflow:hidden; background:
+  radial-gradient(circle at 30% 22%, rgba(255,231,168,.55), transparent 58%),
+  radial-gradient(circle at 72% 84%, rgba(255,208,92,.42), transparent 62%),
+  linear-gradient(135deg, #b28e34, #715725); }
+.hik-kart-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scale(1.25); filter:blur(16px) brightness(1) sepia(.85) saturate(1.9) hue-rotate(2deg); opacity:.45; z-index:0; } /* hafif doku; ALTIN TOZU baskın */
 .hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:1; display:block; }
 /* Küçük avatar KARE (profil karedir) — yuvarlak DEĞİL; UFAK, ince renkli çerçeve */
 .hik-kart-av{ position:absolute; top:6px; left:6px; width:30px; height:30px; border-radius:8px; overflow:hidden; background:#0d1b3a; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; border:2.5px solid #37b6ff; z-index:2; box-shadow:0 1px 4px rgba(0,0,0,.4); }
@@ -369,6 +372,7 @@
 /* HİKÂYE OLUŞTUR kartı — profil YUKARIDAN başlar (siyah bant yok), altta ALTIN ŞERİT: + ve yazı */
 .hik-olustur{ background:#0d1b3a; }
 .hik-kart-foto{ display:block; position:absolute; top:0; left:0; right:0; bottom:52px; overflow:hidden; background:#0d1b3a; }
+.hik-olustur .hik-kart-medya{ object-position:top center; } /* profil YUKARIDAN otursun, boşluk (altın tozu) altta kalsın — zoom yok */
 .hik-kart-harf{ display:flex; width:100%; height:100%; align-items:center; justify-content:center; color:#fff; font-size:34px; font-weight:800; }
 /* Altta ALTIN ŞERİT — içinde + (küçük kare) ve altın yazı */
 .hik-kart-serit{ position:absolute; left:0; right:0; bottom:0; height:52px; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:linear-gradient(180deg,#ffe680,#f0c419); box-shadow:0 -1px 6px rgba(0,0,0,.25) inset; }
@@ -378,13 +382,18 @@
 .hik-kart-sayac{ position:absolute; top:6px; right:6px; z-index:3; background:linear-gradient(180deg,#ffe680,#f0c419); color:#3a2c00; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:7px; box-shadow:0 1px 4px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
 /* GÖRÜNTÜLEYİCİ */
 .hik-fon{ position:fixed; inset:0; z-index:100050; background:rgba(0,0,0,.94); display:flex; align-items:center; justify-content:center; animation:adFon .2s ease; }
-.hik-pencere{ position:relative; width:100%; height:100%; max-width:520px; display:flex; align-items:center; justify-content:center; background:#000; overflow:hidden; }
+.hik-pencere{ position:relative; width:100%; height:100%; max-width:520px; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,231,168,.5), transparent 58%),
+    radial-gradient(circle at 72% 86%, rgba(255,208,92,.4), transparent 62%),
+    linear-gradient(135deg, #9c7c30, #5c471d);
+  box-shadow: inset 0 0 0 2px rgba(217,182,74,.7); } /* ALTIN çember (çerçeve) */
 @media (min-width:540px) and (min-height:620px){ .hik-pencere{ max-height:94vh; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.6); } }
-.hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(30px) brightness(.45); transform:scale(1.2); z-index:0; }
+.hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(30px) brightness(.95) sepia(.8) saturate(1.8); opacity:.4; transform:scale(1.2); z-index:0; } /* hafif doku; ALTIN TOZU baskın */
 .hik-medya{ position:relative; width:100%; height:100%; object-fit:contain; display:block; z-index:1; }
-/* CANLI FOTOĞRAF — yavaş sinema (yakınlaşma + hafif kayma) → fotoğraf "canlı" görünür */
-@keyframes hikCanli { 0%{ transform:scale(1.04) translate(1.5%, 1.5%);} 100%{ transform:scale(1.16) translate(-2%, -3%);} }
-.hik-foto-canli{ animation:hikCanli 5.2s ease-out both; will-change:transform; }
+/* CANLI FOTOĞRAF — yavaş sinema (yakınlaşma + hafif kayma) → fotoğraf "canlı" görünür (7 sn, ekranda daha uzun kalır) */
+@keyframes hikCanli { 0%{ transform:scale(1.04) translate(1.5%, 1.5%);} 100%{ transform:scale(1.18) translate(-2.5%, -3.5%);} }
+.hik-foto-canli{ animation:hikCanli 7.2s ease-out both; will-change:transform; }
 .hik-durdu .hik-foto-canli{ animation-play-state:paused; } /* durunca efekt de durur */
 .hik-ilerle-satir{ position:absolute; top:max(8px,env(safe-area-inset-top)); left:8px; right:8px; z-index:5; display:flex; gap:4px; }
 .hik-ilerle{ flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,.35); overflow:hidden; }

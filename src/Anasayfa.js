@@ -2007,7 +2007,7 @@ export default function Anasayfa({ pro = false }) {
     const onceki = document.body.style.overflow; document.body.style.overflow = "hidden";
     let raf, sil = false;
     if (oge.tip !== "video") {
-      const sure = 5000; let gecen = 0, sonT = Date.now();
+      const sure = 7000; let gecen = 0, sonT = Date.now();
       const tik = () => {
         if (sil) return;
         const simdi = Date.now();
@@ -4948,7 +4948,7 @@ export default function Anasayfa({ pro = false }) {
     // Parmak ne yapıyorsa ORADA kalsın, alt sayfa görülmesin.
     if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || aktifKod === "profil") { dokunRef.current = null; return; }
     try {
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
