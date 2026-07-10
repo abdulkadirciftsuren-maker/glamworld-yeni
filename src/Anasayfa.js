@@ -12,6 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth } from "./firebase";
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
+import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
@@ -69,6 +70,8 @@ const GEM_RENK = ["#dfeaff", "#2f6fd6", "#9b4fd6", "#1ea64f", "#f2a900", "#ff7ab
 const POST_RENK = ["#2f7fd6", "#1fc2c2", "#9b59b6", "#1ea64f", "#f2a900", "#ff7ab0", "#e0707a", "#5aa6e0", "#46d37a", "#c98bff"];
 // GERÇEK CLAUDE yapay zeka köprüsü (Cloudflare Worker) — anahtar köprüde GİZLİ, siteye yazılmaz
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
+// Uygulama sürümü (Gloxoo SADECE yeni sürümde/güncelleme sonrası ilk açılışta selamlar)
+const AKTIF_SURUM = (buildGecmisi && buildGecmisi[0]) ? (buildGecmisi[0].surum + ".B" + buildGecmisi[0].build) : "";
 
 // HER CÜMLE FARKLI RENK + küçük elmas ikonu (kullanıcı isteği: renkli, ikonlu, her cümle bir renk).
 // RC_KOYU = AÇIK zeminde okunur (karşılama balonu); RC_ACIK = KOYU zeminde okunur (Gloxoo sohbeti).
@@ -1214,6 +1217,7 @@ export default function Anasayfa({ pro = false }) {
   const hikSecimAcikRef = useRef(false);
   const hikVideoInputRef = useRef(null);                    // SADECE video seçici
   const hikFotoInputRef = useRef(null);                     // SADECE fotoğraf seçici
+  const hikCanliInputRef = useRef(null);                    // CANLI ÇEK — kamera (foto/video)
   const hikTaslakRef = useRef(null);                 // Android geri tuşu için
   const hikOnizVidRef = useRef(null);                // düzenleyicideki önizleme videosu (AI için CANLI kare)
   const hikMedyaRef = useRef(null);                  // medya kutusu (yazı sürüklerken oran hesabı)
@@ -1382,7 +1386,10 @@ export default function Anasayfa({ pro = false }) {
       if (!canliSohbetRef.current) { try { maskotCanliBaslat(); } catch (e) {} } // KAPALIYSA büyürken SES AÇ (istek)
       return;
     }
-    maskotTanitYap();
+    // KULLANICI KENDİSİ AÇTI → Gloxoo KENDİLİĞİNDEN KONUŞMAZ; açılır ve DİNLER (kullanıcı konuşur/yazar).
+    // Uzun karşılama SADECE ilk üyelikte + yeni sürümde otomatik olur (aşağıdaki effect), elle açınca DEĞİL.
+    setMaskotTur("grox"); setMaskotMini(false); setMaskotTanit(true); setYardimciMod("sohbet");
+    try { maskotCanliBaslat(); } catch (e) {} // dinlemeye başla (kullanıcı konuşsun) — kendi konuşmaz
   }
   // MASKOT KARŞILAMA — yeni üye ilk girişte ana sayfada maskot "hoş geldin" der (tek sefer). Kapatınca/dokununca yerine çekilir.
   const [maskotSelam, setMaskotSelam] = useState(false);
@@ -1813,10 +1820,11 @@ export default function Anasayfa({ pro = false }) {
         }
       } catch (e) {}
       if (yeni) { karsilandiRef.current = true; try { maskotYeniUyeKarsila(); } catch (e) {} return; }
-      // DÖNEN kullanıcı: 3 saat içinde selamlandıysa tekrar etme
-      let selamla = true;
-      try { const son = parseInt(localStorage.getItem("groxSonSelamMs") || "0", 10); if (son > 0 && (Date.now() - son) < 3 * 3600 * 1000) selamla = false; } catch (e) {}
-      if (!selamla) { karsilandiRef.current = true; return; }
+      // DÖNEN kullanıcı: Gloxoo SADECE YENİ SÜRÜMDE (güncelleme sonrası ilk açılış) konuşur.
+      // Normal açılış/dolaşmada SESSİZ kalır — kullanıcı kendisi açıp konuşur (istek).
+      let yeniSurum = false;
+      try { const son = localStorage.getItem("groxSonSurum") || ""; if (son !== AKTIF_SURUM) yeniSurum = true; localStorage.setItem("groxSonSurum", AKTIF_SURUM); } catch (e) { yeniSurum = true; }
+      if (!yeniSurum) { karsilandiRef.current = true; return; }
       karsilandiRef.current = true;
       try { maskotTanitYap(true); } catch (e) {}
     }, 1400);
@@ -5457,6 +5465,7 @@ export default function Anasayfa({ pro = false }) {
             <div className="hik-serit">
               <input ref={hikFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={hikayeSecildi} />
               <input ref={hikVideoInputRef} type="file" accept="video/*" style={{ display: "none" }} onChange={hikayeSecildi} />
+              <input ref={hikCanliInputRef} type="file" accept="image/*,video/*" capture="environment" style={{ display: "none" }} onChange={hikayeSecildi} />
               {/* HİKÂYE OLUŞTUR kartı — dokununca SEÇENEK ekranı açılır (Foto/Video/Yazı) */}
               <button className="hik-kart hik-olustur" onClick={() => { if (!hikayeYuk) setHikSecimAcik(true); }}>
                 <span className="hik-kart-foto">{foto
@@ -7830,6 +7839,9 @@ export default function Anasayfa({ pro = false }) {
               </button>
               <button className="hik-secim-kart hsk-video" onClick={() => { setHikSecimAcik(false); if (hikVideoInputRef.current) hikVideoInputRef.current.click(); }}>
                 <span className="hik-secim-ik" aria-hidden="true">🎬</span><span>{t("hikSecVideo", "Video")}</span>
+              </button>
+              <button className="hik-secim-kart hsk-canli" onClick={() => { setHikSecimAcik(false); if (hikCanliInputRef.current) hikCanliInputRef.current.click(); }}>
+                <span className="hik-secim-ik" aria-hidden="true">📷</span><span>{t("hikSecCanli", "Canlı Çek")}</span>
               </button>
               <button className="hik-secim-kart hsk-yazi" onClick={yaziHikayesiBaslat}>
                 <span className="hik-secim-ik" aria-hidden="true">Aa</span><span>{t("hikSecYazi", "Yazı")}</span>
