@@ -375,7 +375,8 @@
 /* HİKÂYE OLUŞTUR kartı — profil YUKARIDAN başlar (siyah bant yok), altta ALTIN ŞERİT: + ve yazı */
 .hik-olustur{ background:#0d1b3a; }
 .hik-kart-foto{ display:block; position:absolute; top:0; left:0; right:0; bottom:52px; overflow:hidden; background:#0d1b3a; }
-.hik-olustur .hik-kart-medya{ object-position:top center; } /* profil YUKARIDAN otursun, boşluk (altın tozu) altta kalsın — zoom yok */
+/* HİKÂYE OLUŞTUR profili TAM görünür (zoom YOK); boşluk medyasar'ın altın tozu zemini olur (siyah/beyaz bant DEĞİL) */
+.hik-olustur .hik-kart-medya{ object-fit:contain; object-position:center; }
 .hik-kart-harf{ display:flex; width:100%; height:100%; align-items:center; justify-content:center; color:#fff; font-size:34px; font-weight:800; }
 /* Altta ALTIN ŞERİT — içinde + (küçük kare) ve altın yazı */
 .hik-kart-serit{ position:absolute; left:0; right:0; bottom:0; height:52px; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:linear-gradient(180deg,#ffe680,#f0c419); box-shadow:0 -1px 6px rgba(0,0,0,.25) inset; }
