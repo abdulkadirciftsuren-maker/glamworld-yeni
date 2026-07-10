@@ -105,6 +105,7 @@ export async function hikayeEkle(k, medya) {
     await setDoc(doc(db, HIKAYELER, id), {
       uid: k.uid, ad: k.ad || "", foto: k.foto || "", amblem: !!k.amblem,
       tip: medya.tip || "foto", url: medya.url, poster: medya.poster || "",
+      yazi: medya.yazi || "", yaziYer: medya.yaziYer || "alt", yaziRenk: medya.yaziRenk || "#ffd700",
       yer: medya.yer || "", zamanMs: Date.now(), gorulme: 0,
     });
     return id;

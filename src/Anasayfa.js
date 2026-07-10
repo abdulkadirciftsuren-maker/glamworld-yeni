@@ -1191,6 +1191,15 @@ export default function Anasayfa({ pro = false }) {
   const hikDuraklaRef = useRef(false);                    // ilerleme döngüsü duraklatıldı mı
   const hikVidRef = useRef(null);                         // görüntüleyicideki video (duraklat/oynat)
   const hikBasRef = useRef({ x: 0, y: 0 }); // dokunma başlangıç noktası (dokun/kaydır ayrımı)
+  // ---- HİKÂYE DÜZENLEYİCİ (paylaşmadan önce: yazı + Gloxoo AI) ----
+  const [hikTaslak, setHikTaslak] = useState(null); // {tip,url(önizleme),file,poster} — seçilen medya (düzenleniyor)
+  const [hikYazi, setHikYazi] = useState("");        // hikâyenin üstündeki yazı
+  const [hikYaziYer, setHikYaziYer] = useState("alt"); // üst / orta / alt
+  const [hikYaziRenk, setHikYaziRenk] = useState("#ffd700"); // yazı rengi (altın varsayılan)
+  const [hikAiYuk, setHikAiYuk] = useState(false);   // Gloxoo öneri yüklüyor mu
+  const [hikAiOneriler, setHikAiOneriler] = useState([]); // Gloxoo'nun önerdiği üst yazılar
+  const [hikPaylasYuk, setHikPaylasYuk] = useState(false); // hikâye yükleniyor mu
+  const hikTaslakRef = useRef(null);                 // Android geri tuşu için
   const [kalpPatla, setKalpPatla] = useState(null);    // beğeni animasyonu için (o an patlayan gönderi id)
   const [begeniListeAcik, setBegeniListeAcik] = useState(null); // "kim beğendi" penceresi açık gönderi
   const [begeniListe, setBegeniListe] = useState(null);         // beğenenler listesi (null=yükleniyor)
@@ -1941,7 +1950,7 @@ export default function Anasayfa({ pro = false }) {
     });
     setHikayeGruplar(gruplar);
   };
-  // + ile foto/video seç → yükle → hikaye ekle
+  // + ile foto/video seç → HEMEN yüklemez, DÜZENLEYİCİYİ açar (yazı + Gloxoo AI)
   const hikayeSecildi = async (e) => {
     const f = e.target.files && e.target.files[0]; if (e.target) e.target.value = "";
     if (!f || !u) return;
@@ -1949,12 +1958,54 @@ export default function Anasayfa({ pro = false }) {
     if (video && f.size > 60 * 1024 * 1024) { alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 60 MB olmalı.")); return; }
     setHikayeYuk(true);
     try {
-      let url = "";
-      if (video) { url = await videoYukle(f, u.uid, () => {}); }
-      else { const dataURL = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); url = await gorselYukle(dataURL, u.uid, () => {}); }
-      if (url) { await hikayeEkle(benimHikayeKisi, { tip: video ? "video" : "foto", url }); await hikayeleriYukle(); }
+      let onizUrl = "", poster = "";
+      if (video) { onizUrl = URL.createObjectURL(f); try { poster = (await videoKareYakala(onizUrl)) || ""; } catch (x2) {} }
+      else { onizUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
+      setHikYazi(""); setHikYaziYer("alt"); setHikYaziRenk("#ffd700"); setHikAiOneriler([]);
+      setHikTaslak({ tip: video ? "video" : "foto", url: onizUrl, file: f, poster });
     } catch (x) {}
     setHikayeYuk(false);
+  };
+  // Düzenleyiciyi kapat (medyayı bırak)
+  const hikTaslakKapat = () => {
+    setHikTaslak((tas) => { if (tas && tas.tip === "video" && tas.url) { try { URL.revokeObjectURL(tas.url); } catch (x) {} } return null; });
+    setHikAiOneriler([]); setHikPaylasYuk(false);
+  };
+  // PAYLAŞ → medyayı yükle + yazı ile hikâye ekle
+  const hikayeGonder = async () => {
+    if (!hikTaslak || !u || hikPaylasYuk) return;
+    setHikPaylasYuk(true);
+    try {
+      let url = "";
+      if (hikTaslak.tip === "video") url = await videoYukle(hikTaslak.file, u.uid, () => {});
+      else url = await gorselYukle(hikTaslak.url, u.uid, () => {});
+      if (url) {
+        await hikayeEkle(benimHikayeKisi, { tip: hikTaslak.tip, url, poster: hikTaslak.poster || "", yazi: (hikYazi || "").trim(), yaziYer: hikYaziYer, yaziRenk: hikYaziRenk });
+        if (hikTaslak.tip === "video" && hikTaslak.url) { try { URL.revokeObjectURL(hikTaslak.url); } catch (x) {} }
+        setHikTaslak(null); setHikYazi(""); setHikAiOneriler([]);
+        await hikayeleriYukle();
+      }
+    } catch (x) {}
+    setHikPaylasYuk(false);
+  };
+  // GLOXOO'YA SOR → foto/video karesini GÖRÜR, hikâye için kısa üst yazı önerir
+  const aiHikayeOner = async () => {
+    if (!hikTaslak || hikAiYuk) return;
+    setHikAiYuk(true); setHikAiOneriler([]);
+    try {
+      let gors = "";
+      if (hikTaslak.tip === "foto" && (hikTaslak.url || "").indexOf("data:image") === 0) gors = hikTaslak.url;
+      else if (hikTaslak.tip === "video") gors = hikTaslak.poster || (await videoKareYakala(hikTaslak.url));
+      const parcalar = [];
+      if (gors) { const vir = gors.indexOf(","); const mt = (gors.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg"; if (vir > 0) parcalar.push({ type: "image", source: { type: "base64", media_type: mt, data: gors.slice(vir + 1) } }); }
+      const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" }[dil] || "Türkçe";
+      const talimat = `Bu bir HİKÂYE (24 saatte kaybolan kısa paylaşım). ${hikTaslak.tip === "video" ? "Ekteki görsel VİDEODAN alınmış bir karedir; videoda ne olduğunu bu kareden anla. " : ""}${gors ? "Görsele DİKKATLİCE bak: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak yaz (uydurma/klişe YOK). " : ""}Bu içerik için HİKÂYE ÜST YAZISI olarak 3 farklı kısa, canlı ve ÇARPICI öneri ver: her biri 1 satır, 2-6 kelime; 1-2 uygun emoji serpiştir; RENKLİ ve sıcak olsun. ${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
+      parcalar.push({ type: "text", text: talimat });
+      const mesajlar = parcalar.length > 1 ? [{ role: "user", content: parcalar }] : [{ role: "user", content: talimat }];
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG luks profesyonel sosyal platformun asistani. Ekte gorsel/video karesi varsa DIKKATLICE BAK ve SADECE gordugune dayanarak, o ana ozel, kisa ve carpici HIKAYE UST YAZISI oner (2-6 kelime, 1-2 emoji). Istenen dilde yaz; onerileri ||| ile ayir." }) });
+      if (r.ok) { const veri = await r.json(); const txt = (veri && veri.metin) || ""; const ham = txt.indexOf("|||") >= 0 ? txt.split("|||") : txt.split("\n"); const satirlar = ham.map((s) => s.replace(/^["'\d.)\-•*\s]+/, "").replace(/["']+$/, "").trim()).filter((s) => s.length > 1).slice(0, 3); if (satirlar.length) setHikAiOneriler(satirlar); }
+    } catch (e) {}
+    setHikAiYuk(false);
   };
   // Görüntüleyici: grup aç / gez / kapat
   const hikayeAc = (gi) => { if (!hikayeGruplar[gi]) return; setHikayeIlerle(0); setHikayeAcik({ gi, oi: 0 }); };
@@ -4630,7 +4681,7 @@ export default function Anasayfa({ pro = false }) {
   // FEED VİDEOLARI: ekrana gelince KENDİ oynar (sessiz, döngü), çıkınca durur — düğmeye basmaya gerek yok.
   // ⚡ PARLAMA: ana sayfa ÜZERİNDE bir pencere açıkken (menü/ayarlar/panel...) feed videosu arkada oynamaya devam ederse
   // telefonda pencere açılışında PARLAMA yapıyordu → pencere açıkken TÜM feed videoları DURDUR; pencere kapanınca yeniden oynar.
-  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik;
+  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!hikTaslak || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik;
   useEffect(() => {
     if (aktifKod !== "home") return;
     const vids = Array.from(document.querySelectorAll(".ana-akis .apr-medya.video video, .ana-akis .apr-kolaj-oge video"));
@@ -4663,6 +4714,7 @@ export default function Anasayfa({ pro = false }) {
   const tamFotoRef = useRef(tamFoto); useEffect(() => { tamFotoRef.current = tamFoto; }, [tamFoto]);
   const onizGaleriRef = useRef(onizGaleri); useEffect(() => { onizGaleriRef.current = onizGaleri; }, [onizGaleri]);
   const hikayeAcikRef = useRef(hikayeAcik); useEffect(() => { hikayeAcikRef.current = hikayeAcik; }, [hikayeAcik]);
+  useEffect(() => { hikTaslakRef.current = hikTaslak; }, [hikTaslak]);
   // Tam ekran AÇIKKEN sayfa kaydırması KİLİTLİ → adres çubuğu çıkıp ✕'i oynatmaz (sabit kalır)
   useEffect(() => {
     if (!tamFoto) { setTfMini(false); return; }
@@ -4754,7 +4806,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -4762,7 +4814,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikTaslak, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -4773,6 +4825,7 @@ export default function Anasayfa({ pro = false }) {
       else if (ayarHaritaAcikRef.current) { ayarHaritaAcikRef.current = false; setAyarHaritaAcik(false); }
       else if (sehirAcikRef.current) { sehirAcikRef.current = false; setSehirAcik(false); }
       else if (yardimciAcikRef.current) { yardimciAcikRef.current = false; setYardimciAcik(false); }
+      else if (hikTaslakRef.current) { const tas = hikTaslakRef.current; if (tas.tip === "video" && tas.url) { try { URL.revokeObjectURL(tas.url); } catch (e) {} } hikTaslakRef.current = null; setHikTaslak(null); setHikAiOneriler([]); }
       else if (hikayeAcikRef.current) { hikayeAcikRef.current = null; setHikayeAcik(null); }
       else if (onizGaleriRef.current) { onizGaleriRef.current = null; setOnizGaleri(null); }
       else if (uyeSayfaRef.current) { uyeSayfaRef.current = null; setUyeSayfa(null); }
@@ -7601,11 +7654,66 @@ export default function Anasayfa({ pro = false }) {
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
                     onEnded={() => hikayeGec(1)} /></>
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
+            {/* HİKÂYENİN ÜSTÜNDEKİ YAZI (paylaşırken yazılmışsa) */}
+            {oge.yazi ? <div className={"hik-yazi hik-yazi-" + (oge.yaziYer || "alt")} style={{ color: oge.yaziRenk || "#ffd700" }}><span>{oge.yazi}</span></div> : null}
             {/* Tüm yüzey: DOKUN = durdur/devam, KAYDIR = hikaye değiştir (sola=sonraki, sağa=önceki) */}
             <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} />
           </div>
         </div>
       ), document.body); })()}
+
+      {/* HİKÂYE DÜZENLEYİCİ — paylaşmadan önce: önizleme + üstüne YAZI + Gloxoo AI yardım */}
+      {hikTaslak && createPortal((
+        <div className="hik-duzen-fon">
+          <div className="hik-duzen-pencere">
+            {/* Üst bar */}
+            <div className="hik-duzen-ust">
+              <b>{t("hikayeDuzenle", "Hikâyeni hazırla")}</b>
+              <button className="hik-duzen-kapat" onClick={hikTaslakKapat} aria-label={t("vazgec", "Vazgeç")}>✕</button>
+            </div>
+            {/* Medya önizleme + üstünde yazı */}
+            <div className="hik-duzen-medya">
+              {hikTaslak.tip === "video"
+                ? <><video className="hik-medya-bg" src={hikTaslak.url} muted loop autoPlay playsInline aria-hidden="true" tabIndex={-1} /><video className="hik-medya" src={hikTaslak.url} muted loop autoPlay playsInline /></>
+                : <><img className="hik-medya-bg" src={hikTaslak.url} alt="" aria-hidden="true" /><img className="hik-medya" src={hikTaslak.url} alt="" /></>}
+              {hikYazi ? <div className={"hik-yazi hik-yazi-" + hikYaziYer} style={{ color: hikYaziRenk }}><span>{hikYazi}</span></div> : null}
+            </div>
+            {/* Kontroller */}
+            <div className="hik-duzen-alt">
+              {/* Gloxoo'ya sor + öneriler */}
+              <div className="hik-duzen-ai">
+                <button className="hik-ai-btn" onClick={aiHikayeOner} disabled={hikAiYuk}>
+                  <span className="hik-ai-ik" aria-hidden="true">✨</span>{hikAiYuk ? t("hikayeAiYuk", "Gloxoo bakıyor…") : t("hikayeAiSor", "Gloxoo'ya sor · yazı öner")}
+                </button>
+                {hikAiOneriler.length > 0 && (
+                  <div className="hik-ai-oneriler">
+                    {hikAiOneriler.map((o, i) => (<button key={i} className="hik-ai-oneri" onClick={() => setHikYazi(o)}>{o}</button>))}
+                  </div>
+                )}
+              </div>
+              {/* Yazı yaz */}
+              <input className="hik-duzen-input" value={hikYazi} onChange={(e) => setHikYazi(e.target.value.slice(0, 120))} placeholder={t("hikayeYaziYaz", "Bir şeyler yaz (isteğe bağlı)…")} maxLength={120} />
+              {/* Yazı yeri + renk */}
+              <div className="hik-duzen-secim">
+                <div className="hik-yer-grup">
+                  {[["ust", t("hikYerUst", "Üst")], ["orta", t("hikYerOrta", "Orta")], ["alt", t("hikYerAlt", "Alt")]].map(([k, ad]) => (
+                    <button key={k} className={"hik-yer-btn" + (hikYaziYer === k ? " aktif" : "")} onClick={() => setHikYaziYer(k)}>{ad}</button>
+                  ))}
+                </div>
+                <div className="hik-renk-grup">
+                  {["#ffd700", "#ffffff", "#ff5da2", "#37b6ff", "#2fe08a"].map((c) => (
+                    <button key={c} className={"hik-renk-btn" + (hikYaziRenk === c ? " aktif" : "")} style={{ background: c }} onClick={() => setHikYaziRenk(c)} aria-label={t("hikRenk", "Yazı rengi")} />
+                  ))}
+                </div>
+              </div>
+              {/* Paylaş */}
+              <button className="hik-duzen-paylas" onClick={hikayeGonder} disabled={hikPaylasYuk}>
+                {hikPaylasYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("hikayePaylas", "Hikâyeni Paylaş")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ), document.body)}
 
       {onizGaleri && onizGaleri.liste && onizGaleri.liste.length > 0 && createPortal((
         <div className="oniz-fon" onClick={() => setOnizGaleri(null)}
