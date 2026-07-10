@@ -383,13 +383,10 @@
 /* GÖRÜNTÜLEYİCİ */
 .hik-fon{ position:fixed; inset:0; z-index:100050; background:rgba(0,0,0,.94); display:flex; align-items:center; justify-content:center; animation:adFon .2s ease; }
 .hik-pencere{ position:relative; width:100%; height:100%; max-width:520px; display:flex; align-items:center; justify-content:center; overflow:hidden;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255,231,168,.5), transparent 58%),
-    radial-gradient(circle at 72% 86%, rgba(255,208,92,.4), transparent 62%),
-    linear-gradient(135deg, #9c7c30, #5c471d);
-  box-shadow: inset 0 0 0 2px rgba(217,182,74,.7); } /* ALTIN çember (çerçeve) */
+  background: radial-gradient(circle at 50% 42%, #10182c, #05070e 92%); /* KOYU/NÖTR — altın tozu KALDIRILDI; medya doğrudan görünür */
+  box-shadow: inset 0 0 0 2px rgba(217,182,74,.7); } /* ALTIN çember (çerçeve) korunur */
 @media (min-width:540px) and (min-height:620px){ .hik-pencere{ max-height:94vh; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.6); } }
-.hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(30px) brightness(.95) sepia(.8) saturate(1.8); opacity:.4; transform:scale(1.2); z-index:0; } /* hafif doku; ALTIN TOZU baskın */
+.hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(30px) brightness(.5); opacity:.55; transform:scale(1.2); z-index:0; } /* yatay medya boşluğu = medyanın KENDİ bulanık koyu hâli (altın tozu KALDIRILDI) */
 .hik-medya{ position:relative; width:100%; height:100%; object-fit:contain; display:block; z-index:1; }
 /* CANLI FOTOĞRAF — yavaş sinema (yakınlaşma + hafif kayma) → fotoğraf "canlı" görünür (7 sn, ekranda daha uzun kalır) */
 @keyframes hikCanli { 0%{ transform:scale(1.04) translate(1.5%, 1.5%);} 100%{ transform:scale(1.18) translate(-2.5%, -3.5%);} }
@@ -426,10 +423,7 @@
 .hik-duzen-kapat{ width:34px; height:34px; border:none; background:rgba(255,255,255,.12); color:#fff; border-radius:9px; font-size:17px; cursor:pointer; }
 /* Medya önizleme — altın tozu boşluk + çember */
 .hik-duzen-medya{ position:relative; flex:1; min-height:0; overflow:hidden;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255,231,168,.5), transparent 58%),
-    radial-gradient(circle at 72% 86%, rgba(255,208,92,.4), transparent 62%),
-    linear-gradient(135deg, #9c7c30, #5c471d);
+  background: radial-gradient(circle at 50% 42%, #10182c, #05070e 92%); /* KOYU/NÖTR — altın tozu KALDIRILDI; medya büyük ve doğrudan görünür */
   box-shadow: inset 0 0 0 2px rgba(217,182,74,.6); }
 .hik-duzen-alt{ padding:11px 13px calc(12px + env(safe-area-inset-bottom)); background:#0c1020; display:flex; flex-direction:column; gap:9px; }
 /* Gloxoo'ya sor */
@@ -478,10 +472,7 @@
 
 /* TAM EKRAN FOTO/VİDEO GEZİCİ (lightbox) */
 .oniz-fon{ position:fixed; inset:0; z-index:12000; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
-  background:
-    radial-gradient(circle at 20% 16%, rgba(255,228,160,.38), transparent 46%),
-    radial-gradient(circle at 84% 82%, rgba(255,214,96,.28), transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(120,96,45,.94), rgba(20,16,9,.995)); } /* KOYU ALTIN TOZU (opak; arka feed GÖRÜNMESİN — kullanıcı isteği: her yerde aynı) */
+  background: radial-gradient(circle at 50% 42%, #10182c, #05070e 92%); } /* KOYU/NÖTR (opak; arka feed GÖRÜNMESİN; altın tozu KALDIRILDI — kullanıcı: medya doğrudan yüklensin) */
 .oniz-govde{ max-width:100vw; max-height:100vh; display:flex; align-items:center; justify-content:center; }
 .oniz-medya{ max-width:100vw; max-height:88vh; object-fit:contain; display:block; }
 .oniz-kapat{ position:fixed; top:max(12px,env(safe-area-inset-top)); right:14px; width:42px; height:42px; border-radius:50%; border:none; background:rgba(0,0,0,.5); color:#fff; font-size:20px; cursor:pointer; z-index:2; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
@@ -690,11 +681,8 @@
    height:100dvh = DİNAMİK yükseklik → Google sekmesi gizlenip ekran büyüyünce de TAM doldurur (alt/üst siyah şerit YOK), sabitlenmez. */
 /* zemin OPAK AÇIK ALTIN (yarı saydam değil → arkadaki koyu sayfa görünüp siyahlaşmaz) */
 .tamfoto-fon{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:100010; overflow:hidden; display:flex; align-items:center; justify-content:center; animation:adFon .2s ease;
-  background:
-    radial-gradient(circle at 20% 16%, rgba(255,228,160,.38), transparent 46%),
-    radial-gradient(circle at 84% 82%, rgba(255,214,96,.28), transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(120,96,45,.94), rgba(20,16,9,.995));
-  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); } /* foto kenar boşluğu = KOYU ALTIN TOZU (opak; arka feed GÖRÜNMESİN — kullanıcı isteği) */
+  background: radial-gradient(circle at 50% 42%, #10182c, #05070e 92%);
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); } /* foto kenar boşluğu = KOYU/NÖTR (opak; arka feed GÖRÜNMESİN; altın tozu KALDIRILDI — kullanıcı: medya doğrudan yüklensin) */
 /* VİDEO tam ekran → ALTIN zemin YOK, SİYAH (kullanıcı: oynatmadan önceki sarıyı kaldır) — normal video oynatıcı gibi */
 .tamfoto-fon.tf-video-fon{ background:#0a1430; }
 /* TAM EKRAN: fotoğrafın TAMAMI görünür (contain, NORMAL — otomatik yaklaştırma YOK).
