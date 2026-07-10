@@ -599,8 +599,8 @@
 .tamfoto-img{ width:100%; height:100%; object-fit:contain; transform-origin:center center; touch-action:none; will-change:transform; } /* DOĞAL yön: yatay foto yatay, dikey dikey; kenarlar KESİLMEZ (tam görünür) */
 /* TAM EKRAN VİDEO — orijinal en-boy (kırpma yok); NATIVE kontrol YOK, BİZE ÖZGÜ oynatıcı */
 .tf-vid-sar{ position:absolute; inset:0; z-index:1; display:flex; align-items:center; justify-content:center; }
-/* tam ekran VİDEO: ekranı DOLDUR (cover) — kullanıcı onayladı, dokunma; kenar boşluk/şerit yok */
-.tamfoto-video{ width:100%; height:100%; object-fit:cover; background:transparent; }
+/* tam ekran VİDEO: TAMAMI görünür (contain) — kullanıcı: "yatayda video cover olunca ortası çıkıyor, hepsi çıkmıyor; videonun tümü görünsün" */
+.tamfoto-video{ width:100%; height:100%; object-fit:contain; background:transparent; }
 /* ortadaki büyük PIRLANTA oynat (duraklatınca görünür) */
 .tf-vid-buyuk{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:3; width:62px; height:62px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;
   background:transparent; box-shadow:inset 0 0 0 2px rgba(255,215,0,.7); }
