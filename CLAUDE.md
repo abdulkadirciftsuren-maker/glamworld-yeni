@@ -44,6 +44,7 @@ Açıklamalar **numaralı adımlarla** ve sade olur (1, 2, 3…). Teknik jargon 
 
 ## 4. 🎨 SABİT TASARIM KURALLARI
 
+- **⛔ HİÇBİR YERDE SİYAH/KOYU ZEMİN KULLANMA (kullanıcı KESİN istedi).** Tüm zeminler **ALTIN/renkli/canlı** olur. Tam ekran foto/video/hikâye açılışında, yükleme beklerken, kenar boşluklarında (letterbox) — HER YERDE **parlak altın**. Kod içinde siyah/çok koyu zemin (`#000`, `#0a1430`, `#05070e` vb.) görürsen **altına çevir**. Kullanıcı: "Ben hiçbir yerde siyah görmek istemiyorum; sayfam renkli, canlı, düzgün, zarif olacak." Medya yüklenene kadar bile zemin ALTIN kalır (siyah gösterme).
 - **HİÇBİR YERDE yuvarlak düğme/avatar KULLANMA.** Kullanıcının profili **KARE**dir; tüm avatarlar/düğmeler kare (hafif yuvarlatılmış köşe olabilir, tam daire ASLA).
 - Marka yazısı ("GLOXORG"/"GLAMWORLD") **hiçbir dile çevrilmez** → `translate="no"` + `className="notranslate"`.
 - Tüm kullanıcı metinleri doğru **Türkçe karakter** kullanır; kullanıcı yazıları **altın** (#FFD700).
