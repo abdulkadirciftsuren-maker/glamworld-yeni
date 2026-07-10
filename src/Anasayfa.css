@@ -354,7 +354,9 @@
 .hik-serit{ display:flex; gap:8px; overflow-x:auto; padding:10px 12px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .hik-serit::-webkit-scrollbar{ display:none; }
 /* Facebook gibi DİKEY KART — içinde seçilen foto/video görünür */
-.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:2px solid #d9b64a; padding:0; box-shadow:0 0 0 1px rgba(255,235,150,.4) inset, 0 0 7px rgba(0,0,0,.18); -webkit-tap-highlight-color:transparent; } /* ALTIN ÇEMBER HER YERDE EŞİT — yönlü gölge kaldırıldı, simetrik */
+.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:none; padding:0; box-shadow:0 0 6px rgba(0,0,0,.18); -webkit-tap-highlight-color:transparent; }
+/* ALTIN ÇERÇEVE = TEK ÜST KATMAN HALKA → HER KENAR VE KÖŞE BİREBİR EŞİT (kenar/gölge karışımı yok) */
+.hik-kart::after{ content:""; position:absolute; inset:0; border-radius:14px; border:2px solid #d9b64a; box-sizing:border-box; pointer-events:none; z-index:6; }
 /* Medya sarmalı: ALTIN TOZU arka + ÖNDE TAM medya (contain) → yatay/dikey HİÇ KESİLMEZ, boşluk ALTIN */
 .hik-kart-medyasar{ position:absolute; inset:0; overflow:hidden; background:
   radial-gradient(circle at 30% 22%, rgba(255,231,168,.55), transparent 58%),
