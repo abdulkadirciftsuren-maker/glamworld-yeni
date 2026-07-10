@@ -1656,6 +1656,7 @@ export default function Anasayfa({ pro = false }) {
   const [vidT, setVidT] = useState(0);           // anlık saniye
   const [vidSure, setVidSure] = useState(0);     // toplam saniye
   const [tfMini, setTfMini] = useState(false);   // TAM EKRAN video KÜÇÜLTÜLDÜ mü → köşede oynar, sayfa kayar
+  const [tfVidOran, setTfVidOran] = useState(null); // video en-boy oranı (mini pencere videoya göre → dikey video dikey pencere, kenar karartma yok)
   function vidTikla(e) { if (e) e.stopPropagation(); const v = tamVideoRef.current; if (!v) return; if (v.muted) v.muted = false; /* dokununca SESİ AÇ (sessiz autoplay'den sonra) */ if (v.paused) v.play(); else v.pause(); }
   const vidSn = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
   const [acikYazi, setAcikYazi] = useState({});        // uzun açıklamalar: id->true açıldı
@@ -4544,7 +4545,7 @@ export default function Anasayfa({ pro = false }) {
     if (!tamFoto) { setTfMini(false); return; }
     setTfMini(false); // her yeni açılışta TAM ekran (mini değil)
     setZoom({ s: 1, x: 0, y: 0 }); // her açılışta NORMAL (yakınlaştırılmamış); kullanıcı kendi büyütür
-    setVidOyn(false); setVidT(0); setVidSure(0); // video oynatıcı sıfırla
+    setVidOyn(false); setVidT(0); setVidSure(0); setTfVidOran(null); // video oynatıcı sıfırla
   }, [tamFoto]);
   // KİLİT ayrı efekt: mini modda sayfa KAYSIN (kilit yok) → video köşede oynarken aşağı gezilebilir
   useEffect(() => {
@@ -6288,12 +6289,12 @@ export default function Anasayfa({ pro = false }) {
           <div className={"tamfoto-fon" + (metinPost ? " tf-metin-fon" : "") + (p.video ? " tf-video-fon" : "") + (tfMini ? " tf-mini" : "")} style={metinPost && p.zemin ? { background: p.zemin } : undefined} onClick={() => { if (!tfMini) setTamFoto(""); }}>
             {/* TAM AÇILIŞ = ORİJİNAL: video ise kontrollü oynat; fotoğraf ise galeri gibi tam + parmakla zoom */}
             {p.video
-              ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()}>
+              ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()} style={tfMini && tfVidOran ? { aspectRatio: tfVidOran.toFixed(3) } : undefined}>
                   <video ref={tamVideoRef} className="tamfoto-video" src={videoSade(p.video)} autoPlay muted playsInline preload="auto"
                     poster={p.videoPoster || undefined}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
-                    onLoadedMetadata={(e) => setVidSure(e.currentTarget.duration || 0)}
+                    onLoadedMetadata={(e) => { setVidSure(e.currentTarget.duration || 0); const w = e.currentTarget.videoWidth, h = e.currentTarget.videoHeight; if (w && h) setTfVidOran(w / h); }}
                     onPlay={() => setVidOyn(true)} onPause={() => setVidOyn(false)} />
                   {!vidOyn && (
                     <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c="#ffd700" /></button>
