@@ -5239,26 +5239,26 @@ export default function Anasayfa({ pro = false }) {
 
           {/* AKIŞ (feed) — aşağı indikçe dünyadan yeni paylaşımlar */}
           <div className="ana-akis">
-            {/* HİKÂYELER — akış üstünde yatay halka şeridi (24 saatte kaybolur). Medya/akış düzenine dokunmaz, ayrı modül. */}
+            {/* HİKÂYELER — akış üstünde yatay KART şeridi (Facebook gibi). 24 saatte kaybolur. Medya/akış düzenine dokunmaz, ayrı modül. */}
             <div className="hik-serit">
               <input ref={hikayeInputRef} type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={hikayeSecildi} />
-              {/* SENİN hikayen — varsa aç, yoksa + ile ekle */}
-              <button className="hik-oge hik-benim" onClick={() => { const bi = hikayeGruplar.findIndex((g) => g.uid === (u && u.uid)); if (bi >= 0) hikayeAc(bi); else if (hikayeInputRef.current) hikayeInputRef.current.click(); }}>
-                <span className="hik-halka hik-benim-halka">
-                  <span className={"hik-av" + (foto ? "" : " harf")}>{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>
-                  <span className="hik-arti" onClick={(e) => { e.stopPropagation(); if (!hikayeYuk && hikayeInputRef.current) hikayeInputRef.current.click(); }}>{hikayeYuk ? "…" : "+"}</span>
-                </span>
-                <span className="hik-ad">{t("hikayenSenin", "Hikâyen")}</span>
+              {/* HİKÂYE OLUŞTUR kartı — profil foton + büyük + */}
+              <button className="hik-kart hik-olustur" onClick={() => { if (!hikayeYuk && hikayeInputRef.current) hikayeInputRef.current.click(); }}>
+                <span className="hik-kart-foto">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
+                <span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span>
+                <span className="hik-kart-ad">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("hikayeOlustur", "Hikâye Oluştur")}</span>
               </button>
-              {/* BAŞKALARININ hikâyeleri */}
-              {hikayeGruplar.filter((g) => g.uid !== (u && u.uid)).map((g) => {
+              {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = son öge; içinde seçilen fotoğraf/video görünür */}
+              {hikayeGruplar.map((g) => {
                 const gi = hikayeGruplar.indexOf(g);
+                const kapak = g.ogeler[g.ogeler.length - 1];
                 return (
-                  <button className="hik-oge" key={g.uid} onClick={() => hikayeAc(gi)}>
-                    <span className={"hik-halka" + (g.yeni ? " yeni" : " gorulen")}>
-                      <span className={"hik-av" + (g.amblem ? " amblem" : "") + (g.foto ? "" : " harf")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?")[0] || "?").toUpperCase()}</span>
-                    </span>
-                    <span className="hik-ad">{((g.ad || "").split(" ")[0]) || "—"}</span>
+                  <button className="hik-kart" key={g.uid} onClick={() => hikayeAc(gi)}>
+                    {kapak.tip === "video"
+                      ? <video className="hik-kart-medya" src={videoSade(kapak.url)} muted preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} />
+                      : <img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" />}
+                    <span className={"hik-kart-av" + (g.yeni ? " yeni" : " gorulen") + (g.amblem ? " amblem" : "")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?")[0] || "?").toUpperCase()}</span>
+                    <span className="hik-kart-isim">{((g.ad || "").split(" ")[0]) || "—"}</span>
                   </button>
                 );
               })}
