@@ -668,8 +668,10 @@
 /* RAIL SAĞDA, dikey ORTA — ✕ sabit (üst-sağ) olduğu için çakışmaz */
 /* TAM EKRAN ikon şeridi: ALTTA yatay (feed gibi); sağ dikey rail KALDIRILDI */
 .tf-rail{ position:absolute; left:0; right:0; bottom:0; top:auto; transform:none; z-index:5;
-  display:flex; flex-direction:row; align-items:center; justify-content:space-around; gap:0; padding:7px 10px;
-  background:linear-gradient(0deg, rgba(164,134,60,.72), rgba(164,134,60,.12)); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); } /* ALTIN tozu (SİYAH değil; foto+video aynı) */
+  display:flex; flex-direction:row; align-items:center; justify-content:space-around; flex-wrap:wrap; gap:0 10px; row-gap:8px; padding:7px 14px;
+  background:linear-gradient(0deg, rgba(164,134,60,.72), rgba(164,134,60,.12)); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); } /* SİMETRİK dağıt (space-around); ALTIN tozu */
+/* İKON + kendi fotoğrafları (beğeni ikonu+beğenenler, yorum ikonu+yorumcular) yan yana tek grup */
+.tf-ic-cift{ display:inline-flex; align-items:center; gap:6px; }
 .tamfoto-fon.tf-video-fon .tf-rail{ background:linear-gradient(0deg, rgba(201,162,39,.7), rgba(201,162,39,.2)); }
 .tf-ic{ display:flex; align-items:center; justify-content:center; height:20px; background:none; border:none; cursor:pointer; padding:0; color:#fff;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)); }
@@ -677,17 +679,14 @@
 .tf-ic span{ display:none; } /* sayı gizli → simetrik */
 /* İKON ŞERİDİ + BEĞENENLER kapsayıcı — DİKEY: alt alta (beğenenler altta, yer müsait) */
 .tf-dip .tf-rail-satir{ display:flex; flex-direction:column; align-items:stretch; }
-@media (max-height:560px){ .tf-rail{ gap:9px; } .tf-ic, .tf-ic svg{ height:20px; width:20px; }
-  /* YATAY/kısa ekran (telefon yan): fotoğraf TAM görünür, ASLA kırpılmaz (kullanıcı isteği: yatay foto eksik/kesik çıkmasın) — kenarlarda altın boşluk kalabilir, önemli olan fotonun tümünün görünmesi */
+@media (max-height:560px){ .tf-ic, .tf-ic svg{ height:20px; width:20px; }
+  /* YATAY/kısa ekran (telefon yan): fotoğraf TAM görünür, ASLA kırpılmaz (kullanıcı: yatay foto sağ/sol kesik çıkmasın) */
   .tamfoto-img{ object-fit:contain; }
   /* foto üstü yazı yatayda küçülsün (dev+kesik olmasın) */
   .tf-ustyazi.boy-kucuk{ font-size:15px; } .tf-ustyazi.boy-orta{ font-size:20px; } .tf-ustyazi.boy-buyuk{ font-size:26px; }
-  /* YATAY: beğenen/yorumcu fotoğrafları ALT ŞERİT DEĞİL → ikonların SAĞINA (yan yana), yer müsait, pencereyi kapatmaz (kullanıcı isteği) */
-  .tf-dip .tf-rail-satir{ flex-direction:row; align-items:center; gap:12px; }
-  .tf-dip .tf-rail-satir .tf-rail{ flex:0 0 auto; width:auto; justify-content:flex-start; gap:16px; }
-  .tf-dip .tf-rail-satir .serit-grup{ flex:1 1 auto; min-width:0; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
-  .tf-dip .tf-rail-satir .serit-grup::-webkit-scrollbar{ display:none; }
-} /* yatay/kısa ekran: rail küçük, sığar */
+  /* YATAY (geniş ekran): ikonlar SİMETRİK dağılır, beğeni/yorum fotoğrafları KENDİ ikonunun yanında (kullanıcı: geniş ekranda yer var) */
+  .tf-rail{ justify-content:space-around; padding:7px 4vw; }
+} /* yatay/kısa ekran */
 /* BİLGİSAYAR/iPAD: dikey ikonlar BÜYÜK + aralıklı + pencereden UZAK (telefon boyutu sızmasın) */
 @media (min-width:1100px) and (min-height:600px){
   .tf-rail{ padding:8px 6vw; } /* alt ikon şeridi dikey AZALT (bilgisayar) */

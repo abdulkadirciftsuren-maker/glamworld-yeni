@@ -6366,14 +6366,20 @@ export default function Anasayfa({ pro = false }) {
                   ikonların SAĞINA geçer (alt şerit YOK, pencereyi kapatmaz) — kullanıcı isteği. tf-rail-satir CSS ile yönlenir. */}
               <div className="tf-rail-satir">
                 <div className="tf-rail" onClick={(e) => e.stopPropagation()}>
-                  <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{Ikon.kalp}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
-                  <button className="tf-ic ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}</button>
+                  {/* BEĞENİ ikonu + hemen YANINDA beğenenlerin fotoğrafları (kullanıcı: geniş ekranda yer var) */}
+                  <span className="tf-ic-cift">
+                    <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{Ikon.kalp}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
+                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
+                  </span>
+                  {/* YORUM ikonu + hemen YANINDA yorum yapanların fotoğrafları */}
+                  <span className="tf-ic-cift">
+                    <button className="tf-ic ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}</button>
+                    <YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} />
+                  </span>
                   <button className="tf-ic ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}</button>
                   <button className={"tf-ic tf-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                   <button className="tf-ic ape-mesaj" onClick={() => { setTamFoto(""); if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); }}>{Ikon.mesaj}</button>
                 </div>
-                {/* BEĞENENLER + YORUMCULAR — dikeyde ikonların altında, yatayda sağında */}
-                <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
               </div>
             </div>
             {/* SAĞ-ALT — GLOXORG amblemi (şeffaf) — dip'in ÜSTÜNDE */}
