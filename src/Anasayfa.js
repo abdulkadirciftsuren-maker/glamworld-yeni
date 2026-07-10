@@ -5274,7 +5274,9 @@ export default function Anasayfa({ pro = false }) {
               <input ref={hikayeInputRef} type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={hikayeSecildi} />
               {/* HİKÂYE OLUŞTUR kartı — profil TAM/yukarıdan, altta altın şeritte + ve yazı */}
               <button className="hik-kart hik-olustur" onClick={() => { if (!hikayeYuk && hikayeInputRef.current) hikayeInputRef.current.click(); }}>
-                <span className="hik-kart-foto">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
+                <span className="hik-kart-foto">{foto
+                  ? <span className="hik-kart-medyasar"><img className="hik-kart-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={foto} alt="" referrerPolicy="no-referrer" /></span>
+                  : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
                 <span className="hik-kart-serit"><span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span><span className="hik-kart-ad">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("hikayeOlustur", "Hikâye Oluştur")}</span></span>
               </button>
               {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = EN SON hikaye (görüntüleyicide de ilk o oynar) */}
@@ -5283,9 +5285,11 @@ export default function Anasayfa({ pro = false }) {
                 const kapak = g.ogeler[0];
                 return (
                   <button className="hik-kart" key={g.uid} onClick={() => hikayeAc(gi)}>
-                    {kapak.tip === "video"
-                      ? <video className="hik-kart-medya" src={videoSade(kapak.url)} muted preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} />
-                      : <img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" />}
+                    <span className="hik-kart-medyasar">
+                      {kapak.tip === "video"
+                        ? (<><video className="hik-kart-bg" src={videoSade(kapak.url)} muted loop autoPlay playsInline preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} aria-hidden="true" /><video className="hik-kart-medya" src={videoSade(kapak.url)} muted loop autoPlay playsInline preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} /></>)
+                        : (<><img className="hik-kart-bg" src={kapak.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" /></>)}
+                    </span>
                     {g.ogeler.length > 1 && <span className="hik-kart-sayac" aria-label={g.ogeler.length + " hikâye"}>🖼 {g.ogeler.length}</span>}
                     <span className={"hik-kart-av" + (g.yeni ? " yeni" : " gorulen") + (g.amblem ? " amblem" : "")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?")[0] || "?").toUpperCase()}</span>
                     <span className="hik-kart-isim">{((g.ad || "").split(" ")[0]) || "—"}</span>
@@ -7592,10 +7596,11 @@ export default function Anasayfa({ pro = false }) {
               <button className="hik-kapat" onClick={(e) => { e.stopPropagation(); hikayeKapat(); }} aria-label="Kapat">✕</button>
             </div>
             {oge.tip === "video"
-              ? <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline
-                  onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
-                  onEnded={() => hikayeGec(1)} />
-              : <img className="hik-medya" src={oge.url} alt="" referrerPolicy="no-referrer" />}
+              ? <><video className="hik-medya-bg" src={videoSade(oge.url)} muted loop autoPlay playsInline aria-hidden="true" tabIndex={-1} />
+                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline
+                    onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
+                    onEnded={() => hikayeGec(1)} /></>
+              : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-medya" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
             {/* Tüm yüzey: DOKUN = durdur/devam, KAYDIR = hikaye değiştir (sola=sonraki, sağa=önceki) */}
             <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} />
           </div>

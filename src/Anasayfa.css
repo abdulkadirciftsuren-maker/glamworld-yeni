@@ -355,9 +355,12 @@
 .hik-serit::-webkit-scrollbar{ display:none; }
 /* Facebook gibi DİKEY KART — içinde seçilen foto/video görünür */
 .hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:1px solid rgba(255,215,0,.6); padding:0; box-shadow:0 2px 8px rgba(0,0,0,.22); -webkit-tap-highlight-color:transparent; }
-.hik-kart-medya{ width:100%; height:100%; object-fit:cover; display:block; }
-/* Küçük avatar KARE (profil karedir) — yuvarlak DEĞİL; ince renkli çerçeve */
-.hik-kart-av{ position:absolute; top:7px; left:7px; width:40px; height:40px; border-radius:9px; overflow:hidden; background:#0d1b3a; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; border:3px solid #37b6ff; z-index:2; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+/* Medya sarmalı: BULANIK arka (cover) + ÖNDE TAM medya (contain) → yatay/dikey HİÇ KESİLMEZ */
+.hik-kart-medyasar{ position:absolute; inset:0; overflow:hidden; background:#0d1b3a; }
+.hik-kart-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scale(1.25); filter:blur(16px) brightness(.6); z-index:0; }
+.hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:1; display:block; }
+/* Küçük avatar KARE (profil karedir) — yuvarlak DEĞİL; UFAK, ince renkli çerçeve */
+.hik-kart-av{ position:absolute; top:6px; left:6px; width:30px; height:30px; border-radius:8px; overflow:hidden; background:#0d1b3a; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; border:2.5px solid #37b6ff; z-index:2; box-shadow:0 1px 4px rgba(0,0,0,.4); }
 .hik-kart-av.yeni{ border-color:#ffd700; }    /* YENİ hikaye = altın çerçeve */
 .hik-kart-av.gorulen{ border-color:#c8c0ae; } /* görüldü = gri çerçeve */
 .hik-kart-av img{ width:100%; height:100%; object-fit:cover; } .hik-kart-av.amblem img{ object-fit:contain; }
@@ -366,19 +369,19 @@
 /* HİKÂYE OLUŞTUR kartı — profil YUKARIDAN başlar (siyah bant yok), altta ALTIN ŞERİT: + ve yazı */
 .hik-olustur{ background:#0d1b3a; }
 .hik-kart-foto{ display:block; position:absolute; top:0; left:0; right:0; bottom:52px; overflow:hidden; background:#0d1b3a; }
-.hik-kart-foto img{ width:100%; height:100%; object-fit:cover; object-position:top; } /* profil YUKARIDAN, siyah bant kalmaz */
 .hik-kart-harf{ display:flex; width:100%; height:100%; align-items:center; justify-content:center; color:#fff; font-size:34px; font-weight:800; }
 /* Altta ALTIN ŞERİT — içinde + (küçük kare) ve altın yazı */
 .hik-kart-serit{ position:absolute; left:0; right:0; bottom:0; height:52px; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:linear-gradient(180deg,#ffe680,#f0c419); box-shadow:0 -1px 6px rgba(0,0,0,.25) inset; }
 .hik-kart-arti{ width:22px; height:22px; border-radius:7px; background:#2f9e44; color:#fff; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,.4); }
 .hik-kart-ad{ text-align:center; color:#3a2c00; font-size:10.5px; font-weight:800; line-height:1.05; padding:0 4px; text-shadow:0 1px 0 rgba(255,255,255,.35); }
-/* Kaç hikâye var — sağ üst köşede ufak ALTIN rozet (resim ikonu + sayı) */
-.hik-kart-sayac{ position:absolute; top:7px; right:7px; z-index:3; background:linear-gradient(180deg,#ffe680,#f0c419); color:#3a2c00; font-size:11px; font-weight:800; padding:2px 7px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
+/* Kaç hikâye var — sağ üst köşede UFAK ALTIN rozet (resim ikonu + sayı) */
+.hik-kart-sayac{ position:absolute; top:6px; right:6px; z-index:3; background:linear-gradient(180deg,#ffe680,#f0c419); color:#3a2c00; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:7px; box-shadow:0 1px 4px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
 /* GÖRÜNTÜLEYİCİ */
 .hik-fon{ position:fixed; inset:0; z-index:100050; background:rgba(0,0,0,.94); display:flex; align-items:center; justify-content:center; animation:adFon .2s ease; }
 .hik-pencere{ position:relative; width:100%; height:100%; max-width:520px; display:flex; align-items:center; justify-content:center; background:#000; overflow:hidden; }
 @media (min-width:540px) and (min-height:620px){ .hik-pencere{ max-height:94vh; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.6); } }
-.hik-medya{ width:100%; height:100%; object-fit:contain; display:block; }
+.hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(30px) brightness(.45); transform:scale(1.2); z-index:0; }
+.hik-medya{ position:relative; width:100%; height:100%; object-fit:contain; display:block; z-index:1; }
 .hik-ilerle-satir{ position:absolute; top:max(8px,env(safe-area-inset-top)); left:8px; right:8px; z-index:5; display:flex; gap:4px; }
 .hik-ilerle{ flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,.35); overflow:hidden; }
 .hik-ilerle i{ display:block; height:100%; background:#fff; border-radius:3px; width:0; }
