@@ -1209,6 +1209,9 @@ export default function Anasayfa({ pro = false }) {
   const hikTanimaRef = useRef(null);                 // konuşma tanıma (SpeechRecognition)
   const [hikPaylasYuk, setHikPaylasYuk] = useState(false); // hikâye yükleniyor mu
   const [hikPaylasYuzde, setHikPaylasYuzde] = useState(0);  // video yükleme yüzdesi (0..100)
+  const [hikKonum, setHikKonum] = useState(null);           // hikâyenin CANLI konumu {tam,sehir,ulke,yer}
+  const [hikKonumDurum, setHikKonumDurum] = useState("");   // "" | "aliniyor" | "hata"
+  const hikCanliRef = useRef(false);                        // son seçim CANLI ÇEK mi (konum otomatik alınsın)
   const [hikMenuAcik, setHikMenuAcik] = useState(false);    // görüntüleyicide ⋯ menü açık mı
   const [hikBildiri, setHikBildiri] = useState("");         // görüntüleyici içi küçük bildirim (toast)
   const hikGizliRef = useRef(null);                         // "görme" denen kişilerin uid kümesi (localStorage)
@@ -1989,9 +1992,31 @@ export default function Anasayfa({ pro = false }) {
       if (video) { onizUrl = URL.createObjectURL(f); }
       else { onizUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
       setHikYazilar([]); setHikSeciliYazi(null); setHikYaziRenk("#ffd700"); setHikAiOneriler([]);
+      setHikKonum(null); setHikKonumDurum("");
       setHikTaslak({ tip: video ? "video" : "foto", url: onizUrl, file: f, poster: "" });
+      // CANLI ÇEK ise → konumu OTOMATİK al (nereden çektiysen paylaşımda görünsün)
+      const canli = hikCanliRef.current; hikCanliRef.current = false;
+      if (canli) { try { hikKonumAl(); } catch (x2) {} }
     } catch (x) {}
     setHikayeYuk(false);
+  };
+  // Hikâyeye CANLI konum al (paylaşımdaki gibi) — ikinci basış kapatır
+  const hikKonumAl = () => {
+    if (hikKonum) { setHikKonum(null); setHikKonumDurum(""); return; }
+    if (typeof navigator === "undefined" || !navigator.geolocation) { setHikKonumDurum("hata"); return; }
+    setHikKonumDurum("aliniyor");
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const enlem = pos.coords.latitude, boylam = pos.coords.longitude;
+        let yer = "", sehir = "", ulke = "";
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${enlem}&lon=${boylam}&accept-language=${dil}&zoom=18`, { headers: { Accept: "application/json" } });
+          if (r.ok) { const d = await r.json(); const a = d.address || {}; yer = d.name || a.amenity || a.aeroway || a.building || a.tourism || a.leisure || a.shop || a.office || a.road || a.neighbourhood || a.suburb || ""; sehir = a.city || a.town || a.village || a.municipality || a.county || a.state || ""; ulke = a.country || ""; }
+        } catch (x) {}
+        const tam = [yer, sehir, ulke].filter(Boolean).join(", ") || t("konumBulundu", "Konum bulundu");
+        setHikKonum({ enlem, boylam, yer, sehir, ulke, tam }); setHikKonumDurum("");
+      } catch (e) { setHikKonumDurum("hata"); }
+    }, () => setHikKonumDurum("hata"), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
   };
   // Önizleme videosunun O ANKİ karesini yakala (AI için — SİYAH kare sorununu önler; video ekranda oynayıp içerik gösterirken çekilir)
   const canliVideoKare = () => {
@@ -2008,6 +2033,7 @@ export default function Anasayfa({ pro = false }) {
     setHikTaslak((tas) => { if (tas && tas.tip === "video" && tas.url) { try { URL.revokeObjectURL(tas.url); } catch (x) {} } return null; });
     setHikYazilar([]); setHikSeciliYazi(null); setHikAiOneriler([]); setHikPaylasYuk(false); setHikPaylasYuzde(0);
     setHikAiIstek(""); try { if (hikTanimaRef.current) hikTanimaRef.current.stop(); } catch (e) {} setHikMikDinliyor(false);
+    setHikKonum(null); setHikKonumDurum("");
   };
   // "Yazı" hikâyesi başlat (renkli zemin + yazı — Facebook "Aa" gibi)
   const yaziHikayesiBaslat = () => {
@@ -2077,7 +2103,7 @@ export default function Anasayfa({ pro = false }) {
       if (url) {
         // Yazı hikâyesinde yazılar zaten görsele GÖMÜLDÜ → tekrar üste koyma
         const yazilar = yaziTip ? [] : hikYazilar.map((y) => ({ metin: (y.metin || "").trim(), xr: y.xr, yr: y.yr, renk: y.renk, boyut: y.boyut || 1 })).filter((y) => y.metin);
-        await hikayeEkle(benimHikayeKisi, { tip: yaziTip ? "foto" : hikTaslak.tip, url, poster, yazilar });
+        await hikayeEkle(benimHikayeKisi, { tip: yaziTip ? "foto" : hikTaslak.tip, url, poster, yazilar, yer: (hikKonum && hikKonum.tam) || "" });
         if (hikTaslak.tip === "video" && hikTaslak.url) { try { URL.revokeObjectURL(hikTaslak.url); } catch (x) {} }
         setHikTaslak(null); setHikYazilar([]); setHikSeciliYazi(null); setHikAiOneriler([]); setHikAiIstek("");
         await hikayeleriYukle();
@@ -2112,7 +2138,7 @@ export default function Anasayfa({ pro = false }) {
       if (gors) { const vir = gors.indexOf(","); const mt = (gors.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg"; if (vir > 0) parcalar.push({ type: "image", source: { type: "base64", media_type: mt, data: gors.slice(vir + 1) } }); }
       const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" }[dil] || "Türkçe";
       const istek = (hikAiIstek || "").trim();
-      const konum = (profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir, profilBilgi.konum.ulke].filter(Boolean).join(", ")) || "";
+      const konum = (hikKonum && hikKonum.tam) || (profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir, profilBilgi.konum.ulke].filter(Boolean).join(", ")) || "";
       const uzunluk = istek
         ? "Kullanıcı ne istediğini anlattığı için 3 farklı, DAHA DOLU ve UZUN yazı ver (her biri 1-3 cümle olabilir); onun anlattığını tam yansıt, sıcak ve renkli olsun."
         : "3 farklı KISA ve çarpıcı öneri ver (her biri 1 satır, 2-6 kelime).";
@@ -7792,7 +7818,7 @@ export default function Anasayfa({ pro = false }) {
             <div className="hik-ust">
               <span className={"hik-ust-av" + (grup.amblem ? " amblem" : "")}>{grup.foto ? <img src={grup.foto} alt="" referrerPolicy="no-referrer" /> : ((grup.ad || "?")[0] || "?").toUpperCase()}</span>
               <b className="notranslate" translate="no">{grup.ad || "—"}</b>
-              <i>{zamanOnce(oge.zamanMs)}</i>
+              <i>{zamanOnce(oge.zamanMs)}{oge.yer ? " · 📍 " + oge.yer : ""}</i>
               <button className="hik-menu-ac" onClick={(e) => { e.stopPropagation(); hikDuraklaRef.current = true; setHikayeDurdu(true); hikMenuAcikRef.current = true; setHikMenuAcik(true); }} aria-label={t("secenekler", "Seçenekler")}>⋯</button>
               <button className="hik-kapat" onClick={(e) => { e.stopPropagation(); hikayeKapat(); }} aria-label="Kapat">✕</button>
             </div>
@@ -7840,7 +7866,7 @@ export default function Anasayfa({ pro = false }) {
               <button className="hik-secim-kart hsk-video" onClick={() => { setHikSecimAcik(false); if (hikVideoInputRef.current) hikVideoInputRef.current.click(); }}>
                 <span className="hik-secim-ik" aria-hidden="true">🎬</span><span>{t("hikSecVideo", "Video")}</span>
               </button>
-              <button className="hik-secim-kart hsk-canli" onClick={() => { setHikSecimAcik(false); if (hikCanliInputRef.current) hikCanliInputRef.current.click(); }}>
+              <button className="hik-secim-kart hsk-canli" onClick={() => { setHikSecimAcik(false); hikCanliRef.current = true; if (hikCanliInputRef.current) hikCanliInputRef.current.click(); }}>
                 <span className="hik-secim-ik" aria-hidden="true">📷</span><span>{t("hikSecCanli", "Canlı Çek")}</span>
               </button>
               <button className="hik-secim-kart hsk-yazi" onClick={yaziHikayesiBaslat}>
@@ -7915,6 +7941,11 @@ export default function Anasayfa({ pro = false }) {
                   </div>
                 )}
               </div>
+              {/* Konum (canlı) — nereden paylaşıldığı görünsün */}
+              <button className={"hik-konum-btn" + (hikKonum ? " aktif" : "")} onClick={hikKonumAl}>
+                📍 {hikKonumDurum === "aliniyor" ? t("konumAliniyor", "Konum alınıyor…") : (hikKonum ? hikKonum.tam : (hikKonumDurum === "hata" ? t("konumHata", "Konum alınamadı — tekrar dene") : t("hikKonumEkle", "Konum ekle")))}
+                {hikKonum ? <span className="hik-konum-kaldir" aria-hidden="true"> ✕</span> : null}
+              </button>
               {/* Paylaş */}
               <button className="hik-duzen-paylas" onClick={hikayeGonder} disabled={hikPaylasYuk}>
                 {hikPaylasYuk ? (t("hikayeYukleniyor", "Yükleniyor…") + (hikPaylasYuzde > 0 ? " %" + hikPaylasYuzde : "")) : t("hikayePaylas", "Hikâyeni Paylaş")}

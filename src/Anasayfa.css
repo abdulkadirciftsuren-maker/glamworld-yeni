@@ -463,6 +463,9 @@
 .hik-renk-btn{ width:24px; height:24px; border-radius:7px; border:2px solid rgba(255,255,255,.35); cursor:pointer; padding:0; }
 .hik-renk-btn.aktif{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.5); }
 /* Paylaş */
+.hik-konum-btn{ width:100%; padding:10px 12px; border:1px solid rgba(255,215,0,.5); border-radius:11px; background:rgba(255,215,0,.1); color:#ffe680; font-size:13.5px; font-weight:700; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hik-konum-btn.aktif{ background:rgba(47,224,138,.15); border-color:rgba(47,224,138,.55); color:#c9ffe4; }
+.hik-konum-kaldir{ opacity:.8; font-weight:800; }
 .hik-duzen-paylas{ width:100%; padding:13px; border:none; border-radius:13px; cursor:pointer; background:linear-gradient(180deg,#ffe680,#f0c419); color:#2a2000; font-size:16px; font-weight:800; box-shadow:0 3px 12px rgba(240,196,25,.35); }
 .hik-duzen-paylas:disabled{ opacity:.85; }
 .hik-yuzde-cubuk{ height:6px; border-radius:6px; background:rgba(255,255,255,.15); overflow:hidden; margin-top:-2px; }
