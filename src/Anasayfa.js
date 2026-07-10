@@ -1106,6 +1106,9 @@ export default function Anasayfa({ pro = false }) {
   const [ekTelefon, setEkTelefon] = useState("");
   const [ekTelefon2, setEkTelefon2] = useState("");   // İKİNCİ telefon numarası (isteğe bağlı)
   const [ek2Eposta, setEk2Eposta] = useState("");
+  // AD / SOYAD (Ayarlar) — ilk girişte yazılan ad; buradan düzeltilir, Gloxoo yeni adı bilir
+  const [ayarIsim, setAyarIsim] = useState("");
+  const [ayarSoyisim, setAyarSoyisim] = useState("");
   // CİNSİYET + DOĞUM TARİHİ (Ayarlar) — Gloxoo hitabı (Bey/Hanım) ve yaşı buradan bilir
   const [cinsiyet, setCinsiyet] = useState(""); // "bayan" | "erkek" | "belirtme" | ""
   const [dogumGun, setDogumGun] = useState(""); const [dogumAy, setDogumAy] = useState(""); const [dogumYil, setDogumYil] = useState("");
@@ -2624,6 +2627,7 @@ export default function Anasayfa({ pro = false }) {
     if (!ayarlarAcik) return;
     const b = profilBilgi || {};
     setEkTelefon(b.telefon || ""); setEkTelefon2(b.telefon2 || ""); setEk2Eposta(b.eposta2 || "");
+    setAyarIsim(b.isim || ""); setAyarSoyisim(b.soyisim || "");
     setCinsiyet(b.cinsiyet || ""); const dg = b.dogum || {}; setDogumGun(dg.gun ? String(dg.gun) : ""); setDogumAy(dg.ay ? String(dg.ay) : ""); setDogumYil(dg.yil ? String(dg.yil) : "");
     setKurumTur((b.kurum && b.kurum.tur) || ""); setKurumAd((b.kurum && b.kurum.ad) || "");
     const k = b.konum || {};
@@ -2892,6 +2896,15 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser; if (!uu) return;
     setProfilBilgi((p) => ({ ...(p || {}), cinsiyet: deger }));
     profilKaydet(uu.uid, { cinsiyet: deger }).then(() => { setAyarMsg(t("ayarKaydedildi", "Kaydedildi ✓")); setTimeout(() => setAyarMsg(""), 2000); }).catch(() => {});
+  }
+  // AD / SOYAD kaydet (ilk girişte yazılanı düzelt) → her yerde (profil/gönderi/hikâye/Gloxoo) güncellenir
+  function ayarAdKaydet() {
+    const uu = auth.currentUser; if (!uu) return;
+    const isim = (ayarIsim || "").trim(), soyisim = (ayarSoyisim || "").trim();
+    if (!isim) { setAyarMsg(t("ayarAdBos", "İsim boş olamaz")); setTimeout(() => setAyarMsg(""), 2500); return; }
+    const veri = { isim, soyisim };
+    setProfilBilgi((p) => ({ ...(p || {}), isim, soyisim }));
+    profilKaydet(uu.uid, veri).then(() => { setAyarMsg(t("ayarAdKaydedildi", "Adın kaydedildi ✓ — Gloxoo artık yeni adını biliyor")); setTimeout(() => setAyarMsg(""), 3200); }).catch(() => setAyarMsg(t("ayarHata", "Kaydedilemedi")));
   }
   // DOĞUM TARİHİ kaydet (gün/ay/yıl) → Gloxoo yaşı bilir
   function dogumKaydet() {
@@ -3428,7 +3441,9 @@ export default function Anasayfa({ pro = false }) {
     sistem += ` GLOXORG HAKKINDA (sorulursa net anlat, uydurma): GLOXORG dünyaya açık, lüks bir profesyonel sosyal platformdur (web: gloxorg.com). Ben Gloxoo — GLOXORG'un akıllı kalbi ve yardımcısıyım (gloxoo.com): her sayfada yanındayım, paylaşım yazarım, yol/bilgi/güncel haber veririm, sana özel yardım ederim. 🐻 EKSPERT ayı ise bulunduğun sayfanın uzmanıdır (üstteki ayı düğmesi) — o sayfada derin yardım eder. `;
     sistem += ` 7 EKSEN EYLEM PLANI: Kullanıcı "eylem planı", "hedef planı", "yol haritası", "nereden başlarım", "bana plan çıkar" gibi bir şey isterse, ona ÖZEL (mesleği/hedefi/konumuna göre) şu 7 ekseni SIRAYLA sun; her eksende ne YAPACAĞINI somut, kısa ve motive edici tek cümleyle yaz: 1) 🧠 DÜŞÜN — neredesin, ne istiyorsun, netleş. 2) 🔭 GELECEĞİ GÖR — ileriyi, fırsatı, nereye gittiğini gör; vizyon kur. 3) 🎯 HEDEF SEÇ — net, ölçülebilir tek hedef. 4) 🛠️ ÜRET — harekete geç, somut bir şey ortaya koy. 5) ✨ FARK YARAT — seni özel kılanı öne çıkar. 6) 🤝 PAYLAŞ & BAĞ KUR — işini paylaş, doğru insanlar/müşterilerle bağ kur (GLOXORG'un kalbi). 7) 🚀 İLERLE — düzenli ilerle, ölç, geliştir, durma. Sonunda "her adımda yanındayım; ilerlemekten seni alıkoyan neyse birlikte aşarız" de. Bu planı SADECE istendiğinde ver, her mesajda dayatma. `;
     if (yardimciBaglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${yardimciBaglam} Soruları büyük olasılıkla bununla ilgili.`;
-    sistem += ` KULLANICI BİLGİSİ: ${proUye ? "Profesyonel (kırmızı pırlanta) üye" : "Müşteri (beyaz pırlanta) üye"}${meslekAd ? ", meslek " + meslekAd : ""}, konum ${myTamKonum || konum.kod}${u && u.email ? ", e-posta " + u.email : ""}. Nerede olduğu sorulursa konumu kullan.`;
+    const kadi = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    const konumTam = (profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir, profilBilgi.konum.ulke].filter(Boolean).join(", ")) || myTamKonum || konum.kod || "";
+    sistem += ` KULLANICI BİLGİSİ: ${kadi ? "adı " + kadi + ", " : ""}${proUye ? "Profesyonel (kırmızı pırlanta) üye" : "Müşteri (beyaz pırlanta) üye"}${meslekAd ? ", meslek " + meslekAd : ""}${konumTam ? ", konum " + konumTam : ""}${u && u.email ? ", e-posta " + u.email : ""}. Kullanıcıya uygun olduğunda adıyla hitap et. Nerede olduğu, şehri/ilçesi, oradaki haber/spor/gündem sorulursa BU KONUMU kullanarak yardımcı ol; ASLA kuru "bilmiyorum" deme, saçma/alakasız konuşma — bildiğini net söyle, canlı/anlık veri gerekiyorsa nasıl bulacağını göster ama yanlış/uydurma bilgi verme.`;
     const sonIdx = yeniListe.length - 1;
     // GÖRÜNTÜLÜ SOHBET: kamera açıksa (sesli ya da yazılı fark etmez) O ANKİ kareyi al — kullanıcının son mesajına eklenir
     const kk = (opt && opt.kameraKare) ? opt.kameraKare : (kameraModRef.current ? kameraKare() : null);
@@ -7448,6 +7463,13 @@ export default function Anasayfa({ pro = false }) {
 
                 <AyarBolum acik={ayarBolum==="hesap"} onTik={()=>setAyarBolum(b=>b==="hesap"?null:"hesap")} renk="#2f7fd6" ad={t("ayarHesabim", "Hesabım")} ikon="👤" onAcBilgi={setAciklama} bilgi={t("aciklamaHesabim", "Ana e-posta ve adın burada görünür. İstersen müşterilerin sana ulaşması için 2. bir iletişim e-postası ve telefon ekleyebilirsin. Telefon için ülke kodunu seç, numaranı yaz, Kaydet'e bas.")}>
                   <div className="ayar-bilgi"><b>{adTam}</b><span>{(u && u.email) || "—"}</span></div>
+                  {/* AD / SOYAD — ilk girişte yazılanı buradan düzelt; Gloxoo yeni adı bilir */}
+                  <label className="ayar-et">{t("ayarAdim", "Adın ve soyadın")} <BilgiBtn metin={t("aciklamaAdim", "Sayfaya ilk girerken yazdığın ad ve soyad burada. İstediğin zaman düzeltebilirsin. Gloxoo sana bu adla hitap eder; değiştirince yeni adını hemen bilir. Gönderilerinde ve hikâyelerinde de bu ad görünür.")} onAc={setAciklama} /></label>
+                  <div className="ayar-tel-satir">
+                    <input className="ayar-input" type="text" value={ayarIsim} onChange={(e) => setAyarIsim(e.target.value)} placeholder={t("ayarIsimPh", "Adın")} />
+                    <input className="ayar-input" type="text" value={ayarSoyisim} onChange={(e) => setAyarSoyisim(e.target.value)} placeholder={t("ayarSoyisimPh", "Soyadın")} />
+                  </div>
+                  <button className="ayar-btn" onClick={ayarAdKaydet}>{t("ayarAdKaydet", "Adımı kaydet")}</button>
                   <label className="ayar-et">{t("ayar2Eposta", "2. e-posta (iletişim)")} <BilgiBtn metin={t("aciklama2Eposta", "Bu, İSTEĞE BAĞLI ikinci bir İLETİŞİM e-postasıdır — müşteriler sana ulaşsın diye profiline eklenir. Giriş/şifre kurtarma e-postan DEĞİLDİR (o, hesabını açtığın ana e-postandır). Boş bırakabilirsin; istersen ikinci bir e-posta yazıp Kaydet'e bas.")} onAc={setAciklama} /></label>
                   <input className="ayar-input" type="email" value={ek2Eposta} onChange={(e) => setEk2Eposta(e.target.value)} placeholder={t("epostaOrnek", "ornek@gloxorg.com")} />
                   <label className="ayar-et">{t("ayarTelefon", "Telefon")} <BilgiBtn metin={t("aciklamaTelefonNeden", "Telefon numaran müşterilerin sana ulaşması, hesabını kurtarman ve güvenlik için profiline eklenir — istersen boş bırakabilirsin. Önce ülke kodunu seç (soldaki kutuya yaz, ülke adı yaz ya da 'Konumumdan al'), sonra numaranı yaz. İkinci bir numaran varsa (iş / WhatsApp) onu da alttaki '2. numara' kutusuna ekleyebilirsin. Bitince Kaydet'e bas.")} onAc={setAciklama} /></label>
