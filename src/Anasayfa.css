@@ -588,10 +588,10 @@
 /* zemin OPAK AÇIK ALTIN (yarı saydam değil → arkadaki koyu sayfa görünüp siyahlaşmaz) */
 .tamfoto-fon{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:100010; overflow:hidden; display:flex; align-items:center; justify-content:center; animation:adFon .2s ease;
   background:
-    radial-gradient(circle at 20% 16%, rgba(255,228,160,.30), transparent 44%),
-    radial-gradient(circle at 84% 82%, rgba(255,214,96,.20), transparent 48%),
-    radial-gradient(circle at 50% 50%, rgba(120,96,45,.55), rgba(26,22,14,.94));
-  -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); } /* foto kenar boşluğu = ALTIN TOZU ŞEFFAF CAM (siyah bant YOK) — kullanıcı isteği */
+    radial-gradient(circle at 20% 16%, rgba(255,228,160,.38), transparent 46%),
+    radial-gradient(circle at 84% 82%, rgba(255,214,96,.28), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(120,96,45,.94), rgba(20,16,9,.995));
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); } /* foto kenar boşluğu = KOYU ALTIN TOZU (opak; arka feed GÖRÜNMESİN — kullanıcı isteği) */
 /* VİDEO tam ekran → ALTIN zemin YOK, SİYAH (kullanıcı: oynatmadan önceki sarıyı kaldır) — normal video oynatıcı gibi */
 .tamfoto-fon.tf-video-fon{ background:#0a1430; }
 /* TAM EKRAN: fotoğrafın TAMAMI görünür (contain, NORMAL — otomatik yaklaştırma YOK).

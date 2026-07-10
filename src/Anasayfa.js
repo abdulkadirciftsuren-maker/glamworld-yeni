@@ -5307,9 +5307,8 @@ export default function Anasayfa({ pro = false }) {
                       {yaziBlokIc && p.yaziUstunde && (
                         <div className="apr-alt" onClick={(e) => e.stopPropagation()}>{yaziBlokIc}</div>
                       )}
-                      {/* Tür amblemi artık YAZARIN yanında (isim hizasında) — sağ raile binmiyor */}
-                      {/* Sağ-ALT: GLOXORG amblemi (şeffaf) */}
-                      <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
+                      {/* Sağ-ALT GLOXORG amblemi — SADECE VİDEO'da (fotoğrafa GLOXORG zaten gömülü/baked → ikinci rozet ÇİFT olmasın, kullanıcı isteği) */}
+                      {p.video && !postMedyalar && <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>}
                     </div>
                     {/* YAZI AYRI ŞERİT (varsayılan) — medyanın ALTINDA, onu KAPATMAZ; 2 satır + devamını oku (tam ekranda hepsi) */}
                     {yaziBlokIc && !p.yaziUstunde && (
@@ -6382,8 +6381,8 @@ export default function Anasayfa({ pro = false }) {
                 </div>
               </div>
             </div>
-            {/* SAĞ-ALT — GLOXORG amblemi (şeffaf) — dip'in ÜSTÜNDE */}
-            <span className="tf-amblem notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
+            {/* GLOXORG amblemi — SADECE VİDEO/YAZI gönderisinde (fotoğrafa GLOXORG zaten gömülü → ÇİFT olmasın, kullanıcı isteği) */}
+            {(p.video || metinPost) && <span className="tf-amblem notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>}
           </div>
         );
       })()}
