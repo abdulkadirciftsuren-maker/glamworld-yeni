@@ -1185,8 +1185,12 @@ export default function Anasayfa({ pro = false }) {
   const [hikayeAcik, setHikayeAcik] = useState(null);     // görüntüleyici: {gi:grupIndex, oi:ögeIndex}
   const [hikayeYuk, setHikayeYuk] = useState(false);      // hikaye yükleniyor mu (oluşturma)
   const [hikayeIlerle, setHikayeIlerle] = useState(0);    // 0..100 aktif hikayenin ilerleme yüzdesi
+  const [hikayeDurdu, setHikayeDurdu] = useState(false);  // parmakla basılı tutunca DURAKLA
   const hikayeInputRef = useRef(null);                    // hikaye foto/video seçici
   const hikayeGorulenRef = useRef(null);                  // localStorage görülen id kümesi
+  const hikDuraklaRef = useRef(false);                    // ilerleme döngüsü duraklatıldı mı
+  const hikVidRef = useRef(null);                         // görüntüleyicideki video (duraklat/oynat)
+  const hikBasRef = useRef({ x: 0, tut: false, zaman: null }); // basılı tutma zamanlayıcısı
   const [kalpPatla, setKalpPatla] = useState(null);    // beğeni animasyonu için (o an patlayan gönderi id)
   const [begeniListeAcik, setBegeniListeAcik] = useState(null); // "kim beğendi" penceresi açık gönderi
   const [begeniListe, setBegeniListe] = useState(null);         // beğenenler listesi (null=yükleniyor)
@@ -1969,6 +1973,29 @@ export default function Anasayfa({ pro = false }) {
     });
   };
   const hikayemSil = async (id) => { if (!id) return; if (!window.confirm(t("hikayeSilSor", "Bu hikâyeyi silmek istiyor musun?"))) return; await hikayeSil(id); setHikayeAcik(null); hikayeleriYukle(); };
+  // Parmakla BASILI TUTUNCA duraklat; KISA dokununca gezin (sol %32 = önceki, sağ = sonraki)
+  const hikBas = (e) => {
+    hikBasRef.current.x = e.clientX; hikBasRef.current.tut = false;
+    hikBasRef.current.zaman = setTimeout(() => {
+      hikBasRef.current.tut = true; hikDuraklaRef.current = true; setHikayeDurdu(true);
+      const v = hikVidRef.current; if (v) { try { v.pause(); } catch (_) {} }
+    }, 180);
+  };
+  const hikDevam = () => {
+    hikDuraklaRef.current = false; setHikayeDurdu(false);
+    const v = hikVidRef.current; if (v) { try { v.play(); } catch (_) {} }
+  };
+  const hikBit = (e) => {
+    if (hikBasRef.current.zaman) { clearTimeout(hikBasRef.current.zaman); hikBasRef.current.zaman = null; }
+    if (hikBasRef.current.tut) { hikBasRef.current.tut = false; hikDevam(); return; } // basılı tutuldu → devam
+    const el = e.currentTarget; const gen = el.offsetWidth || 1; // kısa dokunuş → gezin
+    const x = e.clientX - el.getBoundingClientRect().left;
+    hikayeGec(x < gen * 0.32 ? -1 : 1);
+  };
+  const hikIptal = () => {
+    if (hikBasRef.current.zaman) { clearTimeout(hikBasRef.current.zaman); hikBasRef.current.zaman = null; }
+    if (hikBasRef.current.tut) { hikBasRef.current.tut = false; hikDevam(); }
+  };
   // Giriş yapınca hikâyeleri yükle (+ 3 dk'da bir tazele)
   useEffect(() => {
     if (!u) { setHikayeGruplar([]); return; }
@@ -1982,11 +2009,20 @@ export default function Anasayfa({ pro = false }) {
     const grup = hikayeGruplar[hikayeAcik.gi]; const oge = grup && grup.ogeler[hikayeAcik.oi];
     if (!oge) { setHikayeAcik(null); return; }
     hikayeGoruldu(oge.id);
+    hikDuraklaRef.current = false; setHikayeDurdu(false); // yeni öge → duraklamayı sıfırla
     const onceki = document.body.style.overflow; document.body.style.overflow = "hidden";
     let raf, sil = false;
     if (oge.tip !== "video") {
-      const sure = 5000, bas = Date.now();
-      const tik = () => { if (sil) return; const g = Math.min(100, ((Date.now() - bas) / sure) * 100); setHikayeIlerle(g); if (g >= 100) { hikayeGec(1); return; } raf = requestAnimationFrame(tik); };
+      const sure = 5000; let gecen = 0, sonT = Date.now();
+      const tik = () => {
+        if (sil) return;
+        const simdi = Date.now();
+        if (!hikDuraklaRef.current) gecen += simdi - sonT; // BASILI TUTULUNCA süre işlemez
+        sonT = simdi;
+        const g = Math.min(100, (gecen / sure) * 100); setHikayeIlerle(g);
+        if (g >= 100) { hikayeGec(1); return; }
+        raf = requestAnimationFrame(tik);
+      };
       raf = requestAnimationFrame(tik);
     }
     return () => { sil = true; if (raf) cancelAnimationFrame(raf); document.body.style.overflow = onceki; };
@@ -5248,10 +5284,10 @@ export default function Anasayfa({ pro = false }) {
                 <span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span>
                 <span className="hik-kart-ad">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("hikayeOlustur", "Hikâye Oluştur")}</span>
               </button>
-              {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = son öge; içinde seçilen fotoğraf/video görünür */}
+              {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = İLK öge (görüntüleyicide de ilk o oynar; tutarlı) */}
               {hikayeGruplar.map((g) => {
                 const gi = hikayeGruplar.indexOf(g);
-                const kapak = g.ogeler[g.ogeler.length - 1];
+                const kapak = g.ogeler[0];
                 return (
                   <button className="hik-kart" key={g.uid} onClick={() => hikayeAc(gi)}>
                     {kapak.tip === "video"
@@ -7550,7 +7586,7 @@ export default function Anasayfa({ pro = false }) {
       {/* HİKÂYE GÖRÜNTÜLEYİCİ — tam ekran, ilerleme çubuğu, sol/sağ dokun, otomatik ilerler */}
       {hikayeAcik && hikayeGruplar[hikayeAcik.gi] && (() => { const grup = hikayeGruplar[hikayeAcik.gi]; const oge = grup.ogeler[hikayeAcik.oi]; if (!oge) return null; const benimki = grup.uid === (u && u.uid); return createPortal((
         <div className="hik-fon" onClick={hikayeKapat}>
-          <div className="hik-pencere" onClick={(e) => e.stopPropagation()}>
+          <div className={"hik-pencere" + (hikayeDurdu ? " hik-durdu" : "")} onClick={(e) => e.stopPropagation()}>
             <div className="hik-ilerle-satir">
               {grup.ogeler.map((o, oi) => (<span className="hik-ilerle" key={o.id}><i style={{ width: oi < hikayeAcik.oi ? "100%" : (oi === hikayeAcik.oi ? hikayeIlerle + "%" : "0%") }} /></span>))}
             </div>
@@ -7562,12 +7598,12 @@ export default function Anasayfa({ pro = false }) {
               <button className="hik-kapat" onClick={(e) => { e.stopPropagation(); hikayeKapat(); }} aria-label="Kapat">✕</button>
             </div>
             {oge.tip === "video"
-              ? <video className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline
+              ? <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline
                   onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
                   onEnded={() => hikayeGec(1)} />
               : <img className="hik-medya" src={oge.url} alt="" referrerPolicy="no-referrer" />}
-            <button className="hik-dok hik-sol" onClick={(e) => { e.stopPropagation(); hikayeGec(-1); }} aria-label="Önceki" />
-            <button className="hik-dok hik-sag" onClick={(e) => { e.stopPropagation(); hikayeGec(1); }} aria-label="Sonraki" />
+            {/* Tüm yüzey: BASILI TUT = durdur, KISA dokun = gezin (sol/sağ) */}
+            <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} onPointerLeave={hikIptal} onPointerCancel={hikIptal} />
           </div>
         </div>
       ), document.body); })()}
