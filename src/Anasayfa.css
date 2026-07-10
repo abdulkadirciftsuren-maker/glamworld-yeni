@@ -409,11 +409,14 @@
 .hik-dok{ position:absolute; inset:64px 0 0 0; z-index:4; background:transparent; border:none; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:none; }
 /* DURUNCA ortada ⏸ işareti (durduğu belli olsun) */
 .hik-durdu::after{ content:"❚❚"; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:7; color:rgba(255,255,255,.92); font-size:34px; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,.7); pointer-events:none; }
-/* HİKÂYENİN ÜSTÜNDEKİ YAZI */
-.hik-yazi{ position:absolute; left:0; right:0; z-index:3; display:flex; justify-content:center; padding:0 18px; pointer-events:none; }
-.hik-yazi span{ font-size:22px; font-weight:800; line-height:1.25; text-align:center; word-break:break-word; text-shadow:0 2px 8px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9); max-width:100%; }
-.hik-yazi-ust{ top:16%; } .hik-yazi-orta{ top:50%; transform:translateY(-50%); } .hik-yazi-alt{ bottom:16%; }
-@media (min-width:560px){ .hik-yazi span{ font-size:27px; } }
+/* SÜRÜKLENEBİLİR YAZI (istediğin yere koy) — hem düzenleyici hem görüntüleyici */
+.hik-yazi-tas{ position:absolute; transform:translate(-50%,-50%); z-index:4; max-width:86%; text-align:center; cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none; }
+.hik-yazi-tas span{ display:inline-block; font-size:23px; font-weight:800; line-height:1.22; word-break:break-word; text-shadow:0 2px 8px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9); }
+.hik-yazi-tas.secili{ outline:2px dashed rgba(255,255,255,.75); outline-offset:5px; border-radius:6px; }
+.hik-yazi-goster{ pointer-events:none; }
+.hik-yazi-sil{ position:absolute; top:-13px; right:-15px; width:22px; height:22px; border-radius:7px; border:none; background:#e23; color:#fff; font-size:15px; line-height:1; cursor:pointer; padding:0; }
+@media (min-width:560px){ .hik-yazi-tas span{ font-size:28px; } }
+.hik-duzen-ipucu{ position:absolute; left:0; right:0; bottom:14px; z-index:3; text-align:center; color:rgba(255,255,255,.9); font-size:12.5px; font-weight:600; padding:0 22px; text-shadow:0 1px 4px rgba(0,0,0,.85); pointer-events:none; }
 /* HİKÂYE DÜZENLEYİCİ */
 .hik-duzen-fon{ position:fixed; inset:0; z-index:100060; background:rgba(6,8,16,.95); display:flex; align-items:center; justify-content:center; animation:adFon .2s ease; }
 .hik-duzen-pencere{ position:relative; width:100%; height:100%; max-width:520px; display:flex; flex-direction:column; background:#0c1020; overflow:hidden; }
@@ -438,14 +441,12 @@
 .hik-ai-oneri{ text-align:left; padding:9px 12px; border:1px solid rgba(255,215,0,.4); background:rgba(255,215,0,.08); color:#ffe680; font-size:13.5px; font-weight:700; border-radius:10px; cursor:pointer; }
 .hik-ai-oneri:active{ background:rgba(255,215,0,.18); }
 /* Yazı yaz */
-.hik-duzen-input{ width:100%; box-sizing:border-box; padding:11px 13px; border-radius:11px; border:1px solid rgba(255,255,255,.18); background:#151a2c; color:#ffd700; font-size:15px; font-weight:700; outline:none; }
+.hik-duzen-input{ flex:1; min-width:0; width:auto; box-sizing:border-box; padding:11px 13px; border-radius:11px; border:1px solid rgba(255,255,255,.18); background:#151a2c; color:#ffd700; font-size:15px; font-weight:700; outline:none; }
 .hik-duzen-input::placeholder{ color:#8a90a6; font-weight:600; }
-/* Yazı yeri + renk */
-.hik-duzen-secim{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.hik-yer-grup{ display:flex; gap:6px; }
-.hik-yer-btn{ padding:7px 12px; border:1px solid rgba(255,255,255,.18); background:#151a2c; color:#cfd4e4; font-size:12.5px; font-weight:700; border-radius:9px; cursor:pointer; }
-.hik-yer-btn.aktif{ background:#ffd700; color:#1c2430; border-color:#ffd700; }
-.hik-renk-grup{ display:flex; gap:6px; }
+/* Yazı ekle satırı */
+.hik-yazi-satir{ display:flex; gap:8px; align-items:center; }
+.hik-yazi-ekle{ flex:none; padding:11px 13px; border:1px solid rgba(255,215,0,.5); background:rgba(255,215,0,.12); color:#ffe680; font-size:13.5px; font-weight:800; border-radius:11px; cursor:pointer; white-space:nowrap; }
+.hik-renk-grup{ display:flex; gap:7px; flex-wrap:wrap; }
 .hik-renk-btn{ width:24px; height:24px; border-radius:7px; border:2px solid rgba(255,255,255,.35); cursor:pointer; padding:0; }
 .hik-renk-btn.aktif{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.5); }
 /* Paylaş */
