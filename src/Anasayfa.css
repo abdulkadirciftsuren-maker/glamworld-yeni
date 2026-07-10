@@ -363,15 +363,17 @@
 .hik-kart-av img{ width:100%; height:100%; object-fit:cover; } .hik-kart-av.amblem img{ object-fit:contain; }
 .hik-kart-isim{ position:absolute; left:0; right:0; bottom:0; z-index:2; color:#fff; font-size:12px; font-weight:700; text-align:left; text-shadow:0 1px 3px rgba(0,0,0,.95); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   padding:16px 8px 8px; background:linear-gradient(0deg, rgba(0,0,0,.6), transparent); }
-/* HİKÂYE OLUŞTUR kartı — profil foto TAM görünür (kesilmez), altta + ve ALTIN zeminli yazı */
+/* HİKÂYE OLUŞTUR kartı — profil YUKARIDAN başlar (siyah bant yok), altta ALTIN ŞERİT: + ve yazı */
 .hik-olustur{ background:#0d1b3a; }
-.hik-kart-foto{ display:block; position:absolute; inset:0; overflow:hidden; background:#0d1b3a; }
-.hik-kart-foto img{ width:100%; height:100%; object-fit:contain; } /* TAM al — profili kırpma */
+.hik-kart-foto{ display:block; position:absolute; top:0; left:0; right:0; bottom:52px; overflow:hidden; background:#0d1b3a; }
+.hik-kart-foto img{ width:100%; height:100%; object-fit:cover; object-position:top; } /* profil YUKARIDAN, siyah bant kalmaz */
 .hik-kart-harf{ display:flex; width:100%; height:100%; align-items:center; justify-content:center; color:#fff; font-size:34px; font-weight:800; }
-/* + düğmesi KÜÇÜK ve KARE (yuvarlak değil) — altın zeminli yazının hemen üstünde */
-.hik-kart-arti{ position:absolute; left:50%; bottom:36px; transform:translateX(-50%); width:28px; height:28px; border-radius:8px; background:#2f9e44; color:#fff; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; line-height:1; z-index:2; box-shadow:0 1px 4px rgba(0,0,0,.45); }
-/* ALTIN zemin + altın/koyu yazı */
-.hik-kart-ad{ position:absolute; left:0; right:0; bottom:0; z-index:2; text-align:center; color:#3a2c00; font-size:11px; font-weight:800; padding:6px 4px 7px; background:linear-gradient(180deg,#ffe680,#f0c419); text-shadow:0 1px 0 rgba(255,255,255,.35); }
+/* Altta ALTIN ŞERİT — içinde + (küçük kare) ve altın yazı */
+.hik-kart-serit{ position:absolute; left:0; right:0; bottom:0; height:52px; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:linear-gradient(180deg,#ffe680,#f0c419); box-shadow:0 -1px 6px rgba(0,0,0,.25) inset; }
+.hik-kart-arti{ width:22px; height:22px; border-radius:7px; background:#2f9e44; color:#fff; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,.4); }
+.hik-kart-ad{ text-align:center; color:#3a2c00; font-size:10.5px; font-weight:800; line-height:1.05; padding:0 4px; text-shadow:0 1px 0 rgba(255,255,255,.35); }
+/* Kaç hikâye var — sağ üst köşede ufak ALTIN rozet (resim ikonu + sayı) */
+.hik-kart-sayac{ position:absolute; top:7px; right:7px; z-index:3; background:linear-gradient(180deg,#ffe680,#f0c419); color:#3a2c00; font-size:11px; font-weight:800; padding:2px 7px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
 /* GÖRÜNTÜLEYİCİ */
 .hik-fon{ position:fixed; inset:0; z-index:100050; background:rgba(0,0,0,.94); display:flex; align-items:center; justify-content:center; animation:adFon .2s ease; }
 .hik-pencere{ position:relative; width:100%; height:100%; max-width:520px; display:flex; align-items:center; justify-content:center; background:#000; overflow:hidden; }
@@ -387,10 +389,10 @@
 .hik-ust i{ font-size:11px; opacity:.85; font-style:normal; text-shadow:0 1px 3px rgba(0,0,0,.85); }
 .hik-kapat{ margin-left:auto; width:36px; height:36px; border:none; background:rgba(0,0,0,.42); color:#fff; border-radius:9px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
 .hik-sil{ width:34px; height:34px; border:none; background:rgba(0,0,0,.42); color:#fff; border-radius:9px; font-size:15px; cursor:pointer; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
-/* Tüm yüzey dokunma katmanı: basılı tut=durdur, kısa dokun=gezin */
+/* Tüm yüzey dokunma katmanı: dokun=durdur/devam, kaydır=hikaye değiştir */
 .hik-dok{ position:absolute; inset:64px 0 0 0; z-index:4; background:transparent; border:none; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:none; }
-/* DURAKLAYINCA üst bilgi + ilerleme çubuğu silinsin (fotoğrafı net gör) */
-.hik-durdu .hik-ust, .hik-durdu .hik-ilerle-satir{ opacity:0; transition:opacity .15s ease; }
+/* DURUNCA ortada ⏸ işareti (durduğu belli olsun) */
+.hik-durdu::after{ content:"❚❚"; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:7; color:rgba(255,255,255,.92); font-size:34px; letter-spacing:2px; text-shadow:0 2px 10px rgba(0,0,0,.7); pointer-events:none; }
 
 /* COMPOSER — ek fotoğraflar (çok fotoğraflı gönderi) */
 .pyl-foto-sayac{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; z-index:2; }
