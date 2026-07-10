@@ -374,11 +374,11 @@
 .pyl-gk-yuk{ position:absolute; left:0; right:0; bottom:0; background:rgba(200,20,40,.85); color:#fff; font-size:10px; font-weight:800; text-align:center; padding:2px 0; pointer-events:none; }
 
 /* TAM EKRAN FOTO/VİDEO GEZİCİ (lightbox) */
-.oniz-fon{ position:fixed; inset:0; z-index:12000; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+.oniz-fon{ position:fixed; inset:0; z-index:12000; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
   background:
-    radial-gradient(circle at 20% 16%, rgba(255,228,160,.26), transparent 44%),
-    radial-gradient(circle at 84% 82%, rgba(255,214,96,.18), transparent 48%),
-    radial-gradient(circle at 50% 50%, rgba(120,96,45,.5), rgba(22,19,12,.95)); } /* siyah bant YOK → altın tozu şeffaf cam */
+    radial-gradient(circle at 20% 16%, rgba(255,228,160,.38), transparent 46%),
+    radial-gradient(circle at 84% 82%, rgba(255,214,96,.28), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(120,96,45,.94), rgba(20,16,9,.995)); } /* KOYU ALTIN TOZU (opak; arka feed GÖRÜNMESİN — kullanıcı isteği: her yerde aynı) */
 .oniz-govde{ max-width:100vw; max-height:100vh; display:flex; align-items:center; justify-content:center; }
 .oniz-medya{ max-width:100vw; max-height:88vh; object-fit:contain; display:block; }
 .oniz-kapat{ position:fixed; top:max(12px,env(safe-area-inset-top)); right:14px; width:42px; height:42px; border-radius:50%; border:none; background:rgba(0,0,0,.5); color:#fff; font-size:20px; cursor:pointer; z-index:2; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
