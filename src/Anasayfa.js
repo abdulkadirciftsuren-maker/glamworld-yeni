@@ -7600,7 +7600,7 @@ export default function Anasayfa({ pro = false }) {
                   <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
                     onEnded={() => hikayeGec(1)} /></>
-              : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-medya" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
+              : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
             {/* Tüm yüzey: DOKUN = durdur/devam, KAYDIR = hikaye değiştir (sola=sonraki, sağa=önceki) */}
             <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} />
           </div>

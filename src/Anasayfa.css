@@ -382,6 +382,10 @@
 @media (min-width:540px) and (min-height:620px){ .hik-pencere{ max-height:94vh; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.6); } }
 .hik-medya-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(30px) brightness(.45); transform:scale(1.2); z-index:0; }
 .hik-medya{ position:relative; width:100%; height:100%; object-fit:contain; display:block; z-index:1; }
+/* CANLI FOTOĞRAF — yavaş sinema (yakınlaşma + hafif kayma) → fotoğraf "canlı" görünür */
+@keyframes hikCanli { 0%{ transform:scale(1.04) translate(1.5%, 1.5%);} 100%{ transform:scale(1.16) translate(-2%, -3%);} }
+.hik-foto-canli{ animation:hikCanli 5.2s ease-out both; will-change:transform; }
+.hik-durdu .hik-foto-canli{ animation-play-state:paused; } /* durunca efekt de durur */
 .hik-ilerle-satir{ position:absolute; top:max(8px,env(safe-area-inset-top)); left:8px; right:8px; z-index:5; display:flex; gap:4px; }
 .hik-ilerle{ flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,.35); overflow:hidden; }
 .hik-ilerle i{ display:block; height:100%; background:#fff; border-radius:3px; width:0; }
