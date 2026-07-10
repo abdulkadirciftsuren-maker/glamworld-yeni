@@ -3298,10 +3298,16 @@ export default function Anasayfa({ pro = false }) {
       const dusuk = (soru || "").toLowerCase();
       const genelMi = /\b(haber|haberler|gündem|son dakika|ne oldu|ne olmuş|neler ol|bugün ne|dünyada|news|headline|breaking|today|новости|nachrichten)\b/i.test(dusuk)
         && !/futbol|maç|skor|sonuç|gol|lig|puan|transfer|şampiyon|takım|dünya kupası|fifa|derbi|football|soccer|match|score|result|league|матч|fußball/i.test(soru || "");
-      const arama = (soru || "").replace(/\s+/g, " ").trim().slice(0, 90);
+      // İLGİ/HABER KONUMU: kullanıcının ayarladığı yerler (yoksa cihaz/profil şehri). "şehrim/buram/takımım" derse burayı baz al.
+      const ilgiYerler = (profilBilgi && Array.isArray(profilBilgi.haberKonumlari) ? profilBilgi.haberKonumlari : []).map((h) => (h.ilce || h.sehir || h.ulke || "")).filter(Boolean);
+      const ilgiSehir = ilgiYerler[0] || (konum && konum.sehir) || "";
+      const yerelMi = /(şehrim|şehrimde|ilim|ilimde|ilçem|buram|burada|buranın|memleket|takımım|takımın|bizim takım|benim şehr|my city|my town|my team)/i.test(dusuk);
+      let arama = (soru || "").replace(/\s+/g, " ").trim().slice(0, 90);
+      // "şehrimde/takımım" gibi ise ilgi şehrini aramaya ekle (yerel sonuç gelsin)
+      if (ilgiSehir && (yerelMi || genelMi)) arama = (ilgiSehir + " " + arama).slice(0, 100);
       // KAYNAKLAR: Google News + Yahoo News (biri engellenirse diğeri) — hem genel hem aramalı
       const kaynaklar = genelMi
-        ? [`https://news.google.com/rss?hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`, `https://news.search.yahoo.com/rss?p=${encodeURIComponent((konum && konum.sehir ? konum.sehir + " " : "") + "son dakika haberler")}`]
+        ? [`https://news.google.com/rss/search?q=${encodeURIComponent((ilgiSehir ? ilgiSehir + " " : "") + "son dakika haberler")}&hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`, `https://news.google.com/rss?hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`, `https://news.search.yahoo.com/rss?p=${encodeURIComponent((ilgiSehir ? ilgiSehir + " " : "") + "son dakika haberler")}`]
         : [`https://news.google.com/rss/search?q=${encodeURIComponent(arama + " when:4d")}&hl=${hl}&gl=${gl}&ceid=${gl}:${hl}`, `https://news.search.yahoo.com/rss?p=${encodeURIComponent(arama)}`];
       // PROKSİLER: her kaynağı farklı köprülerle dene (allorigins/get JSON, Jina reader, corsproxy, codetabs)
       const sar = (u) => [
