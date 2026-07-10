@@ -2101,10 +2101,14 @@ export default function Anasayfa({ pro = false }) {
       if (gors) { const vir = gors.indexOf(","); const mt = (gors.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg"; if (vir > 0) parcalar.push({ type: "image", source: { type: "base64", media_type: mt, data: gors.slice(vir + 1) } }); }
       const dilAd = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" }[dil] || "Türkçe";
       const istek = (hikAiIstek || "").trim();
-      const talimat = `Bu bir HİKÂYE (24 saatte kaybolan kısa paylaşım). ${hikTaslak.tip === "video" ? "Ekteki görsel VİDEODAN alınmış bir karedir; videoda ne olduğunu bu kareden anla. " : ""}${gors ? "Görsele DİKKATLİCE bak: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak yaz (uydurma/klişe YOK). " : ""}${istek ? 'KULLANICININ İSTEĞİ (ne yazılmasını kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan, konuya UYGUN yaz; saçma/alakasız yazma. ' : ""}Bu içerik için HİKÂYE ÜST YAZISI olarak 3 farklı kısa, canlı ve ÇARPICI öneri ver: her biri 1 satır, 2-6 kelime; 1-2 uygun emoji serpiştir; RENKLİ ve sıcak olsun. ${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
+      const konum = (profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir, profilBilgi.konum.ulke].filter(Boolean).join(", ")) || "";
+      const uzunluk = istek
+        ? "Kullanıcı ne istediğini anlattığı için 3 farklı, DAHA DOLU ve UZUN yazı ver (her biri 1-3 cümle olabilir); onun anlattığını tam yansıt, sıcak ve renkli olsun."
+        : "3 farklı KISA ve çarpıcı öneri ver (her biri 1 satır, 2-6 kelime).";
+      const talimat = `Bu bir HİKÂYE (24 saatte kaybolan paylaşım). ${hikTaslak.tip === "video" ? "Ekteki görsel VİDEODAN alınmış bir karedir; videoda ne olduğunu bu kareden anla. " : ""}${gors ? "Görsele DİKKATLİCE bak: içinde ne/kim/nerede/ne oluyor gör; SADECE gördüğüne dayanarak yaz (uydurma/klişe YOK). " : ""}${konum ? "Kullanıcının konumu: " + konum + " (uygunsa yeri doğal bir dille yansıt). " : ""}${istek ? 'KULLANICININ ANLATTIĞI (ne yazmak istediğini kendisi söyledi): "' + istek + '" — MUTLAKA buna göre, tam bunu anlatan yaz; ASLA konu dışı/saçma yazma. ' : ""}Bu içerik için hikâye yazısı olarak ${uzunluk} Her birine 1-3 uygun emoji serpiştir; canlı, sıcak, davet edici olsun. ${dilAd} dilinde yaz. Önerileri ||| (üç dik çizgi) ile ayır; numara/tırnak/madde işareti KOYMA.`;
       parcalar.push({ type: "text", text: talimat });
       const mesajlar = parcalar.length > 1 ? [{ role: "user", content: parcalar }] : [{ role: "user", content: talimat }];
-      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG luks profesyonel sosyal platformun asistani. Ekte gorsel/video karesi varsa DIKKATLICE BAK ve SADECE gordugune dayanarak, o ana ozel, kisa ve carpici HIKAYE UST YAZISI oner (2-6 kelime, 1-2 emoji). Istenen dilde yaz; onerileri ||| ile ayir." }) });
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG luks profesyonel sosyal platformun asistani. Ekte gorsel/video karesi varsa DIKKATLICE BAK ve SADECE gordugune dayanarak yaz. Kullanici ne istedigini yazmissa MUTLAKA ona gore, konuya UYGUN yaz; ASLA 'bilmiyorum' deme, sacma/alakasiz konusma. Kullanici anlatmissa daha DOLU ve UZUN (1-3 cumle) yazabilirsin; yoksa kisa (2-6 kelime). Emoji serpistir. Istenen dilde yaz; onerileri ||| ile ayir." }) });
       if (r.ok) { const veri = await r.json(); const txt = (veri && veri.metin) || ""; const ham = txt.indexOf("|||") >= 0 ? txt.split("|||") : txt.split("\n"); const satirlar = ham.map((s) => s.replace(/^["'\d.)\-•*\s]+/, "").replace(/["']+$/, "").trim()).filter((s) => s.length > 1).slice(0, 3); if (satirlar.length) setHikAiOneriler(satirlar); }
     } catch (e) {}
     setHikAiYuk(false);
@@ -7842,24 +7846,25 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {/* Kontroller */}
             <div className="hik-duzen-alt">
-              {/* Gloxoo'ya NE YAZSIN — yaz veya 🎤 konuş; sonra "sor" */}
+              {/* Gloxoo'ya NE YAZSIN — İSTEDİĞİN KADAR yaz veya 🎤 konuş; sonra "sor" */}
               <div className="hik-ai-istek-satir">
-                <input className="hik-duzen-input" value={hikAiIstek} onChange={(e) => setHikAiIstek(e.target.value.slice(0, 200))} placeholder={t("hikAiIstek", "Gloxoo'ya ne yazsın? (yaz veya 🎤 söyle)")} maxLength={200} />
+                <textarea className="hik-duzen-input hik-istek-alan" rows={2} value={hikAiIstek} onChange={(e) => setHikAiIstek(e.target.value.slice(0, 1500))} placeholder={t("hikAiIstek", "Hikâyeni Gloxoo'ya anlat — istediğin kadar yaz veya 🎤 ile söyle; sana buna göre güzel yazı hazırlar")} />
                 <button className={"hik-mik" + (hikMikDinliyor ? " dinliyor" : "")} onClick={hikMikToggle} aria-label={t("sesleSoyle", "Sesle söyle")}>🎤</button>
               </div>
               <button className="hik-ai-btn" onClick={aiHikayeOner} disabled={hikAiYuk}>
-                <span className="hik-ai-ik" aria-hidden="true">✨</span>{hikAiYuk ? t("hikayeAiYuk", "Gloxoo bakıyor…") : t("hikayeAiSor", "Gloxoo'ya sor · yazı öner")}
+                <span className="hik-ai-ik" aria-hidden="true">✨</span>{hikAiYuk ? t("hikayeAiYuk", "Gloxoo bakıyor…") : (hikAiIstek.trim() ? t("hikayeAiGonder", "Gloxoo'ya gönder · yazı hazırla") : t("hikayeAiSor", "Gloxoo'ya sor · yazı öner"))}
               </button>
               {hikAiOneriler.length > 0 && (
                 <div className="hik-ai-oneriler">
                   {hikAiOneriler.map((o, i) => (<button key={i} className="hik-ai-oneri" onClick={() => hikYaziEkle(o)}>{o}</button>))}
+                  <button className="hik-ai-baska" onClick={aiHikayeOner} disabled={hikAiYuk}>🔄 {t("hikayeAiBaska", "Beğenmedim, başkasını yaz")}</button>
                 </div>
               )}
               {/* Yazı ekle + seçili yazıyı düzenle */}
               <div className="hik-yazi-satir">
                 <button className="hik-yazi-ekle" onClick={() => hikYaziEkle("")}>＋ {t("hikYaziEkle", "Yazı Ekle")}</button>
                 {hikSeciliYazi && (() => { const sy = hikYazilar.find((y) => y.id === hikSeciliYazi); if (!sy) return null; return (
-                  <input className="hik-duzen-input" autoFocus value={sy.metin} onChange={(e) => hikYaziMetin(sy.id, e.target.value.slice(0, 120))} placeholder={t("hikayeYaziYaz", "Yazını yaz…")} maxLength={120} />
+                  <input className="hik-duzen-input" autoFocus value={sy.metin} onChange={(e) => hikYaziMetin(sy.id, e.target.value.slice(0, 300))} placeholder={t("hikayeYaziYaz", "Yazını yaz…")} maxLength={300} />
                 ); })()}
               </div>
               {/* Renk + BOYUT (seçili yazıya uygulanır) */}
