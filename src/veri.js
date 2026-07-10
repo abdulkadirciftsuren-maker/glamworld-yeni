@@ -106,6 +106,7 @@ export async function hikayeEkle(k, medya) {
       uid: k.uid, ad: k.ad || "", foto: k.foto || "", amblem: !!k.amblem,
       tip: medya.tip || "foto", url: medya.url, poster: medya.poster || "",
       yazilar: Array.isArray(medya.yazilar) ? medya.yazilar.slice(0, 6) : [], // istediğin yere konmuş birden çok yazı
+      ses: medya.ses || "", // hikâyeye eklenen müzik/ses
       yer: medya.yer || "", zamanMs: Date.now(), gorulme: 0,
     });
     return id;

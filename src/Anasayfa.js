@@ -1208,6 +1208,7 @@ export default function Anasayfa({ pro = false }) {
   const hikayeGorulenRef = useRef(null);                  // localStorage görülen id kümesi
   const hikDuraklaRef = useRef(false);                    // ilerleme döngüsü duraklatıldı mı
   const hikVidRef = useRef(null);                         // görüntüleyicideki video (duraklat/oynat)
+  const hikSesRef = useRef(null);                         // görüntüleyicideki müzik (duraklat/oynat)
   const hikBasRef = useRef({ x: 0, y: 0 }); // dokunma başlangıç noktası (dokun/kaydır ayrımı)
   // ---- HİKÂYE DÜZENLEYİCİ (paylaşmadan önce: yazı + Gloxoo AI) ----
   const [hikTaslak, setHikTaslak] = useState(null); // {tip,url(önizleme),file,poster} — seçilen medya (düzenleniyor)
@@ -1232,7 +1233,9 @@ export default function Anasayfa({ pro = false }) {
   const hikSecimAcikRef = useRef(false);
   const hikVideoInputRef = useRef(null);                    // SADECE video seçici
   const hikFotoInputRef = useRef(null);                     // SADECE fotoğraf seçici
-  const hikCanliInputRef = useRef(null);                    // CANLI ÇEK — kamera (foto/video)
+  const hikCanliInputRef = useRef(null);                    // CANLI ÇEK — kamera (foto)
+  const hikSesInputRef = useRef(null);                      // MÜZİK/SES seçici
+  const [hikSes, setHikSes] = useState(null);               // {file, ad, url(önizleme)} — hikâyeye eklenen müzik
   const hikTaslakRef = useRef(null);                 // Android geri tuşu için
   const hikOnizVidRef = useRef(null);                // düzenleyicideki önizleme videosu (AI için CANLI kare)
   const hikMedyaRef = useRef(null);                  // medya kutusu (yazı sürüklerken oran hesabı)
@@ -2004,7 +2007,7 @@ export default function Anasayfa({ pro = false }) {
       if (video) { onizUrl = URL.createObjectURL(f); }
       else { onizUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
       setHikYazilar([]); setHikSeciliYazi(null); setHikYaziRenk("#ffd700"); setHikAiOneriler([]);
-      setHikKonum(null); setHikKonumDurum("");
+      setHikKonum(null); setHikKonumDurum(""); hikSesKaldir();
       setHikTaslak({ tip: video ? "video" : "foto", url: onizUrl, file: f, poster: "" });
       // CANLI ÇEK ise → konumu OTOMATİK al (nereden çektiysen paylaşımda görünsün)
       const canli = hikCanliRef.current; hikCanliRef.current = false;
@@ -2030,6 +2033,14 @@ export default function Anasayfa({ pro = false }) {
       } catch (e) { setHikKonumDurum("hata"); }
     }, () => setHikKonumDurum("hata"), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
   };
+  // MÜZİK/SES seç (kendi cihazından) → hikâyeye eklenir, görüntüleyicide çalar
+  const hikSesSecildi = (e) => {
+    const f = e.target.files && e.target.files[0]; if (e.target) e.target.value = "";
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) { alert(t("hikSesBuyuk", "Ses dosyası en fazla 20 MB olmalı.")); return; }
+    setHikSes((s) => { if (s && s.url) { try { URL.revokeObjectURL(s.url); } catch (x) {} } return { file: f, ad: f.name || "müzik", url: URL.createObjectURL(f) }; });
+  };
+  const hikSesKaldir = () => setHikSes((s) => { if (s && s.url) { try { URL.revokeObjectURL(s.url); } catch (x) {} } return null; });
   // Önizleme videosunun O ANKİ karesini yakala (AI için — SİYAH kare sorununu önler; video ekranda oynayıp içerik gösterirken çekilir)
   const canliVideoKare = () => {
     try {
@@ -2045,7 +2056,7 @@ export default function Anasayfa({ pro = false }) {
     setHikTaslak((tas) => { if (tas && tas.tip === "video" && tas.url) { try { URL.revokeObjectURL(tas.url); } catch (x) {} } return null; });
     setHikYazilar([]); setHikSeciliYazi(null); setHikAiOneriler([]); setHikPaylasYuk(false); setHikPaylasYuzde(0);
     setHikAiIstek(""); try { if (hikTanimaRef.current) hikTanimaRef.current.stop(); } catch (e) {} setHikMikDinliyor(false);
-    setHikKonum(null); setHikKonumDurum("");
+    setHikKonum(null); setHikKonumDurum(""); hikSesKaldir();
   };
   // "Yazı" hikâyesi başlat (renkli zemin + yazı — Facebook "Aa" gibi)
   const yaziHikayesiBaslat = () => {
@@ -2113,10 +2124,13 @@ export default function Anasayfa({ pro = false }) {
       if (hikTaslak.tip === "video") url = await videoYukle(hikTaslak.file, u.uid, (p) => setHikPaylasYuzde(p));
       else if (yaziTip) url = await gorselYukle(yaziHikayeGorseli(), u.uid, (p) => setHikPaylasYuzde(p)); // yazı → görsele çevrilir
       else url = await gorselYukle(hikTaslak.url, u.uid, (p) => setHikPaylasYuzde(p));
+      // MÜZİK/SES varsa yükle
+      let sesUrl = "";
+      if (hikSes && hikSes.file) { try { sesUrl = await dosyaYukle(hikSes.file, u.uid, () => {}).then((o) => (o && o.url) || "").catch(() => ""); } catch (x2) {} }
       if (url) {
         // Yazı hikâyesinde yazılar zaten görsele GÖMÜLDÜ → tekrar üste koyma
         const yazilar = yaziTip ? [] : hikYazilar.map((y) => ({ metin: (y.metin || "").trim(), xr: y.xr, yr: y.yr, renk: y.renk, boyut: y.boyut || 1, font: y.font || "sade" })).filter((y) => y.metin);
-        await hikayeEkle(benimHikayeKisi, { tip: yaziTip ? "foto" : hikTaslak.tip, url, poster, yazilar, yer: (hikKonum && hikKonum.tam) || "" });
+        await hikayeEkle(benimHikayeKisi, { tip: yaziTip ? "foto" : hikTaslak.tip, url, poster, yazilar, yer: (hikKonum && hikKonum.tam) || "", ses: sesUrl });
         if (hikTaslak.tip === "video" && hikTaslak.url) { try { URL.revokeObjectURL(hikTaslak.url); } catch (x) {} }
         setHikTaslak(null); setHikYazilar([]); setHikSeciliYazi(null); setHikAiOneriler([]); setHikAiIstek("");
         await hikayeleriYukle();
@@ -2192,6 +2206,7 @@ export default function Anasayfa({ pro = false }) {
     const yeni = !hikDuraklaRef.current;
     hikDuraklaRef.current = yeni; setHikayeDurdu(yeni);
     const v = hikVidRef.current; if (v) { try { yeni ? v.pause() : v.play(); } catch (_) {} }
+    const s = hikSesRef.current; if (s) { try { yeni ? s.pause() : s.play(); } catch (_) {} }
   };
   const hikBas = (e) => { hikBasRef.current.x = e.clientX; hikBasRef.current.y = e.clientY; };
   const hikBit = (e) => {
@@ -5525,7 +5540,8 @@ export default function Anasayfa({ pro = false }) {
             <div className="hik-serit">
               <input ref={hikFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={hikayeSecildi} />
               <input ref={hikVideoInputRef} type="file" accept="video/*" style={{ display: "none" }} onChange={hikayeSecildi} />
-              <input ref={hikCanliInputRef} type="file" accept="image/*,video/*" capture="environment" style={{ display: "none" }} onChange={hikayeSecildi} />
+              <input ref={hikCanliInputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={hikayeSecildi} />
+              <input ref={hikSesInputRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={hikSesSecildi} />
               {/* HİKÂYE OLUŞTUR kartı — dokununca SEÇENEK ekranı açılır (Foto/Video/Yazı) */}
               <button className="hik-kart hik-olustur" onClick={() => { if (!hikayeYuk) setHikSecimAcik(true); }}>
                 <span className="hik-kart-foto">{foto
@@ -7873,7 +7889,7 @@ export default function Anasayfa({ pro = false }) {
             {hikBildiri ? <div className="hik-toast">{hikBildiri}</div> : null}
             {oge.tip === "video"
               ? <><video className="hik-medya-bg" src={videoSade(oge.url)} muted loop autoPlay playsInline aria-hidden="true" tabIndex={-1} />
-                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline
+                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={!!oge.ses}
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
                     onEnded={() => hikayeGec(1)} /></>
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
@@ -7881,6 +7897,9 @@ export default function Anasayfa({ pro = false }) {
             {Array.isArray(oge.yazilar) && oge.yazilar.map((y, i) => (
               <div key={i} className="hik-yazi-tas hik-yazi-goster" style={{ left: ((y.xr != null ? y.xr : 0.5) * 100) + "%", top: ((y.yr != null ? y.yr : 0.85) * 100) + "%", color: y.renk || "#ffd700" }}><span style={{ fontSize: Math.round(23 * (y.boyut || 1)) + "px", fontFamily: hikFontCss(y.font) }}>{y.metin}</span></div>
             ))}
+            {/* HİKÂYEYE EKLENEN MÜZİK — gösterilirken çalar (döngülü) */}
+            {oge.ses ? <audio key={oge.id + "_ses"} ref={hikSesRef} src={oge.ses} autoPlay loop /> : null}
+            {oge.ses ? <div className="hik-ses-rozet" aria-hidden="true">🎵</div> : null}
             {/* Tüm yüzey: DOKUN = durdur/devam, KAYDIR = hikaye değiştir (sola=sonraki, sağa=önceki) */}
             <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} />
             {/* ⋯ MENÜ — Facebook gibi seçenekler */}
@@ -7997,6 +8016,11 @@ export default function Anasayfa({ pro = false }) {
                   </div>
                 )}
               </div>
+              {/* Müzik / Ses ekle (kendi cihazından) */}
+              <button className={"hik-konum-btn hik-ses-btn" + (hikSes ? " aktif" : "")} onClick={() => { if (hikSes) hikSesKaldir(); else if (hikSesInputRef.current) hikSesInputRef.current.click(); }}>
+                🎵 {hikSes ? hikSes.ad : t("hikSesEkle", "Müzik / Ses ekle")}
+                {hikSes ? <span className="hik-konum-kaldir" aria-hidden="true"> ✕</span> : null}
+              </button>
               {/* Konum (canlı) — nereden paylaşıldığı görünsün */}
               <button className={"hik-konum-btn" + (hikKonum ? " aktif" : "")} onClick={hikKonumAl}>
                 📍 {hikKonumDurum === "aliniyor" ? t("konumAliniyor", "Konum alınıyor…") : (hikKonum ? hikKonum.tam : (hikKonumDurum === "hata" ? t("konumHata", "Konum alınamadı — tekrar dene") : t("hikKonumEkle", "Konum ekle")))}
