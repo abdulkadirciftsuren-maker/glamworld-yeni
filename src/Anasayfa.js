@@ -1234,6 +1234,7 @@ export default function Anasayfa({ pro = false }) {
   const hikVideoInputRef = useRef(null);                    // SADECE video seçici
   const hikFotoInputRef = useRef(null);                     // SADECE fotoğraf seçici
   const hikCanliInputRef = useRef(null);                    // CANLI ÇEK — kamera (foto)
+  const hikCanliVidInputRef = useRef(null);                 // CANLI ÇEK — kamera (video)
   const hikSesInputRef = useRef(null);                      // MÜZİK/SES seçici
   const [hikSes, setHikSes] = useState(null);               // {file, ad, url(önizleme)} — hikâyeye eklenen müzik
   const hikTaslakRef = useRef(null);                 // Android geri tuşu için
@@ -2000,7 +2001,7 @@ export default function Anasayfa({ pro = false }) {
     const f = e.target.files && e.target.files[0]; if (e.target) e.target.value = "";
     if (!f || !u) return;
     const video = (f.type || "").indexOf("video") === 0;
-    if (video && f.size > 60 * 1024 * 1024) { alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 60 MB olmalı.")); return; }
+    if (video && f.size > 200 * 1024 * 1024) { alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 200 MB olmalı.")); return; }
     setHikayeYuk(true);
     try {
       let onizUrl = "";
@@ -5541,6 +5542,7 @@ export default function Anasayfa({ pro = false }) {
               <input ref={hikFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={hikayeSecildi} />
               <input ref={hikVideoInputRef} type="file" accept="video/*" style={{ display: "none" }} onChange={hikayeSecildi} />
               <input ref={hikCanliInputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={hikayeSecildi} />
+              <input ref={hikCanliVidInputRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={hikayeSecildi} />
               <input ref={hikSesInputRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={hikSesSecildi} />
               {/* HİKÂYE OLUŞTUR kartı — dokununca SEÇENEK ekranı açılır (Foto/Video/Yazı) */}
               <button className="hik-kart hik-olustur" onClick={() => { if (!hikayeYuk) setHikSecimAcik(true); }}>
@@ -7934,7 +7936,10 @@ export default function Anasayfa({ pro = false }) {
                 <span className="hik-secim-ik" aria-hidden="true">🎬</span><span>{t("hikSecVideo", "Video")}</span>
               </button>
               <button className="hik-secim-kart hsk-canli" onClick={() => { setHikSecimAcik(false); hikCanliRef.current = true; if (hikCanliInputRef.current) hikCanliInputRef.current.click(); }}>
-                <span className="hik-secim-ik" aria-hidden="true">📷</span><span>{t("hikSecCanli", "Canlı Çek")}</span>
+                <span className="hik-secim-ik" aria-hidden="true">📷</span><span>{t("hikSecCanliFoto", "Canlı Foto")}</span>
+              </button>
+              <button className="hik-secim-kart hsk-canlivid" onClick={() => { setHikSecimAcik(false); hikCanliRef.current = true; if (hikCanliVidInputRef.current) hikCanliVidInputRef.current.click(); }}>
+                <span className="hik-secim-ik" aria-hidden="true">🎥</span><span>{t("hikSecCanliVideo", "Canlı Video")}</span>
               </button>
               <button className="hik-secim-kart hsk-yazi" onClick={yaziHikayesiBaslat}>
                 <span className="hik-secim-ik" aria-hidden="true">Aa</span><span>{t("hikSecYazi", "Yazı")}</span>
