@@ -5239,6 +5239,17 @@ export default function Anasayfa({ pro = false }) {
   }, [tamFoto, tfMini]);
   // --- TAM EKRAN parmakla ZOOM jestleri ---
   const _mesafe = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  // HİKÂYE ŞERİT KARTI kapak yönü: YATAY görsel (GLOXORG gibi geniş) → .yatay sınıfı (CSS'te contain, yanlar kesilmez,
+  // boşluk ALTIN). DİKEY/KARE (Hanna gibi portre) → sınıf yok = cover (kartı tam doldurur, kesik/yama yok).
+  const hikKapakYon = (e) => {
+    try {
+      const el = e.target;
+      const w = el.naturalWidth || el.videoWidth || 0;
+      const h = el.naturalHeight || el.videoHeight || 0;
+      const sar = el.closest && el.closest(".hik-kart-medyasar");
+      if (sar && w && h) sar.classList.toggle("yatay", w > h * 1.08);
+    } catch (x) {}
+  };
   function fotoTouchStart(e) {
     if (e.touches.length === 2) {
       pinchRef.current = { tip: "pinch", d0: _mesafe(e.touches), s0: zoom.s };
@@ -5843,7 +5854,7 @@ export default function Anasayfa({ pro = false }) {
               {/* HİKÂYE OLUŞTUR kartı — dokununca SEÇENEK ekranı açılır (Foto/Video/Yazı) */}
               <button className="hik-kart hik-olustur" onClick={() => { if (!hikayeYuk) setHikSecimAcik(true); }}>
                 <span className="hik-kart-foto">{foto
-                  ? <span className="hik-kart-medyasar"><img className="hik-kart-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={foto} alt="" referrerPolicy="no-referrer" /></span>
+                  ? <span className="hik-kart-medyasar"><img className="hik-kart-medya" src={foto} alt="" referrerPolicy="no-referrer" /></span>
                   : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
                 <span className="hik-kart-serit">
                   <span className="hik-kart-arti-satir">
@@ -5862,8 +5873,8 @@ export default function Anasayfa({ pro = false }) {
                   <button className="hik-kart" key={g.uid} onClick={() => hikayeAc(gi)}>
                     <span className="hik-kart-medyasar">
                       {kapak.tip === "video"
-                        ? (<><video className="hik-kart-bg" src={videoSade(kapak.url)} muted loop autoPlay playsInline preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} aria-hidden="true" /><video className="hik-kart-medya" src={videoSade(kapak.url)} muted loop autoPlay playsInline preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} /></>)
-                        : (<><img className="hik-kart-bg" src={kapak.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" /></>)}
+                        ? (<video className="hik-kart-medya" src={videoSade(kapak.url)} muted loop autoPlay playsInline preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} onLoadedMetadata={hikKapakYon} />)
+                        : (<img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />)}
                     </span>
                     {g.ogeler.length > 1 && <span className="hik-kart-sayac" aria-label={g.ogeler.length + " hikâye"}>🖼 {g.ogeler.length}</span>}
                     <span className={"hik-kart-av" + (g.yeni ? " yeni" : " gorulen") + (g.amblem ? " amblem" : "")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?")[0] || "?").toUpperCase()}</span>
