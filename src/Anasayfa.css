@@ -708,9 +708,10 @@
 .ape-kalp{ position:relative; }
 /* TEPKİLER (👍❤️😂😮😢😡) — beğeniye UZUN BASINCA çıkan çubuk */
 .tepki-secili{ font-size:19px; line-height:1; display:inline-block; }
-.ape-kalp .tepki-cubuk{ position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:9px; display:flex; gap:2px; padding:6px 9px; border-radius:30px; background:rgba(20,22,34,.97); box-shadow:0 6px 22px rgba(0,0,0,.5); z-index:30; white-space:nowrap; animation:tepkiAc .16s ease; }
-@keyframes tepkiAc{ from{ opacity:0; transform:translateX(-50%) translateY(7px) scale(.9);} to{ opacity:1; transform:translateX(-50%) translateY(0) scale(1);} }
-.tepki-oge{ border:none; background:transparent; font-size:28px; line-height:1; padding:2px 3px; cursor:pointer; transition:transform .12s ease; }
+/* Çubuk SOLA sabit (ortalamak, en soldaki kalp düğmesinde ekranın solundan taşırıp ilk tepkileri kesiyordu) + yukarı alındı + ALTIN zemin (anayasa: siyah yok) */
+.ape-kalp .tepki-cubuk{ position:absolute; bottom:100%; left:0; margin-bottom:15px; margin-left:2px; display:flex; gap:5px; padding:8px 12px; border-radius:16px; background:linear-gradient(135deg,#fffaf0,#ffe9b0); border:1.5px solid #d9b64a; box-shadow:0 8px 24px rgba(120,90,20,.4); z-index:30; white-space:nowrap; animation:tepkiAc .16s ease; }
+@keyframes tepkiAc{ from{ opacity:0; transform:translateY(9px) scale(.9);} to{ opacity:1; transform:translateY(0) scale(1);} }
+.tepki-oge{ border:none; background:transparent; font-size:29px; line-height:1; padding:2px 3px; cursor:pointer; transition:transform .12s ease; }
 .tepki-oge:hover, .tepki-oge:active{ transform:scale(1.4) translateY(-4px); }
 .tepki-fon{ position:fixed; inset:0; z-index:20; background:transparent; }
 .ape-kalp.patla svg{ animation:kalpPop .42s ease; }
