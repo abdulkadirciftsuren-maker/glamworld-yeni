@@ -46,6 +46,26 @@ const ayarPinIkon = () => L.divIcon({ className: "", html: '<div style="width:20
 function BilgiBtn({ metin, onAc, className }) {
   return <button type="button" className={"bilgi-btn" + (className ? " " + className : "")} onClick={(e) => { e.stopPropagation(); e.preventDefault(); onAc(metin); }} aria-label="Açıklama">?</button>;
 }
+// ANAYASA KURALI: Bir düğme/etikette yazı SIĞMIYORSA kesilmez → yazı şeritte SOLA doğru CANLI yürür,
+// 3 kez gidip başa döner, sonra BAŞTA durur. Bunu her yerde bu bileşenle sağlarız (<KayanYazi>metin</KayanYazi>).
+function KayanYazi({ children, className }) {
+  const disRef = useRef(null);
+  const icRef = useRef(null);
+  const [kayma, setKayma] = useState(0); // taşma miktarı (px) — 0 ise sığıyor, kaymaz
+  useEffect(() => {
+    const dis = disRef.current, ic = icRef.current;
+    if (!dis || !ic) return;
+    const olc = () => { const tasma = Math.ceil(ic.scrollWidth - dis.clientWidth); setKayma(tasma > 2 ? tasma : 0); };
+    olc();
+    let ro; try { ro = new ResizeObserver(olc); ro.observe(dis); ro.observe(ic); } catch (e) {}
+    return () => { try { ro && ro.disconnect(); } catch (e) {} };
+  }, [children]);
+  return (
+    <span ref={disRef} className={"kayan-dis" + (className ? " " + className : "")}>
+      <span ref={icRef} className={"kayan-ic" + (kayma ? " kayar" : "")} style={kayma ? { "--kayma": "-" + kayma + "px" } : undefined}>{children}</span>
+    </span>
+  );
+}
 function AyarBolum({ ad, ikon, renk, acik, onTik, children, bilgi, onAcBilgi }) {
   return (
     <div className={"ayar-bolum" + (acik ? " acik" : "")} style={renk ? { "--ar": renk } : undefined}>
@@ -5048,6 +5068,9 @@ export default function Anasayfa({ pro = false }) {
     const seritVids = Array.from(document.querySelectorAll(".hik-serit video"));
     const feedVids = Array.from(document.querySelectorAll(".ana-akis .apr-medya.video video, .ana-akis .apr-kolaj-oge video"));
     if (ustPencereVar) { [...feedVids, ...seritVids].forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
+    // PENCERE KAPANDI → hikâye şeridi videoları TEKRAR CANLI oynasın (küçük kapak, hep görünür).
+    // Kullanıcı: "menü/sayfa açıp kapatınca ana sayfaya dönünce hikâye ve videolar duruyor, canlı değil" — burada yeniden başlatılır.
+    seritVids.forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
     if (!feedVids.length) return;
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
@@ -5718,7 +5741,7 @@ export default function Anasayfa({ pro = false }) {
                 <span className="hik-kart-foto">{foto
                   ? <span className="hik-kart-medyasar"><img className="hik-kart-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={foto} alt="" referrerPolicy="no-referrer" /></span>
                   : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
-                <span className="hik-kart-serit"><span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span><span className="hik-kart-ad">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("hikayeOlustur", "Hikâye Oluştur")}</span></span>
+                <span className="hik-kart-serit"><span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span><span className="hik-kart-ad"><KayanYazi>{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("hikayeOlustur", "Hikâye Oluştur")}</KayanYazi></span></span>
               </button>
               {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = EN SON hikaye (görüntüleyicide de ilk o oynar) */}
               {hikayeGruplar.map((g) => {
@@ -5744,9 +5767,9 @@ export default function Anasayfa({ pro = false }) {
             </button>
             {/* AKIŞ FİLTRESİ — Sana Özel (algoritma) / Hepsi (zaman) / Takip Ettiklerim */}
             <div className="ana-feed-filtre">
-              <button className={"aff-chip aff-ozel" + (feedFiltre === "ozel" ? " aktif" : "")} onClick={() => setFeedFiltre("ozel")}>✨ {t("feedOzel", "Sana Özel")}</button>
-              <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}>{t("feedHepsi", "Hepsi")}</button>
-              <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}>{t("feedTakip", "Takip Ettiklerim")}</button>
+              <button className={"aff-chip aff-ozel" + (feedFiltre === "ozel" ? " aktif" : "")} onClick={() => setFeedFiltre("ozel")}><KayanYazi>✨ {t("feedOzel", "Sana Özel")}</KayanYazi></button>
+              <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}><KayanYazi>{t("feedHepsi", "Hepsi")}</KayanYazi></button>
+              <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}><KayanYazi>{t("feedTakip", "Takip Ettiklerim")}</KayanYazi></button>
             </div>
             {/* GERÇEK gönderiler önce, sonra örnek akış (platform boş kalmasın) */}
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (

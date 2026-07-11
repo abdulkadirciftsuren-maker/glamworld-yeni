@@ -50,6 +50,7 @@ Açıklamalar **numaralı adımlarla** ve sade olur (1, 2, 3…). Teknik jargon 
 - Tüm kullanıcı metinleri doğru **Türkçe karakter** kullanır; kullanıcı yazıları **altın** (#FFD700).
 - Bilgisayar (desktop) yazı/öğe boyutu **telefondan ASLA küçük olmaz** (`@media (min-width:560px)` ile büyüt).
 - Deploy'dan ÖNCE mümkünse **Playwright ile önizleme görüntüsü** çıkarıp kullanıcıya göster (kullanıcı görmeden onaylamıyor).
+- **⛔ YAZI HİÇBİR DÜĞMEDE/ETİKETTE KESİLMEZ — SIĞMIYORSA KAYAR (kullanıcı KESİN istedi, HER YERDE):** Bir düğmenin/etiketin yazısı içine sığmıyorsa, `…` ile kesme veya taşma OLMAZ. Bunun yerine yazı **şeritte SOLA doğru CANLI yürür**, **3 kez** gidip başa döner, sonra **BAŞTA durur**. Bunun için `<KayanYazi>…</KayanYazi>` bileşeni + `.kayan-dis/.kayan-ic` CSS (Anasayfa) kullanılır. **Her yeni düğme/etikette** (Ayarlar, Gloxoo, akış, hikâye, Reels — HER YER) bu uygulanır; yeni bir yer eklerken de aynısı yapılır. Ayrıca **yazısız bir düğme** varsa, kullanıcı **bastığında üstünde ne işe yaradığı görünmeli** (etiket/ipucu).
 
 ## 5. 🤫 MODEL KİMLİĞİ
 
