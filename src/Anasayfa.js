@@ -82,6 +82,16 @@ const HIK_FONTLAR = [
   { k: "zarif", ad: "Zarif", css: "'Palatino Linotype','Book Antiqua',Palatino,serif" },
 ];
 const hikFontCss = (k) => (HIK_FONTLAR.find((f) => f.k === k) || HIK_FONTLAR[0]).css;
+// TEPKİLER (Facebook gibi) — beğeniye uzun basınca çıkar; sadece kalp değil
+const TEPKILER = [
+  { k: "begen", e: "👍", ad: "Beğen" },
+  { k: "kalp", e: "❤️", ad: "Sevdim" },
+  { k: "kahkaha", e: "😂", ad: "Güldüm" },
+  { k: "saskin", e: "😮", ad: "Şaşırdım" },
+  { k: "uzgun", e: "😢", ad: "Üzüldüm" },
+  { k: "kizgin", e: "😡", ad: "Kızdım" },
+];
+const tepkiEmoji = (k) => (TEPKILER.find((x) => x.k === k) || TEPKILER[1]).e;
 
 // HER CÜMLE FARKLI RENK + küçük elmas ikonu (kullanıcı isteği: renkli, ikonlu, her cümle bir renk).
 // RC_KOYU = AÇIK zeminde okunur (karşılama balonu); RC_ACIK = KOYU zeminde okunur (Gloxoo sohbeti).
@@ -1189,6 +1199,8 @@ export default function Anasayfa({ pro = false }) {
   });
   // BEĞENİ / KAYDET (kullanıcı başına, localStorage) + YORUM penceresi
   const [begeniSet, setBegeniSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxBegeni") || "[]")); } catch (e) { return new Set(); } });
+  const [begeniTepki, setBegeniTepki] = useState(() => { try { return JSON.parse(localStorage.getItem("groxTepki") || "{}"); } catch (e) { return {}; } }); // {postId: tepkiKey}
+  const [tepkiAcik, setTepkiAcik] = useState(null); // tepki çubuğu açık gönderi id'si
   const [kaydetSet, setKaydetSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxKaydet") || "[]")); } catch (e) { return new Set(); } });
   const [yorumAcik, setYorumAcik] = useState(null);    // yorum penceresi açık gönderi
   const [yorumlar, setYorumlar] = useState(null);      // null=yükleniyor
@@ -2681,10 +2693,37 @@ export default function Anasayfa({ pro = false }) {
       if (uu && sahip && sahip !== uu.uid) bildirimEkle({ aliciUid: sahip, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "begeni", gonderiId: p.id, metin: (p.yazi || "").slice(0, 60), gonderiResim: p.gorsel || "", gonderiZemin: p.zemin || "", gonderiVideo: p.video || "" }).catch(() => {});
     }
   }
-  // KALBE UZUN BAS → kim beğendi listesi; KISA tık → beğen/geri al
-  function begeniBas(p) { uzunBasildiRef.current = false; begeniBasRef.current = setTimeout(() => { uzunBasildiRef.current = true; begenenleriAc(p); }, 450); }
+  // KALBE UZUN BAS → TEPKİ ÇUBUĞU (👍❤️😂😮😢😡); KISA tık → beğen/geri al
+  function begeniBas(p) { uzunBasildiRef.current = false; begeniBasRef.current = setTimeout(() => { uzunBasildiRef.current = true; setTepkiAcik(p.id); }, 380); }
   function begeniBirak() { if (begeniBasRef.current) { clearTimeout(begeniBasRef.current); begeniBasRef.current = null; } }
-  function begeniTik(p) { if (uzunBasildiRef.current) { uzunBasildiRef.current = false; return; } begenToggle(p); }
+  function begeniTik(p) { if (uzunBasildiRef.current) { uzunBasildiRef.current = false; return; } if (tepkiAcik === p.id) { setTepkiAcik(null); return; } begenToggle(p); }
+  // TEPKİ ver (çubuktan seç): beğenmemişse +1 beğeni + tepki; beğenmişse sadece tepkiyi değiştir
+  function begeniTepkiVer(p, key) {
+    setTepkiAcik(null); uzunBasildiRef.current = false;
+    if (!p || !p.id) return;
+    const uu = auth.currentUser;
+    const zatenBegendi = begeniSet.has(p.id);
+    setBegeniTepki((m) => { const n = { ...m, [p.id]: key }; try { localStorage.setItem("groxTepki", JSON.stringify(n)); } catch (e) {} return n; });
+    if (!zatenBegendi) {
+      const yeni = new Set(begeniSet); yeni.add(p.id); setBegeniSet(yeni); try { localStorage.setItem("groxBegeni", JSON.stringify([...yeni])); } catch (e) {}
+      const guncel = (g) => (g.id === p.id ? { ...g, begeni: Math.max(0, (g.begeni || 0) + 1) } : g);
+      setGercekAkis((a) => a.map(guncel)); setGonderilerim((a) => a.map(guncel));
+      setTamFoto((tt) => (tt && tt.id === p.id ? { ...tt, begeni: Math.max(0, (tt.begeni || 0) + 1) } : tt));
+      sayacDegistir(p.id, "begeni", 1).catch(() => {});
+      setKalpPatla(p.id); setTimeout(() => setKalpPatla((x) => (x === p.id ? null : x)), 760);
+      const sahip = p.sahipUid || p.uid;
+      if (uu && sahip && sahip !== uu.uid) bildirimEkle({ aliciUid: sahip, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "begeni", gonderiId: p.id, metin: (p.yazi || "").slice(0, 60), gonderiResim: p.gorsel || "", gonderiZemin: p.zemin || "", gonderiVideo: p.video || "" }).catch(() => {});
+    }
+    if (uu) begeniYaz(p.id, { uid: uu.uid, ad: benimAdGetir(), foto: benimFotoGetir(), tepki: key }).catch(() => {});
+  }
+  // Beğeni düğmesi ikonu: tepki verildiyse o emoji, yoksa kalp
+  const begeniIkon = (p) => { const s = begeniSet.has(p.id) ? (begeniTepki[p.id] || "kalp") : null; return s ? <span className="tepki-secili" aria-hidden="true">{tepkiEmoji(s)}</span> : Ikon.kalp; };
+  // Tepki çubuğu (uzun basınca) — düğmenin üstünde çıkar
+  const tepkiCubugu = (p) => tepkiAcik === p.id ? (
+    <span className="tepki-cubuk" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+      {TEPKILER.map((tp) => (<button key={tp.k} className="tepki-oge" title={tp.ad} onClick={(e) => { e.stopPropagation(); begeniTepkiVer(p, tp.k); }} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); begeniTepkiVer(p, tp.k); }}>{tp.e}</button>))}
+    </span>
+  ) : null;
   function begenenleriAc(p) { if (!p || !p.id) return; setBegeniListeAcik(p); setBegeniListe(null); begenenleriOku(p.id).then(setBegeniListe).catch(() => setBegeniListe([])); }
   // Bildirimlerde gösterilecek kendi adım/fotoğrafım
   function benimAdGetir() { return (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || t("biri", "Biri"); }
@@ -5782,7 +5821,7 @@ export default function Anasayfa({ pro = false }) {
                     )}
                     {/* İKON ŞERİDİ — fotoğrafın/videonun ALTINDA, AYRI şerit (medyanın üzerinde DEĞİL) */}
                     <div className={"apr-rail" + (p.video ? " video" : "")} onClick={(e) => e.stopPropagation()}>
-                      <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{Ikon.kalp}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
+                      <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
                       <button className="apr-ic ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
                       <button className="apr-ic ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}</button>
                       <button className={"apr-ic apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
@@ -5859,7 +5898,7 @@ export default function Anasayfa({ pro = false }) {
                     </a>
                   )}
                   <div className="ana-post-eylem">
-                    <button className={"ana-post-btn ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{Ikon.kalp}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span>{(p.begeni || 0).toLocaleString()}</span></button>
+                    <button className={"ana-post-btn ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span>{(p.begeni || 0).toLocaleString()}</span></button>
                     <button className="ana-post-btn ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
                     <button className="ana-post-btn ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}<span></span></button>
                     <button className={"ana-post-btn apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
@@ -6826,7 +6865,7 @@ export default function Anasayfa({ pro = false }) {
                 <div className="tf-rail" onClick={(e) => e.stopPropagation()}>
                   {/* BEĞENİ ikonu + hemen YANINDA beğenenlerin fotoğrafları (kullanıcı: geniş ekranda yer var) */}
                   <span className="tf-ic-cift">
-                    <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{Ikon.kalp}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
+                    <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
                     <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
                   </span>
                   {/* YORUM ikonu + hemen YANINDA yorum yapanların fotoğrafları */}
@@ -7956,6 +7995,9 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       ), document.body); })()}
+
+      {/* TEPKİ ÇUBUĞU ARKA KATMANI — dışarı dokununca kapanır */}
+      {tepkiAcik && createPortal(<div className="tepki-fon" onClick={() => setTepkiAcik(null)} onPointerDown={() => setTepkiAcik(null)} />, document.body)}
 
       {/* HİKÂYE OLUŞTUR — SEÇENEK EKRANI (Foto / Video / Yazı) */}
       {hikSecimAcik && createPortal((

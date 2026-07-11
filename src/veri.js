@@ -17,7 +17,7 @@ export async function sayacDegistir(postId, alan, delta) {
 // KİM BEĞENDİ — her beğeni ayrı doküman (begeniler/{post}_{uid}); kalbe uzun basınca liste gösterilir
 export async function begeniYaz(postId, k) {
   if (!postId || !k || !k.uid) return false;
-  try { await setDoc(doc(db, "begeniler", postId + "_" + k.uid), { postId, uid: k.uid, ad: k.ad || "", foto: k.foto || "", zamanMs: Date.now() }); return true; } catch (e) { return false; }
+  try { await setDoc(doc(db, "begeniler", postId + "_" + k.uid), { postId, uid: k.uid, ad: k.ad || "", foto: k.foto || "", tepki: k.tepki || "kalp", zamanMs: Date.now() }); return true; } catch (e) { return false; }
 }
 export async function begeniSilDoc(postId, uid) {
   if (!postId || !uid) return false;
