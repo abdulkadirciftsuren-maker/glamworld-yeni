@@ -311,6 +311,31 @@
 .pyl-konum-ik{ flex:none; font-size:16px; }
 .pyl-konum-metin{ flex:1; min-width:0; overflow-wrap:anywhere; }
 .pyl-konum-sil{ flex:none; opacity:.7; font-size:13px; }
+/* ANKET oluşturma (composer) — altın tema, kare köşeler */
+.pyl-anket-btn{ border-color:rgba(217,182,74,.5); background:rgba(217,182,74,.08); color:#e9d79a; }
+.pyl-anket-btn.acik{ border-color:rgba(217,182,74,.85); background:rgba(217,182,74,.16); color:#ffe9a8; }
+.pyl-anket{ margin:8px 0 0; padding:11px; border-radius:12px; border:1px solid rgba(217,182,74,.4); background:rgba(217,182,74,.06); display:flex; flex-direction:column; gap:8px; }
+.pyl-anket-baslik{ font-size:12px; color:#e9d79a; line-height:1.35; opacity:.92; }
+.pyl-anket-satir{ display:flex; align-items:center; gap:8px; }
+.pyl-anket-no{ flex:none; width:22px; height:22px; border-radius:6px; background:rgba(217,182,74,.25); color:#2a2000; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; }
+.pyl-anket-in{ flex:1; min-width:0; padding:9px 11px; border-radius:9px; border:1px solid rgba(217,182,74,.35); background:rgba(255,255,255,.06); color:#ffe9a8; font-size:13.5px; font-family:inherit; }
+.pyl-anket-in::placeholder{ color:rgba(233,215,154,.5); }
+.pyl-anket-sil{ flex:none; width:26px; height:26px; border:none; border-radius:7px; background:rgba(255,90,90,.16); color:#ff8b8b; font-size:13px; cursor:pointer; }
+.pyl-anket-ekle{ align-self:flex-start; padding:7px 13px; border:1px dashed rgba(217,182,74,.55); border-radius:9px; background:transparent; color:#e9d79a; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
+/* ANKET gösterimi (feed) — şıklar + oy verince altın yüzde çubukları */
+.anket{ margin:8px 12px 2px; padding:10px; border-radius:12px; border:1px solid rgba(217,182,74,.4); background:rgba(217,182,74,.05); display:flex; flex-direction:column; gap:7px; }
+.anket-bas{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.anket-bas-et{ font-size:12.5px; font-weight:800; color:#e9d79a; }
+.anket-toplam{ font-size:11.5px; color:#c9b877; }
+.anket-sec{ position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; text-align:left; padding:11px 13px; border-radius:10px; border:1px solid rgba(217,182,74,.5); background:rgba(255,255,255,.05); color:#ffe9a8; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; transition:border-color .15s ease; }
+.anket-sec:hover{ border-color:rgba(217,182,74,.9); }
+.anket-sec.secili{ border-color:#ffd700; box-shadow:0 0 0 1px #ffd700 inset; }
+.anket-sec.oylandi{ cursor:default; }
+.anket-dolgu{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, rgba(255,215,0,.28), rgba(217,182,74,.18)); border-radius:10px 0 0 10px; transition:width .4s ease; z-index:0; }
+.anket-metin{ position:relative; z-index:1; overflow-wrap:anywhere; display:flex; align-items:center; gap:6px; }
+.anket-tik{ color:#ffd700; font-weight:900; }
+.anket-yuzde{ position:relative; z-index:1; flex:none; font-weight:800; color:#ffd700; }
+.anket-ipucu{ font-size:11.5px; color:#c9b877; text-align:center; opacity:.85; }
 
 /* CANLI KONUM rozeti (akış — nereden paylaşıldı, üstte belirgin). DOLGUN koyu yeşil zemin + PARLAK yazı → her arka planda (açık/koyu) net okunur. */
 .apr-konum{ display:inline-flex; align-items:center; gap:8px; margin:3px 12px 7px; padding:6px 13px; border-radius:99px; background:linear-gradient(135deg,#1f8a4c,#0e6135); border:1.5px solid #7dffb0; box-shadow:0 2px 8px rgba(0,0,0,.35); max-width:calc(100% - 24px); }

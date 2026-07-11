@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -1201,6 +1201,11 @@ export default function Anasayfa({ pro = false }) {
   const [begeniSet, setBegeniSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxBegeni") || "[]")); } catch (e) { return new Set(); } });
   const [begeniTepki, setBegeniTepki] = useState(() => { try { return JSON.parse(localStorage.getItem("groxTepki") || "{}"); } catch (e) { return {}; } }); // {postId: tepkiKey}
   const [tepkiAcik, setTepkiAcik] = useState(null); // tepki çubuğu açık gönderi id'si
+  // ANKET — composer'da anket oluşturma + feed'de oy sayımları
+  const [anketAcik, setAnketAcik] = useState(false);            // composer: anket ekleme açık mı
+  const [anketSecenekler, setAnketSecenekler] = useState(["", ""]); // composer: anket şıkları
+  const [anketOylar, setAnketOylar] = useState({});             // {postId: {sayim:{i:n}, toplam, benim}}
+  const anketYukRef = useRef(new Set());                        // aynı anketin oylarını iki kez yükleme
   const [kaydetSet, setKaydetSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxKaydet") || "[]")); } catch (e) { return new Set(); } });
   const [yorumAcik, setYorumAcik] = useState(null);    // yorum penceresi açık gönderi
   const [yorumlar, setYorumlar] = useState(null);      // null=yükleniyor
@@ -2669,6 +2674,9 @@ export default function Anasayfa({ pro = false }) {
     setPaylasVideoFile(null); // yeni dosya yok; mevcut video URL'i korunur
     setYaziMedyaUstunde(!!g.yaziUstunde);
     const uy = g.ustYazi || {}; setUstYazi(uy.metin || ""); setUstRenk(uy.renk || "#ffffff"); setUstBoyut(uy.boyut || "orta"); setUstYer(uy.yer || "alt"); setAiOneriler([]); setPaylasDuzen(g.duzen || null); setPaylasZemin(g.zemin || ""); setPaylasYaziRenk(g.yaziRenk || "");
+    // ANKET — düzenlemede mevcut anket şıkları geri yüklenir
+    if (g.anket && Array.isArray(g.anket.secenekler) && g.anket.secenekler.length >= 2) { setAnketAcik(true); setAnketSecenekler([...g.anket.secenekler]); }
+    else { setAnketAcik(false); setAnketSecenekler(["", ""]); }
     setPaylasAcik(true);
   }
   // BEĞEN — kalp dolar/boşalır, sayı artar/azalır (kullanıcı başına localStorage), Firestore sayacı güncellenir
@@ -2725,6 +2733,53 @@ export default function Anasayfa({ pro = false }) {
     </span>
   ) : null;
   function begenenleriAc(p) { if (!p || !p.id) return; setBegeniListeAcik(p); setBegeniListe(null); begenenleriOku(p.id).then(setBegeniListe).catch(() => setBegeniListe([])); }
+  // ANKET — bir gönderinin oylarını yükle (sayım + benim oyum). Feed'de anket ilk göründüğünde çağrılır (ref ile tek sefer).
+  const anketYukle = (postId) => {
+    if (!postId || anketYukRef.current.has(postId)) return;
+    anketYukRef.current.add(postId);
+    anketOylariOku(postId).then((oylar) => {
+      const sayim = {}; let benim = null; const uu = auth.currentUser;
+      oylar.forEach((o) => { const i = o.secenek; sayim[i] = (sayim[i] || 0) + 1; if (uu && o.uid === uu.uid) benim = i; });
+      setAnketOylar((m) => ({ ...m, [postId]: { sayim, toplam: oylar.length, benim } }));
+    }).catch(() => {});
+  };
+  // ANKET — bir şıkka oy ver (iyimser güncelle + backend). Tekrar aynı şıkka basınca değişmez; başka şıkka basınca oyu taşır.
+  const anketOyla = (p, idx) => {
+    const uu = auth.currentUser; if (!uu || !p || !p.id) return;
+    const d = anketOylar[p.id] || { sayim: {}, toplam: 0, benim: null };
+    const onceki = d.benim;
+    if (onceki === idx) return;
+    const sayim = { ...d.sayim }; let toplam = d.toplam;
+    if (onceki !== null && onceki !== undefined) sayim[onceki] = Math.max(0, (sayim[onceki] || 0) - 1); else toplam += 1;
+    sayim[idx] = (sayim[idx] || 0) + 1;
+    setAnketOylar((m) => ({ ...m, [p.id]: { sayim, toplam, benim: idx } }));
+    anketOyVer(p.id, uu.uid, idx).catch(() => {});
+  };
+  // ANKET — feed'de anket bloğu (şıklar; oy verince yüzde çubukları görünür)
+  const anketBlok = (p) => {
+    if (!p.anket || !Array.isArray(p.anket.secenekler) || p.anket.secenekler.length < 2) return null;
+    const d = anketOylar[p.id];
+    if (!d) anketYukle(p.id);
+    const sayim = (d && d.sayim) || {}; const toplam = (d && d.toplam) || 0;
+    const benim = d ? d.benim : null;
+    const oyladi = benim !== null && benim !== undefined;
+    return (
+      <div className="anket" onClick={(e) => e.stopPropagation()}>
+        <div className="anket-bas"><span className="anket-bas-et">📊 {t("anket", "Anket")}</span>{toplam > 0 && <span className="anket-toplam">{toplam.toLocaleString()} {t("oy", "oy")}</span>}</div>
+        {p.anket.secenekler.map((s, i) => {
+          const n = sayim[i] || 0; const yuzde = toplam > 0 ? Math.round((n / toplam) * 100) : 0; const secili = benim === i;
+          return (
+            <button key={i} className={"anket-sec" + (secili ? " secili" : "") + (oyladi ? " oylandi" : "")} onClick={() => anketOyla(p, i)}>
+              {oyladi && <span className="anket-dolgu" style={{ width: yuzde + "%" }} />}
+              <span className="anket-metin">{secili && <span className="anket-tik">✓</span>}{s}</span>
+              {oyladi && <span className="anket-yuzde">%{yuzde}</span>}
+            </button>
+          );
+        })}
+        {!oyladi && <div className="anket-ipucu">{t("anketIpucu", "Oy vermek için bir şıka dokun")}</div>}
+      </div>
+    );
+  };
   // Bildirimlerde gösterilecek kendi adım/fotoğrafım
   function benimAdGetir() { return (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || t("biri", "Biri"); }
   function benimFotoGetir() { return foto || isFoto || ""; }
@@ -4434,25 +4489,27 @@ export default function Anasayfa({ pro = false }) {
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
       duzen: paylasDuzen || null, yaziUstunde: !!yaziMedyaUstunde,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
+      // ANKET — en az 2 dolu şık varsa gönderiye eklenir (şıklar; oylar ayrı koleksiyonda tutulur)
+      anket: (anketAcik && anketSecenekler.filter((s) => s.trim()).length >= 2) ? { secenekler: anketSecenekler.map((s) => s.trim()).filter(Boolean).slice(0, 4) } : null,
     };
     if (duzenlenen && duzenlenen.id) {
       // DÜZENLEME → mevcut gönderiyi güncelle. Kullanıcı: düzenleyip tekrar paylaşınca AKIŞTA EN ÜSTE gelsin + TARİH yenilensin.
       const yeniZaman = Date.now();
       // DÜZENLEMEDE MEDYA da kaydedilir (silinen/eklenen foto/video kalıcı olsun — kullanıcı: "düzenlerken silip kaydedeyim").
-      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, video: yeni.video, videoPoster: yeni.videoPoster, medyalar: yeni.medyalar, ustYazi: yeni.ustYazi, duzen: yeni.duzen, yaziUstunde: yeni.yaziUstunde, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, zamanMs: yeniZaman, zaman: "" };
+      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, video: yeni.video, videoPoster: yeni.videoPoster, medyalar: yeni.medyalar, ustYazi: yeni.ustYazi, duzen: yeni.duzen, yaziUstunde: yeni.yaziUstunde, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, anket: yeni.anket || null, zamanMs: yeniZaman, zaman: "" };
       gonderiGuncelle(duzenlenen.id, degisiklik).then((ok) => {
         if (ok) {
           // EN ÜSTE taşı: eski konumundan çıkar, güncel haliyle başa ekle (hem akış hem profil).
           const bumpla = (a) => { const eski = a.find((g) => g.id === duzenlenen.id) || {}; const kalan = a.filter((g) => g.id !== duzenlenen.id); return [{ ...eski, ...degisiklik }, ...kalan]; };
           setGercekAkis(bumpla); setGonderilerim(bumpla);
-          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setPaylasDurum("ok");
+          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasDurum("ok");
           setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800);
         } else setPaylasDurum("hata");
       }).catch(() => setPaylasDurum("hata"));
       return;
     }
     gonderiEkle(yeni).then((id) => {
-      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
+      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
       else { setPaylasHataDetay("bilinmiyor"); setPaylasDurum("hata"); }
     }).catch((e) => { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("hata"); });
   }
@@ -5642,7 +5699,7 @@ export default function Anasayfa({ pro = false }) {
               })}
             </div>
             {/* PAYLAŞ kutusu — kendi gönderini ekle (gerçek veri) */}
-            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setPaylasAcik(true); }}>
+            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
             </button>
             {/* AKIŞ FİLTRESİ — Sana Özel (algoritma) / Hepsi (zaman) / Takip Ettiklerim */}
@@ -5812,6 +5869,7 @@ export default function Anasayfa({ pro = false }) {
                     {yaziBlokIc && !p.yaziUstunde && (
                       <div className="apr-yazi-serit" onClick={(e) => e.stopPropagation()}>{yaziBlokIc}</div>
                     )}
+                    {anketBlok(p)}
                     {p.dosya && p.dosya.url && (
                       <a className="ana-post-dosya" href={p.dosya.url} target="_blank" rel="noreferrer">
                         <span className="ana-post-dosya-ik">📎</span>
@@ -5890,6 +5948,7 @@ export default function Anasayfa({ pro = false }) {
                       <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>
                     </div>
                   )}
+                  {anketBlok(p)}
                   {p.dosya && p.dosya.url && (
                     <a className="ana-post-dosya" href={p.dosya.url} target="_blank" rel="noreferrer">
                       <span className="ana-post-dosya-ik">📎</span>
@@ -6043,7 +6102,7 @@ export default function Anasayfa({ pro = false }) {
               {/* PAYLAŞIMLARIM — kendi gönderilerim (düzenle / sil); yayınladıkça otomatik gelir */}
               <div className="apf-paylasimlar">
                 {/* Bir şeyler paylaş — Profilim'den de gönderi ekle */}
-                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setPaylasAcik(true); }}>
+                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
                   <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
                 </button>
                 {/* BÖLÜM FİLTRELERİ — her tür kendi amblemi+rengiyle */}
@@ -6430,6 +6489,30 @@ export default function Anasayfa({ pro = false }) {
               </span>
               {paylasKonum && <span className="pyl-konum-sil" aria-hidden="true">✕</span>}
             </button>
+            {/* ANKET EKLE — açınca 2-4 şık yazılır; gönderi bir anket olur (takipçiler oy verir) */}
+            <button className={"pyl-konum-btn pyl-anket-btn" + (anketAcik ? " acik" : "")} onClick={() => setAnketAcik((v) => !v)}>
+              <span className="pyl-konum-ik" aria-hidden="true">📊</span>
+              <span className="pyl-konum-metin">{anketAcik ? t("anketKapat", "📊 Anket eklendi (kapatmak için dokun)") : t("anketEkle", "📊 Anket ekle (insanlar oy versin)")}</span>
+              {anketAcik && <span className="pyl-konum-sil" aria-hidden="true">✕</span>}
+            </button>
+            {anketAcik && (
+              <div className="pyl-anket">
+                <div className="pyl-anket-baslik">{t("anketSoru", "Soru üstteki Başlık / Yazı kutusuna yazılır. Şıkları buraya gir:")}</div>
+                {anketSecenekler.map((s, i) => (
+                  <div className="pyl-anket-satir" key={i}>
+                    <span className="pyl-anket-no">{i + 1}</span>
+                    <input className="pyl-anket-in" value={s} maxLength={80} placeholder={t("anketSik", "Şık") + " " + (i + 1)}
+                      onChange={(e) => setAnketSecenekler((a) => a.map((x, j) => (j === i ? e.target.value : x)))} />
+                    {anketSecenekler.length > 2 && (
+                      <button className="pyl-anket-sil" onClick={() => setAnketSecenekler((a) => a.filter((_, j) => j !== i))} aria-label="Şıkkı kaldır">✕</button>
+                    )}
+                  </div>
+                ))}
+                {anketSecenekler.length < 4 && (
+                  <button className="pyl-anket-ekle" onClick={() => setAnketSecenekler((a) => [...a, ""])}>＋ {t("anketSikEkle", "Şık ekle")}</button>
+                )}
+              </div>
+            )}
             {/* ZEMİN + YAZI RENGİ — yazılı gönderiye (medya yokken) renk şeridi (her türe) */}
             {!paylasGorsel && !paylasVideo && (
               <div className="pyl-zemin">
@@ -6459,7 +6542,7 @@ export default function Anasayfa({ pro = false }) {
               </div>
             )}
             </div>{/* /pyl-kaydir */}
-            <button className="paylas-gonder" onClick={() => { if (duzenlenen && duzenlenen.id) { paylasGonder(); } else { setMedyaMenu(""); setTurSecAcik(true); } }} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya)}>
+            <button className="paylas-gonder" onClick={() => { if (duzenlenen && duzenlenen.id) { paylasGonder(); } else { setMedyaMenu(""); setTurSecAcik(true); } }} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya && !(anketAcik && anketSecenekler.filter((s) => s.trim()).length >= 2))}>
               {paylasDurum === "video" ? (t("paylasVideoYuk", "Video yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "dosya" ? (t("dosyaYukleniyor", "Dosya yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (paylasDurum === "ok" ? t("paylasOk", "Paylaşıldı ✓") : t("paylasEt", "Paylaş"))}
             </button>
             {paylasDurum === "dosyahata" && <div className="adm-durum hata">{t("dosyaHata", "Dosya yüklenemedi, tekrar dene.")}</div>}

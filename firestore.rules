@@ -59,6 +59,14 @@ service cloud.firestore {
       allow delete: if girisli() && resource.data.uid == request.auth.uid;
     }
 
+    // Anket oyları — kim hangi seçeneğe oy verdi (beğeniler gibi ayrı koleksiyon).
+    // Herkes okur (sayım/yüzde için); kişi SADECE kendi oyunu ekler/değiştirir/siler.
+    match /anketOylari/{id} {
+      allow read: if girisli();
+      allow create, update: if girisli() && request.resource.data.uid == request.auth.uid;
+      allow delete: if girisli() && resource.data.uid == request.auth.uid;
+    }
+
     // Hikâyeler (Stories) — 24 saatte kaybolan foto/video. HERKES okur (izler); giriş yapan KENDİ hikâyesini oluşturur/siler.
     // Görülme sayacını (gorulme) HERKES 1 artırabilir (başkasının hikâyesini izleyince de sayılsın); kimlik alanları değişmez.
     match /hikayeler/{id} {

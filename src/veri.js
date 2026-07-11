@@ -43,6 +43,24 @@ export async function begenenleriOku(postId, adet = 100) {
   } catch (e) { return []; }
 }
 
+// ---------- ANKET OYLARI ----------
+// Kim hangi seçeneğe oy verdi — her oy AYRI doküman (anketOylari/{post}_{uid}), tıpkı beğeniler gibi.
+// Gönderi dokümanına DOKUNULMAZ (sahip kuralı korunur) → başkasının anketine oy vermek serbest.
+// Kişi kendi oyunu değiştirebilir (aynı doküman üzerine yazılır); seçenek = seçilen şıkkın sırası (0,1,2,3).
+export async function anketOyVer(postId, uid, secenek) {
+  if (!postId || !uid) return false;
+  try { await setDoc(doc(db, "anketOylari", postId + "_" + uid), { postId, uid, secenek, zamanMs: Date.now() }); return true; } catch (e) { return false; }
+}
+// Bir anketin TÜM oyları (sayım + kimin ne oy verdiği). Feed'de anket gösterilince çağrılır.
+export async function anketOylariOku(postId, adet = 2000) {
+  if (!postId) return [];
+  try {
+    const q = query(collection(db, "anketOylari"), where("postId", "==", postId), fsLimit(adet));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => d.data() || {});
+  } catch (e) { return []; }
+}
+
 // ---------- VİDEO / DOSYA YÜKLEME (FIREBASE DEPOLAMA) ----------
 // Cloudinary'den TAŞINDI (ücretsiz kota aşımı + hesap kapanma riski). Artık videolar/dosyalar
 // Firebase Depolama'ya yüklenir: tek çatı (Firebase), silince OTOMATİK silinir (medyaSil), şeffaf
