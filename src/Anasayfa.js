@@ -2812,9 +2812,11 @@ export default function Anasayfa({ pro = false }) {
         <div className="reels-serit-kaydir">
           {/* BAŞTA: Makara OLUŞTUR kartı — buradan video paylaşınca Makara olur */}
           <button className="reels-serit-oge reels-serit-olustur" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setAiOneriler([]); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
-            {foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-olustur-bos" />}
-            <span className="reels-serit-arti" aria-hidden="true">+</span>
-            <span className="reels-serit-isim notranslate" translate="no">{REELS_AD}</span>
+            {foto ? <img className="reels-serit-olustur-foto" src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-olustur-bos" />}
+            <span className="reels-serit-olustur-alt">
+              <span className="reels-serit-arti2" aria-hidden="true">+</span>
+              <span className="reels-serit-olustur-ad notranslate" translate="no">🎬 {REELS_AD}</span>
+            </span>
           </button>
           {reelListesi.slice(0, 10).map((p, i) => (
             <button className="reels-serit-oge" key={p.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
