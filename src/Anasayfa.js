@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -1197,7 +1197,7 @@ export default function Anasayfa({ pro = false }) {
   const [takipSet, setTakipSet] = useState(new Set());  // takip ettiğim uid'ler
   const [takipBalon, setTakipBalon] = useState(null);   // takip düğmesi yanında kısa etiket (uid; 1.6sn sonra kaybolur)
   const takipBalonZmnRef = useRef(null);
-  const [feedFiltre, setFeedFiltre] = useState("hepsi"); // "hepsi" | "takip" — akış filtresi
+  const [feedFiltre, setFeedFiltre] = useState("ozel"); // "ozel" (algoritma) | "hepsi" (zaman) | "takip" — akış filtresi
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
   const [hikayeAcik, setHikayeAcik] = useState(null);     // görüntüleyici: {gi:grupIndex, oi:ögeIndex}
@@ -2276,6 +2276,37 @@ export default function Anasayfa({ pro = false }) {
   const anaMeslekStar = (profilBilgi && profilBilgi.pro && profilBilgi.pro.meslek) || (profilBilgi && profilBilgi.meslek) || "";
   const meslekAd = (anaMeslekStar && proMeslekDizi.includes(anaMeslekStar)) ? anaMeslekStar : (proMeslekDizi[0] || anaMeslekStar || "");
   const konumYazi = (profilBilgi && profilBilgi.konum) ? [profilBilgi.konum.sehir, profilBilgi.konum.ulke].filter(Boolean).join(", ") : "";
+  // ================= KİŞİYE ÖZEL AKIŞ (Gloxoo algoritması) =================
+  // Akışı; TAKİP + BEĞENDİĞİN KİŞİLER + MESLEĞİN + ŞEHRİN + ETKİLEŞİM + TAZELİK'e göre puanlayıp sıralar.
+  const kisiselAkis = useMemo(() => {
+    if (!gercekAkis || gercekAkis.length < 2) return gercekAkis || [];
+    const benimUid = u && u.uid;
+    const benMeslekler = new Set((proMeslekDizi || []).map((m) => (m || "").toLowerCase()).filter(Boolean));
+    const ilgiSehirler = new Set([
+      (profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || "",
+      ...((profilBilgi && Array.isArray(profilBilgi.haberKonumlari) ? profilBilgi.haberKonumlari : []).map((h) => h.sehir || "")),
+    ].map((x) => (x || "").toLowerCase()).filter(Boolean));
+    // beğendiğim gönderilerin SAHİPLERİ (yakınlık — onların yeni gönderileri de üstte)
+    const yakinSahip = new Set();
+    gercekAkis.forEach((p) => { if (begeniSet && begeniSet.has(p.id)) { const h = p.uid || p.sahipUid; if (h) yakinSahip.add(h); } });
+    const simdi = Date.now();
+    const puan = (p) => {
+      let s = 0; const h = p.uid || p.sahipUid;
+      const yasSaat = Math.max(0, (simdi - (p.zamanMs || simdi)) / 3600000);
+      s += Math.max(0, 60 - yasSaat * 0.8);                 // TAZELİK (yeni gönderi üstte)
+      if (h && takipSet && takipSet.has(h)) s += 55;         // TAKİP ettiklerim
+      if (h && yakinSahip.has(h)) s += 30;                   // BEĞENDİĞİM kişiler
+      if (benimUid && h === benimUid) s += 8;                // kendi gönderim
+      const meslek = ((p.meslek || (p.pro && p.pro.meslek) || "") + "").toLowerCase();
+      if (meslek && benMeslekler.has(meslek)) s += 22;       // MESLEĞİME uygun
+      const psehir = (((p.konum && p.konum.sehir) || p.sehir || "") + "").toLowerCase();
+      if (psehir && ilgiSehirler.has(psehir)) s += 12;       // ŞEHRİM/ilgi yerim
+      const etk = (Number(p.begeni) || 0) + (Number(p.yorumSayisi) || 0) * 1.5;
+      s += Math.min(20, Math.log2(1 + etk) * 4);             // ETKİLEŞİM (popüler)
+      return s;
+    };
+    return [...gercekAkis].map((p) => ({ p, s: puan(p) })).sort((a, b) => b.s - a.s).map((x) => x.p);
+  }, [gercekAkis, takipSet, begeniSet, profilBilgi, proMeslekDizi, u]); // eslint-disable-line react-hooks/exhaustive-deps
   const editorFotoInputRef = useRef(null); // düzenleyici açıkken foto ekle/değiştir
   // ÇOK KATMANLI düzenleyici: SINIRSIZ fotoğraf + SINIRSIZ yazı satırı; her biri ayrı taşınır/ayarlanır.
   //   foto katmanı: { tip:'foto', img, x, y, scale, rot, parlak, kontrast, gri }
@@ -5575,8 +5606,9 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setYaziMedyaUstunde(false); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
             </button>
-            {/* AKIŞ FİLTRESİ — Hepsi / Takip Ettiklerim (kişiselleşmiş akış) */}
+            {/* AKIŞ FİLTRESİ — Sana Özel (algoritma) / Hepsi (zaman) / Takip Ettiklerim */}
             <div className="ana-feed-filtre">
+              <button className={"aff-chip aff-ozel" + (feedFiltre === "ozel" ? " aktif" : "")} onClick={() => setFeedFiltre("ozel")}>✨ {t("feedOzel", "Sana Özel")}</button>
               <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}>{t("feedHepsi", "Hepsi")}</button>
               <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}>{t("feedTakip", "Takip Ettiklerim")}</button>
             </div>
@@ -5584,7 +5616,7 @@ export default function Anasayfa({ pro = false }) {
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (
               <div className="ana-feed-bos">{t("feedTakipBos", "Henüz kimseyi takip etmiyorsun. Gönderilerdeki + Takip düğmesine bas; burada onların paylaşımları görünür.")}</div>
             )}
-            {(feedFiltre === "takip" ? gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }) : gercekAkis).map((p, i) => {
+            {(feedFiltre === "takip" ? gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }) : feedFiltre === "ozel" ? kisiselAkis : gercekAkis).map((p, i) => {
               const ad = p.ad || "—";
               const bas = (String(ad).trim()[0] || "?").toUpperCase();
               const zaman = p.zaman || zamanOnce(p.zamanMs);

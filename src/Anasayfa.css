@@ -2185,6 +2185,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   font-family:'Cormorant Garamond',serif; background:rgba(255,250,240,.66); color:#7a5e10; border:1px solid rgba(184,134,11,.4);
   -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); box-shadow:0 2px 7px rgba(60,45,10,.16); }
 .aff-chip.aktif{ background:linear-gradient(135deg,#FFD700,#c9962a); color:#1a1206; border-color:transparent; box-shadow:0 2px 10px rgba(255,215,0,.28); }
+.aff-ozel.aktif{ background:linear-gradient(135deg,#7b3ff2,#b14bd8); color:#fff; box-shadow:0 2px 12px rgba(123,63,242,.4); } /* AI algoritma çipi */
 .ana-feed-bos{ text-align:center; padding:26px 18px; color:#b3a884; font-style:italic; font-family:'Cormorant Garamond',serif; font-size:14px; line-height:1.5; }
 
 /* TAKİP ET düğmesi — gönderi yazarının yanında (akış-dışı, tıklanır) */
