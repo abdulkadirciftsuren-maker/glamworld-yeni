@@ -1247,6 +1247,9 @@ export default function Anasayfa({ pro = false }) {
   const [takipBalon, setTakipBalon] = useState(null);   // takip düğmesi yanında kısa etiket (uid; 1.6sn sonra kaybolur)
   const takipBalonZmnRef = useRef(null);
   const [feedFiltre, setFeedFiltre] = useState("ozel"); // "ozel" (algoritma) | "hepsi" (zaman) | "takip" — akış filtresi
+  // AKIŞ SAYFALAMA (ölçeklenebilirlik): tümünü birden yükleme — ilk 6, aşağı kaydırdıkça +6 (yüzbinlerce gönderi olsa da telefon donmaz)
+  const [feedGoster, setFeedGoster] = useState(6);
+  const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
   const [hikayeAcik, setHikayeAcik] = useState(null);     // görüntüleyici: {gi:grupIndex, oi:ögeIndex}
@@ -2820,7 +2823,8 @@ export default function Anasayfa({ pro = false }) {
           </button>
           {reelListesi.slice(0, 10).map((p, i) => (
             <button className="reels-serit-oge" key={p.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
-              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <video src={videoSade(p._reelVideo)} muted playsInline preload="none" tabIndex={-1} />}
+              {/* KAPAK: poster varsa resim (en hafif); yoksa videonun İLK KARESİ (#t=0.1 + metadata) → boş sarı kalmaz */}
+              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <video src={videoSade(p._reelVideo) + "#t=0.1"} muted playsInline preload="metadata" tabIndex={-1} />}
               <span className="reels-serit-oyn" aria-hidden="true">▶</span>
               <span className="reels-serit-isim notranslate" translate="no">{((p.ad || "").split(" ")[0]) || ""}</span>
             </button>
@@ -5143,6 +5147,16 @@ export default function Anasayfa({ pro = false }) {
     vids.forEach((v) => io.observe(v));
     return () => io.disconnect();
   }, [reelsAcik, reelListesi, reelSesAcik]);
+  // AKIŞ SAYFALAMA: filtre değişince baştan (ilk 6)
+  useEffect(() => { setFeedGoster(6); }, [feedFiltre]);
+  // Aşağı kaydırınca DAHA FAZLA gönderi yükle — nöbetçi görününce +6 (tümünü birden yüklemez → ölçeklenir, donmaz)
+  useEffect(() => {
+    if (aktifKod !== "home") return;
+    const el = feedSonRef.current; if (!el) return;
+    const io = new IntersectionObserver((girisler) => { if (girisler.some((g) => g.isIntersecting)) setFeedGoster((n) => n + 6); }, { rootMargin: "700px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [aktifKod, feedGoster, feedFiltre, gercekAkis]);
   // REELS açılınca, seçilen reele (karuselden dokunulan) KAYDIR (baştan değil, o videodan başlasın)
   useEffect(() => {
     if (!reelsAcik) return;
@@ -5832,7 +5846,7 @@ export default function Anasayfa({ pro = false }) {
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (
               <div className="ana-feed-bos">{t("feedTakipBos", "Henüz kimseyi takip etmiyorsun. Gönderilerdeki + Takip düğmesine bas; burada onların paylaşımları görünür.")}</div>
             )}
-            {(feedFiltre === "takip" ? gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }) : feedFiltre === "ozel" ? kisiselAkis : gercekAkis).map((p, i) => {
+            {(() => { const feedTam = (feedFiltre === "takip" ? gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }) : feedFiltre === "ozel" ? kisiselAkis : gercekAkis); return feedTam.slice(0, feedGoster).map((p, i) => {
               const ad = p.ad || "—";
               const bas = (String(ad).trim()[0] || "?").toUpperCase();
               const zaman = p.zaman || zamanOnce(p.zamanMs);
@@ -6091,7 +6105,7 @@ export default function Anasayfa({ pro = false }) {
               /* Makara şeridi akışta SADECE BİR KERE geçer (3. gönderiden sonra; feed kısaysa son gönderiden sonra) — tekrarlanmaz (performans + kullanıcı isteği) */
               const sokIndex = Math.min(2, arr.length - 1);
               return (idx === sokIndex && reelListesi.length > 0) ? [node, reelsSeridi("reelserit")] : node;
-            })}
+            }).concat(feedTam.length > feedGoster ? <div key="feed-nob" ref={feedSonRef} className="feed-nobetci" aria-hidden="true" /> : []); })()}
           </div>
           {/* "Profesyonel misin? Üye ol" bandı KALDIRILDI (kullanıcı: ana sayfadan çıkar) — pro daveti menüde duruyor */}
         </div>
