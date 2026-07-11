@@ -2441,9 +2441,14 @@ i18n
     },
   });
 
-// Arapça sağdan-sola: yön ayarı
+// Arapça sağdan-sola: yön ayarı + SAYFA DİLİ (html lang)
+// ÖNEMLİ: html lang'i o an gösterilen dile eşitliyoruz. Yoksa index.html'de sabit lang="tr" kalıyor
+// ve TÜRKÇE OLMAYAN herkesin tarayıcısı "bu sayfa Türkçe, çevrilsin mi?" bandını gösteriyordu
+// (sanki sayfa herkese Türkçe dayatıyormuş gibi). Artık her kullanıcının sayfası KENDİ dilinde işaretlenir → o bant çıkmaz.
 function yonAyarla(lng) {
-  document.documentElement.dir = lng === "ar" ? "rtl" : "ltr";
+  const kod = (lng || "en").split("-")[0];
+  document.documentElement.dir = kod === "ar" ? "rtl" : "ltr";
+  try { document.documentElement.lang = kod; } catch (e) {}
 }
 yonAyarla(i18n.language);
 i18n.on("languageChanged", yonAyarla);

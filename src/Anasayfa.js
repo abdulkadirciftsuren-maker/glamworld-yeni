@@ -5834,7 +5834,7 @@ export default function Anasayfa({ pro = false }) {
                                 // TEMEL (ilk/büyük) kare → cover (pencereyi doldurur, o zaten baz); YAN kareler → contain + ALTIN TOZU zemin (kendi yönünde tam, kesilmez)
                                 <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "") + (ana ? " temel" : " yan-oge")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
+                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop autoPlay playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
                                     : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={yonAyarla} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
@@ -5857,7 +5857,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
+                        ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop autoPlay playsInline tabIndex={-1} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
