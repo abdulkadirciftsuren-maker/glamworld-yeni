@@ -48,6 +48,10 @@ function BilgiBtn({ metin, onAc, className }) {
 }
 // ANAYASA KURALI: Bir düğme/etikette yazı SIĞMIYORSA kesilmez → yazı şeritte SOLA doğru CANLI yürür,
 // 3 kez gidip başa döner, sonra BAŞTA durur. Bunu her yerde bu bileşenle sağlarız (<KayanYazi>metin</KayanYazi>).
+// ÖZGÜN MARKA İSİMLERİ (kopya değil, bize ait) — kullanıcı seçer, kolayca değişir.
+// Hikâye özelliği: "Parıltı" (alternatif: An / Işıltı / Kıvılcım). Reels özelliği: "Gloxo" (alternatif: Şimşek / Vitrin / Akıntı).
+const HIKAYE_AD = "Işıltını Göster"; // hikâye oluştur düğmesi (alternatif: "Anlık Parıltı" / "Kıvılcım Çak")
+const REELS_AD = "Makara";           // reels (alternatif: "Film Makarası")
 function KayanYazi({ children, className }) {
   const disRef = useRef(null);
   const icRef = useRef(null);
@@ -2794,6 +2798,27 @@ export default function Anasayfa({ pro = false }) {
     setAnketOylar((m) => ({ ...m, [p.id]: { sayim, toplam, benim: idx } }));
     anketOyVer(p.id, uu.uid, idx).catch(() => {});
   };
+  // AKIŞTA REELS ŞERİDİ — Facebook gibi, her birkaç gönderide bir yatay kısa video şeridi (dokununca tam ekran Reels açılır)
+  const reelsSeridi = (anahtar) => {
+    if (!reelListesi.length) return null;
+    return (
+      <div className="reels-serit" key={anahtar} onClick={(e) => e.stopPropagation()}>
+        <div className="reels-serit-bas">
+          <span className="reels-serit-ad notranslate" translate="no">🎬 {REELS_AD}</span>
+          <button className="reels-serit-tum" onClick={() => { setReelAktif(0); setReelsAcik(true); }}>{t("tumunuGor", "Tümü")} ›</button>
+        </div>
+        <div className="reels-serit-kaydir">
+          {reelListesi.slice(0, 12).map((p, i) => (
+            <button className="reels-serit-oge" key={p.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
+              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <video src={videoSade(p._reelVideo)} muted playsInline preload="metadata" tabIndex={-1} />}
+              <span className="reels-serit-oyn" aria-hidden="true">▶</span>
+              <span className="reels-serit-isim notranslate" translate="no">{((p.ad || "").split(" ")[0]) || ""}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
   // ANKET — feed'de anket bloğu (şıklar; oy verince yüzde çubukları görünür)
   const anketBlok = (p) => {
     if (!p.anket || !Array.isArray(p.anket.secenekler) || p.anket.secenekler.length < 2) return null;
@@ -5099,6 +5124,13 @@ export default function Anasayfa({ pro = false }) {
     vids.forEach((v) => io.observe(v));
     return () => io.disconnect();
   }, [reelsAcik, reelListesi, reelSesAcik]);
+  // REELS açılınca, seçilen reele (karuselden dokunulan) KAYDIR (baştan değil, o videodan başlasın)
+  useEffect(() => {
+    if (!reelsAcik) return;
+    const sar = reelSarRef.current; if (!sar) return;
+    const el = sar.children && sar.children[reelAktif];
+    if (el && el.scrollIntoView) { try { el.scrollIntoView({ block: "start" }); } catch (e) {} }
+  }, [reelsAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   const profilAcikRef = useRef(profilAcik);
   useEffect(() => { profilAcikRef.current = profilAcik; }, [profilAcik]);
   const bildirimAcikRef = useRef(bildirimAcik);
@@ -5741,7 +5773,7 @@ export default function Anasayfa({ pro = false }) {
                 <span className="hik-kart-foto">{foto
                   ? <span className="hik-kart-medyasar"><img className="hik-kart-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={foto} alt="" referrerPolicy="no-referrer" /></span>
                   : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
-                <span className="hik-kart-serit"><span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span><span className="hik-kart-ad"><KayanYazi>{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("hikayeOlustur", "Hikâye Oluştur")}</KayanYazi></span></span>
+                <span className="hik-kart-serit"><span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span><span className="hik-kart-ad notranslate" translate="no"><KayanYazi>{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : "✨ " + HIKAYE_AD}</KayanYazi></span></span>
               </button>
               {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = EN SON hikaye (görüntüleyicide de ilk o oynar) */}
               {hikayeGruplar.map((g) => {
@@ -6030,7 +6062,10 @@ export default function Anasayfa({ pro = false }) {
                   <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                 </article>
               );
-            })}
+            }).flatMap((node, idx) => (
+              /* FACEBOOK gibi: her 3 gönderiden sonra akışa bir REELS (kısa video) şeridi gir */
+              ((idx + 1) % 3 === 0 && reelListesi.length > 0) ? [node, reelsSeridi("reelserit-" + idx)] : node
+            ))}
           </div>
           {/* "Profesyonel misin? Üye ol" bandı KALDIRILDI (kullanıcı: ana sayfadan çıkar) — pro daveti menüde duruyor */}
         </div>
@@ -7497,7 +7532,7 @@ export default function Anasayfa({ pro = false }) {
         <button className="ana-tab-oge" onClick={() => setAraAcik(true)}>{Ikon.ara}<span>{t("tabAra")}</span></button>
         <button className={"ana-tab-oge ana-tab-reels" + (reelsAcik ? " aktif" : "")} onClick={() => { setReelAktif(0); setReelsAcik(true); }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 4l2.5 5M14 4l2.5 5"/><path d="M10.5 12.5l4 2.2-4 2.3z" fill="currentColor"/></svg>
-          <span>{t("tabReels", "Reels")}</span></button>
+          <span className="notranslate" translate="no">{REELS_AD}</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("konum")}>{Ikon.konum}<span>{t("navKonum")}</span></button>
         <button className="ana-tab-oge" onClick={() => setMesajAcik(true)}>{Ikon.mesaj}<span>{t("tabMesaj")}</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("profil")}>{Ikon.profil}<span>{t("navProfil")}</span></button>
@@ -8152,7 +8187,7 @@ export default function Anasayfa({ pro = false }) {
       {reelsAcik && createPortal((
         <div className="reels-kok">
           <div className="reels-ust">
-            <span className="reels-baslik notranslate" translate="no">🎬 Reels</span>
+            <span className="reels-baslik notranslate" translate="no">🎬 {REELS_AD}</span>
             <button className="reels-kapat" onClick={() => setReelsAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
           </div>
           {reelListesi.length === 0 ? (

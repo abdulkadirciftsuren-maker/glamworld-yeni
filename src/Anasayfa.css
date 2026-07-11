@@ -337,6 +337,19 @@
 .anket-yuzde{ position:relative; z-index:1; flex:none; font-weight:800; color:#ffd700; }
 .anket-ipucu{ font-size:11.5px; color:#c9b877; text-align:center; opacity:.85; }
 
+/* ===== AKIŞTA REELS ŞERİDİ (Facebook gibi, her birkaç gönderide bir) ===== */
+.reels-serit{ margin:10px 0; padding:10px 0 12px; border-radius:16px; background:linear-gradient(135deg, rgba(240,196,25,.14), rgba(177,75,216,.12)); border:1px solid rgba(217,182,74,.4); }
+.reels-serit-bas{ display:flex; align-items:center; justify-content:space-between; padding:0 12px 8px; }
+.reels-serit-ad{ font-size:16px; font-weight:900; color:#8a4bbd; text-shadow:0 1px 2px rgba(255,255,255,.4); }
+.reels-serit-tum{ border:none; background:transparent; color:#b8860b; font-size:13px; font-weight:800; cursor:pointer; }
+.reels-serit-kaydir{ display:flex; gap:9px; overflow-x:auto; padding:0 12px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.reels-serit-kaydir::-webkit-scrollbar{ display:none; }
+.reels-serit-oge{ position:relative; flex:0 0 auto; width:108px; height:180px; border-radius:13px; overflow:hidden; border:2px solid #d9b64a; background:linear-gradient(135deg,#caa23f,#8a6d2a); cursor:pointer; padding:0; }
+.reels-serit-oge img, .reels-serit-oge video{ width:100%; height:100%; object-fit:cover; display:block; }
+.reels-serit-oyn{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:34px; height:34px; border-radius:50%; background:rgba(255,251,240,.9); color:#8a4bbd; font-size:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(90,60,10,.4); }
+.reels-serit-isim{ position:absolute; left:0; right:0; bottom:0; padding:12px 7px 6px; color:#fff; font-size:11.5px; font-weight:700; text-align:left; text-shadow:0 1px 3px rgba(60,40,5,.95); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:linear-gradient(0deg, rgba(90,60,10,.6), transparent); }
+@media (min-width:560px){ .reels-serit-ad{ font-size:19px; } .reels-serit-oge{ width:128px; height:210px; } }
+
 /* ===== REELS — tam ekran, yukarı-aşağı kayan kısa video akışı ===== */
 .reels-kok{ position:fixed; inset:0; z-index:1500; display:flex; flex-direction:column;
   background: radial-gradient(circle at 30% 18%, rgba(255,231,168,.5), transparent 60%), radial-gradient(circle at 72% 86%, rgba(255,208,92,.42), transparent 64%), linear-gradient(135deg,#caa23f,#8a6d2a); }
