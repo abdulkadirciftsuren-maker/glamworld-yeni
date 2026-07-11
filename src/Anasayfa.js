@@ -1206,6 +1206,12 @@ export default function Anasayfa({ pro = false }) {
   const [anketSecenekler, setAnketSecenekler] = useState(["", ""]); // composer: anket şıkları
   const [anketOylar, setAnketOylar] = useState({});             // {postId: {sayim:{i:n}, toplam, benim}}
   const anketYukRef = useRef(new Set());                        // aynı anketin oylarını iki kez yükleme
+  // REELS — tam ekran, yukarı-aşağı kayan kısa video akışı (TikTok/Instagram Reels gibi)
+  const [reelsAcik, setReelsAcik] = useState(false);            // reels tam ekran açık mı
+  const [reelSesAcik, setReelSesAcik] = useState(false);        // reels sesi açık mı (başta sessiz — tarayıcı sesli otomatik oynatmayı engeller)
+  const [reelAktif, setReelAktif] = useState(0);                // o an ekranda olan reel index
+  const reelsAcikRef = useRef(reelsAcik); useEffect(() => { reelsAcikRef.current = reelsAcik; }, [reelsAcik]);
+  const reelSarRef = useRef(null);                              // reels kaydırma kabı
   const [kaydetSet, setKaydetSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxKaydet") || "[]")); } catch (e) { return new Set(); } });
   const [yorumAcik, setYorumAcik] = useState(null);    // yorum penceresi açık gönderi
   const [yorumlar, setYorumlar] = useState(null);      // null=yükleniyor
@@ -2324,6 +2330,17 @@ export default function Anasayfa({ pro = false }) {
     };
     return [...gercekAkis].map((p) => ({ p, s: puan(p) })).sort((a, b) => b.s - a.s).map((x) => x.p);
   }, [gercekAkis, takipSet, begeniSet, profilBilgi, proMeslekDizi, u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // REELS listesi — akıştaki VİDEOLU gönderiler (tekli video veya medyalar içinde video), yeniden eskiye.
+  const reelListesi = useMemo(() => {
+    const kaynak = gercekAkis || [];
+    const cikar = (p) => {
+      if (p.video) return { ...p, _reelVideo: videoSade(p.video), _reelPoster: p.videoPoster || "" };
+      const m = Array.isArray(p.medyalar) ? p.medyalar.find((x) => x.tip === "video" && x.url) : null;
+      if (m) return { ...p, _reelVideo: videoSade(m.url), _reelPoster: m.poster || "" };
+      return null;
+    };
+    return kaynak.map(cikar).filter(Boolean);
+  }, [gercekAkis]);
   const editorFotoInputRef = useRef(null); // düzenleyici açıkken foto ekle/değiştir
   // ÇOK KATMANLI düzenleyici: SINIRSIZ fotoğraf + SINIRSIZ yazı satırı; her biri ayrı taşınır/ayarlanır.
   //   foto katmanı: { tip:'foto', img, x, y, scale, rot, parlak, kontrast, gri }
@@ -5022,7 +5039,7 @@ export default function Anasayfa({ pro = false }) {
   // FEED VİDEOLARI: ekrana gelince KENDİ oynar (sessiz, döngü), çıkınca durur — düğmeye basmaya gerek yok.
   // ⚡ PARLAMA: ana sayfa ÜZERİNDE bir pencere açıkken (menü/ayarlar/panel...) feed videosu arkada oynamaya devam ederse
   // telefonda pencere açılışında PARLAMA yapıyordu → pencere açıkken TÜM feed videoları DURDUR; pencere kapanınca yeniden oynar.
-  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik;
+  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik;
   useEffect(() => {
     if (aktifKod !== "home") return;
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)
@@ -5040,6 +5057,23 @@ export default function Anasayfa({ pro = false }) {
     feedVids.forEach((v) => io.observe(v));
     return () => io.disconnect();
   }, [aktifKod, feedFiltre, gercekAkis, ustPencereVar, hikayeGruplar]);
+  // REELS: ekrandaki reel videosu KENDİ oynar (döngü), ötekiler durur; hangi reelde olduğumuzu izler.
+  useEffect(() => {
+    if (!reelsAcik) return;
+    const vids = Array.from(document.querySelectorAll(".reel-video"));
+    if (!vids.length) return;
+    const io = new IntersectionObserver((girisler) => {
+      girisler.forEach((g) => {
+        const v = g.target;
+        if (g.isIntersecting && g.intersectionRatio >= 0.6) {
+          v.muted = !reelSesAcik; try { v.play().catch(() => {}); } catch (e) {}
+          const i = Number(v.getAttribute("data-i")) || 0; setReelAktif(i);
+        } else { try { v.pause(); } catch (e) {} }
+      });
+    }, { threshold: [0, 0.6, 1] });
+    vids.forEach((v) => io.observe(v));
+    return () => io.disconnect();
+  }, [reelsAcik, reelListesi, reelSesAcik]);
   const profilAcikRef = useRef(profilAcik);
   useEffect(() => { profilAcikRef.current = profilAcik; }, [profilAcik]);
   const bildirimAcikRef = useRef(bildirimAcik);
@@ -5151,7 +5185,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -5159,12 +5193,13 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
       guardSayRef.current = Math.max(0, guardSayRef.current - 1);
-      if (telHaritaAcikRef.current) { telHaritaAcikRef.current = false; setTelHaritaAcik(false); }
+      if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
+      else if (telHaritaAcikRef.current) { telHaritaAcikRef.current = false; setTelHaritaAcik(false); }
       else if (uyelikKartAcikRef.current) { uyelikKartAcikRef.current = false; setUyelikKartAcik(false); }
       else if (sektorListeRef.current) { sektorListeRef.current = ""; setSektorListe(""); }
       else if (ayarHaritaAcikRef.current) { ayarHaritaAcikRef.current = false; setAyarHaritaAcik(false); }
@@ -7435,6 +7470,9 @@ export default function Anasayfa({ pro = false }) {
       <nav className={"ana-tab" + ((tabGizli || menuAcik) ? " gizli" : "")}>
         <button className={"ana-tab-oge" + (aktifKod === "home" ? " aktif" : "")} onClick={() => setAktifKod("home")}>{Ikon.home}<span>{t("tabKesfet")}</span></button>
         <button className="ana-tab-oge" onClick={() => setAraAcik(true)}>{Ikon.ara}<span>{t("tabAra")}</span></button>
+        <button className={"ana-tab-oge ana-tab-reels" + (reelsAcik ? " aktif" : "")} onClick={() => { setReelAktif(0); setReelsAcik(true); }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 4l2.5 5M14 4l2.5 5"/><path d="M10.5 12.5l4 2.2-4 2.3z" fill="currentColor"/></svg>
+          <span>{t("tabReels", "Reels")}</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("konum")}>{Ikon.konum}<span>{t("navKonum")}</span></button>
         <button className="ana-tab-oge" onClick={() => setMesajAcik(true)}>{Ikon.mesaj}<span>{t("tabMesaj")}</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("profil")}>{Ikon.profil}<span>{t("navProfil")}</span></button>
@@ -8084,6 +8122,51 @@ export default function Anasayfa({ pro = false }) {
 
       {/* TEPKİ ÇUBUĞU ARKA KATMANI — dışarı dokununca kapanır */}
       {tepkiAcik && createPortal(<div className="tepki-fon" onClick={() => setTepkiAcik(null)} onPointerDown={() => setTepkiAcik(null)} />, document.body)}
+
+      {/* REELS — tam ekran, yukarı-aşağı kayan kısa video akışı */}
+      {reelsAcik && createPortal((
+        <div className="reels-kok">
+          <div className="reels-ust">
+            <span className="reels-baslik notranslate" translate="no">🎬 Reels</span>
+            <button className="reels-kapat" onClick={() => setReelsAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+          </div>
+          {reelListesi.length === 0 ? (
+            <div className="reels-bos">
+              <div className="reels-bos-ik" aria-hidden="true">🎬</div>
+              <div className="reels-bos-yazi">{t("reelsBos", "Henüz video yok. Bir video paylaş — burada Reels olarak tam ekran görünsün.")}</div>
+              <button className="reels-bos-btn" onClick={() => { setReelsAcik(false); setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasGorsel(""); setPaylasVideo(""); setPaylasAcik(true); }}>{t("reelsVideoPaylas", "🎥 Video paylaş")}</button>
+            </div>
+          ) : (
+            <div className="reels-sar" ref={reelSarRef}>
+              {reelListesi.map((p, i) => (
+                <div className="reel" key={p.id || i}>
+                  <video className="reel-video" data-i={i} src={p._reelVideo} poster={p._reelPoster || undefined}
+                    muted={!reelSesAcik} loop playsInline preload="metadata" autoPlay={i === reelAktif}
+                    onClick={(e) => { const v = e.currentTarget; try { if (v.paused) v.play(); else v.pause(); } catch (x) {} }} />
+                  {/* SAĞ eylem şeridi (beğeni/tepki, yorum, paylaş, kaydet, ses) */}
+                  <div className="reel-eylem" onClick={(e) => e.stopPropagation()}>
+                    <button className={"reel-btn ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}<span>{(p.begeni || 0).toLocaleString()}</span></button>
+                    <button className="reel-btn" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
+                    <button className="reel-btn" onClick={() => paylasNative(p)}>{Ikon.paylas}<span></span></button>
+                    <button className={"reel-btn" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}<span></span></button>
+                    <button className="reel-btn reel-ses" onClick={() => setReelSesAcik((v) => !v)} aria-label={reelSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>{reelSesAcik ? "🔊" : "🔇"}</button>
+                  </div>
+                  {/* ALT bilgi (yazar + açıklama) */}
+                  <div className="reel-alt" onClick={(e) => e.stopPropagation()}>
+                    <div className="reel-yazar" onClick={() => { setReelsAcik(false); uyeyiAc(p); }}>
+                      <span className="reel-av">{p.foto ? <img src={p.foto} alt="" referrerPolicy="no-referrer" /> : ((p.ad && p.ad.trim()[0]) || "?").toUpperCase()}</span>
+                      <b className="notranslate" translate="no">{p.ad || t("biri", "Biri")}</b>
+                      {p.meslek && <span className="reel-meslek">· {p.meslek}</span>}
+                    </div>
+                    {p.yazi && <div className="reel-yazi">{p.yazi.length > 160 ? p.yazi.slice(0, 160) + "…" : p.yazi}</div>}
+                  </div>
+                  {!reelSesAcik && i === reelAktif && <button className="reel-ses-ipucu" onClick={() => setReelSesAcik(true)}>🔇 {t("reelSesIpucu", "Ses için dokun")}</button>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ), document.body)}
 
       {/* HİKÂYE OLUŞTUR — SEÇENEK EKRANI (Foto / Video / Yazı) */}
       {hikSecimAcik && createPortal((
