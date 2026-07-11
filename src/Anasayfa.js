@@ -1234,7 +1234,7 @@ export default function Anasayfa({ pro = false }) {
   const anketYukRef = useRef(new Set());                        // aynı anketin oylarını iki kez yükleme
   // REELS — tam ekran, yukarı-aşağı kayan kısa video akışı (TikTok/Instagram Reels gibi)
   const [reelsAcik, setReelsAcik] = useState(false);            // reels tam ekran açık mı
-  const [reelSesAcik, setReelSesAcik] = useState(false);        // reels sesi açık mı (başta sessiz — tarayıcı sesli otomatik oynatmayı engeller)
+  const [reelSesAcik, setReelSesAcik] = useState(true);         // reels sesi AÇIK başlar (kullanıcı istedi); tarayıcı engellerse sessize düşer, kullanıcı alttaki düğmeyle açar
   const [reelAktif, setReelAktif] = useState(0);                // o an ekranda olan reel index
   const reelsAcikRef = useRef(reelsAcik); useEffect(() => { reelsAcikRef.current = reelsAcik; }, [reelsAcik]);
   const reelSarRef = useRef(null);                              // reels kaydırma kabı
@@ -2832,7 +2832,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="reels-serit-kaydir">
           {/* BAŞTA: Makara OLUŞTUR kartı — buradan video paylaşınca Makara olur */}
           <button className="reels-serit-oge reels-serit-olustur" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setAiOneriler([]); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
-            {foto ? <img className="reels-serit-olustur-foto" src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-olustur-bos" />}
+            {foto ? <><img className="reels-serit-olustur-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="reels-serit-olustur-foto" src={foto} alt="" referrerPolicy="no-referrer" /></> : <span className="reels-serit-olustur-bos" />}
             <span className="reels-serit-olustur-alt">
               <span className="reels-serit-arti2" aria-hidden="true">+</span>
               <span className="reels-serit-olustur-ad notranslate" translate="no">🎬 {REELS_AD}</span>
@@ -5157,7 +5157,7 @@ export default function Anasayfa({ pro = false }) {
         const v = g.target;
         const bg = v.parentElement && v.parentElement.querySelector(".reel-video-bg"); // bulanık arka
         if (g.isIntersecting && g.intersectionRatio >= 0.6) {
-          v.muted = !reelSesAcik; try { v.play().catch(() => {}); } catch (e) {}
+          v.muted = !reelSesAcik; try { v.play().catch(() => { try { v.muted = true; v.play().catch(() => {}); } catch (x) {} }); } catch (e) {}
           if (bg) { try { bg.muted = true; bg.play().catch(() => {}); } catch (e) {} }
           const i = Number(v.getAttribute("data-i")) || 0; setReelAktif(i);
         } else { try { v.pause(); } catch (e) {} if (bg) { try { bg.pause(); } catch (e) {} } }
@@ -8302,7 +8302,7 @@ export default function Anasayfa({ pro = false }) {
                     <button className="reel-btn" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
                     <button className="reel-btn" onClick={() => paylasNative(p)}>{Ikon.paylas}<span></span></button>
                     <button className={"reel-btn" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}<span></span></button>
-                    <button className="reel-btn reel-ses" onClick={() => setReelSesAcik((v) => !v)} aria-label={reelSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>{reelSesAcik ? "🔊" : "🔇"}</button>
+                    <button className="reel-btn reel-ses" onClick={() => setReelSesAcik((v) => !v)} aria-label={reelSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}><span className="reel-ses-ik">{reelSesAcik ? "🔊" : "🔇"}</span><span className="reel-ses-et">{reelSesAcik ? t("sesAcik", "Ses") : t("sesKapali", "Kapalı")}</span></button>
                   </div>
                   {/* ALT bilgi (yazar + açıklama) */}
                   <div className="reel-alt" onClick={(e) => e.stopPropagation()}>
@@ -8313,7 +8313,6 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                     {p.yazi && <div className="reel-yazi">{p.yazi.length > 160 ? p.yazi.slice(0, 160) + "…" : p.yazi}</div>}
                   </div>
-                  {!reelSesAcik && i === reelAktif && <button className="reel-ses-ipucu" onClick={() => setReelSesAcik(true)}>🔇 {t("reelSesIpucu", "Ses için dokun")}</button>}
                 </div>
               ))}
             </div>
