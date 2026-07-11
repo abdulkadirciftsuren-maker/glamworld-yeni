@@ -2832,7 +2832,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="reels-serit-kaydir">
           {/* BAŞTA: Makara OLUŞTUR kartı — buradan video paylaşınca Makara olur */}
           <button className="reels-serit-oge reels-serit-olustur" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setAiOneriler([]); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
-            {foto ? <><img className="reels-serit-olustur-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="reels-serit-olustur-foto" src={foto} alt="" referrerPolicy="no-referrer" /></> : <span className="reels-serit-olustur-bos" />}
+            {foto ? <img className="reels-serit-olustur-foto" src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-olustur-bos" />}
             <span className="reels-serit-olustur-alt">
               <span className="reels-serit-arti2" aria-hidden="true">+</span>
               <span className="reels-serit-olustur-ad notranslate" translate="no">🎬 {REELS_AD}</span>
@@ -5843,10 +5843,7 @@ export default function Anasayfa({ pro = false }) {
                   : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
                 <span className="hik-kart-serit">
                   <span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span>
-                  <span className="hik-kart-ad notranslate" translate="no">
-                    {!hikayeYuk && <span className="hik-kart-ad-ik" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.6l2.3 7.1 7.1 2.3-7.1 2.3L12 20.4l-2.3-7.1L2.6 11l7.1-2.3z"/></svg></span>}
-                    <span className="hik-kart-ad-yazi">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : HIKAYE_AD}</span>
-                  </span>
+                  <span className="hik-kart-ad notranslate" translate="no">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : HIKAYE_AD}</span>
                 </span>
               </button>
               {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = EN SON hikaye (görüntüleyicide de ilk o oynar) */}
@@ -8294,7 +8291,7 @@ export default function Anasayfa({ pro = false }) {
                   <video className="reel-video-bg" src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined} muted loop playsInline preload="none" aria-hidden="true" tabIndex={-1} />
                   <video className="reel-video" data-i={i} src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined}
                     muted={!reelSesAcik} loop playsInline preload="metadata" autoPlay={i === reelAktif}
-                    onLoadedMetadata={(e) => { const v = e.currentTarget; const reel = v.closest(".reel"); if (reel && v.videoWidth) reel.classList.toggle("reel-yatay", v.videoWidth > v.videoHeight * 1.15); }}
+                    onLoadedMetadata={(e) => { const v = e.currentTarget; const reel = v.closest(".reel"); if (reel && v.videoWidth) { reel.classList.toggle("reel-yatay", v.videoWidth > v.videoHeight * 1.15); reel.classList.add("reel-hazir"); } }}
                     onClick={(e) => { const v = e.currentTarget; try { if (v.paused) v.play(); else v.pause(); } catch (x) {} }} />
                   {/* SAĞ eylem şeridi (beğeni/tepki, yorum, paylaş, kaydet, ses) */}
                   <div className="reel-eylem" onClick={(e) => e.stopPropagation()}>
