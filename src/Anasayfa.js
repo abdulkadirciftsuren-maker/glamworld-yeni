@@ -2332,11 +2332,13 @@ export default function Anasayfa({ pro = false }) {
   }, [gercekAkis, takipSet, begeniSet, profilBilgi, proMeslekDizi, u]); // eslint-disable-line react-hooks/exhaustive-deps
   // REELS listesi — akıştaki VİDEOLU gönderiler (tekli video veya medyalar içinde video), yeniden eskiye.
   const reelListesi = useMemo(() => {
+    // NOT: videoSade'yi BURADA çağırma — o const bu satırdan SONRA tanımlı (TDZ hatası sayfayı çökertir).
+    // Ham URL'i sakla; videoSade'yi render'da (<video src>) uygula.
     const kaynak = gercekAkis || [];
     const cikar = (p) => {
-      if (p.video) return { ...p, _reelVideo: videoSade(p.video), _reelPoster: p.videoPoster || "" };
+      if (p.video) return { ...p, _reelVideo: p.video, _reelPoster: p.videoPoster || "" };
       const m = Array.isArray(p.medyalar) ? p.medyalar.find((x) => x.tip === "video" && x.url) : null;
-      if (m) return { ...p, _reelVideo: videoSade(m.url), _reelPoster: m.poster || "" };
+      if (m) return { ...p, _reelVideo: m.url, _reelPoster: m.poster || "" };
       return null;
     };
     return kaynak.map(cikar).filter(Boolean);
@@ -5869,7 +5871,7 @@ export default function Anasayfa({ pro = false }) {
                                 // TEMEL (ilk/büyük) kare → cover (pencereyi doldurur, o zaten baz); YAN kareler → contain + ALTIN TOZU zemin (kendi yönünde tam, kesilmez)
                                 <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "") + (ana ? " temel" : " yan-oge")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop autoPlay playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
+                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
                                     : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={yonAyarla} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
@@ -5892,7 +5894,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop autoPlay playsInline tabIndex={-1} />
+                        ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
@@ -8140,7 +8142,7 @@ export default function Anasayfa({ pro = false }) {
             <div className="reels-sar" ref={reelSarRef}>
               {reelListesi.map((p, i) => (
                 <div className="reel" key={p.id || i}>
-                  <video className="reel-video" data-i={i} src={p._reelVideo} poster={p._reelPoster || undefined}
+                  <video className="reel-video" data-i={i} src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined}
                     muted={!reelSesAcik} loop playsInline preload="metadata" autoPlay={i === reelAktif}
                     onClick={(e) => { const v = e.currentTarget; try { if (v.paused) v.play(); else v.pause(); } catch (x) {} }} />
                   {/* SAĞ eylem şeridi (beğeni/tepki, yorum, paylaş, kaydet, ses) */}
