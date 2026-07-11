@@ -2834,7 +2834,11 @@ export default function Anasayfa({ pro = false }) {
           <button className="reels-serit-oge reels-serit-olustur" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setAiOneriler([]); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
             {foto ? <img className="reels-serit-olustur-foto" src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-olustur-bos" />}
             <span className="reels-serit-olustur-alt">
-              <span className="reels-serit-arti2" aria-hidden="true">+</span>
+              <span className="reels-arti-satir">
+                <span className="reels-parilti" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.4l2.4 7.3 7.4 2.3-7.4 2.3L12 20.6l-2.4-7.3L2.2 11l7.4-2.3z"/></svg></span>
+                <span className="reels-serit-arti2" aria-hidden="true">+</span>
+                <span className="reels-parilti" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.4l2.4 7.3 7.4 2.3-7.4 2.3L12 20.6l-2.4-7.3L2.2 11l7.4-2.3z"/></svg></span>
+              </span>
               <span className="reels-serit-olustur-ad notranslate" translate="no">🎬 {REELS_AD}</span>
             </span>
           </button>
@@ -5842,7 +5846,11 @@ export default function Anasayfa({ pro = false }) {
                   ? <span className="hik-kart-medyasar"><img className="hik-kart-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={foto} alt="" referrerPolicy="no-referrer" /></span>
                   : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
                 <span className="hik-kart-serit">
-                  <span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span>
+                  <span className="hik-kart-arti-satir">
+                    <span className="hik-parilti" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.4l2.4 7.3 7.4 2.3-7.4 2.3L12 20.6l-2.4-7.3L2.2 11l7.4-2.3z"/></svg></span>
+                    <span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span>
+                    <span className="hik-parilti" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.4l2.4 7.3 7.4 2.3-7.4 2.3L12 20.6l-2.4-7.3L2.2 11l7.4-2.3z"/></svg></span>
+                  </span>
                   <span className="hik-kart-ad notranslate" translate="no">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : HIKAYE_AD}</span>
                 </span>
               </button>
