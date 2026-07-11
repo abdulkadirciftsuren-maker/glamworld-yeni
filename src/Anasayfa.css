@@ -454,10 +454,11 @@
   radial-gradient(circle at 30% 22%, rgba(255,231,168,.55), transparent 58%),
   radial-gradient(circle at 72% 84%, rgba(255,208,92,.42), transparent 62%),
   linear-gradient(135deg, #b28e34, #715725); }
-/* KARTTA medya TAM görünür (contain, kesilmez); boşluk = medyasar'ın altın tozu zemini.
-   Çift çizgiye sebep olan BULANIK arka (.hik-kart-bg) KAPATILDI → tek temiz altın çerçeve kalır (kesik YOK). */
+/* SABİT KARAR (kullanıcı 2026-07-11, KESİN): kartta medya KENARA KADAR DOLAR (cover) → altta/kenarda
+   FAZLADAN SARI BAND YOK, sadece etraftaki ALTIN ÇERÇEVE HALKASI (::after) görünür. Çift çizgi/altın boşluk olmaz.
+   Bir daha contain'e döndürme — "tam otursun, sadece çember sarısı gözüksün" dedi. (Oluştur kartı profili ayrı: contain-top.) */
 .hik-kart-bg{ display:none; }
-.hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:1; display:block; }
+.hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:1; display:block; }
 /* Küçük avatar KARE (profil karedir) — yuvarlak DEĞİL; UFAK, ince renkli çerçeve */
 .hik-kart-av{ position:absolute; top:6px; left:6px; width:30px; height:30px; border-radius:8px; overflow:hidden; background:#0d1b3a; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; border:2.5px solid #e3c14e; z-index:3; box-shadow:0 1px 4px rgba(0,0,0,.4); } /* profil çerçevesi ALTIN */
 .hik-kart-av.yeni{ border-color:#ffd700; }    /* YENİ hikaye = parlak altın */
