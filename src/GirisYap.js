@@ -154,7 +154,10 @@ export default function GirisYap() {
         <div className="gy-slogan">{t('tekrarHosgeldinBaslik')}</div>
 
         <label className="gy-label">{t('eposta')}</label>
-        <input className={"gy-input" + (hata.ep ? " hatali" : "")} type="email" autoComplete="email" placeholder={t('epostaPh')}
+        {/* type="email" bazı telefon klavyelerinde Türkçe harfleri (ı,ö,ü,ş,ç,ğ) zorlaştırıyor/kırpıyordu →
+            type="text" + inputMode="email": tüm karakterler serbest yazılır (@ da var), otomatik büyük harf/düzeltme kapalı. */}
+        <input className={"gy-input" + (hata.ep ? " hatali" : "")} type="text" inputMode="email" autoComplete="email"
+          autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder={t('epostaPh')}
           value={ep} onChange={e => { setEp(e.target.value); setHata(h => ({ ...h, ep: "" })); }} />
         {hata.ep && <span className="gy-hata">{hata.ep}</span>}
 

@@ -2810,9 +2810,15 @@ export default function Anasayfa({ pro = false }) {
           <button className="reels-serit-tum" onClick={() => { setReelAktif(0); setReelsAcik(true); }}>{t("tumunuGor", "Tümü")} ›</button>
         </div>
         <div className="reels-serit-kaydir">
-          {reelListesi.slice(0, 12).map((p, i) => (
+          {/* BAŞTA: Makara OLUŞTUR kartı — buradan video paylaşınca Makara olur */}
+          <button className="reels-serit-oge reels-serit-olustur" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setAiOneriler([]); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
+            {foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-olustur-bos" />}
+            <span className="reels-serit-arti" aria-hidden="true">+</span>
+            <span className="reels-serit-isim notranslate" translate="no">{REELS_AD}</span>
+          </button>
+          {reelListesi.slice(0, 10).map((p, i) => (
             <button className="reels-serit-oge" key={p.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
-              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <video src={videoSade(p._reelVideo)} muted playsInline preload="metadata" tabIndex={-1} />}
+              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <video src={videoSade(p._reelVideo)} muted playsInline preload="none" tabIndex={-1} />}
               <span className="reels-serit-oyn" aria-hidden="true">▶</span>
               <span className="reels-serit-isim notranslate" translate="no">{((p.ad || "").split(" ")[0]) || ""}</span>
             </button>
@@ -5477,7 +5483,7 @@ export default function Anasayfa({ pro = false }) {
   return (
     /* DİKKAT: köke "ana-pro" sınıfı VERME — CSS'te eski yatay kaydırma sınıfı (.ana-pro)
        ile çakışır, bütün sayfayı yana dizer (B108 siyah ekran hatasının sebebi buydu). */
-    <div ref={kokRef} className={"ana-kok" + (pro ? " ana-kok-pro" : "") + " sayfa-" + aktifKod} onTouchStart={kaydirBas} onTouchEnd={kaydirBit}
+    <div ref={kokRef} className={"ana-kok" + (pro ? " ana-kok-pro" : "") + " sayfa-" + aktifKod + (ustPencereVar ? " pencere-acik" : "")} onTouchStart={kaydirBas} onTouchEnd={kaydirBit}
       style={{ background: "#f3ead6" }}
       onContextMenu={(e) => { try { if (!(e.target.closest && e.target.closest('input, textarea, [contenteditable="true"]'))) e.preventDefault(); } catch (x) {} }}>
       {/* ARKA PLAN FOTO — ekrana SABİT (gerçek ekran yüksekliği); sayfa kaysa/adres çubuğu oynasa ZIPLAMAZ, alttan açıklık vermez */}
@@ -6079,10 +6085,11 @@ export default function Anasayfa({ pro = false }) {
                   <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                 </article>
               );
-            }).flatMap((node, idx) => (
-              /* FACEBOOK gibi: her 3 gönderiden sonra akışa bir REELS (kısa video) şeridi gir */
-              ((idx + 1) % 3 === 0 && reelListesi.length > 0) ? [node, reelsSeridi("reelserit-" + idx)] : node
-            ))}
+            }).flatMap((node, idx, arr) => {
+              /* Makara şeridi akışta SADECE BİR KERE geçer (3. gönderiden sonra; feed kısaysa son gönderiden sonra) — tekrarlanmaz (performans + kullanıcı isteği) */
+              const sokIndex = Math.min(2, arr.length - 1);
+              return (idx === sokIndex && reelListesi.length > 0) ? [node, reelsSeridi("reelserit")] : node;
+            })}
           </div>
           {/* "Profesyonel misin? Üye ol" bandı KALDIRILDI (kullanıcı: ana sayfadan çıkar) — pro daveti menüde duruyor */}
         </div>
