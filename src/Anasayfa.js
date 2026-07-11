@@ -8294,6 +8294,7 @@ export default function Anasayfa({ pro = false }) {
                   <video className="reel-video-bg" src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined} muted loop playsInline preload="none" aria-hidden="true" tabIndex={-1} />
                   <video className="reel-video" data-i={i} src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined}
                     muted={!reelSesAcik} loop playsInline preload="metadata" autoPlay={i === reelAktif}
+                    onLoadedMetadata={(e) => { const v = e.currentTarget; const reel = v.closest(".reel"); if (reel && v.videoWidth) reel.classList.toggle("reel-yatay", v.videoWidth > v.videoHeight * 1.15); }}
                     onClick={(e) => { const v = e.currentTarget; try { if (v.paused) v.play(); else v.pause(); } catch (x) {} }} />
                   {/* SAĞ eylem şeridi (beğeni/tepki, yorum, paylaş, kaydet, ses) */}
                   <div className="reel-eylem" onClick={(e) => e.stopPropagation()}>
