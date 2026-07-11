@@ -1279,6 +1279,7 @@ export default function Anasayfa({ pro = false }) {
   const hikCanliRef = useRef(false);                        // son seçim CANLI ÇEK mi (konum otomatik alınsın)
   const [hikMenuAcik, setHikMenuAcik] = useState(false);    // görüntüleyicide ⋯ menü açık mı
   const [hikBildiri, setHikBildiri] = useState("");         // görüntüleyici içi küçük bildirim (toast)
+  const [hikMesajYazi, setHikMesajYazi] = useState("");     // hikâye görüntüleyicide "mesaj gönder" kutusu
   const hikGizliRef = useRef(null);                         // "görme" denen kişilerin uid kümesi (localStorage)
   const [hikSecimAcik, setHikSecimAcik] = useState(false);  // "Hikâye Oluştur" seçenek ekranı (Foto/Video/Yazı)
   const hikMenuAcikRef = useRef(false);
@@ -2250,6 +2251,22 @@ export default function Anasayfa({ pro = false }) {
   const hikayemSil = async (id) => { if (!id) return; if (!window.confirm(t("hikayeSilSor", "Bu hikâyeyi silmek istiyor musun?"))) return; await hikayeSil(id); setHikayeAcik(null); hikayeleriYukle(); };
   // ⋯ menü — görüntüleyicideki seçenekler
   const hikToast = (m) => { setHikBildiri(m); setTimeout(() => setHikBildiri(""), 1900); };
+  // HİKÂYEYE MESAJ GÖNDER (Facebook gibi alt kutu) — hikâye sahibine mesaj + bildirim
+  const hikMesajGonder = (grup) => {
+    const uu = auth.currentUser;
+    if (!uu || !grup || !grup.uid || !hikMesajYazi.trim()) return;
+    const metin = hikMesajYazi.trim().slice(0, 500);
+    mesajGonder({ aliciUid: grup.uid, aliciAd: grup.ad || "", metin, gonderen: { uid: uu.uid, ad: benimAdGetir(), foto: benimFotoGetir() } }).catch(() => {});
+    bildirimEkle({ aliciUid: grup.uid, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "mesaj", metin }).catch(() => {});
+    setHikMesajYazi(""); hikToast(t("hikMesajGonderildi", "Mesajın gönderildi ✓"));
+  };
+  // HİKÂYEYE TEPKİ GÖNDER — sahibine bildirim (❤️👍😂...)
+  const hikTepkiGonder = (grup, tepkiKey) => {
+    const uu = auth.currentUser;
+    if (!uu || !grup || !grup.uid) return;
+    bildirimEkle({ aliciUid: grup.uid, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "hikaye-tepki", metin: tepkiEmoji(tepkiKey) }).catch(() => {});
+    hikToast(tepkiEmoji(tepkiKey) + " " + t("hikTepkiGonderildi", "gönderildi"));
+  };
   const hikGizliSet = () => { if (!hikGizliRef.current) { try { hikGizliRef.current = new Set(JSON.parse(localStorage.getItem("gw_hikaye_gizli") || "[]")); } catch (e) { hikGizliRef.current = new Set(); } } return hikGizliRef.current; };
   const hikMenuKapat = (devam) => { setHikMenuAcik(false); hikMenuAcikRef.current = false; if (devam) { hikDuraklaRef.current = false; setHikayeDurdu(false); } };
   const hikKisiGizle = (uid) => { const s = hikGizliSet(); s.add(uid); try { localStorage.setItem("gw_hikaye_gizli", JSON.stringify(Array.from(s))); } catch (e) {} hikMenuKapat(false); setHikayeAcik(null); hikayeleriYukle(); hikToast(t("hikGizlendi", "Tamam, bu kişinin hikâyelerini artık göstermeyeceğiz.")); };
@@ -2823,8 +2840,8 @@ export default function Anasayfa({ pro = false }) {
           </button>
           {reelListesi.slice(0, 10).map((p, i) => (
             <button className="reels-serit-oge" key={p.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
-              {/* KAPAK: poster varsa resim (en hafif); yoksa videonun İLK KARESİ (#t=0.1 + metadata) → boş sarı kalmaz */}
-              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <video src={videoSade(p._reelVideo) + "#t=0.1"} muted playsInline preload="metadata" tabIndex={-1} />}
+              {/* KAPAK: poster varsa resim; yoksa ALTIN placeholder (video elementi koymayız → SİYAH olmaz + hafif; dokununca tam ekran canlı oynar) */}
+              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-bos" aria-hidden="true" />}
               <span className="reels-serit-oyn" aria-hidden="true">▶</span>
               <span className="reels-serit-isim notranslate" translate="no">{((p.ad || "").split(" ")[0]) || ""}</span>
             </button>
@@ -2877,6 +2894,7 @@ export default function Anasayfa({ pro = false }) {
     if (b.tip === "mesaj") return t("bildMesaj", { ad, defaultValue: "{{ad}} sana mesaj gönderdi" });
     if (b.tip === "takip") return t("bildTakip", { ad, defaultValue: "{{ad}} seni takip etmeye başladı" });
     if (b.tip === "tesekkur") return t("bildTesekkur", { ad, defaultValue: "{{ad}} beğenin için teşekkür etti 🙏" });
+    if (b.tip === "hikaye-tepki") return t("bildHikTepki", { ad, tepki: b.metin || "❤️", defaultValue: "{{ad}} hikâyene {{tepki}} verdi" });
     return ad;
   }
   // Telefon/tarayıcı bildirimi göster (servis çalışanı üzerinden — Android uyumlu)
@@ -8201,6 +8219,21 @@ export default function Anasayfa({ pro = false }) {
             {oge.ses ? <div className="hik-ses-rozet" aria-hidden="true">🎵</div> : null}
             {/* Tüm yüzey: DOKUN = durdur/devam, KAYDIR = hikaye değiştir (sola=sonraki, sağa=önceki) */}
             <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} />
+            {/* ALT MESAJ + TEPKİ ÇUBUĞU (Facebook gibi) — başkasının hikâyesinde: mesaj yaz + hızlı tepki */}
+            {!benimki && (
+              <div className="hik-mesajbar" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                <input className="hik-mesaj-in" value={hikMesajYazi} maxLength={500}
+                  onChange={(e) => setHikMesajYazi(e.target.value)}
+                  onFocus={() => { hikDuraklaRef.current = true; setHikayeDurdu(true); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") hikMesajGonder(grup); }}
+                  placeholder={t("hikMesajPh", "Mesaj gönder…")} />
+                {hikMesajYazi.trim()
+                  ? <button className="hik-mesaj-gonder" onClick={() => hikMesajGonder(grup)}>{t("gonder", "Gönder")}</button>
+                  : <>{["kalp", "begen", "kahkaha", "saskin", "uzgun"].map((k) => (
+                      <button key={k} className="hik-tepki-btn" onClick={() => hikTepkiGonder(grup, k)} aria-label={k}>{tepkiEmoji(k)}</button>
+                    ))}</>}
+              </div>
+            )}
             {/* ⋯ MENÜ — Facebook gibi seçenekler */}
             {hikMenuAcik && (
               <div className="hik-menu-fon" onClick={(e) => { e.stopPropagation(); hikMenuKapat(true); }}>
