@@ -477,7 +477,7 @@
 .hik-serit{ display:flex; gap:8px; overflow-x:auto; padding:10px 12px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .hik-serit::-webkit-scrollbar{ display:none; }
 /* Facebook gibi DİKEY KART — içinde seçilen foto/video görünür */
-.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#0d1b3a; border:none; padding:0; box-shadow:0 0 6px rgba(0,0,0,.18); -webkit-tap-highlight-color:transparent; }
+.hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#8a6b28; border:none; padding:0; box-shadow:0 0 6px rgba(90,60,10,.22); -webkit-tap-highlight-color:transparent; }
 /* ALTIN ÇERÇEVE = TEK ÜST KATMAN HALKA → HER KENAR VE KÖŞE BİREBİR EŞİT (kenar/gölge karışımı yok) */
 .hik-kart::after{ content:""; position:absolute; inset:0; border-radius:14px; border:2px solid #d9b64a; box-sizing:border-box; pointer-events:none; z-index:6; }
 /* Medya sarmalı: ALTIN TOZU arka + ÖNDE TAM medya (contain) → yatay/dikey HİÇ KESİLMEZ, boşluk ALTIN */
@@ -485,13 +485,14 @@
   radial-gradient(circle at 30% 22%, rgba(255,231,168,.55), transparent 58%),
   radial-gradient(circle at 72% 84%, rgba(255,208,92,.42), transparent 62%),
   linear-gradient(135deg, #b28e34, #715725); }
-/* SABİT KARAR (kullanıcı 2026-07-11, KESİN): kartta medya KENARA KADAR DOLAR (cover) → altta/kenarda
-   FAZLADAN SARI BAND YOK, sadece etraftaki ALTIN ÇERÇEVE HALKASI (::after) görünür. Çift çizgi/altın boşluk olmaz.
-   Bir daha contain'e döndürme — "tam otursun, sadece çember sarısı gözüksün" dedi. (Oluştur kartı profili ayrı: contain-top.) */
-.hik-kart-bg{ display:none; }
-.hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:1; display:block; }
+/* SABİT KARAR (kullanıcı 2026-07-11): kartta ne KESİK olsun ne de SARI BOŞLUK. İkisini birden sağlayan tek yol
+   (tam ekran hikâyedeki gibi): ARKAYA aynı medyanın BULANIK DOLGU hâli (cover+blur → kenarda boşluk kalmaz),
+   ÖNE medyanın TAMI (contain → "GLOXORG" gibi yatay yazı SAĞDAN-SOLDAN KESİLMEZ). Sadece çevrede altın çerçeve halkası. */
+.hik-kart-bg{ display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center;
+  filter:blur(16px) brightness(.86) saturate(1.15); transform:scale(1.2); z-index:0; }
+.hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center; z-index:1; display:block; }
 /* Küçük avatar KARE (profil karedir) — yuvarlak DEĞİL; UFAK, ince renkli çerçeve */
-.hik-kart-av{ position:absolute; top:6px; left:6px; width:30px; height:30px; border-radius:8px; overflow:hidden; background:#0d1b3a; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; border:2.5px solid #e3c14e; z-index:3; box-shadow:0 1px 4px rgba(0,0,0,.4); } /* profil çerçevesi ALTIN */
+.hik-kart-av{ position:absolute; top:6px; left:6px; width:30px; height:30px; border-radius:8px; overflow:hidden; background:#8a6b28; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; border:2.5px solid #e3c14e; z-index:3; box-shadow:0 1px 4px rgba(90,60,10,.4); } /* profil çerçevesi ALTIN */
 .hik-kart-av.yeni{ border-color:#ffd700; }    /* YENİ hikaye = parlak altın */
 .hik-kart-av.gorulen{ border-color:#c9a63a; } /* görüldü = daha sönük altın (mavi/gri/beyaz YOK) */
 .hik-kart-av img{ width:100%; height:100%; object-fit:cover; } .hik-kart-av.amblem img{ object-fit:contain; }
@@ -503,6 +504,7 @@
 .hik-olustur{ background:#f2ce3f; }
 .hik-kart-foto{ display:block; position:absolute; inset:0; overflow:hidden; background:#f2ce3f; }
 /* Profil TAM görünür (contain, GLOXORG kesilmez, üstten) — DOKUNULMADI. */
+.hik-olustur .hik-kart-bg{ display:none; } /* oluştur kartında bulanık arka YOK → profil düz/temiz kalır (kullanıcı: profile dokunma) */
 .hik-olustur .hik-kart-medya{ object-fit:contain; object-position:top center; }
 .hik-olustur .hik-kart-foto{ bottom:66px; background:#f2ce3f; }  /* foto üstte; altta 66px TEK altın alan (şeritle aynı zemin) */
 .hik-kart-harf{ display:flex; width:100%; height:100%; align-items:center; justify-content:center; color:#fff; font-size:34px; font-weight:800; }
