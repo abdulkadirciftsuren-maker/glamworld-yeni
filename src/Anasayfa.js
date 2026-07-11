@@ -2838,11 +2838,10 @@ export default function Anasayfa({ pro = false }) {
               <span className="reels-serit-olustur-ad notranslate" translate="no">🎬 {REELS_AD}</span>
             </span>
           </button>
-          {reelListesi.slice(0, 10).map((p, i) => (
+          {reelListesi.slice(0, 8).map((p, i) => (
             <button className="reels-serit-oge" key={p.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
-              {/* KAPAK: poster varsa resim; yoksa ALTIN placeholder (video elementi koymayız → SİYAH olmaz + hafif; dokununca tam ekran canlı oynar) */}
-              {p._reelPoster ? <img src={p._reelPoster} alt="" referrerPolicy="no-referrer" /> : <span className="reels-serit-bos" aria-hidden="true" />}
-              <span className="reels-serit-oyn" aria-hidden="true">▶</span>
+              {/* CANLI: ekrana gelince kendi oynar (sessiz, döngü); oynatma düğmesi YOK. Poster varsa ilk kare kapak. */}
+              <video className="reels-serit-vid" data-ci={i} src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined} muted loop playsInline preload="metadata" tabIndex={-1} />
               <span className="reels-serit-isim notranslate" translate="no">{((p.ad || "").split(" ")[0]) || ""}</span>
             </button>
           ))}
@@ -5177,6 +5176,22 @@ export default function Anasayfa({ pro = false }) {
     io.observe(el);
     return () => io.disconnect();
   }, [aktifKod, feedGoster, feedFiltre, gercekAkis]);
+  // MAKARA ŞERİDİ (akıştaki karusel): videolar EKRANA GELİNCE kendi oynar (sessiz, döngü), çıkınca durur; pencere açıkken durur
+  useEffect(() => {
+    if (aktifKod !== "home") return;
+    const vids = Array.from(document.querySelectorAll(".reels-serit-vid"));
+    if (!vids.length) return;
+    if (ustPencereVar) { vids.forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
+    const io = new IntersectionObserver((girisler) => {
+      girisler.forEach((g) => {
+        const v = g.target;
+        if (g.isIntersecting && g.intersectionRatio >= 0.5) { try { v.muted = true; v.play().catch(() => {}); } catch (e) {} }
+        else { try { v.pause(); } catch (e) {} }
+      });
+    }, { threshold: [0, 0.5, 1] });
+    vids.forEach((v) => io.observe(v));
+    return () => io.disconnect();
+  }, [aktifKod, gercekAkis, ustPencereVar, feedGoster, feedFiltre]);
   // REELS açılınca, seçilen reele (karuselden dokunulan) KAYDIR (baştan değil, o videodan başlasın)
   useEffect(() => {
     if (!reelsAcik) return;
