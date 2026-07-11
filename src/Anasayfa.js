@@ -5156,10 +5156,12 @@ export default function Anasayfa({ pro = false }) {
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
         const v = g.target;
+        const bg = v.parentElement && v.parentElement.querySelector(".reel-video-bg"); // bulanık arka
         if (g.isIntersecting && g.intersectionRatio >= 0.6) {
           v.muted = !reelSesAcik; try { v.play().catch(() => {}); } catch (e) {}
+          if (bg) { try { bg.muted = true; bg.play().catch(() => {}); } catch (e) {} }
           const i = Number(v.getAttribute("data-i")) || 0; setReelAktif(i);
-        } else { try { v.pause(); } catch (e) {} }
+        } else { try { v.pause(); } catch (e) {} if (bg) { try { bg.pause(); } catch (e) {} } }
       });
     }, { threshold: [0, 0.6, 1] });
     vids.forEach((v) => io.observe(v));
@@ -8273,6 +8275,8 @@ export default function Anasayfa({ pro = false }) {
             <div className="reels-sar" ref={reelSarRef}>
               {reelListesi.map((p, i) => (
                 <div className="reel" key={p.id || i}>
+                  {/* BULANIK ARKA (Facebook gibi): video ekranı doldurur, kenarda altın band yerine videonun bulanık hâli */}
+                  <video className="reel-video-bg" src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined} muted loop playsInline preload="none" aria-hidden="true" tabIndex={-1} />
                   <video className="reel-video" data-i={i} src={videoSade(p._reelVideo)} poster={p._reelPoster || undefined}
                     muted={!reelSesAcik} loop playsInline preload="metadata" autoPlay={i === reelAktif}
                     onClick={(e) => { const v = e.currentTarget; try { if (v.paused) v.play(); else v.pause(); } catch (x) {} }} />
