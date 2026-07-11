@@ -5756,7 +5756,7 @@ export default function Anasayfa({ pro = false }) {
                     </span>
                     {g.ogeler.length > 1 && <span className="hik-kart-sayac" aria-label={g.ogeler.length + " hikâye"}>🖼 {g.ogeler.length}</span>}
                     <span className={"hik-kart-av" + (g.yeni ? " yeni" : " gorulen") + (g.amblem ? " amblem" : "")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?")[0] || "?").toUpperCase()}</span>
-                    <span className="hik-kart-isim">{((g.ad || "").split(" ")[0]) || "—"}</span>
+                    <span className="hik-kart-isim"><KayanYazi>{((g.ad || "").split(" ")[0]) || "—"}</KayanYazi></span>
                   </button>
                 );
               })}
@@ -5767,9 +5767,9 @@ export default function Anasayfa({ pro = false }) {
             </button>
             {/* AKIŞ FİLTRESİ — Sana Özel (algoritma) / Hepsi (zaman) / Takip Ettiklerim */}
             <div className="ana-feed-filtre">
-              <button className={"aff-chip aff-ozel" + (feedFiltre === "ozel" ? " aktif" : "")} onClick={() => setFeedFiltre("ozel")}><KayanYazi>✨ {t("feedOzel", "Sana Özel")}</KayanYazi></button>
-              <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}><KayanYazi>{t("feedHepsi", "Hepsi")}</KayanYazi></button>
-              <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}><KayanYazi>{t("feedTakip", "Takip Ettiklerim")}</KayanYazi></button>
+              <button className={"aff-chip aff-ozel" + (feedFiltre === "ozel" ? " aktif" : "")} onClick={() => setFeedFiltre("ozel")}>✨ {t("feedOzel", "Sana Özel")}</button>
+              <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}>{t("feedHepsi", "Hepsi")}</button>
+              <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}>{t("feedTakip", "Takip Ettiklerim")}</button>
             </div>
             {/* GERÇEK gönderiler önce, sonra örnek akış (platform boş kalmasın) */}
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (
