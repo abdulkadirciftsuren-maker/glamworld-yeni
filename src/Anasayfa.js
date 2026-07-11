@@ -4895,9 +4895,11 @@ export default function Anasayfa({ pro = false }) {
   const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik;
   useEffect(() => {
     if (aktifKod !== "home") return;
-    const vids = Array.from(document.querySelectorAll(".ana-akis .apr-medya.video video, .ana-akis .apr-kolaj-oge video"));
-    if (!vids.length) return;
-    if (ustPencereVar) { vids.forEach((v) => { try { v.pause(); } catch (e) {} }); return; } // pencere açıkken oynatma (parlama önlenir)
+    // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)
+    const seritVids = Array.from(document.querySelectorAll(".hik-serit video"));
+    const feedVids = Array.from(document.querySelectorAll(".ana-akis .apr-medya.video video, .ana-akis .apr-kolaj-oge video"));
+    if (ustPencereVar) { [...feedVids, ...seritVids].forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
+    if (!feedVids.length) return;
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
         const v = g.target;
@@ -4905,9 +4907,9 @@ export default function Anasayfa({ pro = false }) {
         else { try { v.pause(); } catch (e) {} }
       });
     }, { threshold: [0, 0.55, 1] });
-    vids.forEach((v) => io.observe(v));
+    feedVids.forEach((v) => io.observe(v));
     return () => io.disconnect();
-  }, [aktifKod, feedFiltre, gercekAkis, ustPencereVar]);
+  }, [aktifKod, feedFiltre, gercekAkis, ustPencereVar, hikayeGruplar]);
   const profilAcikRef = useRef(profilAcik);
   useEffect(() => { profilAcikRef.current = profilAcik; }, [profilAcik]);
   const bildirimAcikRef = useRef(bildirimAcik);

@@ -431,8 +431,8 @@
 .hik-duzen-ust b{ font-size:16px; font-weight:800; }
 .hik-duzen-kapat{ width:34px; height:34px; border:none; background:rgba(255,255,255,.12); color:#fff; border-radius:9px; font-size:17px; cursor:pointer; }
 /* Medya önizleme — altın tozu boşluk + çember */
-/* Medya SABİT üstte (yukarı-aşağı oynamaz); sadece alttaki düğmeler kayar */
-.hik-duzen-medya{ position:relative; flex:0 0 52%; min-height:0; overflow:hidden;
+/* Medya SABİT üstte (KÜÇÜK — ayarlara yer kalsın); sadece alttaki düğmeler kayar */
+.hik-duzen-medya{ position:relative; flex:0 0 40%; min-height:0; overflow:hidden;
   background:
     radial-gradient(circle at 30% 22%, rgba(255,231,168,.6), transparent 60%),
     radial-gradient(circle at 72% 84%, rgba(255,208,92,.5), transparent 64%),
