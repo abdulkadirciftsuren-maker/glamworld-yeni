@@ -159,8 +159,10 @@
 .ara-kart-bil{ flex:1; }
 .ara-kart-ok{ flex:none; color:#FFD700; font-size:22px; line-height:1; opacity:.65; }
 /* ARAMA DETAY PENCERESİ — seçilen profesyonel (cam kart, ortalı modal) */
-.ara-detay-fon{ position:fixed; inset:0; z-index:100006; display:flex; align-items:center; justify-content:center; padding:24px;
-  background:rgba(0,0,0,.78); -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); animation:adFon .25s ease; }
+/* z-index tam ekran foto/video görüntüleyicinin (100010) ÜSTÜNDE → beğenen kişinin profili/mesajı videonun ARKASINDA kalmaz
+   (kullanıcı: "beğenene mesaj yazmak istiyorum, mesaj kutusu videonun altında açılıyor"). msj-fon (100016) daha da üstte. */
+.ara-detay-fon{ position:fixed; inset:0; z-index:100015; display:flex; align-items:center; justify-content:center; padding:24px;
+  background:rgba(40,28,6,.82); -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); animation:adFon .25s ease; }
 @keyframes adFon{ from{ opacity:0; } to{ opacity:1; } }
 .ara-detay{ position:relative; width:min(360px,92vw); text-align:center; padding:30px 22px 22px;
   background:linear-gradient(180deg,rgba(10,24,48,.99),rgba(5,14,30,.99));
@@ -468,7 +470,10 @@
 /* Altta ALTIN degrade ŞERİT — fotoğrafın ÜZERİNDE (ayrı kutu/çizgi değil): + (küçük kare) ve GENİŞ altın yazı */
 .hik-kart-serit{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:22px 4px 7px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3px; background:linear-gradient(180deg, transparent, rgba(202,162,63,.35) 32%, rgba(240,196,25,.92) 68%, #f0c419); box-shadow:none; }
 .hik-kart-arti{ width:23px; height:23px; border-radius:7px; background:#2f9e44; color:#fff; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,.4); }
-.hik-kart-ad{ text-align:center; color:#3a2c00; font-size:11.5px; font-weight:800; line-height:1.08; padding:0 3px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.5); }
+.hik-kart-ad{ display:flex; align-items:center; justify-content:center; gap:4px; width:100%; text-align:center; color:#3a2c00; font-size:12px; font-weight:800; line-height:1.08; padding:0 3px; white-space:nowrap; text-shadow:0 1px 0 rgba(255,255,255,.55); }
+.hik-kart-ad-ik{ flex:none; width:14px; height:14px; display:inline-flex; }
+.hik-kart-ad-ik svg{ width:14px; height:14px; fill:#fff7d8; stroke:#8a6410; stroke-width:1; filter:drop-shadow(0 1px 1px rgba(90,60,10,.55)); }
+.hik-kart-ad-yazi{ overflow:hidden; text-overflow:ellipsis; }
 /* Kaç hikâye var — sağ üst köşede UFAK ALTIN rozet (resim ikonu + sayı) */
 .hik-kart-sayac{ position:absolute; top:6px; right:6px; z-index:3; background:linear-gradient(180deg,#ffe680,#f0c419); color:#3a2c00; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:7px; box-shadow:0 1px 4px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
 /* GÖRÜNTÜLEYİCİ */
@@ -2266,6 +2271,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .abm-metin{ font-size:12px; color:#f4eede; line-height:1.32; font-family:'Cormorant Garamond',serif; overflow-wrap:break-word; }
 .abm-gonderi video{ width:100%; height:auto; max-height:62px; object-fit:contain; display:block; }
 .abm-zaman{ font-size:11px; color:#b9c6df; font-style:normal; }
+/* TEŞEKKÜR ET düğmesi (bildirimde, seni beğenene) — altın, kare köşe */
+.abm-tesekkur{ margin-top:6px; padding:6px 13px; border:none; border-radius:10px; background:linear-gradient(180deg,#ffe680,#f0c419); color:#3a2a00; font-size:12.5px; font-weight:800; font-family:inherit; cursor:pointer; box-shadow:0 2px 7px rgba(120,90,20,.3); }
+.abm-tesekkur.edildi{ background:rgba(255,255,255,.14); color:#cbd6ea; box-shadow:none; cursor:default; }
 /* Telefon bildirimi ayar satırı — durum etiketi */
 .ana-menu-bildirim{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .ana-menu-durum{ flex:none; font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:9px;

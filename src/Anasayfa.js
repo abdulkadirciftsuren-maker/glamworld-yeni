@@ -1225,6 +1225,8 @@ export default function Anasayfa({ pro = false }) {
   const [begeniSet, setBegeniSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxBegeni") || "[]")); } catch (e) { return new Set(); } });
   const [begeniTepki, setBegeniTepki] = useState(() => { try { return JSON.parse(localStorage.getItem("groxTepki") || "{}"); } catch (e) { return {}; } }); // {postId: tepkiKey}
   const [tepkiAcik, setTepkiAcik] = useState(null); // tepki çubuğu açık gönderi id'si
+  // TEŞEKKÜR — seni beğenen/tepki veren kişiye "teşekkür et" (bildirimden). Kime teşekkür ettiğimizi hatırla (tekrar etme).
+  const [tesekkurEdilen, setTesekkurEdilen] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxTesekkur") || "[]")); } catch (e) { return new Set(); } });
   // ANKET — composer'da anket oluşturma + feed'de oy sayımları
   const [anketAcik, setAnketAcik] = useState(false);            // composer: anket ekleme açık mı
   const [anketSecenekler, setAnketSecenekler] = useState(["", ""]); // composer: anket şıkları
@@ -2847,6 +2849,14 @@ export default function Anasayfa({ pro = false }) {
   // Bildirimlerde gösterilecek kendi adım/fotoğrafım
   function benimAdGetir() { return (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || t("biri", "Biri"); }
   function benimFotoGetir() { return foto || isFoto || ""; }
+  // TEŞEKKÜR ET — seni beğenen kişiye teşekkür bildirimi gönder (o senin beğendiğini/teşekkürünü görür)
+  const tesekkurEt = (b) => {
+    const uu = auth.currentUser;
+    if (!uu || !b || !b.gonderenUid || b.gonderenUid === uu.uid || tesekkurEdilen.has(b.id)) return;
+    bildirimEkle({ aliciUid: b.gonderenUid, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "tesekkur", metin: b.metin || "", gonderiId: b.gonderiId || "", gonderiResim: b.gonderiResim || "", gonderiVideo: b.gonderiVideo || "", gonderiZemin: b.gonderiZemin || "" }).catch(() => {});
+    const yeni = new Set(tesekkurEdilen); yeni.add(b.id); setTesekkurEdilen(yeni);
+    try { localStorage.setItem("groxTesekkur", JSON.stringify([...yeni])); } catch (e) {}
+  };
   // Bildirim metni (zilde + telefon bildiriminde) — çoklu dil için defaultValue interpolasyonu
   function bildirimMetni(b) {
     const ad = b.gonderenAd || t("biri", "Biri");
@@ -2854,6 +2864,7 @@ export default function Anasayfa({ pro = false }) {
     if (b.tip === "yorum") return t("bildYorum", { ad, metin: b.metin || "", defaultValue: "{{ad}} yorum yaptı: {{metin}}" });
     if (b.tip === "mesaj") return t("bildMesaj", { ad, defaultValue: "{{ad}} sana mesaj gönderdi" });
     if (b.tip === "takip") return t("bildTakip", { ad, defaultValue: "{{ad}} seni takip etmeye başladı" });
+    if (b.tip === "tesekkur") return t("bildTesekkur", { ad, defaultValue: "{{ad}} beğenin için teşekkür etti 🙏" });
     return ad;
   }
   // Telefon/tarayıcı bildirimi göster (servis çalışanı üzerinden — Android uyumlu)
@@ -5440,7 +5451,7 @@ export default function Anasayfa({ pro = false }) {
     // Parmak ne yapıyorsa ORADA kalsın, alt sayfa görülmesin.
     if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || aktifKod === "profil") { dokunRef.current = null; return; }
     try {
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -5773,7 +5784,13 @@ export default function Anasayfa({ pro = false }) {
                 <span className="hik-kart-foto">{foto
                   ? <span className="hik-kart-medyasar"><img className="hik-kart-bg" src={foto} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img className="hik-kart-medya" src={foto} alt="" referrerPolicy="no-referrer" /></span>
                   : <span className="hik-kart-harf">{(benimHikayeKisi.ad[0] || "?").toUpperCase()}</span>}</span>
-                <span className="hik-kart-serit"><span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span><span className="hik-kart-ad notranslate" translate="no"><KayanYazi>{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : "✨ " + HIKAYE_AD}</KayanYazi></span></span>
+                <span className="hik-kart-serit">
+                  <span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span>
+                  <span className="hik-kart-ad notranslate" translate="no">
+                    {!hikayeYuk && <span className="hik-kart-ad-ik" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.6l2.3 7.1 7.1 2.3-7.1 2.3L12 20.4l-2.3-7.1L2.6 11l7.1-2.3z"/></svg></span>}
+                    <span className="hik-kart-ad-yazi">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : HIKAYE_AD}</span>
+                  </span>
+                </span>
               </button>
               {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = EN SON hikaye (görüntüleyicide de ilk o oynar) */}
               {hikayeGruplar.map((g) => {
@@ -8447,7 +8464,16 @@ export default function Anasayfa({ pro = false }) {
                   return (
                     <div className={"abm-oge" + (gp ? " tikla" : "")} key={b.id} onClick={bildirimAc}>
                       <span className="abm-foto">{b.gonderenFoto ? <img src={b.gonderenFoto} alt="" referrerPolicy="no-referrer" /> : bb}</span>
-                      <div className="abm-icerik"><div className="abm-metin">{bildirimMetni(b)}</div><i className="abm-zaman">{ne}</i></div>
+                      <div className="abm-icerik">
+                        <div className="abm-metin">{bildirimMetni(b)}</div>
+                        <i className="abm-zaman">{ne}</i>
+                        {/* Seni BEĞENEN kişiye teşekkür et (o senin teşekkürünü görür) */}
+                        {b.tip === "begeni" && b.gonderenUid && u && b.gonderenUid !== u.uid && (
+                          <button className={"abm-tesekkur" + (tesekkurEdilen.has(b.id) ? " edildi" : "")} onClick={(e) => { e.stopPropagation(); tesekkurEt(b); }} disabled={tesekkurEdilen.has(b.id)}>
+                            {tesekkurEdilen.has(b.id) ? t("tesekkurEdildi", "🙏 Teşekkür edildi") : t("tesekkurEt", "🙏 Teşekkür et")}
+                          </button>
+                        )}
+                      </div>
                       {(onResim || onVideo || onZemin || onMetin) && (
                         <span className="abm-gonderi" style={onZemin && !onResim && !onVideo ? { background: onZemin } : undefined}>
                           {onResim ? <img src={onResim} alt="" referrerPolicy="no-referrer" />
