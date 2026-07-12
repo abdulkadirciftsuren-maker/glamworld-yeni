@@ -5539,7 +5539,7 @@ export default function Anasayfa({ pro = false }) {
   // FEED VİDEOLARI: ekrana gelince KENDİ oynar (sessiz, döngü), çıkınca durur — düğmeye basmaya gerek yok.
   // ⚡ PARLAMA: ana sayfa ÜZERİNDE bir pencere açıkken (menü/ayarlar/panel...) feed videosu arkada oynamaya devam ederse
   // telefonda pencere açılışında PARLAMA yapıyordu → pencere açıkken TÜM feed videoları DURDUR; pencere kapanınca yeniden oynar.
-  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi;
+  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!onizGaleri || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi || !!aramaDurum || !!gelenArama;
   useEffect(() => {
     if (aktifKod !== "home") return;
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)

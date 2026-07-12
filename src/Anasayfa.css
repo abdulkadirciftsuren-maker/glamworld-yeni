@@ -23,6 +23,13 @@
 /* Bir pencere/panel AÇIKKEN arka plandaki HAREKETLİ öğeleri (kayan piyasa şeridi, başlık parıltısı, arka foto) DONDUR
    → altta oynayan/kayan şey bulanık pencereye "parıltı gibi vurmaz" (kullanıcı: "pencere açıksa altından parıltılı üste vuruyor"). */
 .ana-kok.pencere-acik .ana-serit-sar *, .ana-kok.pencere-acik .ana-header, .ana-kok.pencere-acik .ana-header *, .ana-kok.pencere-acik .ana-arka-foto{ animation-play-state:paused !important; }
+/* PARLAMA KESİN ÇÖZÜM: Bir pencere AÇIKKEN arka plandaki (feed + hikâye/Makara şeridi) TÜM videoları ANINDA GÖRÜNMEZ yap.
+   Neden: oynayan/duraklatılan <video> son karesini DONANIM katmanında bırakır; bu katman opak pencereyi bile DELER (parlama).
+   pause() geç kalır ve kareyi silmez; visibility:hidden kareyi katmandan ANINDA siler → parlama tamamen biter. Pencere içi
+   videolara (Glome baloncuğu, tam ekran görüntüleyici, Makara penceresi=portal) DOKUNMAZ — onlar bu kapsayıcıların dışında. */
+.ana-kok.pencere-acik .ana-akis video,
+.ana-kok.pencere-acik .hik-serit video,
+.ana-kok.pencere-acik .reels-serit video{ visibility:hidden !important; opacity:0 !important; }
 .ana-sehir-rozet{ display:none !important; }  /* alttaki şehir fotoğrafı düğmesi */
 /* NOT: Eski ".ana-kok > * { position:relative }" kuralı KALDIRILDI — açılır pencerelerin
    (sayaç, profil menüsü, menü) position:fixed ayarını eziyordu (sol-alta düşüp ikonları itiyordu).
