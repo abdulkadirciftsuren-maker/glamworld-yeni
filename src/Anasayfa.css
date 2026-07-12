@@ -3679,17 +3679,22 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 
 /* ===================== MESAJLAŞMA (WhatsApp gibi) — Mesaj Merkezi + baloncuklu sohbet ===================== */
 /* Üst çubuk MESAJLAR düğmesi (ayının yerine) — altın, hafif yuvarlatılmış KARE (anayasa: tam daire değil) */
-.ana-mesaj-btn{ position:relative; border-radius:12px !important; background:radial-gradient(circle at 34% 24%, #ffe9a8, #ecc84e 68%, #c69a2e) !important; color:#4a3208; border:1.5px solid #d9b64a; }
-.ana-mesaj-btn svg{ width:22px; height:22px; stroke:#4a3208; }
-.ana-mesaj-btn svg path, .ana-mesaj-btn svg rect, .ana-mesaj-btn svg circle{ stroke:#4a3208; }
-.ana-mesaj-btn svg path[fill]{ fill:#4a3208; }
+/* GLOME düğmesi: hafif yuvarlatılmış KARE (yuvarlak değil) + İKİ belirgin altın çember (dış çerçeve + iç açık altın halka) + altın TOZU zemin */
+.ana-mesaj-btn{ position:relative; border-radius:10px !important;
+  background:radial-gradient(circle at 40% 26%, #fff6d0, #f4d867 42%, #e0b13e 78%, #c99628) !important;
+  border:2px solid #a9781f !important;
+  box-shadow:0 0 0 1.6px #fff2c4 inset, 0 2px 8px rgba(90,60,10,.45) !important; }
+.ana-mesaj-btn svg{ width:30px !important; height:30px !important; } /* İKON BÜYÜK — düğme aynı boyutta kalır, içi dolgun görünür */
+/* Alt sekme (Glome) okunmamış rozeti */
+.ana-tab-glome{ position:relative; }
+.ana-tab-rozet{ position:absolute; top:1px; left:calc(50% + 4px); min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#e0202c; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1; }
 
 /* Mesaj Merkezi (Gloxi) — ALTIN tema (base koyu .msj-* paylaş/yorum pencerelerinde AYNEN kalır, bozulmaz) */
 .msj-merkez{ background:rgba(50,34,6,.5) !important; }
 .msj-merkez .msj-pencere{ background:linear-gradient(180deg,#f7ecc9,#efe0b8) !important; border:1.5px solid #d9b64a !important; box-shadow:0 14px 44px rgba(50,34,6,.5) !important; }
 .msj-merkez .msj-bas{ background:linear-gradient(135deg,#d9b64a,#b28e34) !important; border-bottom:none !important; padding:13px 15px !important; }
 .msj-merkez .msj-baslik{ display:flex; align-items:center; gap:7px; color:#3a2c00 !important; }
-.mm-bas-ik{ display:flex; } .mm-bas-ik svg{ width:23px; height:23px; stroke:#3a2c00; } .mm-bas-ik svg path[fill]{ fill:#3a2c00; }
+.mm-bas-ik{ display:flex; } .mm-bas-ik svg{ width:25px; height:25px; }
 .msj-merkez .msj-kapat{ color:#fff !important; }
 .msj-merkez .msj-liste{ padding:8px 10px 14px !important; }
 .msj-merkez .msj-kart{ background:#fffef8 !important; border:1px solid #e7d090 !important; align-items:center !important; }
@@ -3715,7 +3720,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Tam ekran sohbet — ALTIN zemin (anayasa: siyah yok), kare düğmeler */
 .sohbet-fon{ position:fixed; inset:0; z-index:100020; display:flex; align-items:stretch; justify-content:center;
   background:radial-gradient(circle at 50% 38%, #d8b552, #a9812f); animation:adFon .18s ease; }
-.sohbet-pencere{ width:100%; max-width:620px; height:100%; display:flex; flex-direction:column; background:linear-gradient(180deg,#f7ecc9,#efe0b8); }
+.sohbet-pencere{ width:100%; max-width:620px; height:100%; display:flex; flex-direction:column; background:linear-gradient(180deg,#eaf0dc,#dde7ce); } /* sohbet ZEMİNİ: yumuşak açık yeşil-krem (altından farklı, sakin, siyah değil) */
 .sohbet-bas{ flex:0 0 auto; display:flex; align-items:center; gap:9px; padding:9px 12px; background:linear-gradient(135deg,#d9b64a,#b28e34); box-shadow:0 2px 8px rgba(90,60,10,.3); }
 .sohbet-geri{ border:none; background:transparent; color:#fff; font-size:30px; line-height:1; cursor:pointer; padding:0 2px; }
 .sohbet-avatar{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; overflow:hidden; background:#8a6b28; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:17px; border:2px solid #ffe9a8; }
@@ -3731,13 +3736,25 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-balon-sar.benim{ align-self:flex-end; }
 .sohbet-balon-sar.karsi{ align-self:flex-start; }
 .sohbet-balon{ position:relative; padding:8px 11px 5px; border-radius:14px; box-shadow:0 1px 3px rgba(90,60,10,.2); display:flex; flex-direction:column; }
-.sohbet-balon-sar.benim .sohbet-balon{ background:linear-gradient(135deg,#ffe07a,#f2ce3f); color:#3a2c00; border-bottom-right-radius:4px; }
-.sohbet-balon-sar.karsi .sohbet-balon{ background:#fffef8; color:#2a2008; border-bottom-left-radius:4px; }
+.sohbet-balon-sar.benim .sohbet-balon{ background:linear-gradient(135deg,#ffe488,#f5cf46); color:#3a2c00; border-bottom-right-radius:4px; } /* GÖNDEREN (ben) = ALTIN balon */
+.sohbet-balon-sar.karsi .sohbet-balon{ background:linear-gradient(135deg,#eaf3ff,#d3e6ff); color:#16324f; border-bottom-left-radius:4px; } /* ALAN (karşı) = açık MAVİ balon */
+.sohbet-balon-sar.karsi .sohbet-balon-alt{ color:#5a7a9a; }
 .sohbet-balon-metin{ font-size:15px; line-height:1.35; white-space:pre-wrap; word-break:break-word; }
 .sohbet-balon-foto{ max-width:230px; width:100%; border-radius:10px; margin-bottom:4px; cursor:pointer; display:block; }
 .sohbet-balon-alt{ align-self:flex-end; display:flex; align-items:center; gap:3px; font-size:10px; color:#7a5e10; margin-top:2px; }
 .sohbet-tik{ color:#2f9e44; font-weight:800; }
-.sohbet-yazar{ flex:0 0 auto; display:flex; align-items:flex-end; gap:7px; padding:8px 10px; background:linear-gradient(180deg,#efe0b8,#e6d3a3); box-shadow:0 -2px 8px rgba(90,60,10,.15); }
+.sohbet-yazar{ position:relative; flex:0 0 auto; display:flex; align-items:flex-end; gap:7px; padding:8px 10px; background:linear-gradient(180deg,#efe0b8,#e6d3a3); box-shadow:0 -2px 8px rgba(90,60,10,.15); }
+/* Sohbet baloncuğunda VİDEO ve DOSYA */
+.sohbet-balon-video{ max-width:240px; width:100%; border-radius:10px; margin-bottom:4px; display:block; background:#e9d38f; }
+.sohbet-balon-dosya{ display:flex; align-items:center; gap:9px; padding:9px 11px; margin-bottom:4px; background:rgba(90,60,10,.08); border:1px solid rgba(90,60,10,.15); border-radius:10px; text-decoration:none; color:inherit; max-width:230px; }
+.sbd-ik{ font-size:22px; flex:none; } .sbd-ad{ font-size:13px; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* MEDYA MENÜSÜ (foto/video/dosya/canlı çekim) — + düğmesine basınca açılır (boş sayfa değil, seçenekli) */
+.sohbet-medya-fon{ position:fixed; inset:0; z-index:5; }
+.sohbet-medya-menu{ position:absolute; left:8px; bottom:62px; z-index:6; background:#fffef8; border:1.5px solid #d9b64a; border-radius:14px; box-shadow:0 8px 24px rgba(90,60,10,.4); padding:6px; display:flex; flex-direction:column; gap:2px; min-width:186px; animation:adFon .14s ease; }
+.sohbet-medya-menu button{ display:flex; align-items:center; gap:11px; padding:10px 12px; border:none; background:transparent; border-radius:10px; font-size:14.5px; font-weight:600; color:#2a2008; cursor:pointer; text-align:left; font-family:inherit; }
+.sohbet-medya-menu button:active{ background:#f3e8c8; }
+.smm-ik{ font-size:21px; width:26px; text-align:center; flex:none; }
+.sohbet-foto-btn.acik{ background:#2f9e44 !important; color:#fff !important; transform:rotate(45deg); transition:transform .15s; }
 .sohbet-foto-btn, .sohbet-gonder-btn{ flex:0 0 auto; width:42px; height:42px; border-radius:11px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .sohbet-foto-btn{ background:#e9d38f; color:#5a4210; font-size:20px; }
 .sohbet-foto-btn svg{ width:22px; height:22px; }

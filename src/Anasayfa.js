@@ -326,8 +326,8 @@ const Ikon = {
   /* ---- GLOXORG'a ÖZEL ikonlar — hepsinde ortak PIRLANTA/FASET motifi (standart ikonlardan farklı, bize ait) ---- */
   // MESAJ: ZARF (mektup) + pırlanta mühür — yorum balonundan FARKLI
   mesaj: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.7 7.3l6.9 4.9a2.4 2.4 0 0 0 2.8 0l6.9-4.9" /><path d="M12 13.1l1.4 1.5-1.4 1.9-1.4-1.9z" fill="currentColor" stroke="none" /></svg>,
-  // GLOXI — mesaj + arama: konuşma balonu + içinde telefon ahizesi (mektup DEĞİL)
-  gloxi: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 11.4a7.9 7.9 0 0 1-11.2 7.1L4 20.2l1.7-5.3A7.9 7.9 0 1 1 20.8 11.4z" /><path d="M9.4 8.5c-.35.6-.2 1.45.45 2.55.6 1 1.45 1.85 2.45 2.45 1.1.65 1.95.8 2.55.45.35-.2.6-.5.75-.9l-1.6-1.05-1 .7c-.55-.3-1-.7-1.35-1.15-.35-.45-.6-.95-.75-1.5l.7-1z" fill="currentColor" stroke="none" /></svg>,
+  // GLOME — mesaj + arama: RENKLİ konuşma balonu (mavi = mesaj) + içinde YEŞİL telefon ahizesi (arama). Mektup DEĞİL, büyük ve renkli.
+  gloxi: <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M22 10.6c0 4.9-4.5 8.6-10 8.6-1.2 0-2.4-.17-3.4-.5L3 20.8l1.5-4.3C3 15 2 12.9 2 10.6 2 5.7 6.5 2 12 2s10 3.7 10 8.6z" fill="#2f6fd0" stroke="#1a4a94" strokeWidth="0.7" /><path d="M9.7 7.5c-.4-.05-.85.05-1.15.4-.4.45-.65 1.05-.5 1.85.25 1.65 1.15 3.2 2.45 4.45 1.3 1.25 2.9 2.05 4.5 2.25.8.1 1.4-.15 1.8-.6.3-.35.4-.8.35-1.2-.03-.25-.15-.45-.32-.6l-1.55-1.35c-.25-.22-.6-.25-.88-.1l-1.05.6c-.6-.35-1.15-.78-1.6-1.28-.45-.5-.82-1.05-1.05-1.65l.6-1.05c.16-.28.14-.63-.06-.9L9.9 7.7c-.06-.1-.13-.17-.2-.2z" fill="#25c65a" stroke="#fff" strokeWidth="0.5" /></svg>,
   // BEĞENİ: pırlanta-kesimli kalp (içinde faset çizgileri)
   kalp: <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20.6C7 17.1 3.5 13.9 3.5 9.7A4.1 4.1 0 0 1 12 7a4.1 4.1 0 0 1 8.5 2.7c0 4.2-3.5 7.4-8.5 10.9z" /><path d="M7.4 9.4h9.2" strokeWidth="1.05" opacity=".85" /><path d="M12 7l-2.4 2.4L12 14.3l2.4-4.9z" strokeWidth="1.05" opacity=".85" /></svg>,
   // YORUM: konuşma balonu + içinde 4 köşe parıltı (elmas ışıltısı)
@@ -1225,7 +1225,12 @@ export default function Anasayfa({ pro = false }) {
   const [sohbetYazi, setSohbetYazi] = useState("");    // sohbet ekranındaki yazma kutusu
   const [sohbetGonderiliyor, setSohbetGonderiliyor] = useState(false); // foto/mesaj gönderiliyor mu
   const mesajSonRef = useRef(null);                    // sohbette en alta kaydırma çıpası
-  const sohbetFotoInputRef = useRef(null);             // sohbette foto seç
+  const [sohbetMedyaAcik, setSohbetMedyaAcik] = useState(false); // sohbette medya menüsü (foto/video/dosya/canlı) açık mı
+  const sohbetFotoInputRef = useRef(null);             // foto seç (galeri)
+  const sohbetVideoInputRef = useRef(null);            // video seç (galeri)
+  const sohbetDosyaInputRef = useRef(null);            // dosya seç
+  const sohbetCanliFotoRef = useRef(null);             // canlı foto çek (kamera)
+  const sohbetCanliVideoRef = useRef(null);            // canlı video çek (kamera)
   const [mmAra, setMmAra] = useState("");              // Mesaj Merkezi: kişi ara / yeni sohbet başlat
   const [mmKisiler, setMmKisiler] = useState([]);      // kişi bulma + foto için kullanıcı listesi (cache)
   const sohbetKisiRef = useRef(null); useEffect(() => { sohbetKisiRef.current = sohbetKisi; }, [sohbetKisi]);
@@ -2725,15 +2730,33 @@ export default function Anasayfa({ pro = false }) {
     setBegenenModal(null); setYorumAcik(null); setAraSecili(null); setTamFoto(""); // üstteki katmanlar kapansın
     setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false);
   };
-  // Sohbetten mesaj gönder (metin ve/veya foto). Foto önce Storage'a yüklenir, URL saklanır (Firestore 1MB'a sığsın).
-  const sohbetGonderEt = async (metin, gorsel) => {
+  // Sohbetten mesaj gönder (metin / foto / video / dosya). Medya önce Storage'a yüklenir, URL saklanır (Firestore 1MB'a sığsın).
+  const sohbetGonderEt = async (metin, gorsel, video, dosya) => {
     const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
     if (!uu || !kisi) return false;
-    if (!((metin && metin.trim()) || gorsel)) return false;
+    if (!((metin && metin.trim()) || gorsel || video || (dosya && dosya.url))) return false;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try {
-      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", gonderen: { uid: uu.uid, ad: benimAd, foto: isFoto || foto || "" } });
+      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null, gonderen: { uid: uu.uid, ad: benimAd, foto: isFoto || foto || "" } });
     } catch (e) { return false; }
+  };
+  // Sohbette VİDEO seç/çek → Storage'a yükle, video mesajı gönder
+  const sohbetVideoSecildi = async (e) => {
+    const dsy = e.target.files && e.target.files[0]; e.target.value = ""; setSohbetMedyaAcik(false);
+    const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
+    if (!dsy || !uu || !kisi) return;
+    setSohbetGonderiliyor(true);
+    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) await sohbetGonderEt("", "", r.url); } catch (x) {}
+    setSohbetGonderiliyor(false);
+  };
+  // Sohbette DOSYA seç → Storage'a yükle, dosya mesajı gönder (indirilebilir)
+  const sohbetDosyaSecildi = async (e) => {
+    const dsy = e.target.files && e.target.files[0]; e.target.value = ""; setSohbetMedyaAcik(false);
+    const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
+    if (!dsy || !uu || !kisi) return;
+    setSohbetGonderiliyor(true);
+    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) await sohbetGonderEt("", "", "", { url: r.url, ad: r.ad }); } catch (x) {}
+    setSohbetGonderiliyor(false);
   };
   const sohbetMetinGonder = () => {
     const m = sohbetYazi.trim(); if (!m) return;
@@ -2741,7 +2764,7 @@ export default function Anasayfa({ pro = false }) {
     sohbetGonderEt(m, "").then((ok) => { if (!ok) setSohbetYazi(m); }); // hata olursa yazıyı geri koy
   };
   const sohbetFotoSecildi = async (e) => {
-    const dosya = e.target.files && e.target.files[0]; e.target.value = "";
+    const dosya = e.target.files && e.target.files[0]; e.target.value = ""; setSohbetMedyaAcik(false);
     const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
     if (!dosya || !uu || !kisi) return;
     setSohbetGonderiliyor(true);
@@ -5753,8 +5776,8 @@ export default function Anasayfa({ pro = false }) {
           ) : (
             <button className="ana-ara-btn" aria-label={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
           )}
-          {/* GLOXI — bize has mesaj + arama düğmesi (ayının yerine); okunmamış rozetli */}
-          <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label="Gloxi" title="Gloxi — Mesaj & Arama">
+          {/* GLOME — bize has mesaj + arama düğmesi (ayının yerine); okunmamış rozetli */}
+          <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label="Glome" title="Glome — Mesaj & Arama">
             {Ikon.gloxi}
             {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
           </button>
@@ -6570,7 +6593,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="msj-fon msj-merkez" onClick={(e) => { if (e.target === e.currentTarget) { setMesajAcik(false); setMmAra(""); } }}>
           <div className="msj-pencere">
             <div className="msj-bas">
-              <span className="msj-baslik"><span className="mm-bas-ik">{Ikon.gloxi}</span> Gloxi</span>
+              <span className="msj-baslik"><span className="mm-bas-ik">{Ikon.gloxi}</span> Glome</span>
               <button className="msj-kapat" onClick={() => { setMesajAcik(false); setMmAra(""); }} aria-label="Kapat">✕</button>
             </div>
             {/* KİŞİ ARAMA — kimi arayacağını buradan bul, dokun, sohbet başlat */}
@@ -6659,6 +6682,8 @@ export default function Anasayfa({ pro = false }) {
                   <div className={"sohbet-balon-sar " + (benim ? "benim" : "karsi")} key={m.id || i}>
                     <div className="sohbet-balon">
                       {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0 })} />}
+                      {m.video && <video className="sohbet-balon-video" src={m.video} controls playsInline preload="metadata" />}
+                      {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
                       {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
                       <span className="sohbet-balon-alt">{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
                     </div>
@@ -6668,9 +6693,26 @@ export default function Anasayfa({ pro = false }) {
               <div ref={mesajSonRef} />
             </div>
             <div className="sohbet-yazar">
+              {/* gizli dosya seçiciler: galeri foto/video, dosya, canlı foto/video (kamera) */}
               <input ref={sohbetFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={sohbetFotoSecildi} />
-              <button className="sohbet-foto-btn" onClick={() => sohbetFotoInputRef.current && sohbetFotoInputRef.current.click()} disabled={sohbetGonderiliyor} aria-label={t("fotoEkle", "Fotoğraf")}>
-                {sohbetGonderiliyor ? "…" : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5" /><circle cx="8.5" cy="10" r="1.6" /><path d="M21 16l-5-5-9 8" /></svg>}
+              <input ref={sohbetVideoInputRef} type="file" accept="video/*" style={{ display: "none" }} onChange={sohbetVideoSecildi} />
+              <input ref={sohbetDosyaInputRef} type="file" style={{ display: "none" }} onChange={sohbetDosyaSecildi} />
+              <input ref={sohbetCanliFotoRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={sohbetFotoSecildi} />
+              <input ref={sohbetCanliVideoRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={sohbetVideoSecildi} />
+              {sohbetMedyaAcik && (
+                <>
+                  <div className="sohbet-medya-fon" onClick={() => setSohbetMedyaAcik(false)} />
+                  <div className="sohbet-medya-menu">
+                    <button onClick={() => sohbetFotoInputRef.current && sohbetFotoInputRef.current.click()}><span className="smm-ik smm-foto">🖼️</span>{t("mmFoto", "Fotoğraf seç")}</button>
+                    <button onClick={() => sohbetVideoInputRef.current && sohbetVideoInputRef.current.click()}><span className="smm-ik smm-video">🎬</span>{t("mmVideo", "Video seç")}</button>
+                    <button onClick={() => sohbetDosyaInputRef.current && sohbetDosyaInputRef.current.click()}><span className="smm-ik smm-dosya">📄</span>{t("mmDosya", "Dosya seç")}</button>
+                    <button onClick={() => sohbetCanliFotoRef.current && sohbetCanliFotoRef.current.click()}><span className="smm-ik smm-cfoto">📸</span>{t("mmCanliFoto", "Fotoğraf çek")}</button>
+                    <button onClick={() => sohbetCanliVideoRef.current && sohbetCanliVideoRef.current.click()}><span className="smm-ik smm-cvideo">🎥</span>{t("mmCanliVideo", "Video çek")}</button>
+                  </div>
+                </>
+              )}
+              <button className={"sohbet-foto-btn" + (sohbetMedyaAcik ? " acik" : "")} onClick={() => setSohbetMedyaAcik((a) => !a)} disabled={sohbetGonderiliyor} aria-label={t("medyaEkle", "Ekle")}>
+                {sohbetGonderiliyor ? "…" : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>}
               </button>
               <textarea className="sohbet-input" value={sohbetYazi} onChange={(e) => setSohbetYazi(e.target.value)} placeholder={t("mesajYaz", "Mesaj yaz…")} maxLength={1000} rows={1}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sohbetMetinGonder(); } }} />
@@ -7822,7 +7864,7 @@ export default function Anasayfa({ pro = false }) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 4l2.5 5M14 4l2.5 5"/><path d="M10.5 12.5l4 2.2-4 2.3z" fill="currentColor"/></svg>
           <span className="notranslate" translate="no">{REELS_AD}</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("konum")}>{Ikon.konum}<span>{t("navKonum")}</span></button>
-        <button className="ana-tab-oge" onClick={() => setMesajAcik(true)}>{Ikon.gloxi}<span>Gloxi</span></button>
+        <button className="ana-tab-oge ana-tab-glome" onClick={() => setMesajAcik(true)}>{Ikon.gloxi}<span>Glome</span>{okunmamisMesaj > 0 && <span className="ana-tab-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}</button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("profil")}>{Ikon.profil}<span>{t("navProfil")}</span></button>
       </nav>
 

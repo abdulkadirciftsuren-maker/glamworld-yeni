@@ -90,7 +90,8 @@ export function videoYukle(file, uid, onProgress) {
 }
 // Belge (pdf/word/zip vb.) → Firebase Depolama; {url, ad, boyut} döner (post'ta dosya:{...}).
 export async function dosyaYukle(file, uid, onProgress) {
-  const url = await _depoyaYukle(file, uid, onProgress, "application/octet-stream");
+  const ct = (file && file.type) || "application/octet-stream"; // gerçek tür → video oynar, foto görünür (octet yerine)
+  const url = await _depoyaYukle(file, uid, onProgress, ct);
   return { url, ad: (file && file.name) || "dosya", boyut: (file && file.size) || 0 };
 }
 // base64 (dataURL) FOTOĞRAF → Firebase Depolama'ya yükle, indirilebilir URL döner.
@@ -196,21 +197,22 @@ export async function profesyonelAra({ meslek, ulke, sehir } = {}, adet = 30) {
 }
 
 // ---------- MESAJLAŞMA ----------
-// Mesaj gönder (bir kişiye). Metin ve/veya foto (gorsel = yüklenmiş URL). serverTimestamp + zamanMs (anında sıralama).
-export async function mesajGonder({ aliciUid, aliciAd, metin, gorsel, gonderen } = {}) {
+// Mesaj gönder (bir kişiye). Metin ve/veya foto (gorsel) / video / dosya ({url,ad}) — hepsi yüklenmiş URL. serverTimestamp + zamanMs.
+export async function mesajGonder({ aliciUid, aliciAd, metin, gorsel, video, dosya, gonderen } = {}) {
   if (!aliciUid || !gonderen || !gonderen.uid) return false;
   const mt = (metin || "").trim();
-  if (!mt && !gorsel) return false; // boş mesaj gitmesin
+  if (!mt && !gorsel && !video && !(dosya && dosya.url)) return false; // boş mesaj gitmesin
   try {
     const ref = doc(collection(db, "mesajlar"));
     await setDoc(ref, {
       aliciUid, aliciAd: aliciAd || "",
       gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "",
-      metin: mt.slice(0, 1000), gorsel: gorsel || "", okundu: false,
-      zaman: serverTimestamp(), zamanMs: Date.now(),
+      metin: mt.slice(0, 1000), gorsel: gorsel || "", video: video || "", dosya: (dosya && dosya.url) ? { url: dosya.url, ad: (dosya.ad || "dosya").slice(0, 120) } : null,
+      okundu: false, zaman: serverTimestamp(), zamanMs: Date.now(),
     });
     // Alıcıya BİLDİRİM bırak (zil + telefon bildirimi için)
-    bildirimEkle({ aliciUid, gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "", tip: "mesaj", metin: (mt || (gorsel ? "📷 Fotoğraf" : "")).slice(0, 60) }).catch(() => {});
+    const oz = mt || (gorsel ? "📷 Fotoğraf" : video ? "🎥 Video" : dosya ? "📎 Dosya" : "");
+    bildirimEkle({ aliciUid, gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "", tip: "mesaj", metin: oz.slice(0, 60) }).catch(() => {});
     return true;
   } catch (e) { return false; }
 }
