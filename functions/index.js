@@ -28,7 +28,8 @@ async function tokenlariGetir(uid) {
 // Push gönder (bir kullanıcının tüm cihazlarına) + geçersiz anahtarları temizle
 async function pushGonder(uid, baslik, govde, veri) {
   const tokens = await tokenlariGetir(uid);
-  if (!tokens.length) return;
+  console.log(`[pushGonder] alici=${uid} | bulunan token sayisi=${tokens.length} | baslik="${baslik}" | govde="${govde}"`);
+  if (!tokens.length) { console.log(`[pushGonder] ${uid} icin KAYITLI TOKEN YOK -> bildirim gonderilmedi (kullanici bildirim iznini/anahtarini kaydetmemis olabilir)`); return; }
   // SADECE-VERİ (data-only): bildirimi servis çalışanı (firebase-messaging-sw.js) kendi çizer → çift bildirim OLMAZ, tam kontrol.
   const veriTam = Object.assign({ baslik: String(baslik || "GLOXORG"), govde: String(govde || "") }, veri || {});
   const mesaj = {
@@ -39,6 +40,8 @@ async function pushGonder(uid, baslik, govde, veri) {
   };
   try {
     const res = await getMessaging().sendEachForMulticast(mesaj);
+    console.log(`[pushGonder] GONDERILDI -> basarili=${res.successCount}, basarisiz=${res.failureCount}`);
+    res.responses.forEach((r, i) => { if (!r.success) console.log(`  token[${i}] HATA: ${r.error && r.error.code} | ${r.error && r.error.message}`); });
     // Artık geçersiz olan anahtarları listeden çıkar (uygulamayı silmiş/çıkmış cihazlar)
     const gecersiz = [];
     res.responses.forEach((r, i) => {
@@ -59,7 +62,8 @@ async function pushGonder(uid, baslik, govde, veri) {
 // 1) GENEL BİLDİRİM — mesaj / beğeni / yorum / tepki / takip (hepsi "bildirimler" koleksiyonuna düşer)
 exports.genelBildirim = onDocumentCreated("bildirimler/{id}", async (event) => {
   const b = event.data && event.data.data();
-  if (!b || !b.aliciUid) return;
+  console.log(`[genelBildirim] yeni bildirim: tip=${b && b.tip} | aliciUid=${b && b.aliciUid} | gonderenAd=${b && b.gonderenAd}`);
+  if (!b || !b.aliciUid) { console.log("[genelBildirim] aliciUid yok -> atlandi"); return; }
   const ad = b.gonderenAd || "Biri";
   let baslik = ad, govde = "";
   switch (b.tip) {
@@ -76,7 +80,8 @@ exports.genelBildirim = onDocumentCreated("bildirimler/{id}", async (event) => {
 // 2) ARAMA — biri seni arayınca ÇALAN bildirim (site kapalı olsa da)
 exports.aramaBildirim = onDocumentCreated("aramalar/{id}", async (event) => {
   const a = event.data && event.data.data();
-  if (!a || !a.arananUid) return;
+  console.log(`[aramaBildirim] yeni arama: tip=${a && a.tip} | arananUid=${a && a.arananUid} | arayanAd=${a && a.arayanAd} | durum=${a && a.durum}`);
+  if (!a || !a.arananUid) { console.log("[aramaBildirim] arananUid yok -> atlandi"); return; }
   const ad = a.arayanAd || "Biri";
   const tip = a.tip === "goruntulu" ? "📹 Görüntülü arama" : "📞 Sesli arama";
   await pushGonder(a.arananUid, ad + " seni arıyor", tip, { tip: "arama", aramaId: event.params.id, arayanUid: a.arayanUid || "" });

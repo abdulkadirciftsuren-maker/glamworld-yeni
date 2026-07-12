@@ -40,10 +40,13 @@ export async function fcmTokenAl(vapidKey) {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return "";
     if (!(await isSupported())) return "";
     const messaging = getMessaging(app);
+    // ÖNEMLİ: firebase-messaging-sw.js'i KENDİ ayrı scope'unda kaydet.
+    // Aksi halde sitenin kendi sw.js'i (scope "/") ile çakışıp token yanlış servise bağlanıyor
+    // ve arka plan bildirimi gösterilemiyordu. Bu scope FCM'in kendi standart yoludur.
     let reg;
     try {
-      reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
-      if (!reg) reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/firebase-cloud-messaging-push-scope" });
+      if (reg && reg.update) { try { await reg.update(); } catch (e) {} }
     } catch (e) { reg = undefined; }
     const token = await getToken(messaging, reg ? { vapidKey, serviceWorkerRegistration: reg } : { vapidKey });
     return token || "";
