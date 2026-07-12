@@ -3772,3 +3772,31 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .sohbet-kim i{ font-size:12px; }
   .msj-onizleme{ font-size:14px; }
 }
+/* Sohbet başlığındaki ARAMA düğmeleri (sesli + görüntülü) */
+.sohbet-ara-gor{ background:#2f6fd0 !important; } .sohbet-ara-sesli{ background:#2f9e44 !important; }
+
+/* ===================== İNTERNET ARAMASI (sesli/görüntülü) — ALTIN zemin, KARE düğmeler ===================== */
+.arama-fon{ position:fixed; inset:0; z-index:100030; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;
+  background:radial-gradient(circle at 50% 34%, #c79a34, #7a5f22); animation:adFon .2s ease; }
+.arama-kisi{ display:flex; flex-direction:column; align-items:center; gap:12px; color:#fff; z-index:2; text-align:center; padding:0 20px; }
+.arama-avatar{ width:120px; height:120px; border-radius:24px; overflow:hidden; background:#8a6b28; display:flex; align-items:center; justify-content:center; font-size:52px; font-weight:800; color:#fff; border:3px solid #ffe9a8; box-shadow:0 8px 26px rgba(60,40,8,.5); }
+.arama-avatar img{ width:100%; height:100%; object-fit:cover; }
+.arama-kisi b{ font-size:24px; font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,.4); }
+.arama-kisi i{ font-size:15px; font-style:normal; opacity:.95; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+/* gelen çağrı: kabul/reddet */
+.arama-cagri-dugmeler{ position:absolute; bottom:56px; display:flex; gap:64px; z-index:4; }
+.arama-btn{ width:70px; height:70px; border-radius:22px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+.arama-btn svg{ width:32px; height:32px; }
+.arama-red{ background:#e0202c; } .arama-red svg{ transform:rotate(135deg); }
+.arama-kabul{ background:#2f9e44; animation:aramaTitre 1.1s ease-in-out infinite; }
+@keyframes aramaTitre{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.09); } }
+/* aktif arama */
+.arama-uzak-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; background:#7a5f22; }
+.arama-yerel-video{ position:absolute; right:14px; top:14px; width:104px; height:146px; object-fit:cover; border-radius:14px; border:2px solid #fff; z-index:3; background:#5a4210; box-shadow:0 3px 10px rgba(0,0,0,.4); }
+.arama-kisi-orta{ position:relative; z-index:2; }
+.arama-alt-dugmeler{ position:absolute; bottom:44px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:20px; z-index:4; }
+.arama-kk-btn{ width:58px; height:58px; border-radius:18px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#3a2c00; background:rgba(255,242,205,.92); box-shadow:0 3px 10px rgba(0,0,0,.3); }
+.arama-kk-btn svg{ width:26px; height:26px; }
+.arama-kk-btn.kapali{ background:#e0202c; color:#fff; }
+.arama-kapat{ background:#e0202c !important; color:#fff !important; } .arama-kapat svg{ transform:rotate(135deg); }
+@media (min-width:560px){ .arama-avatar{ width:140px; height:140px; } .arama-kisi b{ font-size:27px; } }

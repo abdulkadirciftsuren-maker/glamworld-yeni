@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -1233,6 +1233,20 @@ export default function Anasayfa({ pro = false }) {
   const sohbetCanliVideoRef = useRef(null);            // canlı video çek (kamera)
   const [mmAra, setMmAra] = useState("");              // Mesaj Merkezi: kişi ara / yeni sohbet başlat
   const [mmKisiler, setMmKisiler] = useState([]);      // kişi bulma + foto için kullanıcı listesi (cache)
+  // İNTERNET ARAMASI (WebRTC)
+  const [aramaDurum, setAramaDurum] = useState("");    // "" | "ariyor" (ben aradım, bekliyor) | "geliyor" (bana çağrı) | "konusuyor"
+  const [aktifArama, setAktifArama] = useState(null);  // { id, karsiAd, karsiFoto, tip } — açık arama
+  const [gelenArama, setGelenArama] = useState(null);  // { id, arayanAd, arayanFoto, tip, offer } — bana gelen çağrı
+  const [mikKapali, setMikKapali] = useState(false);   // mikrofon sessiz mi
+  const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
+  const pcRef = useRef(null);                          // RTCPeerConnection
+  const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
+  const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
+  const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
+  const aramaAbonelikRef = useRef([]);                 // arama dinleyicileri (temizlemek için)
+  const aramaDurumRef = useRef(""); useEffect(() => { aramaDurumRef.current = aramaDurum; }, [aramaDurum]);
+  const aktifAramaRef = useRef(null); useEffect(() => { aktifAramaRef.current = aktifArama; }, [aktifArama]);
+  const gelenAramaRef = useRef(null); useEffect(() => { gelenAramaRef.current = gelenArama; }, [gelenArama]);
   const sohbetKisiRef = useRef(null); useEffect(() => { sohbetKisiRef.current = sohbetKisi; }, [sohbetKisi]);
   const mesajAcikRef2 = useRef(false); useEffect(() => { mesajAcikRef2.current = mesajAcik; }, [mesajAcik]);
   // GERÇEK AKIŞ (gönderiler)
@@ -2758,6 +2772,95 @@ export default function Anasayfa({ pro = false }) {
     try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) await sohbetGonderEt("", "", "", { url: r.url, ad: r.ad }); } catch (x) {}
     setSohbetGonderiliyor(false);
   };
+  // ---- İNTERNET ARAMASI (WebRTC — sesli/görüntülü) ----
+  const ICE_SUNUCULAR = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }, { urls: "stun:stun2.l.google.com:19302" }] };
+  const aramaTemizle = () => {
+    try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
+    aramaAbonelikRef.current = [];
+    try { if (pcRef.current) pcRef.current.close(); } catch (e) {}
+    pcRef.current = null;
+    try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
+    yerelStreamRef.current = null;
+    try { if (uzakVideoRef.current) uzakVideoRef.current.srcObject = null; } catch (e) {}
+    try { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = null; } catch (e) {}
+  };
+  const aramaKapat = async (durumYaz) => {
+    const a = aktifAramaRef.current;
+    if (a && a.id && durumYaz !== false) { try { await aramaGuncelle(a.id, { durum: "bitti" }); } catch (e) {} }
+    aramaTemizle();
+    setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false);
+  };
+  const medyaAl = async (tip) => {
+    const kisit = tip === "goruntulu" ? { audio: true, video: { facingMode: "user" } } : { audio: true, video: false };
+    const stream = await navigator.mediaDevices.getUserMedia(kisit);
+    yerelStreamRef.current = stream;
+    if (tip === "goruntulu") { setTimeout(() => { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = stream; }, 50); }
+    return stream;
+  };
+  const pcOlustur = (aramaId, kim) => {
+    const pc = new RTCPeerConnection(ICE_SUNUCULAR);
+    pcRef.current = pc;
+    (yerelStreamRef.current ? yerelStreamRef.current.getTracks() : []).forEach((t) => { try { pc.addTrack(t, yerelStreamRef.current); } catch (e) {} });
+    const uzak = new MediaStream();
+    pc.ontrack = (e) => { (e.streams[0] ? e.streams[0].getTracks() : [e.track]).forEach((t) => { try { uzak.addTrack(t); } catch (x) {} }); if (uzakVideoRef.current) uzakVideoRef.current.srcObject = uzak; };
+    pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
+    pc.onconnectionstatechange = () => { try { if (pc.connectionState === "connected") setAramaDurum("konusuyor"); } catch (x) {} };
+    return pc;
+  };
+  const aramaBaslat = async (kisi, tip) => {
+    if (!kisi || !kisi.uid || aramaDurumRef.current) return;
+    const uu = auth.currentUser; if (!uu) return;
+    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
+    setAramaDurum("ariyor");
+    setAktifArama({ id: "", karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
+    const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: isFoto || foto || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
+    if (!id) { aramaKapat(false); return; }
+    setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
+    const pc = pcOlustur(id, "arayan");
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await aramaGuncelle(id, { offer: { type: offer.type, sdp: offer.sdp } });
+    } catch (e) { aramaKapat(); return; }
+    const ab1 = aramaDinle(id, async (a) => {
+      if (!a) { aramaKapat(false); return; }
+      if (a.answer && !pc.currentRemoteDescription) { try { await pc.setRemoteDescription(new RTCSessionDescription(a.answer)); setAramaDurum("konusuyor"); } catch (e) {} }
+      if (a.durum === "red") { bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); }
+      else if (a.durum === "bitti") { aramaKapat(false); }
+    });
+    const ab2 = iceAdaylariDinle(id, "aranan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
+    aramaAbonelikRef.current.push(ab1, ab2);
+  };
+  const aramaKabulEt = async () => {
+    const g = gelenArama; if (!g) return;
+    setGelenArama(null);
+    try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
+    setAramaDurum("konusuyor");
+    setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
+    const pc = pcOlustur(g.id, "aranan");
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(g.offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await aramaGuncelle(g.id, { answer: { type: answer.type, sdp: answer.sdp }, durum: "kabul" });
+    } catch (e) { aramaKapat(); return; }
+    const ab1 = aramaDinle(g.id, (a) => { if (!a || a.durum === "bitti") aramaKapat(false); });
+    const ab2 = iceAdaylariDinle(g.id, "arayan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
+    aramaAbonelikRef.current.push(ab1, ab2);
+  };
+  const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); };
+  const mikToggle = () => { const s = yerelStreamRef.current; if (s) { s.getAudioTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setMikKapali((m) => !m); } };
+  const kamToggle = () => { const s = yerelStreamRef.current; if (s) { s.getVideoTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setKamKapali((k) => !k); } };
+  // BANA GELEN çağrıları dinle (aktif arama yokken göster)
+  useEffect(() => {
+    const uu = auth.currentUser; if (!uu) return;
+    const iptal = gelenAramalariDinle(uu.uid, (liste) => {
+      if (!aramaDurumRef.current && liste.length) setGelenArama((mv) => (mv && mv.id === liste[0].id) ? mv : liste[0]);
+      else if (!liste.length) setGelenArama((mv) => (aramaDurumRef.current ? mv : null));
+    });
+    return iptal;
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   const sohbetMetinGonder = () => {
     const m = sohbetYazi.trim(); if (!m) return;
     setSohbetYazi("");
@@ -5473,7 +5576,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -5481,12 +5584,14 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
       guardSayRef.current = Math.max(0, guardSayRef.current - 1);
-      if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
+      if (aramaDurumRef.current) { aramaKapat(); }
+      else if (gelenAramaRef.current) { aramaReddet(); }
+      else if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
       else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
       else if (telHaritaAcikRef.current) { telHaritaAcikRef.current = false; setTelHaritaAcik(false); }
       else if (uyelikKartAcikRef.current) { uyelikKartAcikRef.current = false; setUyelikKartAcik(false); }
@@ -6666,11 +6771,13 @@ export default function Anasayfa({ pro = false }) {
                 <b className="notranslate" translate="no"><KayanYazi>{sohbetKisi.ad}</KayanYazi></b>
                 <i>{t("cevrimici", "GLOXORG")}</i>
               </div>
-              {sohbetKisi.tel && (
-                <a className="sohbet-ara" href={"tel:" + sohbetKisi.tel} aria-label={t("telAra", "Ara")}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
-                </a>
-              )}
+              {/* İnternetten arama: sesli + görüntülü (WhatsApp gibi) */}
+              <button className="sohbet-ara sohbet-ara-gor" onClick={() => aramaBaslat({ uid: sohbetKisi.uid, ad: sohbetKisi.ad, foto: sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) }, "goruntulu")} aria-label={t("goruntuluAra", "Görüntülü ara")} title={t("goruntuluAra", "Görüntülü ara")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>
+              </button>
+              <button className="sohbet-ara sohbet-ara-sesli" onClick={() => aramaBaslat({ uid: sohbetKisi.uid, ad: sohbetKisi.ad, foto: sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) }, "sesli")} aria-label={t("sesliAra", "Sesli ara")} title={t("sesliAra", "Sesli ara")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+              </button>
             </div>
             <div className="sohbet-akis">
               {aktifSohbetMesajlari.length === 0 ? (
@@ -6720,6 +6827,57 @@ export default function Anasayfa({ pro = false }) {
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4l17.4-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet) */}
+      {gelenArama && !aramaDurum && (
+        <div className="arama-fon arama-geliyor">
+          <div className="arama-kisi">
+            <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>
+            <b className="notranslate" translate="no">{gelenArama.arayanAd || "—"}</b>
+            <i>{gelenArama.tip === "goruntulu" ? t("goruntuluCagri", "📹 Görüntülü arıyor…") : t("sesliCagri", "📞 Sesli arıyor…")}</i>
+          </div>
+          <div className="arama-cagri-dugmeler">
+            <button className="arama-btn arama-red" onClick={aramaReddet} aria-label={t("reddet", "Reddet")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+            </button>
+            <button className="arama-btn arama-kabul" onClick={aramaKabulEt} aria-label={t("kabul", "Kabul et")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* AKTİF ARAMA — konuşma ekranı (sesli: avatar; görüntülü: video) */}
+      {aramaDurum && aktifArama && (
+        <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli")}>
+          {aktifArama.tip === "goruntulu" && <video ref={uzakVideoRef} className="arama-uzak-video" autoPlay playsInline />}
+          {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
+            <div className="arama-kisi arama-kisi-orta">
+              <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
+              <b className="notranslate" translate="no">{aktifArama.karsiAd}</b>
+              <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : t("baglandi", "Bağlandı")}</i>
+            </div>
+          )}
+          {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className="arama-yerel-video" autoPlay playsInline muted />}
+          <div className="arama-alt-dugmeler">
+            <button className={"arama-kk-btn" + (mikKapali ? " kapali" : "")} onClick={mikToggle} aria-label={t("mikrofon", "Mikrofon")}>
+              {mikKapali
+                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V5a3 3 0 0 0-5.9-.7M12 19v3M8 22h8M2 2l20 20" /></svg>
+                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8" /></svg>}
+            </button>
+            {aktifArama.tip === "goruntulu" && (
+              <button className={"arama-kk-btn" + (kamKapali ? " kapali" : "")} onClick={kamToggle} aria-label={t("kamera", "Kamera")}>
+                {kamKapali
+                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 6h9v12h-9zM15.5 10l5-3v10l-5-3M2 2l20 20" /></svg>
+                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>}
+              </button>
+            )}
+            <button className="arama-kk-btn arama-kapat" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+            </button>
           </div>
         </div>
       )}

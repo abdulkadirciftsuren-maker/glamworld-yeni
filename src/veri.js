@@ -245,6 +245,59 @@ export async function mesajOkunduYap(mesajlar) {
   } catch (e) {}
 }
 
+// ---------- İNTERNET ARAMASI (WebRTC sinyalleşme — sesli/görüntülü, iki üye arası) ----------
+// Firestore "aramalar" koleksiyonu = signaling (offer/answer/durum) + alt koleksiyon adaylar (ICE).
+// Arayan bir arama dokümanı oluşturur (offer), aranan dinler ve cevaplar (answer). ICE adayları alt koleksiyonlarda paylaşılır.
+export async function aramaOlustur(veri) {
+  try {
+    const ref = doc(collection(db, "aramalar"));
+    await setDoc(ref, {
+      arayanUid: veri.arayanUid, arayanAd: veri.arayanAd || "", arayanFoto: veri.arayanFoto || "",
+      arananUid: veri.arananUid, arananAd: veri.arananAd || "",
+      tip: veri.tip || "sesli", offer: veri.offer || null, answer: null,
+      durum: "calliyor", zamanMs: Date.now(), olusturma: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (e) { return null; }
+}
+// Bir aramayı CANLI dinle (answer gelince / durum değişince). Geri: iptal.
+export function aramaDinle(aramaId, cb) {
+  if (!aramaId) return () => {};
+  try { return onSnapshot(doc(db, "aramalar", aramaId), (s) => cb(s.exists() ? { id: s.id, ...s.data() } : null), () => {}); }
+  catch (e) { return () => {}; }
+}
+// Arama dokümanını güncelle (answer yaz / durumu değiştir: kabul, red, bitti)
+export async function aramaGuncelle(aramaId, veri) {
+  try { await setDoc(doc(db, "aramalar", aramaId), veri, { merge: true }); return true; } catch (e) { return false; }
+}
+// BANA GELEN çağrıları dinle (arananUid == ben, durum "calliyor"). Tek eşitlik sorgusu (index gerektirmez), istemcide filtre.
+export function gelenAramalariDinle(uid, cb) {
+  if (!uid) return () => {};
+  try {
+    const q = query(collection(db, "aramalar"), where("arananUid", "==", uid), fsLimit(20));
+    return onSnapshot(q, (snap) => {
+      const simdi = Date.now();
+      const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        .filter((a) => a.durum === "calliyor" && (simdi - (a.zamanMs || 0)) < 60000); // son 60 sn içinde çalan
+      cb(liste);
+    }, () => cb([]));
+  } catch (e) { return () => {}; }
+}
+// ICE adayı ekle (kim: "arayan" | "aranan")
+export async function iceAdayEkle(aramaId, kim, cand) {
+  if (!aramaId || !cand) return;
+  try { const ref = doc(collection(db, "aramalar", aramaId, "aday_" + kim)); await setDoc(ref, { cand, zamanMs: Date.now() }); } catch (e) {}
+}
+// Karşı tarafın ICE adaylarını dinle (yeni ekleneni cb'ye ver)
+export function iceAdaylariDinle(aramaId, kim, cb) {
+  if (!aramaId) return () => {};
+  try {
+    return onSnapshot(collection(db, "aramalar", aramaId, "aday_" + kim), (snap) => {
+      snap.docChanges().forEach((ch) => { if (ch.type === "added") { try { cb(ch.doc.data().cand); } catch (e) {} } });
+    }, () => {});
+  } catch (e) { return () => {}; }
+}
+
 // ---------- BİLDİRİMLER (zil + telefon bildirimi) ----------
 // Bir kullanıcıya bildirim bırak (beğeni/yorum/mesaj). Kendine bildirim YOK.
 export async function bildirimEkle(b) {

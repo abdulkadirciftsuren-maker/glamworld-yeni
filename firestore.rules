@@ -109,6 +109,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // İNTERNET ARAMASI (WebRTC sinyalleşme) — sadece arayan/aranan erişir
+    match /aramalar/{id} {
+      allow read: if girisli() && (resource.data.arayanUid == request.auth.uid || resource.data.arananUid == request.auth.uid);
+      allow create: if girisli() && request.resource.data.arayanUid == request.auth.uid;
+      allow update: if girisli() && (resource.data.arayanUid == request.auth.uid || resource.data.arananUid == request.auth.uid);
+      allow delete: if girisli() && (resource.data.arayanUid == request.auth.uid || resource.data.arananUid == request.auth.uid);
+      // ICE adayları (bağlantı kurulumu) — giriş yapmış katılımcılar ekler/okur
+      match /aday_arayan/{aid} { allow read, create: if girisli(); }
+      match /aday_aranan/{aid} { allow read, create: if girisli(); }
+    }
+
     // Sohbetler / mesajlar — sadece katılımcılar (FAZ 2)
     match /sohbetler/{id} {
       allow read, write: if girisli() && request.auth.uid in resource.data.katilimcilar;
