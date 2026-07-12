@@ -239,6 +239,16 @@ export function mesajlarimiDinle(uid, cb, adet = 500) {
   } catch (e) {}
   return () => { try { a1(); } catch (e) {} try { a2(); } catch (e) {} };
 }
+// Mesajı GERİ ÇEK / SİL (herkesten) — silmek yerine "silindi" işaretle (delete kuralı gerekmez; update = gönderen/alıcı).
+export async function mesajSilGeriCek(mesajId) {
+  if (!mesajId) return false;
+  try { await setDoc(doc(db, "mesajlar", mesajId), { silindi: true, metin: "", gorsel: "", video: "", dosya: null, medyalar: null }, { merge: true }); return true; } catch (e) { return false; }
+}
+// Mesaj METNİNİ düzelt (WhatsApp "düzenle" gibi) — gönderen kendi yazısını günceller.
+export async function mesajDuzelt(mesajId, metin) {
+  if (!mesajId) return false;
+  try { await setDoc(doc(db, "mesajlar", mesajId), { metin: (metin || "").trim().slice(0, 2000), duzenlendi: true }, { merge: true }); return true; } catch (e) { return false; }
+}
 // Bir mesaja TEPKİ (emoji) ver/değiştir (WhatsApp gibi). tepkiler = { uid: emoji } haritası. Boş emoji → tepkiyi kaldır.
 export async function mesajTepkiVer(mesajId, uid, emoji) {
   if (!mesajId || !uid) return false;
