@@ -3790,9 +3790,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-red{ background:#e0202c; } .arama-red svg{ transform:rotate(135deg); }
 .arama-kabul{ background:#2f9e44; animation:aramaTitre 1.1s ease-in-out infinite; }
 @keyframes aramaTitre{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.09); } }
-/* aktif arama */
-.arama-uzak-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; background:#7a5f22; }
-.arama-yerel-video{ position:absolute; right:14px; top:14px; width:104px; height:146px; object-fit:cover; border-radius:14px; border:2px solid #fff; z-index:3; background:#5a4210; box-shadow:0 3px 10px rgba(0,0,0,.4); }
+/* aktif arama — BÜYÜK ekran + TAŞINABİLİR küçük video (dokun: büyüt, sürükle: taşı) */
+.arama-video.arama-buyuk{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; background:#7a5f22; }
+.arama-video.arama-kucuk{ position:absolute; right:14px; top:70px; width:112px; height:158px; object-fit:cover; border-radius:14px; border:2px solid #fff; z-index:6; cursor:grab; touch-action:none; background:#5a4210; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+.arama-video.arama-kucuk:active{ cursor:grabbing; }
+.arama-kucuk-ipucu{ position:absolute; bottom:112px; left:0; right:0; text-align:center; color:#fff; font-size:11px; z-index:4; text-shadow:0 1px 3px rgba(0,0,0,.7); opacity:.85; }
+@media (min-width:560px){ .arama-video.arama-kucuk{ width:150px; height:210px; } }
 .arama-kisi-orta{ position:relative; z-index:2; }
 .arama-alt-dugmeler{ position:absolute; bottom:44px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:20px; z-index:4; }
 .arama-kk-btn{ width:58px; height:58px; border-radius:18px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#3a2c00; background:rgba(255,242,205,.92); box-shadow:0 3px 10px rgba(0,0,0,.3); }

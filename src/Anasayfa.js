@@ -1249,6 +1249,9 @@ export default function Anasayfa({ pro = false }) {
   const [gelenArama, setGelenArama] = useState(null);  // { id, arayanAd, arayanFoto, tip, offer } — bana gelen çağrı
   const [mikKapali, setMikKapali] = useState(false);   // mikrofon sessiz mi
   const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
+  const [videoBuyuk, setVideoBuyuk] = useState("uzak"); // görüntülü aramada BÜYÜK ekranda hangisi: "uzak" (karşı) | "yerel" (ben)
+  const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
+  const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const pcRef = useRef(null);                          // RTCPeerConnection
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
   const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
@@ -2808,7 +2811,7 @@ export default function Anasayfa({ pro = false }) {
     const a = aktifAramaRef.current;
     if (a && a.id && durumYaz !== false) { try { await aramaGuncelle(a.id, { durum: "bitti" }); } catch (e) {} }
     aramaTemizle();
-    setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false);
+    setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null);
   };
   const medyaAl = async (tip) => {
     // Ses: yankı(echo)/gürültü engelleme AÇIK → ses kesilmesin, tekrar etmesin (kullanıcı: ses kesiliyor, 2-3 kez tekrarlıyor)
@@ -2917,14 +2920,28 @@ export default function Anasayfa({ pro = false }) {
     else if (gelenArama && !aramaDurum) zilBaslat("aranan");
     else zilDurdur();
   }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Küçük videoyu PARMAKLA TAŞI (istediğin yere) + DOKUN → büyük/küçük yer değiştir (swap)
+  const kucukVideoBas = (e) => {
+    try { const el = e.currentTarget; const r = el.getBoundingClientRect(); kucukSurRef.current = { on: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top }; el.setPointerCapture(e.pointerId); } catch (x) {}
+  };
+  const kucukVideoGit = (e) => {
+    const s = kucukSurRef.current; if (!s.on) return;
+    const dx = e.clientX - s.sx, dy = e.clientY - s.sy;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) s.moved = true;
+    setKucukYer({ x: Math.max(4, s.ox + dx), y: Math.max(60, s.oy + dy) });
+  };
+  const kucukVideoBitir = () => { const s = kucukSurRef.current; if (!s.on) return; s.on = false; if (!s.moved) { setVideoBuyuk((v) => (v === "uzak" ? "yerel" : "uzak")); } };
   const mikToggle = () => { const s = yerelStreamRef.current; if (s) { s.getAudioTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setMikKapali((m) => !m); } };
   const kamToggle = () => { const s = yerelStreamRef.current; if (s) { s.getVideoTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setKamKapali((k) => !k); } };
   // BANA GELEN çağrıları dinle (aktif arama yokken göster)
   useEffect(() => {
     const uu = auth.currentUser; if (!uu) return;
     const iptal = gelenAramalariDinle(uu.uid, (liste) => {
-      if (!aramaDurumRef.current && liste.length) setGelenArama((mv) => (mv && mv.id === liste[0].id) ? mv : liste[0]);
-      else if (!liste.length) setGelenArama((mv) => (aramaDurumRef.current ? mv : null));
+      if (!aramaDurumRef.current && liste.length) {
+        const yeni = liste[0];
+        // offer null→dolu geçişini YAKALA (aksi halde eski boş halini koruyup çağrı hiç görünmez → arama gelmez)
+        setGelenArama((mv) => (mv && mv.id === yeni.id && !!(mv.offer && mv.offer.sdp) === !!(yeni.offer && yeni.offer.sdp)) ? mv : yeni);
+      } else if (!liste.length) setGelenArama((mv) => (aramaDurumRef.current ? mv : null));
     });
     return iptal;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -6922,7 +6939,9 @@ export default function Anasayfa({ pro = false }) {
       {aramaDurum && aktifArama && (
         <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli")}>
           {aktifArama.tip === "goruntulu"
-            ? <video ref={uzakVideoRef} className="arama-uzak-video" autoPlay playsInline />
+            ? <video ref={uzakVideoRef} className={"arama-video " + (videoBuyuk === "uzak" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline
+                style={videoBuyuk !== "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
+                onPointerDown={videoBuyuk !== "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk !== "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk !== "uzak" ? kucukVideoBitir : undefined} />
             : <audio ref={uzakSesRef} autoPlay playsInline />}
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
@@ -6931,7 +6950,10 @@ export default function Anasayfa({ pro = false }) {
               <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : t("baglandi", "Bağlandı")}</i>
             </div>
           )}
-          {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className="arama-yerel-video" autoPlay playsInline muted />}
+          {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline muted
+            style={videoBuyuk === "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
+            onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
+          {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && <span className="arama-kucuk-ipucu">{t("videoIpucu", "Küçük ekrana dokun: büyüt · sürükle: taşı")}</span>}
           <div className="arama-alt-dugmeler">
             <button className={"arama-kk-btn" + (mikKapali ? " kapali" : "")} onClick={mikToggle} aria-label={t("mikrofon", "Mikrofon")}>
               {mikKapali
