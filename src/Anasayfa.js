@@ -1234,6 +1234,7 @@ export default function Anasayfa({ pro = false }) {
   const [sohbetKisi, setSohbetKisi] = useState(null);  // AÇIK sohbetin karşı tarafı {uid, ad, foto} | null
   const [sohbetYazi, setSohbetYazi] = useState("");    // sohbet ekranındaki yazma kutusu
   const [sohbetGonderiliyor, setSohbetGonderiliyor] = useState(false); // foto/mesaj gönderiliyor mu
+  const [bekleyenMedya, setBekleyenMedya] = useState(null); // seçilip GÖNDERİLMEYİ bekleyen medya {tip, url, ad?} — yazıyla BİRLİKTE gider
   const mesajSonRef = useRef(null);                    // sohbette en alta kaydırma çıpası
   const [sohbetMedyaAcik, setSohbetMedyaAcik] = useState(false); // sohbette medya menüsü (foto/video/dosya/canlı) açık mı
   const sohbetFotoInputRef = useRef(null);             // foto seç (galeri)
@@ -1249,6 +1250,7 @@ export default function Anasayfa({ pro = false }) {
   const [gelenArama, setGelenArama] = useState(null);  // { id, arayanAd, arayanFoto, tip, offer } — bana gelen çağrı
   const [mikKapali, setMikKapali] = useState(false);   // mikrofon sessiz mi
   const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
+  const [onKamera, setOnKamera] = useState(true);      // true=ön kamera (yüz), false=arka kamera
   const [videoBuyuk, setVideoBuyuk] = useState("uzak"); // görüntülü aramada BÜYÜK ekranda hangisi: "uzak" (karşı) | "yerel" (ben)
   const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
@@ -2757,7 +2759,7 @@ export default function Anasayfa({ pro = false }) {
     const ad = kisi.ad || kisi.isim || [kisi.isim, kisi.soyisim].filter(Boolean).join(" ") || kisi.aliciAd || "—";
     const foto = kisi.foto || kisi.isFoto || kisi.avatarFoto || kisi.gonderenFoto || "";
     setBegenenModal(null); setYorumAcik(null); setAraSecili(null); setTamFoto(""); // üstteki katmanlar kapansın
-    setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false);
+    setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false); setBekleyenMedya(null); setSohbetMedyaAcik(false);
   };
   // Sohbetten mesaj gönder (metin / foto / video / dosya). Medya önce Storage'a yüklenir, URL saklanır (Firestore 1MB'a sığsın).
   const sohbetGonderEt = async (metin, gorsel, video, dosya) => {
@@ -2775,16 +2777,16 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
     if (!dsy || !uu || !kisi) return;
     setSohbetGonderiliyor(true);
-    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) await sohbetGonderEt("", "", r.url); } catch (x) {}
+    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) setBekleyenMedya({ tip: "video", url: r.url }); } catch (x) {}
     setSohbetGonderiliyor(false);
   };
-  // Sohbette DOSYA seç → Storage'a yükle, dosya mesajı gönder (indirilebilir)
+  // Sohbette DOSYA seç → Storage'a yükle, GÖNDERİLMEYİ beklet (yazıyla birlikte)
   const sohbetDosyaSecildi = async (e) => {
     const dsy = e.target.files && e.target.files[0]; e.target.value = ""; setSohbetMedyaAcik(false);
     const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
     if (!dsy || !uu || !kisi) return;
     setSohbetGonderiliyor(true);
-    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) await sohbetGonderEt("", "", "", { url: r.url, ad: r.ad }); } catch (x) {}
+    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) setBekleyenMedya({ tip: "dosya", url: r.url, ad: r.ad }); } catch (x) {}
     setSohbetGonderiliyor(false);
   };
   // ---- İNTERNET ARAMASI (WebRTC — sesli/görüntülü) ----
@@ -2928,11 +2930,31 @@ export default function Anasayfa({ pro = false }) {
     const s = kucukSurRef.current; if (!s.on) return;
     const dx = e.clientX - s.sx, dy = e.clientY - s.sy;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) s.moved = true;
-    setKucukYer({ x: Math.max(4, s.ox + dx), y: Math.max(60, s.oy + dy) });
+    // Ekranın TAM köşelerine (sağ/sol/üst/alt) gidebilsin, sadece ekran dışına taşmasın
+    const el = e.currentTarget; const bw = (el && el.offsetWidth) || 112, bh = (el && el.offsetHeight) || 158;
+    const W = window.innerWidth, H = window.innerHeight;
+    const x = Math.max(2, Math.min(s.ox + dx, W - bw - 2));
+    const y = Math.max(6, Math.min(s.oy + dy, H - bh - 6));
+    setKucukYer({ x, y });
   };
   const kucukVideoBitir = () => { const s = kucukSurRef.current; if (!s.on) return; s.on = false; if (!s.moved) { setVideoBuyuk((v) => (v === "uzak" ? "yerel" : "uzak")); } };
   const mikToggle = () => { const s = yerelStreamRef.current; if (s) { s.getAudioTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setMikKapali((m) => !m); } };
   const kamToggle = () => { const s = yerelStreamRef.current; if (s) { s.getVideoTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setKamKapali((k) => !k); } };
+  // ÖN ↔ ARKA kamera değiştir (görüntülü aramada). Yeni kamerayı alıp bağlantıdaki video track'i değiştirir (yeniden arama gerekmez).
+  const kameraCevir = async () => {
+    const pc = pcRef.current; const eski = yerelStreamRef.current; if (!pc || !eski) return;
+    const yeniMod = onKamera ? "environment" : "user";
+    try {
+      const yeniStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: yeniMod } });
+      const yeniVideo = yeniStream.getVideoTracks()[0]; if (!yeniVideo) return;
+      const gonderici = pc.getSenders().find((sn) => sn.track && sn.track.kind === "video");
+      if (gonderici) { try { await gonderici.replaceTrack(yeniVideo); } catch (e) {} }
+      eski.getVideoTracks().forEach((tr) => { try { tr.stop(); eski.removeTrack(tr); } catch (e) {} });
+      eski.addTrack(yeniVideo);
+      if (yerelVideoRef.current) { try { yerelVideoRef.current.srcObject = eski; } catch (e) {} }
+      setOnKamera((v) => !v);
+    } catch (e) {}
+  };
   // BANA GELEN çağrıları dinle (aktif arama yokken göster)
   useEffect(() => {
     const uu = auth.currentUser; if (!uu) return;
@@ -2945,10 +2967,15 @@ export default function Anasayfa({ pro = false }) {
     });
     return iptal;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Gönder: yazı + (varsa) bekleyen foto/video/dosya TEK mesajda birlikte gider (kullanıcı: foto ile yazı ayrı ayrı gitmesin)
   const sohbetMetinGonder = () => {
-    const m = sohbetYazi.trim(); if (!m) return;
-    setSohbetYazi("");
-    sohbetGonderEt(m, "").then((ok) => { if (!ok) setSohbetYazi(m); }); // hata olursa yazıyı geri koy
+    const m = sohbetYazi.trim(); const bm = bekleyenMedya;
+    if (!m && !bm) return;
+    setSohbetYazi(""); setBekleyenMedya(null);
+    const gorsel = bm && bm.tip === "foto" ? bm.url : "";
+    const video = bm && bm.tip === "video" ? bm.url : "";
+    const dosya = bm && bm.tip === "dosya" ? { url: bm.url, ad: bm.ad } : null;
+    sohbetGonderEt(m, gorsel, video, dosya).then((ok) => { if (!ok) { setSohbetYazi(m); setBekleyenMedya(bm); } }); // hata olursa geri koy
   };
   const sohbetFotoSecildi = async (e) => {
     const dosya = e.target.files && e.target.files[0]; e.target.value = ""; setSohbetMedyaAcik(false);
@@ -2960,7 +2987,7 @@ export default function Anasayfa({ pro = false }) {
       const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataURL; });
       const kucuk = imgKucult(img, 1280) || dataURL; // büyük fotoğrafı küçült (yükleme hızlı, kota korunur)
       const url = await gorselYukle(kucuk, uu.uid, () => {});
-      if (url) await sohbetGonderEt("", url);
+      if (url) setBekleyenMedya({ tip: "foto", url }); // GÖNDERME → yazıyla birlikte gitmek üzere beklet
     } catch (x) {}
     setSohbetGonderiliyor(false);
   };
@@ -6883,6 +6910,16 @@ export default function Anasayfa({ pro = false }) {
               })}
               <div ref={mesajSonRef} />
             </div>
+            {/* SEÇİLEN MEDYA ÖNİZLEME — yazı yazıp birlikte gönder (ayrı ayrı değil) */}
+            {bekleyenMedya && (
+              <div className="sohbet-bekleyen">
+                {bekleyenMedya.tip === "foto" && <img className="sb-onizleme" src={bekleyenMedya.url} alt="" referrerPolicy="no-referrer" />}
+                {bekleyenMedya.tip === "video" && <video className="sb-onizleme" src={bekleyenMedya.url} muted playsInline />}
+                {bekleyenMedya.tip === "dosya" && <span className="sb-onizleme sb-dosya">📎 <span className="notranslate">{bekleyenMedya.ad || t("dosya", "Dosya")}</span></span>}
+                <span className="sb-not">{t("yaziEkleGonder", "İstersen yazı ekle, sonra Gönder ➤")}</span>
+                <button className="sb-sil" onClick={() => setBekleyenMedya(null)} aria-label={t("kaldir", "Kaldır")}>✕</button>
+              </div>
+            )}
             <div className="sohbet-yazar">
               {/* gizli dosya seçiciler: galeri foto/video, dosya, canlı foto/video (kamera) */}
               <input ref={sohbetFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={sohbetFotoSecildi} />
@@ -6907,7 +6944,7 @@ export default function Anasayfa({ pro = false }) {
               </button>
               <textarea className="sohbet-input" value={sohbetYazi} onChange={(e) => setSohbetYazi(e.target.value)} placeholder={t("mesajYaz", "Mesaj yaz…")} maxLength={1000} rows={1}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sohbetMetinGonder(); } }} />
-              <button className="sohbet-gonder-btn" onClick={sohbetMetinGonder} disabled={!sohbetYazi.trim()} aria-label={t("gonder", "Gönder")}>
+              <button className="sohbet-gonder-btn" onClick={sohbetMetinGonder} disabled={!sohbetYazi.trim() && !bekleyenMedya} aria-label={t("gonder", "Gönder")}>
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4l17.4-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
               </button>
             </div>
@@ -6965,6 +7002,11 @@ export default function Anasayfa({ pro = false }) {
                 {kamKapali
                   ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 6h9v12h-9zM15.5 10l5-3v10l-5-3M2 2l20 20" /></svg>
                   : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>}
+              </button>
+            )}
+            {aktifArama.tip === "goruntulu" && (
+              <button className="arama-kk-btn" onClick={kameraCevir} aria-label={t("kameraCevir", "Ön/Arka kamera")} title={t("kameraCevir", "Ön/Arka kamera")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5h3.5A2.5 2.5 0 0 1 21 7.5v9A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9A2.5 2.5 0 0 1 5.5 5H9" /><circle cx="12" cy="12" r="2.6" /><path d="M8 5l2-2h4l2 2M16.5 9.5l1.8 1.8-1.8 1.8M7.5 14.5L5.7 12.7l1.8-1.8" /></svg>
               </button>
             )}
             <button className="arama-kk-btn arama-kapat" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")}>
