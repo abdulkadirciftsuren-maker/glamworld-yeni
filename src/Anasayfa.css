@@ -3752,8 +3752,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-tepkiler{ display:inline-flex; align-items:center; gap:1px; margin-top:-6px; margin-bottom:2px; background:#fff; border:1px solid #d9b64a; border-radius:11px; padding:1px 6px; font-size:13px; align-self:flex-start; box-shadow:0 1px 3px rgba(90,60,10,.25); position:relative; z-index:2; }
 .sohbet-balon-sar.benim .sohbet-tepkiler{ align-self:flex-end; }
 .sohbet-tepkiler b{ font-size:11px; color:#6b5417; margin-left:2px; }
-.sohbet-tepki-secici{ position:absolute; bottom:100%; margin-bottom:6px; z-index:20; display:flex; gap:2px; background:#fffef8; border:1.5px solid #d9b64a; border-radius:22px; padding:5px 8px; box-shadow:0 6px 20px rgba(90,60,10,.4); animation:adFon .14s ease; }
-.sohbet-balon-sar.benim .sohbet-tepki-secici{ right:0; } .sohbet-balon-sar.karsi .sohbet-tepki-secici{ left:0; }
+/* Tepki seçici: PORTAL + fixed → parmakla BASTIĞIN mesajın tam üstünde açılır, ekran köşesine kaçmaz, kenardan taşmaz */
+.sohbet-tepki-fon{ position:fixed; inset:0; z-index:12500; }
+.sohbet-tepki-secici{ position:fixed; transform:translate(-50%,-100%); z-index:12600; display:flex; flex-wrap:wrap; justify-content:center; gap:2px; max-width:min(92vw,332px); background:#fffef8; border:1.5px solid #d9b64a; border-radius:22px; padding:5px 8px; box-shadow:0 8px 26px rgba(90,60,10,.5); animation:adFon .14s ease; }
+.sohbet-tepki-secici.alt{ transform:translate(-50%,0); } /* mesaj en üstteyse ALTINA aç (yukarı taşmasın) */
 .sts-emo{ border:none; background:transparent; font-size:24px; cursor:pointer; padding:2px 3px; border-radius:8px; line-height:1; transition:transform .1s; }
 .sts-emo:active{ transform:scale(1.3); background:#f3e8c8; }
 /* Her baloncukta küçük TEPKİ İŞARETİ (🙂) — insanlar tepki verebileceğini görsün, dokun → seçici açılır */
@@ -3795,29 +3797,33 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-kolaj[data-n="1"] .sk-oge img, .sohbet-kolaj[data-n="1"] .sk-oge video{ width:auto; height:auto; max-width:216px; max-height:300px; object-fit:contain; }
 /* İki: yan yana */
 .sohbet-kolaj[data-n="2"]{ grid-template-columns:1fr 1fr; }
-.sohbet-kolaj[data-n="2"] .sk-oge{ height:168px; }
+.sohbet-kolaj[data-n="2"] .sk-oge{ height:202px; }
 /* Üç: bir tane üstte (yatay için geniş), iki tane altta */
 .sohbet-kolaj[data-n="3"]{ grid-template-columns:1fr 1fr; }
-.sohbet-kolaj[data-n="3"] .sk-oge:nth-child(1){ grid-column:1 / span 2; height:148px; }
-.sohbet-kolaj[data-n="3"] .sk-oge:nth-child(2), .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(3){ height:126px; }
+.sohbet-kolaj[data-n="3"] .sk-oge:nth-child(1){ grid-column:1 / span 2; height:176px; }
+.sohbet-kolaj[data-n="3"] .sk-oge:nth-child(2), .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(3){ height:150px; }
 /* Dört: 2x2 */
 .sohbet-kolaj[data-n="4"]{ grid-template-columns:1fr 1fr; }
-.sohbet-kolaj[data-n="4"] .sk-oge{ height:120px; }
+.sohbet-kolaj[data-n="4"] .sk-oge{ height:146px; }
 /* Beş: iki üstte, üç altta (boş göze kalmaz) */
 .sohbet-kolaj[data-n="5"]{ grid-template-columns:repeat(6,1fr); }
-.sohbet-kolaj[data-n="5"] .sk-oge{ height:92px; }
-.sohbet-kolaj[data-n="5"] .sk-oge:nth-child(1), .sohbet-kolaj[data-n="5"] .sk-oge:nth-child(2){ grid-column:span 3; height:116px; }
+.sohbet-kolaj[data-n="5"] .sk-oge{ height:110px; }
+.sohbet-kolaj[data-n="5"] .sk-oge:nth-child(1), .sohbet-kolaj[data-n="5"] .sk-oge:nth-child(2){ grid-column:span 3; height:138px; }
 .sohbet-kolaj[data-n="5"] .sk-oge:nth-child(3), .sohbet-kolaj[data-n="5"] .sk-oge:nth-child(4), .sohbet-kolaj[data-n="5"] .sk-oge:nth-child(5){ grid-column:span 2; }
 /* Altı: üç sütun, iki sıra */
 .sohbet-kolaj[data-n="6"]{ grid-template-columns:1fr 1fr 1fr; }
-.sohbet-kolaj[data-n="6"] .sk-oge{ height:92px; }
+.sohbet-kolaj[data-n="6"] .sk-oge{ height:110px; }
+/* Foto/video rozeti — köşede küçük, altın (video ▶ / foto 📷) */
+.sk-rozet{ position:absolute; top:5px; left:5px; font-size:10px; line-height:1; padding:2px 5px; border-radius:7px; background:rgba(255,222,110,.94); color:#3a2c00; border:1px solid rgba(150,110,20,.55); pointer-events:none; box-shadow:0 1px 3px rgba(60,40,5,.35); font-weight:800; }
+.sk-rozet.sk-video{ font-size:9px; padding:3px 6px; }
 @media (min-width:560px){
   .sohbet-kolaj{ width:300px; }
-  .sohbet-kolaj[data-n="1"]{ max-width:250px; } .sohbet-kolaj[data-n="1"] .sk-oge img, .sohbet-kolaj[data-n="1"] .sk-oge video{ max-width:250px; max-height:340px; }
-  .sohbet-kolaj[data-n="2"] .sk-oge{ height:190px; }
-  .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(1){ height:170px; } .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(2), .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(3){ height:142px; }
-  .sohbet-kolaj[data-n="4"] .sk-oge{ height:140px; }
-  .sohbet-kolaj[data-n="5"] .sk-oge, .sohbet-kolaj[data-n="6"] .sk-oge{ height:108px; }
+  .sohbet-kolaj[data-n="1"]{ max-width:250px; } .sohbet-kolaj[data-n="1"] .sk-oge img, .sohbet-kolaj[data-n="1"] .sk-oge video{ max-width:250px; max-height:360px; }
+  .sohbet-kolaj[data-n="2"] .sk-oge{ height:230px; }
+  .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(1){ height:200px; } .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(2), .sohbet-kolaj[data-n="3"] .sk-oge:nth-child(3){ height:168px; }
+  .sohbet-kolaj[data-n="4"] .sk-oge{ height:168px; }
+  .sohbet-kolaj[data-n="5"] .sk-oge{ height:128px; } .sohbet-kolaj[data-n="5"] .sk-oge:nth-child(1), .sohbet-kolaj[data-n="5"] .sk-oge:nth-child(2){ height:158px; }
+  .sohbet-kolaj[data-n="6"] .sk-oge{ height:128px; }
 }
 /* Sohbet baloncuğunda VİDEO ve DOSYA */
 .sohbet-balon-video{ max-width:240px; width:100%; border-radius:10px; margin-bottom:4px; display:block; background:#e9d38f; }

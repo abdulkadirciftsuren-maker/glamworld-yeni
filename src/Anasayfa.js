@@ -1236,6 +1236,7 @@ export default function Anasayfa({ pro = false }) {
   const [sohbetGonderiliyor, setSohbetGonderiliyor] = useState(false); // foto/mesaj gönderiliyor mu
   const [bekleyenMedyalar, setBekleyenMedyalar] = useState([]); // seçilip GÖNDERİLMEYİ bekleyen medyalar [{tip,url,ad?}] — çoklu foto/video, yazıyla BİRLİKTE gider (max 6)
   const [tepkiMesaj, setTepkiMesaj] = useState(null);  // uzun basılan mesajın id'si → emoji seçici açık
+  const [tepkiYer, setTepkiYer] = useState(null);      // tepki seçicinin ekrandaki yeri {x,y,alt} → BASTIĞIN yerin üstünde çıkar (köşeye kaçmaz)
   const [duzenlenenMesaj, setDuzenlenenMesaj] = useState(null); // düzenlenen mesaj {id, eskiMetin} → yazma kutusu düzenleme modunda
   const tepkiBasRef = useRef(null);                    // uzun-basma zamanlayıcısı
   const GLOME_TEPKI = ["❤️", "👍", "😂", "😮", "😢", "🙏", "🔥", "👏"]; // bize özel 8 tepki (WhatsApp/Messenger gibi)
@@ -2994,7 +2995,16 @@ export default function Anasayfa({ pro = false }) {
     sohbetGonderEt(m, gorsel, video, dosya, medyalar).then((ok) => { if (!ok) { setSohbetYazi(m); setBekleyenMedyalar(meds); } }); // hata olursa geri koy
   };
   // MESAJA TEPKİ (WhatsApp gibi): baloncuğa UZUN BAS → emoji seçici; emoji seç → tepki (karşıya bildirim)
-  const tepkiBaslat = (mesajId) => { tepkiIptal(); tepkiBasRef.current = setTimeout(() => setTepkiMesaj(mesajId), 450); };
+  // Seçici, BASTIĞIN elemanın tam ÜSTÜNDE açılır (ekran kenarına taşmaz, köşeye kaçmaz)
+  const tepkiAc = (mesajId, el) => {
+    try {
+      const r = el.getBoundingClientRect();
+      const yakinUst = r.top < 130; // mesaj ekranın en üstündeyse seçici ALTINA açılsın (yukarı taşmasın)
+      setTepkiYer({ x: Math.max(150, Math.min(window.innerWidth - 150, r.left + r.width / 2)), y: yakinUst ? r.bottom + 8 : r.top - 8, alt: yakinUst });
+    } catch (e) { setTepkiYer(null); }
+    setTepkiMesaj(mesajId);
+  };
+  const tepkiBaslat = (mesajId, el) => { tepkiIptal(); tepkiBasRef.current = setTimeout(() => tepkiAc(mesajId, el), 450); };
   const tepkiIptal = () => { if (tepkiBasRef.current) { clearTimeout(tepkiBasRef.current); tepkiBasRef.current = null; } };
   // Mesajı GERİ ÇEK / SİL
   const mesajSilEt = async (mesajId) => { setTepkiMesaj(null); if (duzenlenenMesaj && duzenlenenMesaj.id === mesajId) mesajDuzenIptal(); await mesajSilGeriCek(mesajId); };
@@ -6937,8 +6947,8 @@ export default function Anasayfa({ pro = false }) {
                   <div className={"sohbet-balon-sar " + (benim ? "benim" : "karsi")} key={m.id || i}>
                     <div className="sohbet-balon-cev">
                       <div className="sohbet-balon"
-                        onPointerDown={() => tepkiBaslat(m.id)} onPointerUp={tepkiIptal} onPointerMove={tepkiIptal} onPointerLeave={tepkiIptal}
-                        onContextMenu={(e) => { e.preventDefault(); setTepkiMesaj(m.id); }}>
+                        onPointerDown={(e) => tepkiBaslat(m.id, e.currentTarget)} onPointerUp={tepkiIptal} onPointerMove={tepkiIptal} onPointerLeave={tepkiIptal}
+                        onContextMenu={(e) => { e.preventDefault(); tepkiAc(m.id, e.currentTarget); }}>
                         {m.silindi ? (
                           <span className="sohbet-balon-metin sohbet-silindi">🚫 {t("mesajSilindi", "Bu mesaj geri çekildi")}</span>
                         ) : (<>
@@ -6946,7 +6956,7 @@ export default function Anasayfa({ pro = false }) {
                             <div className="sohbet-kolaj" data-n={Math.min(m.medyalar.length, 6)}>
                               {m.medyalar.slice(0, 6).map((md, ki) => (
                                 <div className="sk-oge" key={ki} onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: m.medyalar.map((x) => ({ tip: x.tip === "video" ? "video" : "foto", src: x.url })), i: ki, mesajId: m.id }); }}>
-                                  {md.tip === "video" ? <video src={md.url} muted preload="metadata" /> : md.tip === "dosya" ? <span className="sk-dosya">📎</span> : <img src={md.url} alt="" referrerPolicy="no-referrer" />}
+                                  {md.tip === "video" ? <><video src={md.url} muted preload="metadata" /><span className="sk-rozet sk-video">▶</span></> : md.tip === "dosya" ? <span className="sk-dosya">📎</span> : <><img src={md.url} alt="" referrerPolicy="no-referrer" /><span className="sk-rozet sk-foto">📷</span></>}
                                 </div>
                               ))}
                             </div>
@@ -6959,16 +6969,7 @@ export default function Anasayfa({ pro = false }) {
                         <span className="sohbet-balon-alt">{m.duzenlendi && !m.silindi && <span className="sohbet-duzenlendi">{t("duzenlendi", "düzenlendi")} · </span>}{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
                         {tepkiler.length > 0 && <span className="sohbet-tepkiler">{tepkiler.slice(0, 3).map((e2, k) => <span key={k}>{e2}</span>)}{tepkiler.length > 3 ? <b>{tepkiler.length}</b> : null}</span>}
                       </div>
-                      <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); setTepkiMesaj((v) => (v === m.id ? null : m.id)); }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>🙂</button>
-                      {tepkiMesaj === m.id && (
-                        <div className="sohbet-tepki-secici" onClick={(e) => e.stopPropagation()}>
-                          {!m.silindi && GLOME_TEPKI.map((emo) => (
-                            <button key={emo} className="sts-emo" onClick={() => tepkiSec(m.id, emo)}>{emo}</button>
-                          ))}
-                          {benim && !m.silindi && m.metin && <button className="sts-islem" onClick={() => mesajDuzenleBaslat(m)} title={t("duzenle", "Düzenle")}>✏️</button>}
-                          {benim && !m.silindi && <button className="sts-islem sts-sil" onClick={() => mesajSilEt(m.id)} title={t("sil", "Geri çek / Sil")}>🗑️</button>}
-                        </div>
-                      )}
+                      <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); if (tepkiMesaj === m.id) { setTepkiMesaj(null); } else { tepkiAc(m.id, e.currentTarget); } }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>🙂</button>
                     </div>
                   </div>
                 );
@@ -9101,6 +9102,24 @@ export default function Anasayfa({ pro = false }) {
           })()}
         </div>
       ), document.body)}
+
+      {/* MESAJ TEPKİ SEÇİCİ — BASTIĞIN yerin tam üstünde açılır (portal + fixed → köşeye kaçmaz, ekrandan taşmaz) */}
+      {tepkiMesaj && tepkiYer && (() => {
+        const tm = aktifSohbetMesajlari.find((x) => x.id === tepkiMesaj);
+        if (!tm) return null;
+        const benimMsj = tm.gonderenUid === benUid;
+        return createPortal((
+          <div className="sohbet-tepki-fon" onClick={() => setTepkiMesaj(null)}>
+            <div className={"sohbet-tepki-secici" + (tepkiYer.alt ? " alt" : "")} style={{ left: tepkiYer.x, top: tepkiYer.y }} onClick={(e) => e.stopPropagation()}>
+              {!tm.silindi && GLOME_TEPKI.map((emo) => (
+                <button key={emo} className="sts-emo" onClick={() => tepkiSec(tm.id, emo)}>{emo}</button>
+              ))}
+              {benimMsj && !tm.silindi && tm.metin && <button className="sts-islem" onClick={() => mesajDuzenleBaslat(tm)} title={t("duzenle", "Düzenle")}>✏️</button>}
+              {benimMsj && !tm.silindi && <button className="sts-islem sts-sil" onClick={() => mesajSilEt(tm.id)} title={t("sil", "Geri çek / Sil")}>🗑️</button>}
+            </div>
+          </div>
+        ), document.body);
+      })()}
 
       {/* GLOXORG PIRLANTA ÜYELİK KARTLARI — 20 limit dolunca AI buraya yönlendirir; şimdilik ücretsiz seç-devam et */}
       {uyelikKartAcik && createPortal((
