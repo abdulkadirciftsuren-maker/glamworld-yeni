@@ -3721,7 +3721,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Tam ekran sohbet — ALTIN zemin (anayasa: siyah yok), kare düğmeler */
 .sohbet-fon{ position:fixed; inset:0; z-index:100020; display:flex; align-items:stretch; justify-content:center;
   background:radial-gradient(circle at 50% 38%, #d8b552, #a9812f); animation:adFon .18s ease; }
-.sohbet-pencere{ width:100%; max-width:620px; height:100%; display:flex; flex-direction:column; background:linear-gradient(180deg,#eaf0dc,#dde7ce); } /* sohbet ZEMİNİ: yumuşak açık yeşil-krem (altından farklı, sakin, siyah değil) */
+.sohbet-pencere{ width:100%; max-width:620px; height:100%; display:flex; flex-direction:column; background:linear-gradient(160deg,#dcecc4,#cbe0ac); } /* sohbet ZEMİNİ: belirgin AÇIK YEŞİL (beyaz değil; altın/mavi balonlarla 3 net renk) */
 .sohbet-bas{ flex:0 0 auto; display:flex; align-items:center; gap:9px; padding:9px 12px; background:linear-gradient(135deg,#d9b64a,#b28e34); box-shadow:0 2px 8px rgba(90,60,10,.3); }
 .sohbet-geri{ border:none; background:transparent; color:#fff; font-size:30px; line-height:1; cursor:pointer; padding:0 2px; }
 .sohbet-avatar{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; overflow:hidden; background:#8a6b28; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:17px; border:2px solid #ffe9a8; }
@@ -3737,9 +3737,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-balon-sar.benim{ align-self:flex-end; }
 .sohbet-balon-sar.karsi{ align-self:flex-start; }
 .sohbet-balon{ position:relative; padding:8px 11px 5px; border-radius:14px; box-shadow:0 1px 3px rgba(90,60,10,.2); display:flex; flex-direction:column; }
-.sohbet-balon-sar.benim .sohbet-balon{ background:linear-gradient(135deg,#ffe488,#f5cf46); color:#3a2c00; border-bottom-right-radius:4px; } /* GÖNDEREN (ben) = ALTIN balon */
-.sohbet-balon-sar.karsi .sohbet-balon{ background:linear-gradient(135deg,#eaf3ff,#d3e6ff); color:#16324f; border-bottom-left-radius:4px; } /* ALAN (karşı) = açık MAVİ balon */
-.sohbet-balon-sar.karsi .sohbet-balon-alt{ color:#5a7a9a; }
+.sohbet-balon-sar.benim .sohbet-balon{ background:linear-gradient(135deg,#ffdf6b,#f3c62f); color:#3a2c00; border-bottom-right-radius:4px; } /* GÖNDEREN (ben) = ALTIN balon (belirgin) */
+.sohbet-balon-sar.karsi .sohbet-balon{ background:linear-gradient(135deg,#bcd8f7,#9cc2ee); color:#12304e; border-bottom-left-radius:4px; } /* ALAN (karşı) = MAVİ balon (belirgin) */
+.sohbet-balon-sar.karsi .sohbet-balon-alt{ color:#3c6088; }
 .sohbet-balon-metin{ font-size:15px; line-height:1.35; white-space:pre-wrap; word-break:break-word; }
 .sohbet-balon-foto{ max-width:230px; width:100%; border-radius:10px; margin-bottom:4px; cursor:pointer; display:block; }
 .sohbet-balon-alt{ align-self:flex-end; display:flex; align-items:center; gap:3px; font-size:10px; color:#7a5e10; margin-top:2px; }

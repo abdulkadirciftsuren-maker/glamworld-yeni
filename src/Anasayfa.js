@@ -2728,7 +2728,7 @@ export default function Anasayfa({ pro = false }) {
       aliciUid: araSecili.uid,
       aliciAd: [araSecili.isim, araSecili.soyisim].filter(Boolean).join(" "),
       metin: mesajYazi,
-      gonderen: { uid: uu.uid, ad: benimAd, foto: isFoto || foto || "" },
+      gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" },
     }).then((ok) => { setMesajDurum(ok ? "ok" : "hata"); if (ok) setMesajYazi(""); })
       .catch(() => setMesajDurum("hata"));
   }
@@ -2763,7 +2763,7 @@ export default function Anasayfa({ pro = false }) {
     if (!((metin && metin.trim()) || gorsel || video || (dosya && dosya.url))) return false;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try {
-      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null, gonderen: { uid: uu.uid, ad: benimAd, foto: isFoto || foto || "" } });
+      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null, gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" } });
     } catch (e) { return false; }
   };
   // Sohbette VİDEO seç/çek → Storage'a yükle, video mesajı gönder
@@ -2811,7 +2811,9 @@ export default function Anasayfa({ pro = false }) {
     setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false);
   };
   const medyaAl = async (tip) => {
-    const kisit = tip === "goruntulu" ? { audio: true, video: { facingMode: "user" } } : { audio: true, video: false };
+    // Ses: yankı(echo)/gürültü engelleme AÇIK → ses kesilmesin, tekrar etmesin (kullanıcı: ses kesiliyor, 2-3 kez tekrarlıyor)
+    const ses = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+    const kisit = tip === "goruntulu" ? { audio: ses, video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } } : { audio: ses, video: false };
     const stream = await navigator.mediaDevices.getUserMedia(kisit);
     yerelStreamRef.current = stream;
     if (tip === "goruntulu") { setTimeout(() => { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = stream; }, 50); }
@@ -2828,11 +2830,10 @@ export default function Anasayfa({ pro = false }) {
     const pc = new RTCPeerConnection(ICE_SUNUCULAR);
     pcRef.current = pc;
     (yerelStreamRef.current ? yerelStreamRef.current.getTracks() : []).forEach((t) => { try { pc.addTrack(t, yerelStreamRef.current); } catch (e) {} });
-    const uzak = new MediaStream();
-    uzakStreamRef.current = uzak;
     pc.ontrack = (e) => {
-      (e.streams[0] ? e.streams[0].getTracks() : [e.track]).forEach((t) => { try { uzak.addTrack(t); } catch (x) {} });
-      // element mount olduysa hemen bağla; olmadıysa aşağıdaki useEffect bağlar
+      // Karşının akışını DOĞRUDAN kullan (yeni MediaStream'e track kopyalama YOK → aynı ses iki kez eklenmez, tekrar/echo olmaz)
+      if (e.streams && e.streams[0]) uzakStreamRef.current = e.streams[0];
+      else { if (!uzakStreamRef.current) uzakStreamRef.current = new MediaStream(); try { uzakStreamRef.current.addTrack(e.track); } catch (x) {} }
       setTimeout(baglaUzakMedya, 30);
     };
     pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
@@ -2848,7 +2849,7 @@ export default function Anasayfa({ pro = false }) {
     try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("ariyor");
     setAktifArama({ id: "", karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
-    const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: isFoto || foto || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
+    const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: foto || isFoto || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     const pc = pcOlustur(id, "arayan");
@@ -2868,6 +2869,7 @@ export default function Anasayfa({ pro = false }) {
   };
   const aramaKabulEt = async () => {
     const g = gelenArama; if (!g) return;
+    if (!g.offer || !g.offer.sdp) { bilgiBalonu(t("aramaHazirlaniyor", "Arama hazırlanıyor, bir saniye…")); return; } // teklif yoksa kabul etme (yoksa hata → kapanır)
     setGelenArama(null);
     try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("konusuyor");
@@ -6897,8 +6899,8 @@ export default function Anasayfa({ pro = false }) {
       )}
 
       <AramaHataSiniri anahtar={(aktifArama && aktifArama.id) || (gelenArama && gelenArama.id) || ""} onHata={() => { try { aramaTemizle(); zilDurdur(); } catch (e) {} setAktifArama(null); setAramaDurum(""); setGelenArama(null); }}>
-      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet) */}
-      {gelenArama && !aramaDurum && (
+      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). SADECE teklif (offer) hazırken göster → kabul edince hata olmaz */}
+      {gelenArama && gelenArama.offer && gelenArama.offer.sdp && !aramaDurum && (
         <div className="arama-fon arama-geliyor">
           <div className="arama-kisi">
             <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>
