@@ -3774,7 +3774,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* MESAJ TEPKİLERİ (uzun bas → emoji) */
 .sohbet-balon-cev{ position:relative; display:flex; flex-direction:column; }
 .sohbet-balon-sar.benim .sohbet-balon-cev{ align-items:flex-end; }
-.sohbet-tepkiler{ display:inline-flex; align-items:center; gap:1px; margin-top:-6px; margin-bottom:2px; background:#fff; border:1px solid #d9b64a; border-radius:11px; padding:1px 6px; font-size:13px; align-self:flex-start; box-shadow:0 1px 3px rgba(90,60,10,.25); position:relative; z-index:2; }
+/* Tepki rozeti: saatin ÜSTÜNE binmesin → saatin ALTINDA, ayrı dursun (kullanıcı: "rozet paylaşılan saatin üzerine çıkıyor") */
+.sohbet-tepkiler{ display:inline-flex; align-items:center; gap:1px; margin-top:3px; margin-bottom:0; background:#fff; border:1px solid #d9b64a; border-radius:11px; padding:1px 6px; font-size:13px; align-self:flex-start; box-shadow:0 1px 3px rgba(90,60,10,.25); position:relative; z-index:2; }
 .sohbet-balon-sar.benim .sohbet-tepkiler{ align-self:flex-end; }
 .sohbet-tepkiler b{ font-size:11px; color:#6b5417; margin-left:2px; }
 /* Tepki seçici: PORTAL + fixed → parmakla BASTIĞIN mesajın tam üstünde açılır, ekran köşesine kaçmaz, kenardan taşmaz */
