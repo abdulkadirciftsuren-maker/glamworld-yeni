@@ -5,7 +5,7 @@ import { db, storage } from "./firebase";
 import {
   doc, getDoc, setDoc, deleteDoc, updateDoc,
   collection, collectionGroup, query, where, limit as fsLimit, orderBy, getDocs, onSnapshot,
-  serverTimestamp, increment,
+  serverTimestamp, increment, deleteField,
 } from "firebase/firestore";
 import { ref as depoRef, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 
@@ -236,6 +236,14 @@ export function mesajlarimiDinle(uid, cb, adet = 500) {
     a2 = onSnapshot(q2, (s) => { giden = s.docs.map((d) => ({ id: d.id, ...d.data() })); yolla(); }, () => {});
   } catch (e) {}
   return () => { try { a1(); } catch (e) {} try { a2(); } catch (e) {} };
+}
+// Bir mesaja TEPKİ (emoji) ver/değiştir (WhatsApp gibi). tepkiler = { uid: emoji } haritası. Boş emoji → tepkiyi kaldır.
+export async function mesajTepkiVer(mesajId, uid, emoji) {
+  if (!mesajId || !uid) return false;
+  try {
+    await setDoc(doc(db, "mesajlar", mesajId), { tepkiler: { [uid]: emoji ? emoji : deleteField() } }, { merge: true });
+    return true;
+  } catch (e) { return false; }
 }
 // Bir sohbetteki BANA GELEN okunmamış mesajları "okundu" yap (çift tik ✓✓). Sadece alıcı güncelleyebilir (kural).
 export async function mesajOkunduYap(mesajlar) {

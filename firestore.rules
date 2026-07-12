@@ -105,7 +105,7 @@ service cloud.firestore {
     match /mesajlar/{id} {
       allow read: if girisli() && (resource.data.aliciUid == request.auth.uid || resource.data.gonderenUid == request.auth.uid);
       allow create: if girisli() && request.resource.data.gonderenUid == request.auth.uid;
-      allow update: if girisli() && resource.data.aliciUid == request.auth.uid; // okundu işareti
+      allow update: if girisli() && (resource.data.aliciUid == request.auth.uid || resource.data.gonderenUid == request.auth.uid); // okundu işareti + tepki (emoji)
       allow delete: if false;
     }
 

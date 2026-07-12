@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -1235,6 +1235,9 @@ export default function Anasayfa({ pro = false }) {
   const [sohbetYazi, setSohbetYazi] = useState("");    // sohbet ekranındaki yazma kutusu
   const [sohbetGonderiliyor, setSohbetGonderiliyor] = useState(false); // foto/mesaj gönderiliyor mu
   const [bekleyenMedya, setBekleyenMedya] = useState(null); // seçilip GÖNDERİLMEYİ bekleyen medya {tip, url, ad?} — yazıyla BİRLİKTE gider
+  const [tepkiMesaj, setTepkiMesaj] = useState(null);  // uzun basılan mesajın id'si → emoji seçici açık
+  const tepkiBasRef = useRef(null);                    // uzun-basma zamanlayıcısı
+  const GLOME_TEPKI = ["❤️", "👍", "😂", "😮", "😢", "🙏", "🔥", "👏"]; // bize özel 8 tepki (WhatsApp/Messenger gibi)
   const mesajSonRef = useRef(null);                    // sohbette en alta kaydırma çıpası
   const [sohbetMedyaAcik, setSohbetMedyaAcik] = useState(false); // sohbette medya menüsü (foto/video/dosya/canlı) açık mı
   const sohbetFotoInputRef = useRef(null);             // foto seç (galeri)
@@ -2759,7 +2762,7 @@ export default function Anasayfa({ pro = false }) {
     const ad = kisi.ad || kisi.isim || [kisi.isim, kisi.soyisim].filter(Boolean).join(" ") || kisi.aliciAd || "—";
     const foto = kisi.foto || kisi.isFoto || kisi.avatarFoto || kisi.gonderenFoto || "";
     setBegenenModal(null); setYorumAcik(null); setAraSecili(null); setTamFoto(""); // üstteki katmanlar kapansın
-    setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false); setBekleyenMedya(null); setSohbetMedyaAcik(false);
+    setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false); setBekleyenMedya(null); setSohbetMedyaAcik(false); setTepkiMesaj(null);
   };
   // Sohbetten mesaj gönder (metin / foto / video / dosya). Medya önce Storage'a yüklenir, URL saklanır (Firestore 1MB'a sığsın).
   const sohbetGonderEt = async (metin, gorsel, video, dosya) => {
@@ -2976,6 +2979,20 @@ export default function Anasayfa({ pro = false }) {
     const video = bm && bm.tip === "video" ? bm.url : "";
     const dosya = bm && bm.tip === "dosya" ? { url: bm.url, ad: bm.ad } : null;
     sohbetGonderEt(m, gorsel, video, dosya).then((ok) => { if (!ok) { setSohbetYazi(m); setBekleyenMedya(bm); } }); // hata olursa geri koy
+  };
+  // MESAJA TEPKİ (WhatsApp gibi): baloncuğa UZUN BAS → emoji seçici; emoji seç → tepki (karşıya bildirim)
+  const tepkiBaslat = (mesajId) => { tepkiIptal(); tepkiBasRef.current = setTimeout(() => setTepkiMesaj(mesajId), 450); };
+  const tepkiIptal = () => { if (tepkiBasRef.current) { clearTimeout(tepkiBasRef.current); tepkiBasRef.current = null; } };
+  const tepkiSec = async (mesajId, emoji) => {
+    const uu = auth.currentUser; if (!uu) return;
+    setTepkiMesaj(null);
+    const m = aktifSohbetMesajlari.find((x) => x.id === mesajId); if (!m) return;
+    const mevcut = m.tepkiler && m.tepkiler[uu.uid];
+    const yeni = (mevcut === emoji) ? "" : emoji; // aynı emojiye tekrar → kaldır
+    await mesajTepkiVer(mesajId, uu.uid, yeni);
+    if (yeni && m.gonderenUid && m.gonderenUid !== uu.uid) {
+      bildirimEkle({ aliciUid: m.gonderenUid, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "mesaj-tepki", metin: yeni + " " + (m.metin || (m.gorsel ? "📷" : "")).slice(0, 40) }).catch(() => {});
+    }
   };
   const sohbetFotoSecildi = async (e) => {
     const dosya = e.target.files && e.target.files[0]; e.target.value = ""; setSohbetMedyaAcik(false);
@@ -3251,6 +3268,7 @@ export default function Anasayfa({ pro = false }) {
     if (b.tip === "begeni") return t("bildBegeni", { ad, defaultValue: "{{ad}} gönderini beğendi" });
     if (b.tip === "yorum") return t("bildYorum", { ad, metin: b.metin || "", defaultValue: "{{ad}} yorum yaptı: {{metin}}" });
     if (b.tip === "mesaj") return t("bildMesaj", { ad, defaultValue: "{{ad}} sana mesaj gönderdi" });
+    if (b.tip === "mesaj-tepki") return t("bildMesajTepki", { ad, tepki: (b.metin || "❤️").split(" ")[0], defaultValue: "{{ad}} mesajına {{tepki}} verdi" });
     if (b.tip === "takip") return t("bildTakip", { ad, defaultValue: "{{ad}} seni takip etmeye başladı" });
     if (b.tip === "tesekkur") return t("bildTesekkur", { ad, defaultValue: "{{ad}} beğenin için teşekkür etti 🙏" });
     if (b.tip === "hikaye-tepki") return t("bildHikTepki", { ad, tepki: b.metin || "❤️", defaultValue: "{{ad}} hikâyene {{tepki}} verdi" });
@@ -6890,20 +6908,33 @@ export default function Anasayfa({ pro = false }) {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
               </button>
             </div>
-            <div className="sohbet-akis">
+            <div className="sohbet-akis" onClick={() => { if (tepkiMesaj) setTepkiMesaj(null); }}>
               {aktifSohbetMesajlari.length === 0 ? (
                 <div className="sohbet-bos">{t("sohbetBos", "Henüz mesaj yok. İlk mesajı sen yaz 👋")}</div>
               ) : aktifSohbetMesajlari.map((m, i) => {
                 const benim = m.gonderenUid === benUid;
                 const saat = m.zamanMs ? new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" }) : "";
+                const tepkiler = m.tepkiler ? Object.values(m.tepkiler).filter(Boolean) : [];
                 return (
                   <div className={"sohbet-balon-sar " + (benim ? "benim" : "karsi")} key={m.id || i}>
-                    <div className="sohbet-balon">
-                      {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0 })} />}
-                      {m.video && <video className="sohbet-balon-video" src={m.video} controls playsInline preload="metadata" />}
-                      {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
-                      {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
-                      <span className="sohbet-balon-alt">{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
+                    <div className="sohbet-balon-cev">
+                      <div className="sohbet-balon"
+                        onPointerDown={() => tepkiBaslat(m.id)} onPointerUp={tepkiIptal} onPointerMove={tepkiIptal} onPointerLeave={tepkiIptal}
+                        onContextMenu={(e) => { e.preventDefault(); setTepkiMesaj(m.id); }}>
+                        {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0 })} />}
+                        {m.video && <video className="sohbet-balon-video" src={m.video} controls playsInline preload="metadata" />}
+                        {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
+                        {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
+                        <span className="sohbet-balon-alt">{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
+                        {tepkiler.length > 0 && <span className="sohbet-tepkiler">{tepkiler.slice(0, 3).map((e2, k) => <span key={k}>{e2}</span>)}{tepkiler.length > 3 ? <b>{tepkiler.length}</b> : null}</span>}
+                      </div>
+                      {tepkiMesaj === m.id && (
+                        <div className="sohbet-tepki-secici" onClick={(e) => e.stopPropagation()}>
+                          {GLOME_TEPKI.map((emo) => (
+                            <button key={emo} className="sts-emo" onClick={() => tepkiSec(m.id, emo)}>{emo}</button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
