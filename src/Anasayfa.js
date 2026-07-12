@@ -2997,15 +2997,18 @@ export default function Anasayfa({ pro = false }) {
   };
   // MESAJA TEPKİ (WhatsApp gibi): baloncuğa UZUN BAS → emoji seçici; emoji seç → tepki (karşıya bildirim)
   // Seçici, BASTIĞIN elemanın tam ÜSTÜNDE açılır (ekran kenarına taşmaz, köşeye kaçmaz)
-  const tepkiAc = (mesajId, el) => {
+  // Seçici, tam PARMAĞIN değdiği NOKTANIN üstünde açılır (elemanın ortasına DEĞİL → büyük fotoğrafta bile parmağın neredeyse orada; kenara/alta kaçmaz)
+  const tepkiAc = (mesajId, px, py) => {
     try {
-      const r = el.getBoundingClientRect();
-      const yakinUst = r.top < 130; // mesaj ekranın en üstündeyse seçici ALTINA açılsın (yukarı taşmasın)
-      setTepkiYer({ x: Math.max(150, Math.min(window.innerWidth - 150, r.left + r.width / 2)), y: yakinUst ? r.bottom + 8 : r.top - 8, alt: yakinUst });
-    } catch (e) { setTepkiYer(null); }
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const x = Math.max(150, Math.min(vw - 150, px || vw / 2));
+      const yakinUst = (py || 0) < 150; // parmak ekranın en üstündeyse seçici parmağın ALTINA açılsın (yukarı taşmasın)
+      const y = yakinUst ? Math.min((py || 0) + 16, vh - 70) : Math.max((py || 0) - 16, 70); // aksi halde parmağın hemen ÜSTÜNDE
+      setTepkiYer({ x, y, alt: yakinUst });
+    } catch (e) { setTepkiYer({ x: window.innerWidth / 2, y: window.innerHeight / 2, alt: false }); }
     setTepkiMesaj(mesajId);
   };
-  const tepkiBaslat = (mesajId, el) => { tepkiIptal(); tepkiBasRef.current = setTimeout(() => tepkiAc(mesajId, el), 450); };
+  const tepkiBaslat = (mesajId, px, py) => { tepkiIptal(); tepkiBasRef.current = setTimeout(() => tepkiAc(mesajId, px, py), 450); };
   const tepkiIptal = () => { if (tepkiBasRef.current) { clearTimeout(tepkiBasRef.current); tepkiBasRef.current = null; } };
   // Mesajı GERİ ÇEK / SİL
   const mesajSilEt = async (mesajId) => { setTepkiMesaj(null); if (duzenlenenMesaj && duzenlenenMesaj.id === mesajId) mesajDuzenIptal(); await mesajSilGeriCek(mesajId); };
@@ -6960,8 +6963,8 @@ export default function Anasayfa({ pro = false }) {
                   <div className={"sohbet-balon-sar " + (benim ? "benim" : "karsi")} key={m.id || i}>
                     <div className="sohbet-balon-cev">
                       <div className="sohbet-balon"
-                        onPointerDown={(e) => tepkiBaslat(m.id, e.currentTarget)} onPointerUp={tepkiIptal} onPointerMove={tepkiIptal} onPointerLeave={tepkiIptal}
-                        onContextMenu={(e) => { e.preventDefault(); tepkiAc(m.id, e.currentTarget); }}>
+                        onPointerDown={(e) => tepkiBaslat(m.id, e.clientX, e.clientY)} onPointerUp={tepkiIptal} onPointerMove={tepkiIptal} onPointerLeave={tepkiIptal}
+                        onContextMenu={(e) => { e.preventDefault(); tepkiAc(m.id, e.clientX, e.clientY); }}>
                         {m.silindi ? (
                           <span className="sohbet-balon-metin sohbet-silindi">🚫 {t("mesajSilindi", "Bu mesaj geri çekildi")}</span>
                         ) : (<>
@@ -6987,7 +6990,7 @@ export default function Anasayfa({ pro = false }) {
                         <span className="sohbet-balon-alt">{m.duzenlendi && !m.silindi && <span className="sohbet-duzenlendi">{t("duzenlendi", "düzenlendi")} · </span>}{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
                         {tepkiler.length > 0 && <span className="sohbet-tepkiler">{tepkiler.slice(0, 3).map((e2, k) => <span key={k}>{e2}</span>)}{tepkiler.length > 3 ? <b>{tepkiler.length}</b> : null}</span>}
                       </div>
-                      <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); if (tepkiMesaj === m.id) { setTepkiMesaj(null); } else { tepkiAc(m.id, e.currentTarget); } }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>🙂</button>
+                      <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); if (tepkiMesaj === m.id) { setTepkiMesaj(null); } else { tepkiAc(m.id, e.clientX, e.clientY); } }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>🙂</button>
                     </div>
                   </div>
                 );
@@ -9105,6 +9108,9 @@ export default function Anasayfa({ pro = false }) {
             </div>
           ); })()}
           <button className="oniz-kapat" onClick={(e) => { e.stopPropagation(); setOnizGaleri(null); }} aria-label="Kapat">✕</button>
+          {(() => { const it = onizGaleri.liste[onizGaleri.i] || {}; return (
+            <button className="oniz-paylas" onClick={(e) => { e.stopPropagation(); paylasNative(it.tip === "video" ? { video: it.src } : { gorsel: it.src }); }} aria-label={t("paylas", "Paylaş")} title={t("paylas", "Paylaş")}>{Ikon.paylas}</button>
+          ); })()}
           {onizGaleri.liste.length > 1 && <>
             <span className="oniz-say">{onizGaleri.i + 1} / {onizGaleri.liste.length}</span>
             {onizGaleri.i > 0 && <button className="oniz-ok oniz-sol" onClick={(e) => { e.stopPropagation(); setOnizGaleri((g) => ({ ...g, i: Math.max(g.i - 1, 0) })); }} aria-label="Önceki">‹</button>}
