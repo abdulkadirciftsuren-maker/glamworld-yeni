@@ -1243,6 +1243,8 @@ export default function Anasayfa({ pro = false }) {
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
   const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
+  const uzakSesRef = useRef(null);                     // karşının SESİ (sesli aramada — ses buradan çalar)
+  const uzakStreamRef = useRef(null);                  // karşıdan gelen medya akışı (ses+görüntü)
   const aramaAbonelikRef = useRef([]);                 // arama dinleyicileri (temizlemek için)
   const aramaDurumRef = useRef(""); useEffect(() => { aramaDurumRef.current = aramaDurum; }, [aramaDurum]);
   const aktifAramaRef = useRef(null); useEffect(() => { aktifAramaRef.current = aktifArama; }, [aktifArama]);
@@ -2781,9 +2783,17 @@ export default function Anasayfa({ pro = false }) {
     pcRef.current = null;
     try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
     yerelStreamRef.current = null;
+    uzakStreamRef.current = null;
     try { if (uzakVideoRef.current) uzakVideoRef.current.srcObject = null; } catch (e) {}
+    try { if (uzakSesRef.current) uzakSesRef.current.srcObject = null; } catch (e) {}
     try { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = null; } catch (e) {}
   };
+  // Arama konuşmaya geçince (elementler mount olunca) uzak ses/görüntüyü bağla — timing garantisi
+  useEffect(() => {
+    if (!aramaDurum) return;
+    const id = setTimeout(() => { baglaUzakMedya(); }, 150);
+    return () => clearTimeout(id);
+  }, [aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   const aramaKapat = async (durumYaz) => {
     const a = aktifAramaRef.current;
     if (a && a.id && durumYaz !== false) { try { await aramaGuncelle(a.id, { durum: "bitti" }); } catch (e) {} }
@@ -2797,12 +2807,24 @@ export default function Anasayfa({ pro = false }) {
     if (tip === "goruntulu") { setTimeout(() => { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = stream; }, 50); }
     return stream;
   };
+  // Karşıdan gelen ses/görüntüyü uygun elemente bağla (sesli → <audio>, görüntülü → <video>) ve OYNAT.
+  const baglaUzakMedya = () => {
+    const st = uzakStreamRef.current; if (!st) return;
+    const el = uzakVideoRef.current || uzakSesRef.current; // görüntülüde video, seslide audio
+    if (el && el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
+    if (el) { try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+  };
   const pcOlustur = (aramaId, kim) => {
     const pc = new RTCPeerConnection(ICE_SUNUCULAR);
     pcRef.current = pc;
     (yerelStreamRef.current ? yerelStreamRef.current.getTracks() : []).forEach((t) => { try { pc.addTrack(t, yerelStreamRef.current); } catch (e) {} });
     const uzak = new MediaStream();
-    pc.ontrack = (e) => { (e.streams[0] ? e.streams[0].getTracks() : [e.track]).forEach((t) => { try { uzak.addTrack(t); } catch (x) {} }); if (uzakVideoRef.current) uzakVideoRef.current.srcObject = uzak; };
+    uzakStreamRef.current = uzak;
+    pc.ontrack = (e) => {
+      (e.streams[0] ? e.streams[0].getTracks() : [e.track]).forEach((t) => { try { uzak.addTrack(t); } catch (x) {} });
+      // element mount olduysa hemen bağla; olmadıysa aşağıdaki useEffect bağlar
+      setTimeout(baglaUzakMedya, 30);
+    };
     pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
     pc.onconnectionstatechange = () => { try { if (pc.connectionState === "connected") setAramaDurum("konusuyor"); } catch (x) {} };
     return pc;
@@ -6853,7 +6875,9 @@ export default function Anasayfa({ pro = false }) {
       {/* AKTİF ARAMA — konuşma ekranı (sesli: avatar; görüntülü: video) */}
       {aramaDurum && aktifArama && (
         <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli")}>
-          {aktifArama.tip === "goruntulu" && <video ref={uzakVideoRef} className="arama-uzak-video" autoPlay playsInline />}
+          {aktifArama.tip === "goruntulu"
+            ? <video ref={uzakVideoRef} className="arama-uzak-video" autoPlay playsInline />
+            : <audio ref={uzakSesRef} autoPlay playsInline />}
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
               <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
