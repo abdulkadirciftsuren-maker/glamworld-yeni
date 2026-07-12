@@ -2840,8 +2840,10 @@ export default function Anasayfa({ pro = false }) {
     return pc;
   };
   const aramaBaslat = async (kisi, tip) => {
-    if (!kisi || !kisi.uid || aramaDurumRef.current) return;
+    if (!kisi || !kisi.uid) return;
     const uu = auth.currentUser; if (!uu) return;
+    if (kisi.uid === uu.uid) { bilgiBalonu(t("kendiniArama", "Kendini arayamazsın 🙂 Aramak için başka bir GLOXORG hesabı gerekir.")); return; }
+    if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("ariyor");
