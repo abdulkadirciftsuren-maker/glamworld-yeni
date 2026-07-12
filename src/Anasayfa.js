@@ -6943,15 +6943,15 @@ export default function Anasayfa({ pro = false }) {
                           <span className="sohbet-balon-metin sohbet-silindi">🚫 {t("mesajSilindi", "Bu mesaj geri çekildi")}</span>
                         ) : (<>
                           {m.medyalar && m.medyalar.length > 0 && (
-                            <div className="sohbet-kolaj">
+                            <div className="sohbet-kolaj" data-n={Math.min(m.medyalar.length, 6)}>
                               {m.medyalar.slice(0, 6).map((md, ki) => (
-                                <div className="sk-oge" key={ki} onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: m.medyalar.map((x) => ({ tip: x.tip === "video" ? "video" : "foto", src: x.url })), i: ki }); }}>
+                                <div className="sk-oge" key={ki} onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: m.medyalar.map((x) => ({ tip: x.tip === "video" ? "video" : "foto", src: x.url })), i: ki, mesajId: m.id }); }}>
                                   {md.tip === "video" ? <video src={md.url} muted preload="metadata" /> : md.tip === "dosya" ? <span className="sk-dosya">📎</span> : <img src={md.url} alt="" referrerPolicy="no-referrer" />}
                                 </div>
                               ))}
                             </div>
                           )}
-                          {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0 })} />}
+                          {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0, mesajId: m.id })} />}
                           {m.video && <video className="sohbet-balon-video" src={m.video} controls playsInline preload="metadata" />}
                           {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
                           {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
@@ -9087,6 +9087,18 @@ export default function Anasayfa({ pro = false }) {
             {onizGaleri.i < onizGaleri.liste.length - 1 && <button className="oniz-ok oniz-sag" onClick={(e) => { e.stopPropagation(); setOnizGaleri((g) => ({ ...g, i: Math.min(g.i + 1, g.liste.length - 1) })); }} aria-label="Sonraki">›</button>}
             <span className="oniz-noktalar">{onizGaleri.liste.map((_, di) => <i key={di} className={di === onizGaleri.i ? "on" : ""} />)}</span>
           </>}
+          {onizGaleri.mesajId && (() => {
+            const om = aktifSohbetMesajlari.find((x) => x.id === onizGaleri.mesajId);
+            const benimTepki = om && om.tepkiler && auth.currentUser ? om.tepkiler[auth.currentUser.uid] : "";
+            return (
+              <div className="oniz-tepki" onClick={(e) => e.stopPropagation()}>
+                {GLOME_TEPKI.map((emo) => (
+                  <button key={emo} className={"oniz-tepki-btn" + (benimTepki === emo ? " secili" : "")}
+                    onClick={(e) => { e.stopPropagation(); tepkiSec(onizGaleri.mesajId, emo); }}>{emo}</button>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       ), document.body)}
 
