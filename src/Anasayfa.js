@@ -6924,11 +6924,10 @@ export default function Anasayfa({ pro = false }) {
                         onPointerDown={() => tepkiBaslat(m.id)} onPointerUp={tepkiIptal} onPointerMove={tepkiIptal} onPointerLeave={tepkiIptal}
                         onContextMenu={(e) => { e.preventDefault(); setTepkiMesaj(m.id); }}>
                         {m.medyalar && m.medyalar.length > 0 && (
-                          <div className={"sohbet-kolaj n" + Math.min(m.medyalar.length, 4)}>
-                            {m.medyalar.slice(0, 4).map((md, ki) => (
+                          <div className="sohbet-kolaj">
+                            {m.medyalar.slice(0, 6).map((md, ki) => (
                               <div className="sk-oge" key={ki} onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: m.medyalar.map((x) => ({ tip: x.tip === "video" ? "video" : "foto", src: x.url })), i: ki }); }}>
                                 {md.tip === "video" ? <video src={md.url} muted preload="metadata" /> : md.tip === "dosya" ? <span className="sk-dosya">📎</span> : <img src={md.url} alt="" referrerPolicy="no-referrer" />}
-                                {ki === 3 && m.medyalar.length > 4 && <span className="sk-fazla">+{m.medyalar.length - 4}</span>}
                               </div>
                             ))}
                           </div>
@@ -6940,6 +6939,7 @@ export default function Anasayfa({ pro = false }) {
                         <span className="sohbet-balon-alt">{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
                         {tepkiler.length > 0 && <span className="sohbet-tepkiler">{tepkiler.slice(0, 3).map((e2, k) => <span key={k}>{e2}</span>)}{tepkiler.length > 3 ? <b>{tepkiler.length}</b> : null}</span>}
                       </div>
+                      <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); setTepkiMesaj((v) => (v === m.id ? null : m.id)); }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>🙂</button>
                       {tepkiMesaj === m.id && (
                         <div className="sohbet-tepki-secici" onClick={(e) => e.stopPropagation()}>
                           {GLOME_TEPKI.map((emo) => (
