@@ -5,6 +5,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw",
@@ -29,5 +30,24 @@ export const googleProvider = new GoogleAuthProvider();
 // Google'a basınca DÜZ "e-posta gir" değil, HESAP SEÇME penceresi çıksın:
 // kullanıcı kendi Google hesabını görür/seçer (veya "başka hesap"). Eskiden olduğu gibi.
 googleProvider.setCustomParameters({ prompt: "select_account" });
+
+// PUSH BİLDİRİM (FCM) — site KAPALIYKEN bile mesaj/beğeni/arama bildirimi almak için telefon "anahtarı" (token) alır.
+// vapidKey = Firebase Console > Proje Ayarları > Cloud Messaging > "Web Push sertifikaları" anahtarı.
+// Boş/desteklenmiyorsa sessizce "" döner (uygulama etkilenmez).
+export async function fcmTokenAl(vapidKey) {
+  try {
+    if (!vapidKey) return "";
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return "";
+    if (!(await isSupported())) return "";
+    const messaging = getMessaging(app);
+    let reg;
+    try {
+      reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
+      if (!reg) reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    } catch (e) { reg = undefined; }
+    const token = await getToken(messaging, reg ? { vapidKey, serviceWorkerRegistration: reg } : { vapidKey });
+    return token || "";
+  } catch (e) { return ""; }
+}
 
 export default app;

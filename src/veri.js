@@ -5,7 +5,7 @@ import { db, storage } from "./firebase";
 import {
   doc, getDoc, setDoc, deleteDoc, updateDoc,
   collection, collectionGroup, query, where, limit as fsLimit, orderBy, getDocs, onSnapshot,
-  serverTimestamp, increment, deleteField,
+  serverTimestamp, increment, deleteField, arrayUnion, arrayRemove,
 } from "firebase/firestore";
 import { ref as depoRef, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 
@@ -248,6 +248,15 @@ export async function mesajSilGeriCek(mesajId) {
 export async function mesajDuzelt(mesajId, metin) {
   if (!mesajId) return false;
   try { await setDoc(doc(db, "mesajlar", mesajId), { metin: (metin || "").trim().slice(0, 2000), duzenlendi: true }, { merge: true }); return true; } catch (e) { return false; }
+}
+// PUSH BİLDİRİM anahtarı (fcmTokens) — kullanıcının cihazını kaydet (site kapalıyken bildirim gelebilsin). Çoklu cihaz: dizi.
+export async function fcmTokenKaydet(uid, token) {
+  if (!uid || !token) return false;
+  try { await setDoc(doc(db, "kullanicilar", uid), { fcmTokens: arrayUnion(token) }, { merge: true }); return true; } catch (e) { return false; }
+}
+export async function fcmTokenSil(uid, token) {
+  if (!uid || !token) return false;
+  try { await setDoc(doc(db, "kullanicilar", uid), { fcmTokens: arrayRemove(token) }, { merge: true }); return true; } catch (e) { return false; }
 }
 // Bir mesaja TEPKİ (emoji) ver/değiştir (WhatsApp gibi). tepkiler = { uid: emoji } haritası. Boş emoji → tepkiyi kaldır.
 export async function mesajTepkiVer(mesajId, uid, emoji) {

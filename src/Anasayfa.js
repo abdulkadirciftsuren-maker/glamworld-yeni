@@ -9,8 +9,8 @@ import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Googl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
-import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
+import { auth, fcmTokenAl } from "./firebase";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -38,6 +38,10 @@ import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvar
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
+
+// PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
+// BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
+const VAPID_KEY = "";
 
 // ARAMA HATA SINIRI — arama (WebRTC) bölümünde beklenmedik bir hata olursa TÜM sayfa çökmesin;
 // sadece arama kapanır, sayfanın geri kalanı çalışmaya devam eder. (React Error Boundary — class şart.)
@@ -3662,10 +3666,31 @@ export default function Anasayfa({ pro = false }) {
       if (typeof Notification === "undefined") { bilgiBalonu(t("bildDesteklenmiyor", "Bu cihaz/tarayıcı bildirimi desteklemiyor")); return; }
       const izin = await Notification.requestPermission();
       setBildirimIzin(izin); try { localStorage.setItem("groxBildirimIzin", izin); } catch (e) {}
-      if (izin === "granted") { bilgiBalonu(t("bildAcildi", "Telefon bildirimleri açıldı")); telefonBildirimGoster(t("bildHosgeldin", "Bildirimler açık — beğeni, yorum ve mesajları buradan alacaksın"), ""); }
+      if (izin === "granted") {
+        bilgiBalonu(t("bildAcildi", "Telefon bildirimleri açıldı"));
+        telefonBildirimGoster(t("bildHosgeldin", "Bildirimler açık — beğeni, yorum ve mesajları buradan alacaksın"), "");
+        pushKaydet(); // KAPALIYKEN bildirim için telefon anahtarını (FCM) kaydet
+      }
       else bilgiBalonu(t("bildVerilmedi", "Bildirim izni verilmedi (telefon ayarlarından da açabilirsin)"));
     } catch (e) {}
   }
+  // KAPALIYKEN bildirim — telefon anahtarını (FCM token) al ve Firestore'a kaydet (kullanicilar/{uid}.fcmTokens).
+  // VAPID_KEY boşsa/desteklenmiyorsa sessizce çıkar (hiçbir şeyi bozmaz).
+  async function pushKaydet() {
+    try {
+      if (!VAPID_KEY) return;
+      const uu = auth.currentUser; if (!uu) return;
+      const tk = await fcmTokenAl(VAPID_KEY);
+      if (tk) fcmTokenKaydet(uu.uid, tk);
+    } catch (e) {}
+  }
+  // Giriş yapılmış + bildirim izni ZATEN açıksa → her açılışta anahtarı tazele/kaydet (izin butonuna basmaya gerek kalmasın)
+  useEffect(() => {
+    if (!u || !VAPID_KEY) return;
+    let izinli = false;
+    try { izinli = (typeof Notification !== "undefined" && Notification.permission === "granted"); } catch (e) {}
+    if (izinli) pushKaydet();
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   // Kısa bilgi balonu göster (alta belirir, 2.2 sn sonra kaybolur)
   function bilgiBalonu(metin) { setKucukMesaj(metin); setTimeout(() => setKucukMesaj((m) => (m === metin ? "" : m)), 2200); }
   // KAYDET — yer imi dolar/boşalır (kullanıcı başına bu cihazda saklanır) + açıklayıcı balon
