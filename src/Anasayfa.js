@@ -5570,6 +5570,17 @@ export default function Anasayfa({ pro = false }) {
     feedVids.forEach((v) => io.observe(v));
     return () => io.disconnect();
   }, [aktifKod, feedFiltre, gercekAkis, ustPencereVar, hikayeGruplar]);
+  // EK GÜVENLİK — uygulamaya ARKA PLANDAN geri dönünce (odak/görünürlük), bir pencere AÇIKSA arka feed/şerit videoları
+  // tekrar DURDUR (dönüşte kendiliğinden oynamaya başlayıp parlamasın). CSS zaten gizliyor; bu, ses/oynatmayı da keser.
+  useEffect(() => {
+    const tekrarDurdur = () => {
+      if (document.hidden || !ustPencereVar) return;
+      Array.from(document.querySelectorAll(".ana-akis video, .hik-serit video, .reels-serit video")).forEach((v) => { try { v.pause(); } catch (e) {} });
+    };
+    document.addEventListener("visibilitychange", tekrarDurdur);
+    window.addEventListener("focus", tekrarDurdur);
+    return () => { document.removeEventListener("visibilitychange", tekrarDurdur); window.removeEventListener("focus", tekrarDurdur); };
+  }, [ustPencereVar]);
   // REELS: ekrandaki reel videosu KENDİ oynar (döngü), ötekiler durur; hangi reelde olduğumuzu izler.
   useEffect(() => {
     if (!reelsAcik) return;
