@@ -3679,12 +3679,13 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 
 /* ===================== MESAJLAŞMA (WhatsApp gibi) — Mesaj Merkezi + baloncuklu sohbet ===================== */
 /* Üst çubuk MESAJLAR düğmesi (ayının yerine) — altın, hafif yuvarlatılmış KARE (anayasa: tam daire değil) */
-/* GLOME düğmesi: hafif yuvarlatılmış KARE (yuvarlak değil) + İKİ belirgin altın çember (dış çerçeve + iç açık altın halka) + altın TOZU zemin */
-.ana-mesaj-btn{ position:relative; border-radius:10px !important;
+/* GLOME düğmesi: hafif yuvarlatılmış KARE + İKİ belirgin altın çember (dış çerçeve + iç açık altın halka) + altın TOZU zemin.
+   Düğme biraz KÜÇÜK (38px), ikon içinde BELİRGİN/dolgun (28px) — kullanıcı: düğme ufalsın, ikon belirgin dursun. */
+.ana-mesaj-btn{ position:relative; width:38px; height:38px; min-width:38px; padding:0 !important; justify-content:center; border-radius:10px !important;
   background:radial-gradient(circle at 40% 26%, #fff6d0, #f4d867 42%, #e0b13e 78%, #c99628) !important;
   border:2px solid #a9781f !important;
   box-shadow:0 0 0 1.6px #fff2c4 inset, 0 2px 8px rgba(90,60,10,.45) !important; }
-.ana-mesaj-btn svg{ width:30px !important; height:30px !important; } /* İKON BÜYÜK — düğme aynı boyutta kalır, içi dolgun görünür */
+.ana-mesaj-btn svg{ width:28px !important; height:28px !important; }
 /* Alt sekme (Glome) okunmamış rozeti */
 .ana-tab-glome{ position:relative; }
 .ana-tab-rozet{ position:absolute; top:1px; left:calc(50% + 4px); min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#e0202c; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1; }
