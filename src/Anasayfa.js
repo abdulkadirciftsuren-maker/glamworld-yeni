@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -506,7 +506,7 @@ const EKSEN_METIN = {
 };
 // GLOXORG HAKKINDA paneli metinleri — 13 dil
 const HAKKINDA_CEVIRI = {
-  tr: { menu: "GLOXORG Hakkında + 7 Eksen", alt: "Dünyanın lüks profesyonel sosyal platformu", b1h: "🌍 GLOXORG nedir?", b1p: "GLOXORG, dünyaya açık lüks bir profesyonel sosyal platformdur — paylaş, bağ kur, müşteri bul, mesleğini büyüt. Web: gloxorg.com", b2h: "💎 Gloxoo — akıllı kalp", b2p: "Ben Gloxoo, GLOXORG'un akıllı yardımcısıyım. Her sayfada yanındayım: yazarım, konuşurum, güncel bilgi veririm. Web: gloxoo.com", b3h: "🐻 Ekspert — sayfa uzmanı", b3p: "Ekspert ayı, bulunduğun sayfanın uzmanıdır. Üstteki ayı düğmesine dokun; o sayfada derin yardım eder ve seni dinler.", eh: "🎯 7 Eksen Eylem Planı", ea: 'İlerlemenin 7 temel ekseni. Gloxoo\'ya "bana eylem planı çıkar" de — sana özel doldursun.', pb: "🚀 Bana özel plan çıkar" },
+  tr: { menu: "GLOXORG Hakkında + 7 Eksen", alt: "Dünyanın lüks profesyonel sosyal platformu", b1h: "🌍 GLOXORG nedir?", b1p: "GLOXORG, dünyaya açık lüks bir profesyonel sosyal platformdur — paylaş, bağ kur, müşteri bul, mesleğini büyüt. Web: gloxorg.com", b2h: "💎 Gloxoo — akıllı kalp", b2p: "Ben Gloxoo, GLOXORG'un tek akıllı yardımcısıyım. Her sayfada yanındayım ve o sayfanın uzmanıyım: yazarım, konuşurum, güncel bilgi veririm, sana özel yardım ederim. Web: gloxoo.com", b3h: "", b3p: "", eh: "🎯 7 Eksen Eylem Planı", ea: 'İlerlemenin 7 temel ekseni. Gloxoo\'ya "bana eylem planı çıkar" de — sana özel doldursun.', pb: "🚀 Bana özel plan çıkar" },
   en: { menu: "About GLOXORG + 7 Axes", alt: "The world's luxury professional social platform", b1h: "🌍 What is GLOXORG?", b1p: "GLOXORG is a global luxury professional social platform — share, connect, find clients, grow your profession. Web: gloxorg.com", b2h: "💎 Gloxoo — the smart heart", b2p: "I'm Gloxoo, GLOXORG's smart assistant. I'm with you on every page: I write, talk, and give up-to-date info. Web: gloxoo.com", b3h: "🐻 Ekspert — page expert", b3p: "Ekspert the bear is the expert of your current page. Tap the bear button above; it helps deeply on that page and listens to you.", eh: "🎯 7-Axis Action Plan", ea: 'The 7 core axes of progress. Tell Gloxoo "make me an action plan" — it fills them in just for you.', pb: "🚀 Make me a plan" },
   de: { menu: "Über GLOXORG + 7 Achsen", alt: "Die luxuriöse berufliche Social-Plattform der Welt", b1h: "🌍 Was ist GLOXORG?", b1p: "GLOXORG ist eine globale, luxuriöse berufliche Social-Plattform — teilen, vernetzen, Kunden finden, deinen Beruf ausbauen. Web: gloxorg.com", b2h: "💎 Gloxoo — das kluge Herz", b2p: "Ich bin Gloxoo, der smarte Assistent von GLOXORG. Auf jeder Seite bei dir: ich schreibe, spreche und gebe aktuelle Infos. Web: gloxoo.com", b3h: "🐻 Ekspert — Seitenexperte", b3p: "Der Bär Ekspert ist der Experte deiner aktuellen Seite. Tippe oben auf den Bären; er hilft dort tiefgehend und hört dir zu.", eh: "🎯 7-Achsen-Aktionsplan", ea: 'Die 7 Kernachsen des Fortschritts. Sag Gloxoo „mach mir einen Aktionsplan" — er füllt sie für dich aus.', pb: "🚀 Erstelle mir einen Plan" },
   fr: { menu: "À propos de GLOXORG + 7 axes", alt: "La plateforme sociale professionnelle de luxe du monde", b1h: "🌍 Qu'est-ce que GLOXORG ?", b1p: "GLOXORG est une plateforme sociale professionnelle de luxe mondiale — partage, connecte-toi, trouve des clients, développe ton métier. Web : gloxorg.com", b2h: "💎 Gloxoo — le cœur intelligent", b2p: "Je suis Gloxoo, l'assistant intelligent de GLOXORG. Je suis avec toi sur chaque page : j'écris, je parle, je donne des infos à jour. Web : gloxoo.com", b3h: "🐻 Ekspert — expert de la page", b3p: "L'ours Ekspert est l'expert de ta page actuelle. Touche l'ours en haut ; il aide en profondeur sur cette page et t'écoute.", eh: "🎯 Plan d'action à 7 axes", ea: 'Les 7 axes clés du progrès. Dis à Gloxoo « fais-moi un plan d\'action » — il les remplit rien que pour toi.', pb: "🚀 Fais-moi un plan" },
@@ -1215,8 +1215,17 @@ export default function Anasayfa({ pro = false }) {
   // MESAJLAŞMA
   const [mesajYazi, setMesajYazi] = useState("");      // detay penceresindeki mesaj kutusu
   const [mesajDurum, setMesajDurum] = useState("");    // "gonderiliyor" | "ok" | "hata"
-  const [mesajAcik, setMesajAcik] = useState(false);   // gelen kutusu penceresi
-  const [mesajlar, setMesajlar] = useState(null);      // null=okunmadı, []=boş
+  const [mesajAcik, setMesajAcik] = useState(false);   // MESAJ MERKEZİ penceresi (tüm sohbetler — WhatsApp ana ekranı gibi)
+  const [mesajlar, setMesajlar] = useState(null);      // null=okunmadı, []=boş (eski gelen kutusu — korunur)
+  // WHATSAPP GİBİ SOHBET: tüm mesajlarım CANLI dinlenir; karşı kişiye göre gruplanıp merkez/sohbet türetilir
+  const [mesajlarimTum, setMesajlarimTum] = useState([]); // benim TÜM mesajlarım (gelen+giden, canlı)
+  const [sohbetKisi, setSohbetKisi] = useState(null);  // AÇIK sohbetin karşı tarafı {uid, ad, foto} | null
+  const [sohbetYazi, setSohbetYazi] = useState("");    // sohbet ekranındaki yazma kutusu
+  const [sohbetGonderiliyor, setSohbetGonderiliyor] = useState(false); // foto/mesaj gönderiliyor mu
+  const mesajSonRef = useRef(null);                    // sohbette en alta kaydırma çıpası
+  const sohbetFotoInputRef = useRef(null);             // sohbette foto seç
+  const sohbetKisiRef = useRef(null); useEffect(() => { sohbetKisiRef.current = sohbetKisi; }, [sohbetKisi]);
+  const mesajAcikRef2 = useRef(false); useEffect(() => { mesajAcikRef2.current = mesajAcik; }, [mesajAcik]);
   // GERÇEK AKIŞ (gönderiler)
   const [gercekAkis, setGercekAkis] = useState(() => {  // Firestore'dan gelen gönderiler — açılışta ÖNBELLEKTEN anında göster, arkada tazele
     try { return JSON.parse(localStorage.getItem("gw_feedCache") || "[]"); } catch (e) { return []; }
@@ -1648,8 +1657,8 @@ export default function Anasayfa({ pro = false }) {
     const ad = hitapAdi();
     const _ad = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
     const YU = {
-      tr: `Hoş geldin${_ad}! 👋 Ben Gloxoo 💎, GLOXORG'un akıllı kalbiyim. 🌍 GLOXORG dünyanın lüks profesyonel sosyal platformu (gloxorg.com): paylaş, bağ kur, müşteri bul. Her sayfada yanındayım — 🗣️ konuşur, ✍️ yazar, 📰 güncel bilgi veririm (gloxoo.com). Üstteki 🐻 Ekspert bulunduğun sayfanın uzmanıdır. Menüden 💠 Hakkında'ya bak ya da "eylem planı çıkar" de. Hadi başlayalım! 🚀`,
-      en: `Welcome${_ad}! 👋 I'm Gloxoo 💎, the smart heart of GLOXORG. 🌍 GLOXORG is the world's luxury professional social platform (gloxorg.com): share, connect, find clients. I'm on every page — 🗣️ I talk, ✍️ I write, 📰 I give current info (gloxoo.com). The 🐻 Ekspert above is your page's expert. Check 💠 About in the menu or say "make me a plan". Let's begin! 🚀`,
+      tr: `Hoş geldin${_ad}! 👋 Ben Gloxoo 💎, GLOXORG'un akıllı kalbiyim. 🌍 GLOXORG dünyanın lüks profesyonel sosyal platformu (gloxorg.com): paylaş, bağ kur, müşteri bul. Her sayfada yanındayım ve o sayfanın uzmanıyım — 🗣️ konuşur, ✍️ yazar, 📰 güncel bilgi veririm (gloxoo.com). Menüden 💠 Hakkında'ya bak ya da "eylem planı çıkar" de. Hadi başlayalım! 🚀`,
+      en: `Welcome${_ad}! 👋 I'm Gloxoo 💎, the smart heart of GLOXORG. 🌍 GLOXORG is the world's luxury professional social platform (gloxorg.com): share, connect, find clients. I'm on every page and I'm that page's expert too — 🗣️ I talk, ✍️ I write, 📰 I give current info (gloxoo.com). Check 💠 About in the menu or say "make me a plan". Let's begin! 🚀`,
       de: `Willkommen${_ad}! 👋 Ich bin Gloxoo 💎, das kluge Herz von GLOXORG. 🌍 GLOXORG ist die luxuriöse berufliche Social-Plattform der Welt (gloxorg.com): teilen, vernetzen, Kunden finden. Auf jeder Seite bei dir — 🗣️ ich spreche, ✍️ schreibe, 📰 gebe aktuelle Infos (gloxoo.com). Der 🐻 Ekspert oben ist der Experte deiner Seite. Sieh 💠 Über im Menü oder sag „mach mir einen Plan". Los geht's! 🚀`,
       fr: `Bienvenue${_ad}! 👋 Je suis Gloxoo 💎, le cœur intelligent de GLOXORG. 🌍 GLOXORG est la plateforme sociale professionnelle de luxe du monde (gloxorg.com) : partage, connecte, trouve des clients. Je suis sur chaque page — 🗣️ je parle, ✍️ j'écris, 📰 je donne des infos à jour (gloxoo.com). L'🐻 Ekspert en haut est l'expert de ta page. Vois 💠 À propos dans le menu ou dis « fais-moi un plan ». C'est parti ! 🚀`,
       es: `¡Bienvenido${_ad}! 👋 Soy Gloxoo 💎, el corazón inteligente de GLOXORG. 🌍 GLOXORG es la plataforma social profesional de lujo del mundo (gloxorg.com): comparte, conecta, encuentra clientes. Estoy en cada página — 🗣️ hablo, ✍️ escribo, 📰 doy info actual (gloxoo.com). El 🐻 Ekspert de arriba es el experto de tu página. Mira 💠 Acerca en el menú o di "hazme un plan". ¡Empecemos! 🚀`,
@@ -1736,14 +1745,14 @@ export default function Anasayfa({ pro = false }) {
     const ak = mevcutSayfaKodu();
     const sayfaAdlar = { home: "Ana sayfa / Keşfet", ara: "Arama", konum: "Konum", mesaj: "Mesajlar", profil: "Profil", paylas: "Paylaşım", ayarlar: "Ayarlar", bildirim: "Bildirimler", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", akademi: "Akademi" };
     const sayfaAd = sayfaAdlar[ak] || "Ana sayfa / Keşfet";
-    setYardimciBaglam(`Kullanıcı şu an GLOXORG "${sayfaAd}" sayfasında; bu sayfanın eksperti gibi yardım et.`);
+    setYardimciBaglam(`Kullanıcı şu an GLOXORG "${sayfaAd}" sayfasında; bu sayfanın uzmanı gibi yardım et.`);
     const ad = hitapAdi(); const _ea = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
-    const INTRO = { tr: `Selam${_ea}! Ben Ekspert 🐻.`, en: `Hi${_ea}! I'm Ekspert 🐻.`, de: `Hallo${_ea}! Ich bin Ekspert 🐻.` };
+    const INTRO = { tr: `Selam${_ea}! Ben Gloxoo 💎.`, en: `Hi${_ea}! I'm Gloxoo 💎.`, de: `Hallo${_ea}! Ich bin Gloxoo 💎.` };
     const intro = INTRO[aiDilRef.current] || INTRO.en;
     const ack = SAYFA_ACIKLAMA[ak] || SAYFA_ACIKLAMA.home;
     const aciklama = ack[aiDilRef.current] || ack.en;
     const selam = intro + " " + aciklama;
-    setMaskotTur("ekspert"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
+    setMaskotTur("grox"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
     // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
     try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
     if (!otomatik) maskotCanliBaslat(); // düğmeyle açılınca: karşılamadan sonra mikrofonu açıp seni bekler
@@ -2688,13 +2697,93 @@ export default function Anasayfa({ pro = false }) {
     }).then((ok) => { setMesajDurum(ok ? "ok" : "hata"); if (ok) setMesajYazi(""); })
       .catch(() => setMesajDurum("hata"));
   }
-  // Gelen kutusu açılınca mesajları oku
+  // Gelen kutusu açılınca mesajları oku (eski — korunur; artık Mesaj Merkezi canlı listeden besleniyor)
   useEffect(() => {
     if (!mesajAcik) return;
     const uu = auth.currentUser; if (!uu) { setMesajlar([]); return; }
     setMesajlar(null);
     mesajlariOku(uu.uid).then((l) => setMesajlar(l || [])).catch(() => setMesajlar([]));
   }, [mesajAcik]);
+  // ---- WHATSAPP GİBİ SOHBET (canlı) ----
+  const benUid = (u && u.uid) || (auth.currentUser && auth.currentUser.uid) || "";
+  // Giriş yapınca TÜM mesajlarımı (gelen+giden) CANLI dinle → yeni mesaj anında düşer (WhatsApp gibi)
+  useEffect(() => {
+    const uu = auth.currentUser;
+    if (!uu) { setMesajlarimTum([]); return; }
+    const iptal = mesajlarimiDinle(uu.uid, (liste) => setMesajlarimTum(liste || []));
+    return iptal;
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Bir kişiyle SOHBETİ AÇ — her "mesaj at" düğmesi buraya gelir (tek merkez). Karşı taraf {uid, ad, foto}.
+  const sohbetAc = (kisi) => {
+    if (!kisi || !kisi.uid) return;
+    const ad = kisi.ad || kisi.isim || [kisi.isim, kisi.soyisim].filter(Boolean).join(" ") || kisi.aliciAd || "—";
+    const foto = kisi.foto || kisi.isFoto || kisi.avatarFoto || kisi.gonderenFoto || "";
+    setBegenenModal(null); setYorumAcik(null); setAraSecili(null); setTamFoto(""); // üstteki katmanlar kapansın
+    setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false);
+  };
+  // Sohbetten mesaj gönder (metin ve/veya foto). Foto önce Storage'a yüklenir, URL saklanır (Firestore 1MB'a sığsın).
+  const sohbetGonderEt = async (metin, gorsel) => {
+    const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
+    if (!uu || !kisi) return false;
+    if (!((metin && metin.trim()) || gorsel)) return false;
+    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    try {
+      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", gonderen: { uid: uu.uid, ad: benimAd, foto: isFoto || foto || "" } });
+    } catch (e) { return false; }
+  };
+  const sohbetMetinGonder = () => {
+    const m = sohbetYazi.trim(); if (!m) return;
+    setSohbetYazi("");
+    sohbetGonderEt(m, "").then((ok) => { if (!ok) setSohbetYazi(m); }); // hata olursa yazıyı geri koy
+  };
+  const sohbetFotoSecildi = async (e) => {
+    const dosya = e.target.files && e.target.files[0]; e.target.value = "";
+    const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
+    if (!dosya || !uu || !kisi) return;
+    setSohbetGonderiliyor(true);
+    try {
+      const dataURL = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(dosya); });
+      const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataURL; });
+      const kucuk = imgKucult(img, 1280) || dataURL; // büyük fotoğrafı küçült (yükleme hızlı, kota korunur)
+      const url = await gorselYukle(kucuk, uu.uid, () => {});
+      if (url) await sohbetGonderEt("", url);
+    } catch (x) {}
+    setSohbetGonderiliyor(false);
+  };
+  // AKTİF sohbetteki mesajlar (iki taraf) — zamana göre artan
+  const aktifSohbetMesajlari = useMemo(() => {
+    if (!sohbetKisi) return [];
+    return mesajlarimTum.filter((m) =>
+      (m.gonderenUid === sohbetKisi.uid && m.aliciUid === benUid) ||
+      (m.gonderenUid === benUid && m.aliciUid === sohbetKisi.uid));
+  }, [mesajlarimTum, sohbetKisi, benUid]);
+  // MESAJ MERKEZİ listesi — karşı kişiye göre gruplanmış sohbetler (son mesaj + okunmamış sayısı), en yeni üstte
+  const sohbetListesi = useMemo(() => {
+    const harita = new Map();
+    mesajlarimTum.forEach((m) => {
+      const karsiUid = m.gonderenUid === benUid ? m.aliciUid : m.gonderenUid;
+      if (!karsiUid || karsiUid === benUid) return;
+      const karsiAd = m.gonderenUid === benUid ? (m.aliciAd || "") : (m.gonderenAd || "");
+      const karsiFoto = m.gonderenUid === benUid ? "" : (m.gonderenFoto || "");
+      let g = harita.get(karsiUid);
+      if (!g) { g = { uid: karsiUid, ad: karsiAd || "—", foto: karsiFoto, son: m, okunmamis: 0 }; harita.set(karsiUid, g); }
+      if ((m.zamanMs || 0) >= (g.son.zamanMs || 0)) { g.son = m; if (karsiAd) g.ad = karsiAd; }
+      if (karsiFoto) g.foto = karsiFoto;
+      if (m.aliciUid === benUid && !m.okundu) g.okunmamis++;
+    });
+    return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
+  }, [mesajlarimTum, benUid]);
+  const okunmamisMesaj = useMemo(() => sohbetListesi.reduce((s, g) => s + g.okunmamis, 0), [sohbetListesi]);
+  // Sohbet açıkken: o kişiden gelen okunmamışları OKUNDU yap (karşı tarafa çift tik ✓✓)
+  useEffect(() => {
+    if (!sohbetKisi) return;
+    const okunacak = aktifSohbetMesajlari.filter((m) => m.aliciUid === benUid && !m.okundu);
+    if (okunacak.length) mesajOkunduYap(okunacak);
+  }, [sohbetKisi, aktifSohbetMesajlari, benUid]);
+  // Yeni mesaj gelince/sohbet açılınca EN ALTA kaydır
+  useEffect(() => {
+    if (sohbetKisi && mesajSonRef.current) { try { mesajSonRef.current.scrollIntoView({ block: "end" }); } catch (e) {} }
+  }, [aktifSohbetMesajlari.length, sohbetKisi]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   useEffect(() => {
     gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
@@ -3472,11 +3561,10 @@ export default function Anasayfa({ pro = false }) {
     try { const bl = await begenenleriOku(postId, 150); setBegenenModalListe(bl || []); } catch (e) {}
     setBegenenModalYuk(false);
   };
-  // KİŞİYE MESAJ (beğenen/yorumcuya karşılık) → DM aç
+  // KİŞİYE MESAJ (beğenen/yorumcuya karşılık) → WhatsApp gibi sohbeti aç
   const kisiyeMesaj = (k) => {
     if (!k || !k.uid) return;
-    setBegenenModal(null); setYorumAcik(null);
-    setAraSecili({ uid: k.uid, isim: k.ad, pro: { meslek: k.meslek || "" }, konum: {}, isFoto: k.foto });
+    sohbetAc({ uid: k.uid, ad: k.ad, foto: k.foto });
   };
   // KARŞILIK ikonları (Takip + Mesaj) — beğenen/yorumcuya karşılık ver
   const kisiKarsilik = (k) => (
@@ -3742,19 +3830,26 @@ export default function Anasayfa({ pro = false }) {
     // 3) KISA + biçimlendirme yasağı
     sistem += `KISA ve net konuş, laf kalabalığı yapma (açıklaman 1-2 cümle). Yıldız (*), çift yıldız (**kalın**), kare (#), tire-liste, markdown ASLA kullanma — düz metin yaz; sesli konuşur gibi akıcı cümleler; ara sıra emoji serbest. SADECE kullanıcının sorduğu/istediği şeye cevap ver; kullanıcı istemeden kendiliğinden konu açma, ekstra bilgi/öneri YAĞDIRMA, "şunu da yapayım mı" diye üstüne gitme — kullanıcının ne isteyeceğini BEKLE. Resim/görsel ÇİZME, çizemezsin; istenirse kibarca metinle yardım et. KİŞİLİK: sıcak, samimi, neşeli ve CANLI bir dost gibi konuş; yeri gelince hafif şaka yap, espri yap, gül (😄😊); robot gibi soğuk olma — ama yine de KISA kal ve kullanıcı istemeden konuyu uzatma. TEKRAR YOK: Önceki cevaplarında söylediğin cümleleri/kalıpları AYNEN TEKRARLAMA; her yanıt TAZE, kullanıcının SON mesajına ÖZEL ve farklı olsun. Bir şeyi bilmiyorsan ya da veri yoksa aynı klişeyi tekrar tekrar yazma; kısaca söyle ve geç. Kullanıcı seninle gerçek bir sohbet ediyor — papağan gibi değil, düşünen bir dost gibi cevap ver. `;
     // === ROL + BAĞLAM (daha az kritik — köprü kısaltırsa buradan kısalır) ===
-    sistem += site
-      ? `Sen EKSPERT'sin — GLOXORG platformunun 🐻 SAYFA UZMANI ayısı (Gloxoo'nun uzman kardeşi). Gloxoo genel yardımcıdır; SEN ise kullanıcının ŞU AN bulunduğu SAYFANIN uzmanısın: o sayfada ne yapılır, nasıl kullanılır, ipuçları ve püf noktaları — derinlemesine bilirsin. Kullanıcıyla canlı, sıcak ve NET konuş; bulunduğu sayfaya ÖZEL hem ÖNERİ ver hem onu DİNLE (o sayfada ne yapmak istiyorsa ona odaklan). Kısa ve akıcı ol, laf kalabalığı yapma. Kendini tanıtırken "bu sayfanın uzmanı Ekspert" dersin — Gloxoo DEĞİLSİN, kendini Gloxoo diye tanıtma. GLOXORG lüks küresel profesyonel sosyal platform; bölümler: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar. SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç", "ayarları aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
-      : `Sen Gloxoo'sun — GLOXORG adlı lüks, küresel profesyonel sosyal platformun akıllı kalbi ve yardımcı asistanı. Adın Gloxoo; kendini tanıtırken "Gloxorg dünyasının akıllı kalbi Gloxoo" dersin. Paylaşım yazma, meslek tanıtımı, müşteri bulma gibi konularda yardım et.`;
+    sistem += `Sen Gloxoo'sun — GLOXORG adlı lüks, küresel profesyonel sosyal platformun AKILLI KALBİ ve TEK yardımcı asistanısın. Adın Gloxoo; kendini tanıtırken "Gloxorg dünyasının akıllı kalbi Gloxoo" dersin. Her şeyi bilen, akıllı, sıcak ve NET bir dostsun. AYNI ZAMANDA kullanıcının ŞU AN bulunduğu SAYFANIN da UZMANISIN: o sayfada ne yapılır, nasıl kullanılır, ipuçları ve püf noktaları — hepsini bilirsin ve o sayfaya ÖZEL yardım edersin (hem öneri ver hem dinle). Paylaşım yazma, meslek tanıtımı, müşteri bulma dahil her konuda yardımcı ol. GLOXORG bölümleri: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar.` + (site
+      ? ` SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç", "ayarları aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
+      : ``);
     // AYARLAR + UZMAN YÖNLENDİRME: kullanıcı senden GÜNCEL/DOĞRU/kişiye özel bilgi (haber, kişisel öneri, "bana göre") beklerse
     // ve gerekli bilgileri (cinsiyet, doğum tarihi, konum) EKSİKSE, KISACA balondaki ⚙ Ayarlar ikonundan bilgilerini doldurmasını öner
     // ("daha doğru ve sana özel yardım için Ayarlar'dan bilgilerini doldur"). Ayrıca bulunduğu sayfaya ÖZEL derin yardım için üstteki
     // 🐻 UZMAN maskotunu (o sayfanın uzmanı, seninle aynı şekilde konuşup dinler, sayfayı bilir) öner. Bunu HER mesajda DEĞİL, sadece
     // konu gerçekten uyduğunda ve BİR kez söyle; sürekli tekrarlama.
-    sistem += ` YÖNLENDİRME: Kullanıcı güncel/kişiye özel bir şey isteyip Ayarlar'ı (cinsiyet, doğum tarihi, konum) doldurmamışsa, uygun olduğunda BİR kez "Ayarlar'dan bilgilerini doldurursan sana daha doğru ve özel yardım ederim" de (balonda ⚙ Ayarlar ikonu var). Bulunduğu sayfaya özel derin yardım gerekirse üstteki 🐻 Uzman'a yönlendir. Bunları her mesajda TEKRARLAMA. `;
+    sistem += ` YÖNLENDİRME: Kullanıcı güncel/kişiye özel bir şey isteyip Ayarlar'ı (cinsiyet, doğum tarihi, konum) doldurmamışsa, uygun olduğunda BİR kez "Ayarlar'dan bilgilerini doldurursan sana daha doğru ve özel yardım ederim" de (balonda ⚙ Ayarlar ikonu var). Bunu her mesajda TEKRARLAMA. `;
     // GLOXORG HAKKINDA + 7 EKSEN EYLEM PLANI (Gloxoo bilir, sorulunca anlatır/uygular)
-    sistem += ` GLOXORG HAKKINDA (sorulursa net anlat, uydurma): GLOXORG dünyaya açık, lüks bir profesyonel sosyal platformdur (web: gloxorg.com). Ben Gloxoo — GLOXORG'un akıllı kalbi ve yardımcısıyım (gloxoo.com): her sayfada yanındayım, paylaşım yazarım, yol/bilgi/güncel haber veririm, sana özel yardım ederim. 🐻 EKSPERT ayı ise bulunduğun sayfanın uzmanıdır (üstteki ayı düğmesi) — o sayfada derin yardım eder. `;
+    sistem += ` GLOXORG HAKKINDA (sorulursa net anlat, uydurma): GLOXORG dünyaya açık, lüks bir profesyonel sosyal platformdur (web: gloxorg.com). Ben Gloxoo — GLOXORG'un akıllı kalbi ve TEK yardımcısıyım (gloxoo.com): her sayfada yanındayım, o sayfanın uzmanıyım, paylaşım yazarım, yol/bilgi/güncel haber veririm, sana özel yardım ederim. `;
     sistem += ` 7 EKSEN EYLEM PLANI: Kullanıcı "eylem planı", "hedef planı", "yol haritası", "nereden başlarım", "bana plan çıkar" gibi bir şey isterse, ona ÖZEL (mesleği/hedefi/konumuna göre) şu 7 ekseni SIRAYLA sun; her eksende ne YAPACAĞINI somut, kısa ve motive edici tek cümleyle yaz: 1) 🧠 DÜŞÜN — neredesin, ne istiyorsun, netleş. 2) 🔭 GELECEĞİ GÖR — ileriyi, fırsatı, nereye gittiğini gör; vizyon kur. 3) 🎯 HEDEF SEÇ — net, ölçülebilir tek hedef. 4) 🛠️ ÜRET — harekete geç, somut bir şey ortaya koy. 5) ✨ FARK YARAT — seni özel kılanı öne çıkar. 6) 🤝 PAYLAŞ & BAĞ KUR — işini paylaş, doğru insanlar/müşterilerle bağ kur (GLOXORG'un kalbi). 7) 🚀 İLERLE — düzenli ilerle, ölç, geliştir, durma. Sonunda "her adımda yanındayım; ilerlemekten seni alıkoyan neyse birlikte aşarız" de. Bu planı SADECE istendiğinde ver, her mesajda dayatma. `;
     if (yardimciBaglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${yardimciBaglam} Soruları büyük olasılıkla bununla ilgili.`;
+    // SAYFA UZMANLIĞI: o an açık olan sayfanın açıklamasını her yanıta bağlam olarak ekle → Gloxoo o sayfanın uzmanı gibi yardım eder
+    try {
+      const _ak = mevcutSayfaKodu();
+      const _ack = SAYFA_ACIKLAMA[_ak] || SAYFA_ACIKLAMA.home;
+      const _acs = (_ack && (_ack[aiDilRef.current] || _ack.en)) || "";
+      if (_acs) sistem += ` BULUNDUĞUN SAYFA: ${_acs} Bu sayfada ne yapıldığını, nasıl kullanıldığını bilir; kullanıcı bu sayfayla ilgili sorarsa uzman gibi net yardım edersin.`;
+    } catch (e) {}
     const kadi = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     const konumTam = (profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir, profilBilgi.konum.ulke].filter(Boolean).join(", ")) || myTamKonum || konum.kod || "";
     const haberY = (profilBilgi && Array.isArray(profilBilgi.haberKonumlari) ? profilBilgi.haberKonumlari : []).map((h) => [h.ilce, h.sehir, h.ulke].filter(Boolean).join(", ")).filter(Boolean);
@@ -5130,7 +5225,7 @@ export default function Anasayfa({ pro = false }) {
   // FEED VİDEOLARI: ekrana gelince KENDİ oynar (sessiz, döngü), çıkınca durur — düğmeye basmaya gerek yok.
   // ⚡ PARLAMA: ana sayfa ÜZERİNDE bir pencere açıkken (menü/ayarlar/panel...) feed videosu arkada oynamaya devam ederse
   // telefonda pencere açılışında PARLAMA yapıyordu → pencere açıkken TÜM feed videoları DURDUR; pencere kapanınca yeniden oynar.
-  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik;
+  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi;
   useEffect(() => {
     if (aktifKod !== "home") return;
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)
@@ -5325,7 +5420,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -5333,12 +5428,13 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
       guardSayRef.current = Math.max(0, guardSayRef.current - 1);
-      if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
+      if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
+      else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
       else if (telHaritaAcikRef.current) { telHaritaAcikRef.current = false; setTelHaritaAcik(false); }
       else if (uyelikKartAcikRef.current) { uyelikKartAcikRef.current = false; setUyelikKartAcik(false); }
       else if (sektorListeRef.current) { sektorListeRef.current = ""; setSektorListe(""); }
@@ -5627,21 +5723,10 @@ export default function Anasayfa({ pro = false }) {
           ) : (
             <button className="ana-ara-btn" aria-label={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
           )}
-          {/* SİTE ASİSTANI — Ekspert ayı; komutla pencere açar (balondan ayrı) */}
-          <button className="ana-ara-btn ana-site-ai" onClick={() => { if (maskotTanit && maskotTur === "ekspert") { maskotTanitGec(); return; } eksperTanitYap(); }} aria-label={t("siteAsistan", "Site Asistanı")}
-            style={{ backgroundImage: `url(${uyeAyiCerceve})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
-            {/* MASKOT 2 — Ekspert: bilge AYI (yuvarlak pırlanta çerçeve içinde madalyon; dış altın halka çerçeveden gelir) */}
-            <svg className="ana-site-ai-pusula" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9.7" fill="#0c1730" />
-              <circle cx="7.7" cy="7.8" r="2.1" fill="#a9743f" /><circle cx="16.3" cy="7.8" r="2.1" fill="#a9743f" />
-              <circle cx="7.7" cy="7.8" r="0.95" fill="#5b3a1c" /><circle cx="16.3" cy="7.8" r="0.95" fill="#5b3a1c" />
-              <circle cx="12" cy="12.4" r="5.1" fill="#c08a4e" />
-              <ellipse cx="12" cy="13.9" rx="2.5" ry="1.9" fill="#ecd6b0" />
-              <circle cx="10.1" cy="11.2" r="0.78" fill="#241608" /><circle cx="13.9" cy="11.2" r="0.78" fill="#241608" />
-              <ellipse cx="12" cy="13.1" rx="0.95" ry="0.68" fill="#33210f" />
-              <path d="M12 13.8 V14.8 M12 14.8 Q11 15.3 10.3 14.8 M12 14.8 Q13 15.3 13.7 14.8" stroke="#33210f" strokeWidth="0.45" fill="none" strokeLinecap="round" />
-              <path d="M18.6 4 l.55 1.5 1.5.55 -1.5.55 -.55 1.5 -.55-1.5 -1.5-.55 1.5-.55z" fill="#7fe0ff" />
-            </svg>
+          {/* MESAJLAR — bize has WhatsApp/Messenger düğmesi (ayının yerine); okunmamış rozetli */}
+          <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label={t("tabMesaj", "Mesajlar")} title={t("tabMesaj", "Mesajlar")}>
+            {Ikon.mesaj}
+            {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
           </button>
         </div>
       </header>
@@ -5830,12 +5915,9 @@ export default function Anasayfa({ pro = false }) {
                     <span className="adc-cip adc-pro">{p.tip === "profesyonel" ? t("pirlantaProfesyonel", "KIRMIZI PIRLANTA · PROFESYONEL") : t("profUye", "ÜYE")}</span>
                   </div>
                   <div className="ara-detay-mesaj">
-                    <textarea className="adm-yaz" value={mesajYazi} onChange={(e) => { setMesajYazi(e.target.value); setMesajDurum(""); }} placeholder={t("araMesajYaz", "Mesajını yaz…")} maxLength={1000} />
-                    <button className="adm-gonder" onClick={mesajGonderEt} disabled={mesajDurum === "gonderiliyor" || !mesajYazi.trim()}>
-                      {mesajDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : t("araMesajGonder", "Mesaj Gönder")}
+                    <button className="adm-gonder adm-sohbet" onClick={() => sohbetAc({ uid: p.uid, ad, foto: p.isFoto || p.avatarFoto })}>
+                      💬 {t("sohbetiAc", "Sohbeti Aç")}
                     </button>
-                    {mesajDurum === "ok" && <div className="adm-durum ok">{t("araMesajOk", "Mesajın gönderildi ✓")}</div>}
-                    {mesajDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}</div>}
                   </div>
                 </div>
               </div>
@@ -5923,7 +6005,7 @@ export default function Anasayfa({ pro = false }) {
               // KENDİ gönderimde avatar HER ZAMAN GÜNCEL profil fotom (eski paylaşımda eski foto kalmasın); amblemli gönderi hariç
               const postFoto = (kendiPost && !p.amblem && foto) ? foto : p.foto;
               const meslekRenk = MESLEK_RENK[p.meslek] || "#FFD700"; // meslek kendi renginde
-              const mesajAc = () => { if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, tip: p.pro ? "profesyonel" : "", uyelik: p.uyelik || "", konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); };
+              const mesajAc = () => { if (p.uid && p.ad) sohbetAc({ uid: p.uid, ad: p.ad, foto: p.foto }); };
               // ÇOK MEDYALI gönderi → galeri (parmakla yana kaydır); tek medyalı → eski tekli görünüm
               const postMedyalar = (p.medyalar && p.medyalar.length > 1) ? p.medyalar : null;
               // CANLI KONUM ROZETİ — "nereden paylaşıldı" (üstte, renkli, belirgin)
@@ -6458,28 +6540,84 @@ export default function Anasayfa({ pro = false }) {
         <div className="msj-fon" onClick={(e) => { if (e.target === e.currentTarget) setMesajAcik(false); }}>
           <div className="msj-pencere">
             <div className="msj-bas">
-              <span className="msj-baslik">{t("tabMesaj", "Mesajlar")}</span>
+              <span className="msj-baslik">💬 {t("tabMesaj", "Mesajlar")}</span>
               <button className="msj-kapat" onClick={() => setMesajAcik(false)} aria-label="Kapat">✕</button>
             </div>
             <div className="msj-liste">
-              {mesajlar === null ? (
-                <div className="msj-bos">{t("araYukleniyor", "Yükleniyor…")}</div>
-              ) : mesajlar.length === 0 ? (
+              {sohbetListesi.length === 0 ? (
                 <div className="msj-bos">{t("mesajYok", "Henüz mesajın yok. Birine Ara'dan ulaşıp mesaj gönderebilirsin.")}</div>
-              ) : mesajlar.map((m) => {
-                const g = m.gonderenAd || "—"; const bas = (g.trim()[0] || "?").toUpperCase();
-                const ne = m.zamanMs ? new Date(m.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+              ) : sohbetListesi.map((s) => {
+                const bas = ((s.ad || "?").trim()[0] || "?").toUpperCase();
+                const bugun = new Date(); const md = new Date(s.son.zamanMs || 0);
+                const ayniGun = md.toDateString() === bugun.toDateString();
+                const ne = s.son.zamanMs ? md.toLocaleString(dil || "tr", ayniGun ? { hour: "2-digit", minute: "2-digit" } : { day: "2-digit", month: "2-digit" }) : "";
+                const benSon = s.son.gonderenUid === benUid;
+                const oniz = s.son.gorsel ? ("📷 " + (s.son.metin || t("mesajFoto", "Fotoğraf"))) : (s.son.metin || "");
                 return (
-                  <button className="msj-kart" key={m.id} onClick={() => { setMesajAcik(false); setAraSecili({ uid: m.gonderenUid, isim: m.gonderenAd, isFoto: m.gonderenFoto, pro: {}, konum: {} }); }}>
-                    <span className="msj-foto">{m.gonderenFoto ? <img src={m.gonderenFoto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
+                  <button className="msj-kart" key={s.uid} onClick={() => sohbetAc(s)}>
+                    <span className="msj-foto">{s.foto ? <img src={s.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
                     <div className="msj-icerik">
-                      <div className="msj-ust"><b className="notranslate" translate="no">{g}</b><i>{ne}</i></div>
-                      <div className="msj-metin">{m.metin}</div>
-                      <div className="msj-yanitla">↩ {t("mesajYanitla", "Yanıtla")}</div>
+                      <div className="msj-ust"><b className="notranslate" translate="no">{s.ad}</b><i>{ne}</i></div>
+                      <div className="msj-metin-satir">
+                        <div className={"msj-onizleme" + (s.okunmamis ? " okunmadi" : "")}>
+                          {benSon && <span className="msj-tik">{s.son.okundu ? "✓✓" : "✓"}</span>}{oniz}
+                        </div>
+                        {s.okunmamis > 0 && <span className="msj-okunmamis">{s.okunmamis > 99 ? "99+" : s.okunmamis}</span>}
+                      </div>
                     </div>
                   </button>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WHATSAPP GİBİ SOHBET EKRANI — baloncuklu, canlı; en üst katman */}
+      {sohbetKisi && (
+        <div className="sohbet-fon">
+          <div className="sohbet-pencere">
+            <div className="sohbet-bas">
+              <button className="sohbet-geri" onClick={() => setSohbetKisi(null)} aria-label={t("geri", "Geri")}>‹</button>
+              <span className="sohbet-avatar">{sohbetKisi.foto ? <img src={sohbetKisi.foto} alt="" referrerPolicy="no-referrer" /> : ((sohbetKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+              <div className="sohbet-kim">
+                <b className="notranslate" translate="no"><KayanYazi>{sohbetKisi.ad}</KayanYazi></b>
+                <i>{t("cevrimici", "GLOXORG")}</i>
+              </div>
+              {sohbetKisi.tel && (
+                <a className="sohbet-ara" href={"tel:" + sohbetKisi.tel} aria-label={t("telAra", "Ara")}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+                </a>
+              )}
+            </div>
+            <div className="sohbet-akis">
+              {aktifSohbetMesajlari.length === 0 ? (
+                <div className="sohbet-bos">{t("sohbetBos", "Henüz mesaj yok. İlk mesajı sen yaz 👋")}</div>
+              ) : aktifSohbetMesajlari.map((m, i) => {
+                const benim = m.gonderenUid === benUid;
+                const saat = m.zamanMs ? new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" }) : "";
+                return (
+                  <div className={"sohbet-balon-sar " + (benim ? "benim" : "karsi")} key={m.id || i}>
+                    <div className="sohbet-balon">
+                      {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0 })} />}
+                      {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
+                      <span className="sohbet-balon-alt">{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={mesajSonRef} />
+            </div>
+            <div className="sohbet-yazar">
+              <input ref={sohbetFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={sohbetFotoSecildi} />
+              <button className="sohbet-foto-btn" onClick={() => sohbetFotoInputRef.current && sohbetFotoInputRef.current.click()} disabled={sohbetGonderiliyor} aria-label={t("fotoEkle", "Fotoğraf")}>
+                {sohbetGonderiliyor ? "…" : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5" /><circle cx="8.5" cy="10" r="1.6" /><path d="M21 16l-5-5-9 8" /></svg>}
+              </button>
+              <textarea className="sohbet-input" value={sohbetYazi} onChange={(e) => setSohbetYazi(e.target.value)} placeholder={t("mesajYaz", "Mesaj yaz…")} maxLength={1000} rows={1}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sohbetMetinGonder(); } }} />
+              <button className="sohbet-gonder-btn" onClick={sohbetMetinGonder} disabled={!sohbetYazi.trim()} aria-label={t("gonder", "Gönder")}>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4l17.4-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
+              </button>
             </div>
           </div>
         </div>
@@ -7147,7 +7285,7 @@ export default function Anasayfa({ pro = false }) {
                   </span>
                   <button className="tf-ic ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}</button>
                   <button className={"tf-ic tf-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
-                  <button className="tf-ic ape-mesaj" onClick={() => { setTamFoto(""); if (p.uid && p.ad) setAraSecili({ uid: p.uid, isim: p.ad, pro: { meslek: p.meslek }, konum: { sehir: p.sehir, ulke: p.ulke }, isFoto: p.foto }); }}>{Ikon.mesaj}</button>
+                  <button className="tf-ic ape-mesaj" onClick={() => { setTamFoto(""); if (p.uid && p.ad) sohbetAc({ uid: p.uid, ad: p.ad, foto: p.foto }); }}>{Ikon.mesaj}</button>
                 </div>
               </div>
             </div>
@@ -7331,7 +7469,7 @@ export default function Anasayfa({ pro = false }) {
           <button className="ai-maskot-kapat" onClick={(e) => { e.stopPropagation(); maskotSelamKapat(); }} aria-label={t("kapat", "Kapat")}>×</button>
           <div className="ai-maskot-metin">
             <b>{t("maskotSelamBas", "Hoş geldin")}{adTam ? " " + adTam.split(" ")[0] : ""}! 👋</b>
-            {renkliCumleler(t("maskotSelamGovde", " Ben Gloxoo, Gloxorg dünyasının akıllı kalbi 💎 — paylaşım yazar, yol tarifi veririm, her sayfada yanındayım. Üstteki 🐻 Ekspert de bulunduğun sayfanın uzmanı. Bana dokun, konuşalım!"), RC_KOYU)}
+            {renkliCumleler(t("maskotSelamGovde", " Ben Gloxoo, Gloxorg dünyasının akıllı kalbi 💎 — paylaşım yazar, yol tarifi veririm, her sayfada yanındayım ve bulunduğun sayfanın uzmanıyım. Bana dokun, konuşalım!"), RC_KOYU)}
           </div>
         </div>
       )}
@@ -7352,7 +7490,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="ai-fon" onClick={(e) => { if (e.target === e.currentTarget) setYardimciAcik(false); }}>
           <div className={"ai-pencere " + (proUye ? "ai-tema-pro" : "ai-tema-musteri")}>
             <div className="ai-bas">
-              <span className="ai-bas-ad"><button type="button" className={"ai-bas-maskot" + (canliSohbet ? " canli" : "")} onClick={canliSohbetToggle} aria-label={t("canliSohbet", "Canlı Sohbet")} title={t("canliSohbet", "Canlı Sohbet")}><MaskotYuz konusuyor={aiKonusuyor} tur={yardimciMod === "site" ? "ekspert" : "grox"} boyut={32} />{canliSohbet && <span className="ai-bas-canli-nokta" />}</button>{yardimciMod === "site" ? t("siteAsistan", "Site Asistanı") : t("yardimciBaslik", "GLOXORG Yardımcısı")}</span>
+              <span className="ai-bas-ad"><button type="button" className={"ai-bas-maskot" + (canliSohbet ? " canli" : "")} onClick={canliSohbetToggle} aria-label={t("canliSohbet", "Canlı Sohbet")} title={t("canliSohbet", "Canlı Sohbet")}><MaskotYuz konusuyor={aiKonusuyor} tur="grox" boyut={32} />{canliSohbet && <span className="ai-bas-canli-nokta" />}</button>{yardimciMod === "site" ? t("siteAsistan", "Site Asistanı") : t("yardimciBaslik", "GLOXORG Yardımcısı")}</span>
               {/* KONUM DURUM İKONU — panelin üstünde konumun AÇIK/KAPALI olduğunu gösterir; dokununca aç/kapa (hızlı). Açık=yeşil, kapalı=gri. */}
               <button type="button" className={"ai-bas-konum" + (tamKonumIzin ? " acik" : "")} onClick={tamKonumToggle}
                 aria-label={tamKonumIzin ? t("konumAcik", "Konum açık") : t("konumKapali", "Konum kapalı")}
@@ -7784,10 +7922,6 @@ export default function Anasayfa({ pro = false }) {
               <section className="hakkinda-blok">
                 <h2>{H.b2h}</h2>
                 <p>{H.b2p}</p>
-              </section>
-              <section className="hakkinda-blok">
-                <h2>{H.b3h}</h2>
-                <p>{H.b3p}</p>
               </section>
               <section className="hakkinda-blok hakkinda-eksen-blok">
                 <h2>{H.eh}</h2>

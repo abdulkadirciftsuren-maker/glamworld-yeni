@@ -3676,3 +3676,59 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ayar-mchip{ font-size:21px; min-height:78px; }
   .ayar-mchip-ik{ font-size:36px; }
 }
+
+/* ===================== MESAJLAŞMA (WhatsApp gibi) — Mesaj Merkezi + baloncuklu sohbet ===================== */
+/* Üst çubuk MESAJLAR düğmesi (ayının yerine) — altın, hafif yuvarlatılmış KARE (anayasa: tam daire değil) */
+.ana-mesaj-btn{ position:relative; border-radius:12px !important; background:radial-gradient(circle at 34% 24%, #ffe9a8, #ecc84e 68%, #c69a2e) !important; color:#4a3208; border:1.5px solid #d9b64a; }
+.ana-mesaj-btn svg{ width:22px; height:22px; stroke:#4a3208; }
+.ana-mesaj-btn svg path, .ana-mesaj-btn svg rect, .ana-mesaj-btn svg circle{ stroke:#4a3208; }
+
+/* Mesaj Merkezi liste satırı (son mesaj + okunmamış rozeti + çift tik) */
+.msj-metin-satir{ display:flex; align-items:center; gap:6px; margin-top:2px; }
+.msj-onizleme{ flex:1; min-width:0; color:#6b5417; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.msj-onizleme.okunmadi{ color:#3a2c00; font-weight:700; }
+.msj-tik{ color:#2f9e44; font-weight:800; margin-right:3px; }
+.msj-okunmamis{ flex:0 0 auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:#2f9e44; color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+
+/* Tam ekran sohbet — ALTIN zemin (anayasa: siyah yok), kare düğmeler */
+.sohbet-fon{ position:fixed; inset:0; z-index:100020; display:flex; align-items:stretch; justify-content:center;
+  background:radial-gradient(circle at 50% 38%, #d8b552, #a9812f); animation:adFon .18s ease; }
+.sohbet-pencere{ width:100%; max-width:620px; height:100%; display:flex; flex-direction:column; background:linear-gradient(180deg,#f7ecc9,#efe0b8); }
+.sohbet-bas{ flex:0 0 auto; display:flex; align-items:center; gap:9px; padding:9px 12px; background:linear-gradient(135deg,#d9b64a,#b28e34); box-shadow:0 2px 8px rgba(90,60,10,.3); }
+.sohbet-geri{ border:none; background:transparent; color:#fff; font-size:30px; line-height:1; cursor:pointer; padding:0 2px; }
+.sohbet-avatar{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; overflow:hidden; background:#8a6b28; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:17px; border:2px solid #ffe9a8; }
+.sohbet-avatar img{ width:100%; height:100%; object-fit:cover; }
+.sohbet-kim{ flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+.sohbet-kim b{ color:#3a2c00; font-size:16px; font-weight:800; }
+.sohbet-kim i{ color:#6b5417; font-size:11px; font-style:normal; }
+.sohbet-ara{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; background:#2f9e44; color:#fff; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+.sohbet-ara svg{ width:20px; height:20px; }
+.sohbet-akis{ flex:1; overflow-y:auto; padding:14px 12px; display:flex; flex-direction:column; gap:8px; }
+.sohbet-bos{ margin:auto; color:#6b5417; font-size:14px; text-align:center; padding:20px; }
+.sohbet-balon-sar{ display:flex; max-width:82%; }
+.sohbet-balon-sar.benim{ align-self:flex-end; }
+.sohbet-balon-sar.karsi{ align-self:flex-start; }
+.sohbet-balon{ position:relative; padding:8px 11px 5px; border-radius:14px; box-shadow:0 1px 3px rgba(90,60,10,.2); display:flex; flex-direction:column; }
+.sohbet-balon-sar.benim .sohbet-balon{ background:linear-gradient(135deg,#ffe07a,#f2ce3f); color:#3a2c00; border-bottom-right-radius:4px; }
+.sohbet-balon-sar.karsi .sohbet-balon{ background:#fffef8; color:#2a2008; border-bottom-left-radius:4px; }
+.sohbet-balon-metin{ font-size:15px; line-height:1.35; white-space:pre-wrap; word-break:break-word; }
+.sohbet-balon-foto{ max-width:230px; width:100%; border-radius:10px; margin-bottom:4px; cursor:pointer; display:block; }
+.sohbet-balon-alt{ align-self:flex-end; display:flex; align-items:center; gap:3px; font-size:10px; color:#7a5e10; margin-top:2px; }
+.sohbet-tik{ color:#2f9e44; font-weight:800; }
+.sohbet-yazar{ flex:0 0 auto; display:flex; align-items:flex-end; gap:7px; padding:8px 10px; background:linear-gradient(180deg,#efe0b8,#e6d3a3); box-shadow:0 -2px 8px rgba(90,60,10,.15); }
+.sohbet-foto-btn, .sohbet-gonder-btn{ flex:0 0 auto; width:42px; height:42px; border-radius:11px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.sohbet-foto-btn{ background:#e9d38f; color:#5a4210; font-size:20px; }
+.sohbet-foto-btn svg{ width:22px; height:22px; }
+.sohbet-gonder-btn{ background:linear-gradient(135deg,#2f9e44,#268a3a); color:#fff; }
+.sohbet-gonder-btn svg{ width:21px; height:21px; }
+.sohbet-gonder-btn:disabled, .sohbet-foto-btn:disabled{ opacity:.5; cursor:default; }
+.sohbet-input{ flex:1; min-width:0; max-height:110px; resize:none; border:1.5px solid #d9b64a; border-radius:14px; padding:10px 12px; font-size:15px; font-family:inherit; line-height:1.3; background:#fffef8; color:#2a2008; outline:none; }
+.sohbet-input::placeholder{ color:#a98c4a; }
+.adm-sohbet{ background:linear-gradient(135deg,#2f9e44,#268a3a) !important; color:#fff !important; }
+@media (min-width:560px){
+  .sohbet-balon-metin{ font-size:16px; }
+  .sohbet-input{ font-size:16px; }
+  .sohbet-kim b{ font-size:18px; }
+  .sohbet-kim i{ font-size:12px; }
+  .msj-onizleme{ font-size:14px; }
+}

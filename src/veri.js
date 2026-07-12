@@ -196,21 +196,51 @@ export async function profesyonelAra({ meslek, ulke, sehir } = {}, adet = 30) {
 }
 
 // ---------- MESAJLAŞMA ----------
-// Mesaj gönder (arama detayından bir profesyonele). serverTimestamp + zamanMs (anında sıralama için).
-export async function mesajGonder({ aliciUid, aliciAd, metin, gonderen } = {}) {
-  if (!aliciUid || !metin || !metin.trim() || !gonderen || !gonderen.uid) return false;
+// Mesaj gönder (bir kişiye). Metin ve/veya foto (gorsel = yüklenmiş URL). serverTimestamp + zamanMs (anında sıralama).
+export async function mesajGonder({ aliciUid, aliciAd, metin, gorsel, gonderen } = {}) {
+  if (!aliciUid || !gonderen || !gonderen.uid) return false;
+  const mt = (metin || "").trim();
+  if (!mt && !gorsel) return false; // boş mesaj gitmesin
   try {
     const ref = doc(collection(db, "mesajlar"));
     await setDoc(ref, {
       aliciUid, aliciAd: aliciAd || "",
       gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "",
-      metin: metin.trim().slice(0, 1000), okundu: false,
+      metin: mt.slice(0, 1000), gorsel: gorsel || "", okundu: false,
       zaman: serverTimestamp(), zamanMs: Date.now(),
     });
     // Alıcıya BİLDİRİM bırak (zil + telefon bildirimi için)
-    bildirimEkle({ aliciUid, gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "", tip: "mesaj", metin: metin.trim().slice(0, 60) }).catch(() => {});
+    bildirimEkle({ aliciUid, gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "", tip: "mesaj", metin: (mt || (gorsel ? "📷 Fotoğraf" : "")).slice(0, 60) }).catch(() => {});
     return true;
   } catch (e) { return false; }
+}
+// TÜM mesajlarım (GELEN + GİDEN) — WhatsApp gibi sohbet merkezi + baloncuklu sohbet için CANLI dinle.
+// İki dinleyici (aliciUid==ben, gonderenUid==ben); istemcide birleştirilip zamana göre ARTAN sıralanır.
+// Geri: iki aboneliği de iptal eden fonksiyon. (Firestore OR sorgusu index ister → iki ayrı dinleyici daha güvenli.)
+export function mesajlarimiDinle(uid, cb, adet = 500) {
+  if (!uid) return () => {};
+  let gelen = [], giden = [];
+  const yolla = () => {
+    const harita = new Map();
+    [...gelen, ...giden].forEach((m) => { if (m && m.id) harita.set(m.id, m); });
+    const liste = Array.from(harita.values()).sort((a, b) => (a.zamanMs || 0) - (b.zamanMs || 0));
+    try { cb(liste); } catch (e) {}
+  };
+  let a1 = () => {}, a2 = () => {};
+  try {
+    const q1 = query(collection(db, "mesajlar"), where("aliciUid", "==", uid), fsLimit(adet));
+    a1 = onSnapshot(q1, (s) => { gelen = s.docs.map((d) => ({ id: d.id, ...d.data() })); yolla(); }, () => {});
+    const q2 = query(collection(db, "mesajlar"), where("gonderenUid", "==", uid), fsLimit(adet));
+    a2 = onSnapshot(q2, (s) => { giden = s.docs.map((d) => ({ id: d.id, ...d.data() })); yolla(); }, () => {});
+  } catch (e) {}
+  return () => { try { a1(); } catch (e) {} try { a2(); } catch (e) {} };
+}
+// Bir sohbetteki BANA GELEN okunmamış mesajları "okundu" yap (çift tik ✓✓). Sadece alıcı güncelleyebilir (kural).
+export async function mesajOkunduYap(mesajlar) {
+  try {
+    await Promise.all((mesajlar || []).filter((m) => m && m.id && !m.okundu).map((m) =>
+      setDoc(doc(db, "mesajlar", m.id), { okundu: true }, { merge: true })));
+  } catch (e) {}
 }
 
 // ---------- BİLDİRİMLER (zil + telefon bildirimi) ----------
