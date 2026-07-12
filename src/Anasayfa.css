@@ -3716,7 +3716,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 
 /* Mesaj Merkezi (Gloxi) — ALTIN tema (base koyu .msj-* paylaş/yorum pencerelerinde AYNEN kalır, bozulmaz) */
 /* Mesaj Merkezi (Glome ilk sayfa) zemini: TAM OPAK ALTIN — eskiden %50 saydamdı, arkadaki feed sızıp PARLIYORDU; artık hiçbir şey sızmaz (siyah da değil) */
-.msj-merkez{ background:radial-gradient(circle at 50% 34%, #d8b552, #a9812f) !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+.msj-merkez{ background:radial-gradient(circle at 50% 34%, #d8b552, #a9812f) !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; animation:none !important; }
 .msj-merkez .msj-pencere{ background:linear-gradient(180deg,#f7ecc9,#efe0b8) !important; border:1.5px solid #d9b64a !important; box-shadow:0 14px 44px rgba(50,34,6,.5) !important; }
 .msj-merkez .msj-bas{ background:linear-gradient(135deg,#d9b64a,#b28e34) !important; border-bottom:none !important; padding:13px 15px !important; }
 .msj-merkez .msj-baslik{ display:flex; align-items:center; gap:7px; color:#3a2c00 !important; }
@@ -3744,8 +3744,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .msj-okunmamis{ flex:0 0 auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:#2f9e44; color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; }
 
 /* Tam ekran sohbet — ALTIN zemin (anayasa: siyah yok), kare düğmeler */
+/* Glome sohbet penceresi: İLK ANDAN OPAK açılır (adFon opacity fade YOK) — fade sırasında arka plan sızıp parlıyordu; opak pencere delinmez */
 .sohbet-fon{ position:fixed; inset:0; z-index:100020; display:flex; align-items:stretch; justify-content:center;
-  background:radial-gradient(circle at 50% 38%, #d8b552, #a9812f); animation:adFon .18s ease; }
+  background:radial-gradient(circle at 50% 38%, #d8b552, #a9812f); }
 .sohbet-pencere{ width:100%; max-width:540px; height:100%; display:flex; flex-direction:column; background:linear-gradient(160deg,#dcecc4,#cbe0ac); } /* sohbet ZEMİNİ: belirgin AÇIK YEŞİL (beyaz değil; altın/mavi balonlarla 3 net renk) */
 .sohbet-bas{ flex:0 0 auto; display:flex; align-items:center; gap:9px; padding:9px 12px; background:linear-gradient(135deg,#d9b64a,#b28e34); box-shadow:0 2px 8px rgba(90,60,10,.3); }
 .sohbet-geri{ border:none; background:transparent; color:#fff; font-size:30px; line-height:1; cursor:pointer; padding:0 2px; }
@@ -3774,10 +3775,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-tepkiler b{ font-size:11px; color:#6b5417; margin-left:2px; }
 /* Tepki seçici: PORTAL + fixed → parmakla BASTIĞIN mesajın tam üstünde açılır, ekran köşesine kaçmaz, kenardan taşmaz */
 .sohbet-tepki-fon{ position:fixed; inset:0; z-index:12500; }
-.sohbet-tepki-secici{ position:fixed; transform:translate(-50%,-100%); z-index:12600; display:flex; flex-wrap:nowrap; justify-content:center; gap:1px; max-width:96vw; background:#fffef8; border:1.5px solid #d9b64a; border-radius:22px; padding:5px 6px; box-shadow:0 8px 26px rgba(90,60,10,.5); animation:adFon .14s ease; }
+/* Tepki kutusu: DAR, İKİ SATIR (5'li ızgara), ekran DIŞINA taşmaz — parmağın üstünde ortalanır */
+.sohbet-tepki-secici{ position:fixed; transform:translate(-50%,-100%); z-index:12600; display:grid; grid-template-columns:repeat(5, 1fr); justify-items:center; align-items:center; gap:2px; width:max-content; max-width:270px; background:#fffef8; border:1.5px solid #d9b64a; border-radius:18px; padding:6px 8px; box-shadow:0 8px 26px rgba(90,60,10,.5); }
 .sohbet-tepki-secici.alt{ transform:translate(-50%,0); } /* parmak en üstteyse ALTINA aç (yukarı taşmasın) */
-.sohbet-tepki-secici .sts-emo{ font-size:23px; padding:2px 3px; }
-@media (max-width:400px){ .sohbet-tepki-secici .sts-emo{ font-size:21px; padding:2px 2px; } }
+.sohbet-tepki-secici .sts-emo, .sohbet-tepki-secici .sts-islem{ font-size:24px; padding:3px; margin:0; width:44px; height:40px; display:flex; align-items:center; justify-content:center; }
+.sohbet-tepki-secici .sts-islem{ font-size:20px; }
+@media (max-width:400px){ .sohbet-tepki-secici{ max-width:240px; } .sohbet-tepki-secici .sts-emo, .sohbet-tepki-secici .sts-islem{ font-size:22px; width:40px; height:38px; } }
 .sts-emo{ border:none; background:transparent; font-size:24px; cursor:pointer; padding:2px 3px; border-radius:8px; line-height:1; transition:transform .1s; }
 .sts-emo:active{ transform:scale(1.3); background:#f3e8c8; }
 /* Her baloncukta küçük TEPKİ İŞARETİ (🙂) — insanlar tepki verebileceğini görsün, dokun → seçici açılır */
