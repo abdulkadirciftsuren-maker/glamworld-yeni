@@ -198,20 +198,22 @@ export async function profesyonelAra({ meslek, ulke, sehir } = {}, adet = 30) {
 
 // ---------- MESAJLAŞMA ----------
 // Mesaj gönder (bir kişiye). Metin ve/veya foto (gorsel) / video / dosya ({url,ad}) — hepsi yüklenmiş URL. serverTimestamp + zamanMs.
-export async function mesajGonder({ aliciUid, aliciAd, metin, gorsel, video, dosya, gonderen } = {}) {
+export async function mesajGonder({ aliciUid, aliciAd, metin, gorsel, video, dosya, medyalar, gonderen } = {}) {
   if (!aliciUid || !gonderen || !gonderen.uid) return false;
   const mt = (metin || "").trim();
-  if (!mt && !gorsel && !video && !(dosya && dosya.url)) return false; // boş mesaj gitmesin
+  const med = Array.isArray(medyalar) ? medyalar.filter((x) => x && x.url).slice(0, 6) : [];
+  if (!mt && !gorsel && !video && !(dosya && dosya.url) && !med.length) return false; // boş mesaj gitmesin
   try {
     const ref = doc(collection(db, "mesajlar"));
     await setDoc(ref, {
       aliciUid, aliciAd: aliciAd || "",
       gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "",
-      metin: mt.slice(0, 1000), gorsel: gorsel || "", video: video || "", dosya: (dosya && dosya.url) ? { url: dosya.url, ad: (dosya.ad || "dosya").slice(0, 120) } : null,
+      metin: mt.slice(0, 2000), gorsel: gorsel || "", video: video || "", dosya: (dosya && dosya.url) ? { url: dosya.url, ad: (dosya.ad || "dosya").slice(0, 120) } : null,
+      medyalar: med.length ? med.map((x) => ({ tip: x.tip || "foto", url: x.url, ad: (x.ad || "").slice(0, 120) })) : null,
       okundu: false, zaman: serverTimestamp(), zamanMs: Date.now(),
     });
     // Alıcıya BİLDİRİM bırak (zil + telefon bildirimi için)
-    const oz = mt || (gorsel ? "📷 Fotoğraf" : video ? "🎥 Video" : dosya ? "📎 Dosya" : "");
+    const oz = mt || (med.length ? ("📷 " + med.length + " medya") : gorsel ? "📷 Fotoğraf" : video ? "🎥 Video" : dosya ? "📎 Dosya" : "");
     bildirimEkle({ aliciUid, gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "", tip: "mesaj", metin: oz.slice(0, 60) }).catch(() => {});
     return true;
   } catch (e) { return false; }

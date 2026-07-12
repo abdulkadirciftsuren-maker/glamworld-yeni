@@ -1234,12 +1234,13 @@ export default function Anasayfa({ pro = false }) {
   const [sohbetKisi, setSohbetKisi] = useState(null);  // AÇIK sohbetin karşı tarafı {uid, ad, foto} | null
   const [sohbetYazi, setSohbetYazi] = useState("");    // sohbet ekranındaki yazma kutusu
   const [sohbetGonderiliyor, setSohbetGonderiliyor] = useState(false); // foto/mesaj gönderiliyor mu
-  const [bekleyenMedya, setBekleyenMedya] = useState(null); // seçilip GÖNDERİLMEYİ bekleyen medya {tip, url, ad?} — yazıyla BİRLİKTE gider
+  const [bekleyenMedyalar, setBekleyenMedyalar] = useState([]); // seçilip GÖNDERİLMEYİ bekleyen medyalar [{tip,url,ad?}] — çoklu foto/video, yazıyla BİRLİKTE gider (max 6)
   const [tepkiMesaj, setTepkiMesaj] = useState(null);  // uzun basılan mesajın id'si → emoji seçici açık
   const tepkiBasRef = useRef(null);                    // uzun-basma zamanlayıcısı
   const GLOME_TEPKI = ["❤️", "👍", "😂", "😮", "😢", "🙏", "🔥", "👏"]; // bize özel 8 tepki (WhatsApp/Messenger gibi)
   const mesajSonRef = useRef(null);                    // sohbette en alta kaydırma çıpası
   const [sohbetMedyaAcik, setSohbetMedyaAcik] = useState(false); // sohbette medya menüsü (foto/video/dosya/canlı) açık mı
+  const sohbetInputRef = useRef(null);                 // yazma kutusu (otomatik büyür)
   const sohbetFotoInputRef = useRef(null);             // foto seç (galeri)
   const sohbetVideoInputRef = useRef(null);            // video seç (galeri)
   const sohbetDosyaInputRef = useRef(null);            // dosya seç
@@ -2762,16 +2763,16 @@ export default function Anasayfa({ pro = false }) {
     const ad = kisi.ad || kisi.isim || [kisi.isim, kisi.soyisim].filter(Boolean).join(" ") || kisi.aliciAd || "—";
     const foto = kisi.foto || kisi.isFoto || kisi.avatarFoto || kisi.gonderenFoto || "";
     setBegenenModal(null); setYorumAcik(null); setAraSecili(null); setTamFoto(""); // üstteki katmanlar kapansın
-    setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false); setBekleyenMedya(null); setSohbetMedyaAcik(false); setTepkiMesaj(null);
+    setSohbetKisi({ uid: kisi.uid, ad, foto }); setSohbetYazi(""); setSohbetGonderiliyor(false); setBekleyenMedyalar([]); setSohbetMedyaAcik(false); setTepkiMesaj(null);
   };
   // Sohbetten mesaj gönder (metin / foto / video / dosya). Medya önce Storage'a yüklenir, URL saklanır (Firestore 1MB'a sığsın).
-  const sohbetGonderEt = async (metin, gorsel, video, dosya) => {
+  const sohbetGonderEt = async (metin, gorsel, video, dosya, medyalar) => {
     const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
     if (!uu || !kisi) return false;
-    if (!((metin && metin.trim()) || gorsel || video || (dosya && dosya.url))) return false;
+    if (!((metin && metin.trim()) || gorsel || video || (dosya && dosya.url) || (medyalar && medyalar.length))) return false;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try {
-      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null, gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" } });
+      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null, medyalar: medyalar || null, gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" } });
     } catch (e) { return false; }
   };
   // Sohbette VİDEO seç/çek → Storage'a yükle, video mesajı gönder
@@ -2780,7 +2781,7 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
     if (!dsy || !uu || !kisi) return;
     setSohbetGonderiliyor(true);
-    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) setBekleyenMedya({ tip: "video", url: r.url }); } catch (x) {}
+    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) setBekleyenMedyalar((a) => [...a, { tip: "video", url: r.url }].slice(0, 6)); } catch (x) {}
     setSohbetGonderiliyor(false);
   };
   // Sohbette DOSYA seç → Storage'a yükle, GÖNDERİLMEYİ beklet (yazıyla birlikte)
@@ -2789,7 +2790,7 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser; const kisi = sohbetKisiRef.current;
     if (!dsy || !uu || !kisi) return;
     setSohbetGonderiliyor(true);
-    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) setBekleyenMedya({ tip: "dosya", url: r.url, ad: r.ad }); } catch (x) {}
+    try { const r = await dosyaYukle(dsy, uu.uid, () => {}); if (r && r.url) setBekleyenMedyalar((a) => [...a, { tip: "dosya", url: r.url, ad: r.ad }].slice(0, 6)); } catch (x) {}
     setSohbetGonderiliyor(false);
   };
   // ---- İNTERNET ARAMASI (WebRTC — sesli/görüntülü) ----
@@ -2970,15 +2971,16 @@ export default function Anasayfa({ pro = false }) {
     });
     return iptal;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Gönder: yazı + (varsa) bekleyen foto/video/dosya TEK mesajda birlikte gider (kullanıcı: foto ile yazı ayrı ayrı gitmesin)
+  // Gönder: yazı + (varsa) bekleyen foto/video/dosya(lar) TEK mesajda birlikte gider (çoklu medya + yazı, ayrı ayrı değil)
   const sohbetMetinGonder = () => {
-    const m = sohbetYazi.trim(); const bm = bekleyenMedya;
-    if (!m && !bm) return;
-    setSohbetYazi(""); setBekleyenMedya(null);
-    const gorsel = bm && bm.tip === "foto" ? bm.url : "";
-    const video = bm && bm.tip === "video" ? bm.url : "";
-    const dosya = bm && bm.tip === "dosya" ? { url: bm.url, ad: bm.ad } : null;
-    sohbetGonderEt(m, gorsel, video, dosya).then((ok) => { if (!ok) { setSohbetYazi(m); setBekleyenMedya(bm); } }); // hata olursa geri koy
+    const m = sohbetYazi.trim(); const meds = bekleyenMedyalar;
+    if (!m && (!meds || !meds.length)) return;
+    setSohbetYazi(""); setBekleyenMedyalar([]);
+    try { if (sohbetInputRef.current) sohbetInputRef.current.style.height = "auto"; } catch (e) {}
+    let gorsel = "", video = "", dosya = null, medyalar = null;
+    if (meds.length === 1) { const bm = meds[0]; gorsel = bm.tip === "foto" ? bm.url : ""; video = bm.tip === "video" ? bm.url : ""; dosya = bm.tip === "dosya" ? { url: bm.url, ad: bm.ad } : null; }
+    else if (meds.length > 1) { medyalar = meds.map((x) => ({ tip: x.tip, url: x.url, ad: x.ad })); }
+    sohbetGonderEt(m, gorsel, video, dosya, medyalar).then((ok) => { if (!ok) { setSohbetYazi(m); setBekleyenMedyalar(meds); } }); // hata olursa geri koy
   };
   // MESAJA TEPKİ (WhatsApp gibi): baloncuğa UZUN BAS → emoji seçici; emoji seç → tepki (karşıya bildirim)
   const tepkiBaslat = (mesajId) => { tepkiIptal(); tepkiBasRef.current = setTimeout(() => setTepkiMesaj(mesajId), 450); };
@@ -3004,7 +3006,7 @@ export default function Anasayfa({ pro = false }) {
       const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = dataURL; });
       const kucuk = imgKucult(img, 1280) || dataURL; // büyük fotoğrafı küçült (yükleme hızlı, kota korunur)
       const url = await gorselYukle(kucuk, uu.uid, () => {});
-      if (url) setBekleyenMedya({ tip: "foto", url }); // GÖNDERME → yazıyla birlikte gitmek üzere beklet
+      if (url) setBekleyenMedyalar((a) => [...a, { tip: "foto", url }].slice(0, 6)); // listeye EKLE (çoklu), yazıyla birlikte gider
     } catch (x) {}
     setSohbetGonderiliyor(false);
   };
@@ -6921,6 +6923,16 @@ export default function Anasayfa({ pro = false }) {
                       <div className="sohbet-balon"
                         onPointerDown={() => tepkiBaslat(m.id)} onPointerUp={tepkiIptal} onPointerMove={tepkiIptal} onPointerLeave={tepkiIptal}
                         onContextMenu={(e) => { e.preventDefault(); setTepkiMesaj(m.id); }}>
+                        {m.medyalar && m.medyalar.length > 0 && (
+                          <div className={"sohbet-kolaj n" + Math.min(m.medyalar.length, 4)}>
+                            {m.medyalar.slice(0, 4).map((md, ki) => (
+                              <div className="sk-oge" key={ki} onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: m.medyalar.map((x) => ({ tip: x.tip === "video" ? "video" : "foto", src: x.url })), i: ki }); }}>
+                                {md.tip === "video" ? <video src={md.url} muted preload="metadata" /> : md.tip === "dosya" ? <span className="sk-dosya">📎</span> : <img src={md.url} alt="" referrerPolicy="no-referrer" />}
+                                {ki === 3 && m.medyalar.length > 4 && <span className="sk-fazla">+{m.medyalar.length - 4}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0 })} />}
                         {m.video && <video className="sohbet-balon-video" src={m.video} controls playsInline preload="metadata" />}
                         {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
@@ -6941,14 +6953,21 @@ export default function Anasayfa({ pro = false }) {
               })}
               <div ref={mesajSonRef} />
             </div>
-            {/* SEÇİLEN MEDYA ÖNİZLEME — yazı yazıp birlikte gönder (ayrı ayrı değil) */}
-            {bekleyenMedya && (
+            {/* SEÇİLEN MEDYALAR ÖNİZLEME (çoklu) — yazı yazıp hepsini birlikte gönder */}
+            {bekleyenMedyalar.length > 0 && (
               <div className="sohbet-bekleyen">
-                {bekleyenMedya.tip === "foto" && <img className="sb-onizleme" src={bekleyenMedya.url} alt="" referrerPolicy="no-referrer" />}
-                {bekleyenMedya.tip === "video" && <video className="sb-onizleme" src={bekleyenMedya.url} muted playsInline />}
-                {bekleyenMedya.tip === "dosya" && <span className="sb-onizleme sb-dosya">📎 <span className="notranslate">{bekleyenMedya.ad || t("dosya", "Dosya")}</span></span>}
+                <div className="sb-serit">
+                  {bekleyenMedyalar.map((bm, bi) => (
+                    <div className="sb-oge" key={bi}>
+                      {bm.tip === "foto" && <img className="sb-onizleme" src={bm.url} alt="" referrerPolicy="no-referrer" />}
+                      {bm.tip === "video" && <video className="sb-onizleme" src={bm.url} muted playsInline />}
+                      {bm.tip === "dosya" && <span className="sb-onizleme sb-dosya">📎</span>}
+                      <button className="sb-sil" onClick={() => setBekleyenMedyalar((a) => a.filter((_, k) => k !== bi))} aria-label={t("kaldir", "Kaldır")}>✕</button>
+                    </div>
+                  ))}
+                  {bekleyenMedyalar.length < 6 && <button className="sb-ekle" onClick={() => setSohbetMedyaAcik(true)} aria-label={t("dahaEkle", "Daha ekle")}>＋</button>}
+                </div>
                 <span className="sb-not">{t("yaziEkleGonder", "İstersen yazı ekle, sonra Gönder ➤")}</span>
-                <button className="sb-sil" onClick={() => setBekleyenMedya(null)} aria-label={t("kaldir", "Kaldır")}>✕</button>
               </div>
             )}
             <div className="sohbet-yazar">
@@ -6973,9 +6992,11 @@ export default function Anasayfa({ pro = false }) {
               <button className={"sohbet-foto-btn" + (sohbetMedyaAcik ? " acik" : "")} onClick={() => setSohbetMedyaAcik((a) => !a)} disabled={sohbetGonderiliyor} aria-label={t("medyaEkle", "Ekle")}>
                 {sohbetGonderiliyor ? "…" : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>}
               </button>
-              <textarea className="sohbet-input" value={sohbetYazi} onChange={(e) => setSohbetYazi(e.target.value)} placeholder={t("mesajYaz", "Mesaj yaz…")} maxLength={1000} rows={1}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sohbetMetinGonder(); } }} />
-              <button className="sohbet-gonder-btn" onClick={sohbetMetinGonder} disabled={!sohbetYazi.trim() && !bekleyenMedya} aria-label={t("gonder", "Gönder")}>
+              <textarea ref={sohbetInputRef} className="sohbet-input" value={sohbetYazi}
+                onChange={(e) => { setSohbetYazi(e.target.value); const el = e.target; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 138) + "px"; }}
+                placeholder={t("mesajYaz", "Mesaj yaz…")} maxLength={2000} rows={1}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !("ontouchstart" in window)) { e.preventDefault(); sohbetMetinGonder(); } }} />
+              <button className="sohbet-gonder-btn" onClick={sohbetMetinGonder} disabled={!sohbetYazi.trim() && !bekleyenMedyalar.length} aria-label={t("gonder", "Gönder")}>
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4l17.4-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
               </button>
             </div>
