@@ -3028,7 +3028,13 @@ export default function Anasayfa({ pro = false }) {
       if (yeni) t[uu.uid] = yeni; else delete t[uu.uid];
       return { ...x, tepkiler: t };
     }));
-    await mesajTepkiVer(mesajId, uu.uid, yeni);
+    const tepkiOk = await mesajTepkiVer(mesajId, uu.uid, yeni);
+    if (!tepkiOk) {
+      // Firebase kuralı yazmayı reddetti → optimistik değişikliği geri al + net uyarı (sessizce eskiye dönüp kafa karıştırmasın)
+      setMesajlarimTum((liste) => liste.map((x) => (x.id === mesajId ? { ...x, tepkiler: (m.tepkiler || {}) } : x)));
+      setKucukMesaj(t("tepkiKural", "Tepki kaydedilemedi — Firebase mesaj kuralını güncellemen gerekiyor"));
+      return;
+    }
     if (yeni && m.gonderenUid && m.gonderenUid !== uu.uid) {
       bildirimEkle({ aliciUid: m.gonderenUid, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "mesaj-tepki", metin: yeni + " " + (m.metin || (m.gorsel ? "📷" : "")).slice(0, 40) }).catch(() => {});
     }
