@@ -6975,7 +6975,12 @@ export default function Anasayfa({ pro = false }) {
                             </div>
                           )}
                           {m.gorsel && <img className="sohbet-balon-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setOnizGaleri({ liste: [{ tip: "foto", src: m.gorsel }], i: 0, mesajId: m.id })} />}
-                          {m.video && <video className="sohbet-balon-video" src={m.video} controls playsInline preload="metadata" />}
+                          {m.video && (
+                            <div className="sohbet-balon-vid-sar" onClick={(e) => { e.stopPropagation(); setOnizGaleri({ liste: [{ tip: "video", src: m.video }], i: 0, mesajId: m.id }); }}>
+                              <video className="sohbet-balon-video" src={m.video} muted playsInline preload="metadata" tabIndex={-1} />
+                              <span className="sohbet-vid-oynat" aria-hidden="true">▶</span>
+                            </div>
+                          )}
                           {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
                           {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
                         </>)}

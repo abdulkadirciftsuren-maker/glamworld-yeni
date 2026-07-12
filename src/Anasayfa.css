@@ -3711,7 +3711,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ana-tab-rozet{ position:absolute; top:1px; left:calc(50% + 4px); min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#e0202c; color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1; }
 
 /* Mesaj Merkezi (Gloxi) — ALTIN tema (base koyu .msj-* paylaş/yorum pencerelerinde AYNEN kalır, bozulmaz) */
-.msj-merkez{ background:rgba(50,34,6,.5) !important; }
+/* Mesaj Merkezi (Glome ilk sayfa) zemini: TAM OPAK ALTIN — eskiden %50 saydamdı, arkadaki feed sızıp PARLIYORDU; artık hiçbir şey sızmaz (siyah da değil) */
+.msj-merkez{ background:radial-gradient(circle at 50% 34%, #d8b552, #a9812f) !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
 .msj-merkez .msj-pencere{ background:linear-gradient(180deg,#f7ecc9,#efe0b8) !important; border:1.5px solid #d9b64a !important; box-shadow:0 14px 44px rgba(50,34,6,.5) !important; }
 .msj-merkez .msj-bas{ background:linear-gradient(135deg,#d9b64a,#b28e34) !important; border-bottom:none !important; padding:13px 15px !important; }
 .msj-merkez .msj-baslik{ display:flex; align-items:center; gap:7px; color:#3a2c00 !important; }
@@ -3841,6 +3842,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .sohbet-kolaj[data-n="6"] .sk-oge{ height:128px; }
 }
 /* Sohbet baloncuğunda VİDEO ve DOSYA */
+.sohbet-balon-vid-sar{ position:relative; display:block; cursor:pointer; margin-bottom:4px; max-width:240px; }
+.sohbet-balon-vid-sar .sohbet-balon-video{ margin-bottom:0; pointer-events:none; }
+/* Video üzerinde oynat düğmesi — dokununca TAM EKRAN açılır (kare, altın; yuvarlak değil, siyah değil) */
+.sohbet-vid-oynat{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:52px; height:52px; border-radius:15px; background:rgba(255,222,110,.94); color:#3a2c00; font-size:22px; display:flex; align-items:center; justify-content:center; pointer-events:none; box-shadow:0 3px 12px rgba(60,40,5,.45); border:1.5px solid rgba(150,110,20,.6); padding-left:3px; }
 .sohbet-balon-video{ max-width:240px; width:100%; border-radius:10px; margin-bottom:4px; display:block; background:#e9d38f; }
 .sohbet-balon-dosya{ display:flex; align-items:center; gap:9px; padding:9px 11px; margin-bottom:4px; background:rgba(90,60,10,.08); border:1px solid rgba(90,60,10,.15); border-radius:10px; text-decoration:none; color:inherit; max-width:230px; }
 .sbd-ik{ font-size:22px; flex:none; } .sbd-ad{ font-size:13px; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
