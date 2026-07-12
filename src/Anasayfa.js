@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment, Component } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -38,6 +38,16 @@ import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvar
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
+
+// ARAMA HATA SINIRI — arama (WebRTC) bölümünde beklenmedik bir hata olursa TÜM sayfa çökmesin;
+// sadece arama kapanır, sayfanın geri kalanı çalışmaya devam eder. (React Error Boundary — class şart.)
+class AramaHataSiniri extends Component {
+  constructor(p) { super(p); this.state = { hata: false }; }
+  static getDerivedStateFromError() { return { hata: true }; }
+  componentDidCatch(err) { try { if (this.props.onHata) this.props.onHata(err); } catch (e) {} }
+  componentDidUpdate(prev) { if (prev.anahtar !== this.props.anahtar && this.state.hata) this.setState({ hata: false }); }
+  render() { return this.state.hata ? null : this.props.children; }
+}
 
 // Ayarlar konum haritası için altın damla pin (resim gerektirmez)
 const ayarPinIkon = () => L.divIcon({ className: "", html: '<div style="width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#FFD700;border:2px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.55)"></div>', iconSize: [20, 20], iconAnchor: [10, 20] });
@@ -2872,6 +2882,37 @@ export default function Anasayfa({ pro = false }) {
     aramaAbonelikRef.current.push(ab1, ab2);
   };
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); };
+  // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
+  const zilRef = useRef(null);
+  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
+  const zilBaslat = (mod) => {
+    zilDurdur();
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      const ctx = new AC(); try { ctx.resume(); } catch (e) {}
+      const bip = () => {
+        try {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = "sine"; o.frequency.value = mod === "aranan" ? 660 : 440;
+          o.connect(g); g.connect(ctx.destination);
+          const t0 = ctx.currentTime;
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + (mod === "aranan" ? 0.5 : 0.6));
+          o.start(t0); o.stop(t0 + (mod === "aranan" ? 0.55 : 0.65));
+        } catch (e) {}
+      };
+      bip();
+      const iv = setInterval(bip, mod === "aranan" ? 1100 : 3000);
+      zilRef.current = { ctx, iv };
+    } catch (e) {}
+  };
+  // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
+  useEffect(() => {
+    if (aramaDurum === "ariyor") zilBaslat("arayan");
+    else if (gelenArama && !aramaDurum) zilBaslat("aranan");
+    else zilDurdur();
+  }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
   const mikToggle = () => { const s = yerelStreamRef.current; if (s) { s.getAudioTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setMikKapali((m) => !m); } };
   const kamToggle = () => { const s = yerelStreamRef.current; if (s) { s.getVideoTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setKamKapali((k) => !k); } };
   // BANA GELEN çağrıları dinle (aktif arama yokken göster)
@@ -6853,6 +6894,7 @@ export default function Anasayfa({ pro = false }) {
         </div>
       )}
 
+      <AramaHataSiniri anahtar={(aktifArama && aktifArama.id) || (gelenArama && gelenArama.id) || ""} onHata={() => { try { aramaTemizle(); zilDurdur(); } catch (e) {} setAktifArama(null); setAramaDurum(""); setGelenArama(null); }}>
       {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet) */}
       {gelenArama && !aramaDurum && (
         <div className="arama-fon arama-geliyor">
@@ -6905,6 +6947,7 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       )}
+      </AramaHataSiniri>
 
       {/* PAYLAŞ PENCERESİ — yeni gönderi */}
       {paylasAcik && (
