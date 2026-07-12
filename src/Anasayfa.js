@@ -3020,7 +3020,14 @@ export default function Anasayfa({ pro = false }) {
     setTepkiMesaj(null);
     const m = aktifSohbetMesajlari.find((x) => x.id === mesajId); if (!m) return;
     const mevcut = m.tepkiler && m.tepkiler[uu.uid];
-    const yeni = (mevcut === emoji) ? "" : emoji; // aynı emojiye tekrar → kaldır
+    const yeni = (mevcut === emoji) ? "" : emoji; // aynı emojiye tekrar → kaldır; farklı emoji → DEĞİŞTİR
+    // ANINDA yerel güncelle → tepki hemen değişir (Firestore/dinleyici gecikmesini bekleme; eski emoji ekranda takılı kalmasın)
+    setMesajlarimTum((liste) => liste.map((x) => {
+      if (x.id !== mesajId) return x;
+      const t = { ...(x.tepkiler || {}) };
+      if (yeni) t[uu.uid] = yeni; else delete t[uu.uid];
+      return { ...x, tepkiler: t };
+    }));
     await mesajTepkiVer(mesajId, uu.uid, yeni);
     if (yeni && m.gonderenUid && m.gonderenUid !== uu.uid) {
       bildirimEkle({ aliciUid: m.gonderenUid, gonderenUid: uu.uid, gonderenAd: benimAdGetir(), gonderenFoto: benimFotoGetir(), tip: "mesaj-tepki", metin: yeni + " " + (m.metin || (m.gorsel ? "📷" : "")).slice(0, 40) }).catch(() => {});
