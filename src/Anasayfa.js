@@ -41,7 +41,7 @@ import "./Anasayfa.css";
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
-const VAPID_KEY = "";
+const VAPID_KEY = "BGPlXpNRkU6i2TSNsita7I6gOA_D0JxIQvM48wunh_-urSCxts-8fnhCjW1dAr_Krrwp_btQu_CrP-QHKqGfHq0";
 
 // ARAMA HATA SINIRI — arama (WebRTC) bölümünde beklenmedik bir hata olursa TÜM sayfa çökmesin;
 // sadece arama kapanır, sayfanın geri kalanı çalışmaya devam eder. (React Error Boundary — class şart.)
