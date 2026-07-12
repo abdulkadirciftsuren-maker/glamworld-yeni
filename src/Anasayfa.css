@@ -3682,6 +3682,28 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ana-mesaj-btn{ position:relative; border-radius:12px !important; background:radial-gradient(circle at 34% 24%, #ffe9a8, #ecc84e 68%, #c69a2e) !important; color:#4a3208; border:1.5px solid #d9b64a; }
 .ana-mesaj-btn svg{ width:22px; height:22px; stroke:#4a3208; }
 .ana-mesaj-btn svg path, .ana-mesaj-btn svg rect, .ana-mesaj-btn svg circle{ stroke:#4a3208; }
+.ana-mesaj-btn svg path[fill]{ fill:#4a3208; }
+
+/* Mesaj Merkezi (Gloxi) — ALTIN tema (base koyu .msj-* paylaş/yorum pencerelerinde AYNEN kalır, bozulmaz) */
+.msj-merkez{ background:rgba(50,34,6,.5) !important; }
+.msj-merkez .msj-pencere{ background:linear-gradient(180deg,#f7ecc9,#efe0b8) !important; border:1.5px solid #d9b64a !important; box-shadow:0 14px 44px rgba(50,34,6,.5) !important; }
+.msj-merkez .msj-bas{ background:linear-gradient(135deg,#d9b64a,#b28e34) !important; border-bottom:none !important; padding:13px 15px !important; }
+.msj-merkez .msj-baslik{ display:flex; align-items:center; gap:7px; color:#3a2c00 !important; }
+.mm-bas-ik{ display:flex; } .mm-bas-ik svg{ width:23px; height:23px; stroke:#3a2c00; } .mm-bas-ik svg path[fill]{ fill:#3a2c00; }
+.msj-merkez .msj-kapat{ color:#fff !important; }
+.msj-merkez .msj-liste{ padding:8px 10px 14px !important; }
+.msj-merkez .msj-kart{ background:#fffef8 !important; border:1px solid #e7d090 !important; align-items:center !important; }
+.msj-merkez .msj-foto{ border-radius:12px !important; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c) !important; color:#4a3208 !important; }
+.msj-merkez .msj-ust b{ color:#2a2008 !important; }
+.msj-merkez .msj-ust i{ color:#8a7030 !important; }
+.msj-merkez .msj-bos{ color:#6b5417 !important; }
+/* Kişi arama kutusu (kimi arayacağını bul, dokun, sohbet başlat) */
+.mm-ara-sar{ position:relative; display:flex; align-items:center; padding:9px 13px 4px; }
+.mm-ara-ik{ position:absolute; left:24px; width:18px; height:18px; color:#a98c4a; pointer-events:none; }
+.mm-ara-input{ flex:1; border:1.5px solid #d9b64a; border-radius:12px; padding:9px 34px; font-size:14px; background:#fffef8; color:#2a2008; outline:none; font-family:inherit; }
+.mm-ara-input::placeholder{ color:#a98c4a; }
+.mm-ara-temizle{ position:absolute; right:24px; border:none; background:#e9d38f; color:#5a4210; width:22px; height:22px; border-radius:7px; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; }
+@media (min-width:560px){ .mm-ara-input{ font-size:15px; } }
 
 /* Mesaj Merkezi liste satırı (son mesaj + okunmamış rozeti + çift tik) */
 .msj-metin-satir{ display:flex; align-items:center; gap:6px; margin-top:2px; }

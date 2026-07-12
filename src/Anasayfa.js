@@ -326,6 +326,8 @@ const Ikon = {
   /* ---- GLOXORG'a ÖZEL ikonlar — hepsinde ortak PIRLANTA/FASET motifi (standart ikonlardan farklı, bize ait) ---- */
   // MESAJ: ZARF (mektup) + pırlanta mühür — yorum balonundan FARKLI
   mesaj: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.7 7.3l6.9 4.9a2.4 2.4 0 0 0 2.8 0l6.9-4.9" /><path d="M12 13.1l1.4 1.5-1.4 1.9-1.4-1.9z" fill="currentColor" stroke="none" /></svg>,
+  // GLOXI — mesaj + arama: konuşma balonu + içinde telefon ahizesi (mektup DEĞİL)
+  gloxi: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 11.4a7.9 7.9 0 0 1-11.2 7.1L4 20.2l1.7-5.3A7.9 7.9 0 1 1 20.8 11.4z" /><path d="M9.4 8.5c-.35.6-.2 1.45.45 2.55.6 1 1.45 1.85 2.45 2.45 1.1.65 1.95.8 2.55.45.35-.2.6-.5.75-.9l-1.6-1.05-1 .7c-.55-.3-1-.7-1.35-1.15-.35-.45-.6-.95-.75-1.5l.7-1z" fill="currentColor" stroke="none" /></svg>,
   // BEĞENİ: pırlanta-kesimli kalp (içinde faset çizgileri)
   kalp: <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20.6C7 17.1 3.5 13.9 3.5 9.7A4.1 4.1 0 0 1 12 7a4.1 4.1 0 0 1 8.5 2.7c0 4.2-3.5 7.4-8.5 10.9z" /><path d="M7.4 9.4h9.2" strokeWidth="1.05" opacity=".85" /><path d="M12 7l-2.4 2.4L12 14.3l2.4-4.9z" strokeWidth="1.05" opacity=".85" /></svg>,
   // YORUM: konuşma balonu + içinde 4 köşe parıltı (elmas ışıltısı)
@@ -1224,6 +1226,8 @@ export default function Anasayfa({ pro = false }) {
   const [sohbetGonderiliyor, setSohbetGonderiliyor] = useState(false); // foto/mesaj gönderiliyor mu
   const mesajSonRef = useRef(null);                    // sohbette en alta kaydırma çıpası
   const sohbetFotoInputRef = useRef(null);             // sohbette foto seç
+  const [mmAra, setMmAra] = useState("");              // Mesaj Merkezi: kişi ara / yeni sohbet başlat
+  const [mmKisiler, setMmKisiler] = useState([]);      // kişi bulma + foto için kullanıcı listesi (cache)
   const sohbetKisiRef = useRef(null); useEffect(() => { sohbetKisiRef.current = sohbetKisi; }, [sohbetKisi]);
   const mesajAcikRef2 = useRef(false); useEffect(() => { mesajAcikRef2.current = mesajAcik; }, [mesajAcik]);
   // GERÇEK AKIŞ (gönderiler)
@@ -2784,6 +2788,32 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     if (sohbetKisi && mesajSonRef.current) { try { mesajSonRef.current.scrollIntoView({ block: "end" }); } catch (e) {} }
   }, [aktifSohbetMesajlari.length, sohbetKisi]);
+  // Mesaj Merkezi açılınca kişi listesini yükle (profil fotoları + kişi arama için) — bir kez
+  useEffect(() => {
+    if (!mesajAcik || mmKisiler.length) return;
+    tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
+  }, [mesajAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  // uid → profil fotosu + ad haritası (sohbet listesinde/başlığında foto göstermek için)
+  const kisiBilgiHarita = useMemo(() => {
+    const h = {};
+    mmKisiler.forEach((k) => {
+      const id = k.id || k.uid; if (!id) return;
+      const foto = k.foto || k.avatarFoto || k.isFoto || (k.pro && k.pro.foto) || "";
+      const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "";
+      h[id] = { foto, ad };
+    });
+    return h;
+  }, [mmKisiler]);
+  // Kişi arama sonucu (isimle) — yeni sohbet başlatmak için
+  const mmSonuc = useMemo(() => {
+    const q = mmAra.trim().toLowerCase(); if (q.length < 2) return [];
+    return mmKisiler.filter((k) => {
+      const id = k.id || k.uid; if (!id || id === benUid) return false;
+      const ad = ([k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "").toLowerCase();
+      const meslek = (k.pro && k.pro.meslek ? String(k.pro.meslek) : "").toLowerCase();
+      return ad.includes(q) || meslek.includes(q);
+    }).slice(0, 25);
+  }, [mmAra, mmKisiler, benUid]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   useEffect(() => {
     gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
@@ -5723,9 +5753,9 @@ export default function Anasayfa({ pro = false }) {
           ) : (
             <button className="ana-ara-btn" aria-label={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
           )}
-          {/* MESAJLAR — bize has WhatsApp/Messenger düğmesi (ayının yerine); okunmamış rozetli */}
-          <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label={t("tabMesaj", "Mesajlar")} title={t("tabMesaj", "Mesajlar")}>
-            {Ikon.mesaj}
+          {/* GLOXI — bize has mesaj + arama düğmesi (ayının yerine); okunmamış rozetli */}
+          <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label="Gloxi" title="Gloxi — Mesaj & Arama">
+            {Ikon.gloxi}
             {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
           </button>
         </div>
@@ -6535,29 +6565,56 @@ export default function Anasayfa({ pro = false }) {
         </div>
       )}
 
-      {/* MESAJ PENCERESİ (gelen kutusu) — alt menü Mesaj'a basınca */}
+      {/* GLOXI — Mesaj Merkezi: tüm sohbetler + kişi ara/yeni sohbet (altın, WhatsApp gibi) */}
       {mesajAcik && (
-        <div className="msj-fon" onClick={(e) => { if (e.target === e.currentTarget) setMesajAcik(false); }}>
+        <div className="msj-fon msj-merkez" onClick={(e) => { if (e.target === e.currentTarget) { setMesajAcik(false); setMmAra(""); } }}>
           <div className="msj-pencere">
             <div className="msj-bas">
-              <span className="msj-baslik">💬 {t("tabMesaj", "Mesajlar")}</span>
-              <button className="msj-kapat" onClick={() => setMesajAcik(false)} aria-label="Kapat">✕</button>
+              <span className="msj-baslik"><span className="mm-bas-ik">{Ikon.gloxi}</span> Gloxi</span>
+              <button className="msj-kapat" onClick={() => { setMesajAcik(false); setMmAra(""); }} aria-label="Kapat">✕</button>
+            </div>
+            {/* KİŞİ ARAMA — kimi arayacağını buradan bul, dokun, sohbet başlat */}
+            <div className="mm-ara-sar">
+              <svg className="mm-ara-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+              <input className="mm-ara-input" value={mmAra} onChange={(e) => setMmAra(e.target.value)} placeholder={t("mmKisiAra", "Kişi ara, yeni sohbet başlat…")} />
+              {mmAra && <button className="mm-ara-temizle" onClick={() => setMmAra("")} aria-label="Temizle">✕</button>}
             </div>
             <div className="msj-liste">
-              {sohbetListesi.length === 0 ? (
-                <div className="msj-bos">{t("mesajYok", "Henüz mesajın yok. Birine Ara'dan ulaşıp mesaj gönderebilirsin.")}</div>
+              {mmAra.trim().length >= 2 ? (
+                mmSonuc.length === 0 ? (
+                  <div className="msj-bos">{t("mmBulunamadi", "Kişi bulunamadı. İsmini tam yazmayı dene.")}</div>
+                ) : mmSonuc.map((k) => {
+                  const id = k.id || k.uid;
+                  const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
+                  const foto = k.foto || k.avatarFoto || k.isFoto || (k.pro && k.pro.foto) || "";
+                  const meslek = k.pro && k.pro.meslek ? mc(k.pro.meslek, dil) : "";
+                  return (
+                    <button className="msj-kart" key={id} onClick={() => { sohbetAc({ uid: id, ad, foto }); setMmAra(""); }}>
+                      <span className="msj-foto">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : ((ad[0] || "?").toUpperCase())}</span>
+                      <div className="msj-icerik">
+                        <div className="msj-ust"><b className="notranslate" translate="no">{ad}</b></div>
+                        <div className="msj-onizleme">{meslek || t("sohbetBaslat", "Sohbet başlat →")}</div>
+                      </div>
+                    </button>
+                  );
+                })
+              ) : sohbetListesi.length === 0 ? (
+                <div className="msj-bos">{t("mesajYok2", "Henüz sohbetin yok. Yukarıdan kişi ara, dokun ve ilk mesajını gönder 👆")}</div>
               ) : sohbetListesi.map((s) => {
-                const bas = ((s.ad || "?").trim()[0] || "?").toUpperCase();
+                const bilgi = kisiBilgiHarita[s.uid] || {};
+                const foto = s.foto || bilgi.foto || "";
+                const ad = (s.ad && s.ad !== "—") ? s.ad : (bilgi.ad || "—");
+                const bas = ((ad || "?").trim()[0] || "?").toUpperCase();
                 const bugun = new Date(); const md = new Date(s.son.zamanMs || 0);
                 const ayniGun = md.toDateString() === bugun.toDateString();
                 const ne = s.son.zamanMs ? md.toLocaleString(dil || "tr", ayniGun ? { hour: "2-digit", minute: "2-digit" } : { day: "2-digit", month: "2-digit" }) : "";
                 const benSon = s.son.gonderenUid === benUid;
                 const oniz = s.son.gorsel ? ("📷 " + (s.son.metin || t("mesajFoto", "Fotoğraf"))) : (s.son.metin || "");
                 return (
-                  <button className="msj-kart" key={s.uid} onClick={() => sohbetAc(s)}>
-                    <span className="msj-foto">{s.foto ? <img src={s.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
+                  <button className="msj-kart" key={s.uid} onClick={() => sohbetAc({ uid: s.uid, ad, foto })}>
+                    <span className="msj-foto">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
                     <div className="msj-icerik">
-                      <div className="msj-ust"><b className="notranslate" translate="no">{s.ad}</b><i>{ne}</i></div>
+                      <div className="msj-ust"><b className="notranslate" translate="no">{ad}</b><i>{ne}</i></div>
                       <div className="msj-metin-satir">
                         <div className={"msj-onizleme" + (s.okunmamis ? " okunmadi" : "")}>
                           {benSon && <span className="msj-tik">{s.son.okundu ? "✓✓" : "✓"}</span>}{oniz}
@@ -6579,7 +6636,9 @@ export default function Anasayfa({ pro = false }) {
           <div className="sohbet-pencere">
             <div className="sohbet-bas">
               <button className="sohbet-geri" onClick={() => setSohbetKisi(null)} aria-label={t("geri", "Geri")}>‹</button>
-              <span className="sohbet-avatar">{sohbetKisi.foto ? <img src={sohbetKisi.foto} alt="" referrerPolicy="no-referrer" /> : ((sohbetKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+              {(() => { const sf = sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) || ""; return (
+              <span className="sohbet-avatar">{sf ? <img src={sf} alt="" referrerPolicy="no-referrer" /> : ((sohbetKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+              ); })()}
               <div className="sohbet-kim">
                 <b className="notranslate" translate="no"><KayanYazi>{sohbetKisi.ad}</KayanYazi></b>
                 <i>{t("cevrimici", "GLOXORG")}</i>
@@ -7763,7 +7822,7 @@ export default function Anasayfa({ pro = false }) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 4l2.5 5M14 4l2.5 5"/><path d="M10.5 12.5l4 2.2-4 2.3z" fill="currentColor"/></svg>
           <span className="notranslate" translate="no">{REELS_AD}</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("konum")}>{Ikon.konum}<span>{t("navKonum")}</span></button>
-        <button className="ana-tab-oge" onClick={() => setMesajAcik(true)}>{Ikon.mesaj}<span>{t("tabMesaj")}</span></button>
+        <button className="ana-tab-oge" onClick={() => setMesajAcik(true)}>{Ikon.gloxi}<span>Gloxi</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("profil")}>{Ikon.profil}<span>{t("navProfil")}</span></button>
       </nav>
 
