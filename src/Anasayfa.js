@@ -131,6 +131,25 @@ const TEPKILER = [
 ];
 const tepkiEmoji = (k) => (TEPKILER.find((x) => x.k === k) || TEPKILER[1]).e;
 
+// Yazıdaki bağlantıları (gloxorg.com, www…, http…) TIKLANABİLİR yapar → karşı taraf dokununca o SAYFA açılır (fotoğrafı açmaz).
+// Kullanıcı Ayarlar'dan "gloxorg.com" kopyalayıp yazısına yapıştırınca, burada otomatik linke dönüşür.
+function metniLinkle(metin) {
+  const s = String(metin || "");
+  if (!s || s.indexOf(".") === -1) return s;
+  const re = /((?:https?:\/\/|www\.)[^\s]+|(?:[a-z0-9-]+\.)+(?:com|net|org|io|co|dev|app|info|biz|me|tv|gg)(?:\/[^\s]*)?)/gi;
+  const parcalar = []; let sonIndex = 0, m, i = 0;
+  while ((m = re.exec(s)) !== null) {
+    if (m.index > sonIndex) parcalar.push(s.slice(sonIndex, m.index));
+    const ham = m[0];
+    const href = /^https?:\/\//i.test(ham) ? ham : ("https://" + ham.replace(/^www\./i, ""));
+    parcalar.push(<a key={"lnk" + (i++)} className="yazi-link notranslate" translate="no" href={href} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>{ham}</a>);
+    sonIndex = m.index + ham.length;
+  }
+  if (!parcalar.length) return s;
+  if (sonIndex < s.length) parcalar.push(s.slice(sonIndex));
+  return parcalar;
+}
+
 // HER CÜMLE FARKLI RENK + küçük elmas ikonu (kullanıcı isteği: renkli, ikonlu, her cümle bir renk).
 // RC_KOYU = AÇIK zeminde okunur (karşılama balonu); RC_ACIK = KOYU zeminde okunur (Gloxoo sohbeti).
 const RC_KOYU = ["#e11d1d", "#1553d8", "#0e8f47", "#9026d1", "#c76a06", "#0c8a8a", "#d61b7a"];
@@ -6408,7 +6427,7 @@ export default function Anasayfa({ pro = false }) {
                 // YAZI BLOĞU — varsayılan AYRI şerit (medyayı kapatmaz); p.yaziUstunde ise medyanın üzerinde.
                 const yaziBlokIc = p.yazi ? (
                   <>
-                    <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{(ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>
+                    <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{metniLinkle((ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>
                     <span className="apr-alt-arac">
                       <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
@@ -6522,12 +6541,7 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
                     <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
-                    {/* MARKA ŞERİDİ KALDIRILDI (kullanıcı istedi): SADECE kullanıcı paylaşırken "gloxorg.com git" düğmesini açtıysa görünür; yoksa hiçbir şerit/etiket YOK (üstte zaten GLOXORG var) */}
-                    {p.gitLinki === true && (
-                    <div className="ana-post-marka" onClick={(e) => e.stopPropagation()}>
-                      <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
-                    </div>
-                    )}
+                    {/* MARKA ŞERİDİ TAMAMEN KALDIRILDI (kullanıcı istedi): gloxorg.com artık paylaşımların altında HİÇ çıkmaz (eski gönderilerde de). Kullanıcı Ayarlar'dan kopyalayıp istediği yere koyacak. */}
                   </article>
                 );
               }
@@ -6571,7 +6585,7 @@ export default function Anasayfa({ pro = false }) {
                   {p.yazi && (
                     /* UZUN yazıya basınca AYRI pencerede (tam ekran okuyucu) açılır — ana sayfada dev metin olarak açılıp kalmaz (✕ ile kapanır) */
                     <div ref={kesikOlc(anahtar)} translate="no" className="ana-post-yazi notranslate buyuk kisa" style={(() => { const _n = (p.yazi || "").length; const fs = _n > 1400 ? 11.5 : _n > 900 ? 12 : _n > 600 ? 12.5 : _n > 320 ? 13 : 13.5; return { background: icZemin, color: p.yaziRenk || "#fff", fontSize: fs + "px", lineHeight: 1.36 }; })()} onClick={() => setTamFoto(p)}>
-                      {(ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi}
+                      {metniLinkle((ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi)}
                     </div>
                   )}
                   {p.yazi && (
@@ -6606,12 +6620,7 @@ export default function Anasayfa({ pro = false }) {
                   </div>
                   {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
                   <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
-                  {/* MARKA ŞERİDİ KALDIRILDI (kullanıcı istedi): SADECE kullanıcı paylaşırken açtıysa gloxorg.com görünür; yoksa hiçbir şerit YOK */}
-                  {p.gitLinki === true && (
-                  <div className="ana-post-marka" onClick={(e) => e.stopPropagation()}>
-                    <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
-                  </div>
-                  )}
+                  {/* MARKA ŞERİDİ TAMAMEN KALDIRILDI (kullanıcı istedi): gloxorg.com paylaşımların altında hiç çıkmaz. Ayarlar'dan kopyalanır. */}
                 </article>
               );
             }).flatMap((node, idx, arr) => {
@@ -7814,7 +7823,7 @@ export default function Anasayfa({ pro = false }) {
               {/* YAZI + Çevir/Sor (foto/video açıklaması) */}
               {p.yazi && !metinPost && (
                 <div className="tf-alt" onClick={(e) => e.stopPropagation()}>
-                  <div translate="no" className="tf-yazi notranslate">{tfMetin}</div>
+                  <div translate="no" className="tf-yazi notranslate">{metniLinkle(tfMetin)}</div>
                   {tfCevBtn}
                 </div>
               )}
@@ -8812,6 +8821,13 @@ export default function Anasayfa({ pro = false }) {
                 <AyarBolum acik={ayarBolum==="bildirim"} onTik={()=>setAyarBolum(b=>b==="bildirim"?null:"bildirim")} renk="#ff7ab0" ad={t("ayarBildirimler", "Bildirimler")} ikon="🔔" onAcBilgi={setAciklama} bilgi={t("aciklamaBildirim", "Telefon bildirimlerini açarsan beğeni, yorum ve mesajları anında alırsın. İstediğin zaman kapatabilirsin.")}>
                   <button className="ayar-btn" onClick={bildirimIzniIste}>{bildirimIzin === "granted" ? t("ayarBildirimAcik", "Telefon bildirimleri AÇIK ✓") : t("ayarBildirimAc", "Telefon bildirimlerini aç")}</button>
                 </AyarBolum>
+
+                {/* GLOXORG BAĞLANTISI — SADECE YÖNETİCİYE (kullanıcıya) görünür; müşteriler görmez. Kopyala → paylaşımın yazısına İSTEDİĞİN yere yapıştır. */}
+                {yoneticiMi() && (
+                <AyarBolum acik={ayarBolum==="gloxlink"} onTik={()=>setAyarBolum(b=>b==="gloxlink"?null:"gloxlink")} renk="#d4af37" ad={t("ayarGloxLink", "GLOXORG bağlantısı (sadece sen)")} ikon="🔗" onAcBilgi={setAciklama} bilgi={t("aciklamaGloxLink", "Buradaki 'gloxorg.com' yazısını Kopyala'ya basıp al, sonra bir şey paylaşırken YAZINA İSTEDİĞİN yere yapıştır. Karşı taraf ona dokununca gloxorg.com açılır. Bu düğmeyi SADECE sen görürsün; müşterilerde görünmez. Artık paylaşımların altında kendiliğinden çıkmaz — nereye istersen oraya sen koyarsın.")}>
+                  <div className="ayar-bulunan-satir"><span className="notranslate" translate="no"><b>🔗</b> gloxorg.com</span><button type="button" className="ayar-bulunan-kopya" onClick={() => { try { navigator.clipboard.writeText("gloxorg.com"); } catch (e) { try { const ta = document.createElement("textarea"); ta.value = "gloxorg.com"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); } catch (e2) {} } bilgiBalonu(t("baglantiKopyalandi", "gloxorg.com kopyalandı ✓ — paylaşımına istediğin yere yapıştır")); }}>📋 {t("ayarKopyala", "Kopyala")}</button></div>
+                </AyarBolum>
+                )}
 
                 <AyarBolum acik={ayarBolum==="dil"} onTik={()=>setAyarBolum(b=>b==="dil"?null:"dil")} renk="#5aa6e0" ad={t("ayarDil", "Dil")} ikon="🌐" onAcBilgi={setAciklama} bilgi={t("aciklamaDil", "Uygulamanın dilini buradan seçersin. Menü, ayarlar ve harita arayüzü seçtiğin dile geçer.")}>
                   <div className="ayar-dil"><DilSecici /></div>

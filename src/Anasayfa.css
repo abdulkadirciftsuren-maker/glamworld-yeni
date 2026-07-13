@@ -843,6 +843,9 @@
 .apr-ic.ape-kalp .apr-sayi{ display:block; font-size:10.5px; font-weight:700; color:#fff; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.95); }
 /* BEĞENİLEN KALP/TEPKİ EMOJİSİ GÖRÜNSÜN — .apr-ic span{display:none} bunu gizliyordu, o yüzden beğeninde sadece sayı kalıyordu, kalp kayboluyordu */
 .apr-ic.ape-kalp .tepki-secili, .tf-ic.ape-kalp .tepki-secili{ display:block !important; font-size:19px; line-height:1; }
+/* Yazı içindeki bağlantı (gloxorg.com vb.) — tıklanabilir, belirgin altın + altı çizili */
+.yazi-link{ color:#ffe066; font-weight:800; text-decoration:underline; text-underline-offset:2px; word-break:break-word; }
+.yazi-link:hover{ color:#fff3b0; }
 .tf-ic.ape-kalp{ flex-direction:column; height:auto; gap:2px; }
 .tf-ic.ape-kalp .tf-sayi{ display:block; font-size:11px; font-weight:700; color:#fff; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.95); }
 /* Beğeni dokunma animasyonu: kalp poplar + etrafına ufak renkli kalpler uçuşur (müşteriyi rahatsız etmez) */
