@@ -34,23 +34,34 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
 // PUSH BİLDİRİM (FCM) — site KAPALIYKEN bile mesaj/beğeni/arama bildirimi almak için telefon "anahtarı" (token) alır.
 // vapidKey = Firebase Console > Proje Ayarları > Cloud Messaging > "Web Push sertifikaları" anahtarı.
 // Boş/desteklenmiyorsa sessizce "" döner (uygulama etkilenmez).
-export async function fcmTokenAl(vapidKey) {
+// AYRINTILI: telefon anahtarını al AMA nerede takıldıysa SEBEBİNİ de döndür ({ token, sebep }).
+// Böylece kullanıcı bildirimi açınca ekranda TAM sebebi görür (sunucu logu / bilgisayar gerekmez).
+export async function fcmDurumAl(vapidKey) {
   try {
-    if (!vapidKey) return "";
-    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return "";
-    if (!(await isSupported())) return "";
+    if (!vapidKey) return { token: "", sebep: "anahtar-yok" };
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return { token: "", sebep: "servis-calisani-yok" };
+    let destek = false; try { destek = await isSupported(); } catch (e) {}
+    if (!destek) return { token: "", sebep: "tarayici-desteklemiyor" };
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") return { token: "", sebep: "izin-verilmedi" };
     const messaging = getMessaging(app);
-    // ÖNEMLİ: firebase-messaging-sw.js'i KENDİ ayrı scope'unda kaydet.
-    // Aksi halde sitenin kendi sw.js'i (scope "/") ile çakışıp token yanlış servise bağlanıyor
-    // ve arka plan bildirimi gösterilemiyordu. Bu scope FCM'in kendi standart yoludur.
     let reg;
     try {
       reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/firebase-cloud-messaging-push-scope" });
+      try { await navigator.serviceWorker.ready; } catch (e) {}
       if (reg && reg.update) { try { await reg.update(); } catch (e) {} }
-    } catch (e) { reg = undefined; }
-    const token = await getToken(messaging, reg ? { vapidKey, serviceWorkerRegistration: reg } : { vapidKey });
-    return token || "";
-  } catch (e) { return ""; }
+    } catch (e) { return { token: "", sebep: "SW-kayit-hatasi: " + ((e && (e.message || e.name)) || e) }; }
+    let token = "";
+    try {
+      token = await getToken(messaging, reg ? { vapidKey, serviceWorkerRegistration: reg } : { vapidKey });
+    } catch (e) { return { token: "", sebep: "token-hatasi: " + ((e && (e.code || e.message || e.name)) || e) }; }
+    if (!token) return { token: "", sebep: "token-bos" };
+    return { token, sebep: "ok" };
+  } catch (e) { return { token: "", sebep: "genel-hata: " + ((e && (e.message || e.name)) || e) }; }
+}
+
+// Basit sürüm (sessiz; girişte otomatik kayıt için) — sadece token döndürür.
+export async function fcmTokenAl(vapidKey) {
+  try { const d = await fcmDurumAl(vapidKey); return d.token || ""; } catch (e) { return ""; }
 }
 
 export default app;

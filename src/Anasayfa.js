@@ -9,7 +9,7 @@ import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Googl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
-import { auth, fcmTokenAl } from "./firebase";
+import { auth, fcmTokenAl, fcmDurumAl } from "./firebase";
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
@@ -3705,7 +3705,15 @@ export default function Anasayfa({ pro = false }) {
       if (izin === "granted") {
         bilgiBalonu(t("bildAcildi", "Telefon bildirimleri açıldı"));
         telefonBildirimGoster(t("bildHosgeldin", "Bildirimler açık — beğeni, yorum ve mesajları buradan alacaksın"), "");
-        pushKaydet(); // KAPALIYKEN bildirim için telefon anahtarını (FCM) kaydet
+        // KAPALIYKEN bildirim — telefon anahtarını al ve SONUCU EKRANDA GÖSTER (nerede takıldıysa TAM sebebini yazar → bilgisayarsız teşhis)
+        if (VAPID_KEY) {
+          setAyarMsg(t("pushDeneniyor", "Telefon anahtarı alınıyor…"));
+          const uu = auth.currentUser;
+          const d = await fcmDurumAl(VAPID_KEY);
+          if (d.sebep === "ok" && uu) { fcmTokenKaydet(uu.uid, d.token); setAyarMsg(t("pushKayitOk", "✓ Telefon kaydedildi — artık KAPALIYKEN de bildirim gelecek (beğeni/mesaj/arama). Şimdi başka hesaptan test et.")); }
+          else { setAyarMsg("⚠ Kapalıyken bildirim AÇILAMADI. Sebep: " + d.sebep + (uu ? "" : " (giriş yok)") + " — bu yazının ekran görüntüsünü Code'a gönder."); }
+          setTimeout(() => setAyarMsg(""), 15000);
+        }
       }
       else bilgiBalonu(t("bildVerilmedi", "Bildirim izni verilmedi (telefon ayarlarından da açabilirsin)"));
     } catch (e) {}
