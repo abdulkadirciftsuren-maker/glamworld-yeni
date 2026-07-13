@@ -1372,7 +1372,7 @@ export default function Anasayfa({ pro = false }) {
   const [paylasGorsel, setPaylasGorsel] = useState(""); // eklenen fotoğraf (dataURL) — 1. (ANA) fotoğraf
   const [paylasEkFotolar, setPaylasEkFotolar] = useState([]); // EK fotoğraflar (dataURL dizisi) — çok fotoğraflı gönderi; Storage'a yüklenir
   const [filigranEkle, setFiligranEkle] = useState(true); // GLOXORG filigranı eklensin mi (foto zaten GLOXORG'luysa kapat → çift olmasın)
-  const [gitLinki, setGitLinki] = useState(true); // paylaşımın altına "gloxorg.com'a git" düğmesi eklensin mi (isteğe bağlı; basınca platform açılır)
+  const [gitLinki, setGitLinki] = useState(false); // paylaşımın altına "gloxorg.com'a git" düğmesi eklensin mi (VARSAYILAN KAPALI — sadece kullanıcı isterse açar; kendiliğinden çıkmaz)
   const [paylasKonum, setPaylasKonum] = useState(null); // CANLI konum: { enlem, boylam, yer, sehir, ulke, tam } — "nereden paylaşıldı" (hastane/havalimanı/otogar...)
   const [konumDurum, setKonumDurum] = useState(""); // "" | "aliniyor" | "hata"
   const [onizGaleri, setOnizGaleri] = useState(null); // TAM EKRAN foto/video gezici: { liste:[{tip,src,poster}], i } — tek tek gez
@@ -3159,7 +3159,7 @@ export default function Anasayfa({ pro = false }) {
       setPaylasVideoPoster(g.videoPoster || "");
     }
     setPaylasVideoFile(null); // yeni dosya yok; mevcut video URL'i korunur
-    setYaziMedyaUstunde(!!g.yaziUstunde); setGitLinki(g.gitLinki !== false);
+    setYaziMedyaUstunde(!!g.yaziUstunde); setGitLinki(g.gitLinki === true);
     const uy = g.ustYazi || {}; setUstYazi(uy.metin || ""); setUstRenk(uy.renk || "#ffffff"); setUstBoyut(uy.boyut || "orta"); setUstYer(uy.yer || "alt"); setAiOneriler([]); setPaylasDuzen(g.duzen || null); setPaylasZemin(g.zemin || ""); setPaylasYaziRenk(g.yaziRenk || "");
     // ANKET — düzenlemede mevcut anket şıkları geri yüklenir
     if (g.anket && Array.isArray(g.anket.secenekler) && g.anket.secenekler.length >= 2) { setAnketAcik(true); setAnketSecenekler([...g.anket.secenekler]); }
@@ -5113,7 +5113,7 @@ export default function Anasayfa({ pro = false }) {
     Promise.all(dosyalar.slice(0, 10).map(kucultVadesi)).then((hepsi) => {
       const gecerli = hepsi.filter(Boolean);
       if (!gecerli.length) return;
-      setFiligranEkle(true); setGitLinki(true); setPaylasDosya(null); // VİDEO KORUNUR — foto + video AYNI gönderide olabilir
+      setFiligranEkle(true); setGitLinki(false); setPaylasDosya(null); // VİDEO KORUNUR — foto + video AYNI gönderide olabilir
       if (!paylasGorsel && !paylasVideo) setVideoBasta(false); // foto İLK seçildi → foto başta
       if (!paylasGorsel) { setPaylasGorsel(gecerli[0]); setPaylasEkFotolar((a) => [...a, ...gecerli.slice(1)].slice(0, 9)); }
       else { setPaylasEkFotolar((a) => [...a, ...gecerli].slice(0, 9)); }
@@ -6334,7 +6334,7 @@ export default function Anasayfa({ pro = false }) {
               })}
             </div>
             {/* PAYLAŞ kutusu — kendi gönderini ekle (gerçek veri) */}
-            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setGitLinki(true); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
+            <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setGitLinki(false); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
             </button>
             {/* AKIŞ FİLTRESİ — Sana Özel (algoritma) / Hepsi (zaman) / Takip Ettiklerim */}
@@ -6524,7 +6524,7 @@ export default function Anasayfa({ pro = false }) {
                     <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                     {/* MARKA / GİT — her paylaşımın köşesinde GLOXORG; isteğe bağlı "git" ile platform açılır (karşı taraf da görür) */}
                     <div className="ana-post-marka" onClick={(e) => e.stopPropagation()}>
-                      {p.gitLinki !== false
+                      {p.gitLinki === true
                         ? <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
                         : <span className="apm-etiket notranslate" translate="no">◈ GLOXORG</span>}
                     </div>
@@ -6608,7 +6608,7 @@ export default function Anasayfa({ pro = false }) {
                   <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                   {/* MARKA / GİT — her paylaşımın köşesinde GLOXORG; isteğe bağlı "git" ile platform açılır */}
                   <div className="ana-post-marka" onClick={(e) => e.stopPropagation()}>
-                    {p.gitLinki !== false
+                    {p.gitLinki === true
                       ? <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
                       : <span className="apm-etiket notranslate" translate="no">◈ GLOXORG</span>}
                   </div>
@@ -6753,7 +6753,7 @@ export default function Anasayfa({ pro = false }) {
               {/* PAYLAŞIMLARIM — kendi gönderilerim (düzenle / sil); yayınladıkça otomatik gelir */}
               <div className="apf-paylasimlar">
                 {/* Bir şeyler paylaş — Profilim'den de gönderi ekle */}
-                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setGitLinki(true); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
+                <button className="ana-paylas-ac apf-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setGitLinki(false); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
                   <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
                 </button>
                 {/* BÖLÜM FİLTRELERİ — her tür kendi amblemi+rengiyle */}
