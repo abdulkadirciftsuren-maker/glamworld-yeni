@@ -1282,6 +1282,7 @@ export default function Anasayfa({ pro = false }) {
   const [gelenArama, setGelenArama] = useState(null);  // { id, arayanAd, arayanFoto, tip, offer } — bana gelen çağrı
   const [mikKapali, setMikKapali] = useState(false);   // mikrofon sessiz mi
   const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
+  const [hoparlorAcik, setHoparlorAcik] = useState(true); // aramada SES: açık=yüksek (hoparlör), kapalı=alçak (kulağa tut, kimse duymasın)
   const [onKamera, setOnKamera] = useState(true);      // true=ön kamera (yüz), false=arka kamera
   const [videoBuyuk, setVideoBuyuk] = useState("uzak"); // görüntülü aramada BÜYÜK ekranda hangisi: "uzak" (karşı) | "yerel" (ben)
   const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
@@ -3005,6 +3006,10 @@ export default function Anasayfa({ pro = false }) {
   const kucukVideoBitir = () => { const s = kucukSurRef.current; if (!s.on) return; s.on = false; if (!s.moved) { setVideoBuyuk((v) => (v === "uzak" ? "yerel" : "uzak")); } };
   const mikToggle = () => { const s = yerelStreamRef.current; if (s) { s.getAudioTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setMikKapali((m) => !m); } };
   const kamToggle = () => { const s = yerelStreamRef.current; if (s) { s.getVideoTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setKamKapali((k) => !k); } };
+  // HOPARLÖR düğmesi: AÇIK=yüksek ses (hoparlör, herkes duyar). KAPALI=alçak ses (telefonu kulağına tut, kimse duymasın).
+  // NOT: web sitesi telefonun GERÇEK kulaklık/ahize çıkışına erişemez (sadece kurulu uygulamalar yapar) — bu düğme ses YÜKSEKLİĞİNİ değiştirir.
+  const hoparlorToggle = () => setHoparlorAcik((v) => !v);
+  useEffect(() => { try { [uzakSesRef.current, uzakVideoRef.current].forEach((el) => { if (el) el.volume = hoparlorAcik ? 1 : 0.32; }); } catch (e) {} }, [hoparlorAcik, aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   // ÖN ↔ ARKA kamera değiştir (görüntülü aramada). Yeni kamerayı alıp bağlantıdaki video track'i değiştirir (yeniden arama gerekmez).
   const kameraCevir = async () => {
     const pc = pcRef.current; const eski = yerelStreamRef.current; if (!pc || !eski) return;
@@ -7225,6 +7230,12 @@ export default function Anasayfa({ pro = false }) {
               {mikKapali
                 ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V5a3 3 0 0 0-5.9-.7M12 19v3M8 22h8M2 2l20 20" /></svg>
                 : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8" /></svg>}
+            </button>
+            {/* HOPARLÖR — açık: yüksek ses; kapalı: alçak ses (kulağa tut, kimse duymasın) */}
+            <button className={"arama-kk-btn" + (hoparlorAcik ? "" : " kapali")} onClick={hoparlorToggle} aria-label={t("hoparlor", "Hoparlör")} title={hoparlorAcik ? t("hoparlorAcikT", "Ses yüksek (hoparlör) — dokun: alçalt") : t("hoparlorKapaliT", "Ses alçak (kulağa tut) — dokun: yükselt")}>
+              {hoparlorAcik
+                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 8.5a4 4 0 0 1 0 7M18.8 6a8 8 0 0 1 0 12" /></svg>
+                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M22 9.5l-5 5M17 9.5l5 5" /></svg>}
             </button>
             {aktifArama.tip === "goruntulu" && (
               <button className={"arama-kk-btn" + (kamKapali ? " kapali" : "")} onClick={kamToggle} aria-label={t("kamera", "Kamera")}>
