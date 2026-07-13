@@ -229,14 +229,15 @@ function latinYap(s) {
 }
 // BEĞENEN AVATAR ŞERİDİ — gönderiyi beğenenlerin ufak profil resimleri, İSTİFLENMİŞ (öne doğru küçülerek).
 // Gerçek beğeni verisi Firestore'dan (begenenleriOku) çekilir; beğeni yoksa hiç görünmez.
-function BegenenlerSerit({ postId, sayi, dil, onAc }) {
+function BegenenlerSerit({ postId, sayi, dil, onAc, onSayi }) {
   const [liste, setListe] = useState(null);
   useEffect(() => {
     let iptal = false;
     if (!postId || !sayi) { setListe([]); return; }
-    begenenleriOku(postId, 8).then((l) => { if (!iptal) setListe(l || []); }).catch(() => { if (!iptal) setListe([]); });
+    // GERÇEK beğenenleri oku (100'e kadar) → hem avatarlar hem DOĞRU SAYI (sayaç yanlışsa bunu kullanırız: 2 kişi beğendiyse 2 gösterir)
+    begenenleriOku(postId, 100).then((l) => { if (!iptal) { const arr = l || []; setListe(arr); if (onSayi) onSayi(postId, arr.length); } }).catch(() => { if (!iptal) setListe([]); });
     return () => { iptal = true; };
-  }, [postId, sayi]);
+  }, [postId, sayi]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!liste || !liste.length) return null;
   const goster = liste.slice(0, 4);
   const ilkHarf = ((goster[0].ad || "?").trim()[0] || "?").toUpperCase();
@@ -1384,6 +1385,9 @@ export default function Anasayfa({ pro = false }) {
   const [paylasAcik, setPaylasAcik] = useState(false); // paylaşım yazma penceresi
   const [paylasAvatar, setPaylasAvatar] = useState("profil"); // gönderi avatarı: "profil" (profil fotoğrafım) | "amblem" (şirket amblemi)
   const [paylasYazi, setPaylasYazi] = useState("");
+  const paylasYaziRef = useRef(null);                       // metin kutusu — "gloxorg.com ekle" imlecin olduğu yere koyabilsin
+  const [gercekBegeni, setGercekBegeni] = useState({});     // postId -> GERÇEK beğenen sayısı (sayaç yanlış kalırsa: 2 kişi beğendiyse 2 gösterir, 1 değil)
+  const begeniSayiBildir = (id, n) => setGercekBegeni((m) => (m[id] === n ? m : { ...m, [id]: n }));
   const [paylasBaslik, setPaylasBaslik] = useState("");     // gönderi BAŞLIĞI (profil şeridinin altında görünür)
   const [baslikAcikSet, setBaslikAcikSet] = useState(() => new Set()); // akışta başlığı "devamını oku" ile açılan gönderiler
   const [paylasDurum, setPaylasDurum] = useState("");
@@ -6533,14 +6537,14 @@ export default function Anasayfa({ pro = false }) {
                     )}
                     {/* İKON ŞERİDİ — fotoğrafın/videonun ALTINDA, AYRI şerit (medyanın üzerinde DEĞİL) */}
                     <div className={"apr-rail" + (p.video ? " video" : "")} onClick={(e) => e.stopPropagation()}>
-                      <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
+                      <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{((gercekBegeni[p.id] != null ? gercekBegeni[p.id] : (p.begeni || 0))).toLocaleString()}</span></button>
                       <button className="apr-ic ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
                       <button className="apr-ic ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}</button>
                       <button className={"apr-ic apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                       <button className="apr-ic ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
-                    <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
+                    <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} onSayi={begeniSayiBildir} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                     {/* MARKA ŞERİDİ TAMAMEN KALDIRILDI (kullanıcı istedi): gloxorg.com artık paylaşımların altında HİÇ çıkmaz (eski gönderilerde de). Kullanıcı Ayarlar'dan kopyalayıp istediği yere koyacak. */}
                   </article>
                 );
@@ -6619,7 +6623,7 @@ export default function Anasayfa({ pro = false }) {
                     <button className="ana-post-btn ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                   </div>
                   {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
-                  <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
+                  <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} onSayi={begeniSayiBildir} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                   {/* MARKA ŞERİDİ TAMAMEN KALDIRILDI (kullanıcı istedi): gloxorg.com paylaşımların altında hiç çıkmaz. Ayarlar'dan kopyalanır. */}
                 </article>
               );
@@ -7240,7 +7244,7 @@ export default function Anasayfa({ pro = false }) {
                       : foto ? <img src={foto} alt="" referrerPolicy="no-referrer" />
                       : ((adTam && adTam.trim()[0]) || "?").toUpperCase()}
                   </span>
-                  <textarea className="pyl-yaz" value={paylasYazi} onChange={(e) => { setPaylasYazi(e.target.value); setPaylasDurum(""); }} placeholder={t("paylasYaz2", "Ne paylaşmak istersin? (uzun yazı serbest)")} maxLength={20000}
+                  <textarea ref={paylasYaziRef} className="pyl-yaz" value={paylasYazi} onChange={(e) => { setPaylasYazi(e.target.value); setPaylasDurum(""); }} placeholder={t("paylasYaz2", "Ne paylaşmak istersin? (uzun yazı serbest)")} maxLength={20000}
                     style={(!paylasGorsel && !paylasVideo && (paylasZemin || paylasYaziRenk)) ? { background: paylasZemin || undefined, color: paylasYaziRenk || undefined, borderColor: "transparent" } : undefined} />
                 </div>
               </div>
@@ -7337,11 +7341,22 @@ export default function Anasayfa({ pro = false }) {
                 <span>{yaziMedyaUstunde ? t("yaziUstunde", "Yazı fotoğraf/videonun ÜZERİNDE") : t("yaziAyri", "Yazı AYRI şeritte (medyayı kapatmaz) — üstüne koymak için dokun")}</span>
               </button>
             )}
-            {/* GLOXORG'A GİT düğmesi (isteğe bağlı) — paylaşımın altında "gloxorg.com ↗" görünür, basınca platform açılır */}
-            <button className={"pyl-filigran-tog" + (gitLinki ? " acik" : "")} onClick={() => setGitLinki((v) => !v)}>
-              <span className="pyl-filigran-kutu">{gitLinki ? "✓" : ""}</span>
-              <span>{gitLinki ? t("gitAcik", "🌐 Altında “gloxorg.com ↗ git” düğmesi görünecek") : t("gitKapali", "“gloxorg.com git” düğmesi KAPALI (sadece GLOXORG yazısı görünür)")}</span>
+            {/* GLOXORG.COM'U YAZIYA EKLE — SADECE yöneticiye (sana) görünür; imlecin olduğu yere "gloxorg.com" koyar → yazıda tıklanabilir link olur, karşı taraf basınca sayfa açılır. Kendiliğinden çıkmaz, SEN koyarsın. */}
+            {yoneticiMi() && (
+            <button type="button" className="pyl-filigran-tog pyl-gloxekle acik" onClick={() => {
+              const el = paylasYaziRef.current; const s = paylasYazi || ""; const ek = "gloxorg.com";
+              const bas = el ? el.selectionStart : s.length; const bit = el ? el.selectionEnd : s.length;
+              const araOnce = (bas > 0 && !/\s/.test(s[bas - 1])) ? " " : "";
+              const eklenen = araOnce + ek + " ";
+              const yeni = s.slice(0, bas) + eklenen + s.slice(bit);
+              setPaylasYazi(yeni); setPaylasDurum("");
+              setTimeout(() => { try { el.focus(); const p2 = bas + eklenen.length; el.setSelectionRange(p2, p2); } catch (e) {} }, 0);
+              bilgiBalonu(t("gloxEklendi", "gloxorg.com eklendi ✓ — dokununca sayfa açılır (sadece sen bu düğmeyi görürsün)"));
+            }}>
+              <span className="pyl-filigran-kutu">🔗</span>
+              <span>{t("gloxYaziyaEkle", "Yazıma “gloxorg.com” ekle (istediğin yere; dokununca sayfa açılır)")}</span>
             </button>
+            )}
             <input ref={paylasFotoRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={paylasFotoSec} />
             <input ref={paylasVideoRef} type="file" accept="video/*" style={{ display: "none" }} onChange={paylasVideoSec} />
             <input ref={paylasFotoKamRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={paylasFotoSec} />
@@ -7835,8 +7850,8 @@ export default function Anasayfa({ pro = false }) {
                 <div className="tf-rail" onClick={(e) => e.stopPropagation()}>
                   {/* BEĞENİ ikonu + hemen YANINDA beğenenlerin fotoğrafları (kullanıcı: geniş ekranda yer var) */}
                   <span className="tf-ic-cift">
-                    <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{(p.begeni || 0).toLocaleString()}</span></button>
-                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
+                    <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{((gercekBegeni[p.id] != null ? gercekBegeni[p.id] : (p.begeni || 0))).toLocaleString()}</span></button>
+                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} onSayi={begeniSayiBildir} />
                   </span>
                   {/* YORUM ikonu + hemen YANINDA yorum yapanların fotoğrafları */}
                   <span className="tf-ic-cift">
@@ -8822,12 +8837,6 @@ export default function Anasayfa({ pro = false }) {
                   <button className="ayar-btn" onClick={bildirimIzniIste}>{bildirimIzin === "granted" ? t("ayarBildirimAcik", "Telefon bildirimleri AÇIK ✓") : t("ayarBildirimAc", "Telefon bildirimlerini aç")}</button>
                 </AyarBolum>
 
-                {/* GLOXORG BAĞLANTISI — SADECE YÖNETİCİYE (kullanıcıya) görünür; müşteriler görmez. Kopyala → paylaşımın yazısına İSTEDİĞİN yere yapıştır. */}
-                {yoneticiMi() && (
-                <AyarBolum acik={ayarBolum==="gloxlink"} onTik={()=>setAyarBolum(b=>b==="gloxlink"?null:"gloxlink")} renk="#d4af37" ad={t("ayarGloxLink", "GLOXORG bağlantısı (sadece sen)")} ikon="🔗" onAcBilgi={setAciklama} bilgi={t("aciklamaGloxLink", "Buradaki 'gloxorg.com' yazısını Kopyala'ya basıp al, sonra bir şey paylaşırken YAZINA İSTEDİĞİN yere yapıştır. Karşı taraf ona dokununca gloxorg.com açılır. Bu düğmeyi SADECE sen görürsün; müşterilerde görünmez. Artık paylaşımların altında kendiliğinden çıkmaz — nereye istersen oraya sen koyarsın.")}>
-                  <div className="ayar-bulunan-satir"><span className="notranslate" translate="no"><b>🔗</b> gloxorg.com</span><button type="button" className="ayar-bulunan-kopya" onClick={() => { try { navigator.clipboard.writeText("gloxorg.com"); } catch (e) { try { const ta = document.createElement("textarea"); ta.value = "gloxorg.com"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); } catch (e2) {} } bilgiBalonu(t("baglantiKopyalandi", "gloxorg.com kopyalandı ✓ — paylaşımına istediğin yere yapıştır")); }}>📋 {t("ayarKopyala", "Kopyala")}</button></div>
-                </AyarBolum>
-                )}
 
                 <AyarBolum acik={ayarBolum==="dil"} onTik={()=>setAyarBolum(b=>b==="dil"?null:"dil")} renk="#5aa6e0" ad={t("ayarDil", "Dil")} ikon="🌐" onAcBilgi={setAciklama} bilgi={t("aciklamaDil", "Uygulamanın dilini buradan seçersin. Menü, ayarlar ve harita arayüzü seçtiğin dile geçer.")}>
                   <div className="ayar-dil"><DilSecici /></div>
