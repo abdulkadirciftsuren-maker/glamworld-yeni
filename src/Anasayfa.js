@@ -1306,6 +1306,9 @@ export default function Anasayfa({ pro = false }) {
   const [begeniSet, setBegeniSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxBegeni") || "[]")); } catch (e) { return new Set(); } });
   const [begeniTepki, setBegeniTepki] = useState(() => { try { return JSON.parse(localStorage.getItem("groxTepki") || "{}"); } catch (e) { return {}; } }); // {postId: tepkiKey}
   const [tepkiAcik, setTepkiAcik] = useState(null); // tepki çubuğu açık gönderi id'si
+  // MESAJ YANI TEPKİ SİMGESİ — kullanıcı seçer (🙂 yerine istediği) ya da "yok" ile GİZLER. Cihazda saklanır.
+  const [tepkiSimge, setTepkiSimge] = useState(() => { try { return localStorage.getItem("groxTepkiSimge") || "🙂"; } catch (e) { return "🙂"; } });
+  const tepkiSimgeSec = (s) => { setTepkiSimge(s); try { localStorage.setItem("groxTepkiSimge", s); } catch (e) {} };
   // TEŞEKKÜR — seni beğenen/tepki veren kişiye "teşekkür et" (bildirimden). Kime teşekkür ettiğimizi hatırla (tekrar etme).
   const [tesekkurEdilen, setTesekkurEdilen] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxTesekkur") || "[]")); } catch (e) { return new Set(); } });
   // ANKET — composer'da anket oluşturma + feed'de oy sayımları
@@ -7097,7 +7100,7 @@ export default function Anasayfa({ pro = false }) {
                         <span className="sohbet-balon-alt">{m.duzenlendi && !m.silindi && <span className="sohbet-duzenlendi">{t("duzenlendi", "düzenlendi")} · </span>}{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
                         {tepkiler.length > 0 && <span className="sohbet-tepkiler">{tepkiler.slice(0, 3).map((e2, k) => <span key={k}>{e2}</span>)}{tepkiler.length > 3 ? <b>{tepkiler.length}</b> : null}</span>}
                       </div>
-                      <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); if (tepkiMesaj === m.id) { setTepkiMesaj(null); } else { tepkiAc(m.id, e.clientX, e.clientY); } }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>🙂</button>
+                      {tepkiSimge !== "yok" && <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); if (tepkiMesaj === m.id) { setTepkiMesaj(null); } else { tepkiAc(m.id, e.clientX, e.clientY); } }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>{tepkiSimge}</button>}
                     </div>
                   </div>
                 );
@@ -8880,6 +8883,16 @@ export default function Anasayfa({ pro = false }) {
 
                 <AyarBolum acik={ayarBolum==="bildirim"} onTik={()=>setAyarBolum(b=>b==="bildirim"?null:"bildirim")} renk="#ff7ab0" ad={t("ayarBildirimler", "Bildirimler")} ikon="🔔" onAcBilgi={setAciklama} bilgi={t("aciklamaBildirim", "Telefon bildirimlerini açarsan beğeni, yorum ve mesajları anında alırsın. İstediğin zaman kapatabilirsin.")}>
                   <button className="ayar-btn" onClick={bildirimIzniIste}>{bildirimIzin === "granted" ? t("ayarBildirimAcik", "Telefon bildirimleri AÇIK ✓") : t("ayarBildirimAc", "Telefon bildirimlerini aç")}</button>
+                </AyarBolum>
+
+                {/* MESAJ YANI TEPKİ SİMGESİ — kullanıcı seçer ya da gizler (sabit 🙂 dayatılmaz) */}
+                <AyarBolum acik={ayarBolum==="tepkisimge"} onTik={()=>setAyarBolum(b=>b==="tepkisimge"?null:"tepkisimge")} renk="#e0a83c" ad={t("ayarTepkiSimge", "Mesaj yanı tepki simgesi")} ikon="🙂" onAcBilgi={setAciklama} bilgi={t("aciklamaTepkiSimge", "Her mesajın yanında çıkan küçük 'tepki ekle' simgesini SEN seçersin — istediğin emojiyi koy ya da 'Gizle' de hiç çıkmasın. Seçimin sadece SENİN cihazında geçerlidir. (Tepki eklemek için mesaja uzun basmak da her zaman çalışır.)")}>
+                  <div className="ayar-tepki-secenek">
+                    {["🙂", "😊", "❤️", "👍", "🔥", "✨", "➕"].map((e) => (
+                      <button key={e} type="button" className={"ayar-tepki-btn" + (tepkiSimge === e ? " secili" : "")} onClick={() => tepkiSimgeSec(e)}>{e}</button>
+                    ))}
+                    <button type="button" className={"ayar-tepki-btn ayar-tepki-yok" + (tepkiSimge === "yok" ? " secili" : "")} onClick={() => tepkiSimgeSec("yok")}>🚫 {t("gizle", "Gizle")}</button>
+                  </div>
                 </AyarBolum>
 
 
