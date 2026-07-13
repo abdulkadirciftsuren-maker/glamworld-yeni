@@ -44,12 +44,11 @@ export async function fcmDurumAl(vapidKey) {
     if (!destek) return { token: "", sebep: "tarayici-desteklemiyor" };
     if (typeof Notification !== "undefined" && Notification.permission !== "granted") return { token: "", sebep: "izin-verilmedi" };
     const messaging = getMessaging(app);
+    // ÖNEMLİ DEĞİŞİKLİK: Ayrı firebase-messaging-sw.js + gstatic importScripts KULLANMA
+    // (o telefonda "ServiceWorker script evaluation failed" veriyordu — dışarıdan kütüphane çekemiyor).
+    // Sitenin KENDİ sw.js'i (zaten kayıtlı, çalışıyor, dışa bağımlılığı yok) FCM push'u alacak.
     let reg;
-    try {
-      reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/firebase-cloud-messaging-push-scope" });
-      try { await navigator.serviceWorker.ready; } catch (e) {}
-      if (reg && reg.update) { try { await reg.update(); } catch (e) {} }
-    } catch (e) { return { token: "", sebep: "SW-kayit-hatasi: " + ((e && (e.message || e.name)) || e) }; }
+    try { reg = await navigator.serviceWorker.ready; } catch (e) { reg = undefined; }
     let token = "";
     try {
       token = await getToken(messaging, reg ? { vapidKey, serviceWorkerRegistration: reg } : { vapidKey });
