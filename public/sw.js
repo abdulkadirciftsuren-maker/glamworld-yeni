@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A12B67";
+const SW_SURUM = "A12B68";
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
   // Eski onbellekleri temizle (kullanici bir daha ESKI surumde takilmasin)
@@ -37,10 +37,13 @@ self.addEventListener("push", (e) => {
   const secenek = {
     body: govde,
     icon: (d && d.foto) || "logo192.png", badge: "logo192.png",  // varsa GÖNDERENİN fotoğrafı (sunucu gönderince); yoksa logo
-    tag: arama ? "grox-arama" : "grox-bildirim",
+    // ÖNEMLİ: normal bildirimlerde BENZERSİZ tag → her biri AYRI gelir ve SES/TİTREŞİM çıkarır (eskiden aynı "grox-bildirim" tag'i yüzünden sessizce üst üste biniyorlardı).
+    tag: arama ? "grox-arama" : ("grox-" + Date.now() + "-" + Math.round(Math.random() * 1e6)),
     data: d || {},
     requireInteraction: !!arama,                        // arama bildirimi kendiliğinden kapanmasın (cevaplansın)
-    vibrate: arama ? [400, 200, 400, 200, 400] : [200, 100, 200],
+    renotify: !!arama,                                  // arama aynı tag'le tekrar gelirse yine uyarsın
+    silent: false,                                      // AÇIKÇA sesli (sistem bildirim sesi çalsın)
+    vibrate: arama ? [500, 250, 500, 250, 500] : [300, 150, 300],
   };
   if (arama) secenek.actions = [{ action: "ac", title: "📞 Aç" }, { action: "reddet", title: "Reddet" }];
   e.waitUntil(self.registration.showNotification(baslik, secenek));

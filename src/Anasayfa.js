@@ -2935,31 +2935,31 @@ export default function Anasayfa({ pro = false }) {
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       const ctx = new AC(); try { ctx.resume(); } catch (e) {}
-      // GERÇEK TELEFON ZİLİ — iki ton (440+480 Hz) AYNI ANDA → doğal "brrr" titreşimi (klasik telefon zili sesi, düz bip/çan değil).
-      const cal = (gecikme, sure, ses) => {
+      // ZARİF ÇAN — yumuşak, sıcak, YAVAŞ (kaba "brrr"/bip değil): nazik giriş, uzun doğal sönüm (çan gibi çınlar).
+      // Hafif ikinci harmonik (oktav) eklenir → sıcak çan tınısı. Ses düşük tutulur (zarif, bağırmaz).
+      const cingir = (freq, gecikme, ses, sonum) => {
         try {
           const t0 = ctx.currentTime + gecikme;
-          [440, 480].forEach((f) => {
+          [[freq, ses], [freq * 2, ses * 0.28]].forEach(([f, v]) => { // temel + yumuşak oktav
             const o = ctx.createOscillator(), g = ctx.createGain();
             o.type = "sine"; o.frequency.value = f;
             o.connect(g); g.connect(ctx.destination);
             g.gain.setValueAtTime(0.0001, t0);
-            g.gain.exponentialRampToValueAtTime(ses, t0 + 0.04);
-            g.gain.setValueAtTime(ses, t0 + Math.max(0.1, sure - 0.06));
-            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
-            o.start(t0); o.stop(t0 + sure + 0.03);
+            g.gain.exponentialRampToValueAtTime(v, t0 + 0.07);     // yumuşak giriş
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sonum); // uzun, zarif sönüm
+            o.start(t0); o.stop(t0 + sonum + 0.05);
           });
         } catch (e) {}
       };
       let dongu, aralik;
       if (mod === "aranan") {
-        // GELEN ÇAĞRI — "brrring … brrring" (iki kısa çalma), sonra kısa boşluk, tekrar. Normal telefon zili.
-        dongu = () => { cal(0.0, 0.42, 0.32); cal(0.62, 0.42, 0.32); };
-        aralik = 2200;
+        // GELEN ÇAĞRI — yumuşak "çiin … çiin" iki nazik çan notası (tatlı yükseliş), YAVAŞ ve zarif.
+        dongu = () => { cingir(783.99, 0.0, 0.17, 1.2); cingir(1046.5, 0.5, 0.15, 1.4); }; // G5 → C6, uzun çınlar
+        aralik = 3200; // yavaş
       } else {
-        // ARAYAN (giden) ringback — uzun tek "brrr" (karşı taraf çalıyor tonu), sonra bekle.
-        dongu = () => { cal(0.0, 1.0, 0.17); };
-        aralik = 3000; // ~1sn çal, ~2sn sus (klasik "çalıyor" ritmi)
+        // ARAYAN (giden) — tek yumuşak nota, karşı taraf çalıyor hissi (nazik, alçak).
+        dongu = () => { cingir(587.33, 0.0, 0.11, 1.3); }; // D5, yumuşak
+        aralik = 3400;
       }
       dongu();
       const iv = setInterval(dongu, aralik);
@@ -2980,7 +2980,7 @@ export default function Anasayfa({ pro = false }) {
         try { bilgiBalonu(t("aramaUlasilamadi", "Ulaşılamıyor — cevap yok")); } catch (e) {}
         try { aramaKapat(false); } catch (e) {}
       }
-    }, 35000);
+    }, 30000);
     return () => clearTimeout(zmn);
   }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
   // Küçük videoyu PARMAKLA TAŞI (istediğin yere) + DOKUN → büyük/küçük yer değiştir (swap)
