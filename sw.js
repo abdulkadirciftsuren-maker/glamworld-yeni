@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A12B65";
+const SW_SURUM = "A12B66";
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
   // Eski onbellekleri temizle (kullanici bir daha ESKI surumde takilmasin)
@@ -23,20 +23,33 @@ self.addEventListener("fetch", (e) => {
   }
 });
 
-// Push (FCM/sunucu bağlanınca uygulama TAM KAPALIYKEN de çalışır — şu an hazır temel)
+// PUSH — sunucudan (FCM) gelen bildirimi TAM KAPALIYKEN bile gösterir (mesaj/beğeni/yorum/tepki/arama).
+// FCM verisi farklı biçimlerde gelebilir: { notification:{title,body}, data:{...} } VEYA data-only { baslik, govde, tip }.
+// Hepsini defansif oku ki her durumda bildirim çıksın.
 self.addEventListener("push", (e) => {
   let veri = {};
-  try { veri = e.data ? e.data.json() : {}; } catch (x) { veri = { title: "GLOXORG", body: e.data && e.data.text() }; }
-  const baslik = veri.title || "GLOXORG";
-  e.waitUntil(self.registration.showNotification(baslik, {
-    body: veri.body || "", icon: veri.icon || "logo192.png",
-    badge: "logo192.png", tag: "grox-bildirim",
-  }));
+  try { veri = e.data ? e.data.json() : {}; } catch (x) { try { veri = { govde: e.data && e.data.text() }; } catch (y) { veri = {}; } }
+  const n = veri.notification || {};
+  const d = veri.data || veri;
+  const arama = (d && d.tip === "arama");
+  const baslik = n.title || veri.title || (d && d.baslik) || "GLOXORG";
+  const govde = n.body || veri.body || (d && d.govde) || "";
+  const secenek = {
+    body: govde,
+    icon: "logo192.png", badge: "logo192.png",
+    tag: arama ? "grox-arama" : "grox-bildirim",
+    data: d || {},
+    requireInteraction: !!arama,                        // arama bildirimi kendiliğinden kapanmasın (cevaplansın)
+    vibrate: arama ? [400, 200, 400, 200, 400] : [200, 100, 200],
+  };
+  if (arama) secenek.actions = [{ action: "ac", title: "📞 Aç" }, { action: "reddet", title: "Reddet" }];
+  e.waitUntil(self.registration.showNotification(baslik, secenek));
 });
 
-// Bildirime dokununca uygulamayı aç/öne getir
+// Bildirime (veya "Aç"a) dokununca uygulamayı aç/öne getir; "Reddet" → sadece kapat.
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
+  if (e.action === "reddet") return;
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((liste) => {
     for (const c of liste) { if ("focus" in c) return c.focus(); }
     if (self.clients.openWindow) return self.clients.openWindow("./");
