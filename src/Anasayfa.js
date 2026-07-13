@@ -1217,7 +1217,9 @@ export default function Anasayfa({ pro = false }) {
   // ile şehir/ilçe + ev/bina + içinde bulunduğu mekân (mağaza/otel/kuaför/banka) TAKİP edilir; Gloxoo her an tam yeri bilir.
   const [anlikYer, setAnlikYer] = useState(null);   // { adres, yer, tur, lat, lon }
   const anlikYerRef = useRef(null);                 // async AI isteğinde okunur
-  const [tamKonumIzin, setTamKonumIzin] = useState(() => { try { return localStorage.getItem("groxTamKonum") === "1"; } catch (e) { return false; } });
+  // AÇILIŞTA KONUM SORMASIN (kullanıcı KESİN istedi): "Gloxoo tam konum" her açılışta KAPALI başlar → site yüklenince GPS/konum izni İSTENMEZ.
+  // Konum SADECE kullanıcı paylaşım ekranındaki "📍 Konum ekle" düğmesine bastığında (ya da bu ayarı elle açınca) alınır. Kalıcı değil (her açılış temiz).
+  const [tamKonumIzin, setTamKonumIzin] = useState(false);
   const tamKonumIzinRef = useRef(tamKonumIzin);
   useEffect(() => { tamKonumIzinRef.current = tamKonumIzin; }, [tamKonumIzin]);
   const konumTakipRef = useRef({ id: null, sonMs: 0, sonLat: null, sonLon: null }); // watch id + son çözümleme (throttle)
@@ -5325,7 +5327,10 @@ export default function Anasayfa({ pro = false }) {
   // GERÇEK KONUM (GPS) — IP tahmini (Münih vb.) yanlış olabiliyor; navigator + Photon ile şehir/ilçe doğru bulunur
   useEffect(() => {
     if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(async (pos) => {
+    let iptal = false;
+    // AÇILIŞTA KONUM İZNİ SORMA (kullanıcı KESİN istedi): konum OTOMATİK gelir ama PENCERE ÇIKMAZ.
+    // Sadece izin DAHA ÖNCE verilmişse GPS ile sessizce kesinleştir; verilmemişse hiç isteme (IP konumu zaten var). GPS gerekince kullanıcı paylaşımdaki "📍 Konum ekle"ye basar.
+    const gpsAl = () => { if (iptal) return; navigator.geolocation.getCurrentPosition(async (pos) => {
       const lat = pos.coords.latitude, lon = pos.coords.longitude;
       setKonum((k) => ({ ...k, lat, lon })); // koordinat hemen (etraf taraması bununla başlar)
       // 1) NOMINATIM (zengin, doğru adres) — şehir/ülkeyi GPS'ten KESİNLEŞTİR (IP'nin yanlış şehir/ülkesini EZER; "Kyiv/Ukrayna" hatası buradandı)
@@ -5357,7 +5362,14 @@ export default function Anasayfa({ pro = false }) {
           mahalle: p.name && p.name !== p.city ? p.name : "",
         }));
       } catch (e) {}
-    }, () => {}, { enableHighAccuracy: true, timeout: 9000, maximumAge: 300000 });
+    }, () => {}, { enableHighAccuracy: true, timeout: 9000, maximumAge: 300000 }); };
+    // İzin durumunu SESSİZCE sor (bu pencere AÇMAZ); sadece "granted" ise GPS al. "prompt"/"denied" ise açılışta hiç isteme.
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: "geolocation" }).then((st) => { if (!iptal && st.state === "granted") gpsAl(); }).catch(() => {});
+      }
+    } catch (e) {}
+    return () => { iptal = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // YAKIN ÇEVRE — GPS koordinatından OpenStreetMap (Overpass) ile etraftaki market/postane/eczane/su/göl/deniz/nehir vb. (AI çevreyi bilsin)
   const [etraf, setEtraf] = useState("");
