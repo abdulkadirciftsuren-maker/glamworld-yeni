@@ -2935,20 +2935,31 @@ export default function Anasayfa({ pro = false }) {
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       const ctx = new AC(); try { ctx.resume(); } catch (e) {}
-      const bip = () => {
+      // Tek YUMUŞAK nota çal (zil/çan gibi — düz "bip" değil): frekans, gecikme, süre, ses
+      const nota = (freq, gecikme, sure, ses) => {
         try {
           const o = ctx.createOscillator(), g = ctx.createGain();
-          o.type = "sine"; o.frequency.value = mod === "aranan" ? 660 : 440;
+          o.type = "triangle"; o.frequency.value = freq; // triangle = daha sıcak/canlı ton
           o.connect(g); g.connect(ctx.destination);
-          const t0 = ctx.currentTime;
+          const t0 = ctx.currentTime + gecikme;
           g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.03);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + (mod === "aranan" ? 0.5 : 0.6));
-          o.start(t0); o.stop(t0 + (mod === "aranan" ? 0.55 : 0.65));
+          g.gain.exponentialRampToValueAtTime(ses, t0 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
+          o.start(t0); o.stop(t0 + sure + 0.03);
         } catch (e) {}
       };
-      bip();
-      const iv = setInterval(bip, mod === "aranan" ? 1100 : 3000);
+      let dongu, aralik;
+      if (mod === "aranan") {
+        // GELEN ÇAĞRI ZİLİ — CANLI melodik chime: yükselen 3 nota (E5-A5-D6) × 2 ("çal-çal"), sonra kısa sessizlik. Gerçek zil hissi.
+        dongu = () => { [0, 0.60].forEach((off) => { nota(659.3, off + 0.00, 0.20, 0.24); nota(880.0, off + 0.17, 0.20, 0.24); nota(1174.7, off + 0.34, 0.30, 0.22); }); };
+        aralik = 2600; // çal-çal … ~2.6sn sus … tekrar
+      } else {
+        // ARAYAN (giden) — yumuşak ÇİFT tonlu ringback ("brr brr"; karşı taraf çalıyor hissi), sonra bekle.
+        dongu = () => { nota(440, 0.0, 0.95, 0.15); nota(480, 0.0, 0.95, 0.11); };
+        aralik = 3000; // ~1sn çal, ~2sn sus (klasik telefon çalıyor tonu)
+      }
+      dongu();
+      const iv = setInterval(dongu, aralik);
       zilRef.current = { ctx, iv };
     } catch (e) {}
   };
