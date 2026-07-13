@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A12B66";
+const SW_SURUM = "A12B67";
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
   // Eski onbellekleri temizle (kullanici bir daha ESKI surumde takilmasin)
@@ -36,7 +36,7 @@ self.addEventListener("push", (e) => {
   const govde = n.body || veri.body || (d && d.govde) || "";
   const secenek = {
     body: govde,
-    icon: "logo192.png", badge: "logo192.png",
+    icon: (d && d.foto) || "logo192.png", badge: "logo192.png",  // varsa GÖNDERENİN fotoğrafı (sunucu gönderince); yoksa logo
     tag: arama ? "grox-arama" : "grox-bildirim",
     data: d || {},
     requireInteraction: !!arama,                        // arama bildirimi kendiliğinden kapanmasın (cevaplansın)

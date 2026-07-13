@@ -2935,28 +2935,31 @@ export default function Anasayfa({ pro = false }) {
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       const ctx = new AC(); try { ctx.resume(); } catch (e) {}
-      // Tek YUMUŞAK nota çal (zil/çan gibi — düz "bip" değil): frekans, gecikme, süre, ses
-      const nota = (freq, gecikme, sure, ses) => {
+      // GERÇEK TELEFON ZİLİ — iki ton (440+480 Hz) AYNI ANDA → doğal "brrr" titreşimi (klasik telefon zili sesi, düz bip/çan değil).
+      const cal = (gecikme, sure, ses) => {
         try {
-          const o = ctx.createOscillator(), g = ctx.createGain();
-          o.type = "triangle"; o.frequency.value = freq; // triangle = daha sıcak/canlı ton
-          o.connect(g); g.connect(ctx.destination);
           const t0 = ctx.currentTime + gecikme;
-          g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(ses, t0 + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
-          o.start(t0); o.stop(t0 + sure + 0.03);
+          [440, 480].forEach((f) => {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = "sine"; o.frequency.value = f;
+            o.connect(g); g.connect(ctx.destination);
+            g.gain.setValueAtTime(0.0001, t0);
+            g.gain.exponentialRampToValueAtTime(ses, t0 + 0.04);
+            g.gain.setValueAtTime(ses, t0 + Math.max(0.1, sure - 0.06));
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
+            o.start(t0); o.stop(t0 + sure + 0.03);
+          });
         } catch (e) {}
       };
       let dongu, aralik;
       if (mod === "aranan") {
-        // GELEN ÇAĞRI ZİLİ — CANLI melodik chime: yükselen 3 nota (E5-A5-D6) × 2 ("çal-çal"), sonra kısa sessizlik. Gerçek zil hissi.
-        dongu = () => { [0, 0.60].forEach((off) => { nota(659.3, off + 0.00, 0.20, 0.24); nota(880.0, off + 0.17, 0.20, 0.24); nota(1174.7, off + 0.34, 0.30, 0.22); }); };
-        aralik = 2600; // çal-çal … ~2.6sn sus … tekrar
+        // GELEN ÇAĞRI — "brrring … brrring" (iki kısa çalma), sonra kısa boşluk, tekrar. Normal telefon zili.
+        dongu = () => { cal(0.0, 0.42, 0.32); cal(0.62, 0.42, 0.32); };
+        aralik = 2200;
       } else {
-        // ARAYAN (giden) — yumuşak ÇİFT tonlu ringback ("brr brr"; karşı taraf çalıyor hissi), sonra bekle.
-        dongu = () => { nota(440, 0.0, 0.95, 0.15); nota(480, 0.0, 0.95, 0.11); };
-        aralik = 3000; // ~1sn çal, ~2sn sus (klasik telefon çalıyor tonu)
+        // ARAYAN (giden) ringback — uzun tek "brrr" (karşı taraf çalıyor tonu), sonra bekle.
+        dongu = () => { cal(0.0, 1.0, 0.17); };
+        aralik = 3000; // ~1sn çal, ~2sn sus (klasik "çalıyor" ritmi)
       }
       dongu();
       const iv = setInterval(dongu, aralik);
@@ -2969,6 +2972,17 @@ export default function Anasayfa({ pro = false }) {
     else if (gelenArama && !aramaDurum) zilBaslat("aranan");
     else zilDurdur();
   }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
+  // CEVAPSIZ ARAMA — ben ararken (ariyor) 35 saniye cevap gelmezse: sonsuza kadar ÇALMAYI DURDUR, "ulaşılamadı" de, aramayı kapat.
+  useEffect(() => {
+    if (aramaDurum !== "ariyor") return;
+    const zmn = setTimeout(() => {
+      if (aramaDurumRef.current === "ariyor") {
+        try { bilgiBalonu(t("aramaUlasilamadi", "Ulaşılamıyor — cevap yok")); } catch (e) {}
+        try { aramaKapat(false); } catch (e) {}
+      }
+    }, 35000);
+    return () => clearTimeout(zmn);
+  }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
   // Küçük videoyu PARMAKLA TAŞI (istediğin yere) + DOKUN → büyük/küçük yer değiştir (swap)
   const kucukVideoBas = (e) => {
     try { const el = e.currentTarget; const r = el.getBoundingClientRect(); kucukSurRef.current = { on: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top }; el.setPointerCapture(e.pointerId); } catch (x) {}

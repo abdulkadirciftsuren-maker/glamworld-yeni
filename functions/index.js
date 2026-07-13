@@ -74,7 +74,7 @@ exports.genelBildirim = onDocumentCreated("bildirimler/{id}", async (event) => {
     case "mesaj-tepki": govde = (b.metin || "mesajına tepki verdi"); break;
     default: govde = b.metin || "yeni bir bildirimin var"; break;
   }
-  await pushGonder(b.aliciUid, baslik, String(govde).slice(0, 140), { tip: b.tip || "bildirim", gonderenUid: b.gonderenUid || "" });
+  await pushGonder(b.aliciUid, baslik, String(govde).slice(0, 140), { tip: b.tip || "bildirim", gonderenUid: b.gonderenUid || "", foto: b.gonderenFoto || "" });
 });
 
 // 2) ARAMA — biri seni arayınca ÇALAN bildirim (site kapalı olsa da)
@@ -84,5 +84,5 @@ exports.aramaBildirim = onDocumentCreated("aramalar/{id}", async (event) => {
   if (!a || !a.arananUid) { console.log("[aramaBildirim] arananUid yok -> atlandi"); return; }
   const ad = a.arayanAd || "Biri";
   const tip = a.tip === "goruntulu" ? "📹 Görüntülü arama" : "📞 Sesli arama";
-  await pushGonder(a.arananUid, ad + " seni arıyor", tip, { tip: "arama", aramaId: event.params.id, arayanUid: a.arayanUid || "" });
+  await pushGonder(a.arananUid, ad + " seni arıyor", tip, { tip: "arama", aramaId: event.params.id, arayanUid: a.arayanUid || "", foto: a.arayanFoto || "" });
 });
