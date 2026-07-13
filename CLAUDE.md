@@ -4,6 +4,12 @@
 > Kullanıcı teknik değildir, İngilizce bilmez, kolay yorulur/üzülür. Aşağıdaki kurallara **harfiyen** uy.
 > Tüm ayrıntılı kurallar için `ANAYASA.md` dosyasını da baştan sona oku.
 
+> 📌 **AKTİF PLAN — her oturumda ÖNCE `SIRADAKI-PLAN.md` dosyasını oku.** Orada kullanıcının
+> "WhatsApp gibi GLOME" hayali ve sırada bekleyen işler TEK TEK yazılı (kişi listesi, asılı
+> arama düğmesi, bildirimde gönderen fotoğrafı, sayfa açıkken pencere-içi bildirim...). Kullanıcı
+> "yarın unutursun" diye endişelendiği için oraya yazdım. Yeni sorun aramadan o listeden git,
+> her maddeyi bitirince kullanıcıya göster + onay al.
+
 ---
 
 ## 1. ⛔ DİL KURALI — HER ZAMAN TÜRKÇE (EN KRİTİK — HER OTURUMDA TEKRARLANAN ŞİKÂYET)
