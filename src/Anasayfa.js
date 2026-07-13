@@ -6522,12 +6522,12 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
                     <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
-                    {/* MARKA / GİT — her paylaşımın köşesinde GLOXORG; isteğe bağlı "git" ile platform açılır (karşı taraf da görür) */}
+                    {/* MARKA ŞERİDİ KALDIRILDI (kullanıcı istedi): SADECE kullanıcı paylaşırken "gloxorg.com git" düğmesini açtıysa görünür; yoksa hiçbir şerit/etiket YOK (üstte zaten GLOXORG var) */}
+                    {p.gitLinki === true && (
                     <div className="ana-post-marka" onClick={(e) => e.stopPropagation()}>
-                      {p.gitLinki === true
-                        ? <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
-                        : <span className="apm-etiket notranslate" translate="no">◈ GLOXORG</span>}
+                      <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
                     </div>
+                    )}
                   </article>
                 );
               }
@@ -6606,12 +6606,12 @@ export default function Anasayfa({ pro = false }) {
                   </div>
                   {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
                   <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
-                  {/* MARKA / GİT — her paylaşımın köşesinde GLOXORG; isteğe bağlı "git" ile platform açılır */}
+                  {/* MARKA ŞERİDİ KALDIRILDI (kullanıcı istedi): SADECE kullanıcı paylaşırken açtıysa gloxorg.com görünür; yoksa hiçbir şerit YOK */}
+                  {p.gitLinki === true && (
                   <div className="ana-post-marka" onClick={(e) => e.stopPropagation()}>
-                    {p.gitLinki === true
-                      ? <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
-                      : <span className="apm-etiket notranslate" translate="no">◈ GLOXORG</span>}
+                    <a className="apm-git notranslate" translate="no" href="https://gloxorg.com" target="_blank" rel="noreferrer" title={t("gloxorgaGit", "GLOXORG platformuna git")}><span className="apm-ad">◈ GLOXORG</span><span className="apm-et">gloxorg.com ↗</span></a>
                   </div>
+                  )}
                 </article>
               );
             }).flatMap((node, idx, arr) => {

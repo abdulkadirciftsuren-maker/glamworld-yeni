@@ -835,6 +835,9 @@
 .apr-ic.dolu svg, .ana-post-btn.dolu svg, .tf-ic.dolu svg{ fill:currentColor; }
 /* Beğenilen kalp daha canlı kırmızı (dış çizgiden ayrı, biraz daha soylu) */
 .ape-kalp.dolu{ color:#ff2d55 !important; }
+/* KALP HER ZAMAN NET GÖRÜNSÜN: kalp şekli DOLU kırmızı (eskiden ince çizgi altın zemine kaçıp sadece sayı kalıyordu) */
+.apr-ic.ape-kalp svg > path:first-child, .tf-ic.ape-kalp svg > path:first-child{ fill:#ff5d6c; stroke:#ff2d55; }
+.apr-ic.ape-kalp.dolu svg > path:first-child, .tf-ic.ape-kalp.dolu svg > path:first-child{ fill:#ff2d55; stroke:#ff2d55; }
 /* KALP SAYISI — beğeni adedi kalbin ALTINDA görünür (feed rail + tam ekran) */
 .apr-ic.ape-kalp{ flex-direction:column; height:auto; gap:1px; }
 .apr-ic.ape-kalp .apr-sayi{ display:block; font-size:10.5px; font-weight:700; color:#fff; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.95); }
