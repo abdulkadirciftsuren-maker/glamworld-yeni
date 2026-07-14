@@ -4056,15 +4056,13 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* iPAD + BİLGİSAYAR (>=760px): içerik ENİ DOLDURUR — sağ/sol MAVİ kenar YOK (kullanıcı: "iPad kenarları mavi, tam dolacak").
    Paylaşımlar UFAK YATAY kartlar, yan yana; satır soldan sola kayar; her paylaşım TAM SAYFA DEĞİL, küçük. */
 @media (min-width:760px){
-  /* İçerik ORTADA makul genişlik (dar 600px değil, tam %100 de değil) → mavi kenar küçülür ama sayfa "tam ekran" olmaz */
-  .ana-akis{ max-width:90vw !important; width:90vw !important; margin:0 auto !important; }
-  .ana-cta{ max-width:90vw !important; }
-  .ana-post-izgara{ display:flex !important; flex-direction:row !important; align-items:flex-start !important; column-count:auto !important;
-    gap:15px; overflow-x:auto; overflow-y:visible; padding:4px 0 18px;
-    scroll-snap-type:x proximity; touch-action:pan-x; overscroll-behavior-x:contain; }
-  .ana-post-izgara > .ana-post{ flex:0 0 auto; width:300px; margin:0 !important; scroll-snap-align:start; }
-  .ana-post-izgara > .reels-serit, .ana-post-izgara > .feed-nobetci{ flex:0 0 auto; }
-  /* Küçük kartta medya YATAY (16/9) doldurur — dik video bile yatay+kısa; mavi kenar yok */
-  .ana-post .apr-medya.uzun, .ana-post .apr-medya.video, .ana-post .apr-kolaj{ aspect-ratio:16/9 !important; max-height:none !important; }
-  .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ width:100% !important; height:100% !important; object-fit:cover !important; }
+  /* iPad + bilgisayar: akış TELEFON GİBİ AŞAĞI (dik) gider — YATAY MAKARA İPTAL (alt boş kalmasın). Ortada sütun. */
+  .ana-akis{ max-width:680px !important; width:auto !important; margin:0 auto !important; }
+  .ana-cta{ max-width:680px !important; }
+  .ana-post-izgara{ display:block !important; column-count:auto !important; }
+  .ana-post-izgara > .ana-post{ width:100% !important; margin:0 0 18px !important; }
+  /* Medya ÇEKİLDİĞİ GİBİ — TAM gözüksün, göğü/kenarı KESME yok, kare/zorla çerçeve yok (doğal oran) */
+  .ana-post .apr-medya.uzun, .ana-post .apr-medya.video, .ana-post .apr-kolaj{ aspect-ratio:auto !important; max-height:none !important; }
+  .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ width:100% !important; height:auto !important; object-fit:fill !important; max-height:82vh; }
+  .ana-post .apr-medya{ min-height:0 !important; }
 }
