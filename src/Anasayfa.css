@@ -3761,6 +3761,23 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .msj-onizleme.okunmadi{ color:#3a2c00; font-weight:700; }
 .msj-tik{ color:#2f9e44; font-weight:800; margin-right:3px; }
 .msj-okunmamis{ flex:0 0 auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:#2f9e44; color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+/* GLOME bölüm başlığı (Sohbetler / Kişiler) — WhatsApp gibi ayraç şeridi, altın; kaydırınca üstte asılı kalır */
+.msj-merkez .msj-bolum-baslik{ position:sticky; top:0; z-index:2; margin:6px 2px 1px; padding:5px 11px; font-size:12px; font-weight:800; letter-spacing:.04em; color:#7a5e18; background:linear-gradient(90deg,#f3e3b0,#eed89a); border:1px solid #e2c974; border-radius:9px; text-transform:uppercase; }
+.msj-merkez .msj-bolum-baslik:first-child{ margin-top:0; }
+
+/* ASILI (FLOATING) ARAMA DÜĞMESİ — sohbette sağ altta; dokununca Görüntülü/Sesli açılır (WhatsApp FAB gibi, bize has ALTIN) */
+.sohbet-pencere{ position:relative; }
+.sohbet-arama-fab-sar{ position:absolute; right:16px; bottom:80px; z-index:40; display:flex; flex-direction:column; align-items:flex-end; gap:11px; }
+.sohbet-arama-fab{ width:58px; height:58px; border:none; border-radius:18px; background:radial-gradient(circle at 38% 30%,#ffe9a8,#f3c62f 55%,#c9971f); color:#3a2c00; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(90,60,10,.5), 0 0 0 2px #fff2c4 inset; cursor:pointer; transition:transform .15s; }
+.sohbet-arama-fab:active{ transform:scale(.92); }
+.sohbet-arama-fab.acik{ background:radial-gradient(circle at 38% 30%,#ffd9d9,#e97b7b 60%,#c94b4b); color:#fff; }
+.sohbet-arama-fab svg{ width:26px; height:26px; }
+.sohbet-fab-menu{ display:flex; flex-direction:column; gap:9px; align-items:flex-end; animation:fabAc .18s ease; }
+@keyframes fabAc{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
+.sohbet-fab-oge{ display:flex; align-items:center; gap:9px; border:none; padding:9px 14px 9px 12px; border-radius:14px; font-family:'Cinzel',serif; font-weight:700; font-size:14px; cursor:pointer; box-shadow:0 4px 12px rgba(90,60,10,.4); }
+.sohbet-fab-oge svg{ width:22px; height:22px; }
+.sohbet-fab-oge.fab-gor{ background:linear-gradient(135deg,#bcd8f7,#7fb0e6); color:#12304e; }
+.sohbet-fab-oge.fab-sesli{ background:linear-gradient(135deg,#a8e6b8,#4fbf6f); color:#0d3b1c; }
 
 /* Tam ekran sohbet — ALTIN zemin (anayasa: siyah yok), kare düğmeler */
 /* Glome sohbet penceresi: İLK ANDAN OPAK açılır (adFon opacity fade YOK) — fade sırasında arka plan sızıp parlıyordu; opak pencere delinmez */

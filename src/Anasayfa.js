@@ -1310,6 +1310,7 @@ export default function Anasayfa({ pro = false }) {
   // MESAJ YANI TEPKİ SİMGESİ — kullanıcı seçer (🙂 yerine istediği) ya da "yok" ile GİZLER. Cihazda saklanır.
   const [tepkiSimge, setTepkiSimge] = useState(() => { try { return localStorage.getItem("groxTepkiSimge") || "🙂"; } catch (e) { return "🙂"; } });
   const [tepkiSimgeAcik, setTepkiSimgeAcik] = useState(false); // GLOME üstündeki simge seçici açık mı
+  const [aramaFabAcik, setAramaFabAcik] = useState(false);     // sohbette sağ alttaki "asılı" arama düğmesinin menüsü açık mı
   const tepkiSimgeSec = (s) => { setTepkiSimge(s); try { localStorage.setItem("groxTepkiSimge", s); } catch (e) {} setTepkiSimgeAcik(false); };
   // TEŞEKKÜR — seni beğenen/tepki veren kişiye "teşekkür et" (bildirimden). Kime teşekkür ettiğimizi hatırla (tekrar etme).
   const [tesekkurEdilen, setTesekkurEdilen] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxTesekkur") || "[]")); } catch (e) { return new Set(); } });
@@ -3176,6 +3177,21 @@ export default function Anasayfa({ pro = false }) {
       return ad.includes(q) || meslek.includes(q);
     }).slice(0, 25);
   }, [mmAra, mmKisiler, benUid]);
+  // GLOME ANA LİSTESİ — mevcut SOHBETİ OLMAYAN tüm kişiler (WhatsApp gibi "herkes" alt alta çıksın, aramadan).
+  // Böylece GLOME'a basınca boş ekran/ufak şerit değil, herkesin FOTOĞRAFLI listesi görünür; dokununca sohbet başlar.
+  const glomeDigerKisiler = useMemo(() => {
+    const sohbetUidler = new Set(sohbetListesi.map((s) => s.uid));
+    return mmKisiler
+      .filter((k) => { const id = k.id || k.uid; return id && id !== benUid && !sohbetUidler.has(id); })
+      .map((k) => {
+        const id = k.id || k.uid;
+        const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
+        const foto = k.foto || k.avatarFoto || k.isFoto || (k.pro && k.pro.foto) || "";
+        const meslek = k.pro && k.pro.meslek ? mc(k.pro.meslek, dil) : "";
+        return { id, ad, foto, meslek };
+      })
+      .sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
+  }, [mmKisiler, sohbetListesi, benUid, dil]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   useEffect(() => {
     gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
@@ -7015,33 +7031,52 @@ export default function Anasayfa({ pro = false }) {
                     </button>
                   );
                 })
-              ) : sohbetListesi.length === 0 ? (
-                <div className="msj-bos">{t("mesajYok2", "Henüz sohbetin yok. Yukarıdan kişi ara, dokun ve ilk mesajını gönder 👆")}</div>
-              ) : sohbetListesi.map((s) => {
-                const bilgi = kisiBilgiHarita[s.uid] || {};
-                const foto = s.foto || bilgi.foto || "";
-                const ad = (s.ad && s.ad !== "—") ? s.ad : (bilgi.ad || "—");
-                const bas = ((ad || "?").trim()[0] || "?").toUpperCase();
-                const bugun = new Date(); const md = new Date(s.son.zamanMs || 0);
-                const ayniGun = md.toDateString() === bugun.toDateString();
-                const ne = s.son.zamanMs ? md.toLocaleString(dil || "tr", ayniGun ? { hour: "2-digit", minute: "2-digit" } : { day: "2-digit", month: "2-digit" }) : "";
-                const benSon = s.son.gonderenUid === benUid;
-                const oniz = s.son.gorsel ? ("📷 " + (s.son.metin || t("mesajFoto", "Fotoğraf"))) : (s.son.metin || "");
-                return (
-                  <button className="msj-kart" key={s.uid} onClick={() => sohbetAc({ uid: s.uid, ad, foto })}>
-                    <span className="msj-foto">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
-                    <div className="msj-icerik">
-                      <div className="msj-ust"><b className="notranslate" translate="no">{ad}</b><i>{ne}</i></div>
-                      <div className="msj-metin-satir">
-                        <div className={"msj-onizleme" + (s.okunmamis ? " okunmadi" : "")}>
-                          {benSon && <span className="msj-tik">{s.son.okundu ? "✓✓" : "✓"}</span>}{oniz}
+              ) : (
+                <>
+                  {/* 1) MEVCUT SOHBETLER — son mesaj/saat/okunmamış (en üstte) */}
+                  {sohbetListesi.length > 0 && <div className="msj-bolum-baslik">{t("mmSohbetler", "Sohbetler")}</div>}
+                  {sohbetListesi.map((s) => {
+                    const bilgi = kisiBilgiHarita[s.uid] || {};
+                    const foto = s.foto || bilgi.foto || "";
+                    const ad = (s.ad && s.ad !== "—") ? s.ad : (bilgi.ad || "—");
+                    const bas = ((ad || "?").trim()[0] || "?").toUpperCase();
+                    const bugun = new Date(); const md = new Date(s.son.zamanMs || 0);
+                    const ayniGun = md.toDateString() === bugun.toDateString();
+                    const ne = s.son.zamanMs ? md.toLocaleString(dil || "tr", ayniGun ? { hour: "2-digit", minute: "2-digit" } : { day: "2-digit", month: "2-digit" }) : "";
+                    const benSon = s.son.gonderenUid === benUid;
+                    const oniz = s.son.gorsel ? ("📷 " + (s.son.metin || t("mesajFoto", "Fotoğraf"))) : (s.son.metin || "");
+                    return (
+                      <button className="msj-kart" key={s.uid} onClick={() => sohbetAc({ uid: s.uid, ad, foto })}>
+                        <span className="msj-foto">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
+                        <div className="msj-icerik">
+                          <div className="msj-ust"><b className="notranslate" translate="no">{ad}</b><i>{ne}</i></div>
+                          <div className="msj-metin-satir">
+                            <div className={"msj-onizleme" + (s.okunmamis ? " okunmadi" : "")}>
+                              {benSon && <span className="msj-tik">{s.son.okundu ? "✓✓" : "✓"}</span>}{oniz}
+                            </div>
+                            {s.okunmamis > 0 && <span className="msj-okunmamis">{s.okunmamis > 99 ? "99+" : s.okunmamis}</span>}
+                          </div>
                         </div>
-                        {s.okunmamis > 0 && <span className="msj-okunmamis">{s.okunmamis > 99 ? "99+" : s.okunmamis}</span>}
+                      </button>
+                    );
+                  })}
+                  {/* 2) TÜM KİŞİLER — henüz sohbet başlatmadığın herkes; dokun, sohbet başlat (WhatsApp gibi hepsi listede) */}
+                  {glomeDigerKisiler.length > 0 && <div className="msj-bolum-baslik">{t("mmKisilerBaslik", "Kişiler")}</div>}
+                  {glomeDigerKisiler.map((k) => (
+                    <button className="msj-kart" key={k.id} onClick={() => sohbetAc({ uid: k.id, ad: k.ad, foto: k.foto })}>
+                      <span className="msj-foto">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : ((k.ad[0] || "?").toUpperCase())}</span>
+                      <div className="msj-icerik">
+                        <div className="msj-ust"><b className="notranslate" translate="no">{k.ad}</b></div>
+                        <div className="msj-onizleme">{k.meslek || t("sohbetBaslat", "Sohbet başlat →")}</div>
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  ))}
+                  {/* Henüz kişi listesi yüklenmediyse (ilk açılış) küçük bilgi */}
+                  {sohbetListesi.length === 0 && glomeDigerKisiler.length === 0 && (
+                    <div className="msj-bos">{t("mmYukleniyor", "Kişiler yükleniyor… Birazdan herkes burada listelenecek 👇")}</div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -7060,13 +7095,7 @@ export default function Anasayfa({ pro = false }) {
                 <b className="notranslate" translate="no"><KayanYazi>{sohbetKisi.ad}</KayanYazi></b>
                 <i>{t("cevrimici", "GLOXORG")}</i>
               </div>
-              {/* İnternetten arama: sesli + görüntülü (WhatsApp gibi) */}
-              <button className="sohbet-ara sohbet-ara-gor" onClick={() => aramaBaslat({ uid: sohbetKisi.uid, ad: sohbetKisi.ad, foto: sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) }, "goruntulu")} aria-label={t("goruntuluAra", "Görüntülü ara")} title={t("goruntuluAra", "Görüntülü ara")}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>
-              </button>
-              <button className="sohbet-ara sohbet-ara-sesli" onClick={() => aramaBaslat({ uid: sohbetKisi.uid, ad: sohbetKisi.ad, foto: sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) }, "sesli")} aria-label={t("sesliAra", "Sesli ara")} title={t("sesliAra", "Sesli ara")}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
-              </button>
+              {/* ARAMA DÜĞMELERİ ÜSTTEN KALDIRILDI — artık sağ altta "asılı" (floating) tek düğmede (kullanıcı isteği). */}
               {/* GLOME'a ait ayar: mesaj yanı tepki simgesini BURADAN seç (ana Ayarlar'a girmeden). Sadece kendi cihazında. */}
               <button className="sohbet-ara sohbet-simge-btn" onClick={(e) => { e.stopPropagation(); setTepkiSimgeAcik((v) => !v); }} aria-label={t("tepkiSimgeSec", "Tepki simgesi seç")} title={t("tepkiSimgeSec", "Mesaj yanı simgesini seç")}>
                 <span className="sohbet-simge-goster" aria-hidden="true">{tepkiSimge === "yok" ? "🚫" : tepkiSimge}</span>
@@ -7152,6 +7181,26 @@ export default function Anasayfa({ pro = false }) {
                 <span className="sb-not">{t("yaziEkleGonder", "İstersen yazı ekle, sonra Gönder ➤")}</span>
               </div>
             )}
+            {/* ASILI (FLOATING) ARAMA DÜĞMESİ — sağ altta yuvarlak; dokununca Görüntülü/Sesli seçenekleri açılır (WhatsApp FAB gibi, bize has altın) */}
+            <div className="sohbet-arama-fab-sar" onClick={(e) => e.stopPropagation()}>
+              {aramaFabAcik && (
+                <div className="sohbet-fab-menu">
+                  <button className="sohbet-fab-oge fab-gor" onClick={() => { setAramaFabAcik(false); aramaBaslat({ uid: sohbetKisi.uid, ad: sohbetKisi.ad, foto: sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) }, "goruntulu"); }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>
+                    <span>{t("goruntuluAra", "Görüntülü")}</span>
+                  </button>
+                  <button className="sohbet-fab-oge fab-sesli" onClick={() => { setAramaFabAcik(false); aramaBaslat({ uid: sohbetKisi.uid, ad: sohbetKisi.ad, foto: sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) }, "sesli"); }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+                    <span>{t("sesliAra", "Sesli")}</span>
+                  </button>
+                </div>
+              )}
+              <button className={"sohbet-arama-fab" + (aramaFabAcik ? " acik" : "")} onClick={() => setAramaFabAcik((v) => !v)} aria-label={t("ara", "Ara")} title={t("ara", "Ara")}>
+                {aramaFabAcik
+                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>}
+              </button>
+            </div>
             <div className="sohbet-yazar">
               {/* gizli dosya seçiciler: galeri foto/video, dosya, canlı foto/video (kamera) */}
               <input ref={sohbetFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={sohbetFotoSecildi} />
