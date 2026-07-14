@@ -29,12 +29,13 @@ try {
   }
 } catch (e) {}
 
-// Oturum çözülürken (Google/kalıcı oturum) gösterilen KOYU yükleniyor ekranı — giriş kartı FLAŞ etmesin.
+// Oturum çözülürken (Google/kalıcı oturum) gösterilen yükleniyor ekranı.
+// KURAL: hiçbir yerde siyah/koyu YOK → zemin ALTIN. Yanıp sönme (parlama) YOK → yazı SABİT durur.
+// Böylece açılışta krem→lacivert→krem renk sıçraması ve titreme bitiyor; tek düzgün altın kalıyor.
 function Yukleniyor() {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at 50% 0%,#1c2842 0%,#111a2e 55%,#0a1020 100%)" }}>
-      <style>{"@keyframes gwYukYanip{0%,100%{opacity:.5;transform:scale(.99)}50%{opacity:1;transform:scale(1.02)}}"}</style>
-      <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, fontSize: "32px", letterSpacing: ".09em", background: "linear-gradient(110deg,#B8860B,#FFE9A8,#FFD700,#FFE9A8,#B8860B)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", animation: "gwYukYanip 1.4s ease-in-out infinite" }}>GLOXORG</div>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at 50% 35%,#e6c766 0%,#d3ad48 55%,#bd932f 100%)" }}>
+      <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 800, fontSize: "34px", letterSpacing: ".1em", color: "#4a3208", textShadow: "0 1px 0 rgba(255,255,255,.35)" }}>GLOXORG</div>
     </div>
   );
 }

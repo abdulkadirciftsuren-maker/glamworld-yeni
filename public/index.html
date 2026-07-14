@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="theme-color" content="#d3ad48" />
     <script>
       /* SAYFA DİLİNİ ZİYARETÇİNİN TARAYICI DİLİNE HEMEN AYARLA (React'ten ÖNCE).
          Sabit lang yüzünden tarayıcı "bu sayfa yabancı dilde, çevrilsin mi?" bandını gösteriyordu
@@ -21,7 +21,7 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192-b109.png" />
     <link rel="icon" href="%PUBLIC_URL%/logo192-b109.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="GLOXORG" />
     <!-- SADECE amblem düzenleyicinin yazı tipleri yüklenir. DİKKAT: Cinzel/Cormorant YÜKLENMEZ —
          site rakamları (sayaç, şerit, çipler) Cinzel kullanıyor; Cinzel yüklenince rakamlar eğri/bozuk
@@ -31,23 +31,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=Montserrat:wght@600;800&family=Oswald:wght@500;700&family=Bebas+Neue&family=Anton&family=Lobster&family=Pacifico&family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Righteous&display=swap" rel="stylesheet" />
     <title>GLOXORG</title>
     <style>
-      /* Sayfa parmakla zoomlanmaz, fotograflar serbest */
-      html, body, #root { touch-action: pan-x pan-y; background:#f5efe2; }
+      /* Sayfa parmakla zoomlanmaz, fotograflar serbest.
+         İLK ZEMİN ALTIN (kural: hiç siyah/krem sıçraması olmasın; React açılana kadar da altın kalır). */
+      html, body, #root { touch-action: pan-x pan-y; background:radial-gradient(ellipse at 50% 35%,#e6c766 0%,#d3ad48 55%,#bd932f 100%); }
       img { touch-action: auto; }
       /* SOSYAL GİRİŞ YÜKLEME EKRANI — index.html'de (React'ten ÖNCE de görünür).
          Google/sosyal girişte sayfa bir an yeniden yüklenince BEYAZ flash olmasın diye,
          baştan sona TEK koyu ekran kalır. SADECE sosyal giriş bayrağı varsa gösterilir. */
+      /* KURAL: siyah/koyu YOK → sosyal giriş yükleme ekranı da ALTIN. Yazı SABİT (yanıp sönme yok). */
       #gw-yuk{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;
-        background:radial-gradient(ellipse at 50% 35%,#1a1206 0%,#0a0a0f 72%);}
+        background:radial-gradient(ellipse at 50% 35%,#e6c766 0%,#d3ad48 55%,#bd932f 100%);}
       #gw-yuk .gw-k{display:flex;flex-direction:column;align-items:center;gap:22px;}
       #gw-yuk .gw-h{width:54px;height:54px;border-radius:50%;
-        border:3px solid rgba(255,215,0,.18);border-top-color:#FFD700;border-right-color:#FFE9A8;
-        filter:drop-shadow(0 0 10px rgba(255,215,0,.35));animation:gwDon .8s linear infinite;}
+        border:3px solid rgba(74,50,8,.22);border-top-color:#5a4210;border-right-color:#7a5e18;
+        animation:gwDon .8s linear infinite;}
       @keyframes gwDon{to{transform:rotate(360deg);}}
-      #gw-yuk .gw-m{font-family:Georgia,'Times New Roman',serif;color:#FFD700;font-size:17px;font-weight:700;
-        letter-spacing:.04em;text-align:center;max-width:80vw;text-shadow:0 1px 8px rgba(255,215,0,.4);
-        animation:gwNabiz 1.4s ease-in-out infinite;}
-      @keyframes gwNabiz{0%,100%{opacity:.7;}50%{opacity:1;}}
+      #gw-yuk .gw-m{font-family:Georgia,'Times New Roman',serif;color:#4a3208;font-size:17px;font-weight:700;
+        letter-spacing:.04em;text-align:center;max-width:80vw;text-shadow:0 1px 0 rgba(255,255,255,.35);}
     </style>
   </head>
   <body>

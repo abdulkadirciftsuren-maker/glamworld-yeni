@@ -6,8 +6,9 @@
 .ana-arka-foto{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:-2; background-size:cover; background-position:center; pointer-events:none; }
 .ana-kok{
   position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden;
-  /* Zemin ŞEFFAF — arka plan fotoğrafı ayrı SABİT katmanda (.ana-arka-foto); yedek krem renk */
-  background-color:#f3ead6;
+  /* Zemin ŞEFFAF — arka plan fotoğrafı ayrı SABİT katmanda (.ana-arka-foto).
+     Yedek renk ALTIN (kural: foto yüklenene kadar bile krem/siyah değil ALTIN kalır → açılışta renk sıçraması olmaz). */
+  background-color:#d3ad48;
   font-family:'Cormorant Garamond',serif; color:#2c2418;
   -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-tap-highlight-color:transparent;
   padding-bottom:96px;
