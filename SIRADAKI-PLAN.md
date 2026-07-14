@@ -8,14 +8,13 @@
 
 ## 🎯 YAPILACAKLAR (öncelik sırası — kullanıcının istediği gibi)
 
-1. **GLOME kişi listesi (WhatsApp gibi):** Bütün kişiler alt alta, **fotoğraflı**, isim + son
-   mesaj/arama önizlemesi + saat + okunmamış sayısı; üstte arama çubuğu; aşağı kaydırmalı.
-   Şu an sadece "ara-bul" şeridi var, herkes listelenmiyor → **herkes listelenecek.**
+1. ✅ **(B73 BİTTİ) GLOME kişi listesi (WhatsApp gibi):** Bütün kişiler alt alta, **fotoğraflı**,
+   isim + önizleme; üstte arama çubuğu; aşağı kaydırmalı. Arama boşken önce "Sohbetler" sonra
+   "Kişiler" bölümü herkesi listeliyor (glomeDigerKisiler memo). **Kullanıcı onayı bekleniyor.**
 
-2. **Asılı (floating) arama düğmesi:** Arama düğmeleri şu an sohbet başlığının **ÜSTÜNDE**
-   (B70). Kullanıcı bunu İSTEMİYOR. Sağ **ALTTA, yuvarlak, "asılı" güzel** bir düğme olsun
-   (WhatsApp'ın yeşil FAB'ı gibi). Basınca sesli/görüntülü arama seçeneği çıksın. Üstteki
-   sabit düğmeler kalksın. "Bize has, değişik" bir tasarım istiyor.
+2. ✅ **(B73 BİTTİ) Asılı (floating) arama düğmesi:** Arama düğmeleri sohbet başlığından kaldırıldı,
+   sağ **ALTTA** yuvarlatılmış "asılı" altın düğmeye alındı; basınca Görüntülü/Sesli menüsü açılıyor
+   (.sohbet-arama-fab). **Kullanıcı onayı bekleniyor.**
 
 3. **Bildirimde GÖNDERENİN fotoğrafı:** Bildirimde hâlâ **GLOXORG logosu** çıkıyor (iki tarafta
    da), kimden geldiği belli değil. functions foto:gonderenFoto/arayanFoto gönderiyor (B71,
