@@ -5589,13 +5589,20 @@ export default function Anasayfa({ pro = false }) {
     // Parmak + fare ile sürüklenir; bırakınca 3.5s sonra otomatik devam eder.
     let raf, off = 0, durdur = false, suruk = false, basX = 0, basOff = 0, devamZaman = null;
     let w = grup ? grup.offsetWidth : ic.scrollWidth / 2; // TAM grup genişliği = kusursuz döngü (sıçrama yok)
-    const HIZ = 0.4;
+    // ÖNEMLİ (kullanıcı: "başka telefonlarda değerler şeridi hemen hemen yürümüyor"):
+    // Eskiden her KARE (frame) sabit 0.4px ilerliyordu → zayıf telefonda kare düşünce şerit YAVAŞLIYORDU.
+    // ARTIK GEÇEN SÜREYE göre ilerler (0.024 px/ms ≈ eski 60fps hızı) → HER telefonda AYNI hızda akar.
+    const HIZ_PX_MS = 0.024;
+    let sonZaman = 0;
     // Çeviri/yükleme otururken birkaç kez ölç, sonra sabit. off=off%w ile yumuşak.
     const wOlc = () => { const yeni = grup ? grup.offsetWidth : ic.scrollWidth / 2; if (yeni > 0) { if (w > 0) off = off % yeni; w = yeni; } };
     const t1 = setTimeout(wOlc, 600), t2 = setTimeout(wOlc, 1600), t3 = setTimeout(wOlc, 3200);
-    const adim = () => {
+    const adim = (ts) => {
+      if (!sonZaman) sonZaman = ts || 0;
+      const dt = Math.min(64, (ts || 0) - sonZaman); // sekme arka plandan gelince büyük sıçramayı sınırla
+      sonZaman = ts || 0;
       if (w > 0 && !suruk && !durdur) {
-        off += HIZ;
+        off += HIZ_PX_MS * dt;
         if (off >= w) off -= w; else if (off < 0) off += w;
         ic.style.transform = "translateX(" + (-off) + "px)";
       }
@@ -6434,9 +6441,8 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setGitLinki(false); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
             </button>
-            {/* AKIŞ FİLTRESİ — Sana Özel (algoritma) / Hepsi (zaman) / Takip Ettiklerim */}
+            {/* AKIŞ FİLTRESİ — "Sana Özel" KALDIRILDI (kullanıcı: kafa karıştırıyor, kimse ne olduğunu anlamıyor, herkeste farklı gösteriyordu). Sadece Hepsi (herkeste aynı) + Takip Ettiklerim. */}
             <div className="ana-feed-filtre">
-              <button className={"aff-chip aff-ozel" + (feedFiltre === "ozel" ? " aktif" : "")} onClick={() => setFeedFiltre("ozel")}>✨ {t("feedOzel", "Sana Özel")}</button>
               <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}>{t("feedHepsi", "Hepsi")}</button>
               <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}>{t("feedTakip", "Takip Ettiklerim")}</button>
             </div>
