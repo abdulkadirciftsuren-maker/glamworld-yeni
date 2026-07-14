@@ -1315,12 +1315,13 @@
 .ana-logo-yazi-pro{ margin:0; }
 .ana-logo-img{ display:block; height:48px; width:auto; max-width:min(66vw,300px); object-fit:contain; transform:none; transform-origin:center; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); } /* DİKEY düzende ikonlar üst üste → ortaya yer açıldı, yazı BÜYÜK/yüksek (kullanıcı) */
 /* İSİM YAZISI (resim değil) — kullanıcının seçtiği 4 no: zarif altın serif. Geniş ekranda BÜYÜR (kullanıcı istedi). */
-.ana-logo-metin{ display:inline-block; font-family:'Playfair Display','Cinzel',Georgia,serif; font-weight:800; font-size:40px; letter-spacing:.07em; line-height:1; white-space:nowrap;
+.ana-logo-metin{ display:inline-block; max-width:100%; font-family:'Playfair Display','Cinzel',Georgia,serif; font-weight:800;
+  font-size:clamp(22px, 7.4vw, 33px); letter-spacing:.03em; line-height:1; white-space:nowrap; /* TELEFONDA çerçeveye SIĞAR (taşmaz/kesilmez) */
   background:linear-gradient(180deg,#fff4cf,#ffe08a 40%,#ffd700 58%,#b8860b);
   -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 2px 7px rgba(0,0,0,.4)); }
-@media (min-width:560px) and (min-height:600px){ .ana-logo-metin{ font-size:50px; } }
-@media (min-width:1100px) and (min-height:600px){ .ana-logo-metin{ font-size:64px; letter-spacing:.09em; } }
+@media (min-width:560px) and (min-height:600px){ .ana-logo-metin{ font-size:44px; letter-spacing:.05em; } }
+@media (min-width:1100px) and (min-height:600px){ .ana-logo-metin{ font-size:58px; letter-spacing:.07em; } }
 /* KİŞİYE ÖZEL ŞERİT — ismin altında ince renkli çizgi (her müşteri farklı renk) */
 .ana-kisi-serit{ display:block; height:5px; width:132px; max-width:60%; margin:6px auto 0; border-radius:4px; box-shadow:0 1px 4px rgba(0,0,0,.35); }
 @media (min-width:1100px) and (min-height:600px){ .ana-kisi-serit{ height:6px; width:200px; } }
@@ -1490,7 +1491,19 @@
   border:1.5px solid rgba(184,134,11,.5); transition:all .2s;
   box-shadow:0 5px 14px rgba(120,95,30,.22);
 }
-.ana-nav-kutu > svg{ width:22px; height:22px; overflow:visible; } /* kalp ikonun ALTINA taşabilir */
+/* İKONLAR CANLI (kullanıcı: "ikonlar sade, canlandır") — parlak CAM görünümü (üstte ışık, altta hafif gölge)
+   + çok NAZİK yavaş süzülme (yanıp sönme DEĞİL, zarif hareket). Bir pencere açılınca üstteki kural durdurur. */
+.ana-nav-kutu::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(150deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.14) 30%, transparent 52%);
+  box-shadow:inset 0 1.5px 1px rgba(255,255,255,.55), inset 0 -4px 7px rgba(0,0,0,.2); }
+@keyframes navCanli{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-2.5px); } }
+.ana-nav-oge .ana-nav-kutu{ animation:navCanli 3.4s ease-in-out infinite; }
+.ana-nav-oge:nth-child(2) .ana-nav-kutu{ animation-delay:.45s; }
+.ana-nav-oge:nth-child(3) .ana-nav-kutu{ animation-delay:.9s; }
+.ana-nav-oge:nth-child(4) .ana-nav-kutu{ animation-delay:1.35s; }
+.ana-nav-oge:nth-child(5) .ana-nav-kutu{ animation-delay:1.8s; }
+.ana-nav-oge:nth-child(6) .ana-nav-kutu{ animation-delay:2.25s; }
+.ana-nav-kutu > svg{ position:relative; width:22px; height:22px; overflow:visible; } /* kalp ikonun ALTINA taşabilir; z: cam katmanın Üstünde */
 /* Profil = YUVARLAK; fotoğraf varsa içini doldurur */
 .ana-nav-kutu.yuv{ border-radius:50%; }
 .ana-nav-kutu.yuv img{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
@@ -1557,7 +1570,7 @@
   margin-top:2px; height:13px; font-size:10.5px; line-height:1.1; max-width:64px;
   white-space:nowrap; overflow:visible;
   font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:700;
-  color:#8a6a10; letter-spacing:.3px;
+  color:#ffe08a; letter-spacing:.3px; text-shadow:0 1px 3px rgba(0,0,0,.5); /* açık altın → gece mavisi zeminde okunur */
   visibility:hidden; /* sadece aktif görünür */
 }
 .ana-nav-ad::before{ content:"• "; } .ana-nav-ad::after{ content:" •"; }
@@ -1610,6 +1623,10 @@
 .ana-kok.sayfa-konum{ background:radial-gradient(140% 120% at 50% 28%, #0a3a44 0%, #08262e 45%, #06151a 78%, #030b0e 100%); }
 .ana-kok.sayfa-akademi{ background:radial-gradient(140% 120% at 50% 28%, #2f3310 0%, #20240a 45%, #131506 78%, #080a04 100%); }
 .ana-kok.sayfa-profil{ background:radial-gradient(140% 120% at 50% 28%, #1c2738 0%, #131c2a 45%, #0b121c 78%, #06090f 100%); }
+/* ANA SAYFA (home): AÇIK GECE MAVİSİ derin zemin — kullanıcı seçti (krem/sarı gitti). Home'a ÖZEL kural (base ezilmesin). */
+.ana-kok.sayfa-home{ background:radial-gradient(ellipse at 50% 20%, #3d63a0 0%, #294a7d 42%, #1a3560 72%, #142b4f 100%) !important; }
+/* Ana sayfada şehir fotoğrafı KATMANI gizli — üstüne binip zemini krem gösteriyordu; artık net gece mavisi kalır. */
+.ana-kok.sayfa-home .ana-arka-foto{ display:none !important; }
 /* PENCERE geçişi — kaydırınca/değişince yumuşak gelir */
 .ana-pencere{ animation:pencereGel .28s ease; }
 @keyframes pencereGel{ 0%{ opacity:0; transform:translateX(34px); } 100%{ opacity:1; transform:translateX(0); } }
