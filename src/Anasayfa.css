@@ -4020,9 +4020,13 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .alt-serit-bas h3{ margin:0; font-family:'Cinzel','Playfair Display',serif; font-size:16px; font-weight:800; letter-spacing:.02em; color:#ffe9a8; text-shadow:0 1px 4px rgba(0,0,0,.4); }
 .alt-kaydir{ display:flex; gap:11px; overflow-x:auto; padding:2px 2px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .alt-kaydir::-webkit-scrollbar{ display:none; }
-.alt-kart{ flex:0 0 auto; width:142px; border:1px solid rgba(255,215,0,.42); border-radius:15px; padding:13px 11px; cursor:pointer;
+.alt-kart{ position:relative; overflow:hidden; flex:0 0 auto; width:142px; border:1px solid rgba(255,215,0,.42); border-radius:15px; padding:16px 11px 13px; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;
   background:linear-gradient(180deg,#fffdf5,#f4ecd6); box-shadow:0 5px 14px rgba(0,15,35,.35); }
+/* MESLEK RENGİ üst bant (kullanıcı: "her mesleğe göre renk") */
+.alt-kart-bant{ position:absolute; top:0; left:0; right:0; height:9px; }
+.alt-mik{ font-size:14px; margin-right:1px; }
+.alt-kart.alt-pro{ border-color:var(--mrenk,#c9971f); }
 .alt-kart:active{ transform:scale(.97); }
 .alt-av{ width:62px; height:62px; border-radius:15px; overflow:hidden; flex:none; display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-weight:800; font-size:24px; color:#4a3208; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c); }
@@ -4035,7 +4039,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .alt-ilan i{ color:#2f7d32; }
 /* Trend çipleri */
 .alt-cipler{ flex-wrap:nowrap; }
-.alt-cip{ flex:0 0 auto; background:linear-gradient(180deg,#f0dca0,#e2c368); color:#5a4210; border-radius:12px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); }
+.alt-cip{ flex:0 0 auto; color:#fff; border-radius:12px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); text-shadow:0 1px 2px rgba(0,0,0,.35); }
 /* BİLGİSAYAR: şeritler TÜM ENİ kaplasın (yanlar boş kalmasın) — feed ortada dar kalsa da bölümler geniş */
 @media (min-width:1000px){
   .alt-bolumler{ width:94vw; max-width:1500px; margin-left:calc(50% - 47vw); }
@@ -4043,4 +4047,21 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .alt-kart{ width:170px; }
   .alt-av{ width:74px; height:74px; }
   .alt-ilan{ width:280px; }
+}
+
+/* ============================================================
+   BİLGİSAYAR/TABLET (>=1000px) — PAYLAŞIMLAR GENİŞ/YATAY (kullanıcı: "bilgisayar telefon gibi kare değil,
+   geniş ekran yatay olacak, pencere sağdan sola enine, içindeki video/resim TAM çıkacak, kırpma yok").
+   ============================================================ */
+@media (min-width:1000px){
+  /* Akış TEK ŞERİT ama GENİŞ (600px dar sütun kalkar) — postlar enine oturur */
+  .ana-akis{ max-width:min(1040px, 84vw) !important; width:auto !important; margin:0 auto !important; }
+  .ana-post-izgara{ column-count:auto !important; }
+  /* Medya kutusu YATAY (16/10) + medya TAM görünür (contain, kırpılmaz); kenar boşluğu gece mavisi (tema) */
+  .ana-post .apr-medya.uzun, .ana-post .apr-medya.video{ aspect-ratio:16/10 !important; max-height:74vh !important; background:#142b4f !important; }
+  .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ object-fit:contain !important; width:100% !important; height:100% !important; }
+  /* Yatay/normal medya: doğal oran, çok uzamasın */
+  .ana-post .apr-medya:not(.uzun):not(.video) img{ max-height:74vh; width:auto; max-width:100%; margin:0 auto; }
+  /* Çoklu-medya kolajı da yatay kutuda */
+  .ana-post .apr-kolaj{ aspect-ratio:16/10 !important; max-height:74vh !important; }
 }

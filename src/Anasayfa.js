@@ -285,7 +285,11 @@ function YorumcuSerit({ postId, sayi, onAc }) {
 }
 // Meslek → kendi rengi (ızgaradaki bg'nin ilk hex'i) — gönderi/etikette meslek kendi renginde yazılır.
 const MESLEK_RENK = {};
-try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; }); } catch (e) {}
+const MESLEK_BG = {};   // meslek → dolu renk gradyanı (kart üst şeridi)
+const MESLEK_IK = {};   // meslek → emoji ikon (yazı yanında)
+try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; MESLEK_BG[m.ad] = m.bg; MESLEK_IK[m.ad] = m.ik || "💼"; }); } catch (e) {}
+// Trend etiketleri için CANLI renk paleti (kullanıcı: "hepsini sarı yapma, renk ver")
+const CIP_RENK = ["linear-gradient(135deg,#4a86d8,#2c5aa8)", "linear-gradient(135deg,#e0568a,#b0356a)", "linear-gradient(135deg,#3fa85f,#237a42)", "linear-gradient(135deg,#c9971f,#9a7015)", "linear-gradient(135deg,#8a5fd8,#5f3aa8)", "linear-gradient(135deg,#2fa8a8,#1a7a7a)", "linear-gradient(135deg,#e07b3f,#b0562a)"];
 const DERINLIK_PARCALAR = Array.from({ length: 30 }, (_, i) => {
   const sure = 18 + Math.random() * 16;            // YAVAŞ (18-34sn)
   return {
@@ -3207,19 +3211,32 @@ export default function Anasayfa({ pro = false }) {
     if (aktifKod !== "home" || homeUyeler.length) return;
     tumKullanicilar(80).then((l) => setHomeUyeler(l || [])).catch(() => {});
   }, [aktifKod]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Profesyoneller: mesleği olan üyeler (kendisi hariç)
+  // Profesyoneller: mesleği olan üyeler (kendisi hariç). KONUMA GÖRE yakındakiler ÖNCE (aynı şehir > aynı ülke > diğer).
+  // Her karta MESLEK RENGİ + MESLEK İKONU eklenir (kullanıcı: "renk ver, beyaz değil, yazıya göre ikon koy").
   const profesyoneller = useMemo(() => {
+    const benimSehir = ((profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || konumAdres || "").toLowerCase();
+    const benimUlke = ((profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "").toLowerCase();
+    const yakinlik = (k) => {
+      const s = (k.sehir || (k.konum && k.konum.sehir) || "").toLowerCase();
+      const u = (k.ulke || (k.konum && k.konum.ulke) || "").toLowerCase();
+      if (benimSehir && s && s === benimSehir) return 0;   // aynı şehir → en yakın
+      if (benimUlke && u && u === benimUlke) return 1;      // aynı ülke
+      return 2;                                             // diğer
+    };
     return homeUyeler
       .filter((k) => { const id = k.id || k.uid; return id && id !== benUid && (((k.pro && k.pro.meslek)) || k.meslek); })
-      .slice(0, 16)
       .map((k) => {
         const id = k.id || k.uid;
         const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
         const foto = k.foto || k.avatarFoto || k.isFoto || (k.pro && k.pro.foto) || "";
         const meslekRaw = (k.pro && k.pro.meslek) || k.meslek || "";
-        return { id, ad, foto, meslek: mc(meslekRaw, dil), bas: (String(ad).trim()[0] || "?").toUpperCase(), sehir: k.sehir || (k.konum && k.konum.sehir) || "", pro: !!k.pro };
-      });
-  }, [homeUyeler, benUid, dil]);
+        const sehir = k.sehir || (k.konum && k.konum.sehir) || "";
+        return { id, ad, foto, meslek: mc(meslekRaw, dil), bas: (String(ad).trim()[0] || "?").toUpperCase(), sehir, pro: !!k.pro,
+          renk: MESLEK_RENK[meslekRaw] || "#c9971f", bg: MESLEK_BG[meslekRaw] || "linear-gradient(135deg,#d9b64a,#b28e34)", ik: MESLEK_IK[meslekRaw] || "💼", yak: yakinlik(k) };
+      })
+      .sort((a, b) => a.yak - b.yak)
+      .slice(0, 18);
+  }, [homeUyeler, benUid, dil, profilBilgi, konumAdres]);
   // İş İlanları: tur === "is" olan paylaşımlar
   const ilanlar = useMemo(() => gercekAkis.filter((p) => p.tur === "is").slice(0, 12), [gercekAkis]);
   // Trend: paylaşım metinlerindeki #etiketler (en çok geçenler)
@@ -6495,10 +6512,11 @@ export default function Anasayfa({ pro = false }) {
                   <div className="alt-serit-bas"><h3>◎ {t("yakindakiPro", "Yakındaki Profesyoneller")}</h3></div>
                   <div className="alt-kaydir">
                     {profesyoneller.map((k) => (
-                      <button className="alt-kart" key={k.id} onClick={() => uyeyiAc({ uid: k.id, ad: k.ad, foto: k.foto, meslek: k.meslek, sehir: k.sehir, pro: k.pro })}>
-                        <span className="alt-av">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : k.bas}</span>
+                      <button className="alt-kart alt-pro" key={k.id} style={{ "--mrenk": k.renk }} onClick={() => uyeyiAc({ uid: k.id, ad: k.ad, foto: k.foto, meslek: k.meslek, sehir: k.sehir, pro: k.pro })}>
+                        <span className="alt-kart-bant" style={{ background: k.bg }} aria-hidden="true" />
+                        <span className="alt-av" style={{ boxShadow: "0 0 0 2.5px " + k.renk }}>{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : k.bas}</span>
                         <b className="notranslate" translate="no">{k.ad}</b>
-                        <i>{k.meslek || t("uye", "Üye")}{k.sehir ? " · " + k.sehir : ""}</i>
+                        <i><span className="alt-mik" aria-hidden="true">{k.ik}</span> {k.meslek || t("uye", "Üye")}{k.sehir ? " · " + k.sehir : ""}</i>
                       </button>
                     ))}
                   </div>
@@ -6509,8 +6527,9 @@ export default function Anasayfa({ pro = false }) {
                   <div className="alt-serit-bas"><h3>💼 {t("isIlanlari", "İş İlanları")}</h3></div>
                   <div className="alt-kaydir">
                     {ilanlar.map((p) => (
-                      <button className="alt-kart alt-ilan" key={p.id} onClick={() => uyeyiAc(p)}>
-                        <b className="alt-ilan-bas">{p.baslik || (p.yazi ? p.yazi.slice(0, 46) : t("isIlani", "İş İlanı"))}</b>
+                      <button className="alt-kart alt-ilan" key={p.id} style={{ "--mrenk": MESLEK_RENK[p.meslek] || "#1f6fb0" }} onClick={() => uyeyiAc(p)}>
+                        <span className="alt-kart-bant" style={{ background: MESLEK_BG[p.meslek] || "linear-gradient(135deg,#1f6fb0,#134a7a)" }} aria-hidden="true" />
+                        <b className="alt-ilan-bas"><span className="alt-mik" aria-hidden="true">{MESLEK_IK[p.meslek] || "💼"}</span> {p.baslik || (p.yazi ? p.yazi.slice(0, 46) : t("isIlani", "İş İlanı"))}</b>
                         <i>{[p.sehir, mc(p.meslek, dil)].filter(Boolean).join(" · ") || (p.ad || "")}</i>
                       </button>
                     ))}
@@ -6521,7 +6540,7 @@ export default function Anasayfa({ pro = false }) {
                 <div className="alt-serit">
                   <div className="alt-serit-bas"><h3>🔥 {t("populerTrend", "Popüler / Trend")}</h3></div>
                   <div className="alt-kaydir alt-cipler">
-                    {trendler.map((h) => <span className="alt-cip" key={h} translate="no">{h}</span>)}
+                    {trendler.map((h, ti) => <span className="alt-cip" key={h} translate="no" style={{ background: CIP_RENK[ti % CIP_RENK.length] }}>{h}</span>)}
                   </div>
                 </div>
               )}
