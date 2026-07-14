@@ -1338,6 +1338,7 @@ export default function Anasayfa({ pro = false }) {
   // NOT: Varsayılan "hepsi" → kullanıcı "akışım karşı tarafla aynı olsun" dedi; Hepsi zaman sırasıyla herkeste AYNIdır. "Sana Özel" isteyen sekmeden seçer.
   // AKIŞ SAYFALAMA (ölçeklenebilirlik): tümünü birden yükleme — ilk 6, aşağı kaydırdıkça +6 (yüzbinlerce gönderi olsa da telefon donmaz)
   const [feedGoster, setFeedGoster] = useState(6);
+  const [homeUyeler, setHomeUyeler] = useState([]); // Ana sayfa "Yakındaki Profesyoneller" bölümü için üye listesi
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
@@ -3200,6 +3201,37 @@ export default function Anasayfa({ pro = false }) {
     let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
     return "hsl(" + h + ", 64%, 54%)";
   }, [benUid, u]);
+  // ANA SAYFA KEŞİF BÖLÜMLERİ (Yakındaki Profesyoneller / İş İlanları / Trend) — hem telefon hem bilgisayarda yatay şerit.
+  // Üyeleri bir kez yükle (ana sayfa açılınca).
+  useEffect(() => {
+    if (aktifKod !== "home" || homeUyeler.length) return;
+    tumKullanicilar(80).then((l) => setHomeUyeler(l || [])).catch(() => {});
+  }, [aktifKod]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Profesyoneller: mesleği olan üyeler (kendisi hariç)
+  const profesyoneller = useMemo(() => {
+    return homeUyeler
+      .filter((k) => { const id = k.id || k.uid; return id && id !== benUid && (((k.pro && k.pro.meslek)) || k.meslek); })
+      .slice(0, 16)
+      .map((k) => {
+        const id = k.id || k.uid;
+        const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
+        const foto = k.foto || k.avatarFoto || k.isFoto || (k.pro && k.pro.foto) || "";
+        const meslekRaw = (k.pro && k.pro.meslek) || k.meslek || "";
+        return { id, ad, foto, meslek: mc(meslekRaw, dil), bas: (String(ad).trim()[0] || "?").toUpperCase(), sehir: k.sehir || (k.konum && k.konum.sehir) || "", pro: !!k.pro };
+      });
+  }, [homeUyeler, benUid, dil]);
+  // İş İlanları: tur === "is" olan paylaşımlar
+  const ilanlar = useMemo(() => gercekAkis.filter((p) => p.tur === "is").slice(0, 12), [gercekAkis]);
+  // Trend: paylaşım metinlerindeki #etiketler (en çok geçenler)
+  const trendler = useMemo(() => {
+    const say = {};
+    gercekAkis.forEach((p) => {
+      const metin = ((p.yazi || "") + " " + (p.baslik || ""));
+      const bulunan = metin.match(/#[0-9A-Za-zçğıöşüÇĞİÖŞÜ_]+/g);
+      if (bulunan) bulunan.forEach((h) => { const k = h.toLowerCase(); say[k] = (say[k] || 0) + 1; });
+    });
+    return Object.keys(say).sort((a, b) => say[b] - say[a]).slice(0, 14);
+  }, [gercekAkis]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   useEffect(() => {
     gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
@@ -6455,6 +6487,44 @@ export default function Anasayfa({ pro = false }) {
             <div className="ana-feed-filtre">
               <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}>{t("feedHepsi", "Hepsi")}</button>
               <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}>{t("feedTakip", "Takip Ettiklerim")}</button>
+            </div>
+            {/* KEŞİF BÖLÜMLERİ — Yakındaki Profesyoneller / İş İlanları / Trend. Hem TELEFON hem BİLGİSAYAR; yatay SOLA kayan şeritler (akışı bozmaz). */}
+            <div className="alt-bolumler">
+              {profesyoneller.length > 0 && (
+                <div className="alt-serit">
+                  <div className="alt-serit-bas"><h3>◎ {t("yakindakiPro", "Yakındaki Profesyoneller")}</h3></div>
+                  <div className="alt-kaydir">
+                    {profesyoneller.map((k) => (
+                      <button className="alt-kart" key={k.id} onClick={() => uyeyiAc({ uid: k.id, ad: k.ad, foto: k.foto, meslek: k.meslek, sehir: k.sehir, pro: k.pro })}>
+                        <span className="alt-av">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : k.bas}</span>
+                        <b className="notranslate" translate="no">{k.ad}</b>
+                        <i>{k.meslek || t("uye", "Üye")}{k.sehir ? " · " + k.sehir : ""}</i>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {ilanlar.length > 0 && (
+                <div className="alt-serit">
+                  <div className="alt-serit-bas"><h3>💼 {t("isIlanlari", "İş İlanları")}</h3></div>
+                  <div className="alt-kaydir">
+                    {ilanlar.map((p) => (
+                      <button className="alt-kart alt-ilan" key={p.id} onClick={() => uyeyiAc(p)}>
+                        <b className="alt-ilan-bas">{p.baslik || (p.yazi ? p.yazi.slice(0, 46) : t("isIlani", "İş İlanı"))}</b>
+                        <i>{[p.sehir, mc(p.meslek, dil)].filter(Boolean).join(" · ") || (p.ad || "")}</i>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {trendler.length > 0 && (
+                <div className="alt-serit">
+                  <div className="alt-serit-bas"><h3>🔥 {t("populerTrend", "Popüler / Trend")}</h3></div>
+                  <div className="alt-kaydir alt-cipler">
+                    {trendler.map((h) => <span className="alt-cip" key={h} translate="no">{h}</span>)}
+                  </div>
+                </div>
+              )}
             </div>
             {/* GERÇEK gönderiler önce, sonra örnek akış (platform boş kalmasın) */}
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (

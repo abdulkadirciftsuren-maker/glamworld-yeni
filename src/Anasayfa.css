@@ -2118,7 +2118,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .serit-sehir, .serit-saat, .serit-kurfark, .pz{ font-size:13px; }
   .serit-kurfark b, .pz b{ font-size:14.5px; }
   /* İSİM + amblem büyür (telefon gibi ufak kalmaz) */
-  .ana-header{ padding:34px 5vw; gap:13px; min-height:92px; } /* iPad: isim bandı DİKEY uzun (çerçeve binmesin) */
+  .ana-header{ padding:11px 5vw; gap:12px; min-height:0; } /* iPad/tablet: band KISA (kullanıcı: çok yüksekti, sayfayı kapatıyordu) */
   .ana-ikon-kol{ flex-direction:row-reverse; gap:14px; } /* geniş ekran: ikonlar yan yana (eski görünüm) */
   .ana-zil{ margin-left:5px; } .ana-site-ai{ margin-right:16px; } /* masaüstünde ikonlar FERAH (yapışık değil), pusula profilden uzak */
   .ana-logo{ font-size:40px !important; }
@@ -2181,8 +2181,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* ---- BİLGİSAYAR (>=1100px): TAM EKRAN düzen — başlık/isim BÜYÜK ve geniş,
    çipler/arama büyük + kenardan uzak sistematik, AKIŞ 2 SÜTUN ---- */
 @media (min-width:1100px) and (min-height:600px){
-  /* başlık BANDI tam ekran genişler (kesik değil), içerik ortada */
-  .ana-header{ padding:48px 6vw; gap:18px; min-height:128px; } /* bilgisayar: isim bandı DİKEY UZUN (telefondan belirgin büyük) */
+  /* başlık BANDI tam ekran genişler ama KISA (kullanıcı: "band çok yüksek, sayfayı kapatıyor, yazıya dokunma sadece altını küçült"). Yükseklik düşürüldü → pırlanta çerçeve de sıkışıp GÖRÜNÜR. */
+  .ana-header{ padding:12px 6vw; gap:14px; min-height:0; } /* bilgisayar: band KISA, isim yine büyük (yazıya dokunulmadı) */
   .ana-ikon-kol{ flex-direction:row-reverse; gap:18px; } /* bilgisayar: ikonlar yan yana (eski görünüm) */
   .ana-zil{ margin-left:10px; } .ana-site-ai{ margin-right:26px; } /* büyük ekran: ikonlar DAHA ferah, pusula profilden iyice uzak */
   .ana-logo{ font-size:37px !important; }           /* GLOXORG BÜYÜK */
@@ -3992,4 +3992,38 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
    ============================================================ */
 @media (min-width:1000px){
   .ana-post-izgara{ column-count:auto !important; columns:auto !important; column-gap:0 !important; } /* çok sütun İPTAL — tek şerit */
+}
+
+/* ============================================================
+   KEŞİF BÖLÜMLERİ (Yakındaki Profesyoneller / İş İlanları / Trend)
+   Hem TELEFON hem BİLGİSAYAR; yatay SOLA kayan şeritler. Gece mavisi zeminde altın kartlar.
+   ============================================================ */
+.alt-bolumler{ display:flex; flex-direction:column; gap:16px; margin:8px 0 12px; }
+.alt-serit-bas{ margin:0 2px 8px; }
+.alt-serit-bas h3{ margin:0; font-family:'Cinzel','Playfair Display',serif; font-size:16px; font-weight:800; letter-spacing:.02em; color:#ffe9a8; text-shadow:0 1px 4px rgba(0,0,0,.4); }
+.alt-kaydir{ display:flex; gap:11px; overflow-x:auto; padding:2px 2px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.alt-kaydir::-webkit-scrollbar{ display:none; }
+.alt-kart{ flex:0 0 auto; width:142px; border:1px solid rgba(255,215,0,.42); border-radius:15px; padding:13px 11px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;
+  background:linear-gradient(180deg,#fffdf5,#f4ecd6); box-shadow:0 5px 14px rgba(0,15,35,.35); }
+.alt-kart:active{ transform:scale(.97); }
+.alt-av{ width:62px; height:62px; border-radius:15px; overflow:hidden; flex:none; display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-weight:800; font-size:24px; color:#4a3208; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c); }
+.alt-av img{ width:100%; height:100%; object-fit:cover; }
+.alt-kart b{ color:#2a2008; font-size:14px; font-weight:800; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.alt-kart i{ color:#8a7030; font-size:12px; font-style:normal; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* İş ilanı kartı — geniş, sola yaslı */
+.alt-ilan{ width:230px; text-align:left; align-items:flex-start; gap:4px; }
+.alt-ilan-bas{ color:#1f6fb0 !important; white-space:normal !important; line-height:1.25; }
+.alt-ilan i{ color:#2f7d32; }
+/* Trend çipleri */
+.alt-cipler{ flex-wrap:nowrap; }
+.alt-cip{ flex:0 0 auto; background:linear-gradient(180deg,#f0dca0,#e2c368); color:#5a4210; border-radius:12px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); }
+/* BİLGİSAYAR: şeritler TÜM ENİ kaplasın (yanlar boş kalmasın) — feed ortada dar kalsa da bölümler geniş */
+@media (min-width:1000px){
+  .alt-bolumler{ width:94vw; max-width:1500px; margin-left:calc(50% - 47vw); }
+  .alt-serit-bas h3{ font-size:19px; }
+  .alt-kart{ width:170px; }
+  .alt-av{ width:74px; height:74px; }
+  .alt-ilan{ width:280px; }
 }
