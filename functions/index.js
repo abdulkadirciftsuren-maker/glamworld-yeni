@@ -30,8 +30,14 @@ async function pushGonder(uid, baslik, govde, veri) {
   const tokens = await tokenlariGetir(uid);
   console.log(`[pushGonder] alici=${uid} | bulunan token sayisi=${tokens.length} | baslik="${baslik}" | govde="${govde}"`);
   if (!tokens.length) { console.log(`[pushGonder] ${uid} icin KAYITLI TOKEN YOK -> bildirim gonderilmedi (kullanici bildirim iznini/anahtarini kaydetmemis olabilir)`); return; }
-  // SADECE-VERİ (data-only): bildirimi servis çalışanı (firebase-messaging-sw.js) kendi çizer → çift bildirim OLMAZ, tam kontrol.
+  // SADECE-VERİ (data-only): bildirimi servis çalışanı kendi çizer → çift bildirim OLMAZ, tam kontrol.
   const veriTam = Object.assign({ baslik: String(baslik || "GLOXORG"), govde: String(govde || "") }, veri || {});
+  // ÖNEMLİ: FCM data limiti ~4KB. Profil fotoğrafı "data:" (base64, ~50KB) olabiliyor → sığmayıp bildirim HİÇ gitmiyordu.
+  // ÇOK UZUN ya da "data:" ile başlayan alanları AT (özellikle foto) → bildirim GARANTİ gider. (Kısa http foto URL'si kalır.)
+  Object.keys(veriTam).forEach((k) => {
+    const v = veriTam[k];
+    if (typeof v === "string" && (v.length > 700 || v.slice(0, 5) === "data:")) { delete veriTam[k]; }
+  });
   const mesaj = {
     tokens,
     data: Object.fromEntries(Object.entries(veriTam).map(([k, v]) => [k, String(v)])),
