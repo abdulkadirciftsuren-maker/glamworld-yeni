@@ -5734,10 +5734,12 @@ export default function Anasayfa({ pro = false }) {
     io.observe(el);
     return () => io.disconnect();
   }, [aktifKod, feedGoster, feedFiltre, gercekAkis]);
-  // MAKARA ŞERİDİ (akıştaki karusel): videolar EKRANA GELİNCE kendi oynar (sessiz, döngü), çıkınca durur; pencere açıkken durur
+  // AKIŞ VİDEOLARI: hem makara şeridi (karusel) HEM de akıştaki gönderi videoları EKRANA GELİNCE kendi OYNAR
+  // (sessiz + döngü, telefon kuralları gereği sessiz autoplay), ekrandan ÇIKINCA DURUR; bir pencere açıkken hepsi durur.
+  // Kullanıcı: "akışta pencereme video geldiği zaman canlanacak, canlı olacak." → gönderi videoları da .akis-video ile buraya dahil.
   useEffect(() => {
     if (aktifKod !== "home") return;
-    const vids = Array.from(document.querySelectorAll(".reels-serit-vid"));
+    const vids = Array.from(document.querySelectorAll(".reels-serit-vid, .akis-video"));
     if (!vids.length) return;
     if (ustPencereVar) { vids.forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
     const io = new IntersectionObserver((girisler) => {
@@ -6559,7 +6561,7 @@ export default function Anasayfa({ pro = false }) {
                                 // TEMEL (ilk/büyük) kare → cover (pencereyi doldurur, o zaten baz); YAN kareler → contain + ALTIN TOZU zemin (kendi yönünde tam, kesilmez)
                                 <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "") + (ana ? " temel" : " yan-oge")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
+                                    ? <><video className="apr-kolaj-fg akis-video" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
                                     : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={yonAyarla} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
@@ -6582,7 +6584,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? <video src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
+                        ? <video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
