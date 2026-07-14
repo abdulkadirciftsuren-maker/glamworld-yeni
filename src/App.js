@@ -30,12 +30,16 @@ try {
 } catch (e) {}
 
 // Oturum çözülürken (Google/kalıcı oturum) gösterilen yükleniyor ekranı.
-// KURAL: hiçbir yerde siyah/koyu YOK → zemin ALTIN. Yanıp sönme (parlama) YOK → yazı SABİT durur.
-// Böylece açılışta krem→lacivert→krem renk sıçraması ve titreme bitiyor; tek düzgün altın kalıyor.
+// KURAL: hiçbir yerde siyah/koyu YOK → zemin ALTIN. Parlama (yanıp sönme) YOK.
+// Ama müşteri yüklendiğini ANLASIN diye ORTADA yavaşça DÖNEN bir halka + "Yükleniyor…" var (dönme parlama değildir).
 function Yukleniyor() {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at 50% 35%,#e6c766 0%,#d3ad48 55%,#bd932f 100%)" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "22px", background: "radial-gradient(ellipse at 50% 35%,#e6c766 0%,#d3ad48 55%,#bd932f 100%)" }}>
+      <style>{"@keyframes gwDon{to{transform:rotate(360deg)}}"}</style>
       <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 800, fontSize: "34px", letterSpacing: ".1em", color: "#4a3208", textShadow: "0 1px 0 rgba(255,255,255,.35)" }}>GLOXORG</div>
+      {/* Dönen halka — yüklendiğini gösterir (koyu bronz, altın zeminde net görünür) */}
+      <div style={{ width: "46px", height: "46px", borderRadius: "50%", border: "4px solid rgba(74,50,8,.22)", borderTopColor: "#4a3208", borderRightColor: "#7a5e18", animation: "gwDon .8s linear infinite" }} />
+      <div style={{ fontFamily: "Georgia,serif", fontWeight: 700, fontSize: "15px", letterSpacing: ".05em", color: "#5a4210" }}>Yükleniyor…</div>
     </div>
   );
 }
