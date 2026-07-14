@@ -1311,6 +1311,7 @@ export default function Anasayfa({ pro = false }) {
   const [tepkiSimge, setTepkiSimge] = useState(() => { try { return localStorage.getItem("groxTepkiSimge") || "🙂"; } catch (e) { return "🙂"; } });
   const [tepkiSimgeAcik, setTepkiSimgeAcik] = useState(false); // GLOME üstündeki simge seçici açık mı
   const [aramaFabAcik, setAramaFabAcik] = useState(false);     // sohbette sağ alttaki "asılı" arama düğmesinin menüsü açık mı
+  const [glomeSekme, setGlomeSekme] = useState("sohbetler");   // GLOME altındaki WhatsApp gibi ikon çubuğu: sohbetler | durum | gruplar | aramalar
   const tepkiSimgeSec = (s) => { setTepkiSimge(s); try { localStorage.setItem("groxTepkiSimge", s); } catch (e) {} setTepkiSimgeAcik(false); };
   // TEŞEKKÜR — seni beğenen/tepki veren kişiye "teşekkür et" (bildirimden). Kime teşekkür ettiğimizi hatırla (tekrar etme).
   const [tesekkurEdilen, setTesekkurEdilen] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxTesekkur") || "[]")); } catch (e) { return new Set(); } });
@@ -7008,14 +7009,18 @@ export default function Anasayfa({ pro = false }) {
               <span className="msj-baslik"><span className="mm-bas-ik">{Ikon.gloxi}</span> Glome</span>
               <button className="msj-kapat" onClick={() => { setMesajAcik(false); setMmAra(""); }} aria-label="Kapat">✕</button>
             </div>
-            {/* KİŞİ ARAMA — kimi arayacağını buradan bul, dokun, sohbet başlat */}
+            {/* KİŞİ ARAMA — sadece SOHBETLER sekmesinde (kimi arayacağını bul, dokun, sohbet başlat) */}
+            {glomeSekme === "sohbetler" && (
             <div className="mm-ara-sar">
               <svg className="mm-ara-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
               <input className="mm-ara-input" value={mmAra} onChange={(e) => setMmAra(e.target.value)} placeholder={t("mmKisiAra", "Kişi ara, yeni sohbet başlat…")} />
               {mmAra && <button className="mm-ara-temizle" onClick={() => setMmAra("")} aria-label="Temizle">✕</button>}
             </div>
+            )}
             <div className="msj-liste">
-              {mmAra.trim().length >= 2 ? (
+              {/* SOHBETLER SEKMESİ — mevcut sohbetler + tüm kişiler */}
+              {glomeSekme === "sohbetler" && (
+              mmAra.trim().length >= 2 ? (
                 mmSonuc.length === 0 ? (
                   <div className="msj-bos">{t("mmBulunamadi", "Kişi bulunamadı. İsmini tam yazmayı dene.")}</div>
                 ) : mmSonuc.map((k) => {
@@ -7078,7 +7083,59 @@ export default function Anasayfa({ pro = false }) {
                     <div className="msj-bos">{t("mmYukleniyor", "Kişiler yükleniyor… Birazdan herkes burada listelenecek 👇")}</div>
                   )}
                 </>
+              )
               )}
+              {/* DURUM SEKMESİ — hikâyeler (WhatsApp'ın "Durum"u). Dokununca hikâye açılır. */}
+              {glomeSekme === "durum" && (
+                hikayeGruplar.length === 0 ? (
+                  <div className="msj-bos">{t("mmDurumYok", "Henüz durum yok. Ana sayfadan hikâye (durum) ekleyebilirsin.")}</div>
+                ) : hikayeGruplar.map((g, gi) => (
+                  <button className="msj-kart" key={g.uid || gi} onClick={() => { setMesajAcik(false); setMmAra(""); setHikayeAcik({ gi, oi: 0 }); }}>
+                    <span className={"msj-foto" + (g.yeni ? " durum-yeni" : "")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : (((g.ad || "?")[0]) || "?").toUpperCase()}</span>
+                    <div className="msj-icerik">
+                      <div className="msj-ust"><b className="notranslate" translate="no">{g.ad || "—"}</b></div>
+                      <div className="msj-onizleme">{(g.ogeler ? g.ogeler.length : 0) + " " + t("mmDurumAdet", "durum")}{g.yeni ? " · " + t("mmYeni", "yeni") : ""}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+              {/* GRUPLAR SEKMESİ — henüz veri yok; dürüst, şık altın bilgi (dandik boşluk değil) */}
+              {glomeSekme === "gruplar" && (
+                <div className="mm-bos-sik">
+                  <div className="mm-bos-ik">{Ikon.topluluk}</div>
+                  <b>{t("mmGruplarBaslik", "Gruplar yakında")}</b>
+                  <span>{t("mmGruplarAlt", "Yakın çevrenle grup sohbetleri burada olacak. Şimdilik kişilerle birebir sohbet edebilirsin.")}</span>
+                  <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
+                </div>
+              )}
+              {/* ARAMALAR SEKMESİ — arama geçmişi kaydı henüz yok; dürüst, şık altın bilgi */}
+              {glomeSekme === "aramalar" && (
+                <div className="mm-bos-sik">
+                  <div className="mm-bos-ik">{Ikon.video}</div>
+                  <b>{t("mmAramalarBaslik", "Arama geçmişin burada")}</b>
+                  <span>{t("mmAramalarAlt", "Yaptığın sesli/görüntülü aramalar burada listelenecek. Aramak için bir sohbeti aç, sağ alttaki arama düğmesine bas.")}</span>
+                  <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
+                </div>
+              )}
+            </div>
+            {/* ALT İKON ÇUBUĞU — WhatsApp gibi 4 bölme (Sohbetler / Durum / Gruplar / Aramalar) */}
+            <div className="mm-alt-bar">
+              <button className={"mm-alt-btn" + (glomeSekme === "sohbetler" ? " aktif" : "")} onClick={() => setGlomeSekme("sohbetler")}>
+                <svg className="mm-alt-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-11.9 7.6L3 21l1.9-5.6A8.4 8.4 0 1 1 21 11.5z" /></svg>
+                <span className="mm-alt-et">{t("navSohbetler", "Sohbetler")}</span>
+              </button>
+              <button className={"mm-alt-btn" + (glomeSekme === "durum" ? " aktif" : "")} onClick={() => setGlomeSekme("durum")}>
+                <svg className="mm-alt-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" strokeDasharray="3 3" /><circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" /></svg>
+                <span className="mm-alt-et">{t("navDurum", "Durum")}</span>
+              </button>
+              <button className={"mm-alt-btn" + (glomeSekme === "gruplar" ? " aktif" : "")} onClick={() => setGlomeSekme("gruplar")}>
+                <svg className="mm-alt-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><circle cx="17" cy="9" r="2.4" /><path d="M15.5 20a5 5 0 0 1 6.5-4.8" /></svg>
+                <span className="mm-alt-et">{t("navGruplar", "Gruplar")}</span>
+              </button>
+              <button className={"mm-alt-btn" + (glomeSekme === "aramalar" ? " aktif" : "")} onClick={() => setGlomeSekme("aramalar")}>
+                <svg className="mm-alt-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+                <span className="mm-alt-et">{t("navAramalar", "Aramalar")}</span>
+              </button>
             </div>
           </div>
         </div>

@@ -236,7 +236,7 @@
 .msj-kart{ display:flex; gap:11px; padding:11px 12px; background:linear-gradient(150deg,rgba(8,30,55,.6),rgba(4,16,32,.6)); border:1px solid rgba(255,235,170,.18); border-radius:14px; }
 .msj-foto{ width:42px; height:42px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:800; font-size:17px; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); }
 .msj-foto img{ width:100%; height:100%; object-fit:cover; }
-.msj-icerik{ min-width:0; flex:1; }
+.msj-icerik{ min-width:0; flex:1; text-align:left; }
 .msj-ust{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
 .msj-ust b{ font-family:'Cinzel',serif; font-size:14px; color:#FFE9A8; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .msj-ust i{ font-style:normal; font-size:11px; color:#8fa0b8; flex:none; }
@@ -3737,7 +3737,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Mesaj Merkezi (Gloxi) — ALTIN tema (base koyu .msj-* paylaş/yorum pencerelerinde AYNEN kalır, bozulmaz) */
 /* Mesaj Merkezi (Glome ilk sayfa) zemini: TAM OPAK ALTIN — eskiden %50 saydamdı, arkadaki feed sızıp PARLIYORDU; artık hiçbir şey sızmaz (siyah da değil) */
 .msj-merkez{ background:radial-gradient(circle at 50% 34%, #d8b552, #a9812f) !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; animation:none !important; }
-.msj-merkez .msj-pencere{ background:linear-gradient(180deg,#f7ecc9,#efe0b8) !important; border:1.5px solid #d9b64a !important; box-shadow:0 14px 44px rgba(50,34,6,.5) !important; }
+/* GLOME artık TAM SAYFA açılır (WhatsApp gibi) — ortada küçük kart değil; ekranı doldurur */
+.msj-merkez{ display:flex !important; align-items:stretch !important; justify-content:center !important; }
+.msj-merkez .msj-pencere{ width:100% !important; max-width:560px !important; height:100% !important; max-height:100% !important; border-radius:0 !important; border:none !important; background:linear-gradient(180deg,#f7ecc9,#efe0b8) !important; box-shadow:none !important; animation:none !important; }
+.msj-merkez .msj-liste{ flex:1 1 auto !important; min-height:0 !important; }
 .msj-merkez .msj-bas{ background:linear-gradient(135deg,#d9b64a,#b28e34) !important; border-bottom:none !important; padding:13px 15px !important; }
 .msj-merkez .msj-baslik{ display:flex; align-items:center; gap:7px; color:#3a2c00 !important; }
 .mm-bas-ik{ display:flex; } .mm-bas-ik svg{ width:25px; height:25px; }
@@ -3779,6 +3782,25 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-fab-oge svg{ width:22px; height:22px; }
 .sohbet-fab-oge.fab-gor{ background:linear-gradient(135deg,#bcd8f7,#7fb0e6); color:#12304e; }
 .sohbet-fab-oge.fab-sesli{ background:linear-gradient(135deg,#a8e6b8,#4fbf6f); color:#0d3b1c; }
+
+/* GLOME ALT İKON ÇUBUĞU (WhatsApp gibi 4 bölme) — altın, kare düğmeler */
+.mm-alt-bar{ flex:0 0 auto; display:flex; background:linear-gradient(135deg,#e8d49a,#d9b64a); border-top:1px solid #c9a13f; box-shadow:0 -2px 10px rgba(90,60,10,.2); padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px)); }
+.mm-alt-btn{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; border:none; background:transparent; color:#6b5417; padding:6px 2px 5px; cursor:pointer; border-radius:12px; }
+.mm-alt-btn .mm-alt-ik{ width:24px; height:24px; }
+.mm-alt-et{ font-size:11px; font-weight:700; letter-spacing:.01em; }
+.mm-alt-btn.aktif{ color:#3a2c00; background:rgba(255,255,255,.45); }
+.mm-alt-btn.aktif .mm-alt-ik{ filter:drop-shadow(0 1px 2px rgba(90,60,10,.35)); }
+@media (min-width:560px){ .mm-alt-et{ font-size:12px; } .mm-alt-btn .mm-alt-ik{ width:26px; height:26px; } }
+
+/* GLOME boş sekme (Gruplar/Aramalar) — dürüst, ŞIK altın bilgi (dandik boşluk değil) */
+.mm-bos-sik{ margin:auto; display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px; padding:34px 26px; max-width:340px; }
+.mm-bos-ik{ width:64px; height:64px; border-radius:18px; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c); color:#4a3208; box-shadow:0 6px 16px rgba(90,60,10,.35); }
+.mm-bos-ik svg{ width:34px; height:34px; }
+.mm-bos-sik b{ font-family:'Cinzel',serif; font-size:18px; color:#3a2c00; }
+.mm-bos-sik span{ font-size:14px; color:#6b5417; line-height:1.5; }
+.mm-bos-btn{ margin-top:4px; border:none; background:linear-gradient(180deg,#FFE9A8,#FFD700 55%,#B8860B); color:#3a2c00; font-family:'Cinzel',serif; font-weight:800; font-size:14px; padding:10px 20px; border-radius:12px; cursor:pointer; box-shadow:0 3px 10px rgba(90,60,10,.35); }
+/* Durum (hikâye) yeni işareti — kare çerçeve, altın (yuvarlak değil) */
+.msj-merkez .msj-foto.durum-yeni{ box-shadow:0 0 0 2px #e0202c, 0 0 0 4px #fffef8 !important; }
 
 /* Tam ekran sohbet — ALTIN zemin (anayasa: siyah yok), kare düğmeler */
 /* Glome sohbet penceresi: İLK ANDAN OPAK açılır (adFon opacity fade YOK) — fade sırasında arka plan sızıp parlıyordu; opak pencere delinmez */
