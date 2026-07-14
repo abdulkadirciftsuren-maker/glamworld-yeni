@@ -6,6 +6,23 @@
 > KURAL: Yeni sorun aramak yerine **bu listeden** git. TEK TEK yap, her birini bitirince
 > kullanıcıya göster + onay al, öyle devam et. Her şey Türkçe, adım adım.
 
+## 🏗️ BÜYÜK YENİDEN TASARIM (2026-07-14 — kullanıcı onayladı, SIRAYLA yap, UNUTMA)
+
+> Kullanıcı bilgisayar/tablet düzeni + tema için net karar verdi. TEK TEK yap, göster, onayla.
+
+- **A) TEMA (B82 — YAPILDI, kullanıcı onayı bekleniyor):** Zemin AÇIK GECE MAVİSİ (derin radial, düz boya değil).
+  İsim RESİM değil YAZI oldu (Playfair/serif altın, 4 no tasarım), geniş ekranda büyür. İsim altında
+  KİŞİYE ÖZEL ince şerit (uid'den renk, herkes farklı). theme-color + yükleme ekranları da mavi.
+- **B) BÖLÜMLER (sıradaki):** Yakındaki Profesyoneller (gerçek üyeler) / İş İlanları (tur=is postlar) /
+  Trend (paylaşım #etiketleri). HEM bilgisayarda HEM telefonda görünecek. Telefonda akışı BOZMADAN
+  yatay şerit(ler) olarak (hikâye şeridi gibi) araya girecek.
+- **C) BİLGİSAYAR YATAY ŞERİT DÜZENİ (sıradaki):** Akış AŞAĞI değil SOLA kayan yatay şerit (makara gibi);
+  altına Profesyoneller/İlanlar/Trend yatay şeritleri (Netflix gibi, aşağı indikçe). Üstte isim BÜYÜK +
+  ikonlar görünür + isim şeridi tüm eni kaplamaz, yanına şeyler gelir. Boş yer kalmayacak. Postlar YATAY/geniş.
+  Referans mock: scratchpad/masaustu-taslak3.png (kullanıcıya gösterildi, beğendi).
+- ⚠️ Bilgisayar düzeni CANLI önizlenemiyor (giriş+veri lazım) → mock ile göster, ONAYLA, sonra kur.
+  B80'de çok-sütun yaptım → kullanıcı çok kızdı, geri alındı (B81). Bir daha körlemesine yayınlama.
+
 ## 🎯 YAPILACAKLAR (öncelik sırası — kullanıcının istediği gibi)
 
 1. ✅ **(B73 BİTTİ) GLOME kişi listesi (WhatsApp gibi):** Bütün kişiler alt alta, **fotoğraflı**,

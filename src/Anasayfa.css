@@ -7,8 +7,8 @@
 .ana-kok{
   position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden;
   /* Zemin ŞEFFAF — arka plan fotoğrafı ayrı SABİT katmanda (.ana-arka-foto).
-     Yedek renk ALTIN (kural: foto yüklenene kadar bile krem/siyah değil ALTIN kalır → açılışta renk sıçraması olmaz). */
-  background-color:#d3ad48;
+     Yedek renk AÇIK GECE MAVİSİ (derin) — kullanıcı seçti (sarıdan çıktı). */
+  background-color:#294a7d;
   font-family:'Cormorant Garamond',serif; color:#2c2418;
   -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-tap-highlight-color:transparent;
   padding-bottom:96px;
@@ -1314,6 +1314,16 @@
 /* PRO üye GLOXORG GÖRSELİ (bannerdaki nakışlı yazı) — mavi elmas/düz yazı yok; yan boşluk yok, görsel geniş durur */
 .ana-logo-yazi-pro{ margin:0; }
 .ana-logo-img{ display:block; height:48px; width:auto; max-width:min(66vw,300px); object-fit:contain; transform:none; transform-origin:center; filter:drop-shadow(0 1px 3px rgba(0,0,0,.5)); } /* DİKEY düzende ikonlar üst üste → ortaya yer açıldı, yazı BÜYÜK/yüksek (kullanıcı) */
+/* İSİM YAZISI (resim değil) — kullanıcının seçtiği 4 no: zarif altın serif. Geniş ekranda BÜYÜR (kullanıcı istedi). */
+.ana-logo-metin{ display:inline-block; font-family:'Playfair Display','Cinzel',Georgia,serif; font-weight:800; font-size:40px; letter-spacing:.07em; line-height:1; white-space:nowrap;
+  background:linear-gradient(180deg,#fff4cf,#ffe08a 40%,#ffd700 58%,#b8860b);
+  -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 2px 7px rgba(0,0,0,.4)); }
+@media (min-width:560px) and (min-height:600px){ .ana-logo-metin{ font-size:50px; } }
+@media (min-width:1100px) and (min-height:600px){ .ana-logo-metin{ font-size:64px; letter-spacing:.09em; } }
+/* KİŞİYE ÖZEL ŞERİT — ismin altında ince renkli çizgi (her müşteri farklı renk) */
+.ana-kisi-serit{ display:block; height:5px; width:132px; max-width:60%; margin:6px auto 0; border-radius:4px; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+@media (min-width:1100px) and (min-height:600px){ .ana-kisi-serit{ height:6px; width:200px; } }
 /* İKON KOLONLARI — telefon PORTRE: 2 ikon ÜST ÜSTE (sol: zil+menü, sağ: profil+ayı); yazıya bol yer, orta büyür. Yatay/geniş ekran: yan yana (row-reverse → eski sıra) */
 .ana-ikon-kol{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; flex:none; }
 .ana-ikon-kol > *{ margin:0 !important; }

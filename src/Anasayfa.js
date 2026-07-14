@@ -3194,6 +3194,12 @@ export default function Anasayfa({ pro = false }) {
       })
       .sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
   }, [mmKisiler, sohbetListesi, benUid, dil]);
+  // KİŞİYE ÖZEL RENK — her müşterinin ismi altındaki şerit KENDİ renginde (uid'den türetilir; herkes farklı görür).
+  const kisiVurgu = useMemo(() => {
+    const s = String(benUid || u?.uid || "gloxorg");
+    let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+    return "hsl(" + h + ", 64%, 54%)";
+  }, [benUid, u]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   useEffect(() => {
     gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
@@ -6121,7 +6127,8 @@ export default function Anasayfa({ pro = false }) {
       style={{ background: "#f3ead6" }}
       onContextMenu={(e) => { try { if (!(e.target.closest && e.target.closest('input, textarea, [contenteditable="true"]'))) e.preventDefault(); } catch (x) {} }}>
       {/* ARKA PLAN FOTO — ekrana SABİT (gerçek ekran yüksekliği); sayfa kaysa/adres çubuğu oynasa ZIPLAMAZ, alttan açıklık vermez */}
-      <div className="ana-arka-foto" aria-hidden="true" style={{ backgroundImage: `linear-gradient(rgba(250,244,233,.5),rgba(235,222,196,.62)), url("${sehirGaleriUrl}")` }} />
+      {/* Arka plan: şehir fotoğrafı ama ÜSTÜNDE AÇIK GECE MAVİSİ perde (derin) — kullanıcı zemin mavi olsun dedi; foto hafif doku verir, renk mavidir. */}
+      <div className="ana-arka-foto" aria-hidden="true" style={{ backgroundImage: `linear-gradient(rgba(41,74,125,.80),rgba(20,43,80,.88)), url("${sehirGaleriUrl}")` }} />
       {/* DERİNLİK — renkli ufak pırlantalar, hafifçe süzülüp söner (her yere eşit) */}
       <div className="ana-derinlik" aria-hidden="true">
         {DERINLIK_PARCALAR.map((p, i) => (
@@ -6178,11 +6185,14 @@ export default function Anasayfa({ pro = false }) {
         <div className="ana-logo-sar">
           {/* Tüm üyeler: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi).
               Pro=yakut zeminli, Müşteri/Altın=şeffaf (mavi/yeşil zemine oturur). Eski düz yazı + mavi elmas kaldırıldı. */}
-          <span className="ana-logo-yazi ana-logo-yazi-pro"><img className={"ana-logo-img" + ((uyeTema === "pro" || uyeTema === "altin") ? " ana-logo-img-mavi" : "")} src={uyeWordmark} alt="GLOXORG" /></span>
+          {/* İSİM artık RESİM değil, YAZI — kullanıcı seçti (altın, 4 no tasarım). Böylece rengi kişiye özel de olabilir. */}
+          <span className="ana-logo-metin notranslate" translate="no">GLOXORG</span>
           <span className="ana-alt-sar">
             <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)}</span>
             {aktifKod === "home" && <DunyaKure />}
           </span>
+          {/* KİŞİYE ÖZEL ŞERİT — ismin altında, her müşteride farklı renk (kendi rengi) */}
+          <span className="ana-kisi-serit" style={{ background: kisiVurgu }} aria-hidden="true" />
         </div>
         {/* SAĞ KOLON: profil (üstte) + ayı/Ekspert (altta) — DİKEYde üst üste (kullanıcı); YATAY/geniş ekranda yan yana (row-reverse → ayı|profil, eskisi gibi) */}
         <div className="ana-ikon-kol ana-kol-sag">
