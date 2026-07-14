@@ -4053,15 +4053,18 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
    BİLGİSAYAR/TABLET (>=1000px) — PAYLAŞIMLAR GENİŞ/YATAY (kullanıcı: "bilgisayar telefon gibi kare değil,
    geniş ekran yatay olacak, pencere sağdan sola enine, içindeki video/resim TAM çıkacak, kırpma yok").
    ============================================================ */
-@media (min-width:1000px){
-  /* BİLGİSAYAR: paylaşımlar UFAK + YATAY, yan yana; SATIR sağdan soldan ekranı doldurur (mavi kenar YOK);
-     soldan sola kayar (makara). Her paylaşım TAM SAYFA DEĞİL — küçük yatay kart (kullanıcı: "ufak ufak, tam ekran değil, yatay, sağdan soldan dolsun, soldan akıntı"). */
+/* iPAD + BİLGİSAYAR (>=760px): içerik ENİ DOLDURUR — sağ/sol MAVİ kenar YOK (kullanıcı: "iPad kenarları mavi, tam dolacak").
+   Paylaşımlar UFAK YATAY kartlar, yan yana; satır soldan sola kayar; her paylaşım TAM SAYFA DEĞİL, küçük. */
+@media (min-width:760px){
+  /* İçerik ORTADA makul genişlik (dar 600px değil, tam %100 de değil) → mavi kenar küçülür ama sayfa "tam ekran" olmaz */
+  .ana-akis{ max-width:90vw !important; width:90vw !important; margin:0 auto !important; }
+  .ana-cta{ max-width:90vw !important; }
   .ana-post-izgara{ display:flex !important; flex-direction:row !important; align-items:flex-start !important; column-count:auto !important;
-    width:96vw; margin-left:calc(50% - 48vw); gap:16px; overflow-x:auto; overflow-y:visible; padding:4px 26px 18px;
+    gap:15px; overflow-x:auto; overflow-y:visible; padding:4px 0 18px;
     scroll-snap-type:x proximity; touch-action:pan-x; overscroll-behavior-x:contain; }
-  .ana-post-izgara > .ana-post{ flex:0 0 auto; width:320px; margin:0 !important; scroll-snap-align:start; }
+  .ana-post-izgara > .ana-post{ flex:0 0 auto; width:300px; margin:0 !important; scroll-snap-align:start; }
   .ana-post-izgara > .reels-serit, .ana-post-izgara > .feed-nobetci{ flex:0 0 auto; }
-  /* Küçük kartta medya YATAY (16/9) doldurur — dik video bile yatay görünür, kısa; mavi kenar yok */
+  /* Küçük kartta medya YATAY (16/9) doldurur — dik video bile yatay+kısa; mavi kenar yok */
   .ana-post .apr-medya.uzun, .ana-post .apr-medya.video, .ana-post .apr-kolaj{ aspect-ratio:16/9 !important; max-height:none !important; }
   .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ width:100% !important; height:100% !important; object-fit:cover !important; }
 }
