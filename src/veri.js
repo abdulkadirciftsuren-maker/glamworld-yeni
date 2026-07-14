@@ -581,7 +581,7 @@ export async function takipEttiklerimOku(uid, adet = 200) {
   } catch (e) { return []; }
 }
 
-export async function gonderileriOku({ ulke, meslek } = {}, adet = 300) {
+export async function gonderileriOku({ ulke, meslek } = {}, adet = 150) {
   // AKIŞ HERKESTE AYNI + EN YENİ olsun diye zamanMs'e göre SIRALI çekilir.
   // ESKİ HATA: orderBy YOKken fsLimit(150) Firestore'dan RASTGELE 150 gönderi getiriyordu (en yeniler değil)
   // → yeni paylaşımlar karşı tarafa "gitmiyor", sıra bozuk görünüyordu. ÇÖZÜM: orderBy("zamanMs","desc")
