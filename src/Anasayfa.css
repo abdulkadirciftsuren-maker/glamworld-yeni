@@ -3739,14 +3739,17 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .msj-merkez{ background:radial-gradient(circle at 50% 34%, #d8b552, #a9812f) !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; animation:none !important; }
 /* GLOME artık TAM SAYFA açılır (WhatsApp gibi) — ortada küçük kart değil; ekranı doldurur */
 .msj-merkez{ display:flex !important; align-items:stretch !important; justify-content:center !important; }
-.msj-merkez .msj-pencere{ width:100% !important; max-width:560px !important; height:100% !important; max-height:100% !important; border-radius:0 !important; border:none !important; background:linear-gradient(180deg,#f7ecc9,#efe0b8) !important; box-shadow:none !important; animation:none !important; }
+/* Zemin BEYAZ değil, ALTIN (kullanıcı: "beyaz kullanma, başka renk yap, üstündeki yazı gözüksün") */
+.msj-merkez .msj-pencere{ width:100% !important; max-width:560px !important; height:100% !important; max-height:100% !important; border-radius:0 !important; border:none !important; background:linear-gradient(180deg,#efdc9e,#e6cf87) !important; box-shadow:none !important; animation:none !important; }
 .msj-merkez .msj-liste{ flex:1 1 auto !important; min-height:0 !important; }
 .msj-merkez .msj-bas{ background:linear-gradient(135deg,#d9b64a,#b28e34) !important; border-bottom:none !important; padding:13px 15px !important; }
 .msj-merkez .msj-baslik{ display:flex; align-items:center; gap:7px; color:#3a2c00 !important; }
 .mm-bas-ik{ display:flex; } .mm-bas-ik svg{ width:25px; height:25px; }
 .msj-merkez .msj-kapat{ color:#fff !important; }
-.msj-merkez .msj-liste{ padding:8px 10px 14px !important; }
-.msj-merkez .msj-kart{ background:#fffef8 !important; border:1px solid #e7d090 !important; align-items:center !important; }
+/* Kartlar BİRBİRİNE YAPIŞIK, aralarında sadece ÇİZGİ (kullanıcı: "fazla boşluk bırakma, yapıştır, arada çizgi olsun") */
+.msj-merkez .msj-liste{ padding:0 !important; gap:0 !important; }
+.msj-merkez .msj-kart{ background:transparent !important; border:none !important; border-bottom:1px solid rgba(140,105,35,.38) !important; border-radius:0 !important; padding:11px 13px !important; align-items:center !important; }
+.msj-merkez .msj-kart:active{ background:rgba(255,255,255,.28) !important; }
 .msj-merkez .msj-foto{ border-radius:12px !important; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c) !important; color:#4a3208 !important; }
 .msj-merkez .msj-ust b{ color:#2a2008 !important; }
 .msj-merkez .msj-ust i{ color:#8a7030 !important; }
@@ -3754,7 +3757,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Kişi arama kutusu (kimi arayacağını bul, dokun, sohbet başlat) */
 .mm-ara-sar{ position:relative; display:flex; align-items:center; padding:9px 13px 4px; }
 .mm-ara-ik{ position:absolute; left:24px; width:18px; height:18px; color:#a98c4a; pointer-events:none; }
-.mm-ara-input{ flex:1; border:1.5px solid #d9b64a; border-radius:12px; padding:9px 34px; font-size:14px; background:#fffef8; color:#2a2008; outline:none; font-family:inherit; }
+.mm-ara-input{ flex:1; border:1.5px solid #cba43c; border-radius:12px; padding:9px 34px; font-size:14px; background:#f6e8b4; color:#2a2008; outline:none; font-family:inherit; }
 .mm-ara-input::placeholder{ color:#a98c4a; }
 .mm-ara-temizle{ position:absolute; right:24px; border:none; background:#e9d38f; color:#5a4210; width:22px; height:22px; border-radius:7px; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; }
 @media (min-width:560px){ .mm-ara-input{ font-size:15px; } }
@@ -3766,8 +3769,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .msj-tik{ color:#2f9e44; font-weight:800; margin-right:3px; }
 .msj-okunmamis{ flex:0 0 auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:#2f9e44; color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; }
 /* GLOME bölüm başlığı (Sohbetler / Kişiler) — WhatsApp gibi ayraç şeridi, altın; kaydırınca üstte asılı kalır */
-.msj-merkez .msj-bolum-baslik{ position:sticky; top:0; z-index:2; margin:6px 2px 1px; padding:5px 11px; font-size:12px; font-weight:800; letter-spacing:.04em; color:#7a5e18; background:linear-gradient(90deg,#f3e3b0,#eed89a); border:1px solid #e2c974; border-radius:9px; text-transform:uppercase; }
-.msj-merkez .msj-bolum-baslik:first-child{ margin-top:0; }
+.msj-merkez .msj-bolum-baslik{ position:sticky; top:0; z-index:2; margin:0; padding:6px 13px; font-size:12px; font-weight:800; letter-spacing:.04em; color:#5a4210; background:linear-gradient(90deg,#e3c976,#d9bb5c); border:none; border-bottom:1px solid rgba(140,105,35,.4); border-radius:0; text-transform:uppercase; }
 
 /* ASILI (FLOATING) ARAMA DÜĞMESİ — sohbette sağ altta; dokununca Görüntülü/Sesli açılır (WhatsApp FAB gibi, bize has ALTIN) */
 .sohbet-pencere{ position:relative; }

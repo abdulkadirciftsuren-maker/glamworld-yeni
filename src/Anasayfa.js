@@ -1334,7 +1334,8 @@ export default function Anasayfa({ pro = false }) {
   const [takipSet, setTakipSet] = useState(new Set());  // takip ettiğim uid'ler
   const [takipBalon, setTakipBalon] = useState(null);   // takip düğmesi yanında kısa etiket (uid; 1.6sn sonra kaybolur)
   const takipBalonZmnRef = useRef(null);
-  const [feedFiltre, setFeedFiltre] = useState("ozel"); // "ozel" (algoritma) | "hepsi" (zaman) | "takip" — akış filtresi
+  const [feedFiltre, setFeedFiltre] = useState("hepsi"); // "hepsi" (zaman, HERKESTE AYNI — varsayılan) | "ozel" (algoritma, kişiye özel) | "takip" — akış filtresi
+  // NOT: Varsayılan "hepsi" → kullanıcı "akışım karşı tarafla aynı olsun" dedi; Hepsi zaman sırasıyla herkeste AYNIdır. "Sana Özel" isteyen sekmeden seçer.
   // AKIŞ SAYFALAMA (ölçeklenebilirlik): tümünü birden yükleme — ilk 6, aşağı kaydırdıkça +6 (yüzbinlerce gönderi olsa da telefon donmaz)
   const [feedGoster, setFeedGoster] = useState(6);
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
@@ -3195,7 +3196,7 @@ export default function Anasayfa({ pro = false }) {
   }, [mmKisiler, sohbetListesi, benUid, dil]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   useEffect(() => {
-    gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
+    gonderileriOku({}, 300).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
   }, []);
   // TAKİP ETTİKLERİM — giriş yapınca yükle (akış filtresi + düğme durumu için)
   useEffect(() => {
