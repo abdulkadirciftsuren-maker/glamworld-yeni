@@ -4056,13 +4056,17 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* iPAD + BİLGİSAYAR (>=760px): içerik ENİ DOLDURUR — sağ/sol MAVİ kenar YOK (kullanıcı: "iPad kenarları mavi, tam dolacak").
    Paylaşımlar UFAK YATAY kartlar, yan yana; satır soldan sola kayar; her paylaşım TAM SAYFA DEĞİL, küçük. */
 @media (min-width:760px){
-  /* iPad + notebook: DİK akış (telefon gibi aşağı gider) + post SAĞ-SOL TAM ENİ DOLDURUR → yan MAVİ kenar YOK (kullanıcı: "mavi olmayacak, sağ sol dolu"). Yatay makara İPTAL (alt boş kalmaz). Çok geniş ekran (yatay) AYRI/sonra. */
+  /* iPad + notebook: DİK akış (telefon gibi aşağı) + post SAĞ-SOL TAM ENİ DOLDURUR (yan MAVİ kenar YOK). */
   .ana-akis{ max-width:100% !important; width:100% !important; margin:0 !important; padding-left:0 !important; padding-right:0 !important; }
   .ana-cta{ max-width:100% !important; }
   .ana-post-izgara{ display:block !important; column-count:auto !important; }
   .ana-post-izgara > .ana-post{ width:100% !important; margin:0 0 16px !important; }
-  /* Medya ÇEKİLDİĞİ GİBİ — TAM gözüksün, göğü/kenarı KESME yok, kare değil (doğal oran) */
+  /* MEDYA GÖZÜKSÜN (B92 hatası: flex+height:auto medyayı ÇÖKERTİYORDU) → display:block + doğal oran; foto/video TAM gözükür, kesilmez */
+  .ana-post .apr-medya{ display:block !important; min-height:0 !important; }
   .ana-post .apr-medya.uzun, .ana-post .apr-medya.video, .ana-post .apr-kolaj{ aspect-ratio:auto !important; max-height:none !important; }
-  .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ width:100% !important; height:auto !important; object-fit:fill !important; max-height:none; }
-  .ana-post .apr-medya{ min-height:0 !important; }
+  .ana-post .apr-medya img, .ana-post .apr-medya video{ width:100% !important; height:auto !important; object-fit:contain !important; display:block !important; }
+}
+@media (min-width:1300px){
+  /* ÇOK GENİŞ EKRAN (geniş monitör): post TAM SAYFA DEĞİL — genişlik kısıtlı (medya 2 metre uzamasın); yanlarda MAVİ kalabilir (kullanıcı: "geniş ekranda mavi kalsın, kısalt, tam ekran yapma"). Sonra yanlara başka içerik gelecek. */
+  .ana-akis{ max-width:760px !important; width:760px !important; margin:0 auto !important; }
 }
