@@ -3974,3 +3974,26 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-kk-btn.kapali{ background:#e0202c; color:#fff; }
 .arama-kapat{ background:#e0202c !important; color:#fff !important; } .arama-kapat svg{ transform:rotate(135deg); }
 @media (min-width:560px){ .arama-avatar{ width:140px; height:140px; } .arama-kisi b{ font-size:27px; } }
+
+/* ============================================================
+   GENİŞ EKRAN (BİLGİSAYAR/TABLET) DÜZENİ — telefonun gerdirilmiş hali DEĞİL.
+   Kullanıcı (eski glamworld örneği): bilgisayarda paylaşımlar YAN YANA (yatay)
+   gelip ekranı DOLDURSUN, yanlar boş kalmasın; dikey video/foto bile kutusunda
+   kalıp sayfayı ŞİŞİRMESİN. → Postlar tek dar sütun yerine ÇOK SÜTUN (masonry).
+   ============================================================ */
+@media (min-width:1000px){
+  /* Akış alanı GENİŞLER (eski 600px dar sütun kalkar) — ekranı yatay doldurur */
+  .ana-akis{ max-width:1180px !important; width:auto !important; margin:0 auto !important; padding:12px 22px 0 !important; }
+  /* Postlar YAN YANA: 2 sütun (masonry); bir post ikiye BÖLÜNMEZ */
+  .ana-post-izgara{ column-count:2; column-gap:20px; }
+  .ana-post-izgara > .ana-post{ break-inside:avoid; -webkit-column-break-inside:avoid; page-break-inside:avoid;
+    width:100%; margin:0 0 20px !important; display:inline-block; vertical-align:top; }
+  /* Makara şeridi + "daha fazla yükle" nöbetçisi TÜM sütunları kaplasın (sütuna sıkışmasın) */
+  .ana-post-izgara > .reels-serit, .ana-post-izgara > .feed-nobetci{ -webkit-column-span:all; column-span:all; }
+  /* Dikey medya bile sütun yüksekliğini AŞMASIN → sayfa şişmez (kırpma yok, kutu içinde sığar) */
+  .ana-post-izgara .ana-post video, .ana-post-izgara .apr-kolaj{ max-height:66vh; }
+}
+@media (min-width:1500px){
+  .ana-akis{ max-width:1520px !important; }
+  .ana-post-izgara{ column-count:3; } /* çok geniş ekran: 3 sütun */
+}

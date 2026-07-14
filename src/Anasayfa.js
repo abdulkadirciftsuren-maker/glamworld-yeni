@@ -6450,6 +6450,8 @@ export default function Anasayfa({ pro = false }) {
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (
               <div className="ana-feed-bos">{t("feedTakipBos", "Henüz kimseyi takip etmiyorsun. Gönderilerdeki + Takip düğmesine bas; burada onların paylaşımları görünür.")}</div>
             )}
+            {/* POST IZGARASI — GENİŞ ekranda postlar YAN YANA (çok sütun) doldurur; telefonda tek sütun (değişmez). */}
+            <div className="ana-post-izgara">
             {(() => { const feedTam = (feedFiltre === "takip" ? gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }) : feedFiltre === "ozel" ? kisiselAkis : gercekAkis); return feedTam.slice(0, feedGoster).map((p, i) => {
               const ad = p.ad || "—";
               const bas = (String(ad).trim()[0] || "?").toUpperCase();
@@ -6712,6 +6714,7 @@ export default function Anasayfa({ pro = false }) {
               const sokIndex = Math.min(2, arr.length - 1);
               return (idx === sokIndex && reelListesi.length > 0) ? [node, reelsSeridi("reelserit")] : node;
             }).concat(feedTam.length > feedGoster ? <div key="feed-nob" ref={feedSonRef} className="feed-nobetci" aria-hidden="true" /> : []); })()}
+            </div>
           </div>
           {/* "Profesyonel misin? Üye ol" bandı KALDIRILDI (kullanıcı: ana sayfadan çıkar) — pro daveti menüde duruyor */}
         </div>
