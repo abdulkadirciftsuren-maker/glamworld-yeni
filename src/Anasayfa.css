@@ -459,7 +459,7 @@
 /* YAN düzen (kullanıcı: "büyük sol, küçükler YANDA olsun, altta değil → sayfa uzamasın"): SOL büyük + SAĞ 2 küçük stackli.
    SABİT yükseklik → kompakt, sayfayı uzatmaz. Foto TAM (contain) → kesilmez, net; boşluk düz koyu zemin. */
 /* Kutu EN-BOY oranı JS'ten gelir (fotoğrafların oranına göre) → pencere büyür/kısalır, sabit yükseklik YOK, alt-üst siyah bant YOK */
-.apr-kolaj{ position:relative; display:flex; flex-direction:row; gap:3px; width:100%; aspect-ratio:1.1; max-height:94vh; } /* pencere UZATILDI (daha uzun) → içindeki video/foto tam gözüksün, kısa kalmasın */
+.apr-kolaj{ position:relative; display:flex; flex-direction:row; gap:3px; width:100%; aspect-ratio:16/9; max-height:74vh; } /* YATAY kolaj (kullanıcı: dik değil, yatay) */
 .apr-kolaj.n2 > .apr-kolaj-oge{ flex:1 1 50%; height:100%; min-width:0; }
 .apr-kolaj-buyuk{ flex:1.55 1 0; height:100%; min-width:0; }
 .apr-kolaj-buyuk .apr-kolaj-oge{ width:100%; height:100%; }
@@ -766,15 +766,16 @@
    KORUNUR — min-height:0 pencereyi kısaltıp ikonları üst üste bindiriyordu (geri alındı). Foto ortada, isim üstte/yazı altta. */
 /* DİKEY (uzun) foto → DOLU pencere (4/5, az daha az uzun → yanlardan kesmez/zoom azalır); yazılar fotoğraf üstünde */
 /* DİKEY FOTO → pencere kenarını doldurur (cover) ama çok hafif daha az uzun (5/6) → az uzaklaşır, kenar bozulmaz */
-.apr-medya.uzun{ aspect-ratio:4/5; padding:0; }
+/* DİKEY foto artık YATAY çerçevede (16/9) — kullanıcı: "bütün pencereler YATAY olacak, dik değil". Doldurur (cover), kısa+geniş. */
+.apr-medya.uzun{ aspect-ratio:16/9; padding:0; }
 .apr-medya.uzun img{ width:100%; height:100%; object-fit:cover; display:block; }
 /* YATAY (enli) foto: pencereyi DOĞAL doldurur — min-height/ortalama YOK → alt-üst altın/boş bant kalmaz
    (kullanıcı: yatay foto yatay gelsin, kısa kalıp ekleme/karartma olmasın). İkon şeridi (.apr-rail) medyanın
    DIŞINDA olduğu için min-height kaldırmak ikonları bozmaz. */
 .apr-medya:not(.uzun):not(.video){ min-height:0; display:block; background:transparent; }
 .apr-medya:not(.uzun):not(.video) img{ width:100%; height:auto; display:block; }
-/* VİDEO → AYRI zoom: daha YAKIN (kenarlar tam otursun); fotodan farklı */
-.apr-medya.video{ aspect-ratio:3/4; padding:0; background:transparent; }
+/* VİDEO da YATAY çerçevede (16/9) — dik değil; doldurur (cover), kısa+geniş */
+.apr-medya.video{ aspect-ratio:16/9; padding:0; background:transparent; }
 .apr-medya.video video{ width:100%; height:100%; object-fit:cover; display:block; }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
 .apr-medya.video .apr-yazan{ background:transparent; }
@@ -4057,11 +4058,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   /* Akış TEK ŞERİT ama GENİŞ (600px dar sütun kalkar) — postlar enine oturur */
   .ana-akis{ max-width:min(1040px, 84vw) !important; width:auto !important; margin:0 auto !important; }
   .ana-post-izgara{ column-count:auto !important; }
-  /* Medya kutusu YATAY (16/10) + medya TAM görünür (contain, kırpılmaz); kenar boşluğu gece mavisi (tema) */
-  .ana-post .apr-medya.uzun, .ana-post .apr-medya.video{ aspect-ratio:16/10 !important; max-height:74vh !important; background:#142b4f !important; }
-  .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ object-fit:contain !important; width:100% !important; height:100% !important; }
-  /* Yatay/normal medya: doğal oran, çok uzamasın */
-  .ana-post .apr-medya:not(.uzun):not(.video) img{ max-height:74vh; width:auto; max-width:100%; margin:0 auto; }
-  /* Çoklu-medya kolajı da yatay kutuda */
-  .ana-post .apr-kolaj{ aspect-ratio:16/10 !important; max-height:74vh !important; }
+  /* Medya YATAY (16/9) doldurur — bilgisayarda da dik değil, kısa+geniş (base kural zaten 16/9 cover; burada sadece yükseklik sınırı) */
+  .ana-post .apr-medya.uzun, .ana-post .apr-medya.video, .ana-post .apr-kolaj{ max-height:76vh !important; }
+  .ana-post .apr-medya:not(.uzun):not(.video) img{ max-height:76vh; width:auto; max-width:100%; margin:0 auto; }
 }
