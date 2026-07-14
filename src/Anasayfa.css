@@ -4056,13 +4056,13 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* iPAD + BİLGİSAYAR (>=760px): içerik ENİ DOLDURUR — sağ/sol MAVİ kenar YOK (kullanıcı: "iPad kenarları mavi, tam dolacak").
    Paylaşımlar UFAK YATAY kartlar, yan yana; satır soldan sola kayar; her paylaşım TAM SAYFA DEĞİL, küçük. */
 @media (min-width:760px){
-  /* iPad + bilgisayar: akış TELEFON GİBİ AŞAĞI (dik) gider — YATAY MAKARA İPTAL (alt boş kalmasın). Ortada sütun. */
-  .ana-akis{ max-width:680px !important; width:auto !important; margin:0 auto !important; }
-  .ana-cta{ max-width:680px !important; }
+  /* iPad + notebook: DİK akış (telefon gibi aşağı gider) + post SAĞ-SOL TAM ENİ DOLDURUR → yan MAVİ kenar YOK (kullanıcı: "mavi olmayacak, sağ sol dolu"). Yatay makara İPTAL (alt boş kalmaz). Çok geniş ekran (yatay) AYRI/sonra. */
+  .ana-akis{ max-width:100% !important; width:100% !important; margin:0 !important; padding-left:0 !important; padding-right:0 !important; }
+  .ana-cta{ max-width:100% !important; }
   .ana-post-izgara{ display:block !important; column-count:auto !important; }
-  .ana-post-izgara > .ana-post{ width:100% !important; margin:0 0 18px !important; }
-  /* Medya ÇEKİLDİĞİ GİBİ — TAM gözüksün, göğü/kenarı KESME yok, kare/zorla çerçeve yok (doğal oran) */
+  .ana-post-izgara > .ana-post{ width:100% !important; margin:0 0 16px !important; }
+  /* Medya ÇEKİLDİĞİ GİBİ — TAM gözüksün, göğü/kenarı KESME yok, kare değil (doğal oran) */
   .ana-post .apr-medya.uzun, .ana-post .apr-medya.video, .ana-post .apr-kolaj{ aspect-ratio:auto !important; max-height:none !important; }
-  .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ width:100% !important; height:auto !important; object-fit:fill !important; max-height:82vh; }
+  .ana-post .apr-medya.uzun img, .ana-post .apr-medya.video video{ width:100% !important; height:auto !important; object-fit:fill !important; max-height:none; }
   .ana-post .apr-medya{ min-height:0 !important; }
 }
