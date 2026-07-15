@@ -8318,8 +8318,8 @@ export default function Anasayfa({ pro = false }) {
                   {vidHata ? (
                     <div className="tf-vid-hata" onClick={(e) => e.stopPropagation()}>
                       <span className="tf-vid-hata-ik">🎬</span>
-                      <b>{t("videoOynatilamadi", "Bu video açılamadı")}</b>
-                      <i>{t("videoTekrarNot", "Bağlantı kesilmiş olabilir. İnternetini kontrol edip tekrar dene.")}</i>
+                      <b>{t("videoEski", "Bu eski video oynatılamıyor")}</b>
+                      <i>{t("videoYenidenPaylas", "Bu video eski (hatalı) biçimde yüklenmiş. Yeniden paylaşırsan (sil → tekrar paylaş) sorunsuz oynar. Yeni paylaştığın videolar zaten oynuyor.")}</i>
                     </div>
                   ) : (!vidOyn && !vidYukleniyor) && (
                     <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c="#ffd700" /></button>
