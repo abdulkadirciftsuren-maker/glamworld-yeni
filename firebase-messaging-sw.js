@@ -22,9 +22,13 @@ messaging.onBackgroundMessage((payload) => {
   const baslik = d.baslik || "GLOXORG";
   const secenekler = {
     body: d.govde || "",
-    icon: "/logo192.png",
-    badge: "/logo192.png",
-    tag: arama ? "grox-arama" : "grox-bildirim",
+    // BÜYÜK İKON = GÖNDERENİN/ARAYANIN fotoğrafı (varsa kısa http URL; sunucu base64'ü FCM'e sığmadığından atıyor → yoksa logo).
+    // Böylece bildirimde artık GLOXORG amblemi (G) değil, ARAYANIN fotoğrafı görünür.
+    icon: (d.foto && d.foto.indexOf("http") === 0) ? d.foto : "/logo192.png",
+    badge: "/logo192.png",              // küçük rozet: uygulama amblemi (Android tek renk yapar)
+    // BENZERSİZ tag → normal bildirimler üst üste binmez, her biri ayrı gelir (arama tek tag'de kalır ki tekrar çalsın)
+    tag: arama ? "grox-arama" : ("grox-" + Date.now() + "-" + Math.round(Math.random() * 1e6)),
+    renotify: arama,
     data: d,
     requireInteraction: arama,           // arama bildirimi kendiliğinden kapanmasın (kullanıcı cevaplasın)
     vibrate: arama ? [400, 200, 400, 200, 400] : [200, 100, 200],
