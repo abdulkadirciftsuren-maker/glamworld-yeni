@@ -70,12 +70,13 @@ function _guvenliAd(file, varsayilan) {
   const ad = (file && file.name) || varsayilan;
   return String(ad).replace(/[^\w.\-]+/g, "_").slice(-60) || varsayilan;
 }
-function _depoyaYukle(file, uid, onProgress, tipVarsayilan) {
+function _depoyaYukle(file, uid, onProgress, tipVarsayilan, zorTip) {
   return new Promise((resolve, reject) => {
     if (!file) return reject(new Error("eksik"));
     try {
       const yol = "medya/" + (uid || "anon") + "/" + Date.now() + "_" + _guvenliAd(file, "medya");
-      const gorev = uploadBytesResumable(depoRef(storage, yol), file, { contentType: file.type || tipVarsayilan });
+      // zorTip verilmişse (video) onu KULLAN (dosyanın quicktime tipini EZ); yoksa dosya tipi ya da varsayılan.
+      const gorev = uploadBytesResumable(depoRef(storage, yol), file, { contentType: zorTip || file.type || tipVarsayilan });
       gorev.on("state_changed",
         (s) => { if (onProgress && s.totalBytes) onProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)); },
         (e) => reject(e),
@@ -85,8 +86,14 @@ function _depoyaYukle(file, uid, onProgress, tipVarsayilan) {
   });
 }
 // Büyük video → Firebase Depolama; güvenli indirilebilir URL döner (post'ta video:URL saklanır).
+// ⚠️ İÇERİK TİPİ (Content-Type): telefon kamerası videoyu ".mov" (video/quicktime) kaydedebiliyor; bu tiple
+// yüklenince tarayıcı (Chrome) İNTERNETTEN gelen videoyu OYNATMAYI REDDEDİYOR (yerel önizleme oynuyor ama site'de oynamıyor).
+// ÇÖZÜM: web-uyumlu olmayan (quicktime/bilinmeyen) tipleri "video/mp4" olarak yükle → tarayıcı oynatır. (mp4/webm/ogg korunur.)
 export function videoYukle(file, uid, onProgress) {
-  return _depoyaYukle(file, uid, onProgress, "video/mp4");
+  const t = (file && file.type) || "";
+  const webUyumlu = /^video\/(mp4|webm|ogg)$/i.test(t);
+  const zorTip = webUyumlu ? t : "video/mp4";
+  return _depoyaYukle(file, uid, onProgress, zorTip, zorTip);
 }
 // Belge (pdf/word/zip vb.) → Firebase Depolama; {url, ad, boyut} döner (post'ta dosya:{...}).
 export async function dosyaYukle(file, uid, onProgress) {

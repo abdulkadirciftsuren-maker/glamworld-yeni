@@ -1916,7 +1916,28 @@ export default function Anasayfa({ pro = false }) {
   const [vidOyn, setVidOyn] = useState(false);   // oynuyor mu
   const [vidT, setVidT] = useState(0);           // anlık saniye
   const [vidSure, setVidSure] = useState(0);     // toplam saniye
-  const [vidHata, setVidHata] = useState(false); // video OYNATILAMADI mı (tarayıcı formatı/kodeği çözemedi) → indir/aç seçeneği göster
+  const [vidHata, setVidHata] = useState(false); // video HİÇ oynatılamadı mı (blob denemesi de başarısız) → son çare mesaj
+  const [vidBlob, setVidBlob] = useState("");    // eski videolar Content-Type (quicktime) yüzünden internetten oynamıyor → tüm dosyayı blob indirip video/mp4 olarak oynat (bu sorunu AŞAR, indirme düğmesi gerekmez)
+  const [vidYukleniyor, setVidYukleniyor] = useState(false); // blob indirilirken göster
+  const vidBlobDenendiRef = useRef("");          // hangi URL için blob denedik (sonsuz döngü olmasın)
+  // TAM EKRAN video KAPANINCA/değişince blob'u temizle
+  useEffect(() => {
+    setVidHata(false); setVidYukleniyor(false); vidBlobDenendiRef.current = "";
+    setVidBlob((eski) => { if (eski) { try { URL.revokeObjectURL(eski); } catch (e) {} } return ""; });
+  }, [tamFoto]);
+  // VİDEO oynatılamadı → tüm dosyayı indirip (blob) video/mp4 olarak yeniden dene (Content-Type sorununu aşar).
+  const videoBlobDene = async (kaynak) => {
+    if (!kaynak || vidBlobDenendiRef.current === kaynak) { setVidHata(true); return; }
+    vidBlobDenendiRef.current = kaynak;
+    try {
+      setVidYukleniyor(true);
+      const r = await fetch(kaynak); if (!r.ok) throw new Error("indirilemedi");
+      const b = await r.blob();
+      const mp4 = (b.type && /^video\/(mp4|webm|ogg)$/i.test(b.type)) ? b : new Blob([b], { type: "video/mp4" });
+      const url = URL.createObjectURL(mp4);
+      setVidBlob(url); setVidYukleniyor(false);
+    } catch (e) { setVidYukleniyor(false); setVidHata(true); }
+  };
   const [tfMini, setTfMini] = useState(false);   // TAM EKRAN video KÜÇÜLTÜLDÜ mü → köşede oynar, sayfa kayar
   const [tfVidOran, setTfVidOran] = useState(null); // video en-boy oranı (mini pencere videoya göre → dikey video dikey pencere, kenar karartma yok)
   function vidTikla(e) { if (e) e.stopPropagation(); const v = tamVideoRef.current; if (!v) return; if (v.muted) v.muted = false; /* dokununca SESİ AÇ (sessiz autoplay'den sonra) */ if (v.paused) v.play(); else v.pause(); }
@@ -8284,22 +8305,23 @@ export default function Anasayfa({ pro = false }) {
             {/* TAM AÇILIŞ = ORİJİNAL: video ise kontrollü oynat; fotoğraf ise galeri gibi tam + parmakla zoom */}
             {p.video
               ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()} style={tfMini && tfVidOran ? { aspectRatio: tfVidOran.toFixed(3) } : undefined}>
-                  <video ref={tamVideoRef} className="tamfoto-video" src={videoSade(p.video)} autoPlay muted playsInline preload="auto"
+                  <video ref={tamVideoRef} className="tamfoto-video" src={vidBlob || videoSade(p.video)} autoPlay muted playsInline preload="auto"
                     poster={p.videoPoster || undefined}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
                     onLoadedMetadata={(e) => { setVidHata(false); setVidSure(e.currentTarget.duration || 0); const w = e.currentTarget.videoWidth, h = e.currentTarget.videoHeight; if (w && h) setTfVidOran(w / h); }}
-                    onError={() => setVidHata(true)}
+                    onError={() => { if (!vidBlob) videoBlobDene(videoSade(p.video)); else setVidHata(true); }}
                     onPlay={() => setVidOyn(true)} onPause={() => setVidOyn(false)} />
+                  {vidYukleniyor && (
+                    <div className="tf-vid-yuk" onClick={(e) => e.stopPropagation()}><span className="tf-vid-yuk-don" />{t("videoHazirlaniyor", "Video hazırlanıyor…")}</div>
+                  )}
                   {vidHata ? (
-                    /* Tarayıcı bu videoyu ÇÖZEMEDİ (telefon kamerası formatı/kodeği web'de oynamıyor). İndir/başka oynatıcıda aç → çalışır. */
                     <div className="tf-vid-hata" onClick={(e) => e.stopPropagation()}>
                       <span className="tf-vid-hata-ik">🎬</span>
-                      <b>{t("videoOynatilamadi", "Bu video tarayıcıda oynatılamadı")}</b>
-                      <i>{t("videoFormatNot", "Telefon kamerasının kaydettiği format web'de desteklenmiyor olabilir. İndirip açınca oynar.")}</i>
-                      <a className="tf-vid-indir" href={videoSade(p.video)} target="_blank" rel="noreferrer" download>{t("videoIndirAc", "⬇ İndir / Aç")}</a>
+                      <b>{t("videoOynatilamadi", "Bu video açılamadı")}</b>
+                      <i>{t("videoTekrarNot", "Bağlantı kesilmiş olabilir. İnternetini kontrol edip tekrar dene.")}</i>
                     </div>
-                  ) : !vidOyn && (
+                  ) : (!vidOyn && !vidYukleniyor) && (
                     <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c="#ffd700" /></button>
                   )}
                   {/* KÜÇÜLT / BÜYÜT — video oynarken köşeye küçült, sayfada gez; tekrar büyüt */}
