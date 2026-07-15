@@ -1293,6 +1293,7 @@ export default function Anasayfa({ pro = false }) {
   const [onKamera, setOnKamera] = useState(true);      // true=ön kamera (yüz), false=arka kamera
   const [videoBuyuk, setVideoBuyuk] = useState("uzak"); // görüntülü aramada BÜYÜK ekranda hangisi: "uzak" (karşı) | "yerel" (ben)
   const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
+  const [aramaKucuk, setAramaKucuk] = useState(false); // arama penceresi KÜÇÜLTÜLDÜ mü → köşede durur, konuşurken uygulamada GEZİNİLİR (kullanıcı: "küçülüp başka yerde gezinme")
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const pcRef = useRef(null);                          // RTCPeerConnection
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
@@ -1302,7 +1303,7 @@ export default function Anasayfa({ pro = false }) {
   const uzakStreamRef = useRef(null);                  // karşıdan gelen medya akışı (ses+görüntü)
   const aramaAbonelikRef = useRef([]);                 // arama dinleyicileri (temizlemek için)
   const aramaDurumRef = useRef(""); useEffect(() => { aramaDurumRef.current = aramaDurum; }, [aramaDurum]);
-  const aktifAramaRef = useRef(null); useEffect(() => { aktifAramaRef.current = aktifArama; }, [aktifArama]);
+  const aktifAramaRef = useRef(null); useEffect(() => { aktifAramaRef.current = aktifArama; if (!aktifArama) setAramaKucuk(false); }, [aktifArama]);
   const gelenAramaRef = useRef(null); useEffect(() => { gelenAramaRef.current = gelenArama; }, [gelenArama]);
   const sohbetKisiRef = useRef(null); useEffect(() => { sohbetKisiRef.current = sohbetKisi; }, [sohbetKisi]);
   const mesajAcikRef2 = useRef(false); useEffect(() => { mesajAcikRef2.current = mesajAcik; }, [mesajAcik]);
@@ -7429,7 +7430,8 @@ export default function Anasayfa({ pro = false }) {
 
       {/* AKTİF ARAMA — konuşma ekranı (sesli: avatar; görüntülü: video) */}
       {aramaDurum && aktifArama && (
-        <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli")}>
+        <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli") + (aramaKucuk ? " arama-mini" : "")}
+          onClick={aramaKucuk ? () => setAramaKucuk(false) : undefined} title={aramaKucuk ? t("aramaBuyut", "Aramayı büyüt") : undefined}>
           {aktifArama.tip === "goruntulu"
             ? <video ref={uzakVideoRef} className={"arama-video " + (videoBuyuk === "uzak" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline
                 style={videoBuyuk !== "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
@@ -7447,6 +7449,10 @@ export default function Anasayfa({ pro = false }) {
             onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
           {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && <span className="arama-kucuk-ipucu">{t("videoIpucu", "Küçük ekrana dokun: büyüt · sürükle: taşı")}</span>}
           <div className="arama-alt-dugmeler">
+            {/* KÜÇÜLT — pencere köşeye iner, konuşurken uygulamada gezinirsin; küçük pencereye dokununca büyür (kullanıcı isteği) */}
+            <button className="arama-kk-btn" onClick={() => setAramaKucuk(true)} aria-label={t("aramaKucult", "Küçült")} title={t("aramaKucult", "Küçült — konuşurken gezin")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" /></svg>
+            </button>
             <button className={"arama-kk-btn" + (mikKapali ? " kapali" : "")} onClick={mikToggle} aria-label={t("mikrofon", "Mikrofon")}>
               {mikKapali
                 ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V5a3 3 0 0 0-5.9-.7M12 19v3M8 22h8M2 2l20 20" /></svg>
