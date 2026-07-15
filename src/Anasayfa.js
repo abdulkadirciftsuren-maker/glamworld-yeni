@@ -1916,6 +1916,7 @@ export default function Anasayfa({ pro = false }) {
   const [vidOyn, setVidOyn] = useState(false);   // oynuyor mu
   const [vidT, setVidT] = useState(0);           // anlık saniye
   const [vidSure, setVidSure] = useState(0);     // toplam saniye
+  const [vidHata, setVidHata] = useState(false); // video OYNATILAMADI mı (tarayıcı formatı/kodeği çözemedi) → indir/aç seçeneği göster
   const [tfMini, setTfMini] = useState(false);   // TAM EKRAN video KÜÇÜLTÜLDÜ mü → köşede oynar, sayfa kayar
   const [tfVidOran, setTfVidOran] = useState(null); // video en-boy oranı (mini pencere videoya göre → dikey video dikey pencere, kenar karartma yok)
   function vidTikla(e) { if (e) e.stopPropagation(); const v = tamVideoRef.current; if (!v) return; if (v.muted) v.muted = false; /* dokununca SESİ AÇ (sessiz autoplay'den sonra) */ if (v.paused) v.play(); else v.pause(); }
@@ -5969,8 +5970,9 @@ export default function Anasayfa({ pro = false }) {
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
         const v = g.target;
-        if (g.isIntersecting && g.intersectionRatio >= 0.5) { try { v.muted = true; v.play().catch(() => {}); } catch (e) {} }
-        else { try { v.pause(); } catch (e) {} }
+        const kutu = v.closest && v.closest(".apr-medya");
+        if (g.isIntersecting && g.intersectionRatio >= 0.5) { try { v.muted = true; const o = v.play(); if (o && o.then) o.then(() => { if (kutu) kutu.classList.add("oynuyor"); }).catch(() => {}); } catch (e) {} }
+        else { try { v.pause(); if (kutu) kutu.classList.remove("oynuyor"); } catch (e) {} }
       });
     }, { threshold: [0, 0.5, 1] });
     vids.forEach((v) => io.observe(v));
@@ -6857,7 +6859,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? <video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} />
+                        ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
@@ -8286,9 +8288,18 @@ export default function Anasayfa({ pro = false }) {
                     poster={p.videoPoster || undefined}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
-                    onLoadedMetadata={(e) => { setVidSure(e.currentTarget.duration || 0); const w = e.currentTarget.videoWidth, h = e.currentTarget.videoHeight; if (w && h) setTfVidOran(w / h); }}
+                    onLoadedMetadata={(e) => { setVidHata(false); setVidSure(e.currentTarget.duration || 0); const w = e.currentTarget.videoWidth, h = e.currentTarget.videoHeight; if (w && h) setTfVidOran(w / h); }}
+                    onError={() => setVidHata(true)}
                     onPlay={() => setVidOyn(true)} onPause={() => setVidOyn(false)} />
-                  {!vidOyn && (
+                  {vidHata ? (
+                    /* Tarayıcı bu videoyu ÇÖZEMEDİ (telefon kamerası formatı/kodeği web'de oynamıyor). İndir/başka oynatıcıda aç → çalışır. */
+                    <div className="tf-vid-hata" onClick={(e) => e.stopPropagation()}>
+                      <span className="tf-vid-hata-ik">🎬</span>
+                      <b>{t("videoOynatilamadi", "Bu video tarayıcıda oynatılamadı")}</b>
+                      <i>{t("videoFormatNot", "Telefon kamerasının kaydettiği format web'de desteklenmiyor olabilir. İndirip açınca oynar.")}</i>
+                      <a className="tf-vid-indir" href={videoSade(p.video)} target="_blank" rel="noreferrer" download>{t("videoIndirAc", "⬇ İndir / Aç")}</a>
+                    </div>
+                  ) : !vidOyn && (
                     <button className="tf-vid-buyuk" onClick={vidTikla} aria-label="Oynat"><GercekPirlanta cerceve={false} c="#ffd700" /></button>
                   )}
                   {/* KÜÇÜLT / BÜYÜT — video oynarken köşeye küçült, sayfada gez; tekrar büyüt */}
