@@ -4149,3 +4149,14 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   /* ÇOK GENİŞ EKRAN (geniş monitör): post TAM SAYFA DEĞİL — genişlik kısıtlı (medya 2 metre uzamasın); yanlarda MAVİ kalabilir (kullanıcı: "geniş ekranda mavi kalsın, kısalt, tam ekran yapma"). Sonra yanlara başka içerik gelecek. */
   .ana-akis{ max-width:760px !important; width:760px !important; margin:0 auto !important; }
 }
+
+/* ============================================================
+   ⛔ PARLAMA / PARÇA PARÇA ÇİZİM ÖNLEME (kullanıcı bir haftadır: "her yerde parlama,
+   pencere açılınca ekran parça parça oluyor, parlıyor, yerinde durmuyor").
+   ASIL SEBEP: backdrop-filter/blur (cam efekti) — telefonda (özellikle Android Chrome)
+   pencere açılınca arka planı HER KAREDE yeniden bulanıklaştırmaya çalışır → GPU zorlanır,
+   ekran parça parça (tile tile) ve parlayarak çizilir. Kodda zaten bazı yerlerde
+   "backdrop-filter KALDIRILDI" notu var; artık TÜM sayfada kapatıyoruz. Pencere zeminleri
+   zaten opak/yarı-opak renkli → blur olmadan da okunur; parlama biter, pencere yerinde durur.
+   ============================================================ */
+*, *::before, *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
