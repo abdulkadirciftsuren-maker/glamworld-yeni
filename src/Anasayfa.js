@@ -1385,6 +1385,7 @@ export default function Anasayfa({ pro = false }) {
   const [takipBalon, setTakipBalon] = useState(null);   // takip düğmesi yanında kısa etiket (uid; 1.6sn sonra kaybolur)
   const takipBalonZmnRef = useRef(null);
   const [feedFiltre, setFeedFiltre] = useState("hepsi"); // "hepsi" (zaman, HERKESTE AYNI — varsayılan) | "ozel" (algoritma, kişiye özel) | "takip" — akış filtresi
+  const [etiketFiltre, setEtiketFiltre] = useState(""); // Trend/Popüler düğmesine basınca: akışı O ETİKETLİ paylaşımlara filtreler (ör. "#huzur")
   // NOT: Varsayılan "hepsi" → kullanıcı "akışım karşı tarafla aynı olsun" dedi; Hepsi zaman sırasıyla herkeste AYNIdır. "Sana Özel" isteyen sekmeden seçer.
   // AKIŞ SAYFALAMA (ölçeklenebilirlik): tümünü birden yükleme — ilk 6, aşağı kaydırdıkça +6 (yüzbinlerce gönderi olsa da telefon donmaz)
   const [feedGoster, setFeedGoster] = useState(6);
@@ -6688,8 +6689,8 @@ export default function Anasayfa({ pro = false }) {
             </button>
             {/* AKIŞ FİLTRESİ — "Sana Özel" KALDIRILDI (kullanıcı: kafa karıştırıyor, kimse ne olduğunu anlamıyor, herkeste farklı gösteriyordu). Sadece Hepsi (herkeste aynı) + Takip Ettiklerim. */}
             <div className="ana-feed-filtre">
-              <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => setFeedFiltre("hepsi")}>{t("feedHepsi", "Hepsi")}</button>
-              <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => setFeedFiltre("takip")}>{t("feedTakip", "Takip Ettiklerim")}</button>
+              <button className={"aff-chip" + (feedFiltre === "hepsi" ? " aktif" : "")} onClick={() => { setFeedFiltre("hepsi"); setEtiketFiltre(""); }}>{t("feedHepsi", "Hepsi")}</button>
+              <button className={"aff-chip" + (feedFiltre === "takip" ? " aktif" : "")} onClick={() => { setFeedFiltre("takip"); setEtiketFiltre(""); }}>{t("feedTakip", "Takip Ettiklerim")}</button>
             </div>
             {/* KEŞİF BÖLÜMLERİ — Yakındaki Profesyoneller / İş İlanları / Trend. Hem TELEFON hem BİLGİSAYAR; yatay SOLA kayan şeritler (akışı bozmaz). */}
             <div className="alt-bolumler">
@@ -6727,7 +6728,7 @@ export default function Anasayfa({ pro = false }) {
                 <div className="alt-serit">
                   <div className="alt-serit-bas"><h3>🔥 {t("populerTrend", "Popüler / Trend")}</h3></div>
                   <div className="alt-kaydir alt-cipler">
-                    {trendler.map((h, ti) => <button className="alt-cip" key={h} translate="no" style={{ background: CIP_RENK[ti % CIP_RENK.length] }} onClick={() => { setAraQ(h.replace(/^#/, "")); setAraAcik(true); }}><span className="alt-mik" aria-hidden="true">{trendIk(h)}</span> {h}</button>)}
+                    {trendler.map((h, ti) => <button className={"alt-cip" + (etiketFiltre === h ? " secili" : "")} key={h} translate="no" style={{ background: CIP_RENK[ti % CIP_RENK.length] }} onClick={() => { const yeni = etiketFiltre === h ? "" : h; setEtiketFiltre(yeni); setFeedGoster(6); if (yeni) { try { const el = document.querySelector(".alt-serit-bas"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} } }}><span className="alt-mik" aria-hidden="true">{trendIk(h)}</span> {h}</button>)}
                   </div>
                 </div>
               )}
@@ -6736,9 +6737,22 @@ export default function Anasayfa({ pro = false }) {
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (
               <div className="ana-feed-bos">{t("feedTakipBos", "Henüz kimseyi takip etmiyorsun. Gönderilerdeki + Takip düğmesine bas; burada onların paylaşımları görünür.")}</div>
             )}
+            {/* ETİKET FİLTRE ÇUBUĞU — Trend/Popüler düğmesine basınca "#huzur gösteriliyor · Temizle" */}
+            {etiketFiltre && (
+              <div className="etiket-filtre-cubuk">
+                <span className="efc-yazi" translate="no">{trendIk(etiketFiltre)} {etiketFiltre} <b>{t("gosteriliyor", "gösteriliyor")}</b></span>
+                <button className="efc-temizle" onClick={() => { setEtiketFiltre(""); setFeedGoster(6); }}>{t("temizle", "Temizle")} ✕</button>
+              </div>
+            )}
+            {etiketFiltre && gercekAkis.filter((p) => (((p.yazi || "") + " " + (p.baslik || "")).toLowerCase().indexOf(etiketFiltre.toLowerCase()) !== -1)).length === 0 && (
+              <div className="ana-feed-bos">{etiketFiltre} {t("etiketBos", "etiketli paylaşım bulunamadı.")}</div>
+            )}
             {/* POST IZGARASI — GENİŞ ekranda postlar YAN YANA (çok sütun) doldurur; telefonda tek sütun (değişmez). */}
             <div className="ana-post-izgara">
-            {(() => { const feedTam = (feedFiltre === "takip" ? gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }) : feedFiltre === "ozel" ? kisiselAkis : gercekAkis); return feedTam.slice(0, feedGoster).map((p, i) => {
+            {(() => { let feedTam = (feedFiltre === "takip" ? gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }) : feedFiltre === "ozel" ? kisiselAkis : gercekAkis);
+              // ETİKET FİLTRESİ (Trend/Popüler düğmesi): sadece o #etiketi metninde geçen paylaşımlar
+              if (etiketFiltre) { const et = etiketFiltre.toLowerCase(); feedTam = feedTam.filter((p) => (((p.yazi || "") + " " + (p.baslik || "")).toLowerCase().indexOf(et) !== -1)); }
+              return feedTam.slice(0, feedGoster).map((p, i) => {
               const ad = p.ad || "—";
               const bas = (String(ad).trim()[0] || "?").toUpperCase();
               const zaman = p.zaman || zamanOnce(p.zamanMs);

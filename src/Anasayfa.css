@@ -4096,7 +4096,15 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Trend çipleri */
 .alt-cipler{ flex-wrap:nowrap; }
 /* Trend çipi artık BUTON (tıklanınca arama) + yazıya göre ikon */
-.alt-cip{ flex:0 0 auto; border:none; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; color:#fff; border-radius:12px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); text-shadow:0 1px 2px rgba(0,0,0,.35); }
+.alt-cip{ flex:0 0 auto; border:none; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; color:#fff; border-radius:12px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); text-shadow:0 1px 2px rgba(0,0,0,.35); transition:transform .12s ease; }
+.alt-cip:active{ transform:scale(.93); }
+.alt-cip.secili{ outline:3px solid #ffe9a8; outline-offset:1px; box-shadow:0 0 0 2px rgba(255,233,168,.5), 0 4px 12px rgba(0,15,35,.4); } /* seçili trend: altın çerçeve */
+/* ETİKET FİLTRE ÇUBUĞU — "#huzur gösteriliyor · Temizle" (Trend düğmesine basınca akış o etikete filtrelenir) */
+.etiket-filtre-cubuk{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:4px 8px 10px; padding:9px 13px; border-radius:13px; background:linear-gradient(160deg,#3d63a0,#294a7d); border:1.5px solid #ffe9a8; box-shadow:0 3px 10px rgba(0,10,30,.35); }
+.efc-yazi{ color:#ffe9a8; font-weight:800; font-size:15px; }
+.efc-yazi b{ color:#fff; font-weight:700; }
+.efc-temizle{ flex:none; border:none; cursor:pointer; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:13px; padding:7px 13px; border-radius:10px; box-shadow:0 2px 7px rgba(0,0,0,.3); }
+.efc-temizle:active{ transform:scale(.93); }
 .alt-cip:active{ transform:scale(.95); }
 /* BİLGİSAYAR: şeritler feed ile AYNI ortalı genişlikte (kullanıcı: "geniş ekranda o kadar yayma, sağdan sola geniş yapma"). Yayma İPTAL. */
 @media (min-width:1000px){
