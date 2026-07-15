@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A12B106";
+const SW_SURUM = "A12B107";
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
   // Eski onbellekleri temizle (kullanici bir daha ESKI surumde takilmasin)

@@ -1592,6 +1592,14 @@ export default function Anasayfa({ pro = false }) {
   function balonBas(e) { const r = balonRef.current.getBoundingClientRect(); balonSur.current = { on: true, moved: false, sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top }; try { balonRef.current.setPointerCapture(e.pointerId); } catch (_) {} }
   function balonGit(e) { const d = balonSur.current; if (!d.on) return; const dx = e.clientX - d.sx, dy = e.clientY - d.sy; if (Math.abs(dx) > 4 || Math.abs(dy) > 4) d.moved = true; const w = balonRef.current.offsetWidth, h = balonRef.current.offsetHeight; const x = Math.max(6, Math.min(d.ox + dx, window.innerWidth - w - 6)); const y = Math.max(6, Math.min(d.oy + dy, window.innerHeight - h - 6)); setBalonYer({ x, y }); }
   function balonBitir() { const d = balonSur.current; d.on = false; if (d.moved && balonRef.current) { const r = balonRef.current.getBoundingClientRect(); try { localStorage.setItem("groxAiBalon", JSON.stringify({ x: r.left, y: r.top })); } catch (e) {} } }
+  // GLOXOO KAYBOLMASIN: kayıtlı konum EKRAN DIŞINA kaymışsa (küçük ekran/döndürme/eski kayıt) sıfırla → varsayılan köşede GÖRÜNÜR olsun.
+  // (Kullanıcı: "Gloxoo neden kayboldu, göremiyorum" — sürüklenmiş konumu ekran dışına gitmişti.)
+  useEffect(() => {
+    if (!balonYer) return;
+    const w = window.innerWidth, h = window.innerHeight;
+    const disari = !balonYer || typeof balonYer.x !== "number" || typeof balonYer.y !== "number" || balonYer.x < 0 || balonYer.y < 40 || balonYer.x > w - 44 || balonYer.y > h - 44;
+    if (disari) { setBalonYer(null); try { localStorage.removeItem("groxAiBalon"); } catch (e) {} }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // MASKOTA DOKUN → büyür + konuşur (her şeyi anlatır), bitince küçülür + sohbet açılır (sonra seni bekler)
   function balonTik() {
     if (balonSur.current.moved) return;
@@ -3176,14 +3184,20 @@ export default function Anasayfa({ pro = false }) {
   };
   // KAMERA YAKINLAŞTIRMA (zoom) — kullanıcı: "arka kamerayla birine bir şey gösterirken zoomlayabileyim".
   // Cihaz destekliyorsa (çoğu arka kamera) gerçek donanım zoom'u uygular (karşı taraf da yakınlaşmış görür).
+  // ZOOM — GÜNCEL değeri KAMERADAN oku (getSettings().zoom), state'ten DEĞİL. Eskiden state\'ten okuyordu → basılı tutunca
+  // hep AYNI donmuş değere zoom yapıp duruyordu (ilerlemiyor). Artık her adımda gerçek anlık zoom'dan devam eder → sürekli akar.
+  // Geri: destekliyorsa true (basılı-tutma sürer), desteklemiyorsa false (tek uyarı, tekrar denemez).
   const zoomAyarla = async (yon) => {
-    const s = yerelStreamRef.current; if (!s) return;
-    const tr = s.getVideoTracks()[0]; if (!tr) return;
+    const s = yerelStreamRef.current; if (!s) return false;
+    const tr = s.getVideoTracks()[0]; if (!tr) return false;
     const cap = tr.getCapabilities ? tr.getCapabilities() : {};
-    if (!cap || !cap.zoom) { bilgiBalonu(t("zoomYok", "Bu kamera yakınlaştırmayı desteklemiyor")); return; }
-    const adim = cap.zoom.step || Math.max(0.1, (cap.zoom.max - cap.zoom.min) / 10);
-    const yeni = Math.max(cap.zoom.min, Math.min(cap.zoom.max, aramaZoom + yon * adim));
-    try { await tr.applyConstraints({ advanced: [{ zoom: yeni }] }); setAramaZoom(yeni); } catch (e) { bilgiBalonu(t("zoomOlmadi", "Yakınlaştırma uygulanamadı")); }
+    if (!cap || !cap.zoom) { bilgiBalonu(t("zoomYok", "Bu kamera yakınlaştırmayı desteklemiyor")); return false; }
+    const ayar = tr.getSettings ? tr.getSettings() : {};
+    const suan = (ayar && typeof ayar.zoom === "number") ? ayar.zoom : (cap.zoom.min || 1);
+    const adim = cap.zoom.step ? Math.max(cap.zoom.step, (cap.zoom.max - cap.zoom.min) / 40) : (cap.zoom.max - cap.zoom.min) / 30;
+    const yeni = Math.max(cap.zoom.min, Math.min(cap.zoom.max, suan + yon * adim));
+    if (Math.abs(yeni - suan) < 0.0001) { setAramaZoom(yeni); return true; } // sınırda: uyarı verme, sessizce dur
+    try { await tr.applyConstraints({ advanced: [{ zoom: yeni }] }); setAramaZoom(yeni); return true; } catch (e) { return true; }
   };
   // ARAMA SÜRESİ BİÇİM — "12 sn." / "6 dk." / "6 dk. 20 sn." (WhatsApp gibi kısa)
   const aramaSure = (sn) => {
@@ -3192,11 +3206,18 @@ export default function Anasayfa({ pro = false }) {
     const dk = Math.floor(sn / 60), kalan = sn % 60;
     return kalan ? (dk + " " + t("dakikaKisa", "dk.") + " " + kalan + " " + t("saniyeKisa", "sn.")) : (dk + " " + t("dakikaKisa", "dk."));
   };
-  // ZOOM BASILI TUT — kullanıcı: "tık tık değil, parmağımı basılı tutunca sürekli yakınlaşsın".
-  // Basınca hemen bir adım + basılı tuttukça her 140ms tekrar; bırakınca durur.
+  // ZOOM BASILI TUT — kullanıcı: "parmağımı BASILI TUTTUĞUM sürece devam etsin; basıp kaldıracağım DEĞİL".
+  // Basınca hemen bir adım; DESTEKLİYORSA basılı tuttukça her 90ms devam (akıcı); parmağı kaldırınca durur.
   const zoomBasRef = useRef(null);
-  const zoomBasla = (yon) => { zoomAyarla(yon); try { clearInterval(zoomBasRef.current); } catch (e) {} zoomBasRef.current = setInterval(() => zoomAyarla(yon), 140); };
-  const zoomBirak = () => { try { clearInterval(zoomBasRef.current); } catch (e) {} zoomBasRef.current = null; };
+  const zoomBasiliRef = useRef(false);          // parmak HÂLÂ basılı mı (await sırasında kalkarsa devam etme)
+  const zoomBasla = async (yon) => {
+    zoomBasiliRef.current = true;
+    try { clearInterval(zoomBasRef.current); } catch (e) {}
+    const ok = await zoomAyarla(yon);           // ilk adım + destek kontrolü
+    if (!ok || !zoomBasiliRef.current) return;  // desteklemiyor VEYA parmak kalktı → basılı tutmayı başlatma
+    zoomBasRef.current = setInterval(() => { zoomAyarla(yon); }, 90);
+  };
+  const zoomBirak = () => { zoomBasiliRef.current = false; try { clearInterval(zoomBasRef.current); } catch (e) {} zoomBasRef.current = null; };
   // GÖRÜNTÜLÜ ARAMADA FOTOĞRAF ÇEK — kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim".
   // Büyük görüntüdeki (karşı taraf ya da kendi kameran) o anki kareyi yakalar, telefona İNDİRİR.
   const aramaFotoCek = () => {
