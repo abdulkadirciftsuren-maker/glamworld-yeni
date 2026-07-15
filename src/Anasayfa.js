@@ -290,6 +290,9 @@ const MESLEK_IK = {};   // meslek → emoji ikon (yazı yanında)
 try { MESLEK_LISTESI.forEach((m) => { const h = (String(m.bg).match(/#[0-9a-fA-F]{6}/) || [])[0]; if (h) MESLEK_RENK[m.ad] = h; MESLEK_BG[m.ad] = m.bg; MESLEK_IK[m.ad] = m.ik || "💼"; }); } catch (e) {}
 // Trend etiketleri için CANLI renk paleti (kullanıcı: "hepsini sarı yapma, renk ver")
 const CIP_RENK = ["linear-gradient(135deg,#4a86d8,#2c5aa8)", "linear-gradient(135deg,#e0568a,#b0356a)", "linear-gradient(135deg,#3fa85f,#237a42)", "linear-gradient(135deg,#c9971f,#9a7015)", "linear-gradient(135deg,#8a5fd8,#5f3aa8)", "linear-gradient(135deg,#2fa8a8,#1a7a7a)", "linear-gradient(135deg,#e07b3f,#b0562a)"];
+// Trend etiketine YAZIYA GÖRE ikon (kullanıcı: "doğa ikonu, huzur ikonu yanına"). Bilinmeyende 🔥.
+const TREND_IK = { doğa:"🌿", doga:"🌿", huzur:"🕊️", göl:"🏞️", gol:"🏞️", deniz:"🌊", orman:"🌲", ağaç:"🌳", çiçek:"🌸", kuş:"🐦", güneş:"☀️", gökyüzü:"☁️", bulut:"☁️", kahve:"☕", yemek:"🍽️", spor:"⚽", müzik:"🎵", dans:"💃", seyahat:"✈️", moda:"👗", saç:"💇", makyaj:"💄", tırnak:"💅", araba:"🚗", ev:"🏠", köpek:"🐕", kedi:"🐈", aşk:"❤️", kalp:"❤️", para:"💰", iş:"💼", yazılım:"💻", yazılımcı:"💻", kod:"💻", almanya:"🇩🇪", bavyera:"🏰", bayern:"🏰", bavaria:"🏰", istanbul:"🕌", tatil:"🏖️", ilham:"✨", gloxorg:"💎", glox:"💎", kutlama:"🎉", açılış:"🎉", berber:"💈", kuaför:"✂️" };
+function trendIk(h) { const k = String(h || "").replace(/^#/, "").toLowerCase(); for (const key in TREND_IK) { if (k.indexOf(key) !== -1) return TREND_IK[key]; } return "🔥"; }
 const DERINLIK_PARCALAR = Array.from({ length: 30 }, (_, i) => {
   const sure = 18 + Math.random() * 16;            // YAVAŞ (18-34sn)
   return {
@@ -6515,8 +6518,9 @@ export default function Anasayfa({ pro = false }) {
                       <button className="alt-kart alt-pro" key={k.id} style={{ "--mrenk": k.renk }} onClick={() => uyeyiAc({ uid: k.id, ad: k.ad, foto: k.foto, meslek: k.meslek, sehir: k.sehir, pro: k.pro })}>
                         <span className="alt-kart-bant" style={{ background: k.bg }} aria-hidden="true" />
                         <span className="alt-av" style={{ boxShadow: "0 0 0 2.5px " + k.renk }}>{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : k.bas}</span>
-                        <b className="notranslate" translate="no">{k.ad}</b>
-                        <i><span className="alt-mik" aria-hidden="true">{k.ik}</span> {k.meslek || t("uye", "Üye")}{k.sehir ? " · " + k.sehir : ""}</i>
+                        {/* KESİK YAZI YOK → KayanYazi (anayasa): sığmazsa kayar, 3 kez, sonra durur */}
+                        <b className="notranslate" translate="no"><KayanYazi>{k.ad}</KayanYazi></b>
+                        <i><span className="alt-mik" aria-hidden="true">{k.ik}</span> <KayanYazi>{(k.meslek || t("uye", "Üye")) + (k.sehir ? " · " + k.sehir : "")}</KayanYazi></i>
                       </button>
                     ))}
                   </div>
@@ -6530,7 +6534,7 @@ export default function Anasayfa({ pro = false }) {
                       <button className="alt-kart alt-ilan" key={p.id} style={{ "--mrenk": MESLEK_RENK[p.meslek] || "#1f6fb0" }} onClick={() => uyeyiAc(p)}>
                         <span className="alt-kart-bant" style={{ background: MESLEK_BG[p.meslek] || "linear-gradient(135deg,#1f6fb0,#134a7a)" }} aria-hidden="true" />
                         <b className="alt-ilan-bas"><span className="alt-mik" aria-hidden="true">{MESLEK_IK[p.meslek] || "💼"}</span> {p.baslik || (p.yazi ? p.yazi.slice(0, 46) : t("isIlani", "İş İlanı"))}</b>
-                        <i>{[p.sehir, mc(p.meslek, dil)].filter(Boolean).join(" · ") || (p.ad || "")}</i>
+                        <i><KayanYazi>{[p.sehir, mc(p.meslek, dil)].filter(Boolean).join(" · ") || (p.ad || "")}</KayanYazi></i>
                       </button>
                     ))}
                   </div>
@@ -6540,7 +6544,7 @@ export default function Anasayfa({ pro = false }) {
                 <div className="alt-serit">
                   <div className="alt-serit-bas"><h3>🔥 {t("populerTrend", "Popüler / Trend")}</h3></div>
                   <div className="alt-kaydir alt-cipler">
-                    {trendler.map((h, ti) => <span className="alt-cip" key={h} translate="no" style={{ background: CIP_RENK[ti % CIP_RENK.length] }}>{h}</span>)}
+                    {trendler.map((h, ti) => <button className="alt-cip" key={h} translate="no" style={{ background: CIP_RENK[ti % CIP_RENK.length] }} onClick={() => { setAraQ(h.replace(/^#/, "")); setAraAcik(true); }}><span className="alt-mik" aria-hidden="true">{trendIk(h)}</span> {h}</button>)}
                   </div>
                 </div>
               )}

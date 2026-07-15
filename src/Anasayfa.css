@@ -4033,15 +4033,20 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .alt-av{ width:62px; height:62px; border-radius:15px; overflow:hidden; flex:none; display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-weight:800; font-size:24px; color:#4a3208; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c); }
 .alt-av img{ width:100%; height:100%; object-fit:cover; }
-.alt-kart b{ color:#2a2008; font-size:14px; font-weight:800; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.alt-kart i{ color:#8a7030; font-size:12px; font-style:normal; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* KESİK YAZI YOK → içteki KayanYazi sığmazsa kaydırır (anayasa). max-width:100% + block ile KayanYazi kart enini ölçer. */
+.alt-kart b{ color:#2a2008; font-size:14px; font-weight:800; max-width:100%; display:block; }
+.alt-kart i{ color:#8a7030; font-size:12px; font-style:normal; max-width:100%; display:flex; align-items:center; justify-content:center; gap:2px; }
+.alt-kart b .kayan-dis, .alt-kart i .kayan-dis{ max-width:100%; }
+.alt-kart i .kayan-dis{ flex:1; min-width:0; }
 /* İş ilanı kartı — geniş, sola yaslı */
 .alt-ilan{ width:230px; text-align:left; align-items:flex-start; gap:4px; }
 .alt-ilan-bas{ color:#1f6fb0 !important; white-space:normal !important; line-height:1.25; }
 .alt-ilan i{ color:#2f7d32; }
 /* Trend çipleri */
 .alt-cipler{ flex-wrap:nowrap; }
-.alt-cip{ flex:0 0 auto; color:#fff; border-radius:12px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); text-shadow:0 1px 2px rgba(0,0,0,.35); }
+/* Trend çipi artık BUTON (tıklanınca arama) + yazıya göre ikon */
+.alt-cip{ flex:0 0 auto; border:none; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; color:#fff; border-radius:12px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); text-shadow:0 1px 2px rgba(0,0,0,.35); }
+.alt-cip:active{ transform:scale(.95); }
 /* BİLGİSAYAR: şeritler feed ile AYNI ortalı genişlikte (kullanıcı: "geniş ekranda o kadar yayma, sağdan sola geniş yapma"). Yayma İPTAL. */
 @media (min-width:1000px){
   .alt-serit-bas h3{ font-size:18px; }
