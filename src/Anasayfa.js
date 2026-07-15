@@ -1291,6 +1291,7 @@ export default function Anasayfa({ pro = false }) {
   const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
   const [hoparlorAcik, setHoparlorAcik] = useState(true); // aramada SES: açık=yüksek (hoparlör), kapalı=alçak (kulağa tut, kimse duymasın)
   const [onKamera, setOnKamera] = useState(true);      // true=ön kamera (yüz), false=arka kamera
+  const [aramaZoom, setAramaZoom] = useState(1);       // görüntülü aramada kamera YAKINLAŞTIRMA (zoom) — arka kamerayla bir şey gösterirken yakınlaştır
   const [videoBuyuk, setVideoBuyuk] = useState("uzak"); // görüntülü aramada BÜYÜK ekranda hangisi: "uzak" (karşı) | "yerel" (ben)
   const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
   const [aramaKucuk, setAramaKucuk] = useState(false); // arama penceresi KÜÇÜLTÜLDÜ mü → köşede durur, konuşurken uygulamada GEZİNİLİR (kullanıcı: "küçülüp başka yerde gezinme")
@@ -3025,34 +3026,50 @@ export default function Anasayfa({ pro = false }) {
   const hoparlorToggle = () => setHoparlorAcik((v) => !v);
   useEffect(() => { try { [uzakSesRef.current, uzakVideoRef.current].forEach((el) => { if (el) { el.volume = hoparlorAcik ? 1 : 0; el.muted = !hoparlorAcik; } }); } catch (e) {} }, [hoparlorAcik, aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   // ÖN ↔ ARKA kamera değiştir (görüntülü aramada). Yeni kamerayı alıp bağlantıdaki video track'i değiştirir (yeniden arama gerekmez).
+  // ⚠️ ÖNEMLİ (Samsung vb.): çoğu Android telefon AYNI ANDA iki kamera açamaz → önceki kamera hâlâ açıkken yenisini
+  // istersen "cihaz meşgul" hatası verir ("Bu cihazda kamera değiştirilemedi"). ÇÖZÜM: önce ESKİ video track'ini DURDUR,
+  // sonra yeni kamerayı iste. Yeni yön açılmazsa (arka kamera yoksa) eski yöne geri dön → görüntü siyah kalmaz.
   const kameraCevir = async () => {
     const pc = pcRef.current; const eski = yerelStreamRef.current; if (!pc || !eski) return;
-    const yeniMod = onKamera ? "environment" : "user";
-    try {
-      const yeniStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: yeniMod } });
-      const yeniVideo = yeniStream.getVideoTracks()[0]; if (!yeniVideo) return;
-      const gonderici = pc.getSenders().find((sn) => sn.track && sn.track.kind === "video");
-      if (gonderici) { try { await gonderici.replaceTrack(yeniVideo); } catch (e) {} }
-      eski.getVideoTracks().forEach((tr) => { try { tr.stop(); eski.removeTrack(tr); } catch (e) {} });
-      eski.addTrack(yeniVideo);
-      if (yerelVideoRef.current) { try { yerelVideoRef.current.srcObject = eski; } catch (e) {} }
-      setOnKamera((v) => !v);
-    } catch (e) {
-      // Bazı cihazlarda "environment" (arka kamera) tam eşleşmezse getUserMedia hata verir → hiç açılmaz.
-      // Kullanıcı: "arka kamerayı açamıyorsun". Daha esnek dene: tam kısıt olmadan tekrar iste.
-      try {
-        const pc = pcRef.current; const eski = yerelStreamRef.current; if (!pc || !eski) return;
-        const yeniMod = onKamera ? "environment" : "user";
-        const yeniStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: yeniMod } } });
-        const yeniVideo = yeniStream.getVideoTracks()[0]; if (!yeniVideo) return;
-        const gonderici = pc.getSenders().find((sn) => sn.track && sn.track.kind === "video");
-        if (gonderici) { try { await gonderici.replaceTrack(yeniVideo); } catch (e2) {} }
-        eski.getVideoTracks().forEach((tr) => { try { tr.stop(); eski.removeTrack(tr); } catch (e2) {} });
-        eski.addTrack(yeniVideo);
-        if (yerelVideoRef.current) { try { yerelVideoRef.current.srcObject = eski; } catch (e2) {} }
-        setOnKamera((v) => !v);
-      } catch (e2) { bilgiBalonu(t("kameraCevrilemedi", "Bu cihazda kamera değiştirilemedi")); }
+    const yeniMod = onKamera ? "environment" : "user";       // istenen yeni yön
+    const eskiMod = onKamera ? "user" : "environment";        // geri dönülecek yön
+    // 1) ÖNCE eski kamerayı DURDUR (kamera boşalsın, yenisi açılabilsin)
+    const eskiVid = eski.getVideoTracks();
+    eskiVid.forEach((tr) => { try { tr.stop(); } catch (e) {} });
+    // 2) Yeni kamerayı iste — önce KESİN yön, olmazsa esnek, o da olmazsa eski yöne dön
+    const iste = (mod) => navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: mod } });
+    let yeniStream = null, gercekOn = !onKamera;
+    try { yeniStream = await iste({ exact: yeniMod }); }
+    catch (e1) {
+      try { yeniStream = await iste({ ideal: yeniMod }); }
+      catch (e2) {
+        try { yeniStream = await iste({ ideal: eskiMod }); gercekOn = onKamera; bilgiBalonu(onKamera ? t("arkaKameraYok", "Bu telefonda arka kamera bulunamadı") : t("onKameraYok", "Ön kameraya dönüldü")); }
+        catch (e3) { bilgiBalonu(t("kameraAcilamadi", "Kamera açılamadı")); return; }
+      }
     }
+    const yeniVideo = yeniStream.getVideoTracks()[0];
+    if (!yeniVideo) { bilgiBalonu(t("kameraAcilamadi", "Kamera açılamadı")); return; }
+    // 3) Bağlantıdaki gönderilen video'yu yenisiyle değiştir + kendi önizlememi güncelle
+    const gonderici = pc.getSenders().find((sn) => sn.track && sn.track.kind === "video");
+    if (gonderici) { try { await gonderici.replaceTrack(yeniVideo); } catch (e) {} }
+    eskiVid.forEach((tr) => { try { eski.removeTrack(tr); } catch (e) {} });
+    eski.addTrack(yeniVideo);
+    if (yerelVideoRef.current) { try { yerelVideoRef.current.srcObject = eski; } catch (e) {} }
+    // 4) Gerçek yönü track'ten oku (cihaz ne verdiyse o) → düğme/etiket doğru olsun
+    try { const ay = yeniVideo.getSettings ? yeniVideo.getSettings() : {}; if (ay && ay.facingMode) gercekOn = ay.facingMode === "user"; } catch (e) {}
+    setOnKamera(gercekOn);
+    setAramaZoom(1); // yeni kamerada zoom sıfırlanır
+  };
+  // KAMERA YAKINLAŞTIRMA (zoom) — kullanıcı: "arka kamerayla birine bir şey gösterirken zoomlayabileyim".
+  // Cihaz destekliyorsa (çoğu arka kamera) gerçek donanım zoom'u uygular (karşı taraf da yakınlaşmış görür).
+  const zoomAyarla = async (yon) => {
+    const s = yerelStreamRef.current; if (!s) return;
+    const tr = s.getVideoTracks()[0]; if (!tr) return;
+    const cap = tr.getCapabilities ? tr.getCapabilities() : {};
+    if (!cap || !cap.zoom) { bilgiBalonu(t("zoomYok", "Bu kamera yakınlaştırmayı desteklemiyor")); return; }
+    const adim = cap.zoom.step || Math.max(0.1, (cap.zoom.max - cap.zoom.min) / 10);
+    const yeni = Math.max(cap.zoom.min, Math.min(cap.zoom.max, aramaZoom + yon * adim));
+    try { await tr.applyConstraints({ advanced: [{ zoom: yeni }] }); setAramaZoom(yeni); } catch (e) { bilgiBalonu(t("zoomOlmadi", "Yakınlaştırma uygulanamadı")); }
   };
   // GÖRÜNTÜLÜ ARAMADA FOTOĞRAF ÇEK — kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim".
   // Büyük görüntüdeki (karşı taraf ya da kendi kameran) o anki kareyi yakalar, telefona İNDİRİR.
@@ -7487,43 +7504,72 @@ export default function Anasayfa({ pro = false }) {
             style={videoBuyuk === "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
             onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
           {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && <span className="arama-kucuk-ipucu">{t("videoIpucu", "Küçük ekrana dokun: büyüt · sürükle: taşı")}</span>}
+          {/* ZOOM (yakınlaştır) — sağ kenarda +/−; arka kamerayla bir şey gösterirken yaklaştır (kullanıcı isteği) */}
+          {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && (
+            <div className="arama-zoom">
+              <button className="arama-zoom-btn" onClick={() => zoomAyarla(1)} aria-label={t("yakinlastir", "Yakınlaştır")} title={t("yakinlastir", "Yakınlaştır")}>+</button>
+              <span className="arama-zoom-deger">{aramaZoom > 1.05 ? aramaZoom.toFixed(1) + "×" : "1×"}</span>
+              <button className="arama-zoom-btn" onClick={() => zoomAyarla(-1)} aria-label={t("uzaklastir", "Uzaklaştır")} title={t("uzaklastir", "Uzaklaştır")}>−</button>
+            </div>
+          )}
+          {/* HER DÜĞMENİN ALTINDA TÜRKÇE YAZI (kullanıcı: "çarpı işareti nedir anlamıyorum, ikon açık/kapalı göstersin, ne işe yaradığı yazsın").
+              Renk + yazı + ikon birlikte: yeşil "Sesin açık" = seni duyuyorlar; kırmızı "Sesin KAPALI" = seni duymuyorlar. Çarpı (×) kaldırıldı, tek eğik çizgi kondu. */}
           <div className="arama-alt-dugmeler">
-            {/* KÜÇÜLT — pencere köşeye iner, konuşurken uygulamada gezinirsin; küçük pencereye dokununca büyür (kullanıcı isteği) */}
-            <button className="arama-kk-btn" onClick={() => setAramaKucuk(true)} aria-label={t("aramaKucult", "Küçült")} title={t("aramaKucult", "Küçült — konuşurken gezin")}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" /></svg>
-            </button>
-            <button className={"arama-kk-btn arama-mik" + (mikKapali ? " kapali" : "")} onClick={mikToggle} aria-label={t("mikrofon", "Mikrofon")}>
-              {mikKapali
-                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V5a3 3 0 0 0-5.9-.7M12 19v3M8 22h8M2 2l20 20" /></svg>
-                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8" /></svg>}
-            </button>
-            {/* HOPARLÖR — açık: yüksek ses; kapalı: alçak ses (kulağa tut, kimse duymasın) */}
-            <button className={"arama-kk-btn arama-hop" + (hoparlorAcik ? "" : " kapali")} onClick={hoparlorToggle} aria-label={t("hoparlor", "Hoparlör")} title={hoparlorAcik ? t("hoparlorAcikT", "Ses açık — dokun: SESİ TAM KES") : t("hoparlorKapaliT", "Ses KAPALI (duyulmuyor) — dokun: aç")}>
-              {hoparlorAcik
-                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 8.5a4 4 0 0 1 0 7M18.8 6a8 8 0 0 1 0 12" /></svg>
-                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M22 9.5l-5 5M17 9.5l5 5" /></svg>}
-            </button>
-            {aktifArama.tip === "goruntulu" && (
-              <button className={"arama-kk-btn arama-kam" + (kamKapali ? " kapali" : "")} onClick={kamToggle} aria-label={t("kamera", "Kamera")}>
-                {kamKapali
-                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 6h9v12h-9zM15.5 10l5-3v10l-5-3M2 2l20 20" /></svg>
-                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>}
+            <span className="arama-kk">
+              <button className="arama-kk-btn" onClick={() => setAramaKucuk(true)} aria-label={t("aramaKucult", "Küçült")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" /></svg>
               </button>
+              <em className="arama-kk-yazi">{t("aramaKucult", "Küçült")}</em>
+            </span>
+            <span className="arama-kk">
+              <button className={"arama-kk-btn arama-mik" + (mikKapali ? " kapali" : "")} onClick={mikToggle} aria-label={t("mikrofon", "Mikrofon")}>
+                {mikKapali
+                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8M3 3l18 18" /></svg>
+                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8" /></svg>}
+              </button>
+              <em className="arama-kk-yazi">{mikKapali ? t("mikKapaliY", "Sesin KAPALI") : t("mikAcikY", "Sesin açık")}</em>
+            </span>
+            <span className="arama-kk">
+              <button className={"arama-kk-btn arama-hop" + (hoparlorAcik ? "" : " kapali")} onClick={hoparlorToggle} aria-label={t("hoparlor", "Ses")}>
+                {hoparlorAcik
+                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 8.5a4 4 0 0 1 0 7M18.8 6a8 8 0 0 1 0 12" /></svg>
+                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M3 3l18 18" /></svg>}
+              </button>
+              <em className="arama-kk-yazi">{hoparlorAcik ? t("sesAcikY", "Duyuyorsun") : t("sesKapaliY", "Ses KAPALI")}</em>
+            </span>
+            {aktifArama.tip === "goruntulu" && (
+              <span className="arama-kk">
+                <button className={"arama-kk-btn arama-kam" + (kamKapali ? " kapali" : "")} onClick={kamToggle} aria-label={t("kamera", "Kamera")}>
+                  {kamKapali
+                    ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /><path d="M3 3l18 18" /></svg>
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>}
+                </button>
+                <em className="arama-kk-yazi">{kamKapali ? t("kamKapaliY", "Kamera KAPALI") : t("kamAcikY", "Kamera açık")}</em>
+              </span>
             )}
             {aktifArama.tip === "goruntulu" && (
-              <button className="arama-kk-btn arama-kamcevir" onClick={kameraCevir} aria-label={t("kameraCevir", "Ön/Arka kamera")} title={t("kameraCevir", "Ön/Arka kamera")}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5h3.5A2.5 2.5 0 0 1 21 7.5v9A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9A2.5 2.5 0 0 1 5.5 5H9" /><circle cx="12" cy="12" r="2.6" /><path d="M8 5l2-2h4l2 2M16.5 9.5l1.8 1.8-1.8 1.8M7.5 14.5L5.7 12.7l1.8-1.8" /></svg>
-              </button>
+              <span className="arama-kk">
+                <button className="arama-kk-btn arama-kamcevir" onClick={kameraCevir} aria-label={t("kameraCevir", "Ön/Arka kamera")}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5h3.5A2.5 2.5 0 0 1 21 7.5v9A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9A2.5 2.5 0 0 1 5.5 5H9" /><circle cx="12" cy="12" r="2.6" /><path d="M8 5l2-2h4l2 2M16.5 9.5l1.8 1.8-1.8 1.8M7.5 14.5L5.7 12.7l1.8-1.8" /></svg>
+                </button>
+                <em className="arama-kk-yazi">{onKamera ? t("arkayaCevirY", "Arka kamera") : t("oneCevirY", "Ön kamera")}</em>
+              </span>
             )}
             {/* FOTOĞRAF ÇEK — görüntüdeki o anki kareyi telefona kaydeder (kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim") */}
             {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && (
-              <button className="arama-kk-btn arama-fotocek" onClick={aramaFotoCek} aria-label={t("fotoCek", "Fotoğraf çek")} title={t("fotoCek", "Fotoğraf çek")}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l1.5-2h7L16 8h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.4" /></svg>
-              </button>
+              <span className="arama-kk">
+                <button className="arama-kk-btn arama-fotocek" onClick={aramaFotoCek} aria-label={t("fotoCek", "Fotoğraf çek")}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l1.5-2h7L16 8h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.4" /></svg>
+                </button>
+                <em className="arama-kk-yazi">{t("fotoCekY", "Foto çek")}</em>
+              </span>
             )}
-            <button className="arama-kk-btn arama-kapat" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
-            </button>
+            <span className="arama-kk">
+              <button className="arama-kk-btn arama-kapat" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+              </button>
+              <em className="arama-kk-yazi">{t("aramaKapatY", "Kapat")}</em>
+            </span>
           </div>
         </div>
       )}

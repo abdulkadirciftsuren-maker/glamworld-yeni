@@ -3981,8 +3981,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-fon.arama-mini{ inset:auto; right:12px; bottom:86px; width:150px; height:214px; border-radius:16px; border:2px solid #ffe9a8;
   box-shadow:0 8px 26px rgba(0,0,0,.55); cursor:pointer; animation:none; }
 .arama-fon.arama-mini .arama-alt-dugmeler,
+.arama-fon.arama-mini .arama-zoom,
 .arama-fon.arama-mini .arama-kucuk-ipucu,
-.arama-fon.arama-mini .arama-video.arama-kucuk{ display:none !important; } /* küçükken düğmeler/ipucu/ikinci video gizli */
+.arama-fon.arama-mini .arama-video.arama-kucuk{ display:none !important; } /* küçükken düğmeler/zoom/ipucu/ikinci video gizli */
 .arama-fon.arama-mini .arama-video.arama-buyuk{ border-radius:14px; }
 .arama-fon.arama-mini .arama-kisi{ transform:scale(.6); }
 .arama-fon.arama-mini::after{ content:"⤢"; position:absolute; right:6px; top:5px; z-index:9; color:#fff; font-size:16px; text-shadow:0 1px 3px rgba(0,0,0,.7); pointer-events:none; }
@@ -4002,13 +4003,16 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-video.arama-buyuk{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; background:#7a5f22; }
 .arama-video.arama-kucuk{ position:absolute; right:14px; top:70px; width:112px; height:158px; object-fit:cover; border-radius:14px; border:2px solid #fff; z-index:6; cursor:grab; touch-action:none; background:#5a4210; box-shadow:0 4px 14px rgba(0,0,0,.5); }
 .arama-video.arama-kucuk:active{ cursor:grabbing; }
-.arama-kucuk-ipucu{ position:absolute; bottom:112px; left:0; right:0; text-align:center; color:#fff; font-size:11px; z-index:4; text-shadow:0 1px 3px rgba(0,0,0,.7); opacity:.85; }
+.arama-kucuk-ipucu{ position:absolute; bottom:196px; left:0; right:0; text-align:center; color:#fff; font-size:11px; z-index:4; text-shadow:0 1px 3px rgba(0,0,0,.7); opacity:.85; }
 @media (min-width:560px){ .arama-video.arama-kucuk{ width:150px; height:210px; } }
 .arama-kisi-orta{ position:relative; z-index:2; }
-.arama-alt-dugmeler{ position:absolute; bottom:44px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:20px; z-index:4; }
+.arama-alt-dugmeler{ position:absolute; bottom:26px; left:0; right:0; display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:center; gap:10px 12px; z-index:4; padding:0 8px; }
+/* Her düğme + ALTINDA Türkçe yazı (kullanıcı: "ne işe yaradığı yazsın, çarpı işareti anlamıyorum") */
+.arama-kk{ display:flex; flex-direction:column; align-items:center; gap:5px; width:60px; }
+.arama-kk-yazi{ font-style:normal; font-size:10.5px; font-weight:800; line-height:1.05; text-align:center; color:#fff2cd; text-shadow:0 1px 3px rgba(0,0,0,.7); white-space:normal; word-break:break-word; }
 /* ARAMA DÜĞMELERİ — CANLI RENKLİ (kullanıcı: "düğmeleri renkli yap, sade yapma").
    Her düğme kendi parlak rengiyle; basılınca hafif küçülür. Kapalı (mik/kamera/ses kapalı) = kırmızı uyarı. */
-.arama-kk-btn{ width:58px; height:58px; border-radius:18px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(160deg,#7b8aa8,#55647f); box-shadow:0 4px 12px rgba(0,0,0,.34); transition:transform .12s ease, filter .12s ease; }
+.arama-kk-btn{ width:56px; height:56px; border-radius:18px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(160deg,#7b8aa8,#55647f); box-shadow:0 4px 12px rgba(0,0,0,.34); transition:transform .12s ease, filter .12s ease; }
 .arama-kk-btn:active{ transform:scale(.9); filter:brightness(1.12); }
 .arama-kk-btn svg{ width:26px; height:26px; }
 .arama-mik{ background:linear-gradient(160deg,#37c26a,#1f9c4d) !important; }        /* mikrofon AÇIK = yeşil */
@@ -4016,9 +4020,14 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-kam{ background:linear-gradient(160deg,#b06bff,#7d3ce0) !important; }        /* kamera AÇIK = mor */
 .arama-kamcevir{ background:linear-gradient(160deg,#2fd4c8,#12a89c) !important; }   /* ön/arka = turkuaz */
 .arama-fotocek{ background:linear-gradient(160deg,#ffcf4d,#f39b1a) !important; color:#4a3208 !important; }  /* foto çek = altın/turuncu */
-.arama-kk-btn.kapali{ background:#e0202c !important; color:#fff; }                  /* KAPALI (sessiz/kamerasız) = kırmızı */
+.arama-kk-btn.kapali{ background:linear-gradient(160deg,#ff4d4d,#d1121e) !important; color:#fff; }  /* KAPALI (sessiz/kamerasız) = kırmızı */
 .arama-kapat{ background:linear-gradient(160deg,#ff4d4d,#d1121e) !important; color:#fff !important; box-shadow:0 4px 14px rgba(209,18,30,.5) !important; } .arama-kapat svg{ transform:rotate(135deg); }
-@media (min-width:560px){ .arama-avatar{ width:140px; height:140px; } .arama-kisi b{ font-size:27px; } }
+/* ZOOM (yakınlaştır) — sağ kenarda dikey +/− */
+.arama-zoom{ position:absolute; right:12px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; z-index:6; }
+.arama-zoom-btn{ width:46px; height:46px; border-radius:14px; border:none; cursor:pointer; font-size:26px; font-weight:800; line-height:1; color:#4a3208; background:linear-gradient(160deg,#ffe9a8,#e6bd52); box-shadow:0 3px 10px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; }
+.arama-zoom-btn:active{ transform:scale(.9); }
+.arama-zoom-deger{ font-size:12px; font-weight:800; color:#fff; background:rgba(0,0,0,.4); border-radius:8px; padding:2px 6px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+@media (min-width:560px){ .arama-avatar{ width:140px; height:140px; } .arama-kisi b{ font-size:27px; } .arama-kk{ width:74px; } .arama-kk-btn{ width:62px; height:62px; } .arama-kk-yazi{ font-size:12px; } }
 
 /* ============================================================
    GENİŞ EKRAN (BİLGİSAYAR/TABLET) — kullanıcı: "AKIŞ TEK ŞERİT olacak, bütün
