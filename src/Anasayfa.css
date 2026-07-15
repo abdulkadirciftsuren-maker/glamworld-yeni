@@ -2563,6 +2563,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .gb-gon-bilgi span{ font-size:12px; color:#c3cede; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .gb-gon-bilgi i{ font-size:11.5px; color:#8ea0ba; }
 .gb-gon-sil{ flex:none; width:34px; height:34px; border-radius:9px; cursor:pointer; background:rgba(224,32,44,.15); border:1px solid rgba(224,32,44,.4); font-size:15px; }
+/* ÇÖP KUTUSU düğmeleri — geri getir (yeşil) + kalıcı sil (kırmızı) */
+.gb-cop-btnlar{ flex:none; display:flex; gap:6px; }
+.gb-geri-getir{ width:36px; height:36px; border-radius:10px; cursor:pointer; background:rgba(47,158,68,.2); border:1px solid rgba(47,158,68,.55); font-size:17px; }
+.gb-kalici-sil{ width:36px; height:36px; border-radius:10px; cursor:pointer; background:rgba(224,32,44,.2); border:1px solid rgba(224,32,44,.6); font-size:17px; }
+.gb-geri-getir:active, .gb-kalici-sil:active{ transform:scale(.9); }
+.gb-gon-cop{ opacity:.82; }
 /* BEĞENEN/YORUMCU listesi modalı */
 .bgm-pencere{ display:flex; flex-direction:column; width:min(440px,94vw); height:82vh; }
 .bgm-liste{ flex:1; min-height:0; overflow-y:auto; padding:10px 14px 16px; }

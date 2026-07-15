@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth, fcmTokenAl, fcmDurumAl } from "./firebase";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -4278,10 +4278,24 @@ export default function Anasayfa({ pro = false }) {
       </button>
     </>
   );
-  // YÖNETİCİ — gönderi sil (moderasyon)
+  // YÖNETİCİ — gönderiyi ÇÖPE AT (yumuşak silme): akıştan kalkar, Çöp Kutusu'nda durur (geri getirilebilir). KALICI silinmez.
   const gbGonderiSil = async (id) => {
     if (!id) return;
-    try { await gonderiSil(id); setGbGonderiler((a) => a.filter((g) => g.id !== id)); setGercekAkis((a) => a.filter((g) => g.id !== id)); } catch (e) {}
+    const ok = await gonderiCopAt(id);
+    if (ok) { setGbGonderiler((a) => a.map((g) => (g.id === id ? { ...g, silindi: true, silinmeMs: Date.now() } : g))); setGercekAkis((a) => a.filter((g) => g.id !== id)); setGonderilerim((a) => a.filter((g) => g.id !== id)); bilgiBalonu(t("copaAtildi", "Çöp kutusuna atıldı — istersen geri getirebilirsin")); }
+    else bilgiBalonu(t("copHata", "Silinemedi. (Başka hesabın gönderisi için Firebase kuralı gerekir.)"));
+  };
+  // ÇÖP KUTUSUNDAN GERİ GETİR — akışa geri döner
+  const gbGeriGetir = async (id) => {
+    if (!id) return;
+    const ok = await gonderiGeriGetir(id);
+    if (ok) { setGbGonderiler((a) => a.map((g) => (g.id === id ? { ...g, silindi: false, silinmeMs: null } : g))); bilgiBalonu(t("geriGetirildi", "Geri getirildi ✓ — akışta yine görünür")); }
+    else bilgiBalonu(t("copHata2", "Geri getirilemedi."));
+  };
+  // ÇÖP KUTUSUNDAN KALICI SİL — GERİ GELMEZ (dosya + kayıt tümden silinir)
+  const gbKaliciSil = async (id) => {
+    if (!id) return;
+    try { await gonderiSil(id); setGbGonderiler((a) => a.filter((g) => g.id !== id)); bilgiBalonu(t("kaliciSilindi", "Kalıcı silindi — geri gelmez")); } catch (e) { bilgiBalonu(t("copHata", "Silinemedi.")); }
   };
   const gbKullaniciSil = async (id) => {
     if (!id) return;
@@ -8963,6 +8977,7 @@ export default function Anasayfa({ pro = false }) {
               <button className={"gb-sekme" + (gbSekme === "istatistik" ? " aktif" : "")} onClick={() => setGbSekme("istatistik")}>📈 {t("gbSekIst", "İstatistik")}</button>
               <button className={"gb-sekme" + (gbSekme === "kullanici" ? " aktif" : "")} onClick={() => setGbSekme("kullanici")}>👥 {t("gbSekKul", "Kullanıcılar")}</button>
               <button className={"gb-sekme" + (gbSekme === "gonderi" ? " aktif" : "")} onClick={() => setGbSekme("gonderi")}>🗂️ {t("gbSekGon", "Gönderiler")}</button>
+              <button className={"gb-sekme" + (gbSekme === "cop" ? " aktif" : "")} onClick={() => setGbSekme("cop")}>🗑️ {t("gbSekCop", "Çöp Kutusu")}{(() => { const n = gbGonderiler.filter((g) => g.silindi).length; return n ? " (" + n + ")" : ""; })()}</button>
             </div>
             <div className="gb-liste">
               {gbYukleniyor ? <div className="gb-bos">{t("yukleniyor", "Yükleniyor")}…</div>
@@ -9017,9 +9032,26 @@ export default function Anasayfa({ pro = false }) {
                       <button className="gb-gon-sil" onClick={() => { if (window.confirm(t("gbKulSilOnay", "Bu kullanıcıyı listeden silmek istediğine emin misin?"))) gbKullaniciSil(k.id); }} aria-label={t("sil", "Sil")}>🗑</button>
                     </div>
                   ))
+                ) : gbSekme === "cop" ? (
+                  /* ÇÖP KUTUSU — çöpe atılan gönderiler; GERİ GETİR ya da KALICI SİL */
+                  (() => { const cop = gbGonderiler.filter((g) => g.silindi); return cop.length === 0 ? <div className="gb-bos">{t("copBos", "Çöp kutusu boş. Sildiğin gönderiler burada durur, istersen geri getirirsin.")}</div>
+                  : cop.map((g) => (
+                    <div key={g.id} className="gb-gon gb-gon-cop">
+                      {g.gorsel ? <img className="gb-gon-mini" src={g.gorsel} alt="" referrerPolicy="no-referrer" /> : g.video ? <span className="gb-gon-mini gb-gon-vid">🎬</span> : <span className="gb-gon-mini gb-gon-yazi">✍️</span>}
+                      <div className="gb-gon-bilgi">
+                        <b>{g.ad || "—"}</b>
+                        <span>{(g.baslik || g.yazi || "—").slice(0, 60)}</span>
+                        <i>❤ {(g.begeni || 0)} · 💬 {(g.yorumSayisi || 0)}</i>
+                      </div>
+                      <div className="gb-cop-btnlar">
+                        <button className="gb-geri-getir" onClick={() => gbGeriGetir(g.id)} aria-label={t("geriGetir", "Geri getir")} title={t("geriGetir", "Geri getir")}>♻️</button>
+                        <button className="gb-kalici-sil" onClick={() => { if (window.confirm(t("kaliciSilOnay", "KALICI silinsin mi? Bu geri GELMEZ."))) gbKaliciSil(g.id); }} aria-label={t("kaliciSil", "Kalıcı sil")} title={t("kaliciSil", "Kalıcı sil — geri gelmez")}>🔥</button>
+                      </div>
+                    </div>
+                  )); })()
                 ) : (
-                  gbGonderiler.length === 0 ? <div className="gb-bos">{t("gbYok", "Kayıt yok.")}</div>
-                  : gbGonderiler.map((g) => (
+                  (() => { const aktif = gbGonderiler.filter((g) => !g.silindi); return aktif.length === 0 ? <div className="gb-bos">{t("gbYok", "Kayıt yok.")}</div>
+                  : aktif.map((g) => (
                     <div key={g.id} className="gb-gon">
                       {g.gorsel ? <img className="gb-gon-mini" src={g.gorsel} alt="" referrerPolicy="no-referrer" /> : g.video ? <span className="gb-gon-mini gb-gon-vid">🎬</span> : <span className="gb-gon-mini gb-gon-yazi">✍️</span>}
                       <div className="gb-gon-bilgi">
@@ -9027,9 +9059,9 @@ export default function Anasayfa({ pro = false }) {
                         <span>{(g.baslik || g.yazi || "—").slice(0, 60)}</span>
                         <i>❤ {(g.begeni || 0)} · 💬 {(g.yorumSayisi || 0)}</i>
                       </div>
-                      <button className="gb-gon-sil" onClick={() => { if (window.confirm(t("gbSilOnay", "Bu gönderiyi silmek istediğine emin misin?"))) gbGonderiSil(g.id); }} aria-label={t("sil", "Sil")}>🗑</button>
+                      <button className="gb-gon-sil" onClick={() => gbGonderiSil(g.id)} aria-label={t("sil", "Sil")} title={t("copaAt", "Çöp kutusuna at")}>🗑</button>
                     </div>
-                  ))
+                  )); })()
                 )}
             </div>
           </div>

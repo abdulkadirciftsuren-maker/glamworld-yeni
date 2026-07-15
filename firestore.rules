@@ -6,6 +6,8 @@ service cloud.firestore {
 
     function girisli() { return request.auth != null; }
     function sahip(uid) { return request.auth != null && request.auth.uid == uid; }
+    // YÖNETİCİ (site sahibi) — her gönderiyi çöpe atabilir/geri getirebilir/silebilir (moderasyon)
+    function yonetici() { return request.auth != null && request.auth.token.email == "abdulkadirciftsuren@gmail.com"; }
 
     // Kullanıcılar / profiller — keşif için herkes OKUR, sadece sahibi YAZAR
     match /kullanicilar/{uid} {
@@ -22,9 +24,10 @@ service cloud.firestore {
       allow create: if girisli() && request.resource.data.sahipUid == request.auth.uid;
       allow update: if girisli() && (
         resource.data.sahipUid == request.auth.uid
+        || yonetici()
         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['begeni', 'yorumSayisi', 'guncelleme'])
       );
-      allow delete: if girisli() && resource.data.sahipUid == request.auth.uid;
+      allow delete: if girisli() && (resource.data.sahipUid == request.auth.uid || yonetici());
 
       match /yorumlar/{yid} {
         allow read: if true;

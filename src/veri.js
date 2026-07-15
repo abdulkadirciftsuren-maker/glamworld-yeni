@@ -545,6 +545,16 @@ export async function gonderiGuncelle(id, veri) {
   if (!id) return false;
   try { await setDoc(doc(db, "gonderiler", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
 }
+// ÇÖP KUTUSU — yumuşak silme: gönderi SİLİNMEZ, "silindi" işaretlenir → akıştan kalkar, çöp kutusunda durur (geri getirilebilir).
+export async function gonderiCopAt(id) {
+  if (!id) return false;
+  try { await setDoc(doc(db, "gonderiler", id), { silindi: true, silinmeMs: Date.now(), guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+}
+// ÇÖP KUTUSUNDAN GERİ GETİR — "silindi" işaretini kaldırır → akışa geri döner.
+export async function gonderiGeriGetir(id) {
+  if (!id) return false;
+  try { await setDoc(doc(db, "gonderiler", id), { silindi: false, silinmeMs: null, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+}
 
 // ---------- YORUMLAR (gönderiye yorum) ----------
 export async function yorumEkle(postId, y) {
@@ -606,12 +616,12 @@ export async function gonderileriOku({ ulke, meslek } = {}, adet = 150) {
     try {
       const q = query(collection(db, "gonderiler"), ...kosullar, orderBy("zamanMs", "desc"), fsLimit(adet));
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi); // ÇÖPE atılanlar akışta GÖRÜNMEZ
     } catch (indexErr) {
       // Filtre (ulke/meslek) + orderBy için bileşik dizin yoksa: filtreli çek, İSTEMCİDE sırala (yine çalışsın, boş kalmasın)
       const q2 = query(collection(db, "gonderiler"), ...kosullar, fsLimit(adet));
       const snap2 = await getDocs(q2);
-      const liste = snap2.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const liste = snap2.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
       liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
       return liste;
     }
