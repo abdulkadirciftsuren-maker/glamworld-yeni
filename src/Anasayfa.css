@@ -5,7 +5,7 @@
 /* ARKA PLAN FOTO katmanı — ekrana SABİT (gerçek görünen yükseklik), sayfa/adres çubuğu kayınca ZIPLAMAZ, alttan açıklık vermez */
 .ana-arka-foto{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:-2; background-size:cover; background-position:center; pointer-events:none; }
 .ana-kok{
-  position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden;
+  position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; /* en üst/altta SIÇRAMA-parlama YOK */
   /* Zemin ŞEFFAF — arka plan fotoğrafı ayrı SABİT katmanda (.ana-arka-foto).
      Yedek renk AÇIK GECE MAVİSİ (derin) — kullanıcı seçti (sarıdan çıktı). */
   background-color:#294a7d;
@@ -235,7 +235,7 @@
 .msj-bas{ display:flex; align-items:center; justify-content:space-between; padding:15px 16px 11px; border-bottom:1px solid rgba(255,215,0,.18); }
 .msj-baslik{ font-family:'Cinzel',serif; font-weight:800; font-size:17px; color:#FFE9A8; letter-spacing:.03em; }
 .msj-kapat{ background:none; border:none; color:#FFD700; font-size:18px; cursor:pointer; padding:2px 6px; }
-.msj-liste{ overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:9px; }
+.msj-liste{ overflow-y:auto; overscroll-behavior:contain; padding:12px; display:flex; flex-direction:column; gap:9px; }
 .msj-bos{ text-align:center; color:#9fb2d6; font-style:italic; font-size:14px; padding:34px 14px; line-height:1.5; }
 .msj-kart{ display:flex; gap:11px; padding:11px 12px; background:linear-gradient(150deg,rgba(8,30,55,.6),rgba(4,16,32,.6)); border:1px solid rgba(255,235,170,.18); border-radius:14px; }
 .msj-foto{ width:42px; height:42px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:800; font-size:17px; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); }
@@ -3875,7 +3875,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-ara{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; background:#2f9e44; color:#fff; display:flex; align-items:center; justify-content:center; text-decoration:none; }
 .sohbet-ara svg{ width:20px; height:20px; }
 /* ALT BOŞLUK — asılı ARAMA DÜĞMESİ mesajların/fotoğrafların üstüne binmesin (kullanıcı: "ikon altı boş olsun, mesajlar biraz yukarıda gelsin"). */
-.sohbet-akis{ flex:1; overflow-y:auto; padding:14px 12px 86px; display:flex; flex-direction:column; gap:8px; }
+/* overscroll-behavior:contain → en üste/alta gelince SIÇRAMA/parlama YOK (arkadaki altın zemin görünüp parlamaz); background=yeşil → sıçrasa bile yeşil kalır. */
+.sohbet-akis{ flex:1; overflow-y:auto; overscroll-behavior:contain; background:linear-gradient(160deg,#dcecc4,#cbe0ac); padding:14px 12px 86px; display:flex; flex-direction:column; gap:8px; }
 .sohbet-bos{ margin:auto; color:#6b5417; font-size:14px; text-align:center; padding:20px; }
 .sohbet-balon-sar{ display:flex; max-width:82%; }
 .sohbet-balon-sar.benim{ align-self:flex-end; }
