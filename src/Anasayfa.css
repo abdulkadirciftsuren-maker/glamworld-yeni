@@ -3875,8 +3875,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-ara{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; background:#2f9e44; color:#fff; display:flex; align-items:center; justify-content:center; text-decoration:none; }
 .sohbet-ara svg{ width:20px; height:20px; }
 /* ALT BOŞLUK — asılı ARAMA DÜĞMESİ mesajların/fotoğrafların üstüne binmesin (kullanıcı: "ikon altı boş olsun, mesajlar biraz yukarıda gelsin"). */
-/* overscroll-behavior:contain → en üste/alta gelince SIÇRAMA/parlama YOK (arkadaki altın zemin görünüp parlamaz); background=yeşil → sıçrasa bile yeşil kalır. */
-.sohbet-akis{ flex:1; overflow-y:auto; overscroll-behavior:contain; background:linear-gradient(160deg,#dcecc4,#cbe0ac); padding:14px 12px 86px; display:flex; flex-direction:column; gap:8px; }
+/* KAYDIRMA PARLAMASI ÇÖZÜMÜ: overscroll-behavior:contain (sınırda sıçrama yok) + KARARLI GPU KATMANI
+   (transform:translateZ(0)+backface-visibility) → kaydırınca alan yeniden ÇİZİLMEZ, sadece kayar → parlama/titreme biter.
+   (Zemini yeşil parent .sohbet-pencere veriyor; buraya AYRI gradyan koymuyoruz — o hızlı kaydırmayı bozup parlatıyordu.) */
+.sohbet-akis{ flex:1; overflow-y:auto; overscroll-behavior:contain; padding:14px 12px 86px; display:flex; flex-direction:column; gap:8px;
+  transform:translateZ(0); backface-visibility:hidden; -webkit-backface-visibility:hidden; will-change:scroll-position; }
 .sohbet-bos{ margin:auto; color:#6b5417; font-size:14px; text-align:center; padding:20px; }
 .sohbet-balon-sar{ display:flex; max-width:82%; }
 .sohbet-balon-sar.benim{ align-self:flex-end; }
