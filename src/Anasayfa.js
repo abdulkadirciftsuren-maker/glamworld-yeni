@@ -1328,7 +1328,11 @@ export default function Anasayfa({ pro = false }) {
   const uzakSesRef = useRef(null);                     // karşının SESİ (sesli aramada — ses buradan çalar)
   const uzakStreamRef = useRef(null);                  // karşıdan gelen medya akışı (ses+görüntü)
   const aramaAbonelikRef = useRef([]);                 // arama dinleyicileri (temizlemek için)
-  const aramaDurumRef = useRef(""); useEffect(() => { aramaDurumRef.current = aramaDurum; }, [aramaDurum]);
+  // ARAMA GÜNLÜĞÜ (WhatsApp gibi sohbete kayıt) için: ben mi aradım, karşı kim, ne zaman konuşmaya geçti
+  const benAradimRef = useRef(false);                  // bu aramayı BEN mi başlattım (günlüğü arayan yazar → tek kayıt, mükerrer olmaz)
+  const aramaKarsiRef = useRef(null);                  // {uid, ad, foto} — günlük mesajı bu kişiyle aramda
+  const aramaKonusBasRef = useRef(0);                  // konuşmaya geçtiği an (ms); 0 ise hiç cevaplanmadı
+  const aramaDurumRef = useRef(""); useEffect(() => { aramaDurumRef.current = aramaDurum; if (aramaDurum === "konusuyor" && !aramaKonusBasRef.current) aramaKonusBasRef.current = Date.now(); }, [aramaDurum]);
   const aktifAramaRef = useRef(null); useEffect(() => { aktifAramaRef.current = aktifArama; if (!aktifArama) setAramaKucuk(false); }, [aktifArama]);
   const gelenAramaRef = useRef(null); useEffect(() => { gelenAramaRef.current = gelenArama; }, [gelenArama]);
   const sohbetKisiRef = useRef(null); useEffect(() => { sohbetKisiRef.current = sohbetKisi; }, [sohbetKisi]);
@@ -2891,8 +2895,24 @@ export default function Anasayfa({ pro = false }) {
   const aramaKapat = async (durumYaz) => {
     const a = aktifAramaRef.current;
     if (a && a.id && durumYaz !== false) { try { await aramaGuncelle(a.id, { durum: "bitti" }); } catch (e) {} }
+    // ARAMA GÜNLÜĞÜ — sohbete "Görüntülü/Sesli arama · süre / Cevaplanmadı" kaydı (WhatsApp gibi).
+    // Sadece ARAYAN yazar (tek kayıt, mükerrer olmaz). Alıcı tarafta benAradimRef=false → yazmaz.
+    try {
+      const karsi = aramaKarsiRef.current;
+      if (benAradimRef.current && karsi && karsi.uid && (a || aramaDurumRef.current)) {
+        const uu = auth.currentUser;
+        const konusBas = aramaKonusBasRef.current;
+        const sureSn = konusBas ? Math.round((Date.now() - konusBas) / 1000) : 0;
+        const arama = { tip: (a && a.tip) || "sesli", durum: konusBas ? "cevaplandi" : "cevapsiz", sureSn };
+        if (uu) {
+          const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+          mesajGonder({ aliciUid: karsi.uid, aliciAd: karsi.ad || "", arama, gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" } }).catch(() => {});
+        }
+      }
+    } catch (e) {}
+    benAradimRef.current = false; aramaKarsiRef.current = null; aramaKonusBasRef.current = 0;
     aramaTemizle();
-    setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null);
+    setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null); setAramaZoom(1);
   };
   const medyaAl = async (tip) => {
     // Ses: yankı(echo)/gürültü engelleme AÇIK → ses kesilmesin, tekrar etmesin (kullanıcı: ses kesiliyor, 2-3 kez tekrarlıyor)
@@ -2929,6 +2949,8 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser; if (!uu) return;
     if (kisi.uid === uu.uid) { bilgiBalonu(t("kendiniArama", "Kendini arayamazsın 🙂 Aramak için başka bir GLOXORG hesabı gerekir.")); return; }
     if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın
+    // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
+    benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("ariyor");
@@ -2955,6 +2977,8 @@ export default function Anasayfa({ pro = false }) {
     const g = gelenArama; if (!g) return;
     if (!g.offer || !g.offer.sdp) { bilgiBalonu(t("aramaHazirlaniyor", "Arama hazırlanıyor, bir saniye…")); return; } // teklif yoksa kabul etme (yoksa hata → kapanır)
     setGelenArama(null);
+    // ARAMA GÜNLÜĞÜ: BEN aramadım (gelen aramayı kabul ettim) → günlüğü ARAYAN yazar, ben yazmam (mükerrer olmasın)
+    benAradimRef.current = false; aramaKarsiRef.current = { uid: g.arayanUid, ad: g.arayanAd || "", foto: g.arayanFoto || "" }; aramaKonusBasRef.current = 0;
     try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("konusuyor");
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
@@ -3095,6 +3119,18 @@ export default function Anasayfa({ pro = false }) {
     const yeni = Math.max(cap.zoom.min, Math.min(cap.zoom.max, aramaZoom + yon * adim));
     try { await tr.applyConstraints({ advanced: [{ zoom: yeni }] }); setAramaZoom(yeni); } catch (e) { bilgiBalonu(t("zoomOlmadi", "Yakınlaştırma uygulanamadı")); }
   };
+  // ARAMA SÜRESİ BİÇİM — "12 sn." / "6 dk." / "6 dk. 20 sn." (WhatsApp gibi kısa)
+  const aramaSure = (sn) => {
+    sn = Math.max(0, Math.round(sn || 0));
+    if (sn < 60) return sn + " " + t("saniyeKisa", "sn.");
+    const dk = Math.floor(sn / 60), kalan = sn % 60;
+    return kalan ? (dk + " " + t("dakikaKisa", "dk.") + " " + kalan + " " + t("saniyeKisa", "sn.")) : (dk + " " + t("dakikaKisa", "dk."));
+  };
+  // ZOOM BASILI TUT — kullanıcı: "tık tık değil, parmağımı basılı tutunca sürekli yakınlaşsın".
+  // Basınca hemen bir adım + basılı tuttukça her 140ms tekrar; bırakınca durur.
+  const zoomBasRef = useRef(null);
+  const zoomBasla = (yon) => { zoomAyarla(yon); try { clearInterval(zoomBasRef.current); } catch (e) {} zoomBasRef.current = setInterval(() => zoomAyarla(yon), 140); };
+  const zoomBirak = () => { try { clearInterval(zoomBasRef.current); } catch (e) {} zoomBasRef.current = null; };
   // GÖRÜNTÜLÜ ARAMADA FOTOĞRAF ÇEK — kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim".
   // Büyük görüntüdeki (karşı taraf ya da kendi kameran) o anki kareyi yakalar, telefona İNDİRİR.
   const aramaFotoCek = () => {
@@ -7380,6 +7416,19 @@ export default function Anasayfa({ pro = false }) {
                         onContextMenu={(e) => { e.preventDefault(); tepkiAc(m.id, e.clientX, e.clientY); }}>
                         {m.silindi ? (
                           <span className="sohbet-balon-metin sohbet-silindi">🚫 {t("mesajSilindi", "Bu mesaj geri çekildi")}</span>
+                        ) : m.arama ? (
+                          /* ARAMA GÜNLÜĞÜ (WhatsApp gibi): tür + süre/Cevaplanmadı. Cevapsız = kırmızı. */
+                          <span className={"sohbet-arama-gunluk" + (m.arama.durum === "cevaplandi" ? "" : " cevapsiz")}>
+                            <span className="sag-ik">
+                              {m.arama.tip === "goruntulu"
+                                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>
+                                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>}
+                            </span>
+                            <span className="sag-metin">
+                              <b>{m.arama.tip === "goruntulu" ? t("goruntuluArama", "Görüntülü arama") : t("sesliArama", "Sesli arama")}</b>
+                              <i>{m.arama.durum === "cevaplandi" ? aramaSure(m.arama.sureSn) : (benim ? t("cevaplanmadi", "Cevaplanmadı") : t("cevapsizArama", "Cevapsız arama"))}</i>
+                            </span>
+                          </span>
                         ) : (<>
                           {m.medyalar && m.medyalar.length > 0 && (
                             <div className="sohbet-kolaj" data-n={Math.min(m.medyalar.length, 6)}>
@@ -7528,15 +7577,20 @@ export default function Anasayfa({ pro = false }) {
             style={videoBuyuk === "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
             onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
           {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && <span className="arama-kucuk-ipucu">{t("videoIpucu", "Küçük ekrana dokun: büyüt · sürükle: taşı")}</span>}
-          {/* ZOOM (yakınlaştır) — sağ kenarda +/−; arka kamerayla bir şey gösterirken yaklaştır (kullanıcı isteği).
-              Görüntülü aramada HER ZAMAN görünür (aranırken de) — kullanıcı: "artı eksi düğmesini görmüyorum". */}
-          {aktifArama.tip === "goruntulu" && (
-            <div className="arama-zoom">
-              <button className="arama-zoom-btn" onClick={() => zoomAyarla(1)} aria-label={t("yakinlastir", "Yakınlaştır")} title={t("yakinlastir", "Yakınlaştır")}>+</button>
-              <span className="arama-zoom-deger">{aramaZoom > 1.05 ? aramaZoom.toFixed(1) + "×" : "1×"}</span>
-              <button className="arama-zoom-btn" onClick={() => zoomAyarla(-1)} aria-label={t("uzaklastir", "Uzaklaştır")} title={t("uzaklastir", "Uzaklaştır")}>−</button>
-            </div>
-          )}
+          {/* SAĞ SÜTUN (havada, ayrı) — kullanıcı: "artı eksi düğmeleri havada dursun; Kapat'ı da sıradan al, artı eksinin ALTINA havada koy".
+              ZOOM: görüntülüde +/− (BASILI TUTUNCA sürekli yakınlaşır, tık-tık değil). KAPAT: hep en altta, kırmızı, ayrı durur. */}
+          <div className="arama-sag">
+            {aktifArama.tip === "goruntulu" && (
+              <div className="arama-zoom">
+                <button className="arama-zoom-btn" onPointerDown={() => zoomBasla(1)} onPointerUp={zoomBirak} onPointerLeave={zoomBirak} onPointerCancel={zoomBirak} aria-label={t("yakinlastir", "Yakınlaştır")} title={t("yakinlastir", "Basılı tut → yakınlaştır")}>+</button>
+                <span className="arama-zoom-deger">{aramaZoom > 1.05 ? aramaZoom.toFixed(1) + "×" : "1×"}</span>
+                <button className="arama-zoom-btn" onPointerDown={() => zoomBasla(-1)} onPointerUp={zoomBirak} onPointerLeave={zoomBirak} onPointerCancel={zoomBirak} aria-label={t("uzaklastir", "Uzaklaştır")} title={t("uzaklastir", "Basılı tut → uzaklaştır")}>−</button>
+              </div>
+            )}
+            <button className="arama-kk-btn arama-kapat arama-kapat-sag" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")} title={t("aramaKapat", "Kapat")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+            </button>
+          </div>
           {/* HER DÜĞMENİN ALTINDA TEK KISA TÜRKÇE KELİME (kullanıcı: "uzun saçma yazılar yazmışsın, Rusça'ya çevrilince uzar sığmaz").
               Açık/kapalı RENK ile belli (yeşil/mavi/mor açık, kırmızı kapalı) + ikonda eğik çizgi. Çarpı (×) yok. Yazı tek satır, kısa → her dile sığar. */}
           <div className="arama-alt-dugmeler">
@@ -7590,12 +7644,6 @@ export default function Anasayfa({ pro = false }) {
                 <em className="arama-kk-yazi">{t("foto", "Foto")}</em>
               </span>
             )}
-            <span className="arama-kk">
-              <button className="arama-kk-btn arama-kapat" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
-              </button>
-              <em className="arama-kk-yazi">{t("aramaKapatY", "Kapat")}</em>
-            </span>
           </div>
         </div>
       )}

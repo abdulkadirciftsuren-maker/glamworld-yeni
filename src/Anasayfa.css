@@ -3842,7 +3842,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-kim i{ color:#6b5417; font-size:11px; font-style:normal; }
 .sohbet-ara{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; background:#2f9e44; color:#fff; display:flex; align-items:center; justify-content:center; text-decoration:none; }
 .sohbet-ara svg{ width:20px; height:20px; }
-.sohbet-akis{ flex:1; overflow-y:auto; padding:14px 12px; display:flex; flex-direction:column; gap:8px; }
+/* ALT BOŞLUK — asılı ARAMA DÜĞMESİ mesajların/fotoğrafların üstüne binmesin (kullanıcı: "ikon altı boş olsun, mesajlar biraz yukarıda gelsin"). */
+.sohbet-akis{ flex:1; overflow-y:auto; padding:14px 12px 86px; display:flex; flex-direction:column; gap:8px; }
 .sohbet-bos{ margin:auto; color:#6b5417; font-size:14px; text-align:center; padding:20px; }
 .sohbet-balon-sar{ display:flex; max-width:82%; }
 .sohbet-balon-sar.benim{ align-self:flex-end; }
@@ -3852,6 +3853,15 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-balon-sar.karsi .sohbet-balon{ background:linear-gradient(135deg,#bcd8f7,#9cc2ee); color:#12304e; border-bottom-left-radius:4px; } /* ALAN (karşı) = MAVİ balon (belirgin) */
 .sohbet-balon-sar.karsi .sohbet-balon-alt{ color:#3c6088; }
 .sohbet-balon-metin{ font-size:15px; line-height:1.35; white-space:pre-wrap; word-break:break-word; }
+/* ARAMA GÜNLÜĞÜ (WhatsApp gibi) — sohbette "Görüntülü/Sesli arama · süre/Cevaplanmadı". Cevapsız = kırmızı. */
+.sohbet-arama-gunluk{ display:flex; align-items:center; gap:10px; min-width:150px; }
+.sohbet-arama-gunluk .sag-ik{ width:38px; height:38px; border-radius:11px; flex:none; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(160deg,#37c26a,#1f9c4d); }
+.sohbet-arama-gunluk .sag-ik svg{ width:21px; height:21px; }
+.sohbet-arama-gunluk.cevapsiz .sag-ik{ background:linear-gradient(160deg,#ff5a5a,#d1121e); }
+.sohbet-arama-gunluk .sag-metin{ display:flex; flex-direction:column; gap:1px; }
+.sohbet-arama-gunluk .sag-metin b{ font-size:14px; font-weight:800; }
+.sohbet-arama-gunluk .sag-metin i{ font-size:12.5px; font-style:normal; opacity:.85; }
+.sohbet-arama-gunluk.cevapsiz .sag-metin i{ color:#ffb0b0; opacity:1; }
 /* MESAJ TEPKİLERİ (uzun bas → emoji) */
 .sohbet-balon-cev{ position:relative; display:flex; flex-direction:column; }
 .sohbet-balon-sar.benim .sohbet-balon-cev{ align-items:flex-end; }
@@ -3977,9 +3987,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-fon.arama-mini{ inset:auto; right:12px; bottom:86px; width:150px; height:214px; border-radius:16px; border:2px solid #ffe9a8;
   box-shadow:0 8px 26px rgba(0,0,0,.55); cursor:pointer; animation:none; }
 .arama-fon.arama-mini .arama-alt-dugmeler,
-.arama-fon.arama-mini .arama-zoom,
+.arama-fon.arama-mini .arama-sag,
 .arama-fon.arama-mini .arama-kucuk-ipucu,
-.arama-fon.arama-mini .arama-video.arama-kucuk{ display:none !important; } /* küçükken düğmeler/zoom/ipucu/ikinci video gizli */
+.arama-fon.arama-mini .arama-video.arama-kucuk{ display:none !important; } /* küçükken düğmeler/zoom+kapat/ipucu/ikinci video gizli */
 .arama-fon.arama-mini .arama-video.arama-buyuk{ border-radius:14px; }
 .arama-fon.arama-mini .arama-kisi{ transform:scale(.6); }
 .arama-fon.arama-mini::after{ content:"⤢"; position:absolute; right:6px; top:5px; z-index:9; color:#fff; font-size:16px; text-shadow:0 1px 3px rgba(0,0,0,.7); pointer-events:none; }
@@ -4002,29 +4012,33 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-kucuk-ipucu{ position:absolute; bottom:196px; left:0; right:0; text-align:center; color:#fff; font-size:11px; z-index:4; text-shadow:0 1px 3px rgba(0,0,0,.7); opacity:.85; }
 @media (min-width:560px){ .arama-video.arama-kucuk{ width:150px; height:210px; } }
 .arama-kisi-orta{ position:relative; z-index:2; }
-.arama-alt-dugmeler{ position:absolute; bottom:26px; left:0; right:0; display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:center; gap:10px 12px; z-index:4; padding:0 8px; }
-/* Her düğme + ALTINDA Türkçe yazı (kullanıcı: "ne işe yaradığı yazsın, çarpı işareti anlamıyorum") */
-.arama-kk{ display:flex; flex-direction:column; align-items:center; gap:5px; width:auto; min-width:56px; }
-/* TEK KISA KELİME → tek satır (bölünmez, "Duyuyorsu n" gibi kırılmaz); her dile kısa sığar */
-.arama-kk-yazi{ font-style:normal; font-size:11px; font-weight:800; line-height:1.1; text-align:center; color:#fff2cd; text-shadow:0 1px 3px rgba(0,0,0,.7); white-space:nowrap; }
-/* ARAMA DÜĞMELERİ — CANLI RENKLİ (kullanıcı: "düğmeleri renkli yap, sade yapma").
-   Her düğme kendi parlak rengiyle; basılınca hafif küçülür. Kapalı (mik/kamera/ses kapalı) = kırmızı uyarı. */
-.arama-kk-btn{ width:56px; height:56px; border-radius:18px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(160deg,#7b8aa8,#55647f); box-shadow:0 4px 12px rgba(0,0,0,.34); transition:transform .12s ease, filter .12s ease; }
+/* ALT DÜĞMELER — TEK SIRA (kullanıcı: "alttaki ikonları ufalt tek sıraya al"). Kapat bu sıradan ÇIKTI (sağa, havaya alındı).
+   Sığmazsa yatay kayar (dar telefonda taşma/kesme olmasın). */
+.arama-alt-dugmeler{ position:absolute; bottom:22px; left:0; right:0; display:flex; flex-wrap:nowrap; align-items:flex-start; justify-content:center; gap:6px; z-index:4; padding:0 8px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+.arama-alt-dugmeler::-webkit-scrollbar{ display:none; }
+/* Her düğme + ALTINDA tek kısa kelime */
+.arama-kk{ display:flex; flex-direction:column; align-items:center; gap:4px; width:auto; min-width:50px; flex:0 0 auto; }
+/* TEK KISA KELİME → tek satır (bölünmez); her dile kısa sığar */
+.arama-kk-yazi{ font-style:normal; font-size:10px; font-weight:800; line-height:1.1; text-align:center; color:#fff2cd; text-shadow:0 1px 3px rgba(0,0,0,.7); white-space:nowrap; }
+/* ARAMA DÜĞMELERİ — CANLI RENKLİ; basılınca hafif küçülür. Kapalı (mik/kamera/ses kapalı) = kırmızı. */
+.arama-kk-btn{ width:50px; height:50px; border-radius:16px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(160deg,#7b8aa8,#55647f); box-shadow:0 4px 12px rgba(0,0,0,.34); transition:transform .12s ease, filter .12s ease; }
 .arama-kk-btn:active{ transform:scale(.9); filter:brightness(1.12); }
-.arama-kk-btn svg{ width:26px; height:26px; }
+.arama-kk-btn svg{ width:24px; height:24px; }
 .arama-mik{ background:linear-gradient(160deg,#37c26a,#1f9c4d) !important; }        /* mikrofon AÇIK = yeşil */
 .arama-hop{ background:linear-gradient(160deg,#3aa0ff,#1f6fe0) !important; }        /* ses AÇIK = mavi */
 .arama-kam{ background:linear-gradient(160deg,#b06bff,#7d3ce0) !important; }        /* kamera AÇIK = mor */
 .arama-kamcevir{ background:linear-gradient(160deg,#2fd4c8,#12a89c) !important; }   /* ön/arka = turkuaz */
 .arama-fotocek{ background:linear-gradient(160deg,#ffcf4d,#f39b1a) !important; color:#4a3208 !important; }  /* foto çek = altın/turuncu */
-.arama-kk-btn.kapali{ background:linear-gradient(160deg,#ff4d4d,#d1121e) !important; color:#fff; }  /* KAPALI (sessiz/kamerasız) = kırmızı */
+.arama-kk-btn.kapali{ background:linear-gradient(160deg,#ff4d4d,#d1121e) !important; color:#fff; }  /* KAPALI = kırmızı */
 .arama-kapat{ background:linear-gradient(160deg,#ff4d4d,#d1121e) !important; color:#fff !important; box-shadow:0 4px 14px rgba(209,18,30,.5) !important; } .arama-kapat svg{ transform:rotate(135deg); }
-/* ZOOM (yakınlaştır) — sağ kenarda dikey +/− */
-.arama-zoom{ position:absolute; right:12px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; z-index:6; }
-.arama-zoom-btn{ width:46px; height:46px; border-radius:14px; border:none; cursor:pointer; font-size:26px; font-weight:800; line-height:1; color:#4a3208; background:linear-gradient(160deg,#ffe9a8,#e6bd52); box-shadow:0 3px 10px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; }
+/* SAĞ SÜTUN — havada, ayrı (kullanıcı: "artı eksi + Kapat havada, ayrı dursun"). Üstte zoom, altta Kapat. */
+.arama-sag{ position:absolute; right:12px; bottom:112px; display:flex; flex-direction:column; align-items:center; gap:12px; z-index:6; }
+.arama-zoom{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+.arama-zoom-btn{ width:50px; height:50px; border-radius:15px; border:none; cursor:pointer; font-size:28px; font-weight:800; line-height:1; color:#4a3208; background:linear-gradient(160deg,#ffe9a8,#e6bd52); box-shadow:0 3px 10px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; }
 .arama-zoom-btn:active{ transform:scale(.9); }
 .arama-zoom-deger{ font-size:12px; font-weight:800; color:#fff; background:rgba(0,0,0,.4); border-radius:8px; padding:2px 6px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
-@media (min-width:560px){ .arama-avatar{ width:140px; height:140px; } .arama-kisi b{ font-size:27px; } .arama-kk{ width:74px; } .arama-kk-btn{ width:62px; height:62px; } .arama-kk-yazi{ font-size:12px; } }
+.arama-kapat-sag{ width:56px !important; height:56px !important; border-radius:50% !important; margin-top:4px; }  /* Kapat: sağ sütun altında, havada, yuvarlak-kırmızı */
+@media (min-width:560px){ .arama-avatar{ width:140px; height:140px; } .arama-kisi b{ font-size:27px; } .arama-kk{ min-width:64px; } .arama-kk-btn{ width:58px; height:58px; } .arama-kk-yazi{ font-size:12px; } .arama-kapat-sag{ width:62px !important; height:62px !important; } }
 
 /* ============================================================
    GENİŞ EKRAN (BİLGİSAYAR/TABLET) — kullanıcı: "AKIŞ TEK ŞERİT olacak, bütün
