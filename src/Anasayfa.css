@@ -4019,7 +4019,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .alt-bolumler{ display:flex; flex-direction:column; gap:16px; margin:8px 0 12px; }
 .alt-serit-bas{ margin:0 2px 8px; }
 .alt-serit-bas h3{ margin:0; font-family:'Cinzel','Playfair Display',serif; font-size:16px; font-weight:800; letter-spacing:.02em; color:#ffe9a8; text-shadow:0 1px 4px rgba(0,0,0,.4); }
-.alt-kaydir{ display:flex; gap:11px; overflow-x:auto; padding:2px 2px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; touch-action:pan-x; overscroll-behavior-x:contain; }
+/* touch-action:pan-x pan-y → şerit üstünde HEM yana kayar HEM yukarı-aşağı sayfa kayar (kullanıcı: "şeritlerin üstünde parmakla yukarı-aşağı gidemiyorum"). Yana kaydırınca başka sayfa açılmaz (kaydirBas ignore listesinde). */
+.alt-kaydir{ display:flex; gap:11px; overflow-x:auto; padding:2px 2px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; overscroll-behavior-x:contain; }
 .alt-kaydir::-webkit-scrollbar{ display:none; }
 .alt-kart{ position:relative; overflow:hidden; flex:0 0 auto; width:142px; border:1px solid rgba(255,215,0,.42); border-radius:15px; padding:16px 11px 13px; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;
