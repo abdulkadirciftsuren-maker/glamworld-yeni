@@ -1294,6 +1294,7 @@ export default function Anasayfa({ pro = false }) {
   const [videoBuyuk, setVideoBuyuk] = useState("uzak"); // görüntülü aramada BÜYÜK ekranda hangisi: "uzak" (karşı) | "yerel" (ben)
   const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
   const [aramaKucuk, setAramaKucuk] = useState(false); // arama penceresi KÜÇÜLTÜLDÜ mü → köşede durur, konuşurken uygulamada GEZİNİLİR (kullanıcı: "küçülüp başka yerde gezinme")
+  const aramaKucukRef = useRef(false); useEffect(() => { aramaKucukRef.current = aramaKucuk; }, [aramaKucuk]); // geri tuşu: arama açıkken ÖNCE küçültür, kapatmaz
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const pcRef = useRef(null);                          // RTCPeerConnection
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
@@ -3018,10 +3019,11 @@ export default function Anasayfa({ pro = false }) {
   const kucukVideoBitir = () => { const s = kucukSurRef.current; if (!s.on) return; s.on = false; if (!s.moved) { setVideoBuyuk((v) => (v === "uzak" ? "yerel" : "uzak")); } };
   const mikToggle = () => { const s = yerelStreamRef.current; if (s) { s.getAudioTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setMikKapali((m) => !m); } };
   const kamToggle = () => { const s = yerelStreamRef.current; if (s) { s.getVideoTracks().forEach((tr) => { tr.enabled = !tr.enabled; }); setKamKapali((k) => !k); } };
-  // HOPARLÖR düğmesi: AÇIK=yüksek ses (hoparlör, herkes duyar). KAPALI=alçak ses (telefonu kulağına tut, kimse duymasın).
-  // NOT: web sitesi telefonun GERÇEK kulaklık/ahize çıkışına erişemez (sadece kurulu uygulamalar yapar) — bu düğme ses YÜKSEKLİĞİNİ değiştirir.
+  // HOPARLÖR/SES düğmesi: AÇIK=karşıyı duyarsın (tam ses). KAPALI=SESİ TAM KES (hiç duymazsın — sessize alır).
+  // Kullanıcı: "ses düğmesi sona kadar sesi kesmiyor" → KAPALI artık 0 (tam sessiz), hem volume=0 hem muted=true.
+  // NOT: web sitesi telefonun GERÇEK kulaklık/ahize çıkışına erişemez (sadece kurulu uygulamalar yapar) — bu düğme sesi açar/tam keser.
   const hoparlorToggle = () => setHoparlorAcik((v) => !v);
-  useEffect(() => { try { [uzakSesRef.current, uzakVideoRef.current].forEach((el) => { if (el) el.volume = hoparlorAcik ? 1 : 0.32; }); } catch (e) {} }, [hoparlorAcik, aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { try { [uzakSesRef.current, uzakVideoRef.current].forEach((el) => { if (el) { el.volume = hoparlorAcik ? 1 : 0; el.muted = !hoparlorAcik; } }); } catch (e) {} }, [hoparlorAcik, aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   // ÖN ↔ ARKA kamera değiştir (görüntülü aramada). Yeni kamerayı alıp bağlantıdaki video track'i değiştirir (yeniden arama gerekmez).
   const kameraCevir = async () => {
     const pc = pcRef.current; const eski = yerelStreamRef.current; if (!pc || !eski) return;
@@ -3035,7 +3037,41 @@ export default function Anasayfa({ pro = false }) {
       eski.addTrack(yeniVideo);
       if (yerelVideoRef.current) { try { yerelVideoRef.current.srcObject = eski; } catch (e) {} }
       setOnKamera((v) => !v);
-    } catch (e) {}
+    } catch (e) {
+      // Bazı cihazlarda "environment" (arka kamera) tam eşleşmezse getUserMedia hata verir → hiç açılmaz.
+      // Kullanıcı: "arka kamerayı açamıyorsun". Daha esnek dene: tam kısıt olmadan tekrar iste.
+      try {
+        const pc = pcRef.current; const eski = yerelStreamRef.current; if (!pc || !eski) return;
+        const yeniMod = onKamera ? "environment" : "user";
+        const yeniStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: yeniMod } } });
+        const yeniVideo = yeniStream.getVideoTracks()[0]; if (!yeniVideo) return;
+        const gonderici = pc.getSenders().find((sn) => sn.track && sn.track.kind === "video");
+        if (gonderici) { try { await gonderici.replaceTrack(yeniVideo); } catch (e2) {} }
+        eski.getVideoTracks().forEach((tr) => { try { tr.stop(); eski.removeTrack(tr); } catch (e2) {} });
+        eski.addTrack(yeniVideo);
+        if (yerelVideoRef.current) { try { yerelVideoRef.current.srcObject = eski; } catch (e2) {} }
+        setOnKamera((v) => !v);
+      } catch (e2) { bilgiBalonu(t("kameraCevrilemedi", "Bu cihazda kamera değiştirilemedi")); }
+    }
+  };
+  // GÖRÜNTÜLÜ ARAMADA FOTOĞRAF ÇEK — kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim".
+  // Büyük görüntüdeki (karşı taraf ya da kendi kameran) o anki kareyi yakalar, telefona İNDİRİR.
+  const aramaFotoCek = () => {
+    try {
+      const buyuk = videoBuyuk === "yerel" ? yerelVideoRef.current : uzakVideoRef.current;
+      const v = (buyuk && buyuk.videoWidth) ? buyuk : (uzakVideoRef.current && uzakVideoRef.current.videoWidth ? uzakVideoRef.current : yerelVideoRef.current);
+      if (!v || !v.videoWidth) { bilgiBalonu(t("goruntuYok", "Görüntü henüz hazır değil")); return; }
+      const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+      c.toBlob((b) => {
+        if (!b) return;
+        const url = URL.createObjectURL(b);
+        const a = document.createElement("a"); a.href = url; a.download = "GLOXORG-arama-" + (aktifAramaRef.current && aktifAramaRef.current.karsiAd ? aktifAramaRef.current.karsiAd.replace(/\s+/g, "_") : "foto") + ".jpg";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 4000);
+        bilgiBalonu(t("fotoKaydedildi", "Fotoğraf kaydedildi 📸"));
+      }, "image/jpeg", 0.92);
+    } catch (e) { bilgiBalonu(t("fotoCekilemedi", "Fotoğraf çekilemedi")); }
   };
   // BANA GELEN çağrıları dinle (aktif arama yokken göster)
   useEffect(() => {
@@ -5962,8 +5998,11 @@ export default function Anasayfa({ pro = false }) {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
       guardSayRef.current = Math.max(0, guardSayRef.current - 1);
-      if (aramaDurumRef.current) { aramaKapat(); }
-      else if (gelenAramaRef.current) { aramaReddet(); }
+      // ⛔ ARAMA: Geri tuşu görüşmeyi ASLA KAPATMAZ (kullanıcı: "onu kapatamaz geri Android düğmesi, ANCAK BEN kapatırım").
+      // Görüşme açık ve BÜYÜKse → sadece KÜÇÜLT (köşeye al), konuşma sürerken uygulamada gezinilir.
+      // Zaten küçükse → aramaya DOKUNMA, geri tuşu alttaki diğer katmanları normal kapatsın (konuşma yine sürer).
+      if (aramaDurumRef.current && !aramaKucukRef.current) { aramaKucukRef.current = true; setAramaKucuk(true); return; }
+      if (gelenAramaRef.current) { aramaReddet(); }
       else if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
       else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
       else if (telHaritaAcikRef.current) { telHaritaAcikRef.current = false; setTelHaritaAcik(false); }
@@ -7453,27 +7492,33 @@ export default function Anasayfa({ pro = false }) {
             <button className="arama-kk-btn" onClick={() => setAramaKucuk(true)} aria-label={t("aramaKucult", "Küçült")} title={t("aramaKucult", "Küçült — konuşurken gezin")}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" /></svg>
             </button>
-            <button className={"arama-kk-btn" + (mikKapali ? " kapali" : "")} onClick={mikToggle} aria-label={t("mikrofon", "Mikrofon")}>
+            <button className={"arama-kk-btn arama-mik" + (mikKapali ? " kapali" : "")} onClick={mikToggle} aria-label={t("mikrofon", "Mikrofon")}>
               {mikKapali
                 ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V5a3 3 0 0 0-5.9-.7M12 19v3M8 22h8M2 2l20 20" /></svg>
                 : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8" /></svg>}
             </button>
             {/* HOPARLÖR — açık: yüksek ses; kapalı: alçak ses (kulağa tut, kimse duymasın) */}
-            <button className={"arama-kk-btn" + (hoparlorAcik ? "" : " kapali")} onClick={hoparlorToggle} aria-label={t("hoparlor", "Hoparlör")} title={hoparlorAcik ? t("hoparlorAcikT", "Ses yüksek (hoparlör) — dokun: alçalt") : t("hoparlorKapaliT", "Ses alçak (kulağa tut) — dokun: yükselt")}>
+            <button className={"arama-kk-btn arama-hop" + (hoparlorAcik ? "" : " kapali")} onClick={hoparlorToggle} aria-label={t("hoparlor", "Hoparlör")} title={hoparlorAcik ? t("hoparlorAcikT", "Ses açık — dokun: SESİ TAM KES") : t("hoparlorKapaliT", "Ses KAPALI (duyulmuyor) — dokun: aç")}>
               {hoparlorAcik
                 ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 8.5a4 4 0 0 1 0 7M18.8 6a8 8 0 0 1 0 12" /></svg>
                 : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M22 9.5l-5 5M17 9.5l5 5" /></svg>}
             </button>
             {aktifArama.tip === "goruntulu" && (
-              <button className={"arama-kk-btn" + (kamKapali ? " kapali" : "")} onClick={kamToggle} aria-label={t("kamera", "Kamera")}>
+              <button className={"arama-kk-btn arama-kam" + (kamKapali ? " kapali" : "")} onClick={kamToggle} aria-label={t("kamera", "Kamera")}>
                 {kamKapali
                   ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 6h9v12h-9zM15.5 10l5-3v10l-5-3M2 2l20 20" /></svg>
                   : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>}
               </button>
             )}
             {aktifArama.tip === "goruntulu" && (
-              <button className="arama-kk-btn" onClick={kameraCevir} aria-label={t("kameraCevir", "Ön/Arka kamera")} title={t("kameraCevir", "Ön/Arka kamera")}>
+              <button className="arama-kk-btn arama-kamcevir" onClick={kameraCevir} aria-label={t("kameraCevir", "Ön/Arka kamera")} title={t("kameraCevir", "Ön/Arka kamera")}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5h3.5A2.5 2.5 0 0 1 21 7.5v9A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9A2.5 2.5 0 0 1 5.5 5H9" /><circle cx="12" cy="12" r="2.6" /><path d="M8 5l2-2h4l2 2M16.5 9.5l1.8 1.8-1.8 1.8M7.5 14.5L5.7 12.7l1.8-1.8" /></svg>
+              </button>
+            )}
+            {/* FOTOĞRAF ÇEK — görüntüdeki o anki kareyi telefona kaydeder (kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim") */}
+            {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && (
+              <button className="arama-kk-btn arama-fotocek" onClick={aramaFotoCek} aria-label={t("fotoCek", "Fotoğraf çek")} title={t("fotoCek", "Fotoğraf çek")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l1.5-2h7L16 8h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.4" /></svg>
               </button>
             )}
             <button className="arama-kk-btn arama-kapat" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")}>
