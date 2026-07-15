@@ -2131,6 +2131,36 @@ export default function Anasayfa({ pro = false }) {
   const [postOlcu, setPostOlcu] = useState({ w: 208, h: 260 }); // paylaşım editörü çerçevesi (fotoğrafın oranına göre)
   const isInputRef = useRef(null);
   const isFoto = (profilBilgi && profilBilgi.isFoto) || "";
+  // BİLDİRİM FOTOSU (http) — telefon bildiriminde (mesaj/arama) GÖNDERENİN/ARAYANIN fotoğrafı görünsün diye KISA http URL.
+  // Profil fotoğrafı base64 "data:" olabiliyor → FCM'e (4KB sınır) sığmayıp ATILIYOR, bildirimde GLOXORG amblemi (G) kalıyordu.
+  // Çözüm: base64 avatarın küçük http (Storage) sürümünü BİR KEZ yükle, profilBilgi.fotoUrl'e sakla, bildirimlerde onu kullan.
+  const bildirimFotoUrl = (() => {
+    const f = (profilBilgi && profilBilgi.fotoUrl) || "";
+    if (f && f.indexOf("http") === 0) return f;            // önceden yüklenmiş http avatar
+    if (foto && foto.indexOf("http") === 0) return foto;   // avatar zaten http
+    if (isFoto && isFoto.indexOf("http") === 0) return isFoto;
+    return "";
+  })();
+  const fotoUrlYukluRef = useRef(false);
+  useEffect(() => {
+    const uu = auth.currentUser; if (!uu || fotoUrlYukluRef.current) return;
+    const kaynak = foto || isFoto || ""; if (!kaynak) return;
+    // Zaten http fotoUrl varsa iş bitti
+    if (profilBilgi && profilBilgi.fotoUrl && profilBilgi.fotoUrl.indexOf("http") === 0) { fotoUrlYukluRef.current = true; return; }
+    // Avatar zaten http ise onu fotoUrl yap (yükleme gerekmez)
+    if (kaynak.indexOf("http") === 0) { fotoUrlYukluRef.current = true; profilKaydet(uu.uid, { fotoUrl: kaynak }).catch(() => {}); setProfilBilgi((p) => ({ ...(p || {}), fotoUrl: kaynak })); return; }
+    // base64 → küçük http sürüm yükle (bir kez), sonra sakla
+    if (kaynak.indexOf("data:image") !== 0) return;
+    fotoUrlYukluRef.current = true;
+    (async () => {
+      try {
+        const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = kaynak; });
+        const kucuk = imgKucult(img, 256) || kaynak;       // bildirim ikonu küçük → 256px yeter
+        const url = await gorselYukle(kucuk, uu.uid, () => {});
+        if (url) { profilKaydet(uu.uid, { fotoUrl: url }).catch(() => {}); setProfilBilgi((p) => ({ ...(p || {}), fotoUrl: url })); }
+      } catch (e) { fotoUrlYukluRef.current = false; } // olmadıysa tekrar denenebilsin
+    })();
+  }, [foto, isFoto, profilBilgi]); // eslint-disable-line react-hooks/exhaustive-deps
   const galeri = (profilBilgi && Array.isArray(profilBilgi.galeri)) ? profilBilgi.galeri : []; // 2./3... profil fotoğrafları
   const galeriInputRef = useRef(null);
   const [acikBolum, setAcikBolum] = useState(null); // "foto" | "amblem" | "meslek" | null — her bölüm KENDİ ayarını açar
@@ -2816,7 +2846,7 @@ export default function Anasayfa({ pro = false }) {
       aliciUid: araSecili.uid,
       aliciAd: [araSecili.isim, araSecili.soyisim].filter(Boolean).join(" "),
       metin: mesajYazi,
-      gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" },
+      gonderen: { uid: uu.uid, ad: benimAd, foto: bildirimFotoUrl || foto || isFoto || "" },
     }).then((ok) => { setMesajDurum(ok ? "ok" : "hata"); if (ok) setMesajYazi(""); })
       .catch(() => setMesajDurum("hata"));
   }
@@ -2851,7 +2881,7 @@ export default function Anasayfa({ pro = false }) {
     if (!((metin && metin.trim()) || gorsel || video || (dosya && dosya.url) || (medyalar && medyalar.length))) return false;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try {
-      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null, medyalar: medyalar || null, gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" } });
+      return await mesajGonder({ aliciUid: kisi.uid, aliciAd: kisi.ad || "", metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null, medyalar: medyalar || null, gonderen: { uid: uu.uid, ad: benimAd, foto: bildirimFotoUrl || foto || isFoto || "" } });
     } catch (e) { return false; }
   };
   // Sohbette VİDEO seç/çek → Storage'a yükle, video mesajı gönder
@@ -2906,7 +2936,7 @@ export default function Anasayfa({ pro = false }) {
         const arama = { tip: (a && a.tip) || "sesli", durum: konusBas ? "cevaplandi" : "cevapsiz", sureSn };
         if (uu) {
           const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
-          mesajGonder({ aliciUid: karsi.uid, aliciAd: karsi.ad || "", arama, gonderen: { uid: uu.uid, ad: benimAd, foto: foto || isFoto || "" } }).catch(() => {});
+          mesajGonder({ aliciUid: karsi.uid, aliciAd: karsi.ad || "", arama, gonderen: { uid: uu.uid, ad: benimAd, foto: bildirimFotoUrl || foto || isFoto || "" } }).catch(() => {});
         }
       }
     } catch (e) {}
@@ -2955,7 +2985,8 @@ export default function Anasayfa({ pro = false }) {
     try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("ariyor");
     setAktifArama({ id: "", karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
-    const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: foto || isFoto || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
+    // arayanFoto: telefon bildiriminde arayanın fotoğrafı görünsün diye KISA http URL (base64 FCM'e sığmaz, atılır → G kalırdı)
+    const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     const pc = pcOlustur(id, "arayan");
