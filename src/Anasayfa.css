@@ -251,6 +251,14 @@
   background:linear-gradient(150deg,rgba(255,255,255,.9),rgba(253,248,238,.95)); border:1.5px dashed rgba(184,134,11,.55); border-radius:13px; padding:9px 13px; color:#7a6a3a; font-size:13px; font-style:italic; }
 .ana-paylas-art{ width:22px; height:22px; flex:none; border-radius:50%; background:linear-gradient(180deg,#FFE9A8,#FFD700,#B8860B); color:#1a1206; font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; font-style:normal; }
 .ana-post-avatar-img{ width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+/* BİLDİRİM UYARI BANDI — herkesin bildirimi açması için (arama/mesaj ulaşsın); altın/canlı (anayasa) */
+.bildirim-bandi{ display:flex; align-items:center; gap:9px; margin:0 0 10px; padding:11px 13px; border-radius:13px;
+  background:linear-gradient(150deg,#FFE9A8,#FFD700 55%,#E6BD52); border:1.5px solid #b8860b; box-shadow:0 3px 10px rgba(120,80,10,.3); }
+.bb-ik{ font-size:22px; flex:none; }
+.bb-yazi{ flex:1; color:#4a3208; font-weight:800; font-size:13.5px; line-height:1.3; }
+.bb-ac{ flex:none; border:none; cursor:pointer; background:linear-gradient(160deg,#2f9e44,#1f7a34); color:#fff; font-weight:800; font-size:14px; padding:9px 18px; border-radius:11px; box-shadow:0 3px 8px rgba(0,0,0,.25); }
+.bb-ac:active{ transform:scale(.94); }
+.bb-kapat{ flex:none; border:none; cursor:pointer; background:rgba(74,50,8,.14); color:#4a3208; font-weight:800; font-size:14px; width:30px; height:30px; border-radius:9px; }
 /* ZENGİN PAYLAŞ EKRANI (avatar + soru + renkli seçenekler) */
 /* Foto+yazı kutusu = ÜSTTE SABİT (ayarlar altından kayar, bununla yükselmez) */
 .pyl-ust{ display:flex; flex-direction:column; gap:9px; flex:none; margin:10px 14px 0; padding-bottom:10px; border-bottom:1px solid rgba(255,215,0,.16); max-height:44vh; overflow-y:auto; }

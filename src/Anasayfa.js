@@ -1283,6 +1283,7 @@ export default function Anasayfa({ pro = false }) {
   const [bildirimAcik, setBildirimAcik] = useState(false); // sol üst zil — bildirim penceresi
   const [bildirimListe, setBildirimListe] = useState([]);  // gerçek bildirimler (canlı)
   const [bildirimIzin, setBildirimIzin] = useState(() => { try { return (typeof Notification !== "undefined") ? Notification.permission : "default"; } catch (e) { return "default"; } });
+  const [bildirimBandiKapat, setBildirimBandiKapat] = useState(false); // ana sayfadaki "Bildirimleri Aç" uyarı bandı kapatıldı mı (bu oturum)
   const gorulenBildirimRef = useRef(null);                 // ilk yüklemede sessiz, sonra yeni gelenler bildirilir
   // Arama şeridi KAPALI durur; ortadaki ufak düğmeye basınca açılır (yer kaplamasın)
   const [araAcik, setAraAcik] = useState(false);
@@ -6718,6 +6719,18 @@ export default function Anasayfa({ pro = false }) {
                 );
               })}
             </div>
+            {/* BİLDİRİM UYARISI — HER kullanıcı bildirimi AÇMAZSA arama/mesaj ULAŞMAZ (push için izin şart).
+                Kullanıcı: "sadece ben mi alıyorum, başka müşteriler bildirim almayacak mı" → herkese açması kolay uyarı. */}
+            {bildirimIzin !== "granted" && !bildirimBandiKapat && (
+              <div className="bildirim-bandi">
+                <span className="bb-ik" aria-hidden="true">🔔</span>
+                <span className="bb-yazi">{bildirimIzin === "denied"
+                  ? t("bildBandiRed", "Bildirimler KAPALI — aramalar ve mesajlar sana ulaşmaz. Telefon ayarlarından bu site için bildirime izin ver.")
+                  : t("bildBandiAc", "Aramalar ve mesajlar sana ulaşsın diye bildirimleri aç.")}</span>
+                {bildirimIzin !== "denied" && <button className="bb-ac" onClick={() => bildirimIzniIste()}>{t("bildBandiAcBtn", "Aç")}</button>}
+                <button className="bb-kapat" onClick={() => setBildirimBandiKapat(true)} aria-label={t("kapat", "Kapat")}>✕</button>
+              </div>
+            )}
             {/* PAYLAŞ kutusu — kendi gönderini ekle (gerçek veri) */}
             <button className="ana-paylas-ac" onClick={() => { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum(""); setPaylasAvatar("profil"); setUstYazi(""); setUstRenk("#ffffff"); setUstBoyut("orta"); setUstYer("alt"); setAiOneriler([]); setPaylasDuzen(null); setPaylasZemin(""); setPaylasYaziRenk(""); setPaylasKonum(null); setKonumDurum(""); setFiligranEkle(true); setGitLinki(false); setYaziMedyaUstunde(false); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasAcik(true); }}>
               <span className="ana-paylas-art" aria-hidden="true">+</span>{t("paylasAc", "Bir şeyler paylaş…")}
