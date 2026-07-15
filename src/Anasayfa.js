@@ -66,21 +66,45 @@ function BilgiBtn({ metin, onAc, className }) {
 // Hikâye özelliği: "Parıltı" (alternatif: An / Işıltı / Kıvılcım). Reels özelliği: "Gloxo" (alternatif: Şimşek / Vitrin / Akıntı).
 const HIKAYE_AD = "Işıltını Göster"; // hikâye oluştur düğmesi (alternatif: "Anlık Parıltı" / "Kıvılcım Çak")
 const REELS_AD = "Makara";           // reels (alternatif: "Film Makarası")
+// KAYAN YAZI — sığmayan yazı (isim vb.) hem KENDİLİĞİNDEN 3 kez sağa-sola gezer, hem de
+// PARMAKLA sağa-sola kaydırılıp içindeki tam yazı okunabilir (kullanıcı: "şeritteki yazıyı parmağımla
+// kaydırıp ne olduğunu göreyim; sayfaya gelince 3-4 sefer geçsin"). Yazı ASLA kesilmez (anayasa).
 function KayanYazi({ children, className }) {
   const disRef = useRef(null);
   const icRef = useRef(null);
-  const [kayma, setKayma] = useState(0); // taşma miktarı (px) — 0 ise sığıyor, kaymaz
+  const [tasar, setTasar] = useState(false); // sığmıyor mu → kaydırılabilir + otomatik gezer
+  const otoRef = useRef({ calisti: false, zamanlar: [] });
   useEffect(() => {
     const dis = disRef.current, ic = icRef.current;
     if (!dis || !ic) return;
-    const olc = () => { const tasma = Math.ceil(ic.scrollWidth - dis.clientWidth); setKayma(tasma > 2 ? tasma : 0); };
+    const olc = () => setTasar(Math.ceil(ic.scrollWidth - dis.clientWidth) > 2);
     olc();
     let ro; try { ro = new ResizeObserver(olc); ro.observe(dis); ro.observe(ic); } catch (e) {}
     return () => { try { ro && ro.disconnect(); } catch (e) {} };
   }, [children]);
+  // OTOMATİK GEZ — sağa (yazının sonu) kadar git, başa dön; 3 kez, sonra başta dur. Dokununca tekrar başlar.
+  const otoGez = () => {
+    const dis = disRef.current; if (!dis) return;
+    const max = dis.scrollWidth - dis.clientWidth; if (max <= 2) return;
+    otoRef.current.zamanlar.forEach((z) => clearTimeout(z)); otoRef.current.zamanlar = [];
+    const kaydir = (hedef) => { try { dis.scrollTo({ left: hedef, behavior: "smooth" }); } catch (e) { dis.scrollLeft = hedef; } };
+    let adim = 0; // her tur: sağa git + başa dön = 2 adım; 3 tur = 6 adım
+    const surdur = () => {
+      if (adim >= 6) { kaydir(0); return; }
+      kaydir(adim % 2 === 0 ? max : 0); adim++;
+      otoRef.current.zamanlar.push(setTimeout(surdur, 1500));
+    };
+    surdur();
+  };
+  useEffect(() => {
+    if (!tasar) return;
+    const z = setTimeout(() => { if (!otoRef.current.calisti) { otoRef.current.calisti = true; otoGez(); } }, 700);
+    return () => { clearTimeout(z); otoRef.current.zamanlar.forEach((zz) => clearTimeout(zz)); };
+  }, [tasar]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <span ref={disRef} className={"kayan-dis" + (className ? " " + className : "")}>
-      <span ref={icRef} className={"kayan-ic" + (kayma ? " kayar" : "")} style={kayma ? { "--kayma": "-" + kayma + "px" } : undefined}>{children}</span>
+    <span ref={disRef} className={"kayan-dis" + (tasar ? " kayabilir" : "") + (className ? " " + className : "")}
+      onClick={tasar ? otoGez : undefined} title={tasar ? "Kaydır / dokun" : undefined}>
+      <span ref={icRef} className="kayan-ic">{children}</span>
     </span>
   );
 }
@@ -7504,16 +7528,17 @@ export default function Anasayfa({ pro = false }) {
             style={videoBuyuk === "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
             onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
           {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && <span className="arama-kucuk-ipucu">{t("videoIpucu", "Küçük ekrana dokun: büyüt · sürükle: taşı")}</span>}
-          {/* ZOOM (yakınlaştır) — sağ kenarda +/−; arka kamerayla bir şey gösterirken yaklaştır (kullanıcı isteği) */}
-          {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && (
+          {/* ZOOM (yakınlaştır) — sağ kenarda +/−; arka kamerayla bir şey gösterirken yaklaştır (kullanıcı isteği).
+              Görüntülü aramada HER ZAMAN görünür (aranırken de) — kullanıcı: "artı eksi düğmesini görmüyorum". */}
+          {aktifArama.tip === "goruntulu" && (
             <div className="arama-zoom">
               <button className="arama-zoom-btn" onClick={() => zoomAyarla(1)} aria-label={t("yakinlastir", "Yakınlaştır")} title={t("yakinlastir", "Yakınlaştır")}>+</button>
               <span className="arama-zoom-deger">{aramaZoom > 1.05 ? aramaZoom.toFixed(1) + "×" : "1×"}</span>
               <button className="arama-zoom-btn" onClick={() => zoomAyarla(-1)} aria-label={t("uzaklastir", "Uzaklaştır")} title={t("uzaklastir", "Uzaklaştır")}>−</button>
             </div>
           )}
-          {/* HER DÜĞMENİN ALTINDA TÜRKÇE YAZI (kullanıcı: "çarpı işareti nedir anlamıyorum, ikon açık/kapalı göstersin, ne işe yaradığı yazsın").
-              Renk + yazı + ikon birlikte: yeşil "Sesin açık" = seni duyuyorlar; kırmızı "Sesin KAPALI" = seni duymuyorlar. Çarpı (×) kaldırıldı, tek eğik çizgi kondu. */}
+          {/* HER DÜĞMENİN ALTINDA TEK KISA TÜRKÇE KELİME (kullanıcı: "uzun saçma yazılar yazmışsın, Rusça'ya çevrilince uzar sığmaz").
+              Açık/kapalı RENK ile belli (yeşil/mavi/mor açık, kırmızı kapalı) + ikonda eğik çizgi. Çarpı (×) yok. Yazı tek satır, kısa → her dile sığar. */}
           <div className="arama-alt-dugmeler">
             <span className="arama-kk">
               <button className="arama-kk-btn" onClick={() => setAramaKucuk(true)} aria-label={t("aramaKucult", "Küçült")}>
@@ -7527,7 +7552,7 @@ export default function Anasayfa({ pro = false }) {
                   ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8M3 3l18 18" /></svg>
                   : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8" /></svg>}
               </button>
-              <em className="arama-kk-yazi">{mikKapali ? t("mikKapaliY", "Sesin KAPALI") : t("mikAcikY", "Sesin açık")}</em>
+              <em className="arama-kk-yazi">{t("mikrofon", "Mikrofon")}</em>
             </span>
             <span className="arama-kk">
               <button className={"arama-kk-btn arama-hop" + (hoparlorAcik ? "" : " kapali")} onClick={hoparlorToggle} aria-label={t("hoparlor", "Ses")}>
@@ -7535,7 +7560,7 @@ export default function Anasayfa({ pro = false }) {
                   ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 8.5a4 4 0 0 1 0 7M18.8 6a8 8 0 0 1 0 12" /></svg>
                   : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M3 3l18 18" /></svg>}
               </button>
-              <em className="arama-kk-yazi">{hoparlorAcik ? t("sesAcikY", "Duyuyorsun") : t("sesKapaliY", "Ses KAPALI")}</em>
+              <em className="arama-kk-yazi">{t("hoparlor", "Ses")}</em>
             </span>
             {aktifArama.tip === "goruntulu" && (
               <span className="arama-kk">
@@ -7544,7 +7569,7 @@ export default function Anasayfa({ pro = false }) {
                     ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /><path d="M3 3l18 18" /></svg>
                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>}
                 </button>
-                <em className="arama-kk-yazi">{kamKapali ? t("kamKapaliY", "Kamera KAPALI") : t("kamAcikY", "Kamera açık")}</em>
+                <em className="arama-kk-yazi">{t("kamera", "Kamera")}</em>
               </span>
             )}
             {aktifArama.tip === "goruntulu" && (
@@ -7552,16 +7577,17 @@ export default function Anasayfa({ pro = false }) {
                 <button className="arama-kk-btn arama-kamcevir" onClick={kameraCevir} aria-label={t("kameraCevir", "Ön/Arka kamera")}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5h3.5A2.5 2.5 0 0 1 21 7.5v9A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9A2.5 2.5 0 0 1 5.5 5H9" /><circle cx="12" cy="12" r="2.6" /><path d="M8 5l2-2h4l2 2M16.5 9.5l1.8 1.8-1.8 1.8M7.5 14.5L5.7 12.7l1.8-1.8" /></svg>
                 </button>
-                <em className="arama-kk-yazi">{onKamera ? t("arkayaCevirY", "Arka kamera") : t("oneCevirY", "Ön kamera")}</em>
+                <em className="arama-kk-yazi">{t("cevir", "Çevir")}</em>
               </span>
             )}
-            {/* FOTOĞRAF ÇEK — görüntüdeki o anki kareyi telefona kaydeder (kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim") */}
-            {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && (
+            {/* FOTOĞRAF ÇEK — görüntüdeki o anki kareyi telefona kaydeder (kullanıcı: "kamerada ne varsa fotoğrafını çekebileyim").
+                Görüntülü aramada HER ZAMAN görünür (aranırken de kendi kameranı çekebilirsin). */}
+            {aktifArama.tip === "goruntulu" && (
               <span className="arama-kk">
                 <button className="arama-kk-btn arama-fotocek" onClick={aramaFotoCek} aria-label={t("fotoCek", "Fotoğraf çek")}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l1.5-2h7L16 8h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.4" /></svg>
                 </button>
-                <em className="arama-kk-yazi">{t("fotoCekY", "Foto çek")}</em>
+                <em className="arama-kk-yazi">{t("foto", "Foto")}</em>
               </span>
             )}
             <span className="arama-kk">

@@ -2403,17 +2403,13 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ana-menu-durum.acik{ background:rgba(70,211,122,.18); color:#5fe09a; }
 
 /* ANAYASA: DÜĞMEYE SIĞMAYAN YAZI KESİLMEZ → şeritte SOLA yürür, 3 kez gidip-döner, sonra BAŞTA durur */
-.kayan-dis{ display:inline-block; max-width:100%; overflow:hidden; white-space:nowrap; vertical-align:bottom; }
-.kayan-ic{ display:inline-block; white-space:nowrap; will-change:transform; }
-.kayan-ic.kayar{ animation:kayanYazi 5.5s ease-in-out 3; }
-@keyframes kayanYazi{
-  0%{ transform:translateX(0); }
-  12%{ transform:translateX(0); }                 /* başta kısa bekle */
-  50%{ transform:translateX(var(--kayma)); }       /* sola tam kay (yazının sonu görünür) */
-  88%{ transform:translateX(var(--kayma)); }       /* sonda kısa bekle */
-  100%{ transform:translateX(0); }                 /* başa dön (3. tekrar sonunda burada DURUR) */
-}
-@media (prefers-reduced-motion: reduce){ .kayan-ic.kayar{ animation:none; } }
+/* KAYAN YAZI — native yatay kaydırma (parmakla sağa-sola sürüklenir), scrollbar GİZLİ.
+   Otomatik gezme JS ile scrollLeft üzerinden (smooth) yapılır; kesme/… YOK (anayasa). */
+.kayan-dis{ display:inline-block; max-width:100%; overflow-x:auto; overflow-y:hidden; white-space:nowrap; vertical-align:bottom; scrollbar-width:none; -ms-overflow-style:none; scroll-behavior:smooth; }
+.kayan-dis::-webkit-scrollbar{ display:none; height:0; }
+/* Sığmayanlar: parmakla yatay kaydırılır; dikey (sayfa) kayması yine geçer (pan-x pan-y) → şerit üstünde takılmaz. */
+.kayan-dis.kayabilir{ touch-action:pan-x pan-y; overscroll-behavior-x:contain; cursor:ew-resize; }
+.kayan-ic{ display:inline-block; white-space:nowrap; }
 
 /* AKIŞ SAYFALAMA nöbetçisi — görününce daha fazla gönderi yüklenir (spinner) */
 .feed-nobetci{ width:32px; height:32px; margin:14px auto 20px; border-radius:50%; border:3px solid rgba(184,134,11,.25); border-top-color:#c9962a; animation:feedDon .8s linear infinite; }
@@ -4008,8 +4004,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-kisi-orta{ position:relative; z-index:2; }
 .arama-alt-dugmeler{ position:absolute; bottom:26px; left:0; right:0; display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:center; gap:10px 12px; z-index:4; padding:0 8px; }
 /* Her düğme + ALTINDA Türkçe yazı (kullanıcı: "ne işe yaradığı yazsın, çarpı işareti anlamıyorum") */
-.arama-kk{ display:flex; flex-direction:column; align-items:center; gap:5px; width:60px; }
-.arama-kk-yazi{ font-style:normal; font-size:10.5px; font-weight:800; line-height:1.05; text-align:center; color:#fff2cd; text-shadow:0 1px 3px rgba(0,0,0,.7); white-space:normal; word-break:break-word; }
+.arama-kk{ display:flex; flex-direction:column; align-items:center; gap:5px; width:auto; min-width:56px; }
+/* TEK KISA KELİME → tek satır (bölünmez, "Duyuyorsu n" gibi kırılmaz); her dile kısa sığar */
+.arama-kk-yazi{ font-style:normal; font-size:11px; font-weight:800; line-height:1.1; text-align:center; color:#fff2cd; text-shadow:0 1px 3px rgba(0,0,0,.7); white-space:nowrap; }
 /* ARAMA DÜĞMELERİ — CANLI RENKLİ (kullanıcı: "düğmeleri renkli yap, sade yapma").
    Her düğme kendi parlak rengiyle; basılınca hafif küçülür. Kapalı (mik/kamera/ses kapalı) = kırmızı uyarı. */
 .arama-kk-btn{ width:56px; height:56px; border-radius:18px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(160deg,#7b8aa8,#55647f); box-shadow:0 4px 12px rgba(0,0,0,.34); transition:transform .12s ease, filter .12s ease; }
