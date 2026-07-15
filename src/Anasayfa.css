@@ -774,8 +774,9 @@
    DIŞINDA olduğu için min-height kaldırmak ikonları bozmaz. */
 .apr-medya:not(.uzun):not(.video){ min-height:0; display:block; background:transparent; }
 .apr-medya:not(.uzun):not(.video) img{ width:100%; height:auto; display:block; }
-/* TELEFON: video NORMAL (3/4) — telefona dokunma; doğal/yatay sadece bilgisayarda */
-.apr-medya.video{ aspect-ratio:3/4; padding:0; background:transparent; }
+/* TELEFON: video NORMAL (3/4) — telefona dokunma; doğal/yatay sadece bilgisayarda.
+   ⛔ ARKA PLAN ALTIN (şeffaf DEĞİL): video ilk kare boyanana kadar boş kutu LACİVERT değil ALTIN görünsün (anayasa: siyah/lacivert boş zemin YOK). */
+.apr-medya.video{ aspect-ratio:3/4; padding:0; background:radial-gradient(circle at 50% 44%, #a4863c, #6f5a2b); }
 .apr-medya.video video{ width:100%; height:100%; object-fit:cover; display:block; }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
 .apr-medya.video .apr-yazan{ background:transparent; }

@@ -108,6 +108,18 @@ function KayanYazi({ children, className }) {
     </span>
   );
 }
+// AKIŞ VİDEOSU İLK KARE BOYAMA — kullanıcı: "aşağı kaydırınca videolar gözükmüyor, pencere boş (lacivert) çıkıyor".
+// SEBEP: preload="metadata" + poster yoksa video kutusu BOŞ kalıyor (arkadaki lacivert görünüyor). ÇÖZÜM: metadata gelince
+// küçük bir currentTime'a atla → tarayıcı İLK KAREYİ boyar (poster gibi). Ekrana gelince zaten otomatik oynar/canlanır.
+function videoIlkKareBoya(e) {
+  const v = e && e.target; if (!v) return;
+  try {
+    if (!v.getAttribute("poster") && v.paused && (!v.currentTime || v.currentTime < 0.05)) {
+      const hedef = (v.duration && isFinite(v.duration)) ? Math.min(0.12, v.duration / 2) : 0.12;
+      v.currentTime = hedef;
+    }
+  } catch (x) {}
+}
 function AyarBolum({ ad, ikon, renk, acik, onTik, children, bilgi, onAcBilgi }) {
   return (
     <div className={"ayar-bolum" + (acik ? " acik" : "")} style={renk ? { "--ar": renk } : undefined}>
@@ -6815,7 +6827,7 @@ export default function Anasayfa({ pro = false }) {
                                 k.style.maxHeight = vidFg ? "none" : "";
                               } catch (x) {}
                             };
-                            const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { el.dataset.oran = (w / h).toFixed(4); kolajGuncelle(el.closest(".apr-kolaj")); } } catch (x) {} };
+                            const yonAyarla = (e) => { try { const el = e.target; const w = el.naturalWidth || el.videoWidth || 0; const h = el.naturalHeight || el.videoHeight || 0; if (w && h) { el.dataset.oran = (w / h).toFixed(4); kolajGuncelle(el.closest(".apr-kolaj")); } if (el.tagName === "VIDEO") videoIlkKareBoya(e); } catch (x) {} };
                             const oge = (m, idx, fazla, ana) => {
                               const src = m.tip === "video" ? videoSade(m.url) : (m.data || m.url);
                               return (
@@ -6845,7 +6857,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? <video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} />
+                        ? <video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} />
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
