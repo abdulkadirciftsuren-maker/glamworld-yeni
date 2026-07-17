@@ -2904,6 +2904,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 @keyframes maskotBuyu{ from{ transform:scale(.25); opacity:0; } to{ transform:scale(1); opacity:1; } }
 .maskot-tanit-balon{ max-width:min(86vw,440px); max-height:34vh; flex:0 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; background:linear-gradient(160deg,#fffefa,#fff6e0); color:#221a0c; border:1.5px solid rgba(184,134,11,.55); border-radius:18px; border-bottom-left-radius:6px; padding:12px 16px; font-family:'Cormorant Garamond',serif; font-size:14px; font-weight:500; line-height:1.4; box-shadow:0 12px 34px rgba(0,0,0,.42); text-align:center; }
 .maskot-tanit-balon::-webkit-scrollbar{ display:none; }
+/* "Gloxoo düşünüyor…" — ben gönderdikten sonra cevap gelene kadar (eski balon gitti, canlı nokta) */
+.maskot-dusunuyor{ display:inline-flex !important; align-items:center; gap:9px; color:#7a5c12; font-weight:700; font-style:italic; }
+.dusun-nokta{ display:inline-flex; gap:4px; }
+.dusun-nokta i{ width:8px; height:8px; border-radius:50%; background:#e0a92a; display:inline-block; animation:dusunZipla 1s ease-in-out infinite; }
+.dusun-nokta i:nth-child(2){ animation-delay:.16s; } .dusun-nokta i:nth-child(3){ animation-delay:.32s; }
+@keyframes dusunZipla{ 0%,80%,100%{ transform:translateY(0); opacity:.5; } 40%{ transform:translateY(-6px); opacity:1; } }
 @media(min-width:560px){ .maskot-tanit-balon{ font-size:18px; line-height:1.42; padding:14px 18px; } }
 .maskot-tanit-yuz{ position:relative; filter:drop-shadow(0 10px 20px rgba(0,0,0,.5)); }
 .maskot-tanit-yuz .maskot-yuz{ width:90px !important; height:90px !important; }

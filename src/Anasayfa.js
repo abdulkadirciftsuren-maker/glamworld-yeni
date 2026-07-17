@@ -4465,6 +4465,10 @@ export default function Anasayfa({ pro = false }) {
     say.sayi++; try { localStorage.setItem("groxAiSayac", JSON.stringify(say)); } catch (e) {}
     const yeniListe = [...listeAl, { rol: "user", metin: soru, foto, ek, zamanMs: Date.now(), konum: myTamKonum || konum.kod }];
     setListe(yeniListe); setYardimciYazi(""); setYardimciFoto(null); setYardimciEk(null); setYardimciYukleniyor(true);
+    // BEN GÖNDERDİM → Gloxoo'nun ESKİ konuşma balonu HEMEN kaybolsun (asılı kalmasın) + konuşma/kelime imleci dursun.
+    // Yerine "Gloxoo düşünüyor" (canlı ikon) gösterilir; cevap gelince yeni metin balonda çıkar. (Kullanıcı isteği.)
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    try { setMaskotMetni(""); setOkunanKelime(-1); okunanKelimeRef.current = -1; aiKonusuyorRef.current = false; setAiKonusuyor(false); } catch (e) {}
     aiAltaKay();
     // TAM KONUM AÇIKSA: cevaptan ÖNCE anlık yeri (adres+mekân) KESİNLEŞTİR — watchPosition sabit dururken tetiklenmeyebilir,
     // bu yüzden burada TAZE bir GPS + adres çözümü yapılır ki Gloxoo "neredeyim"e TAM cevap versin (henüz yoksa zorla).
@@ -8569,6 +8573,10 @@ export default function Anasayfa({ pro = false }) {
           {maskotMini && maskotMetni && (aiKonusuyor || aiDuraklat) && (
             <div className="ai-mini-balon">{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>
           )}
+          {/* BEN gönderince eski balon gitti → cevap gelene kadar "Gloxoo düşünüyor" (canlı nokta) */}
+          {maskotMini && !maskotMetni && yardimciYukleniyor && (
+            <div className="ai-mini-balon maskot-dusunuyor"><span className="dusun-nokta" aria-hidden="true"><i /><i /><i /></span> {t("gloxooDusunuyor", "Gloxoo düşünüyor…")}</div>
+          )}
           {/* MASKOT — her yerde gezen GLOXORG karakteri (konuşurken şişer/canlanır) */}
           <button className={"ai-balon" + (aiKonusuyor ? " konusuyor" : "") + (dinliyor ? " dinliyor" : "") + (maskotKizgin ? " kizgin" : "")}
             onClick={balonTik} aria-label={t("yardimciAc", "GLOXORG Yardımcısı")}>
@@ -8601,7 +8609,11 @@ export default function Anasayfa({ pro = false }) {
           {maskotTur === "ekspert" && (
             <button className="maskot-tanit-kapat" onClick={(e) => { e.stopPropagation(); maskotKucult(); }} aria-label={t("kapat", "Kapat")}>&#10005;</button>
           )}
-          {maskotMetni && <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>}
+          {maskotMetni
+            ? <div className="maskot-tanit-balon" ref={maskotBalonRef} onClick={(e) => e.stopPropagation()} onTouchMove={maskotElleKaydir} onWheel={maskotElleKaydir}>{kelimeBalon(maskotMetni, RC_KOYU, okunanKelime)}</div>
+            : yardimciYukleniyor
+            ? <div className="maskot-tanit-balon maskot-dusunuyor"><span className="dusun-nokta" aria-hidden="true"><i /><i /><i /></span> {t("gloxooDusunuyor", "Gloxoo düşünüyor…")}</div>
+            : null}
           {maskotTur === "ekspert" ? (
             /* EKSPERT ayı: yüz = TAŞIMA TUTAMACI (parmakla sürükle → istediğin yere). Taşınırken kapanmaz. */
             <div className={"maskot-tanit-yuz tasinir" + (aiKonusuyor ? " konus" : dinliyor ? " dinle" : "")}
