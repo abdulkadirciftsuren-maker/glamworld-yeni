@@ -4177,3 +4177,6 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
    zaten opak/yarı-opak renkli → blur olmadan da okunur; parlama biter, pencere yerinde durur.
    ============================================================ */
 *, *::before, *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* PENCERE AÇILIŞ FADE'İ KALDIR — opacity 0→1 fade, ağır arka plan üstünde "parça parça belirme/parlama" yapıyordu.
+   Pencereler artık ANINDA opak açılır (fade yok) → belirme sırasında arkadaki içerik sızmaz, parlamaz. */
+.tamfoto-fon, .oniz-fon, .msj-fon, .ara-detay-fon, .apf-fon, .sohbet-fon, .arama-fon, .gb-fon, .bgm-fon, .msj-merkez { animation: none !important; }
