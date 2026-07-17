@@ -1540,6 +1540,8 @@ export default function Anasayfa({ pro = false }) {
   const [yardimciEkMenu, setYardimciEkMenu] = useState(false);
   const yardimciVideoRef = useRef(null);
   const yardimciDosyaRef = useRef(null);
+  const yardimciCanliFotoRef = useRef(null);  // CANLI foto çek (kamera) — Gloxoo penceresinde
+  const yardimciCanliVideoRef = useRef(null); // CANLI video çek (kamera) — Gloxoo penceresinde
   const mediaRecorderRef = useRef(null);  // ses kaydedici (Whisper'a gönderilir)
   const sesParcaRef = useRef([]);          // kaydedilen ses parçaları
   // GÖRÜNTÜLÜ CANLI SOHBET: kamera açık → Gloxoo seni ve çevreni GÖRÜR (her konuşmada kare çekilip AI'ya eklenir), sesli konuşur
@@ -8856,6 +8858,9 @@ export default function Anasayfa({ pro = false }) {
               <input ref={yardimciFotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={yardimciFotoSec} />
               <input ref={yardimciVideoRef} type="file" accept="video/*" style={{ display: "none" }} onChange={yardimciVideoSec} />
               <input ref={yardimciDosyaRef} type="file" accept="application/pdf,text/*,.pdf,.txt,.md,.csv,.json,.doc,.docx" style={{ display: "none" }} onChange={yardimciDosyaSec} />
+              {/* CANLI ÇEKİM — kamerayı AÇAR (capture): canlı foto + canlı video (Gloxoo penceresinde çek, direkt gönder) */}
+              <input ref={yardimciCanliFotoRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={yardimciFotoSec} />
+              <input ref={yardimciCanliVideoRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={yardimciVideoSec} />
               {/* ÜST: ikon araçları (foto/canlı/mikrofon/hoparlör) — AYRI satır */}
               <div className="ai-arac">
                 {/* EKLE — tek düğme: Fotoğraf (vision) + Video + Dosya (PDF/metin); dokununca menü açılır */}
@@ -8865,13 +8870,23 @@ export default function Anasayfa({ pro = false }) {
                   </button>
                   {yardimciEkMenu && (
                     <div className="ai-ekle-menu">
+                      {/* CANLI FOTO ÇEK — kamerayı açar, çektiğin foto direkt Gloxoo'ya gider */}
+                      <button className="ai-ekle-oge canlifoto" onClick={() => { setYardimciEkMenu(false); yardimciCanliFotoRef.current && yardimciCanliFotoRef.current.click(); }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l1.5-2h7L16 8h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.4"/></svg>
+                        <span>{t("canliFoto", "Canlı Foto")}</span>
+                      </button>
+                      {/* CANLI VİDEO ÇEK — kamerayı açar, çektiğin video direkt Gloxoo'ya gider */}
+                      <button className="ai-ekle-oge canlivideo" onClick={() => { setYardimciEkMenu(false); yardimciCanliVideoRef.current && yardimciCanliVideoRef.current.click(); }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10l5-3v10l-5-3z"/><circle cx="7" cy="12" r="2.2"/></svg>
+                        <span>{t("canliVideo", "Canlı Video")}</span>
+                      </button>
                       <button className="ai-ekle-oge foto" onClick={() => { setYardimciEkMenu(false); yardimciFotoRef.current && yardimciFotoRef.current.click(); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="8.5" cy="9" r="1.5"/></svg>
-                        <span>{t("fotograf", "Fotoğraf")}</span>
+                        <span>{t("fotograf", "Galeriden Foto")}</span>
                       </button>
                       <button className="ai-ekle-oge video" onClick={() => { setYardimciEkMenu(false); yardimciVideoRef.current && yardimciVideoRef.current.click(); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="14" height="14" rx="2"/><path d="M16 9l6-3v12l-6-3"/></svg>
-                        <span>{t("video", "Video")}</span>
+                        <span>{t("video", "Galeriden Video")}</span>
                       </button>
                       <button className="ai-ekle-oge dosya" onClick={() => { setYardimciEkMenu(false); yardimciDosyaRef.current && yardimciDosyaRef.current.click(); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v5h5M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>

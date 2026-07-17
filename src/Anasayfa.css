@@ -3229,6 +3229,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-tema-musteri .ai-ekle-menu{ background:#fff7e6; border-color:rgba(150,100,30,.5); }
 .ai-ekle-oge{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:none; background:none; cursor:pointer; border-radius:9px; font-family:inherit; font-size:14px; font-weight:600; color:#eef3fb; text-align:left; }
 .ai-tema-musteri .ai-ekle-oge{ color:#352712; }
+/* CANLI ÇEKİM (kamera) düğmeleri — vurgulu renk: canlı foto altın, canlı video mor; ikon renkli */
+.ai-ekle-oge.canlifoto svg{ color:#f2a900; } .ai-ekle-oge.canlivideo svg{ color:#b06bff; }
+.ai-ekle-oge.canlifoto, .ai-ekle-oge.canlivideo{ font-weight:800; }
 .ai-ekle-oge svg{ width:21px; height:21px; flex:none; }
 .ai-ekle-oge.foto{ color:#13b6c4; } .ai-ekle-oge.video{ color:#ff5d7a; } .ai-ekle-oge.dosya{ color:#f0962e; }
 .ai-ekle-oge:active{ transform:scale(.97); }
