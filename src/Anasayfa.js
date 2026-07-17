@@ -4698,6 +4698,7 @@ export default function Anasayfa({ pro = false }) {
         // İlerleme 0→1 hesaplanır: onboundary VARSA gerçek karakter konumundan (kesin), YOKSA zamana göre (tahmin).
         // Böylece Android onboundary desteklemese bile yazı kelime kelime akmaya DEVAM eder (sonuna kadar).
         const toplamChar = temiz.length || 1;
+        const temizKelimeSay = (temiz.split(/\s+/).filter(Boolean).length) || 1; // konuşulan metnin KELİME sayısı (kelime senkronu için)
         const tahminMs = Math.max(1400, toplamChar * 90); // ~90ms/karakter (rate 1): gerçek TTS'e yakın. 62 ÇOK HIZLIYDI → yazı imleci sesten ÖNCE sona varıyordu (kullanıcı: "ok sona geliyor ama konuşma devam ediyor")
         let basMs = Date.now(), duraklaTop = 0, duraklaBas = 0, boundaryChar = -1, ilerTimer = null, ilerBitti = false;
         const durdurIler = () => { if (ilerTimer) { clearInterval(ilerTimer); ilerTimer = null; } if (!ilerBitti) { ilerBitti = true; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } } };
@@ -4715,7 +4716,10 @@ export default function Anasayfa({ pro = false }) {
             if (duraklaBas) { duraklaTop += Date.now() - duraklaBas; duraklaBas = 0; }
             let frac;
             if (boundaryChar >= 0) {
-              frac = boundaryChar / toplamChar;                    // GERÇEK konuşma konumu (onboundary) — kesin, sınırlama yok
+              // KELİME SENKRONU: onboundary KARAKTER konumu verir; onu KELİME indeksine çevir (o karakterden ÖNCEKİ kelime sayısı)
+              // → imleç TAM o an okunan kelimede olur. (Eskiden karakter oranı kullanılıyordu → uzun kelimelerde imleç kayıyordu/geri kalıyordu.)
+              const sozcuk = temiz.slice(0, Math.max(0, boundaryChar)).split(/\s+/).filter(Boolean).length;
+              frac = sozcuk / temizKelimeSay;                       // KELİME oranı — konuşmayla birebir yürür
             } else {
               frac = (Date.now() - basMs - duraklaTop) / tahminMs; // zaman tahmini
               if (frac > 0.9) frac = 0.9;                          // TAHMİNDE: imleç SESTEN ÖNCE sona VARMASIN → 0.9'da bekler; ses gerçekten bitince durdurIler() 1 yapar (imleç tam o an sona gelir, senkron)
