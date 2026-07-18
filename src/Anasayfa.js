@@ -251,19 +251,26 @@ function kelimeSayisi(metin) {
   if (!metin) return 0;
   return String(metin).trim().split(/\s+/).filter(Boolean).length;
 }
-// ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği üst üste ("merhaba merhaba merhaba…" 10x)
-// üretebiliyor; bunu şeride/metne yazmadan önce tekile indir. 1-4 kelimelik ardışık tekrarlar sadeleşir.
-// Unicode (Türkçe ş/ğ/ı/ö/ü/ç) güvenli: \p{L}\p{N} + u bayrağı. Backreference i bayrağıyla büyük/küçük harf duyarsız.
+// ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
+// ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
+// yazmadan önce tekile indir. 1..8 kelimelik ARDIŞIK tekrar bloklarını (büyükten küçüğe) kaldırır → uzun
+// cümle tekrarı da temizlenir. Karşılaştırma küçük harfe indirgenir (Türkçe locale) → büyük/küçük fark etmez.
 function tekrarSil(s) {
   if (!s) return s;
-  let r = String(s).replace(/\s+/g, " ").trim();
-  try { r = r.replace(/([\p{L}\p{N}]+(?:\s+[\p{L}\p{N}]+){0,3})(?:\s+\1\b)+/giu, "$1"); } catch (e) {
-    // Eski tarayıcı \p desteklemezse: en azından ardışık aynı TEK kelimeyi indir
-    const kel = r.split(" "); const o = [];
-    for (const k of kel) { if (!o.length || o[o.length - 1].toLowerCase() !== k.toLowerCase()) o.push(k); }
-    r = o.join(" ");
+  let kel = String(s).replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  if (kel.length < 2) return kel.join(" ");
+  const kucuk = (x) => { try { return x.toLocaleLowerCase("tr"); } catch (e) { return x.toLowerCase(); } };
+  // Büyükten küçüğe blok boyu: önce uzun cümle tekrarını, sonra kısa/kelime tekrarını yakala
+  for (let blok = Math.min(8, Math.floor(kel.length / 2)); blok >= 1; blok--) {
+    let i = 0, guvenlik = 0;
+    while (i + 2 * blok <= kel.length && guvenlik++ < 20000) {
+      let ayni = true;
+      for (let j = 0; j < blok; j++) { if (kucuk(kel[i + j]) !== kucuk(kel[i + blok + j])) { ayni = false; break; } }
+      if (ayni) kel.splice(i + blok, blok); // ikinci kopyayı sil; aynı i'de kal (3+ tekrar için)
+      else i++;
+    }
   }
-  return r;
+  return kel.join(" ");
 }
 // ADRESİ SAF LATİN/İNGİLİZCE HARFE ÇEVİR: ß→ss, ö→o, ü→u, ş→s, ç→c, aksanları at.
 // Böylece adres HER dilde İngilizce/Latin çıkar (özel harf yüzünden hata/karmaşa olmaz).
@@ -4963,55 +4970,37 @@ export default function Anasayfa({ pro = false }) {
     if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
     // ===== ÖNCE TARAYICININ KENDİ SES TANIMASI (OpenAI/Whisper GEREKMEZ, ÜCRETSİZ) =====
     // Ses→yazı için OpenAI anahtarına ihtiyaç YOK: Chrome/Android'in yerleşik tanımasını kullanır.
-    // CÜMLE ORTASINDA KESMESİN diye: continuous=true (kısa duraklamada durmaz) + KENDİ SESSİZLİK SAYACIMIZ
-    // (son konuşmadan ~1.5sn sonra bitir) → düşünmek için durunca kesmez, konuşman bitince güvenilir durur.
-    // Android'in "aynı kelimeyi 10x" tekrarı: resultIndex ile SADECE yeni sonuçlar alınır + gönderirken tekrarSil() ile temizlenir.
+    // ÖNEMLİ: continuous=false + interimResults=false + SADECE SON final sonuç alınır → Android'in
+    // "aynı cümleyi biriktirip 10x tekrar" hatası OLMAZ (continuous=true bunu tetikliyordu, geri alındı).
+    // Yine de güvenlik için gönderirken tekrarSil() uygulanır.
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SR) {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
         const rec = new SR();
         rec.lang = aiSesKodu(aiDilRef.current); // SEÇİLİ AI dili — gürültüde İngilizce'ye kaymaz (dil kilidi)
-        rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+        rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
         recognitionRef.current = rec;
-        let bitti = false, kalici = "", sonGecici = "", sonSesMs = Date.now(), sessizTi = null;
-        const temizleTi = () => { if (sessizTi) { clearInterval(sessizTi); sessizTi = null; } };
-        const durdur = () => { try { rec.stop(); } catch (e) {} };
-        const gonder = () => {
-          if (bitti) return; bitti = true; temizleTi();
+        let bitti = false;
+        const sonlan = (tekrarDinle) => {
+          if (bitti) return; bitti = true;
           recognitionRef.current = null; setDinliyor(false);
-          // kesinleşen metin yoksa (bazı Android'ler isFinal üretmeden durur) son ara sonucu kullan → metin kaybolmasın
-          const ham = ((kalici && kalici.trim()) ? kalici : sonGecici);
-          const metin = tekrarSil((ham || "").replace(/\s+/g, " ").trim());
-          if (metin && canliSohbetRef.current) { bosSesRef.current = 0; yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
-          else if (canliSohbetRef.current && !aiKonusuyorRef.current && !(window.speechSynthesis && window.speechSynthesis.speaking)) canliDinle(); // boş → tekrar dinle
+          if (tekrarDinle && canliSohbetRef.current && !aiKonusuyorRef.current && !(window.speechSynthesis && window.speechSynthesis.speaking)) canliDinle();
         };
         rec.onresult = (e) => {
           if (bitti) return;
-          let gecici = "";
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            const tr = (e.results[i][0] && e.results[i][0].transcript) || "";
-            if (e.results[i].isFinal) kalici += tr + " "; else gecici += tr + " ";
-          }
-          if (gecici.trim()) sonGecici = (kalici + gecici); // yedek: isFinal gelmezse bu kullanılır
-          sonSesMs = Date.now(); // herhangi bir konuşma hareketi (ara sonuç dahil) → sessizlik sayacını sıfırla
+          const son = e.results && e.results[e.results.length - 1];
+          const metin = tekrarSil(((son && son[0] && son[0].transcript) || "").trim()); // sadece SON sonuç → biriktirmez
+          if (metin && canliSohbetRef.current) { bitti = true; recognitionRef.current = null; setDinliyor(false); bosSesRef.current = 0; yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
+          else sonlan(true); // boş → tekrar dinle
         };
         rec.onerror = (ev) => {
-          if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; temizleTi(); recognitionRef.current = null; setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
-          gonder(); // no-speech / aborted / network → varsa gönder, yoksa tekrar dinle
+          if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; recognitionRef.current = null; setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
+          sonlan(true); // no-speech / aborted / network → tekrar dinle
         };
-        rec.onend = () => gonder();
+        rec.onend = () => sonlan(true);
         setDinliyor(true);
         rec.start();
-        // SESSİZLİK SAYACI: konuştuktan sonra ~1.5sn sesizlik → bitir (kısa duraklamada kesmez).
-        // Hiç konuşmadıysa 9sn sonra bırak (döngü tekrar dinlemeye döner). Gloxoo konuşmaya başlarsa hemen bırak.
-        sessizTi = setInterval(() => {
-          if (bitti || !canliSohbetRef.current) { durdur(); return; }
-          if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { durdur(); return; }
-          const gecen = Date.now() - sonSesMs, konustu = (kalici.trim().length > 0 || sonGecici.trim().length > 0);
-          if (konustu && gecen > 1500) durdur();          // konuştu + 1.5sn sessiz → bitti
-          else if (!konustu && gecen > 9000) durdur();     // hiç konuşmadı → 9sn sonra tazele
-        }, 250);
         return;
       } catch (e) { try { recognitionRef.current = null; } catch (e2) {} /* başlatılamadı → aşağıdaki Whisper yoluna düş */ }
     }
