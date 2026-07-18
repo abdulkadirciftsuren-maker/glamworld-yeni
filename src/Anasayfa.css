@@ -1651,9 +1651,11 @@
 .ana-kok.sayfa-akademi{ background:radial-gradient(140% 120% at 50% 28%, #2f3310 0%, #20240a 45%, #131506 78%, #080a04 100%); }
 .ana-kok.sayfa-profil{ background:radial-gradient(140% 120% at 50% 28%, #1c2738 0%, #131c2a 45%, #0b121c 78%, #06090f 100%); }
 /* ANA SAYFA (home): AÇIK GECE MAVİSİ derin zemin — kullanıcı seçti (krem/sarı gitti). Home'a ÖZEL kural (base ezilmesin). */
-/* ⛔ ZEMİN — SAKİN, DONUK (muted) lacivert-gri AİLE + DERİNLİK (koyu-açık): üstten hafif AÇIK → alta KOYU, yumuşak geçiş.
-   Eski "çok renkli/karmakarışık" çok-tonlu mavi DEĞİL; tek renk ailesinde nazik derinlik (kullanıcı: "bu renkte koyu-açık yap"). Başlığa dokunulmadı. */
-.ana-kok.sayfa-home{ background:radial-gradient(ellipse at 50% 16%, #4a5c7d 0%, #3f4e69 42%, #35435b 74%, #2c384d 100%) !important; }
+/* ⛔ ZEMİN — BEJ (kullanıcı: "bej yap zemini") + koyu-açık DERİNLİK: üstten hafif AÇIK bej → alta biraz KOYU bej, yumuşak geçiş.
+   Sıcak, zarif, sade; başlığa (gold GLOXORG) dokunulmadı. Bejde okunmayan açık başlıklar aşağıda koyulaştırıldı. */
+.ana-kok.sayfa-home{ background:radial-gradient(ellipse at 50% 16%, #f4ecda 0%, #ece0c4 44%, #e2d3b1 76%, #d6c49c 100%) !important; }
+/* BEJ zeminde keşif başlıkları (◎ Yakındaki Profesyoneller / 🔥 Popüler·Trend) KOYU BRONZ → net okunur */
+.ana-kok.sayfa-home .alt-serit-bas h3{ color:#6b5010 !important; text-shadow:0 1px 1px rgba(255,255,255,.55) !important; }
 /* Ana sayfada şehir fotoğrafı KATMANI gizli — üstüne binip zemini krem gösteriyordu; artık net gece mavisi kalır. */
 .ana-kok.sayfa-home .ana-arka-foto{ display:none !important; }
 /* PENCERE geçişi — kaydırınca/değişince yumuşak gelir */
