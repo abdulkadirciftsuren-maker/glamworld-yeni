@@ -6583,11 +6583,11 @@ export default function Anasayfa({ pro = false }) {
             {Ikon.bildirim}
             {bildirimListe.some((b) => !b.okundu) && <span className="ana-zil-rozet">{Math.min(99, bildirimListe.filter((b) => !b.okundu).length)}</span>}
           </button>
+          {/* DİL — geniş ekranda MENÜ ile BİLDİRİM ARASINDA (kullanıcı: Menü, Dil, Bildirim sırası). Telefonda gizli (display:none) → telefon düzeni DEĞİŞMEZ. row-reverse ile DOM [bildirim, dil, menü] → görünüm [menü, dil, bildirim]. */}
+          <span className="header-dil"><DilSecici /></span>
           <button className="ana-menu-btn" onClick={() => setMenuAcik(true)} aria-label="Menü"
             style={{ backgroundImage: `url(${ikonCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>{Ikon.menu}</button>
         </div>
-        {/* DİL — SADECE geniş ekranda (bilgisayar/iPad/notebook) header'da görünür; telefonda menüdedir (yer dar). CSS: .header-dil telefonda display:none, >=760px görünür */}
-        <span className="header-dil"><DilSecici /></span>
         {/* MARKA her pencerede O SAYFANIN renginde: pırlanta + GLOXORG + sayfanın adı (ANAYASA 6.15) */}
         <div className="ana-logo-sar">
           {/* Tüm üyeler: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi).
@@ -6617,6 +6617,8 @@ export default function Anasayfa({ pro = false }) {
             {Ikon.gloxi}
             {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
           </button>
+          {/* ARA — SADECE BİLGİSAYARDA başlıkta (kullanıcı: "Ara ikonu yukarı, Glome'nin soluna"). Telefonda gizli (display:none) → telefon DEĞİŞMEZ; row-reverse ile DOM [profil, glome, ara] → görünüm [ara, glome, profil]. */}
+          <button className="ana-ara-btn ana-ara-header" onClick={() => setAraAcik(true)} aria-label={t("tabAra", "Ara")} title={t("tabAra", "Ara")}>{Ikon.ara}</button>
         </div>
       </header>
 
