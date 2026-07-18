@@ -1699,12 +1699,16 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) {}
     let yer = "", tur = "";
     try {
-      const q = `[out:json][timeout:15];(nwr(around:120,${lat},${lon})[name][shop];nwr(around:120,${lat},${lon})[name][amenity];nwr(around:120,${lat},${lon})[name][tourism];nwr(around:120,${lat},${lon})[name][office];nwr(around:120,${lat},${lon})[name][leisure];);out center 80;`;
+      // FABRİKA/SANAYİ/ŞİRKET/RESMİ DAİRE/BANKA da SORULUR (eskiden sadece dükkan/kafe/ofis vardı → fabrikayı bilmiyordu).
+      // Yarıçap 180m (büyük tesis/fabrika binası biraz uzakta olabilir). building/industrial/man_made/landuse dahil.
+      const q = `[out:json][timeout:20];(nwr(around:180,${lat},${lon})[name][shop];nwr(around:180,${lat},${lon})[name][amenity];nwr(around:180,${lat},${lon})[name][tourism];nwr(around:180,${lat},${lon})[name][office];nwr(around:180,${lat},${lon})[name][leisure];nwr(around:180,${lat},${lon})[name][industrial];nwr(around:180,${lat},${lon})[name][man_made];nwr(around:180,${lat},${lon})[name][craft];nwr(around:180,${lat},${lon})[name][healthcare];nwr(around:180,${lat},${lon})[name][government];nwr(around:180,${lat},${lon})[name][building~"industrial|factory|warehouse|commercial|office|government|hospital|bank"];nwr(around:250,${lat},${lon})[name][landuse=industrial];);out center 120;`;
       const sunucular = ["https://overpass.kumi.systems/api/interpreter", "https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"];
       let d = null;
       for (const sv of sunucular) { try { const r = await fetch(sv, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(q) }); if (!r.ok) continue; d = await r.json(); if (d && Array.isArray(d.elements)) break; } catch (e2) {} }
       if (d && d.elements && d.elements.length) {
-        const TUR_AD = { hairdresser: "kuaför", beauty: "güzellik salonu", barber: "berber", bank: "banka", atm: "ATM", hotel: "otel", motel: "motel", guest_house: "pansiyon", hostel: "hostel", restaurant: "restoran", cafe: "kafe", fast_food: "fast-food", pharmacy: "eczane", hospital: "hastane", clinic: "klinik", supermarket: "süpermarket", convenience: "market", mall: "AVM", bakery: "fırın", clothes: "giyim mağazası", jewelry: "kuyumcu", fuel: "benzin istasyonu", school: "okul", university: "üniversite", post_office: "postane" };
+        const TUR_AD = { hairdresser: "kuaför", beauty: "güzellik salonu", barber: "berber", bank: "banka", atm: "ATM", hotel: "otel", motel: "motel", guest_house: "pansiyon", hostel: "hostel", restaurant: "restoran", cafe: "kafe", fast_food: "fast-food", pharmacy: "eczane", hospital: "hastane", clinic: "klinik", supermarket: "süpermarket", convenience: "market", mall: "AVM", bakery: "fırın", clothes: "giyim mağazası", jewelry: "kuyumcu", fuel: "benzin istasyonu", school: "okul", university: "üniversite", post_office: "postane",
+          // FABRİKA / SANAYİ / ŞİRKET / RESMİ DAİRE (kullanıcı fabrikanın içinde → bunları da tanısın)
+          factory: "fabrika", works: "fabrika", industrial: "sanayi tesisi", warehouse: "depo", manufacture: "üretim tesisi", company: "şirket", office: "ofis", government: "resmi daire", townhall: "belediye", courthouse: "adliye", police: "polis merkezi", fire_station: "itfaiye", embassy: "elçilik", logistics: "lojistik tesisi", it: "yazılım şirketi", telecommunication: "telekom şirketi", energy_supplier: "enerji şirketi", insurance: "sigorta şirketi", estate_agent: "emlak ofisi", warehouse_office: "depo ofisi" };
         const R = 6371000, rad = (x) => (x * Math.PI) / 180;
         let enYakin = null, enM = Infinity;
         d.elements.forEach((el) => {
@@ -1717,7 +1721,17 @@ export default function Anasayfa({ pro = false }) {
           const m = R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
           if (m < enM) { enM = m; enYakin = tg; }
         });
-        if (enYakin) { yer = latinYap(enYakin["name:en"] || enYakin.name); const tp = enYakin.shop || enYakin.amenity || enYakin.tourism || enYakin.office || enYakin.leisure || ""; tur = TUR_AD[tp] || tp.replace(/_/g, " "); }
+        if (enYakin) {
+          yer = latinYap(enYakin["name:en"] || enYakin.name);
+          // Türü belirle — önce belirgin dükkan/kurum etiketleri, sonra FABRİKA/SANAYİ/ŞİRKET/RESMİ DAİRE etiketleri.
+          // man_made=works → fabrika; building=industrial/factory/warehouse... → o tür; landuse=industrial → sanayi bölgesi.
+          let tp = enYakin.shop || enYakin.amenity || enYakin.tourism || enYakin.office || enYakin.leisure || enYakin.craft || enYakin.healthcare || enYakin.government || "";
+          if (!tp && enYakin.man_made) tp = (enYakin.man_made === "works" ? "factory" : enYakin.man_made);
+          if (!tp && enYakin.industrial) tp = (enYakin.industrial === "yes" ? "industrial" : enYakin.industrial);
+          if (!tp && enYakin.building && enYakin.building !== "yes") tp = enYakin.building;
+          if (!tp && enYakin.landuse === "industrial") tp = "industrial";
+          tur = TUR_AD[tp] || (tp ? tp.replace(/_/g, " ") : "");
+        }
       }
     } catch (e) {}
     const bilgi = { adres, yer, tur, lat, lon };
