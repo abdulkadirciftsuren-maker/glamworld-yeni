@@ -4206,15 +4206,3 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* PENCERE AÇILIŞ FADE'İ KALDIR — opacity 0→1 fade, ağır arka plan üstünde "parça parça belirme/parlama" yapıyordu.
    Pencereler artık ANINDA opak açılır (fade yok) → belirme sırasında arkadaki içerik sızmaz, parlamaz. */
 .tamfoto-fon, .oniz-fon, .msj-fon, .ara-detay-fon, .apf-fon, .sohbet-fon, .arama-fon, .gb-fon, .bgm-fon, .msj-merkez { animation: none !important; }
-
-/* ============================================================
-   BİLGİSAYAR ÜST BAŞLIK — "Ara" ikonu başlıkta (kullanıcı: "Ara ikonu yukarı, Glome'nin soluna").
-   ⛔ TELEFON DEĞİŞMEZ: Ara telefonda GİZLİ (display:none). SADECE bilgisayarda (>=1000px) görünür.
-   Başlık sırası JSX (Dil menü-bildirim arasına, Ara sağ kolona) + mevcut row-reverse ile:
-   SOL [Menü · Dil · Bildirim]  |  GLOXORG  |  SAĞ [Ara · Glome · Profilim].
-   ============================================================ */
-.ana-ara-header{ display:none; }
-@media (min-width:1000px){
-  .ana-ara-header{ display:flex; align-items:center; justify-content:center; width:38px; height:38px; min-width:38px; padding:0; }
-  .ana-ara-header svg{ width:28px; height:28px; }
-}
