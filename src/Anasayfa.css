@@ -2404,6 +2404,21 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   box-shadow:0 6px 24px rgba(0,0,0,.5); animation:toastBel .3s ease; }
 @keyframes toastBel{ from{ opacity:0; transform:translateX(-50%) translateY(12px); } to{ opacity:1; transform:translateX(-50%) translateY(0); } }
 
+/* PENCERE-İÇİ BİLDİRİM ŞERİDİ — uygulama açıkken üstten iner; altın/sıcak, KARE fotoğraf (anayasa), dokununca açılır */
+.pencere-bildirim{ position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:100050;
+  width:min(94vw, 440px); display:flex; align-items:center; gap:11px; cursor:pointer;
+  background:linear-gradient(135deg,#fff6d9,#ffe9a8 55%,#f3cf6a); color:#4a3600; border:1.5px solid #e8c96a;
+  padding:10px 12px; border-radius:15px; box-shadow:0 8px 30px rgba(90,60,0,.32); animation:pbIn .32s cubic-bezier(.2,.8,.2,1); }
+@keyframes pbIn{ from{ opacity:0; transform:translateX(-50%) translateY(-18px); } to{ opacity:1; transform:translateX(-50%) translateY(0); } }
+.pencere-bildirim .pb-foto{ flex:none; width:42px; height:42px; border-radius:11px; overflow:hidden; background:linear-gradient(135deg,#d9b64a,#b28e34); display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,.55); }
+.pencere-bildirim .pb-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pencere-bildirim .pb-harf{ color:#3a2c00; font-family:'Playfair Display',serif; font-weight:800; font-size:20px; }
+.pencere-bildirim .pb-metin{ flex:1; min-width:0; font-family:'Cormorant Garamond',serif; font-weight:700; font-size:15px; line-height:1.3;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.pencere-bildirim .pb-kapat{ flex:none; width:26px; height:26px; border:none; border-radius:8px; background:rgba(74,54,0,.12); color:#4a3600; font-size:14px; font-weight:800; cursor:pointer; line-height:1; }
+.pencere-bildirim .pb-kapat:active{ transform:scale(.9); }
+@media(min-width:560px){ .pencere-bildirim{ width:min(80vw,480px); } .pencere-bildirim .pb-metin{ font-size:17px; } .pencere-bildirim .pb-foto{ width:48px; height:48px; } }
+
 /* Bildirim penceresi açıklama satırı — müşteri ne için olduğunu anlasın */
 .abm-aciklama{ padding:4px 14px 14px; font-size:12.5px; line-height:1.5; color:#9aa3bd; }
 

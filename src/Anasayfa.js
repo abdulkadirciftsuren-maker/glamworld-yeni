@@ -1325,6 +1325,9 @@ export default function Anasayfa({ pro = false }) {
   const [bildirimIzin, setBildirimIzin] = useState(() => { try { return (typeof Notification !== "undefined") ? Notification.permission : "default"; } catch (e) { return "default"; } });
   const [bildirimBandiKapat, setBildirimBandiKapat] = useState(false); // ana sayfadaki "Bildirimleri Aç" uyarı bandı kapatıldı mı (bu oturum)
   const gorulenBildirimRef = useRef(null);                 // ilk yüklemede sessiz, sonra yeni gelenler bildirilir
+  // PENCERE-İÇİ BİLDİRİM ŞERİDİ (uygulama AÇIKKEN): sistem bildirimi sekme öndeyken çıkmaz → içeride güzel bir şerit göster
+  const [pencereBildirim, setPencereBildirim] = useState(null); // { metin, foto, tip } | null
+  const pencereBildirimTiRef = useRef(null);               // otomatik kapanma zamanlayıcısı
   // Arama şeridi KAPALI durur; ortadaki ufak düğmeye basınca açılır (yer kaplamasın)
   const [araAcik, setAraAcik] = useState(false);
   const [araQ, setAraQ] = useState("");
@@ -2222,12 +2225,33 @@ export default function Anasayfa({ pro = false }) {
       for (const b of liste) {
         if (!gorulenBildirimRef.current.has(b.id)) {
           gorulenBildirimRef.current.add(b.id);
-          if (!b.okundu) telefonBildirimGoster(bildirimMetni(b), b.gonderenFoto);
+          if (!b.okundu) { telefonBildirimGoster(bildirimMetni(b), b.gonderenFoto); pencereBildirimGoster(b); } // sistem bildirimi + pencere-içi şerit
         }
       }
     });
     return unsub;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // PENCERE-İÇİ BİLDİRİM ŞERİDİ göster (uygulama açıkken) — 5 sn sonra kendiliğinden kapanır; dokununca ilgili yere gider
+  function pencereBildirimGoster(b) {
+    try {
+      // Bildirimin geldiği bölüm (mesaj) zaten AÇIKSA şerit gösterme (kullanıcı zaten orada, rahatsız etme)
+      const mesajTipi = (b.tip === "mesaj" || b.tip === "mesaj-tepki");
+      if (mesajTipi && mesajAcikRef.current) return;
+      setPencereBildirim({ metin: bildirimMetni(b), foto: b.gonderenFoto || "", tip: b.tip || "", gonderenUid: b.gonderenUid || "", gonderenAd: b.gonderenAd || "" });
+      if (pencereBildirimTiRef.current) clearTimeout(pencereBildirimTiRef.current);
+      pencereBildirimTiRef.current = setTimeout(() => setPencereBildirim(null), 5000);
+    } catch (e) {}
+  }
+  // Pencere-içi bildirime dokununca: mesajsa Glome'yi, diğerlerinde bildirim penceresini aç
+  function pencereBildirimAc() {
+    try {
+      const b = pencereBildirim; if (!b) return;
+      if (pencereBildirimTiRef.current) clearTimeout(pencereBildirimTiRef.current);
+      setPencereBildirim(null);
+      if (b.tip === "mesaj" || b.tip === "mesaj-tepki") setMesajAcik(true);
+      else { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((x) => ({ ...x, okundu: true }))); }
+    } catch (e) {}
+  }
   const adTam = (u && (u.displayName || u.email)) || "GLOXORG";
   const harf = (adTam || "G").trim().charAt(0).toUpperCase();
   const fotoInputRef = useRef(null);
@@ -10139,6 +10163,20 @@ export default function Anasayfa({ pro = false }) {
 
       {/* Kısa bilgi balonu (toast) — kaydet/paylaş açıklaması */}
       {kucukMesaj && <div className="grox-toast" role="status">{kucukMesaj}</div>}
+
+      {/* PENCERE-İÇİ BİLDİRİM ŞERİDİ — uygulama açıkken mesaj/beğeni/yorum/tepki/takip gelince üstten iner (sistem bildirimi sekme öndeyken çıkmaz) */}
+      {pencereBildirim && (
+        <div className="pencere-bildirim" role="status" onClick={pencereBildirimAc}>
+          <span className="pb-foto" aria-hidden="true">
+            {pencereBildirim.foto
+              ? <img src={pencereBildirim.foto} alt="" />
+              : <span className="pb-harf">{((pencereBildirim.gonderenAd || "G").trim().charAt(0) || "G").toUpperCase()}</span>}
+          </span>
+          <span className="pb-metin">{pencereBildirim.metin}</span>
+          <button type="button" className="pb-kapat" aria-label={t("kapat", "Kapat")}
+            onClick={(e) => { e.stopPropagation(); if (pencereBildirimTiRef.current) clearTimeout(pencereBildirimTiRef.current); setPencereBildirim(null); }}>✕</button>
+        </div>
+      )}
 
       <SurumRozeti />
     </div>
