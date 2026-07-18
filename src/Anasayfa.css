@@ -8,7 +8,7 @@
   position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; /* en üst/altta SIÇRAMA-parlama YOK */
   /* Zemin ŞEFFAF — arka plan fotoğrafı ayrı SABİT katmanda (.ana-arka-foto).
      Yedek renk AÇIK GECE MAVİSİ (derin) — kullanıcı seçti (sarıdan çıktı). */
-  background-color:#294a7d;
+  background-color:#37455d;
   font-family:'Cormorant Garamond',serif; color:#2c2418;
   -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-tap-highlight-color:transparent;
   padding-bottom:96px;
@@ -1651,7 +1651,9 @@
 .ana-kok.sayfa-akademi{ background:radial-gradient(140% 120% at 50% 28%, #2f3310 0%, #20240a 45%, #131506 78%, #080a04 100%); }
 .ana-kok.sayfa-profil{ background:radial-gradient(140% 120% at 50% 28%, #1c2738 0%, #131c2a 45%, #0b121c 78%, #06090f 100%); }
 /* ANA SAYFA (home): AÇIK GECE MAVİSİ derin zemin — kullanıcı seçti (krem/sarı gitti). Home'a ÖZEL kural (base ezilmesin). */
-.ana-kok.sayfa-home{ background:radial-gradient(ellipse at 50% 20%, #3d63a0 0%, #294a7d 42%, #1a3560 72%, #142b4f 100%) !important; }
+/* ⛔ ZEMİN — SAKİN, DONUK (muted) lacivert-gri AİLE + DERİNLİK (koyu-açık): üstten hafif AÇIK → alta KOYU, yumuşak geçiş.
+   Eski "çok renkli/karmakarışık" çok-tonlu mavi DEĞİL; tek renk ailesinde nazik derinlik (kullanıcı: "bu renkte koyu-açık yap"). Başlığa dokunulmadı. */
+.ana-kok.sayfa-home{ background:radial-gradient(ellipse at 50% 16%, #4a5c7d 0%, #3f4e69 42%, #35435b 74%, #2c384d 100%) !important; }
 /* Ana sayfada şehir fotoğrafı KATMANI gizli — üstüne binip zemini krem gösteriyordu; artık net gece mavisi kalır. */
 .ana-kok.sayfa-home .ana-arka-foto{ display:none !important; }
 /* PENCERE geçişi — kaydırınca/değişince yumuşak gelir */
