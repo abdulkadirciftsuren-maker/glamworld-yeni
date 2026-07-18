@@ -40,9 +40,11 @@
    dolu mu?), (b) Google foto URL'si (lh3.googleusercontent) bildirim ikonu olarak
    yüklenemiyor mu (referrer/CORS)? Gerekirse foto'yu Storage'a al ya da uygun URL kullan.
 
-4. **Sayfa AÇIKKEN pencere-içi bildirim:** Kapalıyken FCM push geliyor (ÇALIŞIYOR). Ama sayfa
-   AÇIKKEN pencerede hiç uyarı çıkmıyor. Uygulama açıkken mesaj/beğeni/arama gelince pencere
-   içinde **güzel bir bildirim şeridi/balonu** göster (in-app toast/banner).
+4. ✅ **(B125 BİTTİ) Sayfa AÇIKKEN pencere-içi bildirim:** Uygulama açıkken mesaj/beğeni/yorum/
+   tepki/takip gelince üstten altın şerit iniyor (gönderenin KARE fotoğrafı + Türkçe metin + ✕),
+   5 sn sonra kapanıyor, dokununca ilgili yere gidiyor (mesaj→Glome, diğerleri→bildirimler);
+   Glome zaten açıkken mesaj şeridi gösterilmiyor. (pencereBildirimGoster/pencereBildirim)
+   **Kullanıcı onayı bekleniyor.**
 
 ## 🔧 AÇIK / TEŞHİS BEKLEYEN
 
