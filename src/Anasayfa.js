@@ -1260,11 +1260,30 @@ export default function Anasayfa({ pro = false }) {
   // ile şehir/ilçe + ev/bina + içinde bulunduğu mekân (mağaza/otel/kuaför/banka) TAKİP edilir; Gloxoo her an tam yeri bilir.
   const [anlikYer, setAnlikYer] = useState(null);   // { adres, yer, tur, lat, lon }
   const anlikYerRef = useRef(null);                 // async AI isteğinde okunur
-  // AÇILIŞTA KONUM SORMASIN (kullanıcı KESİN istedi): "Gloxoo tam konum" her açılışta KAPALI başlar → site yüklenince GPS/konum izni İSTENMEZ.
-  // Konum SADECE kullanıcı paylaşım ekranındaki "📍 Konum ekle" düğmesine bastığında (ya da bu ayarı elle açınca) alınır. Kalıcı değil (her açılış temiz).
+  // KONUM AYARI KALICI (kullanıcı: "konum her güncellemede sıfırlanıyor"): bir kez AÇTIYSA açık KALIR.
+  // ÖNEMLİ denge — açılışta İZİN PENCERESİ ÇIKMASIN diye başlangıçta KAPALI başlar; hemen aşağıdaki useEffect
+  // localStorage'da "açık" kayıtlıysa VE tarayıcı konum izni HÂLÂ verilmişse SESSİZCE geri açar (izin verili olduğu için pencere çıkmaz).
+  // İzin verilmemiş/silinmişse açmaz (açılışta GPS sorma kuralı korunur); kullanıcı elle açınca normal sorulur.
   const [tamKonumIzin, setTamKonumIzin] = useState(false);
   const tamKonumIzinRef = useRef(tamKonumIzin);
   useEffect(() => { tamKonumIzinRef.current = tamKonumIzin; }, [tamKonumIzin]);
+  // AÇILIŞTA: daha önce açılmış + izin hâlâ duruyorsa → tekrar aç (her güncellemede sıfırlanmasın).
+  useEffect(() => {
+    let vazgec = false, kayit = "0";
+    try { kayit = localStorage.getItem("groxTamKonum") || "0"; } catch (e) {}
+    if (kayit !== "1") return;
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: "geolocation" }).then((p) => {
+          if (vazgec) return;
+          if (p.state === "granted") setTamKonumIzin(true);                                   // izin duruyor → sessizce geri aç (pencere çıkmaz)
+          else if (p.state === "denied") { try { localStorage.setItem("groxTamKonum", "0"); } catch (e) {} } // izin gitmiş → kaydı temizle
+          // "prompt" → açılışta pencere çıkmasın diye AÇMA; kullanıcı elle açarsa sorulur
+        }).catch(() => {});
+      } else { setTamKonumIzin(true); } // Permissions API yok (eski tarayıcı): kullanıcı istediği için geri aç
+    } catch (e) {}
+    return () => { vazgec = true; };
+  }, []); // yalnız açılışta
   const konumTakipRef = useRef({ id: null, sonMs: 0, sonLat: null, sonLon: null }); // watch id + son çözümleme (throttle)
   const [bulunan, setBulunan] = useState(null); // haritaya dokununca çözülen adres ÖNİZLEMESİ (şeritlere otomatik yazılmaz)
   const [haritaMsg, setHaritaMsg] = useState(""); // harita üstünde düğme onay mesajı (kopyalandı/yazıldı)
@@ -1688,14 +1707,21 @@ export default function Anasayfa({ pro = false }) {
       if (uzak < 25 && (Date.now() - t0d.sonMs) < 40000) return; // ne yer değişti ne süre doldu → geç
     }
     t0d.sonMs = Date.now(); t0d.sonLat = lat; t0d.sonLon = lon;
-    let adres = "";
+    let adres = "", sokak = "", kapiNo = "", mahalle = "", posta = "";
     try {
       // ADRES HER DİLDE İNGİLİZCE/LATİN: accept-language=en + latinYap (özel harf yok)
       const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=en`, { headers: { Accept: "application/json" } });
       const d = await r.json();
       adres = latinYap((d && d.display_name) || "");
       const a = d && d.address;
-      if (a) setKonum((k) => ({ ...k, lat, lon, kod: (a.country_code || k.kod || "").toUpperCase(), sehir: latinYap(a.city || a.town || a.village || a.municipality || "") || k.sehir, ilce: latinYap(a.suburb || a.city_district || a.district || a.county || "") || k.ilce, mahalle: latinYap(a.neighbourhood || a.quarter || a.hamlet || "") || k.mahalle }));
+      if (a) {
+        // SOKAK + KAPI NO + MAHALLE ayrı ayrı al (kullanıcı: "mahalle/numara çıkmıyor") → Gloxoo net söyleyebilsin
+        sokak = latinYap(a.road || a.pedestrian || a.footway || a.residential || a.street || "");
+        kapiNo = latinYap(a.house_number || "");
+        mahalle = latinYap(a.neighbourhood || a.quarter || a.hamlet || a.suburb || a.city_district || "");
+        posta = latinYap(a.postcode || "");
+        setKonum((k) => ({ ...k, lat, lon, kod: (a.country_code || k.kod || "").toUpperCase(), sehir: latinYap(a.city || a.town || a.village || a.municipality || "") || k.sehir, ilce: latinYap(a.suburb || a.city_district || a.district || a.county || "") || k.ilce, mahalle: mahalle || k.mahalle }));
+      }
     } catch (e) {}
     let yer = "", tur = "", yakinlar = [];
     try {
@@ -1742,7 +1768,7 @@ export default function Anasayfa({ pro = false }) {
         }
       }
     } catch (e) {}
-    const bilgi = { adres, yer, tur, lat, lon, yakinlar };
+    const bilgi = { adres, yer, tur, lat, lon, yakinlar, sokak, kapiNo, mahalle, posta };
     anlikYerRef.current = bilgi; setAnlikYer(bilgi);
   }
   // AYARLAR: "Gloxoo tam konumumu bilsin" AÇ/KAPAT. AÇARKEN izin ister (watchPosition → tarayıcı sorar). Tercih localStorage'da tutulur.
@@ -4558,7 +4584,9 @@ export default function Anasayfa({ pro = false }) {
       const cevreYer = (ay && Array.isArray(ay.yakinlar) && ay.yakinlar.length)
         ? ay.yakinlar.map((y) => y.ad + (y.tur ? " (" + y.tur + ")" : "") + (y.m != null ? " ~" + y.m + "m" : "") + (y.site ? " | site: " + y.site : "")).join(" ; ")
         : "";
-      if (tamKonumIzin && ay && (ay.yer || ay.adres)) sistem += `KULLANICININ ŞU ANKİ TAM YERİ (canlı, yüksek doğruluklu GPS ile SÜREKLİ takip — bunu ZATEN BİLİYORSUN): ${ay.yer ? "İçinde bulunduğu yer: “" + ay.yer + "”" + (ay.tur ? " (" + ay.tur + ")" : "") + ". " : ""}${ay.adres ? "Tam adres: " + ay.adres + ". " : ""}Kullanıcı "neredeyim / şu an neredeyim / hangi mekândayım" diye sorarsa DOĞRUDAN bu yeri söyle (örn "Şu an ${ay.yer || "…"} adlı ${ay.tur || "mekân"}dasın"), ASLA "bilmiyorum / paylaş / haritadan bak" deme, başka yer UYDURMA, koordinat verme, HARİTA düğmesi koyma. ${ay.yer ? "Bu mekân (" + ay.yer + ") hakkında SEN NE BİLİYORSAN (nasıl bir yer, ne yapılır, tarihi/özelliği, çevresi) sohbet ederek anlat; kullanıcı orada oturmuş seninle konuşuyor gibi." : "Sokak/bina adresini bildiğin için çevreyi ve oranın nasıl bir yer olduğunu kelimelerle anlatabilirsin."} ${cevreYer ? "ÇEVRENDEKİ İSİMLİ YERLER (gerçek — şirket/fabrika/banka/resmi daire dahil, en yakından uzağa): " + cevreYer + ". Kullanıcı 'etrafımda hangi şirketler/fabrikalar var, yakınımda ne var' diye sorarsa BU GERÇEK isimleri say (uydurma) ve HER BİRİ için aşağıdaki [SITE:] düğmesini koy ki dokununca sitesine/sayfasına gitsin. " : ""}Konumu her cümlede TEKRARLAMA; sadece sorulunca ya da işe yaradığında kullan. Kullanıcı başka yere giderse bu bilgi otomatik güncellenir (eski yeri söyleme, en son bilgiyi kullan). `;
+      // SOKAK / KAPI NO / MAHALLE / POSTA — ayrı ayrı (kullanıcı: "mahalle numara çıkmıyor") → Gloxoo net söyleyebilsin
+      const adresDetay = ay ? [ay.mahalle ? "Mahalle/semt: " + ay.mahalle : "", ay.sokak ? "Sokak/cadde: " + ay.sokak : "", ay.kapiNo ? "Kapı no: " + ay.kapiNo : "", ay.posta ? "Posta kodu: " + ay.posta : ""].filter(Boolean).join(", ") : "";
+      if (tamKonumIzin && ay && (ay.yer || ay.adres)) sistem += `KULLANICININ ŞU ANKİ TAM YERİ (canlı, yüksek doğruluklu GPS ile SÜREKLİ takip — bunu ZATEN BİLİYORSUN): ${ay.yer ? "İçinde bulunduğu yer: “" + ay.yer + "”" + (ay.tur ? " (" + ay.tur + ")" : "") + ". " : ""}${ay.adres ? "Tam adres: " + ay.adres + ". " : ""}${adresDetay ? adresDetay + ". " : ""}Kullanıcı "mahallem ne / hangi sokaktayım / kapı numaram kaç / adresim ne" diye sorarsa BU AYRINTILARI (mahalle, sokak, kapı no, posta kodu) net söyle; ay bilgisinde yoksa "adres bende sokak/mahalle olarak şu görünüyor" de, UYDURMA. Kullanıcı "neredeyim / şu an neredeyim / hangi mekândayım" diye sorarsa DOĞRUDAN bu yeri söyle (örn "Şu an ${ay.yer || "…"} adlı ${ay.tur || "mekân"}dasın"), ASLA "bilmiyorum / paylaş / haritadan bak" deme, başka yer UYDURMA, koordinat verme, HARİTA düğmesi koyma. ${ay.yer ? "Bu mekân (" + ay.yer + ") hakkında SEN NE BİLİYORSAN (nasıl bir yer, ne yapılır, tarihi/özelliği, çevresi) sohbet ederek anlat; kullanıcı orada oturmuş seninle konuşuyor gibi." : "Sokak/bina adresini bildiğin için çevreyi ve oranın nasıl bir yer olduğunu kelimelerle anlatabilirsin."} ${cevreYer ? "ÇEVRENDEKİ İSİMLİ YERLER (gerçek — şirket/fabrika/banka/resmi daire dahil, en yakından uzağa): " + cevreYer + ". Kullanıcı 'etrafımda hangi şirketler/fabrikalar var, yakınımda ne var' diye sorarsa BU GERÇEK isimleri say (uydurma) ve HER BİRİ için aşağıdaki [SITE:] düğmesini koy ki dokununca sitesine/sayfasına gitsin. " : ""}Konumu her cümlede TEKRARLAMA; sadece sorulunca ya da işe yaradığında kullan. Kullanıcı başka yere giderse bu bilgi otomatik güncellenir (eski yeri söyleme, en son bilgiyi kullan). `;
       else if (tamKonumIzin) sistem += `Kullanıcı tam konum yetkisini açtı ama kesin nokta henüz gelmedi; şehir/ilçe bilgisini kullan, "hangi mağaza/bina" diye çok özel sorulursa bir saniye içinde kesinleşeceğini kısaca söyle. `;
       else sistem += `Kullanıcı şehir/ilçe düzeyinde konumunu paylaşıyor ama "tam nokta" (bina/mağaza) yetkisi KAPALI. "Tam olarak hangi mağaza/binadayım" gibi çok özel bir şey sorarsa, Ayarlar > Konum'dan "Gloxoo tam konumumu bilsin" anahtarını açabileceğini KISACA (tek cümle) söyle; şehir/ilçe sorularını normal yanıtla. `; }
     // TIKLANABİLİR SİTE/KURUM DÜĞMESİ — Gloxoo bir ŞİRKET / BANKA / RESMİ DAİRE / KURUM / MAĞAZA / OTEL / SİTE önerdiğinde,
@@ -9504,7 +9532,12 @@ export default function Anasayfa({ pro = false }) {
                     </button>
                   </div>
                   {tamKonumIzin && anlikYer && (anlikYer.yer || anlikYer.adres) && (
-                    <div className="ayar-konum-anlik">📍 {anlikYer.yer ? anlikYer.yer + (anlikYer.tur ? " (" + anlikYer.tur + ")" : "") : (anlikYer.adres || "").split(",").slice(0, 3).join(",")}</div>
+                    <div className="ayar-konum-anlik">
+                      <div>📍 {anlikYer.yer ? anlikYer.yer + (anlikYer.tur ? " (" + anlikYer.tur + ")" : "") : (anlikYer.adres || "").split(",").slice(0, 3).join(",")}</div>
+                      {(anlikYer.mahalle || anlikYer.sokak || anlikYer.kapiNo) && (
+                        <div className="ayar-konum-detay">{[anlikYer.mahalle, anlikYer.sokak, anlikYer.kapiNo ? "No: " + anlikYer.kapiNo : "", anlikYer.posta].filter(Boolean).join(" · ")}</div>
+                      )}
+                    </div>
                   )}
                   <p className="ayar-not">{t("ayarKonumNot", "İşini nerede yapıyorsun? Haritada bir yere dokun → adres altta çıkar (kopyala ya da 'Şeritlere yaz'). 'Konumumu bul' alanları doldurur. Alanları kendin de yazabilirsin.")}</p>
                   <div className="ayar-konum-dugmeler">
