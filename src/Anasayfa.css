@@ -2131,8 +2131,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ana-nav, .ana-akis, .ana-cta{
     width:92vw; max-width:920px; margin-left:auto; margin-right:auto;
   }
-  /* iPAD/TABLET: AKIŞ ORTALI (foto kendi şekliyle doldurur, dev olmaz) */
-  .ana-akis, .ana-cta{ width:100%; max-width:600px; margin-left:auto; margin-right:auto; } /* DAR ortalı sütun (ESKİ, onaylı) — video/foto uzamasın; YAZI ayrı büyütülür */
+  /* iPAD/NOTEBOOK: AKIŞ TAM GENİŞLİK — yanlarda boşluk YOK (kullanıcı: "iPad/notebook tam ekran, sağ-sol boş kalmasın"). Büyük monitör (>=1500px) aşağıda iPad-genişliğinde ORTALANIR. */
+  .ana-akis, .ana-cta{ width:100% !important; max-width:100% !important; margin-left:0 !important; margin-right:0 !important; padding-left:0 !important; padding-right:0 !important; }
   /* medya oranı TELEFON base ile aynı (portre 4/5, video 3/4, cover) — ayrı override YOK */
   /* iPAD feed üstü öğeler büyük + aralıklı + kenardan uzak */
   .apr-rail{ padding:6px 16px; } /* alt ikon şeridi DİKEY incelt (bilgisayar) */
@@ -2301,8 +2301,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .serit-kurfark b, .pz b{ font-size:16.5px; }
   /* AKIŞ kenarlara yakın + 2 sütun geniş */
   .ana-nav, .ana-ara-sar{ width:94vw; max-width:1100px; }
-  /* NOTEBOOK: AKIŞ ORTALI (foto kendi şekliyle doldurur, dev olmaz) */
-  .ana-akis, .ana-cta{ width:100%; max-width:600px; margin-left:auto; margin-right:auto; } /* DAR ortalı sütun (ESKİ, onaylı) — video/foto uzamasın; YAZI ayrı büyütülür */
+  /* NOTEBOOK: AKIŞ TAM GENİŞLİK — yanlarda boşluk YOK (kullanıcı). Sadece çok geniş monitörde (>=1500px) iPad-genişliğinde ortalanır. */
+  .ana-akis, .ana-cta{ width:100% !important; max-width:100% !important; margin-left:0 !important; margin-right:0 !important; padding-left:0 !important; padding-right:0 !important; }
   /* medya oranı TELEFON base ile aynı (portre 4/5, video 3/4, cover) — ayrı override YOK */
   .ana-post{ margin:0; }
   .ana-tab{ width:min(680px,64vw); }
@@ -2335,8 +2335,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 @media (min-width:1500px) and (min-height:600px){
   .ana-logo{ font-size:60px !important; }
   .ana-nav, .ana-ara-sar{ max-width:1400px; }
-  /* GENİŞ EKRAN: AKIŞ sütunu enden DARALTILDI (B379, kullanıcı: geniş ekranı biraz ufalt) — KİLİTLİ */
-  .ana-akis, .ana-cta{ width:100%; max-width:600px; margin-left:auto; margin-right:auto; } /* DAR ortalı sütun (ESKİ, onaylı) — video/foto uzamasın; YAZI ayrı büyütülür */
+  /* BÜYÜK BİLGİSAYAR MONİTÖRÜ (geniş yatay ekran): AKIŞ TAM PENCERE DEĞİL — iPad DİKEY genişliği kadar (830px) ORTALI (kullanıcı: "bilgisayarda tam sayfa yapma, iPad dikey genişliği neyse o olsun, ortalı"). */
+  .ana-akis, .ana-cta{ width:100% !important; max-width:830px !important; margin-left:auto !important; margin-right:auto !important; }
 }
 
 /* ---- PROFİLİM penceresi CİHAZA GÖRE BÜYÜR (ANAYASA 430) ---- */
