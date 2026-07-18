@@ -1697,7 +1697,7 @@ export default function Anasayfa({ pro = false }) {
       const a = d && d.address;
       if (a) setKonum((k) => ({ ...k, lat, lon, kod: (a.country_code || k.kod || "").toUpperCase(), sehir: latinYap(a.city || a.town || a.village || a.municipality || "") || k.sehir, ilce: latinYap(a.suburb || a.city_district || a.district || a.county || "") || k.ilce, mahalle: latinYap(a.neighbourhood || a.quarter || a.hamlet || "") || k.mahalle }));
     } catch (e) {}
-    let yer = "", tur = "";
+    let yer = "", tur = "", yakinlar = [];
     try {
       // FABRİKA/SANAYİ/ŞİRKET/RESMİ DAİRE/BANKA da SORULUR (eskiden sadece dükkan/kafe/ofis vardı → fabrikayı bilmiyordu).
       // Yarıçap 180m (büyük tesis/fabrika binası biraz uzakta olabilir). building/industrial/man_made/landuse dahil.
@@ -1709,8 +1709,20 @@ export default function Anasayfa({ pro = false }) {
         const TUR_AD = { hairdresser: "kuaför", beauty: "güzellik salonu", barber: "berber", bank: "banka", atm: "ATM", hotel: "otel", motel: "motel", guest_house: "pansiyon", hostel: "hostel", restaurant: "restoran", cafe: "kafe", fast_food: "fast-food", pharmacy: "eczane", hospital: "hastane", clinic: "klinik", supermarket: "süpermarket", convenience: "market", mall: "AVM", bakery: "fırın", clothes: "giyim mağazası", jewelry: "kuyumcu", fuel: "benzin istasyonu", school: "okul", university: "üniversite", post_office: "postane",
           // FABRİKA / SANAYİ / ŞİRKET / RESMİ DAİRE (kullanıcı fabrikanın içinde → bunları da tanısın)
           factory: "fabrika", works: "fabrika", industrial: "sanayi tesisi", warehouse: "depo", manufacture: "üretim tesisi", company: "şirket", office: "ofis", government: "resmi daire", townhall: "belediye", courthouse: "adliye", police: "polis merkezi", fire_station: "itfaiye", embassy: "elçilik", logistics: "lojistik tesisi", it: "yazılım şirketi", telecommunication: "telekom şirketi", energy_supplier: "enerji şirketi", insurance: "sigorta şirketi", estate_agent: "emlak ofisi", warehouse_office: "depo ofisi" };
+        // Bir OSM etiket kümesinden Türkçe tür adını çöz (fabrika/banka/şirket/resmi daire dahil).
+        const turCoz = (tg) => {
+          let tp = tg.shop || tg.amenity || tg.tourism || tg.office || tg.leisure || tg.craft || tg.healthcare || tg.government || "";
+          if (!tp && tg.man_made) tp = (tg.man_made === "works" ? "factory" : tg.man_made);
+          if (!tp && tg.industrial) tp = (tg.industrial === "yes" ? "industrial" : tg.industrial);
+          if (!tp && tg.building && tg.building !== "yes") tp = tg.building;
+          if (!tp && tg.landuse === "industrial") tp = "industrial";
+          return TUR_AD[tp] || (tp ? tp.replace(/_/g, " ") : "");
+        };
+        // Bir OSM etiket kümesinden varsa RESMİ SİTE adresini al (website / contact:website / url).
+        const siteCoz = (tg) => { let s = tg.website || tg["contact:website"] || tg.url || ""; if (s && !/^https?:\/\//i.test(s)) s = "https://" + s; return s; };
         const R = 6371000, rad = (x) => (x * Math.PI) / 180;
-        let enYakin = null, enM = Infinity;
+        // TÜM isimli yerleri mesafeleriyle topla → en yakını "içinde bulunulan yer", ilk birkaçı "çevrendeki yerler".
+        const yerListe = [];
         d.elements.forEach((el) => {
           const tg = el.tags || {}; if (!tg.name) return;
           const plat = el.lat != null ? el.lat : (el.center && el.center.lat);
@@ -1719,22 +1731,18 @@ export default function Anasayfa({ pro = false }) {
           const dLat = rad(plat - lat), dLon = rad(plon - lon);
           const aa = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat)) * Math.cos(rad(plat)) * Math.sin(dLon / 2) ** 2;
           const m = R * 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
-          if (m < enM) { enM = m; enYakin = tg; }
+          yerListe.push({ ad: latinYap(tg["name:en"] || tg.name), tur: turCoz(tg), site: siteCoz(tg), m: Math.round(m) });
         });
-        if (enYakin) {
-          yer = latinYap(enYakin["name:en"] || enYakin.name);
-          // Türü belirle — önce belirgin dükkan/kurum etiketleri, sonra FABRİKA/SANAYİ/ŞİRKET/RESMİ DAİRE etiketleri.
-          // man_made=works → fabrika; building=industrial/factory/warehouse... → o tür; landuse=industrial → sanayi bölgesi.
-          let tp = enYakin.shop || enYakin.amenity || enYakin.tourism || enYakin.office || enYakin.leisure || enYakin.craft || enYakin.healthcare || enYakin.government || "";
-          if (!tp && enYakin.man_made) tp = (enYakin.man_made === "works" ? "factory" : enYakin.man_made);
-          if (!tp && enYakin.industrial) tp = (enYakin.industrial === "yes" ? "industrial" : enYakin.industrial);
-          if (!tp && enYakin.building && enYakin.building !== "yes") tp = enYakin.building;
-          if (!tp && enYakin.landuse === "industrial") tp = "industrial";
-          tur = TUR_AD[tp] || (tp ? tp.replace(/_/g, " ") : "");
+        yerListe.sort((a, b) => a.m - b.m);
+        if (yerListe.length) {
+          const enYakin = yerListe[0];
+          yer = enYakin.ad; tur = enYakin.tur;
+          // ÇEVREDEKİ isimli yerler (en yakın hariç ilk ~6) → Gloxoo bunları gerçek isimle söyleyip tıklanabilir yapar.
+          yakinlar = yerListe.slice(0, 7);
         }
       }
     } catch (e) {}
-    const bilgi = { adres, yer, tur, lat, lon };
+    const bilgi = { adres, yer, tur, lat, lon, yakinlar };
     anlikYerRef.current = bilgi; setAnlikYer(bilgi);
   }
   // AYARLAR: "Gloxoo tam konumumu bilsin" AÇ/KAPAT. AÇARKEN izin ister (watchPosition → tarayıcı sorar). Tercih localStorage'da tutulur.
@@ -4546,9 +4554,16 @@ export default function Anasayfa({ pro = false }) {
     else if (konum.lat != null) sistem += `Yakın çevre listesi henüz gelmedi; "yakınımda" sorulursa kısaca konum iznini açmasını iste. `;
     // CANLI TAM KONUM (kullanıcı AYARLAR'dan "tam konum" yetkisini AÇTIYSA): AI tam olarak hangi bina/mekânda olduğunu SÜREKLİ bilir
     { const ay = anlikYerRef.current;
-      if (tamKonumIzin && ay && (ay.yer || ay.adres)) sistem += `KULLANICININ ŞU ANKİ TAM YERİ (canlı, yüksek doğruluklu GPS ile SÜREKLİ takip — bunu ZATEN BİLİYORSUN): ${ay.yer ? "İçinde bulunduğu yer: “" + ay.yer + "”" + (ay.tur ? " (" + ay.tur + ")" : "") + ". " : ""}${ay.adres ? "Tam adres: " + ay.adres + ". " : ""}Kullanıcı "neredeyim / şu an neredeyim / hangi mekândayım" diye sorarsa DOĞRUDAN bu yeri söyle (örn "Şu an ${ay.yer || "…"} adlı ${ay.tur || "mekân"}dasın"), ASLA "bilmiyorum / paylaş / haritadan bak" deme, başka yer UYDURMA, koordinat verme, HARİTA düğmesi koyma. ${ay.yer ? "Bu mekân (" + ay.yer + ") hakkında SEN NE BİLİYORSAN (nasıl bir yer, ne yapılır, tarihi/özelliği, çevresi) sohbet ederek anlat; kullanıcı orada oturmuş seninle konuşuyor gibi." : "Sokak/bina adresini bildiğin için çevreyi ve oranın nasıl bir yer olduğunu kelimelerle anlatabilirsin."} Konumu her cümlede TEKRARLAMA; sadece sorulunca ya da işe yaradığında kullan. Kullanıcı başka yere giderse bu bilgi otomatik güncellenir (eski yeri söyleme, en son bilgiyi kullan). `;
+      // ÇEVREDEKİ İSİMLİ YERLER (şirket/fabrika/banka/resmi daire...) — Gloxoo bunları GERÇEK isimle söyleyip [SITE:] ile tıklanabilir yapar.
+      const cevreYer = (ay && Array.isArray(ay.yakinlar) && ay.yakinlar.length)
+        ? ay.yakinlar.map((y) => y.ad + (y.tur ? " (" + y.tur + ")" : "") + (y.m != null ? " ~" + y.m + "m" : "") + (y.site ? " | site: " + y.site : "")).join(" ; ")
+        : "";
+      if (tamKonumIzin && ay && (ay.yer || ay.adres)) sistem += `KULLANICININ ŞU ANKİ TAM YERİ (canlı, yüksek doğruluklu GPS ile SÜREKLİ takip — bunu ZATEN BİLİYORSUN): ${ay.yer ? "İçinde bulunduğu yer: “" + ay.yer + "”" + (ay.tur ? " (" + ay.tur + ")" : "") + ". " : ""}${ay.adres ? "Tam adres: " + ay.adres + ". " : ""}Kullanıcı "neredeyim / şu an neredeyim / hangi mekândayım" diye sorarsa DOĞRUDAN bu yeri söyle (örn "Şu an ${ay.yer || "…"} adlı ${ay.tur || "mekân"}dasın"), ASLA "bilmiyorum / paylaş / haritadan bak" deme, başka yer UYDURMA, koordinat verme, HARİTA düğmesi koyma. ${ay.yer ? "Bu mekân (" + ay.yer + ") hakkında SEN NE BİLİYORSAN (nasıl bir yer, ne yapılır, tarihi/özelliği, çevresi) sohbet ederek anlat; kullanıcı orada oturmuş seninle konuşuyor gibi." : "Sokak/bina adresini bildiğin için çevreyi ve oranın nasıl bir yer olduğunu kelimelerle anlatabilirsin."} ${cevreYer ? "ÇEVRENDEKİ İSİMLİ YERLER (gerçek — şirket/fabrika/banka/resmi daire dahil, en yakından uzağa): " + cevreYer + ". Kullanıcı 'etrafımda hangi şirketler/fabrikalar var, yakınımda ne var' diye sorarsa BU GERÇEK isimleri say (uydurma) ve HER BİRİ için aşağıdaki [SITE:] düğmesini koy ki dokununca sitesine/sayfasına gitsin. " : ""}Konumu her cümlede TEKRARLAMA; sadece sorulunca ya da işe yaradığında kullan. Kullanıcı başka yere giderse bu bilgi otomatik güncellenir (eski yeri söyleme, en son bilgiyi kullan). `;
       else if (tamKonumIzin) sistem += `Kullanıcı tam konum yetkisini açtı ama kesin nokta henüz gelmedi; şehir/ilçe bilgisini kullan, "hangi mağaza/bina" diye çok özel sorulursa bir saniye içinde kesinleşeceğini kısaca söyle. `;
       else sistem += `Kullanıcı şehir/ilçe düzeyinde konumunu paylaşıyor ama "tam nokta" (bina/mağaza) yetkisi KAPALI. "Tam olarak hangi mağaza/binadayım" gibi çok özel bir şey sorarsa, Ayarlar > Konum'dan "Gloxoo tam konumumu bilsin" anahtarını açabileceğini KISACA (tek cümle) söyle; şehir/ilçe sorularını normal yanıtla. `; }
+    // TIKLANABİLİR SİTE/KURUM DÜĞMESİ — Gloxoo bir ŞİRKET / BANKA / RESMİ DAİRE / KURUM / MAĞAZA / OTEL / SİTE önerdiğinde,
+    // kullanıcının o yerin sitesine/sayfasına DOKUNARAK gidebilmesi için AYRI bir düğme etiketi koyar (yazıya URL gömmez).
+    sistem += `TIKLANABİLİR SİTE DÜĞMELERİ ([SITE:] — ÇOK ÖNEMLİ): Kullanıcıya "şu şirkette/bankada/resmi dairede/kurumda/mağazada/sitede bulabilirsin", "şuraya başvur", "şunlara bak" gibi GERÇEK bir yer/kurum/site söylediğinde, o yerin adını cümle içine yazmakla KALMA — kullanıcı dokununca ULAŞABİLSİN diye HER biri için AYRI şu etiketi koy: [SITE: Görünen ad | hedef]. "hedef" = biliyorsan yerin GERÇEK web adresi (örn https://www.abc.com), EMİN DEĞİLSEN URL UYDURMA → hedefi boş bırak ya da "ara" yaz (dokununca o adı internette arar, sitesine ulaşır). Örnekler: [SITE: Privatbank | https://privatbank.ua] , [SITE: Nova Poshta | ara] , [SITE: Belediye | ara]. BİRDEN ÇOK yer varsa BİRDEN ÇOK [SITE:] koy (her kuruma bir düğme). Bu düğmeler konuşma metninden AYRI, altında görünür; sen sadece etiketi koy, gerisini uygulama halleder. Adres/telefon verirken de yerin adını [SITE:] ile tıklanabilir yap. URL'yi cümlenin İÇİNE yazma (okunması çirkin); sadece [SITE:] etiketinde ver. `;
     // GÖRÜNTÜLÜ SOHBET: kamera açık → ekteki fotoğraf kullanıcının CANLI kamera görüntüsüdür (kendisi + çevresi)
     if (kameraModRef.current) sistem += `GÖRÜNTÜLÜ CANLI SOHBET AÇIK: Kullanıcının mesajına EKLİ fotoğraf, ŞU AN kamerasından gelen CANLI görüntüsüdür — onu ve/veya çevresini (${kameraYon === "environment" ? "ARKA kamera: etrafı/manzarayı" : "ÖN kamera: kendisini"}) GÖRÜYORSUN. Onu gerçekten görüyorsun; kim olduğunu, ne giydiğini, çevresinde ne olduğunu BİLİYORSUN. ÇOK ÖNEMLİ: Kullanıcı SORMADAN kendiliğinden görünüş dökümü YAPMA — "üzerinde şu var, elinde bu var, arkanda şu var" diye HER mesajda TEKRARLAMA, bu sinir bozucu. Normal, sıcak, akıcı bir DOST gibi sohbet et; gördüklerini yalnızca (a) kullanıcı AÇIKÇA sorunca ("beni görüyor musun, ne giymişim, arkamda ne var" gibi), ya da (b) o an gerçekten anlamlı/ilginç/yeni bir şey olduğunda ve konuya uyduğunda söyle. Sorulunca net ve doğru söyle ("evet, görüyorum — ... giymişsin, arkanda ... var"); ASLA "göremiyorum/fotoğraf yok" deme. Görünüş hakkında daima nazik ve olumlu ol, kaba/incitici olma. Kısa konuş. `;
     // DÜNYA ÇAPINDA — kısıtlama YOK (kullanıcı her yerden, her şeyi sorabilir)
@@ -4651,7 +4666,28 @@ export default function Anasayfa({ pro = false }) {
         metin = metin.replace(/\[HARITA:[^\]]*\]/gi, "").trim();
         if (!metin && harita.length) metin = "İşte konumu — yol tarifi için dokun 👇";
       }
-      setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, zamanMs: Date.now() }]);
+      // SİTE/KURUM DÜĞMELERİ — AI bir şirket/banka/resmi daire/site önerdiyse: [SITE: Ad | url-veya-ara]
+      // → konuşma metninden AYRI, tıklanabilir düğme; dokununca sitesine (varsa) ya da o adın internet aramasına gider.
+      let siteler = [];
+      const smAll = metin.match(/\[SITE:[^\]]*\]/gi);
+      if (smAll) {
+        smAll.forEach((tag) => {
+          const ic = tag.replace(/^\[SITE:\s*/i, "").replace(/\]$/, "");
+          const par = ic.split("|");
+          const ad = (par[0] || "").trim();
+          let hedef = (par[1] || "").trim();
+          if (!ad) return;
+          // hedef gerçek bir URL mi? değilse (boş / "ara" / "search") o adı internette aratacak URL kur
+          let url;
+          if (/^https?:\/\//i.test(hedef)) url = hedef;
+          else if (hedef && /\.[a-z]{2,}$/i.test(hedef) && !/\s/.test(hedef)) url = "https://" + hedef; // "abc.com" gibi çıplak alan adı
+          else { const ara = ad + (konum && konum.sehir ? " " + konum.sehir : "") + (konum && konum.kod ? " " + konum.kod : ""); url = "https://www.google.com/search?q=" + encodeURIComponent(ara); }
+          siteler.push({ ad, url });
+        });
+        metin = metin.replace(/\[SITE:[^\]]*\]/gi, "").trim();
+        if (!metin && siteler.length) metin = "İşte ilgili yerler — sitesine gitmek için dokun 👇";
+      }
+      setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, siteler, zamanMs: Date.now() }]);
       // HAZIRLANAN İÇERİK (paylaşım metni vb.): kullanıcı SÖZLÜ istediyse ve panel KAPALIYSA, yazı panelini
       // OTOMATİK aç ki hazırladığını GÖRSÜN (canlı sohbet SÜRER — kapatmaz). İstek: "hazırladığını yazı sayfasında göster".
       if (paylasim && !yardimciAcikRef.current && !site) { try { setYardimciAcik(true); } catch (e) {} }
@@ -8826,6 +8862,18 @@ export default function Anasayfa({ pro = false }) {
                           <a key={hi} className="ai-harita-btn" href={h.yer ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(h.yer)}` : (/^(konum|konumum|benim konum|buras[ıi]|nerede)/i.test((h.ad || "").trim()) ? `https://www.google.com/maps/@${h.lat},${h.lon},17z` : `https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lon}`)} target="_blank" rel="noreferrer">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
                             <span>{h.ad} — {/^(konum|konumum|benim konum|buras[ıi]|nerede)/i.test((h.ad || "").trim()) ? t("haritadaGor", "Haritada gör") : t("yolTarifi", "Yol tarifi")}</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    {/* SİTE/KURUM DÜĞMELERİ — Gloxoo bir şirket/banka/resmi daire/site söylediyse: dokununca sitesine (veya o adın aramasına) gider */}
+                    {m.rol !== "user" && Array.isArray(m.siteler) && m.siteler.length > 0 && (
+                      <div className="ai-site-sar">
+                        {m.siteler.map((s, si) => (
+                          <a key={si} className="ai-site-btn" href={s.url} target="_blank" rel="noreferrer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>
+                            <span>{s.ad}</span>
+                            <svg className="ai-site-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
                           </a>
                         ))}
                       </div>

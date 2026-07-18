@@ -3264,6 +3264,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-harita-btn{ display:inline-flex; align-items:center; gap:7px; text-decoration:none; background:linear-gradient(135deg,#2360b8,#0c6e3a); color:#fff; font-family:inherit; font-size:13px; font-weight:800; padding:9px 15px; border-radius:14px; cursor:pointer; line-height:1.2; box-shadow:0 2px 6px rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.18); }
 .ai-harita-btn svg{ width:17px; height:17px; flex:none; }
 .ai-harita-btn:active{ transform:scale(.96); }
+/* SİTE/KURUM düğmeleri — Gloxoo bir şirket/banka/resmi daire söylediğinde dokununca sitesine gider (mor-altın, haritadan ayrı renk) */
+.ai-site-sar{ align-self:flex-start; max-width:94%; display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px; }
+.ai-site-btn{ display:inline-flex; align-items:center; gap:7px; text-decoration:none; background:linear-gradient(135deg,#7d3ce0,#b0208a); color:#fff; font-family:inherit; font-size:13px; font-weight:800; padding:9px 15px; border-radius:14px; cursor:pointer; line-height:1.2; box-shadow:0 2px 6px rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.22); }
+.ai-site-btn svg{ width:17px; height:17px; flex:none; }
+.ai-site-btn .ai-site-ok{ width:14px; height:14px; opacity:.85; }
+.ai-site-btn:active{ transform:scale(.96); }
 .ai-oneri-cip:disabled{ opacity:.55; cursor:default; }
 /* HAZIRLANAN PAYLAŞIM/İÇERİK — AYRI kart (kopyala / paylaş) */
 .ai-paylasim-kart{ align-self:flex-start; max-width:94%; margin:-1px 0 6px; padding:14px 15px 13px; border-radius:16px;
@@ -3394,7 +3400,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ai-bas-ad{ font-size:23px !important; } .ai-bas-pir{ width:24px; height:24px; } .ai-kapat{ font-size:27px; }
   .ai-msj{ font-size:23px !important; max-width:86%; } .ai-karsilama{ font-size:23px !important; }
   .ai-input{ font-size:20px !important; min-height:58px; } .ai-msj-saat{ font-size:12px; }
-  .ai-oneri-cip{ font-size:17px !important; padding:11px 18px; } .ai-paylasim-metin{ font-size:19px !important; } .ai-paylasim-btn{ font-size:16px; } .ai-harita-btn{ font-size:16px !important; padding:11px 18px; } .ai-harita-btn svg{ width:20px; height:20px; }
+  .ai-oneri-cip{ font-size:17px !important; padding:11px 18px; } .ai-paylasim-metin{ font-size:19px !important; } .ai-paylasim-btn{ font-size:16px; } .ai-harita-btn{ font-size:16px !important; padding:11px 18px; } .ai-harita-btn svg{ width:20px; height:20px; } .ai-site-btn{ font-size:16px !important; padding:11px 18px; } .ai-site-btn svg{ width:20px; height:20px; }
   .ai-oku-btn{ width:30px; height:30px; } .ai-oku-btn svg{ width:17px; height:17px; }
   .ai-dil-oge{ font-size:16px; }
   .ai-ekle-oge{ font-size:18px !important; padding:13px 16px; } .ai-ekle-oge svg{ width:26px; height:26px; } .ai-ekle-menu{ min-width:200px; }
@@ -3407,7 +3413,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ai-bas-ad{ font-size:26px !important; } .ai-bas-pir{ width:26px; height:26px; } .ai-kapat{ font-size:29px; }
   .ai-msj{ font-size:26px !important; } .ai-karsilama{ font-size:26px !important; }
   .ai-input{ font-size:23px !important; min-height:64px; } .ai-msj-saat{ font-size:13px; }
-  .ai-oneri-cip{ font-size:18px !important; padding:13px 21px; } .ai-paylasim-metin{ font-size:22px !important; } .ai-paylasim-btn{ font-size:17px; } .ai-harita-btn{ font-size:18px !important; padding:13px 21px; } .ai-harita-btn svg{ width:22px; height:22px; }
+  .ai-oneri-cip{ font-size:18px !important; padding:13px 21px; } .ai-paylasim-metin{ font-size:22px !important; } .ai-paylasim-btn{ font-size:17px; } .ai-harita-btn{ font-size:18px !important; padding:13px 21px; } .ai-harita-btn svg{ width:22px; height:22px; } .ai-site-btn{ font-size:18px !important; padding:13px 21px; } .ai-site-btn svg{ width:22px; height:22px; }
   .ai-oku-btn{ width:34px; height:34px; } .ai-oku-btn svg{ width:19px; height:19px; }
   .ai-dil-oge{ font-size:17px; }
   .ai-ekle-oge{ font-size:21px !important; padding:15px 18px; } .ai-ekle-oge svg{ width:30px; height:30px; } .ai-ekle-menu{ min-width:240px; }
