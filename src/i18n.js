@@ -11,6 +11,7 @@ import { AYAR_CEVIRI5 } from "./ceviriAyar5";
 import { AYAR_CEVIRI6 } from "./ceviriAyar6";
 import { AYAR_CEVIRI7 } from "./ceviriAyar7";
 import { CEVIRI_EKSIK } from "./ceviriEksik";
+import { CEVIRI_EKSIK2 } from "./ceviriEksik2";
 import { MESLEK_EK } from "./meslekCevirEk";
 import { MESLEK_EK2 } from "./meslekCevirEk2";
 import { MESLEK_EK3 } from "./meslekCevirEk3";
@@ -2416,7 +2417,7 @@ const resources = {
 };
 
 // Ayarlar + Konum/Harita anahtarlarını 13 dile ekle (Anasayfa.js'teki t() satır-içi Türkçe yedekleri yerine gerçek çeviri)
-[AYAR_CEVIRI, AYAR_CEVIRI2, AYAR_CEVIRI3, AYAR_CEVIRI4, AYAR_CEVIRI5, AYAR_CEVIRI6, AYAR_CEVIRI7, CEVIRI_EKSIK].forEach((paket) => {
+[AYAR_CEVIRI, AYAR_CEVIRI2, AYAR_CEVIRI3, AYAR_CEVIRI4, AYAR_CEVIRI5, AYAR_CEVIRI6, AYAR_CEVIRI7, CEVIRI_EKSIK, CEVIRI_EKSIK2].forEach((paket) => {
   Object.keys(paket).forEach((lng) => {
     if (!resources[lng]) resources[lng] = { translation: {} };
     Object.assign(resources[lng].translation, paket[lng]);
