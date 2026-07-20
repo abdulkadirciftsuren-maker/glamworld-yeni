@@ -955,7 +955,7 @@
 /* ÇEVİR + AI(Sor) yan yana küçük araç şeridi */
 .apr-alt-arac, .tf-cevir-arac{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 /* AI (GLOXORG'a sor) butonu — çeviri yanında, altın tonlu, küçük */
-.apr-ai, .tf-ai{ color:#FFE9A8 !important; border-color:rgba(255,215,0,.5) !important; background:rgba(40,30,8,.4) !important; display:inline-flex !important; align-items:center; gap:7px; }
+.apr-ai, .tf-ai, .ana-post-ai{ color:#FFE9A8 !important; border-color:rgba(255,215,0,.5) !important; background:rgba(40,30,8,.4) !important; display:inline-flex !important; align-items:center; gap:7px; border:1px solid rgba(255,215,0,.45); border-radius:11px; padding:4px 11px !important; }
 .apr-ai-tas{ width:13px; height:13px; display:inline-flex; align-items:center; justify-content:center; flex:none; } /* pırlanta SABİT, yazıya BİNMEZ */
 .tf-ai .apr-ai-tas{ width:15px; height:15px; }
 /* Tam ekran okuyucudaki Çevir düğmesi — KÜÇÜK, zarif (kaba değil) */

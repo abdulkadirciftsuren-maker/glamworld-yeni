@@ -5402,8 +5402,9 @@ export default function Anasayfa({ pro = false }) {
     setTamFoto("");
     setYardimciMod("site");
     setYardimciFoto(null);
+    const dilAd = { tr: "Türkçe", en: "İngilizce", de: "Almanca", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", ar: "Arapça", uk: "Ukraynaca", zh: "Çince", ja: "Japonca", hi: "Hintçe" }[dil] || "Türkçe";
     const metin = p.yazi || (p.video ? "(video gönderisi)" : p.gorsel ? "(fotoğraf gönderisi)" : "");
-    setYardimciBaglam(`Kullanıcı şu an bu GÖNDERİYE bakıyor ve hakkında konuşmak/öneri istiyor. Gönderi sahibi: ${p.ad || "—"}${p.meslek ? " ("+mc(p.meslek, dil)+")" : ""}. Gönderi metni: "${metin}".${p.gorsel ? " Gönderinin fotoğrafı da ekli — görseli incele." : ""} Bu gönderiyi (yazı${p.gorsel ? "+fotoğraf" : ""}) değerlendir, faydalı öneri/yorum ver, soruları yanıtla, konuşmaya DEVAM et (kesme).`);
+    setYardimciBaglam(`Kullanıcı şu an bu GÖNDERİYE bakıyor ve hakkında konuşmak/öneri istiyor. Gönderi sahibi: ${p.ad || "—"}${p.meslek ? " ("+mc(p.meslek, dil)+")" : ""}. Gönderi metni: "${metin}".${p.gorsel ? " Gönderinin fotoğrafı da ekli — görseli incele; fotoğrafın İÇİNDE yazı varsa onu OKU." : ""} ÇOK ÖNEMLİ: Kullanıcı gönderinin dilini BİLMİYOR olabilir. Selamlaşmadan, gönderinin içeriğini (yazıyı${p.gorsel ? " ve/veya fotoğraftaki metni" : ""}) ${dilAd} diline KISACA ÇEVİR/özetle ve ne anlattığını anlat. Sonra faydalı öneri/yorum ver, soruları yanıtla, konuşmaya DEVAM et (kesme).`);
     setYardimciAcik(true);
     // FOTOĞRAFLI gönderi → görseli base64'e çevirip asistana ekle (Claude görebilsin)
     if (p.gorsel) {
@@ -6994,18 +6995,21 @@ export default function Anasayfa({ pro = false }) {
               if (medyaVar) {
                 // İMMERSİF MEDYA KARTI — her şey fotoğrafın ÜZERİNDE (TikTok gibi), çerçeve yok
                 // YAZI BLOĞU — varsayılan AYRI şerit (medyayı kapatmaz); p.yaziUstunde ise medyanın üzerinde.
-                const yaziBlokIc = p.yazi ? (
+                // YAZI + Çevir/Sor bloğu. "Sor" HER ZAMAN çıkar (yazı olmasa da: Gloxoo fotoğrafı/videoyu okuyup kullanıcının diline çevirir/anlatır — resmin İÇİNDEKİ yazıyı da). "Çevir" yalnız gönderi metni varsa.
+                const yaziBlokIc = (
                   <>
-                    <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{metniLinkle((ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>
+                    {p.yazi && <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{metniLinkle((ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>}
                     <span className="apr-alt-arac">
-                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
-                        {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
-                      </button>
+                      {p.yazi && (
+                        <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
+                          {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
+                        </button>
+                      )}
                       <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
                     </span>
                   </>
-                ) : null;
+                );
                 return (
                   <article className={"ana-post ana-post-im " + (p.video ? "post-video" : "post-foto")} key={anahtar} style={{ "--pc": pc, "--sep": p.video ? "#e0202c" : "#0d0a05" }}>
                     {/* PROFİL/İSİM/MESLEK — fotoğrafın DIŞINDA, ÜSTTE ayrı şerit (ANA SAYFADA HEP AYRI — bozma) */}
@@ -7081,15 +7085,15 @@ export default function Anasayfa({ pro = false }) {
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
-                      {/* YAZI medyanın ÜZERİNDE — yalnız kullanıcı öyle istediyse (p.yaziUstunde) */}
-                      {yaziBlokIc && p.yaziUstunde && (
+                      {/* YAZI medyanın ÜZERİNDE — yalnız METİN VARSA ve kullanıcı öyle istediyse (p.yaziUstunde) */}
+                      {p.yazi && p.yaziUstunde && (
                         <div className="apr-alt" onClick={(e) => e.stopPropagation()}>{yaziBlokIc}</div>
                       )}
                       {/* Sağ-ALT GLOXORG amblemi — SADECE VİDEO'da (fotoğrafa GLOXORG zaten gömülü/baked → ikinci rozet ÇİFT olmasın, kullanıcı isteği) */}
                       {p.video && !postMedyalar && <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>}
                     </div>
-                    {/* YAZI AYRI ŞERİT (varsayılan) — medyanın ALTINDA, onu KAPATMAZ; 2 satır + devamını oku (tam ekranda hepsi) */}
-                    {yaziBlokIc && !p.yaziUstunde && (
+                    {/* YAZI + Çevir/Sor AYRI ŞERİT (varsayılan) — medyanın ALTINDA. Yazı yoksa da çıkar (içinde "Sor" var → Gloxoo resmi/videoyu okuyup çevirir). Yalnızca yazı medyanın ÜZERİNDEYSE burada tekrar gösterilmez. */}
+                    {!(p.yazi && p.yaziUstunde) && (
                       <div className="apr-yazi-serit" onClick={(e) => e.stopPropagation()}>{yaziBlokIc}</div>
                     )}
                     {anketBlok(p)}
@@ -7165,6 +7169,8 @@ export default function Anasayfa({ pro = false }) {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
                         {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
                       </button>
+                      {/* SOR — Gloxoo'ya sor (metni kullanıcının diline çevirir/anlatır). Sadece-metin gönderisinde de olsun. */}
+                      <button className="ana-post-cevir ana-post-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
                     </div>
                   )}
                   {p.medya && (
@@ -8474,15 +8480,18 @@ export default function Anasayfa({ pro = false }) {
         const tfKey = p.id || "tf";
         const tfCev = ceviri[tfKey];
         const tfMetin = (tfCev && tfCev.acik && tfCev.metin) ? tfCev.metin : p.yazi;
-        const tfCevBtn = p.yazi ? (
+        const tfCevBtn = (
           <span className="tf-cevir-arac">
-            <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, tfKey); }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
-              {tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
-            </button>
+            {p.yazi && (
+              <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, tfKey); }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
+                {tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
+              </button>
+            )}
+            {/* SOR her zaman (yazı olmasa da: Gloxoo fotoğraf/videoyu okuyup kullanıcının diline çevirir/anlatır) */}
             <button className="ana-post-cevir tf-cevir tf-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
           </span>
-        ) : null;
+        );
         // OYNATMA/SEEK çubuğu — artık alt KOLON (.tf-dip) içinde (sabit konum yok → çakışmaz)
         const tfVidBar = p.video ? (
           <div className="tf-vid-bar" onClick={(e) => e.stopPropagation()}>
@@ -8575,10 +8584,10 @@ export default function Anasayfa({ pro = false }) {
                 <a className="tf-ic tf-indir" href={p.video || p.gorsel || "#"} download target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} aria-label={pl(aiDil, "indir")}>{Ikon.indir}</a>
                 <button className="tf-ic tf-daha" aria-label={t("dahaFazla", "Daha fazla")} onClick={() => dahaAc(p)}><span className="daha-tas" aria-hidden="true"><Elmas4 c="#1a1a1a" /></span></button>
               </div>
-              {/* YAZI + Çevir/Sor (foto/video açıklaması) */}
-              {p.yazi && !metinPost && (
+              {/* YAZI + Çevir/Sor (foto/video açıklaması). Yazı YOKSA da Sor düğmesi çıkar (Gloxoo görseli/videoyu okuyup çevirir). */}
+              {!metinPost && (
                 <div className="tf-alt" onClick={(e) => e.stopPropagation()}>
-                  <div translate="no" className="tf-yazi notranslate">{metniLinkle(tfMetin)}</div>
+                  {p.yazi && <div translate="no" className="tf-yazi notranslate">{metniLinkle(tfMetin)}</div>}
                   {tfCevBtn}
                 </div>
               )}
