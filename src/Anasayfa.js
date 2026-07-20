@@ -6833,7 +6833,7 @@ export default function Anasayfa({ pro = false }) {
                     <span className="hik-kart-arti">{hikayeYuk ? "…" : "+"}</span>
                     <span className="hik-parilti" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.4l2.4 7.3 7.4 2.3-7.4 2.3L12 20.6l-2.4-7.3L2.2 11l7.4-2.3z"/></svg></span>
                   </span>
-                  <span className="hik-kart-ad notranslate" translate="no">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : HIKAYE_AD}</span>
+                  <span className="hik-kart-ad">{hikayeYuk ? t("hikayeYukleniyor", "Yükleniyor…") : t("isiltiGoster", HIKAYE_AD)}</span>
                 </span>
               </button>
               {/* HERKESİN hikaye kartı (kendisi dahil) — kapak = EN SON hikaye (görüntüleyicide de ilk o oynar) */}
