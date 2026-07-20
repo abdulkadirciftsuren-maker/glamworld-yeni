@@ -5443,6 +5443,43 @@ export default function Anasayfa({ pro = false }) {
       setCeviri((s) => ({ ...s, [key]: { metin: t("ceviriHata", "Çevrilemedi, tekrar dene"), yuk: false, acik: true } }));
     }
   }
+  // RESİM ÇEVİR — gönderi metni YOKSA (yazı fotoğrafın/videonun İÇİNDE): görseli vision ile OKUT + çevir,
+  // sonucu AYNI YERDE (gönderinin üstünde) göster. Gloxoo penceresi AÇMAZ (kullanıcı: "orada çevirsin").
+  async function resimCevir(p, key) {
+    if (!key || !p) return;
+    const mevcut = ceviri[key];
+    if (mevcut && mevcut.metin) { setCeviri((s) => ({ ...s, [key]: { ...mevcut, acik: !mevcut.acik } })); return; } // tekrar bas → gizle/göster
+    if (mevcut && mevcut.yuk) return;
+    setCeviri((s) => ({ ...s, [key]: { yuk: true, acik: true } }));
+    const dilAd = { tr: "Türkçe", en: "İngilizce", de: "Almanca", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", ar: "Arapça", uk: "Ukraynaca", zh: "Çince", ja: "Japonca", hi: "Hintçe" }[dil] || "Türkçe";
+    try {
+      const kaynak = p.gorsel || p.poster || (p.medyalar && p.medyalar[0] && (p.medyalar[0].data || p.medyalar[0].url)) || "";
+      if (!kaynak) { setCeviri((s) => ({ ...s, [key]: { metin: t("ceviriHata", "Çevrilemedi, tekrar dene"), yuk: false, acik: true } })); return; }
+      // base64'e çevir (http ise canvas ile; data: ise doğrudan)
+      let dataURL = kaynak;
+      if (kaynak.indexOf("data:image") !== 0) {
+        dataURL = await new Promise((res) => {
+          try {
+            const im = new Image(); im.crossOrigin = "anonymous";
+            im.onload = () => { try { const mx = 1280; let w = im.naturalWidth || 800, h = im.naturalHeight || 800; if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); } const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(im, 0, 0, w, h); res(c.toDataURL("image/jpeg", 0.85)); } catch (e) { res(""); } };
+            im.onerror = () => res(""); im.src = kaynak;
+          } catch (e) { res(""); }
+        });
+      }
+      if (!dataURL || dataURL.indexOf("data:image") !== 0) { setCeviri((s) => ({ ...s, [key]: { metin: t("ceviriHata", "Çevrilemedi, tekrar dene"), yuk: false, acik: true } })); return; }
+      const vir = dataURL.indexOf(","); const mt = (dataURL.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg";
+      const parcalar = [
+        { type: "image", source: { type: "base64", media_type: mt, data: dataURL.slice(vir + 1) } },
+        { type: "text", text: `Bu görselin İÇİNDEKİ tüm yazıyı dikkatlice OKU ve ${dilAd} diline DOĞAL, akıcı çevir. SADECE çeviriyi yaz; açıklama, başlık, tırnak veya ek kelime EKLEME. Görselde okunacak anlamlı yazı yoksa görselde ne olduğunu ${dilAd} dilinde tek cümleyle anlat.` },
+      ];
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar: [{ role: "user", content: parcalar }], sistem: `Sen bir çevirmensin. Görseldeki yazıyı oku ve ${dilAd} diline çevir. Sadece çeviriyi ver, başka bir şey yazma.` }) });
+      const veri = await r.json();
+      const metin = (veri && veri.metin) ? veri.metin.trim() : "";
+      setCeviri((s) => ({ ...s, [key]: { metin: metin || t("ceviriHata", "Çevrilemedi, tekrar dene"), yuk: false, acik: true } }));
+    } catch (e) {
+      setCeviri((s) => ({ ...s, [key]: { metin: t("ceviriHata", "Çevrilemedi, tekrar dene"), yuk: false, acik: true } }));
+    }
+  }
   // Yerel yedek öneriler (AI servisine ulaşılamazsa)
   function yerelAiOneriler() {
     const meslek = meslekAd || (profilBilgi && profilBilgi.pro && profilBilgi.pro.meslek) || t("aiUzman", "uzman");
@@ -6996,14 +7033,25 @@ export default function Anasayfa({ pro = false }) {
                 // İMMERSİF MEDYA KARTI — her şey fotoğrafın ÜZERİNDE (TikTok gibi), çerçeve yok
                 // YAZI BLOĞU — varsayılan AYRI şerit (medyayı kapatmaz); p.yaziUstunde ise medyanın üzerinde.
                 // YAZI + Çevir/Sor bloğu. "Sor" HER ZAMAN çıkar (yazı olmasa da: Gloxoo fotoğrafı/videoyu okuyup kullanıcının diline çevirir/anlatır — resmin İÇİNDEKİ yazıyı da). "Çevir" yalnız gönderi metni varsa.
+                // Bu gönderi için ÇEVİRİ metni (metin gönderisinde p.yazi çevirisi; resimli gönderide resimden okunan çeviri)
+                const cevAcik = ceviri[anahtar] && ceviri[anahtar].acik;
+                const cevMetin = ceviri[anahtar] && ceviri[anahtar].metin;
+                const cevYuk = ceviri[anahtar] && ceviri[anahtar].yuk;
                 const yaziBlokIc = (
                   <>
-                    {p.yazi && <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{metniLinkle((ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>}
+                    {/* ALTYAZI: gönderi metni varsa onu (çeviri açıksa çevirisini). Metin YOKSA ama RESİM ÇEVİRİSİ açıksa → çeviriyi burada göster. */}
+                    {(p.yazi || (cevAcik && (cevMetin || cevYuk))) && (
+                      <div translate="no" className={"apr-altyazi notranslate" + (uzun && p.yazi ? " kisa" : "")} onClick={() => uzun && p.yazi && setTamFoto(p)}>
+                        {p.yazi
+                          ? <>{metniLinkle(cevAcik && cevMetin ? cevMetin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</>
+                          : (cevYuk ? t("ceviriliyor", "Çevriliyor…") : metniLinkle(cevMetin || ""))}
+                      </div>
+                    )}
                     <span className="apr-alt-arac">
-                      {/* ÇEVİR her zaman: metin varsa yerinde çevirir; metin YOKSA (yazı resmin içinde) Gloxoo resmi okuyup çevirir */}
-                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, anahtar); else yaziAISor(p); }}>
+                      {/* ÇEVİR: metin varsa yerinde çevirir; metin YOKSA (yazı resmin içinde) resmi OKUYUP çeviriyi burada gösterir (Gloxoo penceresi açmaz) */}
+                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, anahtar); else resimCevir(p, anahtar); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
-                        {p.yazi ? (ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))) : t("cevir", "Çevir")}
+                        {cevYuk ? t("ceviriliyor", "Çevriliyor…") : (cevAcik && cevMetin ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
                       </button>
                       <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
                     </span>
@@ -8478,13 +8526,14 @@ export default function Anasayfa({ pro = false }) {
         // Tam ekran okuyucu da ÇEVİRİYİ taşır: feed'de çevirdiysen burada da çevrili açılır (aynı anahtar = p.id)
         const tfKey = p.id || "tf";
         const tfCev = ceviri[tfKey];
-        const tfMetin = (tfCev && tfCev.acik && tfCev.metin) ? tfCev.metin : p.yazi;
+        // metin gönderisinde p.yazi çevirisi; resimli gönderide resimden okunan çeviri (p.yazi boşsa)
+        const tfMetin = (tfCev && tfCev.acik && tfCev.metin) ? tfCev.metin : (p.yazi || (tfCev && tfCev.acik && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : ""));
         const tfCevBtn = (
           <span className="tf-cevir-arac">
-            {/* ÇEVİR her zaman: metin varsa yerinde çevirir; metin YOKSA Gloxoo resmi/videoyu okuyup çevirir */}
-            <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, tfKey); else yaziAISor(p); }}>
+            {/* ÇEVİR: metin varsa yerinde çevirir; metin YOKSA resmi/videoyu OKUYUP çeviriyi burada gösterir (Gloxoo açmaz) */}
+            <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, tfKey); else resimCevir(p, tfKey); }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
-              {p.yazi ? (tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))) : t("cevir", "Çevir")}
+              {tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik && tfCev.metin ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
             </button>
             {/* SOR her zaman (yazı olmasa da: Gloxoo fotoğraf/videoyu okuyup kullanıcının diline çevirir/anlatır) */}
             <button className="ana-post-cevir tf-cevir tf-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
@@ -8585,7 +8634,7 @@ export default function Anasayfa({ pro = false }) {
               {/* YAZI + Çevir/Sor (foto/video açıklaması). Yazı YOKSA da Sor düğmesi çıkar (Gloxoo görseli/videoyu okuyup çevirir). */}
               {!metinPost && (
                 <div className="tf-alt" onClick={(e) => e.stopPropagation()}>
-                  {p.yazi && <div translate="no" className="tf-yazi notranslate">{metniLinkle(tfMetin)}</div>}
+                  {(p.yazi || (tfCev && tfCev.acik && (tfCev.metin || tfCev.yuk))) && <div translate="no" className="tf-yazi notranslate">{metniLinkle(tfMetin)}</div>}
                   {tfCevBtn}
                 </div>
               )}
