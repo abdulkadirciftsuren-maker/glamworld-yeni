@@ -5425,7 +5425,10 @@ export default function Anasayfa({ pro = false }) {
     }
   };
   async function cevirToggle(p, key) {
-    if (!key || !p.yazi) return;
+    // Görünen yazı: önce ALT YAZI (p.yazi), o yoksa BAŞLIK (p.baslik) çevrilir.
+    // (Kullanıcının gönderisinde yazı bazen "başlık" alanında; eskiden başlık HİÇ çevrilmiyordu → düzeltildi.)
+    const kaynakMetin = p.yazi || p.baslik || "";
+    if (!key || !kaynakMetin) return;
     const mevcut = ceviri[key];
     if (mevcut && mevcut.metin) { setCeviri((s) => ({ ...s, [key]: { ...mevcut, acik: !mevcut.acik } })); return; }
     if (mevcut && mevcut.yuk) return;
@@ -5434,11 +5437,11 @@ export default function Anasayfa({ pro = false }) {
     try {
       const r = await fetch(AI_KOPRU, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sistem: `Sen bir cevirmensin. Verilen metni ${dilAd} diline DOGAL ve akici cevir. SADECE ceviriyi yaz; aciklama, baslik, tirnak veya ek kelime EKLEME.`, prompt: (p.yazi || "").slice(0, 4000) }),
+        body: JSON.stringify({ sistem: `Sen bir cevirmensin. Verilen metni ${dilAd} diline DOGAL ve akici cevir. SADECE ceviriyi yaz; aciklama, baslik, tirnak veya ek kelime EKLEME.`, prompt: kaynakMetin.slice(0, 4000) }),
       });
       const veri = await r.json();
       const metin = (veri && veri.metin) ? veri.metin.trim() : "";
-      setCeviri((s) => ({ ...s, [key]: { metin: metin || p.yazi, yuk: false, acik: true } }));
+      setCeviri((s) => ({ ...s, [key]: { metin: metin || kaynakMetin, yuk: false, acik: true } }));
     } catch (e) {
       setCeviri((s) => ({ ...s, [key]: { metin: t("ceviriHata", "Çevrilemedi, tekrar dene"), yuk: false, acik: true } }));
     }
@@ -7039,8 +7042,9 @@ export default function Anasayfa({ pro = false }) {
                 const cevYuk = ceviri[anahtar] && ceviri[anahtar].yuk;
                 const yaziBlokIc = (
                   <>
-                    {/* ALTYAZI: gönderi metni varsa onu (çeviri açıksa çevirisini). Metin YOKSA ama RESİM ÇEVİRİSİ açıksa → çeviriyi burada göster. */}
-                    {(p.yazi || (cevAcik && (cevMetin || cevYuk))) && (
+                    {/* ALTYAZI: gönderi metni varsa onu (çeviri açıksa çevirisini). Metin YOKSA ama RESİM ÇEVİRİSİ açıksa → çeviriyi burada göster.
+                        BAŞLIK varsa çeviri başlıkta gösterilir (yukarıda) → burada TEKRAR gösterme (çift olmasın). */}
+                    {(p.yazi || (!p.baslik && cevAcik && (cevMetin || cevYuk))) && (
                       <div translate="no" className={"apr-altyazi notranslate" + (uzun && p.yazi ? " kisa" : "")} onClick={() => uzun && p.yazi && setTamFoto(p)}>
                         {p.yazi
                           ? <>{metniLinkle(cevAcik && cevMetin ? cevMetin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</>
@@ -7049,7 +7053,7 @@ export default function Anasayfa({ pro = false }) {
                     )}
                     <span className="apr-alt-arac">
                       {/* ÇEVİR: metin varsa yerinde çevirir; metin YOKSA (yazı resmin içinde) resmi OKUYUP çeviriyi burada gösterir (Gloxoo penceresi açmaz) */}
-                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, anahtar); else resimCevir(p, anahtar); }}>
+                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi || p.baslik) cevirToggle(p, anahtar); else resimCevir(p, anahtar); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
                         {cevYuk ? t("ceviriliyor", "Çevriliyor…") : (cevAcik && cevMetin ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
                       </button>
@@ -7064,8 +7068,9 @@ export default function Anasayfa({ pro = false }) {
                     {konumRozet}
                     {p.baslik && (
                       <div className={"ana-post-baslik" + (baslikAcikSet.has(p.id) ? " acik" : "")} onClick={(e) => e.stopPropagation()}>
-                        <span className="ana-post-baslik-metin">{p.baslik}</span>
-                        {p.baslik.length > 70 && (
+                        {/* Alt yazı YOKSA başlık ana metindir → Çevir'e basınca AYNI YERDE çeviriyi göster (orijinal kaybolur, çeviri gelir). */}
+                        <span className="ana-post-baslik-metin">{(!p.yazi && cevAcik && cevMetin) ? cevMetin : (!p.yazi && cevYuk ? t("ceviriliyor", "Çevriliyor…") : p.baslik)}</span>
+                        {p.baslik.length > 70 && !(!p.yazi && cevAcik && cevMetin) && (
                           <button className="ana-post-baslik-dev" onClick={(e) => { e.stopPropagation(); setBaslikAcikSet((s) => { const n = new Set(s); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; }); }}>
                             {baslikAcikSet.has(p.id) ? t("gizle", "gizle") : t("devamOku", "…devamını oku")}
                           </button>
@@ -8527,11 +8532,11 @@ export default function Anasayfa({ pro = false }) {
         const tfKey = p.id || "tf";
         const tfCev = ceviri[tfKey];
         // metin gönderisinde p.yazi çevirisi; resimli gönderide resimden okunan çeviri (p.yazi boşsa)
-        const tfMetin = (tfCev && tfCev.acik && tfCev.metin) ? tfCev.metin : (p.yazi || (tfCev && tfCev.acik && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : ""));
+        const tfMetin = (tfCev && tfCev.acik && tfCev.metin) ? tfCev.metin : ((p.yazi || p.baslik) || (tfCev && tfCev.acik && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : ""));
         const tfCevBtn = (
           <span className="tf-cevir-arac">
             {/* ÇEVİR: metin varsa yerinde çevirir; metin YOKSA resmi/videoyu OKUYUP çeviriyi burada gösterir (Gloxoo açmaz) */}
-            <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, tfKey); else resimCevir(p, tfKey); }}>
+            <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi || p.baslik) cevirToggle(p, tfKey); else resimCevir(p, tfKey); }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
               {tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik && tfCev.metin ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
             </button>
@@ -8634,7 +8639,7 @@ export default function Anasayfa({ pro = false }) {
               {/* YAZI + Çevir/Sor (foto/video açıklaması). Yazı YOKSA da Sor düğmesi çıkar (Gloxoo görseli/videoyu okuyup çevirir). */}
               {!metinPost && (
                 <div className="tf-alt" onClick={(e) => e.stopPropagation()}>
-                  {(p.yazi || (tfCev && tfCev.acik && (tfCev.metin || tfCev.yuk))) && <div translate="no" className="tf-yazi notranslate">{metniLinkle(tfMetin)}</div>}
+                  {(p.yazi || p.baslik || (tfCev && tfCev.acik && (tfCev.metin || tfCev.yuk))) && <div translate="no" className="tf-yazi notranslate">{metniLinkle(tfMetin)}</div>}
                   {tfCevBtn}
                 </div>
               )}
