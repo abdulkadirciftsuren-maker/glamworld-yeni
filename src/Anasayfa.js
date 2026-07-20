@@ -7000,12 +7000,11 @@ export default function Anasayfa({ pro = false }) {
                   <>
                     {p.yazi && <div translate="no" className={"apr-altyazi notranslate" + (uzun ? " kisa" : "")} onClick={() => uzun && setTamFoto(p)}>{metniLinkle((ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</div>}
                     <span className="apr-alt-arac">
-                      {p.yazi && (
-                        <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
-                          {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
-                        </button>
-                      )}
+                      {/* ÇEVİR her zaman: metin varsa yerinde çevirir; metin YOKSA (yazı resmin içinde) Gloxoo resmi okuyup çevirir */}
+                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, anahtar); else yaziAISor(p); }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
+                        {p.yazi ? (ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))) : t("cevir", "Çevir")}
+                      </button>
                       <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
                     </span>
                   </>
@@ -8482,12 +8481,11 @@ export default function Anasayfa({ pro = false }) {
         const tfMetin = (tfCev && tfCev.acik && tfCev.metin) ? tfCev.metin : p.yazi;
         const tfCevBtn = (
           <span className="tf-cevir-arac">
-            {p.yazi && (
-              <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, tfKey); }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
-                {tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
-              </button>
-            )}
+            {/* ÇEVİR her zaman: metin varsa yerinde çevirir; metin YOKSA Gloxoo resmi/videoyu okuyup çevirir */}
+            <button className="ana-post-cevir tf-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi) cevirToggle(p, tfKey); else yaziAISor(p); }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
+              {p.yazi ? (tfCev && tfCev.yuk ? t("ceviriliyor", "Çevriliyor…") : (tfCev && tfCev.acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))) : t("cevir", "Çevir")}
+            </button>
             {/* SOR her zaman (yazı olmasa da: Gloxoo fotoğraf/videoyu okuyup kullanıcının diline çevirir/anlatır) */}
             <button className="ana-post-cevir tf-cevir tf-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
           </span>
