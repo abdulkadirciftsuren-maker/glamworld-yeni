@@ -5016,13 +5016,19 @@ export default function Anasayfa({ pro = false }) {
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
     // Konuşma bitince canliDevam otomatik tekrar dinlemeye geçirir (kullanıcının düğmesi otomatik açılır).
     if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
-    // ===== CANLI DİNLEMEDE TARAYICI SES TANIMASI KAPALI (BİP SORUNU) =====
-    // Android, tarayıcının ses tanımasını (SpeechRecognition) HER başlattığında bir "tık" BİP çalıyor; canlı sohbet
-    // sürekli durup başladığı için "her saniye tık tık tık" oluyordu (kullanıcı: "rahatsız ediyor"). Bu yüzden canlı
-    // dinlemede tarayıcı tanıması KULLANILMIYOR → aşağıdaki BİPSİZ yol (mikrofonu MediaRecorder ile dinle + Whisper ile
-    // yazıya çevir) kullanılıyor. Böylece hiç "tık" sesi çıkmaz. (Yazıyla dikte için ayrı düğme hâlâ tarayıcı tanıması kullanır.)
-    const SR = null;
-    if (SR) {
+    // ===== SESLİ GİRİŞ: SADECE TARAYICININ KENDİ SES TANIMASI (ÜCRETSİZ, ANAHTAR GEREKMEZ) =====
+    // ÖNEMLİ: Sesi yazıya çeviren Whisper yolu KAPATILDI — worker'da OpenAI anahtarı yok ("OPENAI_API_KEY yok" hatası veriyordu)
+    // VE o yol mikrofonu SÜREKLİ AÇIK tutup Gloxoo'nun sesli okumasını KISIYORDU (konuşması duyulmuyordu). Artık yalnızca
+    // tarayıcı tanıması kullanılır ve sessizlikte KENDİLİĞİNDEN TEKRAR BAŞLAMAZ (böylece "her saniye tık tık tık" bitti;
+    // sıra, Gloxoo cevabı okuduktan sonra ya da sen 🎤'a basınca bir kez dinlemeye gelir). Yazıyla dikte düğmesi ayrıdır.
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      // Bu tarayıcıda sesli GİRİŞ yok → canlı mikrofonu kapat. Gloxoo cevapları YİNE SESLİ OKUR; sen YAZARAK sorabilirsin.
+      canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
+      setKucukMesaj(t("sesGirisYok", "Sesle konuşma bu tarayıcıda yok — yazarak sor, cevabı sesli okurum."));
+      return;
+    }
+    {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
         const rec = new SR();
@@ -5030,10 +5036,10 @@ export default function Anasayfa({ pro = false }) {
         rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
         recognitionRef.current = rec;
         let bitti = false;
-        const sonlan = (tekrarDinle) => {
+        const sonlan = () => {
           if (bitti) return; bitti = true;
           recognitionRef.current = null; setDinliyor(false);
-          if (tekrarDinle && canliSohbetRef.current && !aiKonusuyorRef.current && !(window.speechSynthesis && window.speechSynthesis.speaking)) canliDinle();
+          // SESSİZLİKTE KENDİLİĞİNDEN TEKRAR DİNLEME (tık-tık olmasın). Sıra: Gloxoo cevabı okuyunca (canliDevam) ya da sen 🎤'a basınca bir kez dinler.
         };
         rec.onresult = (e) => {
           if (bitti) return;
@@ -5046,11 +5052,16 @@ export default function Anasayfa({ pro = false }) {
           if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; recognitionRef.current = null; setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
           sonlan(true); // no-speech / aborted / network → tekrar dinle
         };
-        rec.onend = () => sonlan(true);
+        rec.onend = () => sonlan();
         setDinliyor(true);
         rec.start();
         return;
-      } catch (e) { try { recognitionRef.current = null; } catch (e2) {} /* başlatılamadı → aşağıdaki Whisper yoluna düş */ }
+      } catch (e) {
+        try { recognitionRef.current = null; } catch (e2) {}
+        setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false);
+        setKucukMesaj(t("sesGirisYok", "Sesle konuşma açılamadı — yazarak sor, cevabı sesli okurum."));
+        return; // BOZUK Whisper yoluna DÜŞME (worker'da OpenAI anahtarı yok → "OPENAI_API_KEY yok")
+      }
     }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     try {
