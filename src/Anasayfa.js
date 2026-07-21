@@ -5016,12 +5016,12 @@ export default function Anasayfa({ pro = false }) {
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
     // Konuşma bitince canliDevam otomatik tekrar dinlemeye geçirir (kullanıcının düğmesi otomatik açılır).
     if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
-    // ===== ÖNCE TARAYICININ KENDİ SES TANIMASI (OpenAI/Whisper GEREKMEZ, ÜCRETSİZ) =====
-    // Ses→yazı için OpenAI anahtarına ihtiyaç YOK: Chrome/Android'in yerleşik tanımasını kullanır.
-    // ÖNEMLİ: continuous=false + interimResults=false + SADECE SON final sonuç alınır → Android'in
-    // "aynı cümleyi biriktirip 10x tekrar" hatası OLMAZ (continuous=true bunu tetikliyordu, geri alındı).
-    // Yine de güvenlik için gönderirken tekrarSil() uygulanır.
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // ===== CANLI DİNLEMEDE TARAYICI SES TANIMASI KAPALI (BİP SORUNU) =====
+    // Android, tarayıcının ses tanımasını (SpeechRecognition) HER başlattığında bir "tık" BİP çalıyor; canlı sohbet
+    // sürekli durup başladığı için "her saniye tık tık tık" oluyordu (kullanıcı: "rahatsız ediyor"). Bu yüzden canlı
+    // dinlemede tarayıcı tanıması KULLANILMIYOR → aşağıdaki BİPSİZ yol (mikrofonu MediaRecorder ile dinle + Whisper ile
+    // yazıya çevir) kullanılıyor. Böylece hiç "tık" sesi çıkmaz. (Yazıyla dikte için ayrı düğme hâlâ tarayıcı tanıması kullanır.)
+    const SR = null;
     if (SR) {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
