@@ -2152,6 +2152,20 @@ export default function Anasayfa({ pro = false }) {
     }, 1400);
     return () => clearTimeout(ti);
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // GÜVENLİ YENİLEME — sayfayı en fazla 30 SANİYEDE BİR yeniler. GitHub sunucuları yeni yayından sonra bir süre
+  // FARKLI sürüm gösterebiliyor (kimi "yeni", kimi "eski"); eski kod bunu görünce "yeni var→yenile→eski→yenile" diye
+  // SÜREKLİ yeniliyordu → sayfa PARLIYOR, Gloxoo yazısı uçuyor, konuşamıyor, hiçbir şey yapılamıyordu. Bu, o döngüyü kırar.
+  const guvenliYenile = () => {
+    try {
+      if (window.__groxYenilendi) return;                 // bu yüklemede zaten yenilendi
+      const simdi = Date.now();
+      let son = 0; try { son = parseInt(sessionStorage.getItem("groxSonYenileMs") || "0", 10); } catch (e) {}
+      if (son && simdi - son < 30000) return;             // 30 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
+      window.__groxYenilendi = true;
+      try { sessionStorage.setItem("groxSonYenileMs", String(simdi)); } catch (e) {}
+      window.location.reload();
+    } catch (e) {}
+  };
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
@@ -2159,7 +2173,7 @@ export default function Anasayfa({ pro = false }) {
     try {
       navigator.serviceWorker.addEventListener("message", (ev) => {
         if (ev && ev.data && ev.data.tip === "sw-guncellendi") {
-          try { if (!window.__groxYenilendi) { window.__groxYenilendi = true; window.location.reload(); } } catch (e) {}
+          guvenliYenile();
         }
       });
     } catch (e) {}
@@ -2170,7 +2184,7 @@ export default function Anasayfa({ pro = false }) {
         const yeni = reg.installing; if (!yeni) return;
         yeni.addEventListener("statechange", () => {
           if (yeni.state === "activated" && navigator.serviceWorker.controller) {
-            try { if (!window.__groxYenilendi) { window.__groxYenilendi = true; window.location.reload(); } } catch (e) {}
+            guvenliYenile();
           }
         });
       });
@@ -2202,10 +2216,18 @@ export default function Anasayfa({ pro = false }) {
         if (!r.ok) return;
         const html = await r.text();
         const yeni = (html.match(/main\.[a-z0-9]+\.js/) || [""])[0];
-        if (yeni && yeni !== suanki) { // sunucuda YENİ sürüm var → otomatik yenile (tek sefer)
-          window.__groxYenilendi = true;
-          try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
-          window.location.reload();
+        if (yeni && yeni !== suanki) { // sunucuda FARKLI sürüm var
+          // CDN TUTARSIZLIĞINA KARŞI: aynı yeni sürümü ÜST ÜSTE 2 kez görmeden yenileme. GitHub'ın kenar sunucuları
+          // yeni yayından sonra bir süre farklı sürüm gösterebiliyor; tek görüşte yenilersek "yeni→eski→yeni" döngüsü
+          // (parlama) oluyordu. İki kontrol de aynı yeni sürümü derse → gerçekten yayınlanmış → güvenle yenile.
+          if (window.__groxYeniHash === yeni) {
+            try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
+            guvenliYenile();
+          } else {
+            window.__groxYeniHash = yeni; // İLK görüş → doğrulamak için sonraki kontrolü bekle
+          }
+        } else if (window.__groxYeniHash) {
+          window.__groxYeniHash = null; // sunucu tekrar mevcut sürümü gösterdi (tutarsızdı) → sıfırla
         }
       } catch (e) {}
     };
