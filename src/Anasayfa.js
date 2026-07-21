@@ -4855,13 +4855,10 @@ export default function Anasayfa({ pro = false }) {
             try { onIlerleme(frac); } catch (e) {}
           }, 90);
         }
-        // ANDROID/CHROME: motor bazen "duraklatılmış" halde takılır → resume() ile uyandır (yoksa speak() sessiz kalır)
-        try { window.speechSynthesis.resume(); } catch (e) {}
         let charOfs = 0;
         parcalar.forEach((p, idx) => {
           const u = new SpeechSynthesisUtterance(p);
-          // Ses farklı dilden seçildiyse (o dilin sesi cihazda yoksa) okuma dilini SESİN diline ayarla → sessiz kalmasın
-          u.lang = (ses && ses.lang) ? ses.lang : sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+          u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           const buOfs = charOfs;
           // HER cümle okunmaya başlayınca haber ver (teleprompter geri uyumluluk) + ilk parçada zaman sıfırla
           u.onstart = () => { if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } };
@@ -4879,24 +4876,6 @@ export default function Anasayfa({ pro = false }) {
       else { try { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; baslat(); }; } catch (e) {} setTimeout(baslat, 400); }
     } catch (e) {}
   };
-  // TTS KİLİT AÇMA: bazı telefon tarayıcıları (iOS Safari + kimi Android), kullanıcı sayfaya İLK dokunana kadar
-  // programlı sesli okumayı ENGELLER → Gloxoo cevabını otomatik okurken SES ÇIKMIYOR. İlk dokunuşta sessiz bir
-  // konuşma başlatıp motoru "kilit aç"arız; sonraki tüm oto-okumalar (Gloxoo cevapları) sesli olur. (Bir kez çalışır.)
-  useEffect(() => {
-    let acildi = false;
-    const ac = () => {
-      if (acildi) return; acildi = true;
-      try { const u = new window.SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis.speak(u); window.speechSynthesis.resume(); } catch (e) {}
-      document.removeEventListener("pointerdown", ac); document.removeEventListener("touchend", ac);
-    };
-    try {
-      if ("speechSynthesis" in window) {
-        document.addEventListener("pointerdown", ac);
-        document.addEventListener("touchend", ac);
-      }
-    } catch (e) {}
-    return () => { try { document.removeEventListener("pointerdown", ac); document.removeEventListener("touchend", ac); } catch (e) {} };
-  }, []);
   // BALON İÇİ "OKU" DÜĞMESİ — mikrofondan TAMAMEN AYRI (sadece TTS). Bas=oku, tekrar bas=dur; okurken × gösterir.
   const [konusanMesaj, setKonusanMesaj] = useState(-1);
   const konusanMesajRef = useRef(-1);
