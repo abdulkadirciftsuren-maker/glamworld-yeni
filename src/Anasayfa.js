@@ -7040,15 +7040,16 @@ export default function Anasayfa({ pro = false }) {
                 const cevAcik = ceviri[anahtar] && ceviri[anahtar].acik;
                 const cevMetin = ceviri[anahtar] && ceviri[anahtar].metin;
                 const cevYuk = ceviri[anahtar] && ceviri[anahtar].yuk;
+                // RESİM ÇEVİRİSİ AÇIK MI: gönderide ayrı yazı YOK (yazı resmin İÇİNDE) ve çeviri açık →
+                // çeviriyi resmin TAM ÜSTÜNE koy (orijinal resim kaybolur, yerine çeviri gelir). "Orijinal"e basınca geri gelir.
+                const resimCevAcik = !p.yazi && !p.baslik && cevAcik && (cevMetin || cevYuk);
                 const yaziBlokIc = (
                   <>
-                    {/* ALTYAZI: gönderi metni varsa onu (çeviri açıksa çevirisini). Metin YOKSA ama RESİM ÇEVİRİSİ açıksa → çeviriyi burada göster.
-                        BAŞLIK varsa çeviri başlıkta gösterilir (yukarıda) → burada TEKRAR gösterme (çift olmasın). */}
-                    {(p.yazi || (!p.baslik && cevAcik && (cevMetin || cevYuk))) && (
+                    {/* ALTYAZI: yalnız gönderi METNİ (p.yazi) varsa (çeviri açıksa çevirisini) burada gösterilir.
+                        Yazı BAŞLIKTAysa çeviri başlıkta, yazı RESMİN İÇİNDEyse çeviri resmin ÜSTÜNDE (apr-resim-ceviri) → burada TEKRAR gösterme (çift olmasın). */}
+                    {p.yazi && (
                       <div translate="no" className={"apr-altyazi notranslate" + (uzun && p.yazi ? " kisa" : "")} onClick={() => uzun && p.yazi && setTamFoto(p)}>
-                        {p.yazi
-                          ? <>{metniLinkle(cevAcik && cevMetin ? cevMetin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</>
-                          : (cevYuk ? t("ceviriliyor", "Çevriliyor…") : metniLinkle(cevMetin || ""))}
+                        <>{metniLinkle(cevAcik && cevMetin ? cevMetin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</>
                       </div>
                     )}
                     <span className="apr-alt-arac">
@@ -7143,6 +7144,12 @@ export default function Anasayfa({ pro = false }) {
                       )}
                       {/* Sağ-ALT GLOXORG amblemi — SADECE VİDEO'da (fotoğrafa GLOXORG zaten gömülü/baked → ikinci rozet ÇİFT olmasın, kullanıcı isteği) */}
                       {p.video && !postMedyalar && <span className="ana-post-medya-rozet notranslate" translate="no"><Elmas4 c="#ffd700" /> GLOXORG</span>}
+                      {/* RESİM ÇEVİRİSİ — resmin İÇİNDEKİ yazının çevirisi, resmin TAM ÜSTÜNDE (AYNI YERDE): orijinal resim kaybolur, yerine çeviri gelir. "Orijinal"e basınca geri gelir. Zemin ALTIN (siyah asla). */}
+                      {resimCevAcik && (
+                        <div translate="no" className="apr-resim-ceviri notranslate" onClick={(e) => e.stopPropagation()}>
+                          {cevYuk ? <span className="apr-resim-ceviri-yuk">{t("ceviriliyor", "Çevriliyor…")}</span> : metniLinkle(cevMetin)}
+                        </div>
+                      )}
                     </div>
                     {/* YAZI + Çevir/Sor AYRI ŞERİT (varsayılan) — medyanın ALTINDA. Yazı yoksa da çıkar (içinde "Sor" var → Gloxoo resmi/videoyu okuyup çevirir). Yalnızca yazı medyanın ÜZERİNDEYSE burada tekrar gösterilmez. */}
                     {!(p.yazi && p.yaziUstunde) && (
