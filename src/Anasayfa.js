@@ -4810,15 +4810,12 @@ export default function Anasayfa({ pro = false }) {
         const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || ""); // bulut/doğal = tekleme YOK
         // KADIN + DÜZGÜN ses tercih et (kullanıcı: tekleyen kadın sesini değiştir). Bilinen kadın ses adları + female/kadın.
         const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|google türkçe|google.*(female)/i.test(v.name || "");
-        const secili = dilli.find((v) => iyi(v) && kadin(v)) // en iyi: doğal + kadın
+        // O DİLİN SESİ VARSA en iyisini seç. YOKSA null döndür → utterance'a SES ZORLAMA, sadece dil kodunu ver
+        // (işletim sistemi o dili AĞDAN seslendirebilir; yanlış dilden ses zorlamak sesi TAMAMEN keser → sessizlik).
+        return dilli.find((v) => iyi(v) && kadin(v)) // en iyi: doğal + kadın
           || dilli.find((v) => v.localService === false && kadin(v)) // bulut + kadın
           || dilli.find((v) => v.localService === false) // bulut (tekleme yok)
           || dilli.find(iyi) || dilli.find(kadin) || dilli[0] || null;
-        if (secili) return secili;
-        // O DİLİN SESİ CİHAZDA YOK → SESSİZ KALMASIN: cihazın VARSAYILAN/ilk sesiyle yine de oku
-        // (kullanıcı: "Gloxoo konuşmuyor, sesi çıkmıyor". Örn. arayüz Rusça ama telefonda Rusça ses yoksa,
-        //  eskiden hiç ses çıkmıyordu; artık en azından mevcut bir sesle okuyor.)
-        return sesler.find((v) => v.default) || sesler[0] || null;
       };
       // UZUN metni CÜMLELERE böl: Chrome masaüstünde uzun metin kesiliyor/tekliyor → kısa parçalar akıcı okunur
       const parcalar = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
