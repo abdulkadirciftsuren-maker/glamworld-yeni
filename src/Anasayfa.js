@@ -1654,13 +1654,13 @@ export default function Anasayfa({ pro = false }) {
     // KÜÇÜLTÜLMÜŞ (mini) maskota dokun = BÜYÜT (yeniden karşılama YOK — kaldığı yerden devam). KAPATMAZ.
     if (maskotMini || canliSohbetRef.current) {
       setMaskotMini(false); setMaskotTanit(true); setYardimciMod("sohbet");
+      if (!canliSohbetRef.current) { try { maskotCanliBaslat(); } catch (e) {} } // KAPALIYSA büyürken SES AÇ (istek)
       return;
     }
-    // KULLANICI KENDİSİ AÇTI → Gloxoo açılır. MİKROFON KENDİLİĞİNDEN AÇILMAZ (kullanıcı: "Gloxoo açıkken tink-tink
-    // ses çıkarıyor + hiç konuşmuyor"). SEBEP: otomatik canlı dinleme, tanıyıcıyı sürekli durdurup başlatıyor →
-    // Android her başlangıçta "tink" bip çalıyor VE konuşma sesini (TTS) kısıyor → Gloxoo duyulmuyor. Artık açılınca
-    // SESSİZCE hazır durur; konuşmak istersen alttaki 🎤 / "Canlı Sohbet" düğmesine BAS (yazabilirsin de). Gloxoo yazınca sesli okur.
+    // KULLANICI KENDİSİ AÇTI → Gloxoo KENDİLİĞİNDEN KONUŞMAZ; açılır ve DİNLER (kullanıcı konuşur/yazar).
+    // Uzun karşılama SADECE ilk üyelikte + yeni sürümde otomatik olur (aşağıdaki effect), elle açınca DEĞİL.
     setMaskotTur("grox"); setMaskotMini(false); setMaskotTanit(true); setYardimciMod("sohbet");
+    try { maskotCanliBaslat(); } catch (e) {} // dinlemeye başla (kullanıcı konuşsun) — kendi konuşmaz
   }
   // MASKOT KARŞILAMA — yeni üye ilk girişte ana sayfada maskot "hoş geldin" der (tek sefer). Kapatınca/dokununca yerine çekilir.
   const [maskotSelam, setMaskotSelam] = useState(false);
@@ -1867,7 +1867,7 @@ export default function Anasayfa({ pro = false }) {
     // Kullanıcı KENDİSİ dokununca (oto değil) BÜYÜK kalır, kapatmayı kullanıcı yapar.
     const bitince = oto ? () => { try { setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); } catch (e) {} } : undefined;
     try { sesliOku(selam, bitince, undefined, teleIlerleme); } catch (e) {}
-    // MİKROFON OTOMATİK AÇILMAZ (tink-tink bip + sesi kısma sorunu) → Gloxoo karşılamayı SESLİ okur; konuşmak istersen 🎤 düğmesine bas.
+    if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
   };
   // YENİ ÜYE KARŞILAMASI — ilk kez kayıt olan kişi: Gloxoo BÜYÜK açılır, KAPANMAZ (okusun); kendini + GLOXORG + gloxorg.com
   // + Gloxoo.com + 🐻 Ekspert'i İKONLU anlatır ve 7 Eksen / eylem planına yönlendirir.
@@ -1974,7 +1974,7 @@ export default function Anasayfa({ pro = false }) {
     setMaskotTur("grox"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
     // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
     try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
-    // MİKROFON OTOMATİK AÇILMAZ (tink-tink bip + sesi kısma sorunu) → Gloxoo sayfayı SESLİ anlatır; konuşmak istersen 🎤 düğmesine bas.
+    if (!otomatik) maskotCanliBaslat(); // düğmeyle açılınca: karşılamadan sonra mikrofonu açıp seni bekler
   };
   const [paylasDuzen, setPaylasDuzen] = useState(null); // paylaşım fotoğrafının katman hafızası (yeniden düzenle)
   const [paylasZemin, setPaylasZemin] = useState(""); // yazılı gönderi ZEMİN (arka plan) rengi/gradyanı
@@ -2153,14 +2153,14 @@ export default function Anasayfa({ pro = false }) {
     return () => clearTimeout(ti);
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   // GÜVENLİ YENİLEME — sayfayı en fazla 30 SANİYEDE BİR yeniler. GitHub sunucuları yeni yayından sonra bir süre
-  // FARKLI sürüm gösterebiliyor (kimi "yeni", kimi "eski"); eski kod bunu görünce "yeni var→yenile→eski→yenile" diye
-  // SÜREKLİ yeniliyordu → sayfa PARLIYOR, Gloxoo yazısı uçuyor, konuşamıyor, hiçbir şey yapılamıyordu. Bu, o döngüyü kırar.
+  // FARKLI sürüm gösterebiliyor; eski kod bunu görünce "yeni var→yenile→eski→yenile" diye SÜREKLİ yeniliyordu →
+  // sayfa PARLIYOR, konuşma kesiliyor, hiçbir şey yapılamıyordu. Bu, o döngüyü kırar.
   const guvenliYenile = () => {
     try {
-      if (window.__groxYenilendi) return;                 // bu yüklemede zaten yenilendi
+      if (window.__groxYenilendi) return;
       const simdi = Date.now();
       let son = 0; try { son = parseInt(sessionStorage.getItem("groxSonYenileMs") || "0", 10); } catch (e) {}
-      if (son && simdi - son < 30000) return;             // 30 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
+      if (son && simdi - son < 30000) return; // 30 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
       window.__groxYenilendi = true;
       try { sessionStorage.setItem("groxSonYenileMs", String(simdi)); } catch (e) {}
       window.location.reload();
@@ -2169,12 +2169,10 @@ export default function Anasayfa({ pro = false }) {
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    // Yeni servis çalışan "güncellendi" haberi gönderince → sayfayı BİR KEZ yenile (kullanıcı hep güncel sürümü görür)
+    // Yeni servis çalışan "güncellendi" haberi gönderince → sayfayı (güvenli) yenile
     try {
       navigator.serviceWorker.addEventListener("message", (ev) => {
-        if (ev && ev.data && ev.data.tip === "sw-guncellendi") {
-          guvenliYenile();
-        }
+        if (ev && ev.data && ev.data.tip === "sw-guncellendi") { guvenliYenile(); }
       });
     } catch (e) {}
     navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js").then((reg) => {
@@ -2217,9 +2215,7 @@ export default function Anasayfa({ pro = false }) {
         const html = await r.text();
         const yeni = (html.match(/main\.[a-z0-9]+\.js/) || [""])[0];
         if (yeni && yeni !== suanki) { // sunucuda FARKLI sürüm var
-          // CDN TUTARSIZLIĞINA KARŞI: aynı yeni sürümü ÜST ÜSTE 2 kez görmeden yenileme. GitHub'ın kenar sunucuları
-          // yeni yayından sonra bir süre farklı sürüm gösterebiliyor; tek görüşte yenilersek "yeni→eski→yeni" döngüsü
-          // (parlama) oluyordu. İki kontrol de aynı yeni sürümü derse → gerçekten yayınlanmış → güvenle yenile.
+          // CDN TUTARSIZLIĞINA KARŞI: aynı yeni sürümü ÜST ÜSTE 2 kez görmeden yenileme (yoksa "yeni→eski→yeni" parlama döngüsü olur)
           if (window.__groxYeniHash === yeni) {
             try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
             guvenliYenile();
@@ -2227,7 +2223,7 @@ export default function Anasayfa({ pro = false }) {
             window.__groxYeniHash = yeni; // İLK görüş → doğrulamak için sonraki kontrolü bekle
           }
         } else if (window.__groxYeniHash) {
-          window.__groxYeniHash = null; // sunucu tekrar mevcut sürümü gösterdi (tutarsızdı) → sıfırla
+          window.__groxYeniHash = null;
         }
       } catch (e) {}
     };
@@ -4832,8 +4828,6 @@ export default function Anasayfa({ pro = false }) {
         const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || ""); // bulut/doğal = tekleme YOK
         // KADIN + DÜZGÜN ses tercih et (kullanıcı: tekleyen kadın sesini değiştir). Bilinen kadın ses adları + female/kadın.
         const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|google türkçe|google.*(female)/i.test(v.name || "");
-        // O DİLİN SESİ VARSA en iyisini seç. YOKSA null döndür → utterance'a SES ZORLAMA, sadece dil kodunu ver
-        // (işletim sistemi o dili AĞDAN seslendirebilir; yanlış dilden ses zorlamak sesi TAMAMEN keser → sessizlik).
         return dilli.find((v) => iyi(v) && kadin(v)) // en iyi: doğal + kadın
           || dilli.find((v) => v.localService === false && kadin(v)) // bulut + kadın
           || dilli.find((v) => v.localService === false) // bulut (tekleme yok)
@@ -5016,19 +5010,13 @@ export default function Anasayfa({ pro = false }) {
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
     // Konuşma bitince canliDevam otomatik tekrar dinlemeye geçirir (kullanıcının düğmesi otomatik açılır).
     if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
-    // ===== SESLİ GİRİŞ: SADECE TARAYICININ KENDİ SES TANIMASI (ÜCRETSİZ, ANAHTAR GEREKMEZ) =====
-    // ÖNEMLİ: Sesi yazıya çeviren Whisper yolu KAPATILDI — worker'da OpenAI anahtarı yok ("OPENAI_API_KEY yok" hatası veriyordu)
-    // VE o yol mikrofonu SÜREKLİ AÇIK tutup Gloxoo'nun sesli okumasını KISIYORDU (konuşması duyulmuyordu). Artık yalnızca
-    // tarayıcı tanıması kullanılır ve sessizlikte KENDİLİĞİNDEN TEKRAR BAŞLAMAZ (böylece "her saniye tık tık tık" bitti;
-    // sıra, Gloxoo cevabı okuduktan sonra ya da sen 🎤'a basınca bir kez dinlemeye gelir). Yazıyla dikte düğmesi ayrıdır.
+    // ===== ÖNCE TARAYICININ KENDİ SES TANIMASI (OpenAI/Whisper GEREKMEZ, ÜCRETSİZ) =====
+    // Ses→yazı için OpenAI anahtarına ihtiyaç YOK: Chrome/Android'in yerleşik tanımasını kullanır.
+    // ÖNEMLİ: continuous=false + interimResults=false + SADECE SON final sonuç alınır → Android'in
+    // "aynı cümleyi biriktirip 10x tekrar" hatası OLMAZ (continuous=true bunu tetikliyordu, geri alındı).
+    // Yine de güvenlik için gönderirken tekrarSil() uygulanır.
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      // Bu tarayıcıda sesli GİRİŞ yok → canlı mikrofonu kapat. Gloxoo cevapları YİNE SESLİ OKUR; sen YAZARAK sorabilirsin.
-      canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
-      setKucukMesaj(t("sesGirisYok", "Sesle konuşma bu tarayıcıda yok — yazarak sor, cevabı sesli okurum."));
-      return;
-    }
-    {
+    if (SR) {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
         const rec = new SR();
@@ -5036,10 +5024,10 @@ export default function Anasayfa({ pro = false }) {
         rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
         recognitionRef.current = rec;
         let bitti = false;
-        const sonlan = () => {
+        const sonlan = (tekrarDinle) => {
           if (bitti) return; bitti = true;
           recognitionRef.current = null; setDinliyor(false);
-          // SESSİZLİKTE KENDİLİĞİNDEN TEKRAR DİNLEME (tık-tık olmasın). Sıra: Gloxoo cevabı okuyunca (canliDevam) ya da sen 🎤'a basınca bir kez dinler.
+          if (tekrarDinle && canliSohbetRef.current && !aiKonusuyorRef.current && !(window.speechSynthesis && window.speechSynthesis.speaking)) canliDinle();
         };
         rec.onresult = (e) => {
           if (bitti) return;
@@ -5052,16 +5040,11 @@ export default function Anasayfa({ pro = false }) {
           if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; recognitionRef.current = null; setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
           sonlan(true); // no-speech / aborted / network → tekrar dinle
         };
-        rec.onend = () => sonlan();
+        rec.onend = () => sonlan(true);
         setDinliyor(true);
         rec.start();
         return;
-      } catch (e) {
-        try { recognitionRef.current = null; } catch (e2) {}
-        setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false);
-        setKucukMesaj(t("sesGirisYok", "Sesle konuşma açılamadı — yazarak sor, cevabı sesli okurum."));
-        return; // BOZUK Whisper yoluna DÜŞME (worker'da OpenAI anahtarı yok → "OPENAI_API_KEY yok")
-      }
+      } catch (e) { try { recognitionRef.current = null; } catch (e2) {} /* başlatılamadı → aşağıdaki Whisper yoluna düş */ }
     }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     try {
