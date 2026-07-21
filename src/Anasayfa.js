@@ -1654,13 +1654,13 @@ export default function Anasayfa({ pro = false }) {
     // KÜÇÜLTÜLMÜŞ (mini) maskota dokun = BÜYÜT (yeniden karşılama YOK — kaldığı yerden devam). KAPATMAZ.
     if (maskotMini || canliSohbetRef.current) {
       setMaskotMini(false); setMaskotTanit(true); setYardimciMod("sohbet");
-      if (!canliSohbetRef.current) { try { maskotCanliBaslat(); } catch (e) {} } // KAPALIYSA büyürken SES AÇ (istek)
       return;
     }
-    // KULLANICI KENDİSİ AÇTI → Gloxoo KENDİLİĞİNDEN KONUŞMAZ; açılır ve DİNLER (kullanıcı konuşur/yazar).
-    // Uzun karşılama SADECE ilk üyelikte + yeni sürümde otomatik olur (aşağıdaki effect), elle açınca DEĞİL.
+    // KULLANICI KENDİSİ AÇTI → Gloxoo açılır. MİKROFON KENDİLİĞİNDEN AÇILMAZ (kullanıcı: "Gloxoo açıkken tink-tink
+    // ses çıkarıyor + hiç konuşmuyor"). SEBEP: otomatik canlı dinleme, tanıyıcıyı sürekli durdurup başlatıyor →
+    // Android her başlangıçta "tink" bip çalıyor VE konuşma sesini (TTS) kısıyor → Gloxoo duyulmuyor. Artık açılınca
+    // SESSİZCE hazır durur; konuşmak istersen alttaki 🎤 / "Canlı Sohbet" düğmesine BAS (yazabilirsin de). Gloxoo yazınca sesli okur.
     setMaskotTur("grox"); setMaskotMini(false); setMaskotTanit(true); setYardimciMod("sohbet");
-    try { maskotCanliBaslat(); } catch (e) {} // dinlemeye başla (kullanıcı konuşsun) — kendi konuşmaz
   }
   // MASKOT KARŞILAMA — yeni üye ilk girişte ana sayfada maskot "hoş geldin" der (tek sefer). Kapatınca/dokununca yerine çekilir.
   const [maskotSelam, setMaskotSelam] = useState(false);
@@ -1867,7 +1867,7 @@ export default function Anasayfa({ pro = false }) {
     // Kullanıcı KENDİSİ dokununca (oto değil) BÜYÜK kalır, kapatmayı kullanıcı yapar.
     const bitince = oto ? () => { try { setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); } catch (e) {} } : undefined;
     try { sesliOku(selam, bitince, undefined, teleIlerleme); } catch (e) {}
-    if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
+    // MİKROFON OTOMATİK AÇILMAZ (tink-tink bip + sesi kısma sorunu) → Gloxoo karşılamayı SESLİ okur; konuşmak istersen 🎤 düğmesine bas.
   };
   // YENİ ÜYE KARŞILAMASI — ilk kez kayıt olan kişi: Gloxoo BÜYÜK açılır, KAPANMAZ (okusun); kendini + GLOXORG + gloxorg.com
   // + Gloxoo.com + 🐻 Ekspert'i İKONLU anlatır ve 7 Eksen / eylem planına yönlendirir.
@@ -1974,7 +1974,7 @@ export default function Anasayfa({ pro = false }) {
     setMaskotTur("grox"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
     // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
     try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
-    if (!otomatik) maskotCanliBaslat(); // düğmeyle açılınca: karşılamadan sonra mikrofonu açıp seni bekler
+    // MİKROFON OTOMATİK AÇILMAZ (tink-tink bip + sesi kısma sorunu) → Gloxoo sayfayı SESLİ anlatır; konuşmak istersen 🎤 düğmesine bas.
   };
   const [paylasDuzen, setPaylasDuzen] = useState(null); // paylaşım fotoğrafının katman hafızası (yeniden düzenle)
   const [paylasZemin, setPaylasZemin] = useState(""); // yazılı gönderi ZEMİN (arka plan) rengi/gradyanı
