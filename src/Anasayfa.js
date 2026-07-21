@@ -1539,13 +1539,40 @@ export default function Anasayfa({ pro = false }) {
   const aiKonusuyorRef = useRef(false); // Gloxoo KONUŞUYOR mu (async okunur): konuşurken mikrofon dinlemez (yarı-çift yönlü)
   const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
   const maskotBosRef = useRef(0);
+  const konusBasRef = useRef(0);
   useEffect(() => {
     const id = setInterval(() => {
       let s = false; try { s = !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (e) {}
-      if (s) { maskotBosRef.current = 0; aiKonusuyorRef.current = true; setAiKonusuyor((p) => (p ? p : true)); }
-      else { maskotBosRef.current++; if (maskotBosRef.current >= 2) { aiKonusuyorRef.current = false; setAiKonusuyor((p) => (p ? false : p)); } } // 2 boş ölçüm (~400ms) → cümle arası boşlukta titremesin
+      if (s) {
+        maskotBosRef.current = 0;
+        if (!konusBasRef.current) konusBasRef.current = Date.now();
+        // TAKILMA EMNİYETİ (kullanıcı: "sayfa sürekli parlıyor"): Chrome bazen "speaking=true" halinde SES ÜRETMEDEN
+        // TAKILIR; o zaman maskot/balon "konuşuyor" animasyonu SONSUZA KADAR döner = SÜREKLİ PARLAMA + düğme takılması.
+        // Tek bir cevabın konuşması bu kadar sürmez → 14 sn'yi geçince motoru İPTAL et, durumu temizle → parlama durur.
+        else if (Date.now() - konusBasRef.current > 20000) { try { window.speechSynthesis.cancel(); } catch (e) {} konusBasRef.current = 0; maskotBosRef.current = 2; aiKonusuyorRef.current = false; setAiKonusuyor(false); return; }
+        aiKonusuyorRef.current = true; setAiKonusuyor((p) => (p ? p : true));
+      }
+      else { maskotBosRef.current++; if (maskotBosRef.current >= 2) { konusBasRef.current = 0; aiKonusuyorRef.current = false; setAiKonusuyor((p) => (p ? false : p)); } } // 2 boş ölçüm (~400ms) → cümle arası boşlukta titremesin
     }, 200);
     return () => clearInterval(id);
+  }, []);
+  // TTS KİLİT AÇMA (Chrome/Android): Tarayıcı, sesli okumayı yalnızca kullanıcı sayfaya DOKUNDUKTAN sonra serbest
+  // bırakır; cevap kendiliğinden gelince (dokunmadan) okuma SESSİZ kalıp "speaking=true" TAKILIYOR (parlama sebebi).
+  // İlk dokunuşta sessiz bir konuşmayla motoru "aç" → sonraki okumalar SESLİ olur ve düzgün biter (takılmaz).
+  useEffect(() => {
+    let acildi = false;
+    const ac = () => {
+      if (acildi) return;
+      try {
+        const ss = window.speechSynthesis; if (!ss) { acildi = true; return; }
+        const u = new window.SpeechSynthesisUtterance(" "); u.volume = 0;
+        ss.cancel(); ss.speak(u); ss.resume();
+        acildi = true;
+        try { document.removeEventListener("pointerdown", ac, true); document.removeEventListener("touchend", ac, true); } catch (e) {}
+      } catch (e) {}
+    };
+    try { document.addEventListener("pointerdown", ac, true); document.addEventListener("touchend", ac, true); } catch (e) {}
+    return () => { try { document.removeEventListener("pointerdown", ac, true); document.removeEventListener("touchend", ac, true); } catch (e) {} };
   }, []);
   const [aiOneriler, setAiOneriler] = useState([]); // yapay zeka yazı önerileri
   const [aiYukleniyor, setAiYukleniyor] = useState(false);
@@ -4897,10 +4924,15 @@ export default function Anasayfa({ pro = false }) {
   const konusanMesajRef = useRef(-1);
   const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; };
   const okuToggle = (metin, i) => {
+    // TAKILMA DÜZELTMESİ: Düğme "konuşuyor" görünüp de telefon SES ÜRETMEDİYSE (speaking=false),
+    // eski kod temizlemiyordu → düğme TAKILI kalıyordu (kullanıcı: "balon düğmesi bozuk, takılıyor").
+    // Artık: bu mesaj "okunuyor" işaretliyse (görsel olarak) VEYA gerçekten konuşuyorsa → BAS = DURDUR/temizle.
+    const buMesajAcik = (konusanMesajRef.current === i);
     let konusuyor = false;
     try { konusuyor = !!(window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)); } catch (e) {}
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
-    if (konusuyor) { okuTemizle(); return; } // bir şey konuşuyordu (oto-okuma dahil) → DURDUR
+    if (konusuyor || buMesajAcik) { okuTemizle(); return; } // konuşuyordu YA DA takılıydı → DURDUR + temizle (bir daha basınca yeniden okur)
+    try { window.speechSynthesis && window.speechSynthesis.resume(); } catch (e) {} // Chrome bazen "duraklatılmış" takılır → uyandır (ses çıksın)
     setKonusanMesaj(i); konusanMesajRef.current = i;
     sesliOku(metin, okuTemizle);
   };
