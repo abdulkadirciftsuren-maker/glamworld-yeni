@@ -4810,10 +4810,15 @@ export default function Anasayfa({ pro = false }) {
         const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || ""); // bulut/doğal = tekleme YOK
         // KADIN + DÜZGÜN ses tercih et (kullanıcı: tekleyen kadın sesini değiştir). Bilinen kadın ses adları + female/kadın.
         const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|google türkçe|google.*(female)/i.test(v.name || "");
-        return dilli.find((v) => iyi(v) && kadin(v)) // en iyi: doğal + kadın
+        const secili = dilli.find((v) => iyi(v) && kadin(v)) // en iyi: doğal + kadın
           || dilli.find((v) => v.localService === false && kadin(v)) // bulut + kadın
           || dilli.find((v) => v.localService === false) // bulut (tekleme yok)
           || dilli.find(iyi) || dilli.find(kadin) || dilli[0] || null;
+        if (secili) return secili;
+        // O DİLİN SESİ CİHAZDA YOK → SESSİZ KALMASIN: cihazın VARSAYILAN/ilk sesiyle yine de oku
+        // (kullanıcı: "Gloxoo konuşmuyor, sesi çıkmıyor". Örn. arayüz Rusça ama telefonda Rusça ses yoksa,
+        //  eskiden hiç ses çıkmıyordu; artık en azından mevcut bir sesle okuyor.)
+        return sesler.find((v) => v.default) || sesler[0] || null;
       };
       // UZUN metni CÜMLELERE böl: Chrome masaüstünde uzun metin kesiliyor/tekliyor → kısa parçalar akıcı okunur
       const parcalar = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
@@ -4853,10 +4858,13 @@ export default function Anasayfa({ pro = false }) {
             try { onIlerleme(frac); } catch (e) {}
           }, 90);
         }
+        // ANDROID/CHROME: motor bazen "duraklatılmış" halde takılır → resume() ile uyandır (yoksa speak() sessiz kalır)
+        try { window.speechSynthesis.resume(); } catch (e) {}
         let charOfs = 0;
         parcalar.forEach((p, idx) => {
           const u = new SpeechSynthesisUtterance(p);
-          u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+          // Ses farklı dilden seçildiyse (o dilin sesi cihazda yoksa) okuma dilini SESİN diline ayarla → sessiz kalmasın
+          u.lang = (ses && ses.lang) ? ses.lang : sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           const buOfs = charOfs;
           // HER cümle okunmaya başlayınca haber ver (teleprompter geri uyumluluk) + ilk parçada zaman sıfırla
           u.onstart = () => { if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } };
@@ -4874,6 +4882,24 @@ export default function Anasayfa({ pro = false }) {
       else { try { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; baslat(); }; } catch (e) {} setTimeout(baslat, 400); }
     } catch (e) {}
   };
+  // TTS KİLİT AÇMA: bazı telefon tarayıcıları (iOS Safari + kimi Android), kullanıcı sayfaya İLK dokunana kadar
+  // programlı sesli okumayı ENGELLER → Gloxoo cevabını otomatik okurken SES ÇIKMIYOR. İlk dokunuşta sessiz bir
+  // konuşma başlatıp motoru "kilit aç"arız; sonraki tüm oto-okumalar (Gloxoo cevapları) sesli olur. (Bir kez çalışır.)
+  useEffect(() => {
+    let acildi = false;
+    const ac = () => {
+      if (acildi) return; acildi = true;
+      try { const u = new window.SpeechSynthesisUtterance(" "); u.volume = 0; window.speechSynthesis.speak(u); window.speechSynthesis.resume(); } catch (e) {}
+      document.removeEventListener("pointerdown", ac); document.removeEventListener("touchend", ac);
+    };
+    try {
+      if ("speechSynthesis" in window) {
+        document.addEventListener("pointerdown", ac);
+        document.addEventListener("touchend", ac);
+      }
+    } catch (e) {}
+    return () => { try { document.removeEventListener("pointerdown", ac); document.removeEventListener("touchend", ac); } catch (e) {} };
+  }, []);
   // BALON İÇİ "OKU" DÜĞMESİ — mikrofondan TAMAMEN AYRI (sadece TTS). Bas=oku, tekrar bas=dur; okurken × gösterir.
   const [konusanMesaj, setKonusanMesaj] = useState(-1);
   const konusanMesajRef = useRef(-1);
