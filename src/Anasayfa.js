@@ -5038,16 +5038,18 @@ export default function Anasayfa({ pro = false }) {
     const ti = setInterval(() => {
       if (!canliSohbetRef.current) { clearInterval(ti); return; }
       bekle += 300;
-      let konusuyor = false; try { konusuyor = !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (e) {}
-      if ((bekle >= 700 && !konusuyor) || bekle > 45000) { clearInterval(ti); try { canliDinle(); } catch (e) {} }
+      // speaking VE pending: uzun cevap birden çok cümleye bölünür; cümleler ARASI boşlukta speaking bir an false olur
+      // ama sıradaki cümle "pending" (kuyrukta) → ikisini de kontrol et, yoksa mikrofon araya girip okumayı KESİYORDU.
+      let konusuyor = false; try { konusuyor = !!(window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)); } catch (e) {}
+      if ((bekle >= 900 && !konusuyor) || bekle > 45000) { clearInterval(ti); try { canliDinle(); } catch (e) {} }
     }, 300);
   };
   const canliDinle = async () => {
     if (!canliSohbetRef.current) return;
     if (mediaRecorderRef.current) return; // zaten dinliyor (çift kayıt olmasın)
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
-    // Konuşma bitince canliDevam otomatik tekrar dinlemeye geçirir (kullanıcının düğmesi otomatik açılır).
-    if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { setDinliyor(false); canliDevam(); return; }
+    // speaking VE pending: sıradaki cümle kuyruktaysa (pending) da dinleme AÇMA → uzun cevap cümleler arası kesilmesin.
+    if (aiKonusuyorRef.current || (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending))) { setDinliyor(false); canliDevam(); return; }
     // ===== ÖNCE TARAYICININ KENDİ SES TANIMASI (OpenAI/Whisper GEREKMEZ, ÜCRETSİZ) =====
     // Ses→yazı için OpenAI anahtarına ihtiyaç YOK: Chrome/Android'in yerleşik tanımasını kullanır.
     // ÖNEMLİ: continuous=false + interimResults=false + SADECE SON final sonuç alınır → Android'in
@@ -5185,8 +5187,8 @@ export default function Anasayfa({ pro = false }) {
   const aiKarsila = () => {
     const selam = aiSelamMetni();
     setYardimciMesajlar((s) => [...s, { rol: "ai", metin: selam, zamanMs: Date.now() }]);
-    sesliOku(selam);
-    if (canliSohbetRef.current) canliDevam(); // karşılama bitince dinlemeye geç (kesintisiz döngü, onend'e bağlı değil)
+    // Karşılama OKUNUP BİTİNCE dinlemeye geç (okuma bitmeden mikrofon açılıp KESMESİN — cevaplardaki gibi).
+    sesliOku(selam, () => { if (canliSohbetRef.current) canliDevam(); });
   };
   // GÖRÜNTÜLÜ SOHBET: kameradan O ANKİ kareyi JPEG base64 olarak al (AI'nın "görmesi" için)
   const kameraKare = () => {
