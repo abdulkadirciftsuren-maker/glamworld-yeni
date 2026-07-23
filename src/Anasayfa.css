@@ -17,6 +17,14 @@
 }
 /* Yazı yazılan alanlarda seçim AÇIK kalsın (yoksa yazamaz/düzeltemez) */
 .ana-kok input, .ana-kok textarea, .ana-kok [contenteditable="true"]{ user-select:text; -webkit-user-select:text; -ms-user-select:text; -webkit-touch-callout:default; }
+/* METİN SEÇ + KOPYALA (kullanıcı isteği: "tek bir kelimeyi kopyalamak istesem kopyalayabileyim; müşteri istediği kelimeye basıp kopyalasın"):
+   Gloxoo cevapları ve paylaşım yazıları PARMAKLA BASILI TUTUNCA seçilebilir → istediğin kelimeyi/parçayı kopyala (hepsini değil).
+   Kısa dokunuş yine eski işini yapar (aç/oku); UZUN BASIŞ = seç + kopyala menüsü çıkar. */
+.ana-kok .ai-msj, .ana-kok .ai-paylasim-metin,
+.ana-kok .apr-altyazi, .ana-kok .ana-post-yazi, .ana-kok .ana-post-baslik-metin,
+.ana-kok .apr-resim-ceviri, .ana-kok .tf-yazi, .ana-kok .tf-metin-kart {
+  user-select:text; -webkit-user-select:text; -ms-user-select:text; -webkit-touch-callout:default;
+}
 /* TEMİZ ARKA PLAN (kullanıcı): arka plan doğa fotoğrafı + baloncuklar + alttaki şehir düğmesi KALKSIN.
    DEĞERLER ŞERİDİ (.ana-serit-sar) AYNEN KALIR — ona DOKUNMA. */
 .ana-arka-foto{ display:none !important; }    /* arka plan doğa/şehir fotoğrafı */
