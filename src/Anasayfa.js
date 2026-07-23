@@ -4875,7 +4875,7 @@ export default function Anasayfa({ pro = false }) {
         // Böylece Android onboundary desteklemese bile yazı kelime kelime akmaya DEVAM eder (sonuna kadar).
         const toplamChar = temiz.length || 1;
         const temizKelimeSay = (temiz.split(/\s+/).filter(Boolean).length) || 1; // konuşulan metnin KELİME sayısı (kelime senkronu için)
-        const tahminMs = Math.max(1400, toplamChar * 90); // ~90ms/karakter (rate 1): gerçek TTS'e yakın. 62 ÇOK HIZLIYDI → yazı imleci sesten ÖNCE sona varıyordu (kullanıcı: "ok sona geliyor ama konuşma devam ediyor")
+        const tahminMs = Math.max(1400, toplamChar * 72); // ~72ms/karakter: 90 ÇOK YAVAŞTI → imleç sesin GERİSİNDE kalıyordu (kullanıcı: "Gloxoo daha hızlı okuyor, ikon yavaş kalmasın"). 62 çok hızlıydı; 72 ortada. Sondaki 0.9 emniyeti imlecin sesten ÖNCE bitmesini yine engeller.
         let basMs = Date.now(), duraklaTop = 0, duraklaBas = 0, boundaryChar = -1, ilerTimer = null, ilerBitti = false;
         const durdurIler = () => { if (ilerTimer) { clearInterval(ilerTimer); ilerTimer = null; } if (!ilerBitti) { ilerBitti = true; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } } };
         if (typeof onIlerleme === "function") {
