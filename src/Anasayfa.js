@@ -1539,20 +1539,21 @@ export default function Anasayfa({ pro = false }) {
   const aiKonusuyorRef = useRef(false); // Gloxoo KONUŞUYOR mu (async okunur): konuşurken mikrofon dinlemez (yarı-çift yönlü)
   const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
   const maskotBosRef = useRef(0);
-  const konusBasRef = useRef(0);
+  const konusIlerRef = useRef(0);
   useEffect(() => {
     const id = setInterval(() => {
       let s = false; try { s = !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (e) {}
       if (s) {
         maskotBosRef.current = 0;
-        if (!konusBasRef.current) konusBasRef.current = Date.now();
+        if (!konusIlerRef.current) konusIlerRef.current = Date.now();
         // TAKILMA EMNİYETİ (kullanıcı: "sayfa sürekli parlıyor"): Chrome bazen "speaking=true" halinde SES ÜRETMEDEN
         // TAKILIR; o zaman maskot/balon "konuşuyor" animasyonu SONSUZA KADAR döner = SÜREKLİ PARLAMA + düğme takılması.
-        // Tek bir cevabın konuşması bu kadar sürmez → 14 sn'yi geçince motoru İPTAL et, durumu temizle → parlama durur.
-        else if (Date.now() - konusBasRef.current > 20000) { try { window.speechSynthesis.cancel(); } catch (e) {} konusBasRef.current = 0; maskotBosRef.current = 2; aiKonusuyorRef.current = false; setAiKonusuyor(false); return; }
+        // Okuma İLERLEDİKÇE (her kelime/cümlede konusIlerRef sıfırlanır — sesliOku'da) → UZUN yazı ASLA kesilmez;
+        // yalnızca ilerleme 14 sn DURURSA (gerçekten takıldıysa) motor iptal edilir → parlama durur.
+        else if (Date.now() - konusIlerRef.current > 14000) { try { window.speechSynthesis.cancel(); } catch (e) {} konusIlerRef.current = 0; maskotBosRef.current = 2; aiKonusuyorRef.current = false; setAiKonusuyor(false); return; }
         aiKonusuyorRef.current = true; setAiKonusuyor((p) => (p ? p : true));
       }
-      else { maskotBosRef.current++; if (maskotBosRef.current >= 2) { konusBasRef.current = 0; aiKonusuyorRef.current = false; setAiKonusuyor((p) => (p ? false : p)); } } // 2 boş ölçüm (~400ms) → cümle arası boşlukta titremesin
+      else { maskotBosRef.current++; if (maskotBosRef.current >= 2) { konusIlerRef.current = 0; aiKonusuyorRef.current = false; setAiKonusuyor((p) => (p ? false : p)); } } // 2 boş ölçüm (~400ms) → cümle arası boşlukta titremesin
     }, 200);
     return () => clearInterval(id);
   }, []);
@@ -4811,8 +4812,13 @@ export default function Anasayfa({ pro = false }) {
       if (paylasim && !yardimciAcikRef.current && !site) { try { setYardimciAcik(true); } catch (e) {} }
       if (maskotTanitRef.current && metin) setMaskotMetni(metin); // BÜYÜK maskot açıksa: balonunda da cevabı göster (sadece karşılama kalmasın, konuşmaya devam ediyormuş gibi)
       // OTOMATİK SESLİ OKUMA: yeni cevabın BALON düğmesinde × göster (konuşurken), bitince kendiliğinden kapansın → balon düğmesi = konuşma göstergesi/kontrolü
-      if (sesliMod && metin) { const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi; sesliOku(metin, okuTemizle, undefined, (maskotTanitRef.current || maskotMini) ? teleIlerleme : undefined); }
-      if (canliIc && canliSohbetRef.current) canliDevam(); // CANLI: cevap bitince tekrar dinlemeye geç (döngü ölmesin)
+      if (sesliMod && metin) {
+        const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi;
+        // OKUMA BİTİNCE dinlemeye geç. ESKİDEN: okuma başlar başlamaz canliDevam çağrılıyordu → mikrofon okuma
+        // daha bitmeden devreye girip okumayı 5-6 KELİMEDE KESİYORDU (kullanıcı: "uzun yazıyı okumuyor, kesiyor").
+        // Artık mikrofon SADECE Gloxoo tüm cevabı OKUYUP BİTİRDİKTEN sonra açılır → yazının tamamı okunur.
+        sesliOku(metin, () => { okuTemizle(); if (canliIc && canliSohbetRef.current) canliDevam(); }, undefined, (maskotTanitRef.current || maskotMini) ? teleIlerleme : undefined);
+      } else if (canliIc && canliSohbetRef.current) canliDevam(); // sesli okuma yoksa hemen dinlemeye geç
       if (komut) setTimeout(() => komutAc(komut), 650);
     } catch (e) {
       setListe((s) => [...s, { rol: "ai", metin: t("yardimciHata", "Bağlantı kurulamadı, birazdan tekrar dene."), zamanMs: Date.now() }]);
@@ -4904,9 +4910,9 @@ export default function Anasayfa({ pro = false }) {
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           const buOfs = charOfs;
           // HER cümle okunmaya başlayınca haber ver (teleprompter geri uyumluluk) + ilk parçada zaman sıfırla
-          u.onstart = () => { if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } };
+          u.onstart = () => { konusIlerRef.current = Date.now(); if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } }; // konusIlerRef: okuma ilerledi → takılma emniyeti sıfırlanır (uzun yazı kesilmez)
           // KELİME sınırı (destekleyen tarayıcıda): gerçek karakter konumu → ilerleme kesinleşir
-          u.onboundary = (ev) => { try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} };
+          u.onboundary = (ev) => { konusIlerRef.current = Date.now(); try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} }; // her kelimede ilerleme → emniyet sıfırlanır
           // SON parça bitince: ilerlemeyi 1 yap/kapat + haber ver (oku düğmesi × → normale dönsün)
           if (idx === parcalar.length - 1) u.onend = () => { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
           window.speechSynthesis.speak(u);
