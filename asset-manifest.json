@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "./static/css/main.ee2c7199.css",
-    "main.js": "./static/js/main.79786453.js",
+    "main.js": "./static/js/main.e89f8724.js",
     "static/js/453.d745a41a.chunk.js": "./static/js/453.d745a41a.chunk.js",
     "static/media/profilCerceveMavi.png": "./static/media/profilCerceveMavi.0b25c849ca29eb692e24.png",
     "static/media/profilCerceveYesil.png": "./static/media/profilCerceveYesil.634920b132be92e49644.png",
@@ -23,11 +23,11 @@
     "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
     "index.html": "./index.html",
     "main.ee2c7199.css.map": "./static/css/main.ee2c7199.css.map",
-    "main.79786453.js.map": "./static/js/main.79786453.js.map",
+    "main.e89f8724.js.map": "./static/js/main.e89f8724.js.map",
     "453.d745a41a.chunk.js.map": "./static/js/453.d745a41a.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.ee2c7199.css",
-    "static/js/main.79786453.js"
+    "static/js/main.e89f8724.js"
   ]
 }
