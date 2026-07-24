@@ -80,7 +80,14 @@ export async function gloxooResimUret(istem) {
     }
     return { hata: "Resim gelmedi (modelin cevabinda gorsel yok)" };
   } catch (e) {
-    return { hata: (e && (e.code || e.message || e.name)) ? String(e.code || e.message || e.name) : "bilinmeyen hata" };
+    // AYRINTILI HATA — sebebi ekranda tek fotoğrafta görünsün (App Check mi, faturalandırma mı, model mi?)
+    const parca = [];
+    try { if (e && e.code) parca.push("kod=" + e.code); } catch (x) {}
+    try { if (e && e.message) parca.push(String(e.message)); } catch (x) {}
+    try { if (e && !e.code && !e.message && e.name) parca.push(e.name); } catch (x) {}
+    try { if (e && e.customErrorData) parca.push("veri=" + JSON.stringify(e.customErrorData)); } catch (x) {}
+    try { if (e && e.cause && e.cause.message) parca.push("neden=" + e.cause.message); } catch (x) {}
+    return { hata: (parca.join(" | ") || "bilinmeyen hata").slice(0, 400) };
   }
 }
 
