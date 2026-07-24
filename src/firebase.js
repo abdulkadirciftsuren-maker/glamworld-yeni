@@ -6,7 +6,7 @@ import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } 
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
-import { getAI, getGenerativeModel, GoogleAIBackend, ResponseModality } from "firebase/ai";
+import { getAI, getGenerativeModel, GoogleAIBackend, VertexAIBackend, ResponseModality } from "firebase/ai";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw",
@@ -62,8 +62,9 @@ export async function fcmDurumAl(vapidKey) {
 // ── FIREBASE AI LOGIC (Gemini) — Gloxoo'nun GERÇEK (fotoğraf gibi) resim üretmesi için ──
 // Google'ın Gemini "Nano Banana" resim modeli. Kurulum: Firebase Console > AI Logic > Gemini Developer API (etkin).
 // Resim üretimi için Blaze planı gerekebilir; hata olursa SEBEBİ döner → ekranda görünür, kolay teşhis.
+// VERTEX AI arka ucu — Firebase'in ZATEN AÇIK olan Blaze (Cloud) faturasını doğrudan kullanır → ayrı "AI Studio kredisi" derdi olmaz.
 let _gloxAi = null;
-function _aiAl() { if (!_gloxAi) { try { _gloxAi = getAI(app, { backend: new GoogleAIBackend() }); } catch (e) { _gloxAi = null; } } return _gloxAi; }
+function _aiAl() { if (!_gloxAi) { try { _gloxAi = getAI(app, { backend: new VertexAIBackend() }); } catch (e) { _gloxAi = null; } } return _gloxAi; }
 export async function gloxooResimUret(istem) {
   try {
     const ai = _aiAl();
