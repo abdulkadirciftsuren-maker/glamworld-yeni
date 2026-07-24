@@ -3311,6 +3311,17 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   background:linear-gradient(135deg,#ff7a9c,#9a6bff 55%,#21c4d0); padding:4px 8px; border-radius:9px; box-shadow:0 3px 9px rgba(0,0,0,.3); }
 .ai-paylasim-metin{ color:#fff; font-size:14.5px; line-height:1.6; white-space:pre-wrap; overflow-wrap:break-word; margin:6px 0 11px; }
 .ai-paylasim-arac{ display:flex; gap:8px; flex-wrap:wrap; }
+/* GLOXOO ÇİZİMİ (SVG vektör) — sohbette resim kartı + tam ekran büyütme. Zemin ALTIN/açık (⛔ siyah yok), köşeler yumuşak kare. */
+.ai-cizim-kart{ align-self:flex-start; max-width:94%; margin:-1px 0 6px; padding:10px; border-radius:16px; background:linear-gradient(150deg,#fff3c4,#ffe58a 55%,#ffd94f); border:1.6px solid rgba(255,205,130,.85); box-shadow:0 6px 22px rgba(0,0,0,.28); }
+.ai-cizim-gorsel{ display:block; width:100%; max-width:260px; height:auto; aspect-ratio:1/1; object-fit:contain; border-radius:12px; background:#fffbe9; cursor:zoom-in; margin:0 auto 9px; }
+.ai-cizim-arac{ display:flex; gap:8px; flex-wrap:wrap; }
+.cizim-fon{ position:fixed; inset:0; z-index:100040; display:flex; align-items:center; justify-content:center; padding:22px; background:radial-gradient(circle at 50% 40%,#ffe9a8,#e6bd52); }
+.cizim-pencere{ position:relative; width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+.cizim-buyuk{ width:100%; max-width:440px; height:auto; aspect-ratio:1/1; object-fit:contain; border-radius:18px; background:#fffbe9; box-shadow:0 10px 34px rgba(0,0,0,.4); }
+.cizim-kapat{ position:absolute; top:-6px; right:-4px; width:40px; height:40px; border:none; border-radius:12px; background:#12203f; color:#ffd700; font-size:20px; font-weight:800; cursor:pointer; }
+.cizim-indir-btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border:none; border-radius:14px; background:#12203f; color:#ffd700; font-family:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+.cizim-indir-btn svg{ width:20px; height:20px; }
+@media (min-width:560px){ .ai-cizim-gorsel{ max-width:300px; } }
 .ai-paylasim-btn{ flex:1 1 auto; min-width:92px; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 10px; border-radius:12px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; border:none; }
 .ai-paylasim-btn svg{ width:16px; height:16px; }
 .ai-paylasim-btn.kopya{ background:rgba(255,255,255,.15); color:#FFE9A8; border:1px solid rgba(255,215,0,.5); }

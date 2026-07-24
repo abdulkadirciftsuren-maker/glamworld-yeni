@@ -1581,6 +1581,7 @@ export default function Anasayfa({ pro = false }) {
   // YAZI GERÇEKTEN KESİLDİ Mİ (12 satır taşıyor mu) — "devamını oku" SADECE kesilen yazıda çıksın (kısa/tam yazıda çıkmaz).
   const [kesik, setKesik] = useState({}); // anahtar -> true (taşıyor)
   const kesikOlc = (anahtar) => (el) => { if (!el) return; const k = el.scrollHeight > el.clientHeight + 3; setKesik((p) => (p[anahtar] === k ? p : { ...p, [anahtar]: k })); };
+  const [cizimBuyut, setCizimBuyut] = useState(null); // Gloxoo çizimini (SVG) tam ekran büyütme
   const [sehirAcik, setSehirAcik] = useState(false); // günlük şehir fotoğrafı tam ekran görüntüleyici
   const [arsivAcik, setArsivAcik] = useState(false); // AYLIK ARŞİV penceresi (tüm konuşma geçmişi)
   const [arsivGun, setArsivGun] = useState(null);     // açık aylık dosya (null=liste)
@@ -4692,11 +4693,12 @@ export default function Anasayfa({ pro = false }) {
     else if (haberSoruldu) sistem += `GÜNCEL SORU: Kullanıcı güncel bir şey (haber/futbol skoru/son dakika) sordu. ÖNCE web arama aracın varsa onunla ARA ve GERÇEK güncel sonucu ver. Web araması yoksa ya da hiçbir şekilde ulaşamıyorsan: ÇOK KISA, TEK cümle söyle → "Şu an güncel habere ulaşamadım 🙏 birkaç saniye sonra tekrar sorar mısın?" (kullanıcının dilinde) ve BAŞKA HİÇBİR ŞEY EKLEME — hangi takım kazandı/kaç-kaç/bugün ne oldu diye TAHMİN/UYDURMA yapma, eski bilgini güncelmiş gibi ANLATMA, eski bir olayı "şu an oluyor" DEME, konuyu uzatma. `;
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
     sistem += `EN ÖNEMLİ KURAL — HAZIRLANAN METİN AYRI: Kullanıcı için bir paylaşım, gönderi, mesaj, şiir, kutlama, ilan, slogan, biyografi veya kopyalanabilir/paylaşılabilir HERHANGİ bir metin hazırladığında (kısa ya da uzun, KAÇINCI kez olursa olsun HER SEFERİNDE), o metni MUTLAKA ve SADECE şu etiketlerin arasına koy: [PAYLASIM]...sadece paylaşılacak metin...[/PAYLASIM]. Bu etiketlerin İÇİNE kendi sohbetini/açıklamanı ASLA yazma; etiket DIŞINDAki sözün en fazla TEK kısa cümle olsun. Hazırladığın metin ŞIK, canlı, SÜSLÜ olsun: bol emoji + çiçek/yıldız süsleri (🌸✨🌟💫🎉), sönük/düz değil. ÖRNEK: kullanıcı "bana doğum günü paylaşımı yaz" derse yanıtın TAM şöyle: Hazır! 🎉 [PAYLASIM]🎂✨ Nice mutlu yıllara! Bugün senin günün! 🥳🌸[/PAYLASIM]. UNUTMA: paylaşılacak/kopyalanacak metin SADECE [PAYLASIM][/PAYLASIM] arasında olur; etiketi koymayı ASLA unutma yoksa kullanıcı kopyalayamaz. `;
+    sistem += ` ÇİZİM ([CIZIM] — kullanıcı senden logo, amblem, ikon, rozet, işaret, kart, basit şekil/desen/şema ÇİZMENİ isterse): Fotoğraf gibi gerçekçi resim çizemezsin ama temiz bir VEKTÖR (SVG) çizim yaparsın. İstenen çizimi, kendi içinde TAM ve geçerli bir SVG olarak üret ve SADECE şu etiketler arasına koy: [CIZIM]<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">...şekiller...</svg>[/CIZIM]. KURALLAR: mutlaka viewBox olsun; SADECE şekil öğeleri kullan (path, rect, circle, ellipse, polygon, line, text, g, linearGradient/radialGradient, defs); <script>, <foreignObject>, on... olayları, dış URL/bağlantı, javascript: KESİNLİKLE KULLANMA; renkler CANLI ve ALTIN/sıcak tonlar tercih (kullanıcı koyu/siyah zemin sevmez → zemin şeffaf ya da açık/altın); yazı gerekiyorsa <text> ile net ve okunur koy; markayı "GLOXORG" yazacaksan aynen böyle yaz. Etiket DIŞINDA en fazla TEK kısa cümle söyle (örn "İşte senin için bir logo 🎨"). Ne çizeceğini önceden sormana gerek yok; makul yorumla hemen çiz. Birden çok çizim istenirse birden çok [CIZIM] koyabilirsin. Kullanıcı "değiştir/rengini değiştir/büyüt/başka türlü" derse yeni bir [CIZIM] ile güncelle. `;
     // 2) TIKLANABİLİR ÖNERİLER (ayrı)
     // KULLANICI İSTEĞİ: kendiliğinden öneri/sonraki-adım YAĞDIRMA. [ONERILER] baloncukları KALDIRILDI —
     // kullanıcı istemediği "şunu da yapayım" tarzı önerilerden rahatsız oluyordu. Sadece sorulana cevap.
     // 3) KISA + biçimlendirme yasağı
-    sistem += `KISA ve net konuş, laf kalabalığı yapma (açıklaman 1-2 cümle). Yıldız (*), çift yıldız (**kalın**), kare (#), tire-liste, markdown ASLA kullanma — düz metin yaz; sesli konuşur gibi akıcı cümleler; ara sıra emoji serbest. SADECE kullanıcının sorduğu/istediği şeye cevap ver; kullanıcı istemeden kendiliğinden konu açma, ekstra bilgi/öneri YAĞDIRMA, "şunu da yapayım mı" diye üstüne gitme — kullanıcının ne isteyeceğini BEKLE. Resim/görsel ÇİZME, çizemezsin; istenirse kibarca metinle yardım et. KİŞİLİK: sıcak, samimi, neşeli ve CANLI bir dost gibi konuş; yeri gelince hafif şaka yap, espri yap, gül (😄😊); robot gibi soğuk olma — ama yine de KISA kal ve kullanıcı istemeden konuyu uzatma. TEKRAR YOK: Önceki cevaplarında söylediğin cümleleri/kalıpları AYNEN TEKRARLAMA; her yanıt TAZE, kullanıcının SON mesajına ÖZEL ve farklı olsun. Bir şeyi bilmiyorsan ya da veri yoksa aynı klişeyi tekrar tekrar yazma; kısaca söyle ve geç. Kullanıcı seninle gerçek bir sohbet ediyor — papağan gibi değil, düşünen bir dost gibi cevap ver. `;
+    sistem += `KISA ve net konuş, laf kalabalığı yapma (açıklaman 1-2 cümle). Yıldız (*), çift yıldız (**kalın**), kare (#), tire-liste, markdown ASLA kullanma — düz metin yaz; sesli konuşur gibi akıcı cümleler; ara sıra emoji serbest. SADECE kullanıcının sorduğu/istediği şeye cevap ver; kullanıcı istemeden kendiliğinden konu açma, ekstra bilgi/öneri YAĞDIRMA, "şunu da yapayım mı" diye üstüne gitme — kullanıcının ne isteyeceğini BEKLE. Fotoğraf gibi gerçek/gerçekçi resim çizemezsin AMA temiz bir VEKTÖR (SVG) çizim yapabilirsin — aşağıdaki [CIZIM] kuralına bak. KİŞİLİK: sıcak, samimi, neşeli ve CANLI bir dost gibi konuş; yeri gelince hafif şaka yap, espri yap, gül (😄😊); robot gibi soğuk olma — ama yine de KISA kal ve kullanıcı istemeden konuyu uzatma. TEKRAR YOK: Önceki cevaplarında söylediğin cümleleri/kalıpları AYNEN TEKRARLAMA; her yanıt TAZE, kullanıcının SON mesajına ÖZEL ve farklı olsun. Bir şeyi bilmiyorsan ya da veri yoksa aynı klişeyi tekrar tekrar yazma; kısaca söyle ve geç. Kullanıcı seninle gerçek bir sohbet ediyor — papağan gibi değil, düşünen bir dost gibi cevap ver. `;
     // === ROL + BAĞLAM (daha az kritik — köprü kısaltırsa buradan kısalır) ===
     sistem += `Sen Gloxoo'sun — GLOXORG adlı lüks, küresel profesyonel sosyal platformun AKILLI KALBİ ve TEK yardımcı asistanısın. Adın Gloxoo; kendini tanıtırken "Gloxorg dünyasının akıllı kalbi Gloxoo" dersin. Her şeyi bilen, akıllı, sıcak ve NET bir dostsun. AYNI ZAMANDA kullanıcının ŞU AN bulunduğu SAYFANIN da UZMANISIN: o sayfada ne yapılır, nasıl kullanılır, ipuçları ve püf noktaları — hepsini bilirsin ve o sayfaya ÖZEL yardım edersin (hem öneri ver hem dinle). Paylaşım yazma, meslek tanıtımı, müşteri bulma dahil her konuda yardımcı ol. GLOXORG bölümleri: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar.` + (site
       ? ` SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç", "ayarları aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
@@ -4768,6 +4770,18 @@ export default function Anasayfa({ pro = false }) {
       const pm = metin.match(/\[PAYLA[SŞ]IM\]([\s\S]*?)\[\/PAYLA[SŞ]IM\]/i) || metin.match(/\[PAYLA[SŞ]IM\]([\s\S]*)$/i);
       if (pm) { paylasim = (pm[1] || "").trim(); metin = metin.replace(/\[PAYLA[SŞ]IM\][\s\S]*?(\[\/PAYLA[SŞ]IM\]|$)/gi, "").trim(); }
       if (!metin && paylasim) metin = t("paylasimHazir", "İşte hazırladım — kopyala ya da paylaş 👇");
+      // ÇİZİM — AI bir SVG (vektör) çizim ürettiyse: [CIZIM]<svg>...</svg>[/CIZIM] → GÜVENLİ temizle (script/olay yok), ayrı kartta göster + indir
+      let cizim = "";
+      const cm = metin.match(/\[CIZIM\]([\s\S]*?)\[\/CIZIM\]/i) || metin.match(/\[CIZIM\]([\s\S]*)$/i);
+      if (cm) {
+        let svg = (cm[1] || "").trim();
+        // GÜVENLİK: script/olay/foreignObject/javascript: temizle (yalnızca şekiller kalsın — XSS olmasın)
+        svg = svg.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, "").replace(/\son\w+\s*=\s*"[^"]*"/gi, "").replace(/\son\w+\s*=\s*'[^']*'/gi, "").replace(/(?:href|xlink:href)\s*=\s*(["'])\s*javascript:[^"']*\1/gi, "");
+        const sm = svg.match(/<svg[\s\S]*<\/svg>/i); // sadece <svg>...</svg> kısmı
+        cizim = sm ? sm[0] : "";
+        metin = metin.replace(/\[CIZIM\][\s\S]*?(\[\/CIZIM\]|$)/gi, "").trim();
+      }
+      if (!metin && cizim) metin = t("cizimHazir", "İşte çizdim 🎨");
       // HARİTA — AI bir yere yol tarifi/konum verirse: [HARITA: Yer adı | enlem,boylam] → tıklanınca Google Haritalar'da yol tarifi açan düğme
       let harita = [];
       const hmAll = metin.match(/\[HARITA:[^\]]*\]/gi);
@@ -4806,7 +4820,7 @@ export default function Anasayfa({ pro = false }) {
         metin = metin.replace(/\[SITE:[^\]]*\]/gi, "").trim();
         if (!metin && siteler.length) metin = "İşte ilgili yerler — sitesine gitmek için dokun 👇";
       }
-      setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, siteler, zamanMs: Date.now() }]);
+      setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, siteler, cizim, zamanMs: Date.now() }]);
       // HAZIRLANAN İÇERİK (paylaşım metni vb.): kullanıcı SÖZLÜ istediyse ve panel KAPALIYSA, yazı panelini
       // OTOMATİK aç ki hazırladığını GÖRSÜN (canlı sohbet SÜRER — kapatmaz). İstek: "hazırladığını yazı sayfasında göster".
       if (paylasim && !yardimciAcikRef.current && !site) { try { setYardimciAcik(true); } catch (e) {} }
@@ -5338,6 +5352,30 @@ export default function Anasayfa({ pro = false }) {
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
       setKucukMesaj(t("indirildi", "İndirildi 📄"));
+    } catch (e) {}
+  };
+  // GLOXOO ÇİZİMİNİ İNDİR — SVG çizimi PNG resmine çevirip (yüksek çözünürlük) telefona indir (her yerde açılır, gönderiye eklenir)
+  const cizimIndir = (svg) => {
+    const s = (svg || "").toString(); if (!s) return;
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const boy = 1024; const c = document.createElement("canvas"); c.width = boy; c.height = boy;
+          const ctx = c.getContext("2d");
+          ctx.drawImage(img, 0, 0, boy, boy);
+          c.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a"); a.href = url; a.download = "GLOXORG-cizim.png";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
+            setKucukMesaj(t("indirildi", "İndirildi 📄"));
+          }, "image/png");
+        } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
+      };
+      img.onerror = () => setKucukMesaj(t("indirilemedi", "İndirilemedi"));
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
     } catch (e) {}
   };
   // Hazırlanan PAYLAŞIMI paylaşım penceresine taşı (yazısı dolu açılır)
@@ -8549,6 +8587,19 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       )}
+      {/* GLOXOO ÇİZİMİ — TAM EKRAN BÜYÜT (altın zemin, güvenli resim, indir) */}
+      {cizimBuyut && (
+        <div className="cizim-fon" onClick={() => setCizimBuyut(null)}>
+          <div className="cizim-pencere" onClick={(e) => e.stopPropagation()}>
+            <button className="cizim-kapat" onClick={() => setCizimBuyut(null)} aria-label={t("kapat", "Kapat")}>&#10005;</button>
+            <img className="cizim-buyuk" src={"data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut)} alt={t("cizim", "çizim")} />
+            <button className="cizim-indir-btn" onClick={() => cizimIndir(cizimBuyut)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+              {pl(aiDil, "indir")}
+            </button>
+          </div>
+        </div>
+      )}
       {sehirAcik && (
         <div className="sehir-fon" onClick={() => setSehirAcik(false)}>
           <div className="sehir-pencere" onClick={(e) => e.stopPropagation()}>
@@ -9019,6 +9070,22 @@ export default function Anasayfa({ pro = false }) {
                           <button className="ai-paylasim-btn paylas" onClick={() => paylasimaTasi(m.paylasim)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                             {pl(aiDil, "paylas")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {/* GLOXOO ÇİZİMİ (SVG vektör) — güvenli biçimde RESİM olarak gösterilir (script çalışmaz); indirilebilir */}
+                    {m.rol !== "user" && m.cizim && (
+                      <div className="ai-cizim-kart">
+                        <img className="ai-cizim-gorsel" src={"data:image/svg+xml;charset=utf-8," + encodeURIComponent(m.cizim)} alt={t("cizim", "çizim")} onClick={() => setCizimBuyut(m.cizim)} />
+                        <div className="ai-cizim-arac">
+                          <button className="ai-paylasim-btn indir" onClick={() => cizimIndir(m.cizim)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                            {pl(aiDil, "indir")}
+                          </button>
+                          <button className="ai-paylasim-btn kopya" onClick={() => setCizimBuyut(m.cizim)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                            {t("buyut", "Büyüt")}
                           </button>
                         </div>
                       </div>
