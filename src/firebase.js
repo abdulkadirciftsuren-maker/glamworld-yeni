@@ -62,34 +62,40 @@ export async function fcmDurumAl(vapidKey) {
 // ── FIREBASE AI LOGIC (Gemini) — Gloxoo'nun GERÇEK (fotoğraf gibi) resim üretmesi için ──
 // Google'ın Gemini "Nano Banana" resim modeli. Kurulum: Firebase Console > AI Logic > Gemini Developer API (etkin).
 // Resim üretimi için Blaze planı gerekebilir; hata olursa SEBEBİ döner → ekranda görünür, kolay teşhis.
-// VERTEX AI arka ucu — Firebase'in ZATEN AÇIK olan Blaze (Cloud) faturasını doğrudan kullanır → ayrı "AI Studio kredisi" derdi olmaz.
-let _gloxAi = null;
-function _aiAl() { if (!_gloxAi) { try { _gloxAi = getAI(app, { backend: new VertexAIBackend() }); } catch (e) { _gloxAi = null; } } return _gloxAi; }
-export async function gloxooResimUret(istem) {
-  try {
-    const ai = _aiAl();
-    if (!ai) return { hata: "AI baglanamadi (Firebase AI Logic kurulu mu?)" };
-    const model = getGenerativeModel(ai, { model: "gemini-2.5-flash-image", generationConfig: { responseModalities: [ResponseModality.TEXT, ResponseModality.IMAGE] } });
-    const sonuc = await model.generateContent((istem || "").toString().slice(0, 1200));
-    const resp = sonuc && sonuc.response;
-    let parcalar = [];
-    try { parcalar = (resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content && resp.candidates[0].content.parts) || []; } catch (e) {}
-    for (const p of parcalar) {
-      if (p && p.inlineData && p.inlineData.data) {
-        return { dataUrl: "data:" + (p.inlineData.mimeType || "image/png") + ";base64," + p.inlineData.data };
-      }
-    }
-    return { hata: "Resim gelmedi (modelin cevabinda gorsel yok)" };
-  } catch (e) {
-    // AYRINTILI HATA — sebebi ekranda tek fotoğrafta görünsün (App Check mi, faturalandırma mı, model mi?)
-    const parca = [];
-    try { if (e && e.code) parca.push("kod=" + e.code); } catch (x) {}
-    try { if (e && e.message) parca.push(String(e.message)); } catch (x) {}
-    try { if (e && !e.code && !e.message && e.name) parca.push(e.name); } catch (x) {}
-    try { if (e && e.customErrorData) parca.push("veri=" + JSON.stringify(e.customErrorData)); } catch (x) {}
-    try { if (e && e.cause && e.cause.message) parca.push("neden=" + e.cause.message); } catch (x) {}
-    return { hata: (parca.join(" | ") || "bilinmeyen hata").slice(0, 400) };
+// İKİ KATMAN: ÖNCE Vertex AI (Firebase'in ZATEN AÇIK Blaze/Cloud faturasını kullanır), OLMAZSA Gemini Developer API.
+// Hangisi açık/çalışıyorsa ondan resim gelir; ikisi de olmazsa iki sebep birden döner (ekranda görünür, teşhis kolay).
+function _hataMetni(e) {
+  const parca = [];
+  try { if (e && e.code) parca.push("kod=" + e.code); } catch (x) {}
+  try { if (e && e.message) parca.push(String(e.message)); } catch (x) {}
+  try { if (e && !e.code && !e.message && e.name) parca.push(e.name); } catch (x) {}
+  try { if (e && e.customErrorData) parca.push("veri=" + JSON.stringify(e.customErrorData)); } catch (x) {}
+  try { if (e && e.cause && e.cause.message) parca.push("neden=" + e.cause.message); } catch (x) {}
+  return parca.join(" | ") || "bilinmeyen hata";
+}
+async function _resimDene(backend, istem) {
+  const ai = getAI(app, { backend });
+  const model = getGenerativeModel(ai, { model: "gemini-2.5-flash-image", generationConfig: { responseModalities: [ResponseModality.TEXT, ResponseModality.IMAGE] } });
+  const sonuc = await model.generateContent((istem || "").toString().slice(0, 1200));
+  const resp = sonuc && sonuc.response;
+  let parcalar = [];
+  try { parcalar = (resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content && resp.candidates[0].content.parts) || []; } catch (e) {}
+  for (const p of parcalar) {
+    if (p && p.inlineData && p.inlineData.data) return "data:" + (p.inlineData.mimeType || "image/png") + ";base64," + p.inlineData.data;
   }
+  throw new Error("Resim gelmedi (modelin cevabinda gorsel yok)");
+}
+export async function gloxooResimUret(istem) {
+  const yollar = [{ ad: "Vertex", yap: () => new VertexAIBackend() }, { ad: "Gemini", yap: () => new GoogleAIBackend() }];
+  const hatalar = [];
+  for (const y of yollar) {
+    try {
+      let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
+      const url = await _resimDene(bk, istem);
+      if (url) return { dataUrl: url };
+    } catch (e) { hatalar.push(y.ad + ": " + _hataMetni(e)); }
+  }
+  return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };
 }
 
 // Basit sürüm (sessiz; girişte otomatik kayıt için) — sadece token döndürür.
