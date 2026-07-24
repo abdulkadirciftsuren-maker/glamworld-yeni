@@ -9,7 +9,7 @@ import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Googl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
-import { auth, fcmTokenAl, fcmDurumAl } from "./firebase";
+import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret } from "./firebase";
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
@@ -4694,6 +4694,7 @@ export default function Anasayfa({ pro = false }) {
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
     sistem += `EN ÖNEMLİ KURAL — HAZIRLANAN METİN AYRI: Kullanıcı için bir paylaşım, gönderi, mesaj, şiir, kutlama, ilan, slogan, biyografi veya kopyalanabilir/paylaşılabilir HERHANGİ bir metin hazırladığında (kısa ya da uzun, KAÇINCI kez olursa olsun HER SEFERİNDE), o metni MUTLAKA ve SADECE şu etiketlerin arasına koy: [PAYLASIM]...sadece paylaşılacak metin...[/PAYLASIM]. Bu etiketlerin İÇİNE kendi sohbetini/açıklamanı ASLA yazma; etiket DIŞINDAki sözün en fazla TEK kısa cümle olsun. Hazırladığın metin ŞIK, canlı, SÜSLÜ olsun: bol emoji + çiçek/yıldız süsleri (🌸✨🌟💫🎉), sönük/düz değil. ÖRNEK: kullanıcı "bana doğum günü paylaşımı yaz" derse yanıtın TAM şöyle: Hazır! 🎉 [PAYLASIM]🎂✨ Nice mutlu yıllara! Bugün senin günün! 🥳🌸[/PAYLASIM]. UNUTMA: paylaşılacak/kopyalanacak metin SADECE [PAYLASIM][/PAYLASIM] arasında olur; etiketi koymayı ASLA unutma yoksa kullanıcı kopyalayamaz. `;
     sistem += ` ÇİZİM ([CIZIM] — kullanıcı senden logo, amblem, ikon, rozet, işaret, kart, basit şekil/desen/şema ÇİZMENİ isterse): Fotoğraf gibi gerçekçi resim çizemezsin ama temiz bir VEKTÖR (SVG) çizim yaparsın. İstenen çizimi, kendi içinde TAM ve geçerli bir SVG olarak üret ve SADECE şu etiketler arasına koy: [CIZIM]<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">...şekiller...</svg>[/CIZIM]. KURALLAR: mutlaka viewBox olsun; SADECE şekil öğeleri kullan (path, rect, circle, ellipse, polygon, line, text, g, linearGradient/radialGradient, defs); <script>, <foreignObject>, on... olayları, dış URL/bağlantı, javascript: KESİNLİKLE KULLANMA; renkler CANLI ve ALTIN/sıcak tonlar tercih (kullanıcı koyu/siyah zemin sevmez → zemin şeffaf ya da açık/altın); yazı gerekiyorsa <text> ile net ve okunur koy; markayı "GLOXORG" yazacaksan aynen böyle yaz. Etiket DIŞINDA en fazla TEK kısa cümle söyle (örn "İşte senin için bir logo 🎨"). Ne çizeceğini önceden sormana gerek yok; makul yorumla hemen çiz. Birden çok çizim istenirse birden çok [CIZIM] koyabilirsin. Kullanıcı "değiştir/rengini değiştir/büyüt/başka türlü" derse yeni bir [CIZIM] ile güncelle. `;
+    sistem += ` GERÇEK/FOTOĞRAF GİBİ RESİM ([RESIM:] — kullanıcı senden GERÇEKÇİ, fotoğraf gibi bir görsel/resim isterse; örn "gün batımında deniz", "modern bir kuaför salonu içi", "kırmızı spor araba", "bir kedi"): Bunu SVG ile çizemezsin; bunun için AYRI bir gerçek görsel üretici bağlı. İstenen resmi İNGİLİZCE, kısa ve NET betimleyip şu etikete koy: [RESIM: detailed english description]. Örnek: "bana gün batımında deniz çiz" → [RESIM: a calm sea at golden sunset, warm orange sky, gentle waves, photorealistic]. TEK [RESIM:] koy (bir istekte bir resim). Etiket dışında en fazla tek kısa cümle (örn "Hemen çiziyorum 🎨"). AYRIM: basit logo/ikon/amblem/rozet/şema → [CIZIM] (SVG); gerçekçi/fotoğraf gibi sahne/nesne/manzara/kişi → [RESIM:]. `;
     // 2) TIKLANABİLİR ÖNERİLER (ayrı)
     // KULLANICI İSTEĞİ: kendiliğinden öneri/sonraki-adım YAĞDIRMA. [ONERILER] baloncukları KALDIRILDI —
     // kullanıcı istemediği "şunu da yapayım" tarzı önerilerden rahatsız oluyordu. Sadece sorulana cevap.
@@ -4782,6 +4783,12 @@ export default function Anasayfa({ pro = false }) {
         metin = metin.replace(/\[CIZIM\][\s\S]*?(\[\/CIZIM\]|$)/gi, "").trim();
       }
       if (!metin && cizim) metin = t("cizimHazir", "İşte çizdim 🎨");
+      // GERÇEK RESİM — AI [RESIM: ingilizce betim] koyduysa: Firebase AI (Gemini) ile GERÇEK resim üret (async, aşağıda)
+      let resimIstem = "";
+      const rm = metin.match(/\[RESIM:\s*([^\]]+)\]/i);
+      if (rm) { resimIstem = (rm[1] || "").trim(); metin = metin.replace(/\[RESIM:[^\]]*\]/gi, "").trim(); }
+      if (!metin && resimIstem) metin = t("resimUretiliyor", "Resmi hazırlıyorum 🎨");
+      const resimId = resimIstem ? ("r" + Date.now() + "-" + Math.round(Math.random() * 1e6)) : "";
       // HARİTA — AI bir yere yol tarifi/konum verirse: [HARITA: Yer adı | enlem,boylam] → tıklanınca Google Haritalar'da yol tarifi açan düğme
       let harita = [];
       const hmAll = metin.match(/\[HARITA:[^\]]*\]/gi);
@@ -4820,7 +4827,14 @@ export default function Anasayfa({ pro = false }) {
         metin = metin.replace(/\[SITE:[^\]]*\]/gi, "").trim();
         if (!metin && siteler.length) metin = "İşte ilgili yerler — sitesine gitmek için dokun 👇";
       }
-      setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, siteler, cizim, zamanMs: Date.now() }]);
+      setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, siteler, cizim, resimId, resimIstem, resimYuk: !!resimIstem, zamanMs: Date.now() }]);
+      // GERÇEK RESİM ÜRET (async) — cevabı hemen göster, resim gelince o mesajı güncelle (yükleniyor → resim / hata)
+      if (resimIstem && resimId) {
+        (async () => {
+          let sonuc; try { sonuc = await gloxooResimUret(resimIstem); } catch (e) { sonuc = { hata: (e && (e.message || e.name)) || "hata" }; }
+          setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimYuk: false, resimData: (sonuc && sonuc.dataUrl) || "", resimHata: (sonuc && sonuc.hata) || "" } : m)));
+        })();
+      }
       // HAZIRLANAN İÇERİK (paylaşım metni vb.): kullanıcı SÖZLÜ istediyse ve panel KAPALIYSA, yazı panelini
       // OTOMATİK aç ki hazırladığını GÖRSÜN (canlı sohbet SÜRER — kapatmaz). İstek: "hazırladığını yazı sayfasında göster".
       if (paylasim && !yardimciAcikRef.current && !site) { try { setYardimciAcik(true); } catch (e) {} }
@@ -5377,6 +5391,15 @@ export default function Anasayfa({ pro = false }) {
       img.onerror = () => setKucukMesaj(t("indirilemedi", "İndirilemedi"));
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
     } catch (e) {}
+  };
+  // GERÇEK RESMİ (Gemini — zaten data:image PNG/JPEG) doğrudan indir
+  const resimIndir = (dataUrl) => {
+    const s = (dataUrl || "").toString(); if (!s) return;
+    try {
+      const a = document.createElement("a"); a.href = s; a.download = "GLOXORG-resim.png";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setKucukMesaj(t("indirildi", "İndirildi 📄"));
+    } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
   };
   // Hazırlanan PAYLAŞIMI paylaşım penceresine taşı (yazısı dolu açılır)
   const paylasimaTasi = (metin) => {
@@ -8592,8 +8615,8 @@ export default function Anasayfa({ pro = false }) {
         <div className="cizim-fon" onClick={() => setCizimBuyut(null)}>
           <div className="cizim-pencere" onClick={(e) => e.stopPropagation()}>
             <button className="cizim-kapat" onClick={() => setCizimBuyut(null)} aria-label={t("kapat", "Kapat")}>&#10005;</button>
-            <img className="cizim-buyuk" src={"data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut)} alt={t("cizim", "çizim")} />
-            <button className="cizim-indir-btn" onClick={() => cizimIndir(cizimBuyut)}>
+            <img className="cizim-buyuk" src={(cizimBuyut || "").slice(0, 5) === "data:" ? cizimBuyut : ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut))} alt={t("cizim", "çizim")} />
+            <button className="cizim-indir-btn" onClick={() => ((cizimBuyut || "").slice(0, 5) === "data:" ? resimIndir(cizimBuyut) : cizimIndir(cizimBuyut))}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
               {pl(aiDil, "indir")}
             </button>
@@ -9088,6 +9111,30 @@ export default function Anasayfa({ pro = false }) {
                             {t("buyut", "Büyüt")}
                           </button>
                         </div>
+                      </div>
+                    )}
+                    {/* GERÇEK RESİM (Firebase AI / Gemini) — yükleniyor / resim / hata */}
+                    {m.rol !== "user" && (m.resimYuk || m.resimData || m.resimHata) && (
+                      <div className="ai-cizim-kart">
+                        {m.resimYuk ? (
+                          <div className="ai-resim-yuk"><span className="ai-resim-don" />{t("resimHazirlaniyor", "Resim hazırlanıyor…")}</div>
+                        ) : m.resimData ? (
+                          <>
+                            <img className="ai-cizim-gorsel" src={m.resimData} alt={t("resim", "resim")} onClick={() => setCizimBuyut(m.resimData)} />
+                            <div className="ai-cizim-arac">
+                              <button className="ai-paylasim-btn indir" onClick={() => resimIndir(m.resimData)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                                {pl(aiDil, "indir")}
+                              </button>
+                              <button className="ai-paylasim-btn kopya" onClick={() => setCizimBuyut(m.resimData)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                                {t("buyut", "Büyüt")}
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="ai-resim-hata">{t("resimOlmadi", "Resim üretilemedi")} 🙁<br/><small>{m.resimHata}</small></div>
+                        )}
                       </div>
                     )}
                     {/* MÜŞTERİ LİMİTİ DOLDU → Profesyonele yönlendirme düğmesi (açıklamalı) */}

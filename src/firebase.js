@@ -6,6 +6,7 @@ import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } 
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
+import { getAI, getGenerativeModel, GoogleAIBackend, ResponseModality } from "firebase/ai";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw",
@@ -56,6 +57,31 @@ export async function fcmDurumAl(vapidKey) {
     if (!token) return { token: "", sebep: "token-bos" };
     return { token, sebep: "ok" };
   } catch (e) { return { token: "", sebep: "genel-hata: " + ((e && (e.message || e.name)) || e) }; }
+}
+
+// ── FIREBASE AI LOGIC (Gemini) — Gloxoo'nun GERÇEK (fotoğraf gibi) resim üretmesi için ──
+// Google'ın Gemini "Nano Banana" resim modeli. Kurulum: Firebase Console > AI Logic > Gemini Developer API (etkin).
+// Resim üretimi için Blaze planı gerekebilir; hata olursa SEBEBİ döner → ekranda görünür, kolay teşhis.
+let _gloxAi = null;
+function _aiAl() { if (!_gloxAi) { try { _gloxAi = getAI(app, { backend: new GoogleAIBackend() }); } catch (e) { _gloxAi = null; } } return _gloxAi; }
+export async function gloxooResimUret(istem) {
+  try {
+    const ai = _aiAl();
+    if (!ai) return { hata: "AI baglanamadi (Firebase AI Logic kurulu mu?)" };
+    const model = getGenerativeModel(ai, { model: "gemini-2.5-flash-image", generationConfig: { responseModalities: [ResponseModality.TEXT, ResponseModality.IMAGE] } });
+    const sonuc = await model.generateContent((istem || "").toString().slice(0, 1200));
+    const resp = sonuc && sonuc.response;
+    let parcalar = [];
+    try { parcalar = (resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content && resp.candidates[0].content.parts) || []; } catch (e) {}
+    for (const p of parcalar) {
+      if (p && p.inlineData && p.inlineData.data) {
+        return { dataUrl: "data:" + (p.inlineData.mimeType || "image/png") + ";base64," + p.inlineData.data };
+      }
+    }
+    return { hata: "Resim gelmedi (modelin cevabinda gorsel yok)" };
+  } catch (e) {
+    return { hata: (e && (e.code || e.message || e.name)) ? String(e.code || e.message || e.name) : "bilinmeyen hata" };
+  }
 }
 
 // Basit sürüm (sessiz; girişte otomatik kayıt için) — sadece token döndürür.

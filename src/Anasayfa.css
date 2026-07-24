@@ -3315,6 +3315,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-cizim-kart{ align-self:flex-start; max-width:94%; margin:-1px 0 6px; padding:10px; border-radius:16px; background:linear-gradient(150deg,#fff3c4,#ffe58a 55%,#ffd94f); border:1.6px solid rgba(255,205,130,.85); box-shadow:0 6px 22px rgba(0,0,0,.28); }
 .ai-cizim-gorsel{ display:block; width:100%; max-width:260px; height:auto; aspect-ratio:1/1; object-fit:contain; border-radius:12px; background:#fffbe9; cursor:zoom-in; margin:0 auto 9px; }
 .ai-cizim-arac{ display:flex; gap:8px; flex-wrap:wrap; }
+/* GERÇEK RESİM üretilirken yükleniyor + hata */
+.ai-resim-yuk{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:11px; min-height:150px; color:#5c4600; font-weight:800; font-size:14px; }
+.ai-resim-don{ width:34px; height:34px; border:4px solid rgba(90,70,0,.22); border-top-color:#5c4600; border-radius:50%; animation:resimDon .8s linear infinite; }
+@keyframes resimDon{ to{ transform:rotate(360deg); } }
+.ai-resim-hata{ padding:14px 12px; text-align:center; color:#8a2a2a; font-weight:800; font-size:14px; }
+.ai-resim-hata small{ display:inline-block; margin-top:6px; color:#9a5a5a; font-weight:600; font-size:11px; word-break:break-word; }
 .cizim-fon{ position:fixed; inset:0; z-index:100040; display:flex; align-items:center; justify-content:center; padding:22px; background:radial-gradient(circle at 50% 40%,#ffe9a8,#e6bd52); }
 .cizim-pencere{ position:relative; width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; gap:16px; }
 .cizim-buyuk{ width:100%; max-width:440px; height:auto; aspect-ratio:1/1; object-fit:contain; border-radius:18px; background:#fffbe9; box-shadow:0 10px 34px rgba(0,0,0,.4); }
