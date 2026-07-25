@@ -86,7 +86,8 @@ async function _resimDene(backend, istem) {
   throw new Error("Resim gelmedi (modelin cevabinda gorsel yok)");
 }
 export async function gloxooResimUret(istem) {
-  const yollar = [{ ad: "Vertex", yap: () => new VertexAIBackend() }, { ad: "Gemini", yap: () => new GoogleAIBackend() }];
+  // ÖNCE Gemini Developer API (kullanıcının kurduğu + kredi ekleyeceği yer), OLMAZSA Vertex AI.
+  const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
   const hatalar = [];
   for (const y of yollar) {
     try {
