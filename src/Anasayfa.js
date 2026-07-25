@@ -4694,7 +4694,7 @@ export default function Anasayfa({ pro = false }) {
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
     sistem += `EN ÖNEMLİ KURAL — HAZIRLANAN METİN AYRI: Kullanıcı için bir paylaşım, gönderi, mesaj, şiir, kutlama, ilan, slogan, biyografi veya kopyalanabilir/paylaşılabilir HERHANGİ bir metin hazırladığında (kısa ya da uzun, KAÇINCI kez olursa olsun HER SEFERİNDE), o metni MUTLAKA ve SADECE şu etiketlerin arasına koy: [PAYLASIM]...sadece paylaşılacak metin...[/PAYLASIM]. Bu etiketlerin İÇİNE kendi sohbetini/açıklamanı ASLA yazma; etiket DIŞINDAki sözün en fazla TEK kısa cümle olsun. Hazırladığın metin ŞIK, canlı, SÜSLÜ olsun: bol emoji + çiçek/yıldız süsleri (🌸✨🌟💫🎉), sönük/düz değil. ÖRNEK: kullanıcı "bana doğum günü paylaşımı yaz" derse yanıtın TAM şöyle: Hazır! 🎉 [PAYLASIM]🎂✨ Nice mutlu yıllara! Bugün senin günün! 🥳🌸[/PAYLASIM]. UNUTMA: paylaşılacak/kopyalanacak metin SADECE [PAYLASIM][/PAYLASIM] arasında olur; etiketi koymayı ASLA unutma yoksa kullanıcı kopyalayamaz. `;
     sistem += ` ÇİZİM ([CIZIM] — kullanıcı senden logo, amblem, ikon, rozet, işaret, kart, basit şekil/desen/şema ÇİZMENİ isterse): Fotoğraf gibi gerçekçi resim çizemezsin ama temiz bir VEKTÖR (SVG) çizim yaparsın. İstenen çizimi, kendi içinde TAM ve geçerli bir SVG olarak üret ve SADECE şu etiketler arasına koy: [CIZIM]<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">...şekiller...</svg>[/CIZIM]. KURALLAR: mutlaka viewBox olsun; SADECE şekil öğeleri kullan (path, rect, circle, ellipse, polygon, line, text, g, linearGradient/radialGradient, defs); <script>, <foreignObject>, on... olayları, dış URL/bağlantı, javascript: KESİNLİKLE KULLANMA; renkler CANLI ve ALTIN/sıcak tonlar tercih (kullanıcı koyu/siyah zemin sevmez → zemin şeffaf ya da açık/altın); yazı gerekiyorsa <text> ile net ve okunur koy; markayı "GLOXORG" yazacaksan aynen böyle yaz. Etiket DIŞINDA en fazla TEK kısa cümle söyle (örn "İşte senin için bir logo 🎨"). Ne çizeceğini önceden sormana gerek yok; makul yorumla hemen çiz. Birden çok çizim istenirse birden çok [CIZIM] koyabilirsin. Kullanıcı "değiştir/rengini değiştir/büyüt/başka türlü" derse yeni bir [CIZIM] ile güncelle. `;
-    sistem += ` GERÇEK/FOTOĞRAF GİBİ RESİM ([RESIM:] — kullanıcı senden GERÇEKÇİ, fotoğraf gibi bir görsel/resim isterse; örn "gün batımında deniz", "modern bir kuaför salonu içi", "kırmızı spor araba", "bir kedi"): Bunu SVG ile çizemezsin; bunun için AYRI bir gerçek görsel üretici bağlı. İstenen resmi İNGİLİZCE, kısa ve NET betimleyip şu etikete koy: [RESIM: detailed english description]. Örnek: "bana gün batımında deniz çiz" → [RESIM: a calm sea at golden sunset, warm orange sky, gentle waves, photorealistic]. TEK [RESIM:] koy (bir istekte bir resim). Etiket dışında en fazla tek kısa cümle (örn "Hemen çiziyorum 🎨"). AYRIM: basit logo/ikon/amblem/rozet/şema → [CIZIM] (SVG); gerçekçi/fotoğraf gibi sahne/nesne/manzara/kişi → [RESIM:]. ÇOK ÖNEMLİ KURAL: Kullanıcı bir GÖRSEL/resim/manzara/fotoğraf GÖRMEK istediğini belli ederse ("resim çiz/göster", "bir şey göster", "sürpriz yap", "manzara göster", "çiz" gibi) MUTLAKA [RESIM:] (gerçekçi) ya da [CIZIM] (basit) etiketini KOY. "İşte resim", "işte manzara", "bak bakalım", "sürpriz" gibi bir şey söylüyorsan ETİKETİ DE MUTLAKA KOY — ETİKETSİZ "işte görsel/resim/manzara" DEME (yoksa kullanıcı BOŞ ekran görür, çok kötü olur). Yani görsel vaat ediyorsan etiketi de vereceksin, istisnasız. `;
+    sistem += ` GERÇEK/FOTOĞRAF GİBİ RESİM ([RESIM:] — kullanıcı senden GERÇEKÇİ, fotoğraf gibi bir görsel/resim isterse; örn "gün batımında deniz", "modern bir kuaför salonu içi", "kırmızı spor araba", "bir kedi"): Bunu SVG ile çizemezsin; bunun için AYRI bir gerçek görsel üretici bağlı. İstenen resmi İNGİLİZCE, kısa ve NET betimleyip şu etikete koy: [RESIM: detailed english description]. Örnek: "bana gün batımında deniz çiz" → [RESIM: a calm sea at golden sunset, warm orange sky, gentle waves, photorealistic]. TEK [RESIM:] koy (bir istekte bir resim). Etiket dışında en fazla tek kısa cümle (örn "Hemen çiziyorum 🎨"). AYRIM: basit logo/ikon/amblem/rozet/şema → [CIZIM] (SVG); gerçekçi/fotoğraf gibi sahne/nesne/manzara/kişi → [RESIM:]. ÇOK ÖNEMLİ KURAL: Kullanıcı bir GÖRSEL/resim/manzara/fotoğraf GÖRMEK istediğini belli ederse ("resim çiz/göster", "bir şey göster", "sürpriz yap", "manzara göster", "çiz" gibi) MUTLAKA [RESIM:] (gerçekçi) ya da [CIZIM] (basit) etiketini KOY. "İşte resim", "işte manzara", "bak bakalım", "sürpriz" gibi bir şey söylüyorsan ETİKETİ DE MUTLAKA KOY — ETİKETSİZ "işte görsel/resim/manzara" DEME (yoksa kullanıcı BOŞ ekran görür, çok kötü olur). Yani görsel vaat ediyorsan etiketi de vereceksin, istisnasız. EN KRİTİK: İLK istekte, TA İLK cevabında etiketi HEMEN koy — "resmi hazırlıyorum, birazdan gelir, şimdi çiziyorum" deyip etiketi SONRAYA BIRAKMA; kullanıcı 2. kez istemek zorunda kalmasın. Görsel istendiği ANDA, o cevabın içinde [RESIM:] (ya da [CIZIM]) mutlaka bulunacak. `;
     // 2) TIKLANABİLİR ÖNERİLER (ayrı)
     // KULLANICI İSTEĞİ: kendiliğinden öneri/sonraki-adım YAĞDIRMA. [ONERILER] baloncukları KALDIRILDI —
     // kullanıcı istemediği "şunu da yapayım" tarzı önerilerden rahatsız oluyordu. Sadece sorulana cevap.
@@ -4749,6 +4749,10 @@ export default function Anasayfa({ pro = false }) {
         let ic = m.metin || "";
         if (m.paylasim) ic += `\n[PAYLASIM]${m.paylasim}[/PAYLASIM]`;
         if (Array.isArray(m.oneriler) && m.oneriler.length) ic += `\n[ONERILER: ${m.oneriler.join(" | ")}]`;
+        // GEÇMİŞE ETİKETİ GERİ KOY: model önceki turda resim/çizim ÜRETTİYSE onu görsün → sonraki turda da
+        // etiketi koymaya DEVAM etsin (yoksa etiketsiz "işte resim" halini taklit edip boş bırakıyordu).
+        if (m.resimIstem) ic += `\n[RESIM: ${m.resimIstem}]`;
+        if (m.cizim) ic += `\n(önceki turda bir SVG çizim gösterdin)`;
         return { role: "assistant", content: ic };
       }
       return { role: "user", content: m.metin };
@@ -4787,6 +4791,24 @@ export default function Anasayfa({ pro = false }) {
       let resimIstem = "";
       const rm = metin.match(/\[RESIM:\s*([^\]]+)\]/i);
       if (rm) { resimIstem = (rm[1] || "").trim(); metin = metin.replace(/\[RESIM:[^\]]*\]/gi, "").trim(); }
+      // GÜVENLİK AĞI (İLK İSTEK DÜZELTMESİ): Gloxoo bazen İLK istekte [RESIM:] etiketini KOYMADAN
+      // "Al sana resim / işte manzara" deyip BOŞ bırakıyordu (kullanıcı 2. kez istemek zorunda kalıyordu).
+      // Kullanıcı GÖRSEL istediyse ve AI görsel VAAT ettiyse ama etiket YOKSA → kullanıcının
+      // isteğinden OTOMATİK resim üret; böylece İLK seferde de resim gelir, boş kalmaz.
+      if (!resimIstem && !cizim) {
+        const sonKul = (yeniListe[sonIdx] && yeniListe[sonIdx].rol === "user") ? (yeniListe[sonIdx].metin || "") : "";
+        const kulFoto = !!(yeniListe[sonIdx] && yeniListe[sonIdx].foto);
+        const mtDus = (metin || "").toLowerCase();
+        const kulDus = sonKul.toLowerCase();
+        const gorselSoz = /(resim|resm|görsel|gorsel|manzara|fotoğraf|fotograf|çiz|ciz|görüntü|goruntu)/i;
+        // kullanıcı GERÇEKTEN görsel istedi mi? (foto EKLEMEDİYSE — foto varsa o çeviri/inceleme akışıdır)
+        const kulGorselIstedi = !kulFoto && gorselSoz.test(kulDus);
+        // AI görseli VAAT etti mi (al sana / işte / çizdim …) ve OLUMSUZ (çizemem) DEĞİL mi?
+        const olumsuz = /(çizemem|cizemem|çizemiyorum|cizemiyorum|yapamam|üretemem|uretemem|edemem|veremem|göremem|goremem)/i.test(mtDus);
+        const vaatSoz = /(al sana|işte|iste|buyur|çizdim|cizdim|çiziyorum|ciziyorum|oluşturdum|olusturdum|hazırladım|hazirladim|hazırlıyorum|hazirliyorum|hazır|hazir|sürpriz|surpriz)/i;
+        const aiVaat = !olumsuz && vaatSoz.test(mtDus) && gorselSoz.test(mtDus);
+        if (kulGorselIstedi && aiVaat) resimIstem = sonKul.slice(0, 300);
+      }
       if (!metin && resimIstem) metin = t("resimUretiliyor", "Resmi hazırlıyorum 🎨");
       const resimId = resimIstem ? ("r" + Date.now() + "-" + Math.round(Math.random() * 1e6)) : "";
       // HARİTA — AI bir yere yol tarifi/konum verirse: [HARITA: Yer adı | enlem,boylam] → tıklanınca Google Haritalar'da yol tarifi açan düğme
