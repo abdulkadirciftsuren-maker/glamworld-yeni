@@ -1638,7 +1638,17 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => { setCeviri({}); }, [dil]);
   // GLOXORG YARDIMCISI — gerçek Claude ile sohbet (sağ alt balon)
   const [yardimciAcik, setYardimciAcik] = useState(false);
-  const [yardimciMesajlar, setYardimciMesajlar] = useState(() => { try { return JSON.parse(localStorage.getItem("groxSohbet") || "[]"); } catch (e) { return []; } }); // {rol:'user'|'ai', metin} — kalıcı (yenilense silinmez)
+  const [yardimciMesajlar, setYardimciMesajlar] = useState(() => {
+    // {rol:'user'|'ai', metin} — kalıcı (yenilense silinmez)
+    // TAKILI ÇEMBER DÜZELTMESİ: kaydedilmiş "resim hazırlanıyor" (resimYuk:true) mesajları sayfa
+    // yeniden açılınca SONSUZA DEK döner (üretim işlemi yeniden başlamadığı için asla bitmez).
+    // Yüklerken bu takılı yükleniyor halini KAPAT; resmi yoksa "tekrar iste" notu göster (dönme biter).
+    try {
+      const arr = JSON.parse(localStorage.getItem("groxSohbet") || "[]");
+      if (!Array.isArray(arr)) return [];
+      return arr.map((m) => (m && m.resimYuk && !m.resimData) ? { ...m, resimYuk: false, resimHata: m.resimHata || "__eski__" } : m);
+    } catch (e) { return []; }
+  });
   const [yardimciYazi, setYardimciYazi] = useState("");
   const [yardimciYukleniyor, setYardimciYukleniyor] = useState(false);
   const yardimciAltRef = useRef(null);
@@ -4694,7 +4704,7 @@ export default function Anasayfa({ pro = false }) {
     // 1) HAZIRLANAN METİN AYRI BLOK (en kritik — kopyala/paylaş bunu alır)
     sistem += `EN ÖNEMLİ KURAL — HAZIRLANAN METİN AYRI: Kullanıcı için bir paylaşım, gönderi, mesaj, şiir, kutlama, ilan, slogan, biyografi veya kopyalanabilir/paylaşılabilir HERHANGİ bir metin hazırladığında (kısa ya da uzun, KAÇINCI kez olursa olsun HER SEFERİNDE), o metni MUTLAKA ve SADECE şu etiketlerin arasına koy: [PAYLASIM]...sadece paylaşılacak metin...[/PAYLASIM]. Bu etiketlerin İÇİNE kendi sohbetini/açıklamanı ASLA yazma; etiket DIŞINDAki sözün en fazla TEK kısa cümle olsun. Hazırladığın metin ŞIK, canlı, SÜSLÜ olsun: bol emoji + çiçek/yıldız süsleri (🌸✨🌟💫🎉), sönük/düz değil. ÖRNEK: kullanıcı "bana doğum günü paylaşımı yaz" derse yanıtın TAM şöyle: Hazır! 🎉 [PAYLASIM]🎂✨ Nice mutlu yıllara! Bugün senin günün! 🥳🌸[/PAYLASIM]. UNUTMA: paylaşılacak/kopyalanacak metin SADECE [PAYLASIM][/PAYLASIM] arasında olur; etiketi koymayı ASLA unutma yoksa kullanıcı kopyalayamaz. `;
     sistem += ` ÇİZİM ([CIZIM] — kullanıcı senden logo, amblem, ikon, rozet, işaret, kart, basit şekil/desen/şema ÇİZMENİ isterse): Fotoğraf gibi gerçekçi resim çizemezsin ama temiz bir VEKTÖR (SVG) çizim yaparsın. İstenen çizimi, kendi içinde TAM ve geçerli bir SVG olarak üret ve SADECE şu etiketler arasına koy: [CIZIM]<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">...şekiller...</svg>[/CIZIM]. KURALLAR: mutlaka viewBox olsun; SADECE şekil öğeleri kullan (path, rect, circle, ellipse, polygon, line, text, g, linearGradient/radialGradient, defs); <script>, <foreignObject>, on... olayları, dış URL/bağlantı, javascript: KESİNLİKLE KULLANMA; renkler CANLI ve ALTIN/sıcak tonlar tercih (kullanıcı koyu/siyah zemin sevmez → zemin şeffaf ya da açık/altın); yazı gerekiyorsa <text> ile net ve okunur koy; markayı "GLOXORG" yazacaksan aynen böyle yaz. Etiket DIŞINDA en fazla TEK kısa cümle söyle (örn "İşte senin için bir logo 🎨"). Ne çizeceğini önceden sormana gerek yok; makul yorumla hemen çiz. Birden çok çizim istenirse birden çok [CIZIM] koyabilirsin. Kullanıcı "değiştir/rengini değiştir/büyüt/başka türlü" derse yeni bir [CIZIM] ile güncelle. `;
-    sistem += ` GERÇEK/FOTOĞRAF GİBİ RESİM ([RESIM:] — kullanıcı senden GERÇEKÇİ, fotoğraf gibi bir görsel/resim isterse; örn "gün batımında deniz", "modern bir kuaför salonu içi", "kırmızı spor araba", "bir kedi"): Bunu SVG ile çizemezsin; bunun için AYRI bir gerçek görsel üretici bağlı. İstenen resmi İNGİLİZCE, kısa ve NET betimleyip şu etikete koy: [RESIM: detailed english description]. Örnek: "bana gün batımında deniz çiz" → [RESIM: a calm sea at golden sunset, warm orange sky, gentle waves, photorealistic]. TEK [RESIM:] koy (bir istekte bir resim). Etiket dışında en fazla tek kısa cümle (örn "Hemen çiziyorum 🎨"). AYRIM: basit logo/ikon/amblem/rozet/şema → [CIZIM] (SVG); gerçekçi/fotoğraf gibi sahne/nesne/manzara/kişi → [RESIM:]. ÇOK ÖNEMLİ KURAL: Kullanıcı bir GÖRSEL/resim/manzara/fotoğraf GÖRMEK istediğini belli ederse ("resim çiz/göster", "bir şey göster", "sürpriz yap", "manzara göster", "çiz" gibi) MUTLAKA [RESIM:] (gerçekçi) ya da [CIZIM] (basit) etiketini KOY. "İşte resim", "işte manzara", "bak bakalım", "sürpriz" gibi bir şey söylüyorsan ETİKETİ DE MUTLAKA KOY — ETİKETSİZ "işte görsel/resim/manzara" DEME (yoksa kullanıcı BOŞ ekran görür, çok kötü olur). Yani görsel vaat ediyorsan etiketi de vereceksin, istisnasız. EN KRİTİK: İLK istekte, TA İLK cevabında etiketi HEMEN koy — "resmi hazırlıyorum, birazdan gelir, şimdi çiziyorum" deyip etiketi SONRAYA BIRAKMA; kullanıcı 2. kez istemek zorunda kalmasın. Görsel istendiği ANDA, o cevabın içinde [RESIM:] (ya da [CIZIM]) mutlaka bulunacak. `;
+    sistem += ` GERÇEK/FOTOĞRAF GİBİ RESİM ([RESIM:] — kullanıcı senden GERÇEKÇİ, fotoğraf gibi bir görsel/resim isterse; örn "gün batımında deniz", "modern bir kuaför salonu içi", "kırmızı spor araba", "bir kedi"): Bunu SVG ile çizemezsin; bunun için AYRI bir gerçek görsel üretici bağlı. İstenen resmi İNGİLİZCE, kısa ve NET betimleyip şu etikete koy: [RESIM: detailed english description]. Örnek: "bana gün batımında deniz çiz" → [RESIM: a calm sea at golden sunset, warm orange sky, gentle waves, photorealistic]. TEK [RESIM:] koy (bir istekte bir resim). Etiket dışında en fazla tek kısa cümle (örn "Hemen çiziyorum 🎨"). AYRIM: basit logo/ikon/amblem/rozet/şema → [CIZIM] (SVG); gerçekçi/fotoğraf gibi sahne/nesne/manzara/kişi → [RESIM:]. ÇOK ÖNEMLİ KURAL: Kullanıcı bir GÖRSEL/resim/manzara/fotoğraf GÖRMEK istediğini belli ederse ("resim çiz/göster", "bir şey göster", "sürpriz yap", "manzara göster", "çiz" gibi) MUTLAKA [RESIM:] (gerçekçi) ya da [CIZIM] (basit) etiketini KOY. "İşte resim", "işte manzara", "bak bakalım", "sürpriz" gibi bir şey söylüyorsan ETİKETİ DE MUTLAKA KOY — ETİKETSİZ "işte görsel/resim/manzara" DEME (yoksa kullanıcı BOŞ ekran görür, çok kötü olur). Yani görsel vaat ediyorsan etiketi de vereceksin, istisnasız. EN KRİTİK: İLK istekte, TA İLK cevabında etiketi HEMEN koy — "resmi hazırlıyorum, birazdan gelir, şimdi çiziyorum" deyip etiketi SONRAYA BIRAKMA; kullanıcı 2. kez istemek zorunda kalmasın. Görsel istendiği ANDA, o cevabın içinde [RESIM:] (ya da [CIZIM]) mutlaka bulunacak. RESMİN ÜSTÜNE YAZI: Kullanıcı resmin üzerinde YAZI/metin isterse (tebrik kartı, afiş, poster, isim, slogan, "üstüne şunu yaz", doğum günü/kutlama yazısı gibi), yazılacak METNİ [RESIM:] betiminin İÇİNE, İNGİLİZCE betimin yanında AYNEN ve TIRNAK içinde koy — yazı kullanıcının yazdığı dilde (Türkçe ise Türkçe, Türkçe harfleriyle) olsun ve KISA tut (bir-iki satır); üslubu da betimle (renkli, büyük şık harfler, zarif yazı tipi). ÖRNEK: kullanıcı "üstünde 'Nice Yıllara' yazan renkli bir doğum günü kartı" derse → [RESIM: a festive colorful birthday card, balloons and confetti, with large elegant text that reads "Nice Yıllara" in bright golden letters, photorealistic, high quality]. Metni AYNEN yaz (harf/kelime değiştirme), tırnak içinde ver ki resimde doğru çıksın. `;
     // 2) TIKLANABİLİR ÖNERİLER (ayrı)
     // KULLANICI İSTEĞİ: kendiliğinden öneri/sonraki-adım YAĞDIRMA. [ONERILER] baloncukları KALDIRILDI —
     // kullanıcı istemediği "şunu da yapayım" tarzı önerilerden rahatsız oluyordu. Sadece sorulana cevap.
@@ -4853,7 +4863,9 @@ export default function Anasayfa({ pro = false }) {
       // GERÇEK RESİM ÜRET (async) — cevabı hemen göster, resim gelince o mesajı güncelle (yükleniyor → resim / hata)
       if (resimIstem && resimId) {
         (async () => {
-          let sonuc; try { sonuc = await gloxooResimUret(resimIstem); } catch (e) { sonuc = { hata: (e && (e.message || e.name)) || "hata" }; }
+          // ZAMAN AŞIMI: resim 75 sn içinde gelmezse çemberi durdur, hata göster (ASLA sonsuz dönmesin).
+          const zamanAsimi = new Promise((cz) => setTimeout(() => cz({ hata: t("resimZamanAsimi", "Resim zamanında gelmedi, tekrar dener misin?") }), 75000));
+          let sonuc; try { sonuc = await Promise.race([gloxooResimUret(resimIstem), zamanAsimi]); } catch (e) { sonuc = { hata: (e && (e.message || e.name)) || "hata" }; }
           setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimYuk: false, resimData: (sonuc && sonuc.dataUrl) || "", resimHata: (sonuc && sonuc.hata) || "" } : m)));
         })();
       }
@@ -9155,7 +9167,11 @@ export default function Anasayfa({ pro = false }) {
                             </div>
                           </>
                         ) : (
-                          <div className="ai-resim-hata">{t("resimOlmadi", "Resim üretilemedi")} 🙁<br/><small>{m.resimHata}</small></div>
+                          m.resimHata === "__eski__" ? (
+                            <div className="ai-resim-hata">{t("resimEski", "Bu resim gelmedi — yeniden ister misin?")} 🙏</div>
+                          ) : (
+                            <div className="ai-resim-hata">{t("resimOlmadi", "Resim üretilemedi")} 🙁<br/><small>{m.resimHata}</small></div>
+                          )
                         )}
                       </div>
                     )}
