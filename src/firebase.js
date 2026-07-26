@@ -73,10 +73,51 @@ function _hataMetni(e) {
   try { if (e && e.cause && e.cause.message) parca.push("neden=" + e.cause.message); } catch (x) {}
   return parca.join(" | ") || "bilinmeyen hata";
 }
-async function _resimDene(backend, istem) {
+// FİLİGRAN — üretilen HER resmin SAĞ ALT köşesine "GLOXORG" markası basılır (her zaman görünür, marka korunur).
+// Tarayıcıda canvas ile eklenir (model yazıyı yanlış yazamaz → marka HER SEFERİNDE net ve doğru çıkar).
+function _filigranEkle(dataUrl) {
+  return new Promise((cz) => {
+    try {
+      if (typeof document === "undefined" || !dataUrl) return cz(dataUrl);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const g = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+          if (!g || !h) return cz(dataUrl);
+          const c = document.createElement("canvas"); c.width = g; c.height = h;
+          const x = c.getContext("2d");
+          x.drawImage(img, 0, 0, g, h);
+          const yazi = "GLOXORG";
+          const boy = Math.max(15, Math.round(g * 0.040));       // resim boyuna göre yazı boyu
+          const pay = Math.round(g * 0.028);                     // köşe boşluğu
+          x.font = "700 " + boy + "px Arial, Helvetica, sans-serif";
+          x.textAlign = "right"; x.textBaseline = "bottom";
+          const kx = g - pay, ky = h - pay;
+          x.lineWidth = Math.max(2, Math.round(boy * 0.18)); x.lineJoin = "round";
+          x.strokeStyle = "rgba(0,0,0,0.55)"; x.strokeText(yazi, kx, ky); // okunur olsun diye koyu kontur
+          x.fillStyle = "#FFD700"; x.fillText(yazi, kx, ky);              // ALTIN marka yazısı
+          cz(c.toDataURL("image/png"));
+        } catch (e) { cz(dataUrl); }
+      };
+      img.onerror = () => cz(dataUrl);
+      img.src = dataUrl;
+    } catch (e) { cz(dataUrl); }
+  });
+}
+// girdiResim: kullanıcının verdiği fotoğraf {base64, mediaType} — VARSA modele girdi olur (o resmi işler/düzenler,
+// örn. kişinin YÜZÜNÜ koruyarak istenen sahneyi kurar). YOKSA yalnız metinden yeni resim üretir.
+async function _resimDene(backend, istem, girdiResim) {
   const ai = getAI(app, { backend });
   const model = getGenerativeModel(ai, { model: "gemini-2.5-flash-image", generationConfig: { responseModalities: [ResponseModality.TEXT, ResponseModality.IMAGE] } });
-  const sonuc = await model.generateContent((istem || "").toString().slice(0, 1200));
+  const metin = (istem || "").toString().slice(0, 1200);
+  let girisi;
+  if (girdiResim && girdiResim.base64) {
+    // Çok parçalı istek: ÖNCE kullanıcının fotoğrafı, SONRA ne yapılacağı → model o resmi düzenler/kullanır
+    girisi = [{ inlineData: { mimeType: girdiResim.mediaType || "image/jpeg", data: girdiResim.base64 } }, { text: metin }];
+  } else {
+    girisi = metin;
+  }
+  const sonuc = await model.generateContent(girisi);
   const resp = sonuc && sonuc.response;
   let parcalar = [];
   try { parcalar = (resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content && resp.candidates[0].content.parts) || []; } catch (e) {}
@@ -85,15 +126,15 @@ async function _resimDene(backend, istem) {
   }
   throw new Error("Resim gelmedi (modelin cevabinda gorsel yok)");
 }
-export async function gloxooResimUret(istem) {
+export async function gloxooResimUret(istem, girdiResim) {
   // ÖNCE Gemini Developer API (kullanıcının kurduğu + kredi ekleyeceği yer), OLMAZSA Vertex AI.
   const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
   const hatalar = [];
   for (const y of yollar) {
     try {
       let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
-      const url = await _resimDene(bk, istem);
-      if (url) return { dataUrl: url };
+      const url = await _resimDene(bk, istem, girdiResim);
+      if (url) { let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
     } catch (e) { hatalar.push(y.ad + ": " + _hataMetni(e)); }
   }
   return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };
