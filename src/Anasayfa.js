@@ -4775,6 +4775,12 @@ export default function Anasayfa({ pro = false }) {
       });
       const veri = await r.json();
       let metin = (veri && veri.metin) ? veri.metin : (veri && veri.hata) ? veri.hata : t("yardimciHata", "Şu an yanıt veremedim, birazdan tekrar dene.");
+      // YAZI BEYNİ (Claude/Anthropic) KREDİSİ BİTTİ hatası İNGİLİZCE geliyordu ("Your credit balance is too low...
+      // Anthropic API ... purchase credits") → kullanıcı anlamıyor. Bunu ANLAŞILIR TÜRKÇE mesaja çevir (resim
+      // kredisinden AYRI bir hesap olduğunu da belirt). Böylece ne olduğu ve ne yapılacağı net olur.
+      if (/credit balance is too low|purchase credits|Plans ?& ?Billing|Anthropic API|insufficient .*credit|quota|rate.?limit|overloaded/i.test(String(metin))) {
+        metin = t("beyinKredi", "Şu an Gloxoo'nun yazı beyni yoğun ya da kredisi bitmiş görünüyor 🙏 (Bu, resim kredisinden ayrı bir hesap.) Birkaç dakika sonra tekrar dener misin? Sürerse GLOXORG sahibine haber ver — kısa sürede açılır.");
+      }
       let komut = null;
       if (site) { const m = metin.match(/\[AC:\s*([a-zçğıöşü]+)\s*\]/i); if (m) { komut = m[1].toLowerCase(); metin = metin.replace(/\[AC:[^\]]*\]/gi, "").trim() || t("yardimciAciliyor", "Açıyorum…"); } }
       let oneriler = [];
