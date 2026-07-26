@@ -3334,6 +3334,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-paylasim-btn.indir{ background:rgba(47,149,255,.18); color:#bfe0ff; border:1px solid rgba(47,149,255,.55); }
 .ai-paylasim-btn.paylas{ background:linear-gradient(135deg,#FFE9A8,#FFD700 55%,#E8C254); color:#1a1206; }
 .ai-paylasim-btn:active{ transform:scale(.97); }
+/* RESİM/ÇİZİM KARTI AÇIK ALTIN ZEMİN → düğme yazıları KOYU olmalı (açık renk yazılar görünmüyordu; sağdakiler kayboluyordu) */
+.ai-cizim-arac .ai-paylasim-btn{ min-width:104px; padding:11px 10px; }
+.ai-cizim-arac .ai-paylasim-btn.kopya{ background:rgba(90,60,10,.16); color:#4a3208; border:1.6px solid rgba(120,85,25,.7); }
+.ai-cizim-arac .ai-paylasim-btn.indir{ background:rgba(30,95,190,.16); color:#123f8c; border:1.6px solid rgba(30,95,190,.7); }
+.ai-cizim-arac .ai-paylasim-btn.paylas{ background:linear-gradient(135deg,#6a3df0,#5326d4 55%,#3f1cb0); color:#fff; border:1.6px solid rgba(120,80,240,.5); }
 /* HER AI mesajinin altinda kopyala/indir/paylas satiri (renkli) — paylasim yoksa da hep cikar */
 .ai-msj-arac{ align-self:flex-start; max-width:94%; display:flex; flex-wrap:wrap; gap:7px; margin:-2px 0 4px; }
 .ai-msj-arac-btn{ display:inline-flex; align-items:center; gap:5px; padding:6px 11px; border-radius:11px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; border:1.4px solid; background:rgba(255,255,255,.06); }

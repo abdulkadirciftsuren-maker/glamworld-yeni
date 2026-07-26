@@ -5481,6 +5481,19 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) {}
     resimIndir(dataUrl); setKucukMesaj(t("resimIndiKopya", "Resim indirildi 📄"));
   };
+  // ÜRETİLEN RESMİ GLOXORG'DA PAYLAŞ — resmi paylaşım penceresine (kendi feed'ine) taşır, yazı boş açılır.
+  // ÖNEMLİ: resimde ZATEN GLOXORG filigranı var → paylaşımda TEKRAR filigran ekleme (çift olmasın) → filigranEkle=false.
+  const resimGloxordaPaylas = (dataUrl) => {
+    const s = (dataUrl || "").toString(); if (!s) return;
+    try { setDuzenlenen(null); } catch (e) {}
+    setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur("");
+    setPaylasGorsel(s); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum("");
+    setPaylasAvatar("profil"); setUstYazi(""); setPaylasDuzen(null); setPaylasZemin(""); setPaylasKonum(null); setKonumDurum("");
+    setFiligranEkle(false); // resimde GLOXORG zaten var → çift filigran olmasın
+    setYaziMedyaUstunde(false); setAnketAcik(false);
+    setYardimciAcik(false); setPaylasAcik(true);
+    setKucukMesaj(t("resimPaylasima", "Resim paylaşıma taşındı — istersen yazı ekleyip GLOXORG'da paylaş 📤"));
+  };
   // Hazırlanan PAYLAŞIMI paylaşım penceresine taşı (yazısı dolu açılır)
   const paylasimaTasi = (metin) => {
     if (!metin) return;
@@ -9224,7 +9237,7 @@ export default function Anasayfa({ pro = false }) {
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
                                 {pl(aiDil, "kopyala")}
                               </button>
-                              <button className="ai-paylasim-btn paylas" onClick={() => resimPaylas(m.resimData)}>
+                              <button className="ai-paylasim-btn paylas" onClick={() => resimGloxordaPaylas(m.resimData)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                                 {pl(aiDil, "paylas")}
                               </button>
