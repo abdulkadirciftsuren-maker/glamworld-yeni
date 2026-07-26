@@ -5025,19 +5025,25 @@ export default function Anasayfa({ pro = false }) {
       dikteAcikRef.current = true; setDinliyor(true);
       dikteTabanRef.current = (yardimciYazi || "").trim(); // mevcut yazı korunur, üstüne eklenir
       // Her başlatmada TAZE tanıyıcı (Android'de sessizlikte durunca temiz yeniden başlar → kelime tekrarı olmaz)
+      // ÖNEMLİ (KELİME 4-5-6 KEZ TEKRARI DÜZELTMESİ): continuous=true Android'de sonuçları BİRİKTİRİP
+      // aynı kelimeyi tekrar tekrar yazıyordu. Canlı sohbette olduğu gibi continuous=FALSE kullan +
+      // oturum içinde BİRİKTİRME YAP MA: her kısa oturum TEK cümle döndürür, onu tabana ekleriz → tekrar olmaz.
       const basla = () => {
         let rec; try { rec = new SR(); } catch (e) { dikteAcikRef.current = false; setDinliyor(false); return; }
-        rec.lang = aiSesKodu(aiDilRef.current); rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+        rec.lang = aiSesKodu(aiDilRef.current); rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
         recognitionRef.current = rec;
-        let kalici = ""; // bu oturumda KESİNLEŞEN metin
+        let sonFinal = ""; // bu KISA oturumda kesinleşen tek cümle (biriktirme YOK)
         rec.onresult = (e) => {
-          let gecici = "";
-          for (let i = e.resultIndex; i < e.results.length; i++) {
+          // continuous=false → tek söz; SADECE mevcut cümleyi al (kesinleşen varsa onu, yoksa geçici) — asla eskiyi biriktirme
+          let gecici = "", fin = "";
+          for (let i = 0; i < e.results.length; i++) {
             const tr = (e.results[i][0] && e.results[i][0].transcript) || "";
-            if (e.results[i].isFinal) kalici += tr + " "; else gecici += tr; // resultIndex ile SADECE yeni sonuçlar → tekrar YOK
+            if (e.results[i].isFinal) fin += tr; else gecici = tr;
           }
+          if (fin) sonFinal = fin.trim();
           const taban = dikteTabanRef.current;
-          const yeni = tekrarSil(((taban ? taban + " " : "") + kalici + gecici).replace(/\s+/g, " ").replace(/^\s+/, "")); // aynı kelime/öbek 10x yazılmasın
+          const canli = (fin || gecici).trim(); // final geldiyse final, yoksa o anki geçici
+          const yeni = tekrarSil(((taban ? taban + " " : "") + canli).replace(/\s+/g, " ").replace(/^\s+/, "")); // emniyet
           setYardimciYazi(yeni);
           try { const el = yardimciInputRef.current; if (el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 200) + "px"; } } catch (er) {}
         };
@@ -5045,7 +5051,8 @@ export default function Anasayfa({ pro = false }) {
           if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { dikteAcikRef.current = false; recognitionRef.current = null; setDinliyor(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); }
         };
         rec.onend = () => {
-          if (kalici) dikteTabanRef.current = ((dikteTabanRef.current ? dikteTabanRef.current + " " : "") + kalici).replace(/\s+/g, " ").trim();
+          // Kısa oturum bitti → kesinleşen cümleyi TABANA ekle (bir sonraki oturum bunun ÜSTÜNE yazar → tekrar olmaz)
+          if (sonFinal) dikteTabanRef.current = ((dikteTabanRef.current ? dikteTabanRef.current + " " : "") + sonFinal).replace(/\s+/g, " ").trim();
           recognitionRef.current = null;
           if (dikteAcikRef.current) basla(); // kullanıcı kapatana kadar dinlemeye devam (sessizlikte durunca yeniden başlat)
           else setDinliyor(false);
