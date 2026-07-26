@@ -5447,6 +5447,40 @@ export default function Anasayfa({ pro = false }) {
       setKucukMesaj(t("indirildi", "İndirildi 📄"));
     } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
   };
+  // data URL → Blob (paylaş/kopyala için gerçek dosya lazım)
+  const _dataUrlBlob = (dataUrl) => {
+    try {
+      const s = (dataUrl || "").toString(); const virgul = s.indexOf(",");
+      const bas = s.slice(0, virgul); const veri = s.slice(virgul + 1);
+      const tur = (bas.match(/data:([^;]+)/) || [])[1] || "image/png";
+      const ikili = atob(veri); const uz = new Uint8Array(ikili.length);
+      for (let i = 0; i < ikili.length; i++) uz[i] = ikili.charCodeAt(i);
+      return new Blob([uz], { type: tur });
+    } catch (e) { return null; }
+  };
+  // RESMİ PAYLAŞ — telefonun paylaşım penceresini FOTOĞRAFLA açar (WhatsApp, Instagram, kime istersen)
+  const resimPaylas = async (dataUrl) => {
+    const blob = _dataUrlBlob(dataUrl); if (!blob) { setKucukMesaj(t("paylasilamadi", "Paylaşılamadı")); return; }
+    try {
+      const dosya = new File([blob], "GLOXORG-resim.png", { type: blob.type || "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [dosya] }) && navigator.share) {
+        await navigator.share({ files: [dosya], title: "GLOXORG" }); return;
+      }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    // Paylaşım desteklenmiyorsa → indir (kullanıcı oradan paylaşır)
+    resimIndir(dataUrl); setKucukMesaj(t("resimIndiPaylas", "Resim indirildi — oradan paylaşabilirsin 📤"));
+  };
+  // RESMİ KOPYALA — panoya PNG olarak koyar (destekleyen tarayıcıda), olmazsa indirir
+  const resimKopyala = async (dataUrl) => {
+    const blob = _dataUrlBlob(dataUrl); if (!blob) { setKucukMesaj(t("kopyalanamadi", "Kopyalanamadı")); return; }
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([new window.ClipboardItem({ [blob.type || "image/png"]: blob })]);
+        setKucukMesaj(t("resimKopyalandi", "Resim kopyalandı 📋")); return;
+      }
+    } catch (e) {}
+    resimIndir(dataUrl); setKucukMesaj(t("resimIndiKopya", "Resim indirildi 📄"));
+  };
   // Hazırlanan PAYLAŞIMI paylaşım penceresine taşı (yazısı dolu açılır)
   const paylasimaTasi = (metin) => {
     if (!metin) return;
@@ -9117,6 +9151,20 @@ export default function Anasayfa({ pro = false }) {
                         </button>
                       )}
                     </div>
+                    {/* YAZININ HEMEN ALTINDA (fotoğrafın DEĞİL) Kopyala/İndir/Paylaş — bu düğmeler YAZIYI alır; fotoğrafın kendi düğmeleri kartında ayrı. [PAYLASIM] kartı varsa onun düğmeleri geçerli olduğu için burada gösterme */}
+                    {m.rol !== "user" && m.metin && !m.paylasim && !m.proButon && !m.uyelikTeklif && (
+                      <div className="ai-msj-arac">
+                        <button className="ai-msj-arac-btn kopya" onClick={() => panoyaKopyala(m.metin)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>{pl(aiDil, "kopyala")}
+                        </button>
+                        <button className="ai-msj-arac-btn indir" onClick={() => metniIndir(m.metin)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>{pl(aiDil, "indir")}
+                        </button>
+                        <button className="ai-msj-arac-btn paylas" onClick={() => paylasimaTasi(m.metin)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>{pl(aiDil, "paylas")}
+                        </button>
+                      </div>
+                    )}
                     {/* HAZIRLANAN İÇERİK — SADECE burada (AI'nin sohbet baloncuğundan AYRI): ne kopyalayacağını görürsün; kopya/indir/paylaş YALNIZCA bu metni alır (sohbeti değil) */}
                     {m.rol !== "user" && m.paylasim && (
                       <div className="ai-paylasim-kart">
@@ -9172,6 +9220,14 @@ export default function Anasayfa({ pro = false }) {
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
                                 {pl(aiDil, "indir")}
                               </button>
+                              <button className="ai-paylasim-btn kopya" onClick={() => resimKopyala(m.resimData)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                                {pl(aiDil, "kopyala")}
+                              </button>
+                              <button className="ai-paylasim-btn paylas" onClick={() => resimPaylas(m.resimData)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                                {pl(aiDil, "paylas")}
+                              </button>
                               <button className="ai-paylasim-btn kopya" onClick={() => setCizimBuyut(m.resimData)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                                 {t("buyut", "Büyüt")}
@@ -9203,20 +9259,6 @@ export default function Anasayfa({ pro = false }) {
                           <span className="ai-uyelik-pir" aria-hidden="true"><GercekPirlanta c="#e0202c" cerceve={false} /><GercekPirlanta c="#FFD700" cerceve={false} /></span>
                           <span className="ai-uyelik-yazi">{t("uyelikKartlariAc", "Üyelik kartlarını aç")}</span>
                           <span className="ai-uyelik-yon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
-                        </button>
-                      </div>
-                    )}
-                    {/* HER AI MESAJININ ALTINDA (sohbet baloncuğundan AYRI satır) Kopyala/İndir/Paylaş — [PAYLASIM] kartı yoksa da hep çıkar; o mesajı alır */}
-                    {m.rol !== "user" && m.metin && !m.paylasim && !m.proButon && !m.uyelikTeklif && (
-                      <div className="ai-msj-arac">
-                        <button className="ai-msj-arac-btn kopya" onClick={() => panoyaKopyala(m.metin)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>{pl(aiDil, "kopyala")}
-                        </button>
-                        <button className="ai-msj-arac-btn indir" onClick={() => metniIndir(m.metin)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>{pl(aiDil, "indir")}
-                        </button>
-                        <button className="ai-msj-arac-btn paylas" onClick={() => paylasimaTasi(m.metin)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>{pl(aiDil, "paylas")}
                         </button>
                       </div>
                     )}

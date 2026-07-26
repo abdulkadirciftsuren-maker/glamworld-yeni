@@ -88,14 +88,29 @@ function _filigranEkle(dataUrl) {
           const x = c.getContext("2d");
           x.drawImage(img, 0, 0, g, h);
           const yazi = "GLOXORG";
-          const boy = Math.max(15, Math.round(g * 0.040));       // resim boyuna göre yazı boyu
-          const pay = Math.round(g * 0.028);                     // köşe boşluğu
-          x.font = "700 " + boy + "px Arial, Helvetica, sans-serif";
-          x.textAlign = "right"; x.textBaseline = "bottom";
-          const kx = g - pay, ky = h - pay;
-          x.lineWidth = Math.max(2, Math.round(boy * 0.18)); x.lineJoin = "round";
-          x.strokeStyle = "rgba(0,0,0,0.55)"; x.strokeText(yazi, kx, ky); // okunur olsun diye koyu kontur
-          x.fillStyle = "#FFD700"; x.fillText(yazi, kx, ky);              // ALTIN marka yazısı
+          const boy = Math.max(20, Math.round(g * 0.055));       // resim boyuna göre yazı boyu (daha BÜYÜK → net görünür)
+          const pay = Math.round(g * 0.030);                     // köşe boşluğu
+          x.font = "800 " + boy + "px Arial, Helvetica, sans-serif";
+          x.textAlign = "right"; x.textBaseline = "alphabetic";
+          const yaziEn = x.measureText(yazi).width;
+          const dolguX = Math.round(boy * 0.45), dolguY = Math.round(boy * 0.30);
+          const serEn = yaziEn + dolguX * 2, serBoy = boy + dolguY * 2;
+          const serX = g - pay - serEn, serY = h - pay - serBoy;
+          // ARKA ŞERİT: koyu yarı saydam yuvarlatılmış zemin → altın yazı HER resimde net okunur (parlak/açık resimde bile)
+          const r = Math.round(serBoy * 0.28);
+          x.fillStyle = "rgba(0,0,0,0.42)";
+          x.beginPath();
+          x.moveTo(serX + r, serY);
+          x.arcTo(serX + serEn, serY, serX + serEn, serY + serBoy, r);
+          x.arcTo(serX + serEn, serY + serBoy, serX, serY + serBoy, r);
+          x.arcTo(serX, serY + serBoy, serX, serY, r);
+          x.arcTo(serX, serY, serX + serEn, serY, r);
+          x.closePath(); x.fill();
+          // YAZI: önce ince koyu kontur, sonra ALTIN dolgu (kalın, belirgin)
+          const tx = g - pay - dolguX, ty = h - pay - dolguY;
+          x.lineWidth = Math.max(2, Math.round(boy * 0.12)); x.lineJoin = "round";
+          x.strokeStyle = "rgba(0,0,0,0.85)"; x.strokeText(yazi, tx, ty);
+          x.fillStyle = "#FFD700"; x.fillText(yazi, tx, ty);
           cz(c.toDataURL("image/png"));
         } catch (e) { cz(dataUrl); }
       };
