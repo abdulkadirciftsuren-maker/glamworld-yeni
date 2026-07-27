@@ -1537,12 +1537,32 @@ export default function Anasayfa({ pro = false }) {
   const [ustYer, setUstYer] = useState("alt");      // ust | orta | alt
   const [aiKonusuyor, setAiKonusuyor] = useState(false); // TTS çalıyor mu — maskot ağzını oynatır
   const aiKonusuyorRef = useRef(false); // Gloxoo KONUŞUYOR mu (async okunur): konuşurken mikrofon dinlemez (yarı-çift yönlü)
+  const aiSesElemRef = useRef(null); // GERÇEK insan sesi (worker'dan gelen mp3) çalınırken tutulan <audio>; durdurmak/izlemek için
+  const gercekSesKapaliRef = useRef(false); // gerçek ses anahtarı yok/kredisi bittiyse → o oturumda boşuna deneme, direkt tarayıcı sesine geç
+  const aiHazirlaniyorRef = useRef(false); // gerçek ses worker'dan YÜKLENİYOR (henüz çalmadı) — bu sırada da "konuşuyor" say (mikrofon araya girmesin)
+  // GLOXOO'YU SUSTUR — hem tarayıcının KENDİ sesini (speechSynthesis) hem GERÇEK sesi (worker mp3) BİRLİKTE durdurur.
+  // Eskiden her yerde sadece speechSynthesis.cancel() vardı; gerçek ses eklenince o tek başına yetmiyor → bu yardımcı ikisini de keser.
+  const gloxSustur = () => {
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+    try { aiHazirlaniyorRef.current = false; } catch (e) {}
+    try { if (aiSesElemRef.current) { const a = aiSesElemRef.current; aiSesElemRef.current = null; a.onended = null; a.onerror = null; a.ontimeupdate = null; a.onplay = null; a.pause(); a.src = ""; } } catch (e) {}
+  };
+  // GLOXOO KONUŞUYOR MU? — tek merkez: tarayıcı sesi VEYA gerçek ses (mp3) çalıyorsa, ya da gerçek ses YÜKLENİYORSA true.
+  // (Yükleniyor da sayılır → canlı sohbette mikrofon, ses gelmeden araya girip Gloxoo'yu kesmez.)
+  const gloxKonusuyor = () => {
+    try {
+      if (aiHazirlaniyorRef.current || aiKonusuyorRef.current) return true;
+      if (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) return true;
+      if (aiSesElemRef.current && !aiSesElemRef.current.paused && !aiSesElemRef.current.ended) return true;
+    } catch (e) {}
+    return false;
+  };
   const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
   const maskotBosRef = useRef(0);
   const konusIlerRef = useRef(0);
   useEffect(() => {
     const id = setInterval(() => {
-      let s = false; try { s = !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (e) {}
+      let s = false; try { s = (!!(window.speechSynthesis && window.speechSynthesis.speaking)) || (!!(aiSesElemRef.current && !aiSesElemRef.current.paused && !aiSesElemRef.current.ended)); } catch (e) {}
       if (s) {
         maskotBosRef.current = 0;
         if (!konusIlerRef.current) konusIlerRef.current = Date.now();
@@ -1550,7 +1570,7 @@ export default function Anasayfa({ pro = false }) {
         // TAKILIR; o zaman maskot/balon "konuşuyor" animasyonu SONSUZA KADAR döner = SÜREKLİ PARLAMA + düğme takılması.
         // Okuma İLERLEDİKÇE (her kelime/cümlede konusIlerRef sıfırlanır — sesliOku'da) → UZUN yazı ASLA kesilmez;
         // yalnızca ilerleme 14 sn DURURSA (gerçekten takıldıysa) motor iptal edilir → parlama durur.
-        else if (Date.now() - konusIlerRef.current > 14000) { try { window.speechSynthesis.cancel(); } catch (e) {} konusIlerRef.current = 0; maskotBosRef.current = 2; aiKonusuyorRef.current = false; setAiKonusuyor(false); return; }
+        else if (Date.now() - konusIlerRef.current > 14000) { try { gloxSustur(); } catch (e) {} konusIlerRef.current = 0; maskotBosRef.current = 2; aiKonusuyorRef.current = false; setAiKonusuyor(false); return; }
         aiKonusuyorRef.current = true; setAiKonusuyor((p) => (p ? p : true));
       }
       else { maskotBosRef.current++; if (maskotBosRef.current >= 2) { konusIlerRef.current = 0; aiKonusuyorRef.current = false; setAiKonusuyor((p) => (p ? false : p)); } } // 2 boş ölçüm (~400ms) → cümle arası boşlukta titremesin
@@ -1944,7 +1964,7 @@ export default function Anasayfa({ pro = false }) {
   // Büyük maskotu KAPAT/sustur: dokun = sus + canlı sohbeti durdur (mikrofon kapanır) + yerine çekil (panel AÇMAZ)
   const maskotTanitGec = () => {
     canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    gloxSustur();
     try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
     setMaskotTanit(false); setMaskotMini(false); // TAM KAPAT (sadece ✕ ile)
   };
@@ -1954,7 +1974,7 @@ export default function Anasayfa({ pro = false }) {
     // AYI (Ekspert) AYRIDIR: küçülünce TAMAMEN KAPANIR (Gloxoo gibi köşede kalmaz, karışmaz).
     if (maskotTur === "ekspert") {
       canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
-      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      gloxSustur();
       try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
       try { recognitionRef.current && recognitionRef.current.abort(); recognitionRef.current = null; } catch (e) {}
       setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); setMaskotTur("grox");
@@ -1973,7 +1993,7 @@ export default function Anasayfa({ pro = false }) {
   const miniSesToggle = () => {
     if (canliSohbetRef.current) { // KAPAT (sus) — mini kalır, düğmeler kaybolmaz
       canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
-      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      gloxSustur();
       try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
       try { recognitionRef.current && recognitionRef.current.abort(); recognitionRef.current = null; } catch (e) {} // tarayıcı ses tanımasını durdur
       miniEtiketGoster(t("kapat", "Kapat"));
@@ -4619,7 +4639,7 @@ export default function Anasayfa({ pro = false }) {
     setListe(yeniListe); setYardimciYazi(""); setYardimciFoto(null); setYardimciEk(null); setYardimciYukleniyor(true);
     // BEN GÖNDERDİM → Gloxoo'nun ESKİ konuşma balonu HEMEN kaybolsun (asılı kalmasın) + konuşma/kelime imleci dursun.
     // Yerine "Gloxoo düşünüyor" (canlı ikon) gösterilir; cevap gelince yeni metin balonda çıkar. (Kullanıcı isteği.)
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    gloxSustur();
     try { setMaskotMetni(""); setOkunanKelime(-1); okunanKelimeRef.current = -1; aiKonusuyorRef.current = false; setAiKonusuyor(false); } catch (e) {}
     aiAltaKay();
     // TAM KONUM AÇIKSA: cevaptan ÖNCE anlık yeri (adres+mekân) KESİNLEŞTİR — watchPosition sabit dururken tetiklenmeyebilir,
@@ -4904,8 +4924,55 @@ export default function Anasayfa({ pro = false }) {
   // SESLİ KONUŞMA — SEÇİLİ AI dilinde dil kodu (TTS + STT). Canlı döngüde bile GÜNCEL kalsın diye aiDilRef.current.
   const aiSesKodu = (kod) => ({ tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR", es: "es-ES", ru: "ru-RU", ar: "ar-SA", it: "it-IT", pt: "pt-PT", zh: "zh-CN", ja: "ja-JP", hi: "hi-IN", uk: "uk-UA" }[kod] || (typeof navigator !== "undefined" && navigator.language) || "tr-TR");
   const sesDilKodu = aiSesKodu(aiDil);
-  // AI cevabını SESLİ oku (tarayıcı seslendirme) — dil kodu HER ZAMAN güncel aiDilRef'ten
+  // ── GERÇEK İNSAN SESİ (worker → OpenAI mp3) ──
+  // Önce worker'dan DOĞAL insan sesi ister; gelirse <audio> ile çalar (maskot ağzı oynar + yazı kelime kelime yürür).
+  // Ses gelmezse (anahtar yok / kredi yok / ağ hatası) → onBasarisiz ile tarayıcının KENDİ sesine düşer; Gloxoo ASLA susmaz.
+  const gercekSesOku = async (metin, onBitti, onCumle, onIlerleme, onBasarisiz) => {
+    const dus = () => { try { aiHazirlaniyorRef.current = false; } catch (e) {} try { onBasarisiz(); } catch (e) {} };
+    try {
+      // Okunacak metni temizle: yıldız/markdown/emoji atılır, marka adları doğru telaffuz edilir
+      const temiz = String(metin || "")
+        .replace(/\*\*?|__?|`+|#+|>|~+|\|/g, " ")
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/gu, "")
+        .replace(/[•★☆◆♦]/g, " ")
+        .replace(/Gloxoo/gi, "Gloksu").replace(/GLOXORG/gi, "Gloksorg")
+        .replace(/\s+/g, " ").trim();
+      if (!temiz) { if (typeof onBitti === "function") onBitti(); return; }
+      gloxSustur(); // önceki sesi (varsa) durdur
+      aiHazirlaniyorRef.current = true; // ses YÜKLENİYOR → mikrofon araya girmesin
+      const dilK = (((aiSesKodu(aiDilRef.current) || "tr") + "").toLowerCase().split("-")[0]) || "tr";
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seslendir: temiz.slice(0, 2500), dil: dilK }) }).catch(() => null);
+      if (!r || !r.ok) { aiHazirlaniyorRef.current = false; dus(); return; }
+      const j = await r.json().catch(() => ({}));
+      if (!j || !j.ses) {
+        // Kalıcı sebep (anahtar yok/yetki/kredi) ise bu oturumda gerçek sesi kapat → boşuna bekleme olmaz
+        const h = (j && j.hata ? String(j.hata) : "").toLowerCase();
+        if (/key yok|api key|invalid|401|403|insufficient|quota|billing|access|model_not_found|not found/.test(h)) gercekSesKapaliRef.current = true;
+        dus(); return;
+      }
+      const audio = new Audio("data:audio/mpeg;base64," + j.ses);
+      aiSesElemRef.current = audio;
+      let bitti = false;
+      const bitir = () => { if (bitti) return; bitti = true; aiHazirlaniyorRef.current = false; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } aiKonusuyorRef.current = false; setAiKonusuyor(false); if (aiSesElemRef.current === audio) aiSesElemRef.current = null; if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
+      audio.onplay = () => { aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now(); if (typeof onCumle === "function") { try { onCumle(0); } catch (e) {} } };
+      audio.ontimeupdate = () => { konusIlerRef.current = Date.now(); if (typeof onIlerleme === "function" && audio.duration && isFinite(audio.duration)) { let f = audio.currentTime / audio.duration; if (f < 0) f = 0; if (f > 1) f = 1; try { onIlerleme(f); } catch (e) {} } };
+      audio.onended = bitir;
+      audio.onerror = () => { if (bitti) return; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; dus(); };
+      const oynat = audio.play();
+      if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (bitti) return; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; dus(); });
+    } catch (e) { dus(); }
+  };
+  // AI cevabını SESLİ oku: ÖNCE gerçek insan sesi (worker), olmazsa tarayıcının kendi sesi. Dışarıdan hep bu çağrılır.
   const sesliOku = (metin, onBitti, onCumle, onIlerleme) => {
+    if (!metin) { if (typeof onBitti === "function") onBitti(); return; }
+    try {
+      if (gercekSesKapaliRef.current) { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); return; }
+      gercekSesOku(metin, onBitti, onCumle, onIlerleme, () => { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {} });
+    } catch (e) { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (x) {} }
+  };
+  // AI cevabını TARAYICININ KENDİ sesiyle oku (yedek) — dil kodu HER ZAMAN güncel aiDilRef'ten
+  const sesliOkuTarayici = (metin, onBitti, onCumle, onIlerleme) => {
     try {
       if (!("speechSynthesis" in window) || !metin) { if (typeof onBitti === "function") onBitti(); return; }
       const sesDilKodu = aiSesKodu(aiDilRef.current);
@@ -5008,8 +5075,8 @@ export default function Anasayfa({ pro = false }) {
     // Artık: bu mesaj "okunuyor" işaretliyse (görsel olarak) VEYA gerçekten konuşuyorsa → BAS = DURDUR/temizle.
     const buMesajAcik = (konusanMesajRef.current === i);
     let konusuyor = false;
-    try { konusuyor = !!(window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)); } catch (e) {}
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    try { konusuyor = gloxKonusuyor(); } catch (e) {}
+    gloxSustur();
     if (konusuyor || buMesajAcik) { okuTemizle(); return; } // konuşuyordu YA DA takılıydı → DURDUR + temizle (bir daha basınca yeniden okur)
     try { window.speechSynthesis && window.speechSynthesis.resume(); } catch (e) {} // Chrome bazen "duraklatılmış" takılır → uyandır (ses çıksın)
     setKonusanMesaj(i); konusanMesajRef.current = i;
@@ -5032,7 +5099,7 @@ export default function Anasayfa({ pro = false }) {
     if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} return; }
     if (SR) {
       if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} }
-      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      gloxSustur();
       dikteAcikRef.current = true; setDinliyor(true);
       dikteTabanRef.current = (yardimciYazi || "").trim(); // mevcut yazı korunur, üstüne eklenir
       // Her başlatmada TAZE tanıyıcı (Android'de sessizlikte durunca temiz yeniden başlar → kelime tekrarı olmaz)
@@ -5081,7 +5148,7 @@ export default function Anasayfa({ pro = false }) {
     if (dinliyor && mediaRecorderRef.current) { try { mediaRecorderRef.current.stop(); } catch (e) {} return; }
     if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
     if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} await new Promise((r) => setTimeout(r, 200)); }
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    gloxSustur();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false, channelCount: 1 } });
       const mr = new MediaRecorder(stream);
@@ -5129,7 +5196,7 @@ export default function Anasayfa({ pro = false }) {
     if (mediaRecorderRef.current) return; // zaten dinliyor (çift kayıt olmasın)
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
     // speaking VE pending: sıradaki cümle kuyruktaysa (pending) da dinleme AÇMA → uzun cevap cümleler arası kesilmesin.
-    if (aiKonusuyorRef.current || (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending))) { setDinliyor(false); canliDevam(); return; }
+    if (gloxKonusuyor()) { setDinliyor(false); canliDevam(); return; }
     // ===== ÖNCE TARAYICININ KENDİ SES TANIMASI (OpenAI/Whisper GEREKMEZ, ÜCRETSİZ) =====
     // Ses→yazı için OpenAI anahtarına ihtiyaç YOK: Chrome/Android'in yerleşik tanımasını kullanır.
     // ÖNEMLİ: continuous=false + interimResults=false + SADECE SON final sonuç alınır → Android'in
@@ -5147,7 +5214,7 @@ export default function Anasayfa({ pro = false }) {
         const sonlan = (tekrarDinle) => {
           if (bitti) return; bitti = true;
           recognitionRef.current = null; setDinliyor(false);
-          if (tekrarDinle && canliSohbetRef.current && !aiKonusuyorRef.current && !(window.speechSynthesis && window.speechSynthesis.speaking)) canliDinle();
+          if (tekrarDinle && canliSohbetRef.current && !gloxKonusuyor()) canliDinle();
         };
         rec.onresult = (e) => {
           if (bitti) return;
@@ -5185,7 +5252,7 @@ export default function Anasayfa({ pro = false }) {
         const izle = () => {
           if (!mr || mr.state !== "recording") return;
           // Kayıt sırasında GLOXOO KONUŞMAYA BAŞLADIYSA (ör. sesli okuma) → kaydı hemen bırak, GÖNDERME; TTS bitince tekrar dinlenir.
-          if (aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { ttsKesti = true; konustu = false; try { mr.stop(); } catch (e) {} return; }
+          if (gloxKonusuyor()) { ttsKesti = true; konustu = false; try { mr.stop(); } catch (e) {} return; }
           an.getByteTimeDomainData(veri);
           let rms = 0; for (let i = 0; i < veri.length; i++) { const v = (veri[i] - 128) / 128; rms += v * v; } rms = Math.sqrt(rms / veri.length);
           const simdi = Date.now();
@@ -5211,7 +5278,7 @@ export default function Anasayfa({ pro = false }) {
         if (!konustu || !blob.size) {
           if (canliSohbetRef.current) {
             // TTS yüzünden kesildiyse "duyamadım" DEME (Gloxoo konuşuyordu); TTS bitince canliDevam tekrar dinletir. Sessizlikse normal uyar + tekrar dinle.
-            if (ttsKesti || aiKonusuyorRef.current || (window.speechSynthesis && window.speechSynthesis.speaking)) { canliDevam(); }
+            if (ttsKesti || gloxKonusuyor()) { canliDevam(); }
             else { setKucukMesaj(t("duyamadim", "Seni duyamadım — biraz daha yüksek konuş 🎤")); canliDinle(); }
           }
           return;
@@ -5352,7 +5419,7 @@ export default function Anasayfa({ pro = false }) {
     if (canliSohbetRef.current) { // KAPAT
       canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
       aiKarsiladiRef.current = false;
-      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      gloxSustur();
       try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
       try { recognitionRef.current && recognitionRef.current.abort(); recognitionRef.current = null; } catch (e) {} // tarayıcı ses tanımasını da durdur
       // NOT: kamerayı burada KAPATMA — yazı kutusuna dokununca da canlı ses kapanıyor; kamera açık kalsın (sadece ✕ / kamera düğmesi kapatır)
@@ -5369,6 +5436,14 @@ export default function Anasayfa({ pro = false }) {
   // DURAKLAT/DEVAM — konuşmayı olduğu yerde durdurur; tekrar basınca kaldığı yerden devam eder
   const sesDuraklaToggle = () => {
     try {
+      // GERÇEK ses (mp3) çalıyorsa onu duraklat/devam ettir
+      const a = aiSesElemRef.current;
+      if (a) {
+        if (aiDuraklat || a.paused) { const p = a.play(); if (p && p.catch) p.catch(() => {}); setAiDuraklat(false); }
+        else { a.pause(); setAiDuraklat(true); }
+        return;
+      }
+      // Yoksa tarayıcının kendi sesini duraklat/devam ettir
       const ss = window.speechSynthesis; if (!ss) return;
       if (aiDuraklat || ss.paused) { ss.resume(); setAiDuraklat(false); }
       else if (ss.speaking) { ss.pause(); setAiDuraklat(true); }
@@ -5376,7 +5451,7 @@ export default function Anasayfa({ pro = false }) {
   };
   // SUS — konuşmayı tamamen keser (sen hemen konuşabilirsin); canlı modda dinlemeye geçer
   const sesSus = () => {
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    gloxSustur();
     aiKonusuyorRef.current = false; setAiKonusuyor(false); // Gloxoo sustu → mikrofon otomatik açılabilir (senin düğmen açılır)
     setAiDuraklat(false);
     try { okuTemizle(); } catch (e) {}
@@ -5573,7 +5648,7 @@ export default function Anasayfa({ pro = false }) {
       if (canliSohbetRef.current) {
         setMaskotMini(true);
       } else {
-        try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+        gloxSustur();
         try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
       }
     }
@@ -10074,7 +10149,7 @@ export default function Anasayfa({ pro = false }) {
             <div className="aciklama-bas"><span>💡 {t("aciklamaBaslik", "Nasıl çalışır?")}</span><button className="aciklama-kapat" onClick={() => setAciklama("")} aria-label="Kapat">✕</button></div>
             <p className="aciklama-metin">{aciklama}</p>
             <button className={"aciklama-ses" + (sesliOkunan ? " calar" : "")} onClick={() => seslendir(aciklama)}>{sesliOkunan ? "⏸ " + t("sesDurdur", "Durdur") : "🔊 " + t("sesDinle", "Sesli dinle")}</button>
-            <button className="ayar-btn aciklama-tamam" onClick={() => { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {} setSesliOkunan(false); setAciklama(""); }}>{t("anladim", "Anladım")}</button>
+            <button className="ayar-btn aciklama-tamam" onClick={() => { try { gloxSustur(); } catch (e) {} setSesliOkunan(false); setAciklama(""); }}>{t("anladim", "Anladım")}</button>
           </div>
         </div>
       ), document.body)}

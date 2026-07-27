@@ -1,10 +1,11 @@
 /*
  * GLOXORG AI — Cloudflare Worker (Gloxoo'nun beyni)  —  DAYANIKLI SÜRÜM
  * ---------------------------------------------------------------------
- * Bu worker 3 şeyi yapar:
- *   1) SOHBET  : { sistem, mesajlar }  → Claude + CANLI WEB ARAMA → { metin }
- *   2) TEK ISTEK: { prompt, sistem }   → Claude + CANLI WEB ARAMA → { metin }
- *   3) SES→YAZI: { ses, dil }          → OpenAI (ses→yazı)         → { metin }
+ * Bu worker 4 şeyi yapar:
+ *   1) SOHBET   : { sistem, mesajlar }  → Claude + CANLI WEB ARAMA → { metin }
+ *   2) TEK ISTEK: { prompt, sistem }    → Claude + CANLI WEB ARAMA → { metin }
+ *   3) SES→YAZI : { ses, dil }          → OpenAI (ses→yazı)         → { metin }
+ *   4) YAZI→SES : { seslendir, dil }    → OpenAI (GERÇEK insan sesi)→ { ses }  (base64 mp3)
  *
  * ✅ EN ÖNEMLİ YENİLİK — "kendi kendini kurtarma":
  *    Yeni/güçlü model (claude-sonnet-5, gpt-4o-transcribe) senin anahtarında
@@ -29,6 +30,13 @@ const SES_MODELLERI = [
   "gpt-4o-transcribe",  // EN SON
   "whisper-1",          // her hesapta çalışan güvenli yedek
 ];
+// Yazı→ses (GERÇEK insan sesi) modelleri — SIRAYLA denenir; ilki olmazsa alttakine düşer.
+const SES_URET_MODELLERI = [
+  "gpt-4o-mini-tts",  // EN SON (sıcak, doğal, tonu ayarlanabilir)
+  "tts-1",            // her hesapta çalışan güvenli yedek
+];
+// Varsayılan ses: sıcak, kadın, canlı. (OpenAI sesleri: shimmer/nova/coral/sage/alloy...)
+const VARSAYILAN_SES = "shimmer";
 const MAX_ARAMA = 6;    // bir cevapta en fazla kaç web araması
 
 export default {
@@ -71,6 +79,38 @@ export default {
         }
         // Hiçbir ses modeli metin veremedi (gerçekten sessizlik de olabilir) → boş metin + iz için hata
         return json({ metin: "", hata: sonHata || "ses cozulemedi" }, cors);
+      }
+
+      // ================= 4) YAZI → SES (GERÇEK insan sesi) =================
+      // { seslendir: "okunacak metin", dil: "tr", ses?: "shimmer" } → { ses: base64mp3 }
+      if (body.seslendir) {
+        if (!env.OPENAI_API_KEY) return json({ ses: "", hata: "OPENAI_API_KEY yok" }, cors);
+        const metin = String(body.seslendir).slice(0, 3000); // güvenlik için üst sınır
+        if (!metin.trim()) return json({ ses: "" }, cors);
+        const secilenSes = (body.ses && String(body.ses).slice(0, 20)) || VARSAYILAN_SES;
+        let sonHata = "";
+        for (const model of SES_URET_MODELLERI) {
+          try {
+            const govde = { model, voice: secilenSes, input: metin, response_format: "mp3" };
+            // Yeni model tonu ayarlayabilir → sıcak, samimi, canlı okusun (eski tts-1'de bu alan yok sayılır)
+            if (model === "gpt-4o-mini-tts") govde.instructions = "Sıcak, samimi, canlı ve doğal bir tonla; bir arkadaş gibi konuş.";
+            const tr = await fetch("https://api.openai.com/v1/audio/speech", {
+              method: "POST",
+              headers: { Authorization: "Bearer " + env.OPENAI_API_KEY, "Content-Type": "application/json" },
+              body: JSON.stringify(govde),
+            });
+            if (tr.ok) {
+              const buf = await tr.arrayBuffer();
+              const b64 = bufToB64(buf);
+              if (b64) return json({ ses: b64 }, cors);
+              sonHata = "bos ses";
+            } else {
+              const ej = await tr.json().catch(() => ({}));
+              sonHata = (ej.error && (ej.error.message || ej.error.code)) || ("HTTP " + tr.status);
+            }
+          } catch (e) { sonHata = String(e); }
+        }
+        return json({ ses: "", hata: sonHata || "ses uretilemedi" }, cors);
       }
 
       // ================= 2/3) SOHBET / TEK ISTEK (Claude) =================
@@ -130,4 +170,15 @@ async function claudeCagir(env, model, sistem, mesajlar, webArama) {
 
 function json(obj, cors, status) {
   return new Response(JSON.stringify(obj), { status: status || 200, headers: { "content-type": "application/json", ...cors } });
+}
+
+// İkili (mp3) veriyi base64 metne çevir — parça parça (büyük seste yığın taşmasın)
+function bufToB64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  const yigin = 0x8000;
+  for (let i = 0; i < bytes.length; i += yigin) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + yigin));
+  }
+  return btoa(bin);
 }
