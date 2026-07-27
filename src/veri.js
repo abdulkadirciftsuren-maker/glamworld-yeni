@@ -627,3 +627,37 @@ export async function gonderileriOku({ ulke, meslek } = {}, adet = 150) {
     }
   } catch (e) { return []; }
 }
+
+// ================= ELİTE PAZAR (ürün ilanları) =================
+// Ürün ilanı: {uid, satici, saticiFoto, urunAd, aciklama, fiyat, paraBirimi, kategori, durum, etiketler[], medyalar[{tip,url}], kapak, konum, zamanMs, favSayi}
+// Güvenlik: herkes OKUR; giriş yapan KENDİ ilanını oluşturur; favSayi herkes günceller; sahibi siler. (firestore.rules: pazarUrunleri)
+export async function pazarUrunEkle(veri) {
+  const ref = doc(collection(db, "pazarUrunleri"));
+  await setDoc(ref, { zamanMs: Date.now(), ...veri, sahipUid: veri.uid || "", olusturma: serverTimestamp(), favSayi: 0 });
+  return ref.id;
+}
+export async function pazarUrunleriOku(adet = 200) {
+  try {
+    const q = query(collection(db, "pazarUrunleri"), fsLimit(adet));
+    const snap = await getDocs(q);
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+    return liste;
+  } catch (e) { return []; }
+}
+export async function pazarUrunlerimOku(uid, adet = 100) {
+  if (!uid) return [];
+  try {
+    const q = query(collection(db, "pazarUrunleri"), where("sahipUid", "==", uid), fsLimit(adet));
+    const snap = await getDocs(q);
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+    return liste;
+  } catch (e) { return []; }
+}
+export async function pazarUrunSil(id) {
+  try { await deleteDoc(doc(db, "pazarUrunleri", id)); return true; } catch (e) { return false; }
+}
+export async function pazarFavGuncelle(id, delta) {
+  try { await updateDoc(doc(db, "pazarUrunleri", id), { favSayi: increment(delta) }); return true; } catch (e) { return false; }
+}

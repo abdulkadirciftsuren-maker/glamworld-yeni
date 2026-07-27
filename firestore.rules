@@ -36,6 +36,19 @@ service cloud.firestore {
       }
     }
 
+    // Elite Pazar (ürün ilanları) — herkes okur; giriş yapan KENDİ ilanını oluşturur; SAHİBİ düzenler/siler.
+    // favSayi (favori sayısı) HERKES güncelleyebilir → başkasının ilanını favlayınca da sayılır.
+    match /pazarUrunleri/{id} {
+      allow read: if true;
+      allow create: if girisli() && request.resource.data.sahipUid == request.auth.uid;
+      allow update: if girisli() && (
+        resource.data.sahipUid == request.auth.uid
+        || yonetici()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['favSayi', 'guncelleme'])
+      );
+      allow delete: if girisli() && (resource.data.sahipUid == request.auth.uid || yonetici());
+    }
+
     // Teklifler — sadece ilgili müşteri/profesyonel
     match /teklifler/{id} {
       allow read: if girisli() && (request.auth.uid == resource.data.musteriUid || request.auth.uid == resource.data.profesyonelUid);

@@ -19,6 +19,7 @@ import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
+import ElitePazar from "./ElitePazar";
 import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
 import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
@@ -7931,6 +7932,18 @@ export default function Anasayfa({ pro = false }) {
               )}
             </>
           )}
+        </div>
+      ) : aktifKod === "elite" ? (
+        /* ELİTE PAZAR — ürün ilanları (al, sat, kazan) + Gloxoo her yerde */
+        <div className="ana-pencere" key="elite">
+          <ElitePazar
+            uid={(u && u.uid) || ""}
+            benAd={benimAdGetir()}
+            benFoto={(profilBilgi && profilBilgi.fotoUrl) || ""}
+            konum={(profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir].filter(Boolean).join(", ")) || ""}
+            dil={dil}
+            saticiyaYaz={(satici) => sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto })}
+          />
         </div>
       ) : (
         /* Diğer bölümlerin penceresi — kendi ikonu ve adıyla açılır (içerikler sırayla yapılacak) */

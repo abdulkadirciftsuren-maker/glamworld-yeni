@@ -1,0 +1,167 @@
+/* ELİTE PAZAR — sıcak altın tema + renkli kategoriler; siyah YOK, kareler (tam daire yok) */
+.ep-sar{ position:relative; min-height:88vh; padding:6px 0 96px;
+  border-radius:16px 16px 0 0; margin-top:2px;
+  background:
+    radial-gradient(circle at 18% 5%, rgba(255,231,168,.55), transparent 40%),
+    radial-gradient(circle at 88% 20%, rgba(120,200,255,.18), transparent 36%),
+    radial-gradient(circle at 82% 84%, rgba(255,150,190,.18), transparent 44%),
+    linear-gradient(160deg,#cda641 0%, #b0862f 46%, #8a6d2a 100%); }
+
+.ep-ust{ display:flex; align-items:center; gap:8px; padding:10px 16px 2px; }
+.ep-elmas{ font-size:18px; }
+.ep-tag{ font-size:13px; color:#3a2c00; font-weight:700; opacity:.9; }
+.ep-tag b{ color:#5a4406; }
+
+.ep-ara{ margin:11px 16px 0; display:flex; align-items:center; gap:8px; background:linear-gradient(180deg,rgba(255,250,228,.97),rgba(255,238,190,.94));
+  border:1.5px solid #B8860B; border-radius:14px; padding:10px 13px; box-shadow:0 3px 10px rgba(80,55,5,.26); }
+.ep-ara .ep-lup{ font-size:15px; }
+.ep-ara input{ flex:1; min-width:0; background:none; border:none; outline:none; font-size:14.5px; font-weight:600; color:#5a4406; font-family:inherit; }
+.ep-ara input::placeholder{ color:#a4832f; font-weight:600; }
+.ep-ara-x{ background:none; border:none; color:#8a6a15; font-size:15px; cursor:pointer; }
+
+.ep-kats{ display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:11px 16px 3px; scrollbar-width:none; }
+.ep-kats::-webkit-scrollbar{ display:none; }
+.ep-chip{ flex:none; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:800; color:#fff; cursor:pointer;
+  background:linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 76%, #000 10%)); border:1.4px solid rgba(255,255,255,.45);
+  box-shadow:0 2px 7px color-mix(in srgb, var(--c) 38%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.32); opacity:.85; }
+.ep-chip.sec{ opacity:1; box-shadow:0 3px 11px color-mix(in srgb, var(--c) 60%, transparent); transform:translateY(-1px); }
+.ep-chip.tumu{ color:#3a2c00; background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#E6BD52); text-shadow:none; border-color:#b8860b; }
+
+.ep-sat{ margin:13px 16px 4px; display:flex; align-items:center; justify-content:center; gap:9px; width:calc(100% - 32px); cursor:pointer;
+  background:linear-gradient(110deg,#FFE9A8,#FFD700 42%,#ff9d55 100%); color:#3a1e02; border:none;
+  border-radius:15px; padding:14px; font-weight:800; font-size:16px; font-family:'Playfair Display',serif;
+  box-shadow:0 5px 16px rgba(120,70,10,.4); border-top:1px solid rgba(255,255,255,.5); }
+.ep-arti{ font-size:20px; font-weight:900; }
+
+.ep-bolum{ font-family:'Playfair Display',serif; font-weight:800; color:#3a2c00; font-size:15.5px; margin:14px 16px 2px; }
+
+.ep-durum{ text-align:center; color:#3a2c00; font-weight:700; font-size:14px; padding:40px 24px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.ep-durum-btn{ background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#B8860B); color:#3a1e02; border:none; border-radius:12px; padding:11px 20px; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 3px 10px rgba(90,60,10,.35); }
+
+.ep-izgara{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:8px 16px 22px; }
+.ep-kart{ position:relative; background:linear-gradient(180deg,#fffdf6,#fff3d8 100%); border-radius:16px; overflow:hidden; cursor:pointer;
+  border:1px solid rgba(150,110,20,.4); box-shadow:0 4px 12px rgba(70,45,5,.28); }
+.ep-kfoto{ position:relative; width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; font-size:48px;
+  background:radial-gradient(circle at 42% 34%, #fff8e6, #f0dba4 60%, #dcc06a); background-size:cover; background-position:center; }
+.ep-kfoto-ik{ opacity:.85; }
+.ep-acil{ position:absolute; top:8px; left:8px; font-size:10px; font-weight:800; color:#fff; padding:3px 8px; border-radius:8px;
+  background:linear-gradient(180deg,#ff5a3c,#d61f1f); box-shadow:0 1px 6px rgba(210,30,30,.5); }
+.ep-fav{ position:absolute; top:7px; right:7px; display:flex; align-items:center; gap:3px; background:rgba(255,255,255,.92);
+  border:none; border-radius:20px; padding:3px 8px 3px 6px; box-shadow:0 1px 5px rgba(0,0,0,.22); cursor:pointer; }
+.ep-fav.dolu{ background:rgba(255,225,232,.96); }
+.ep-kalp{ font-size:13px; } .ep-fav b{ font-size:11px; color:#c02a4a; }
+.ep-kkat{ position:absolute; bottom:8px; left:8px; font-size:9.5px; font-weight:800; color:#fff; padding:3px 8px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.3); text-shadow:0 1px 1px rgba(0,0,0,.3); }
+.ep-vid{ position:absolute; bottom:8px; right:8px; width:25px; height:25px; border-radius:8px; background:rgba(40,30,60,.72); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; }
+.ep-kbil{ padding:9px 10px 11px; }
+.ep-kad{ font-size:13.5px; font-weight:700; color:#2a2008; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ep-etks{ display:flex; gap:5px; margin-top:6px; flex-wrap:wrap; }
+.ep-et{ font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:7px; white-space:nowrap; }
+.ep-et.pz{ color:#0d7a3a; background:#d7f5e2; border:1px solid #7fd9a3; }
+.ep-et.kg{ color:#1f6fb0; background:#dcefff; border:1px solid #8fc5ef; }
+.ep-et.el{ color:#8a4fd0; background:#efe4fb; border:1px solid #c9a8ef; }
+.ep-et.ac{ color:#fff; background:linear-gradient(180deg,#ff5a3c,#d61f1f); }
+.ep-et.tk{ color:#0f6a86; background:#d4f2fb; border:1px solid #7fd0e6; }
+.ep-et.uc{ color:#fff; background:linear-gradient(180deg,#25c268,#0f9e4e); border:1px solid #7fe0a8; }
+.ep-et.dr{ color:#7a5c10; background:#fff2c8; border:1px solid #e0c060; }
+.ep-kfiyat{ font-family:'Playfair Display',serif; font-weight:800; font-size:19px; color:#b25a00; margin-top:7px; }
+.ep-kfiyat.bedava{ color:#0f9e4e; }
+.ep-ksat{ display:flex; align-items:center; gap:6px; margin-top:8px; }
+.ep-kavatar{ width:22px; height:22px; border-radius:6px; flex:none; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); }
+.ep-kavatar img{ width:100%; height:100%; object-fit:cover; }
+.ep-kavatar.buyuk{ width:40px; height:40px; border-radius:11px; font-size:17px; }
+.ep-kyer{ font-size:10.5px; color:#6a5010; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ---- ORTAK PENCERE (detay + form) ---- */
+.ep-fon{ position:fixed; inset:0; z-index:100060; background:rgba(60,42,8,.55); backdrop-filter:blur(3px); display:flex; align-items:flex-end; justify-content:center; }
+.ep-detay, .ep-sat-form{ width:100%; max-width:620px; max-height:94vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  background:linear-gradient(160deg,#e9cf86,#d8b866 60%,#caa23f); border-radius:20px 20px 0 0; box-shadow:0 -6px 24px rgba(40,26,4,.5); position:relative; }
+.ep-detay-x{ position:absolute; top:11px; right:12px; z-index:5; width:34px; height:34px; border-radius:11px; border:none; background:rgba(58,44,0,.5); color:#ffe680; font-size:17px; cursor:pointer; }
+
+.ep-dmedya{ width:100%; aspect-ratio:1/1; background:radial-gradient(circle at 42% 34%,#fff8e6,#e6cd8e 60%,#d0b25e); display:flex; align-items:center; justify-content:center; font-size:64px; }
+.ep-dmedya img, .ep-dmedya video{ width:100%; height:100%; object-fit:cover; }
+.ep-dkucuk{ display:flex; gap:8px; padding:10px 14px 0; flex-wrap:wrap; }
+.ep-dk{ width:52px; height:52px; border-radius:10px; border:2px solid transparent; background:#f0dba4; background-size:cover; background-position:center; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#5a4406; font-weight:800; }
+.ep-dk.sec{ border-color:#b8860b; }
+.ep-dbil{ padding:12px 16px 18px; }
+.ep-dkat{ display:inline-block; font-size:11px; font-weight:800; color:#fff; padding:3px 10px; border-radius:9px; text-shadow:0 1px 1px rgba(0,0,0,.3); }
+.ep-dad{ font-family:'Playfair Display',serif; font-size:21px; color:#2a2008; margin:8px 0 4px; line-height:1.2; }
+.ep-dfiyat{ font-family:'Playfair Display',serif; font-weight:800; font-size:26px; color:#b25a00; }
+.ep-dfiyat.bedava{ color:#0f9e4e; }
+.ep-daciklama{ margin-top:10px; font-size:14px; line-height:1.5; color:#3d3117; white-space:pre-wrap; }
+.ep-dsatici{ display:flex; align-items:center; gap:10px; margin-top:14px; padding:10px; background:rgba(255,250,228,.7); border-radius:13px; border:1px solid rgba(150,110,20,.3); }
+.ep-dsatici-ad{ font-weight:800; color:#2a2008; font-size:14.5px; }
+.ep-dsatici-yer{ font-size:12px; color:#6a5010; font-weight:600; }
+.ep-dbtnlar{ display:flex; gap:10px; margin-top:16px; }
+.ep-dfav, .ep-dyaz, .ep-dsil{ flex:1; padding:14px; border:none; border-radius:13px; font-weight:800; font-size:14.5px; cursor:pointer; font-family:inherit; }
+.ep-dfav{ background:rgba(255,255,255,.9); color:#c02a4a; flex:0 0 auto; padding:14px 16px; }
+.ep-dfav.dolu{ background:#ffe1e8; }
+.ep-dyaz{ background:linear-gradient(180deg,#25c268,#0f9e4e); color:#fff; box-shadow:0 4px 12px rgba(15,120,60,.4); }
+.ep-dsil{ background:linear-gradient(180deg,#ff7a5c,#d61f1f); color:#fff; }
+
+/* ---- İLAN VER FORMU ---- */
+.ep-sat-bas{ display:flex; align-items:center; gap:8px; padding:14px 16px 8px; position:sticky; top:0; z-index:4;
+  background:linear-gradient(180deg,#e9cf86,rgba(233,207,134,.9)); }
+.ep-sat-bas .ep-detay-x{ position:static; background:none; color:#3a2c00; font-size:26px; width:auto; height:auto; }
+.ep-sat-bas h2{ font-family:'Playfair Display',serif; font-size:21px; color:#FFD700; text-shadow:0 2px 4px rgba(70,45,0,.5); }
+.ep-sat-icerik{ padding:4px 16px 20px; }
+
+.ep-kutu{ background:linear-gradient(180deg,#fffdf6,#fff3d8); border:1px solid rgba(150,110,20,.4); border-radius:16px; padding:12px 13px; box-shadow:0 3px 10px rgba(70,45,5,.22); margin-top:11px; }
+.ep-etk{ font-size:11.5px; font-weight:800; color:#7a5c10; margin-bottom:7px; letter-spacing:.02em; }
+.ep-fotolar{ display:flex; gap:9px; flex-wrap:wrap; }
+.ep-fbox{ position:relative; width:80px; height:80px; border-radius:12px; flex:none; display:flex; align-items:center; justify-content:center; font-size:30px;
+  background:radial-gradient(circle at 42% 34%,#fff8e6,#f0dba4 60%,#dcc06a); background-size:cover; background-position:center; border:1px solid rgba(150,110,20,.35); }
+.ep-fbox-vd{ color:#fff; background:rgba(40,30,60,.6); border-radius:7px; padding:1px 6px; font-size:13px; }
+.ep-fbox-x{ position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:8px; border:none; background:#d61f1f; color:#fff; font-size:11px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.3); }
+.ep-fekle{ width:80px; height:80px; border-radius:12px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  border:2px dashed #b8860b; color:#8a6a15; font-size:11px; font-weight:800; background:rgba(255,245,210,.5); cursor:pointer; }
+.ep-fekle.vid{ border-color:#8a4fd0; color:#7a44b0; }
+.ep-fp{ font-size:22px; }
+.ep-yuk-not{ font-size:12px; color:#8a6a15; font-weight:700; margin-top:8px; }
+
+.ep-glox{ margin-top:11px; border-radius:16px; padding:12px 13px; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#5b3ea8,#7d3f9e 55%,#b5417a); box-shadow:0 5px 16px rgba(70,20,80,.38); border:1px solid rgba(255,255,255,.22); }
+.ep-glox-bas{ display:flex; align-items:center; gap:8px; color:#fff; font-weight:800; font-size:14px; }
+.ep-glox-rozet{ width:26px; height:26px; border-radius:8px; background:radial-gradient(circle at 40% 35%,#8fd0ff,#3f7fd8); display:flex; align-items:center; justify-content:center; font-size:15px; box-shadow:0 0 0 2px rgba(255,255,255,.35); }
+.ep-glox-alt{ color:#f0e2ff; font-size:11.5px; margin:4px 0 10px 34px; }
+.ep-glox-btnlar{ display:flex; gap:8px; flex-wrap:wrap; }
+.ep-gb{ background:rgba(255,255,255,.95); color:#5b2e86; font-weight:800; font-size:12.5px; padding:9px 13px; border:none; border-radius:11px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.2); }
+.ep-gb:disabled{ opacity:.7; }
+
+.ep-inp{ width:100%; background:rgba(255,255,255,.95); border:1px solid rgba(150,110,20,.4); border-radius:11px; padding:11px 12px; font-size:14.5px; color:#2a2008; font-family:inherit; outline:none; }
+.ep-inp:focus{ border-color:#b8860b; }
+.ep-ta{ resize:vertical; line-height:1.4; }
+.ep-fiyat-in{ display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.95); border:1.5px solid #B8860B; border-radius:12px; padding:9px 12px; }
+.ep-tl{ font-family:'Playfair Display',serif; font-size:20px; font-weight:800; color:#b25a00; }
+.ep-fiyat-val{ flex:1; background:none; border:none; outline:none; font-family:'Playfair Display',serif; font-size:20px; font-weight:800; color:#2a2008; }
+.ep-glox-fiyat{ margin-top:9px; background:linear-gradient(180deg,#e9f9ef,#d1f2df); border:1px solid #7fd9a3; border-radius:12px; padding:10px 12px; }
+.ep-gf-bas{ font-size:12px; font-weight:800; color:#0d7a3a; }
+.ep-gf-ara{ font-family:'Playfair Display',serif; font-weight:800; font-size:16px; color:#0f9e4e; margin-top:3px; }
+.ep-gf-kul{ margin-top:8px; background:linear-gradient(180deg,#25c268,#0f9e4e); color:#fff; border:none; font-weight:800; font-size:11.5px; padding:7px 13px; border-radius:10px; cursor:pointer; }
+
+.ep-katsec{ display:flex; gap:7px; flex-wrap:wrap; }
+.ep-kc{ font-size:12px; font-weight:800; color:var(--c); padding:7px 12px; border-radius:20px; cursor:pointer;
+  background:color-mix(in srgb, var(--c) 14%, #fff); border:1.4px solid color-mix(in srgb, var(--c) 55%, transparent); }
+.ep-kc.sec{ color:#fff; background:linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 78%, #000 8%)); box-shadow:0 2px 8px color-mix(in srgb, var(--c) 45%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.3); }
+.ep-durum-sec{ display:flex; gap:9px; }
+.ep-dc{ flex:1; text-align:center; font-size:13px; font-weight:800; padding:10px; border-radius:11px; cursor:pointer; border:1.4px solid rgba(120,90,20,.5); color:#7a5c10; background:rgba(255,245,210,.5); }
+.ep-dc.sec{ color:#3a2c00; background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#E6BD52); border-color:#b8860b; }
+.ep-etsec{ display:flex; gap:7px; flex-wrap:wrap; }
+.ep-es{ font-size:11.5px; font-weight:800; padding:7px 12px; border-radius:11px; cursor:pointer; border:1.4px solid; background:#fff; }
+.ep-es.pz{ color:#0d7a3a; border-color:#7fd9a3; } .ep-es.pz.sec{ background:#eafaf0; }
+.ep-es.kg{ color:#1f6fb0; border-color:#8fc5ef; } .ep-es.kg.sec{ background:#eaf4ff; }
+.ep-es.el{ color:#8a4fd0; border-color:#c9a8ef; } .ep-es.el.sec{ background:#f2e9fc; }
+.ep-es.ac{ color:#d61f1f; border-color:#f0a0a0; } .ep-es.ac.sec{ background:#ffeaea; }
+.ep-es.tk{ color:#0f6a86; border-color:#7fd0e6; } .ep-es.tk.sec{ background:#e6f8fd; }
+.ep-es.uc{ color:#0f9e4e; border-color:#7fe0a8; } .ep-es.uc.sec{ background:#e9f9ef; }
+.ep-es.sec{ box-shadow:0 2px 7px rgba(0,0,0,.12); }
+
+.ep-hata{ margin-top:12px; background:#ffeaea; border:1px solid #f0a0a0; color:#c02020; font-size:13px; font-weight:700; padding:11px 13px; border-radius:12px; }
+.ep-yayinla{ width:100%; margin-top:14px; text-align:center; background:linear-gradient(110deg,#FFE9A8,#FFD700 42%,#ff9d55); color:#3a1e02; border:none;
+  border-radius:15px; padding:15px; font-weight:800; font-size:16px; font-family:'Playfair Display',serif; cursor:pointer; box-shadow:0 5px 16px rgba(120,70,10,.4); border-top:1px solid rgba(255,255,255,.5); }
+.ep-yayinla:disabled{ opacity:.7; }
+
+/* Bilgisayarda (geniş ekran) yazılar telefondan KÜÇÜK olmasın */
+@media (min-width:560px){
+  .ep-izgara{ grid-template-columns:1fr 1fr 1fr; }
+  .ep-baslik{ font-size:32px; } .ep-kad{ font-size:14.5px; } .ep-kfiyat{ font-size:20px; }
+}
