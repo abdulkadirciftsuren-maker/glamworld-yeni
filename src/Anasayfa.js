@@ -251,6 +251,25 @@ function kelimeSayisi(metin) {
   if (!metin) return 0;
   return String(metin).trim().split(/\s+/).filter(Boolean).length;
 }
+// GERÇEK SESİ HIZLI BAŞLATMAK İÇİN: metni cümlelere böl, ~220 karakterlik parçalar halinde grupla.
+// İlk parça kısa olduğu için hemen seslendirilip çalınır; kalanlar arkadan hazırlanır (bekleme çok azalır).
+function _sesBol(metin) {
+  const cumleler = (String(metin || "").match(/[^.!?…\n]+[.!?…]*/g) || [String(metin || "")]).map((s) => s.trim()).filter(Boolean);
+  if (!cumleler.length) { const t = String(metin || "").trim(); return t ? [t] : []; }
+  const parcalar = [];
+  // İLK parça KISA olsun (sadece ilk cümle) → ses hemen başlar; çok kısaysa bir sonrakiyle birleştir
+  let ilk = cumleler.shift();
+  while (ilk.length < 40 && cumleler.length) ilk += " " + cumleler.shift();
+  parcalar.push(ilk);
+  // Kalan cümleleri ~240 karakterlik parçalar halinde grupla (az istek, akıcı geçiş)
+  let birikim = "";
+  for (const c of cumleler) {
+    if (birikim && (birikim.length + 1 + c.length) > 240) { parcalar.push(birikim); birikim = c; }
+    else birikim = birikim ? birikim + " " + c : c;
+  }
+  if (birikim) parcalar.push(birikim);
+  return parcalar;
+}
 // ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
 // ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
 // yazmadan önce tekile indir. 1..8 kelimelik ARDIŞIK tekrar bloklarını (büyükten küçüğe) kaldırır → uzun
@@ -1539,12 +1558,14 @@ export default function Anasayfa({ pro = false }) {
   const aiKonusuyorRef = useRef(false); // Gloxoo KONUŞUYOR mu (async okunur): konuşurken mikrofon dinlemez (yarı-çift yönlü)
   const aiSesElemRef = useRef(null); // GERÇEK insan sesi (worker'dan gelen mp3) çalınırken tutulan <audio>; durdurmak/izlemek için
   const gercekSesKapaliRef = useRef(false); // gerçek ses anahtarı yok/kredisi bittiyse → o oturumda boşuna deneme, direkt tarayıcı sesine geç
-  const aiHazirlaniyorRef = useRef(false); // gerçek ses worker'dan YÜKLENİYOR (henüz çalmadı) — bu sırada da "konuşuyor" say (mikrofon araya girmesin)
+  const aiHazirlaniyorRef = useRef(false); // gerçek ses YÜKLENİYOR (henüz çalmadı) — bu sırada da "konuşuyor" say (mikrofon araya girmesin)
+  const sesZinciriIptalRef = useRef(null); // parça parça (cümle cümle) çalan gerçek ses zincirini durdurmak için — gloxSustur çağırır
   // GLOXOO'YU SUSTUR — hem tarayıcının KENDİ sesini (speechSynthesis) hem GERÇEK sesi (worker mp3) BİRLİKTE durdurur.
   // Eskiden her yerde sadece speechSynthesis.cancel() vardı; gerçek ses eklenince o tek başına yetmiyor → bu yardımcı ikisini de keser.
   const gloxSustur = () => {
     try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
     try { aiHazirlaniyorRef.current = false; } catch (e) {}
+    try { if (sesZinciriIptalRef.current) { const ipt = sesZinciriIptalRef.current; sesZinciriIptalRef.current = null; ipt(); } } catch (e) {} // parça parça çalan zinciri de durdur
     try { if (aiSesElemRef.current) { const a = aiSesElemRef.current; aiSesElemRef.current = null; a.onended = null; a.onerror = null; a.ontimeupdate = null; a.onplay = null; a.pause(); a.src = ""; } } catch (e) {}
   };
   // GLOXOO KONUŞUYOR MU? — tek merkez: tarayıcı sesi VEYA gerçek ses (mp3) çalıyorsa, ya da gerçek ses YÜKLENİYORSA true.
@@ -4907,10 +4928,12 @@ export default function Anasayfa({ pro = false }) {
       // OTOMATİK SESLİ OKUMA: yeni cevabın BALON düğmesinde × göster (konuşurken), bitince kendiliğinden kapansın → balon düğmesi = konuşma göstergesi/kontrolü
       if (sesliMod && metin) {
         const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi;
+        // KELİME İMLECİ: okurken hangi kelimede olduğu bu cevabın üstünde ▸ ile yürüsün (balonda da görünür)
+        toplamKelimeRef.current = kelimeSayisi(metin); okunanKelimeRef.current = -1; setOkunanKelime(-1);
         // OKUMA BİTİNCE dinlemeye geç. ESKİDEN: okuma başlar başlamaz canliDevam çağrılıyordu → mikrofon okuma
         // daha bitmeden devreye girip okumayı 5-6 KELİMEDE KESİYORDU (kullanıcı: "uzun yazıyı okumuyor, kesiyor").
         // Artık mikrofon SADECE Gloxoo tüm cevabı OKUYUP BİTİRDİKTEN sonra açılır → yazının tamamı okunur.
-        sesliOku(metin, () => { okuTemizle(); if (canliIc && canliSohbetRef.current) canliDevam(); }, undefined, (maskotTanitRef.current || maskotMini) ? teleIlerleme : undefined);
+        sesliOku(metin, () => { okuTemizle(); if (canliIc && canliSohbetRef.current) canliDevam(); }, undefined, teleIlerleme);
       } else if (canliIc && canliSohbetRef.current) canliDevam(); // sesli okuma yoksa hemen dinlemeye geç
       if (komut) setTimeout(() => komutAc(komut), 650);
     } catch (e) {
@@ -4942,24 +4965,55 @@ export default function Anasayfa({ pro = false }) {
       gloxSustur(); // önceki sesi (varsa) durdur
       aiHazirlaniyorRef.current = true; // ses YÜKLENİYOR → mikrofon araya girmesin
       const dilK = (((aiSesKodu(aiDilRef.current) || "tr") + "").toLowerCase().split("-")[0]) || "tr";
-      // GERÇEK SESİ GOOGLE'DAN (Gemini TTS) al — resimle aynı Google kredisi; ayrı hesap/worker GEREKMEZ.
-      const sonuc = await gloxooSesUret(temiz.slice(0, 1500), dilK).catch(() => ({ hata: "cagri hatasi" }));
-      if (!sonuc || !sonuc.dataUrl) {
-        // Kalıcı sebep (yetki/kredi/model kapalı) ise bu oturumda gerçek sesi kapat → boşuna bekleme olmaz
-        const h = (sonuc && sonuc.hata ? String(sonuc.hata) : "").toLowerCase();
-        if (/permission|denied|invalid|401|403|quota|billing|not.?enabled|not found|access|api key|unauthenticated|resource.?exhausted/.test(h)) gercekSesKapaliRef.current = true;
-        dus(); return;
-      }
-      const audio = new Audio(sonuc.dataUrl);
-      aiSesElemRef.current = audio;
-      let bitti = false;
-      const bitir = () => { if (bitti) return; bitti = true; aiHazirlaniyorRef.current = false; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } aiKonusuyorRef.current = false; setAiKonusuyor(false); if (aiSesElemRef.current === audio) aiSesElemRef.current = null; if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
-      audio.onplay = () => { aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now(); if (typeof onCumle === "function") { try { onCumle(0); } catch (e) {} } };
-      audio.ontimeupdate = () => { konusIlerRef.current = Date.now(); if (typeof onIlerleme === "function" && audio.duration && isFinite(audio.duration)) { let f = audio.currentTime / audio.duration; if (f < 0) f = 0; if (f > 1) f = 1; try { onIlerleme(f); } catch (e) {} } };
-      audio.onended = bitir;
-      audio.onerror = () => { if (bitti) return; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; dus(); };
-      const oynat = audio.play();
-      if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (bitti) return; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; dus(); });
+
+      // ── HIZLI BAŞLAT: metni CÜMLELERE böl; İLK parçayı hemen seslendirip ÇAL, o çalarken
+      //    sonraki parçaları arkadan hazırla → ses 30-60 sn değil, birkaç saniyede başlar. ──
+      const parcalar = _sesBol(temiz.slice(0, 2400));               // parça metinleri
+      const uzun = parcalar.map((p) => p.length || 1);              // her parçanın karakter uzunluğu (kelime imleci için)
+      const toplamChar = uzun.reduce((a, b) => a + b, 0) || 1;
+      let oncekiChar = 0;                                           // tamamlanan parçaların toplam karakteri
+      let durduruldu = false;
+      sesZinciriIptalRef.current = () => { durduruldu = true; };    // gloxSustur bunu çağırınca zincir durur
+      const sesCache = new Array(parcalar.length).fill(null);       // parça sesleri (Promise<dataUrl|null>) — önden getirilir
+      const sesGetir = (idx) => {
+        if (idx < 0 || idx >= parcalar.length) return Promise.resolve(null);
+        if (!sesCache[idx]) sesCache[idx] = gloxooSesUret(parcalar[idx], dilK).then((r) => (r && r.dataUrl) ? r.dataUrl : { _hata: (r && r.hata) || "" }).catch(() => null);
+        return sesCache[idx];
+      };
+      const bitir = () => { durduruldu = true; if (sesZinciriIptalRef.current) sesZinciriIptalRef.current = null; aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = false; setAiKonusuyor(false); if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
+      const oynatSira = async (idx) => {
+        if (durduruldu) return;
+        if (idx >= parcalar.length) { bitir(); return; }             // hepsi bitti
+        const sonuc = await sesGetir(idx);
+        if (durduruldu) return;
+        const url = (typeof sonuc === "string") ? sonuc : null;
+        if (!url) {
+          if (idx === 0 && oncekiChar === 0) {                        // İLK parça hiç gelmedi → tarayıcı sesine düş
+            const h = (sonuc && sonuc._hata ? String(sonuc._hata) : "").toLowerCase();
+            if (/permission|denied|invalid|401|403|quota|billing|not.?enabled|not found|access|api key|unauthenticated|resource.?exhausted/.test(h)) gercekSesKapaliRef.current = true;
+            dus(); return;
+          }
+          oncekiChar += uzun[idx]; return oynatSira(idx + 1);          // ortadaki parça gelmediyse atla
+        }
+        sesGetir(idx + 1);                                            // SONRAKİNİ şimdiden hazırla (arka planda)
+        const audio = new Audio(url);
+        aiSesElemRef.current = audio;
+        const buBas = oncekiChar;
+        audio.onplay = () => { aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now(); if (idx === 0 && typeof onCumle === "function") { try { onCumle(0); } catch (e) {} } };
+        audio.ontimeupdate = () => {
+          konusIlerRef.current = Date.now();
+          if (typeof onIlerleme === "function" && audio.duration && isFinite(audio.duration)) {
+            const ic = Math.min(1, audio.currentTime / audio.duration);
+            let f = (buBas + ic * uzun[idx]) / toplamChar; if (f < 0) f = 0; if (f > 1) f = 1;
+            try { onIlerleme(f); } catch (e) {}
+          }
+        };
+        audio.onended = () => { if (durduruldu) return; oncekiChar += uzun[idx]; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; oynatSira(idx + 1); };
+        audio.onerror = () => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { dus(); return; } oncekiChar += uzun[idx]; oynatSira(idx + 1); };
+        const oynat = audio.play();
+        if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { dus(); return; } oncekiChar += uzun[idx]; oynatSira(idx + 1); });
+      };
+      oynatSira(0);
     } catch (e) { dus(); }
   };
   // AI cevabını SESLİ oku: ÖNCE gerçek insan sesi (Google/Gemini), olmazsa tarayıcının kendi sesi. Dışarıdan hep bu çağrılır.
@@ -5067,7 +5121,7 @@ export default function Anasayfa({ pro = false }) {
   // BALON İÇİ "OKU" DÜĞMESİ — mikrofondan TAMAMEN AYRI (sadece TTS). Bas=oku, tekrar bas=dur; okurken × gösterir.
   const [konusanMesaj, setKonusanMesaj] = useState(-1);
   const konusanMesajRef = useRef(-1);
-  const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; };
+  const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; okunanKelimeRef.current = -1; setOkunanKelime(-1); }; // imleci de temizle
   const okuToggle = (metin, i) => {
     // TAKILMA DÜZELTMESİ: Düğme "konuşuyor" görünüp de telefon SES ÜRETMEDİYSE (speaking=false),
     // eski kod temizlemiyordu → düğme TAKILI kalıyordu (kullanıcı: "balon düğmesi bozuk, takılıyor").
@@ -5079,7 +5133,9 @@ export default function Anasayfa({ pro = false }) {
     if (konusuyor || buMesajAcik) { okuTemizle(); return; } // konuşuyordu YA DA takılıydı → DURDUR + temizle (bir daha basınca yeniden okur)
     try { window.speechSynthesis && window.speechSynthesis.resume(); } catch (e) {} // Chrome bazen "duraklatılmış" takılır → uyandır (ses çıksın)
     setKonusanMesaj(i); konusanMesajRef.current = i;
-    sesliOku(metin, okuTemizle);
+    // KELİME İMLECİ: okurken hangi kelimede olduğu bu mesajın üstünde ▸ ile yürüsün (kullanıcı: "konuşma nerede, o kelimede görünsün")
+    toplamKelimeRef.current = kelimeSayisi(metin); okunanKelimeRef.current = -1; setOkunanKelime(-1);
+    sesliOku(metin, okuTemizle, undefined, teleIlerleme);
   };
   // Canlı dikteyi DURDUR (gönderince / tekrar basınca) — şeritteki metin KALIR
   const dikteDurdur = () => {
@@ -9233,7 +9289,7 @@ export default function Anasayfa({ pro = false }) {
                       {m.foto && m.foto.dataURL && <img className="ai-msj-foto" src={m.foto.dataURL} alt="" />}
                       {m.ek && m.ek.tur === "video" && (m.ek.url || m.ek.dataURL) && <video className="ai-msj-video" src={m.ek.url || m.ek.dataURL} controls playsInline />}
                       {m.ek && m.ek.tur !== "video" && <span className="ai-msj-dosya">{m.ek.tur === "pdf" ? "📄" : m.ek.tur === "metin" ? "📝" : "📎"} {m.ek.ad}</span>}
-                      {m.rol === "user" ? m.metin : renkliCumleler(m.metin, RC_ACIK)}
+                      {m.rol === "user" ? m.metin : (konusanMesaj === i ? <span className="ai-msj-okunan">{kelimeBalon(m.metin, RC_ACIK, okunanKelime)}</span> : renkliCumleler(m.metin, RC_ACIK))}
                       {m.zamanMs && <span className="ai-msj-saat">{new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" })}</span>}
                       {/* AI mesajını TEKRAR sesli okut (istediğin kadar) */}
                       {m.rol !== "user" && m.metin && (
