@@ -155,6 +155,67 @@ export async function gloxooResimUret(istem, girdiResim) {
   return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };
 }
 
+// ── GLOXOO GERÇEK İNSAN SESİ (Google/Gemini TTS) ──
+// Sesi, resim üretimiyle AYNI Google/Gemini kurulumundan üretir → ayrı hesap/anahtar GEREKMEZ,
+// kullanıcının resim için eklediği Google kredisini kullanır. İki katman: önce Gemini Developer API,
+// olmazsa Vertex AI (resimdeki gibi). Dönen ses ham PCM'dir → tarayıcıda çalması için WAV'a sarılır.
+// Ses gelmezse { hata } döner → uygulama eski tarayıcı sesine düşer (Gloxoo asla susmaz).
+function _pcmToWav(base64Pcm, mimeType) {
+  try {
+    let rate = 24000; // Gemini TTS varsayılanı 24kHz, 16-bit, mono
+    const m = /rate=(\d+)/i.exec(mimeType || ""); if (m) rate = parseInt(m[1], 10) || 24000;
+    const bin = atob(base64Pcm);
+    const len = bin.length;
+    const numCh = 1, bits = 16, blockAlign = numCh * bits / 8, byteRate = rate * blockAlign;
+    const buf = new ArrayBuffer(44 + len);
+    const dv = new DataView(buf);
+    const yaz = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    yaz(0, "RIFF"); dv.setUint32(4, 36 + len, true); yaz(8, "WAVE");
+    yaz(12, "fmt "); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, numCh, true);
+    dv.setUint32(24, rate, true); dv.setUint32(28, byteRate, true); dv.setUint16(32, blockAlign, true); dv.setUint16(34, bits, true);
+    yaz(36, "data"); dv.setUint32(40, len, true);
+    const pcm = new Uint8Array(buf, 44);
+    for (let i = 0; i < len; i++) pcm[i] = bin.charCodeAt(i);
+    let out = ""; const bytes = new Uint8Array(buf), yigin = 0x8000;
+    for (let i = 0; i < bytes.length; i += yigin) out += String.fromCharCode.apply(null, bytes.subarray(i, i + yigin));
+    return "data:audio/wav;base64," + btoa(out);
+  } catch (e) { return ""; }
+}
+async function _sesDene(backend, metin, sesAdi) {
+  const ai = getAI(app, { backend });
+  const model = getGenerativeModel(ai, {
+    model: "gemini-2.5-flash-preview-tts",
+    generationConfig: {
+      responseModalities: [ResponseModality.AUDIO],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: sesAdi || "Aoede" } } },
+    },
+  });
+  const sonuc = await model.generateContent(String(metin || "").slice(0, 1500));
+  const resp = sonuc && sonuc.response;
+  let parcalar = [];
+  try { parcalar = (resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content && resp.candidates[0].content.parts) || []; } catch (e) {}
+  for (const p of parcalar) {
+    if (p && p.inlineData && p.inlineData.data) {
+      const wav = _pcmToWav(p.inlineData.data, p.inlineData.mimeType);
+      if (wav) return wav;
+    }
+  }
+  throw new Error("ses gelmedi (cevapta ses yok)");
+}
+export async function gloxooSesUret(metin, dil, sesAdi) {
+  if (!metin || !String(metin).trim()) return { hata: "bos metin" };
+  const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
+  const hatalar = [];
+  for (const y of yollar) {
+    try {
+      let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
+      const url = await _sesDene(bk, metin, sesAdi);
+      if (url) return { dataUrl: url };
+    } catch (e) { hatalar.push(y.ad + ": " + _hataMetni(e)); }
+  }
+  return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };
+}
+
 // Basit sürüm (sessiz; girişte otomatik kayıt için) — sadece token döndürür.
 export async function fcmTokenAl(vapidKey) {
   try { const d = await fcmDurumAl(vapidKey); return d.token || ""; } catch (e) { return ""; }

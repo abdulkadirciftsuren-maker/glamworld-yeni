@@ -9,7 +9,7 @@ import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Googl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
-import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret } from "./firebase";
+import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
@@ -4942,16 +4942,15 @@ export default function Anasayfa({ pro = false }) {
       gloxSustur(); // önceki sesi (varsa) durdur
       aiHazirlaniyorRef.current = true; // ses YÜKLENİYOR → mikrofon araya girmesin
       const dilK = (((aiSesKodu(aiDilRef.current) || "tr") + "").toLowerCase().split("-")[0]) || "tr";
-      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seslendir: temiz.slice(0, 2500), dil: dilK }) }).catch(() => null);
-      if (!r || !r.ok) { aiHazirlaniyorRef.current = false; dus(); return; }
-      const j = await r.json().catch(() => ({}));
-      if (!j || !j.ses) {
-        // Kalıcı sebep (anahtar yok/yetki/kredi) ise bu oturumda gerçek sesi kapat → boşuna bekleme olmaz
-        const h = (j && j.hata ? String(j.hata) : "").toLowerCase();
-        if (/key yok|api key|invalid|401|403|insufficient|quota|billing|access|model_not_found|not found/.test(h)) gercekSesKapaliRef.current = true;
+      // GERÇEK SESİ GOOGLE'DAN (Gemini TTS) al — resimle aynı Google kredisi; ayrı hesap/worker GEREKMEZ.
+      const sonuc = await gloxooSesUret(temiz.slice(0, 1500), dilK).catch(() => ({ hata: "cagri hatasi" }));
+      if (!sonuc || !sonuc.dataUrl) {
+        // Kalıcı sebep (yetki/kredi/model kapalı) ise bu oturumda gerçek sesi kapat → boşuna bekleme olmaz
+        const h = (sonuc && sonuc.hata ? String(sonuc.hata) : "").toLowerCase();
+        if (/permission|denied|invalid|401|403|quota|billing|not.?enabled|not found|access|api key|unauthenticated|resource.?exhausted/.test(h)) gercekSesKapaliRef.current = true;
         dus(); return;
       }
-      const audio = new Audio("data:audio/mpeg;base64," + j.ses);
+      const audio = new Audio(sonuc.dataUrl);
       aiSesElemRef.current = audio;
       let bitti = false;
       const bitir = () => { if (bitti) return; bitti = true; aiHazirlaniyorRef.current = false; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } aiKonusuyorRef.current = false; setAiKonusuyor(false); if (aiSesElemRef.current === audio) aiSesElemRef.current = null; if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
@@ -4963,7 +4962,7 @@ export default function Anasayfa({ pro = false }) {
       if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (bitti) return; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; dus(); });
     } catch (e) { dus(); }
   };
-  // AI cevabını SESLİ oku: ÖNCE gerçek insan sesi (worker), olmazsa tarayıcının kendi sesi. Dışarıdan hep bu çağrılır.
+  // AI cevabını SESLİ oku: ÖNCE gerçek insan sesi (Google/Gemini), olmazsa tarayıcının kendi sesi. Dışarıdan hep bu çağrılır.
   const sesliOku = (metin, onBitti, onCumle, onIlerleme) => {
     if (!metin) { if (typeof onBitti === "function") onBitti(); return; }
     try {
