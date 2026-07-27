@@ -270,6 +270,15 @@ function _sesBol(metin) {
   if (birikim) parcalar.push(birikim);
   return parcalar;
 }
+// GLOXOO SESLERİ — Google/Gemini'nin doğal sesleri; kullanıcı Ayarlar'dan seçer (id = Gemini ses adı, ad = Türkçe etiket).
+const GLOX_SESLER = [
+  { id: "Aoede", ad: "Sıcak", cins: "Kadın" },
+  { id: "Kore", ad: "Net", cins: "Kadın" },
+  { id: "Leda", ad: "Genç", cins: "Kadın" },
+  { id: "Charon", ad: "Derin", cins: "Erkek" },
+  { id: "Puck", ad: "Neşeli", cins: "Erkek" },
+  { id: "Orus", ad: "Sakin", cins: "Erkek" },
+];
 // ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
 // ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
 // yazmadan önce tekile indir. 1..8 kelimelik ARDIŞIK tekrar bloklarını (büyükten küçüğe) kaldırır → uzun
@@ -1645,6 +1654,11 @@ export default function Anasayfa({ pro = false }) {
   // SAYFA DİLİ değişince AI dili de OTOMATİK o dile geçer (kullanıcı: site Rusça ise AI da Rusça konuşsun/dinlesin). Sonra istenirse AI dili elle değiştirilebilir.
   useEffect(() => { setAiDil(dil); aiDilRef.current = dil; }, [dil]); // eslint-disable-line react-hooks/exhaustive-deps
   const [aiDilAcik, setAiDilAcik] = useState(false); // AI dil seçici açık mı
+  // GLOXOO SESİ (Google/Gemini doğal ses seçimi) — kullanıcı seçer, kalıcı; gerçek seste bu ses kullanılır
+  const [gloxSes, setGloxSes] = useState(() => { try { return localStorage.getItem("gw_gloxSes") || "Aoede"; } catch (e) { return "Aoede"; } });
+  const gloxSesRef = useRef(gloxSes);
+  useEffect(() => { gloxSesRef.current = gloxSes; try { localStorage.setItem("gw_gloxSes", gloxSes); } catch (e) {} }, [gloxSes]);
+  const [gloxSesAcik, setGloxSesAcik] = useState(false); // ses seçici açık mı
   const aiKarsiladiRef = useRef(false); // bu açılışta karşılama yapıldı mı (tekrar etmesin)
   const [yardimciFoto, setYardimciFoto] = useState(null); // asistana eklenen foto {dataURL, base64, mediaType}
   const yardimciFotoRef = useRef(null);
@@ -4787,7 +4801,13 @@ export default function Anasayfa({ pro = false }) {
     const mesajlar = yeniListe.map((m, mi) => {
       // SADECE en son (şu anki) kullanıcı mesajına kamera karesini ekle — geçmişte biriktirme (maliyet/karışıklık olmasın)
       if (mi === sonIdx && kk && kk.base64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: kk.mediaType || "image/jpeg", data: kk.base64 } }, { type: "text", text: m.metin || "Kameradan beni görüyorsun; buna göre konuş." } ] };
-      if (m.foto && m.foto.base64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: m.foto.mediaType || "image/jpeg", data: m.foto.base64 } }, { type: "text", text: m.metin || "Bu görseli incele ve hakkında kısaca konuş." } ] };
+      // FOTO HAFIZASI: base64 yoksa (yenileme/güncelleme sonrası kayıttan gelen foto sadece dataURL tutar) → base64'ü dataURL'den TÜRET.
+      // Böylece Gloxoo yenilendikten sonra da eklenen fotoğrafı GÖRÜR/HATIRLAR (yalnız ekranda görünüp AI'nın körleşmesi biter).
+      if (m.foto && (m.foto.base64 || m.foto.dataURL)) {
+        const b64 = m.foto.base64 || (((m.foto.dataURL || "") + "").split(",")[1] || "");
+        const mt = m.foto.mediaType || ((((m.foto.dataURL || "") + "").match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1]) || "image/jpeg";
+        if (b64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: mt, data: b64 } }, { type: "text", text: m.metin || "Bu görseli incele ve hakkında kısaca konuş." } ] };
+      }
       // EK: PDF (AI okur/document), metin dosyası (içeriği yazıya eklenir), video/diğer (AI izleyemez → not)
       if (m.ek) {
         if (m.ek.tur === "pdf" && m.ek.base64) return { role: "user", content: [ { type: "document", source: { type: "base64", media_type: "application/pdf", data: m.ek.base64 } }, { type: "text", text: m.metin || `Bu PDF dosyasını (${m.ek.ad}) incele ve özetle.` } ] };
@@ -4977,7 +4997,7 @@ export default function Anasayfa({ pro = false }) {
       const sesCache = new Array(parcalar.length).fill(null);       // parça sesleri (Promise<dataUrl|null>) — önden getirilir
       const sesGetir = (idx) => {
         if (idx < 0 || idx >= parcalar.length) return Promise.resolve(null);
-        if (!sesCache[idx]) sesCache[idx] = gloxooSesUret(parcalar[idx], dilK).then((r) => (r && r.dataUrl) ? r.dataUrl : { _hata: (r && r.hata) || "" }).catch(() => null);
+        if (!sesCache[idx]) sesCache[idx] = gloxooSesUret(parcalar[idx], dilK, gloxSesRef.current).then((r) => (r && r.dataUrl) ? r.dataUrl : { _hata: (r && r.hata) || "" }).catch(() => null);
         return sesCache[idx];
       };
       const bitir = () => { durduruldu = true; if (sesZinciriIptalRef.current) sesZinciriIptalRef.current = null; aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = false; setAiKonusuyor(false); if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
@@ -6662,10 +6682,11 @@ export default function Anasayfa({ pro = false }) {
   const aiSohbetKaydet = (anahtar, dizi) => {
     const son = dizi.slice(-150); const n = son.length;
     const ekHafif = (m) => { if (!m.ek) return m; const e = { tur: m.ek.tur, ad: m.ek.ad }; if (m.ek.url) e.url = m.ek.url; return { ...m, ek: e }; }; // ağır base64/dataURL KAYDETME; video URL'si (küçük) KALIR → yenilenince oynar
-    const veri = son.map((m, i) => { let mm = ekHafif(m); if (mm.foto) { const tut = i >= n - 6 && mm.foto.dataURL; mm = { ...mm, foto: tut ? { dataURL: mm.foto.dataURL } : null }; } return mm; });
-    try { localStorage.setItem(anahtar, JSON.stringify(veri)); return; } catch (e) {}
-    try { localStorage.setItem(anahtar, JSON.stringify(son.map((m) => m.foto ? { ...m, foto: null } : m))); return; } catch (e) {}
-    try { localStorage.setItem(anahtar, JSON.stringify(dizi.slice(-50).map((m) => m.foto ? { ...m, foto: null } : m))); } catch (e) {}
+    // Son K mesajın fotoğrafını (dataURL) tut, gerisini at. Kota zorlanırsa K'yı KADEMELİ düşür (6→3→1→0) → hepsini birden kaybetme.
+    const yap = (K) => son.map((m, i) => { let mm = ekHafif(m); if (mm.foto) { const tut = i >= n - K && mm.foto.dataURL; mm = { ...mm, foto: tut ? { dataURL: mm.foto.dataURL } : null }; } return mm; });
+    for (const K of [6, 3, 1, 0]) { try { localStorage.setItem(anahtar, JSON.stringify(yap(K))); return; } catch (e) {} }
+    // en kötü ihtimal: daha az mesaj + fotosuz
+    try { localStorage.setItem(anahtar, JSON.stringify(son.slice(-50).map((m) => { const mm = ekHafif(m); return mm.foto ? { ...mm, foto: null } : mm; }))); } catch (e) {}
   };
   useEffect(() => { aiSohbetKaydet("groxSohbet", yardimciMesajlar); }, [yardimciMesajlar]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { aiSohbetKaydet("groxSiteSohbet", siteMesajlar); }, [siteMesajlar]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -9541,6 +9562,25 @@ export default function Anasayfa({ pro = false }) {
                         <button key={d.kod} className={"ai-dil-oge" + (d.kod === aiDil ? " sec" : "")} onClick={() => { setAiDil(d.kod); aiDilRef.current = d.kod; setAiDilAcik(false); }}>
                           <span className="ai-dil-oge-kod">{d.bayrak.toUpperCase()}</span>
                           <span className="ai-dil-oge-ad">{d.ad}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* GLOXOO SES SEÇİCİ — Google'ın doğal sesleri; seçince kısa örnek okur (sesi duyarsın) */}
+                <div className="ai-dil-sar">
+                  <button className="ai-ses ai-dil-btn" onClick={() => setGloxSesAcik((v) => !v)} aria-label={t("gloxSes", "Gloxoo sesi")}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>
+                  </button>
+                  {gloxSesAcik && (
+                    <div className="ai-dil-liste ai-dil-yukari">
+                      {GLOX_SESLER.map((s) => (
+                        <button key={s.id} className={"ai-dil-oge" + (s.id === gloxSes ? " sec" : "")} onClick={() => {
+                          setGloxSes(s.id); gloxSesRef.current = s.id; gercekSesKapaliRef.current = false; setGloxSesAcik(false);
+                          // KISA ÖRNEK: seçilen sesi HEMEN duy (yeni sesle okunur)
+                          try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
+                        }}>
+                          <span className="ai-dil-oge-ad">{s.id === gloxSes ? "✓ " : ""}{s.ad} · {s.cins}</span>
                         </button>
                       ))}
                     </div>
