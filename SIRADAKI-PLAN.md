@@ -32,12 +32,24 @@
   gerekmez. firebase.js gloxooSesUret + Anasayfa gercekSesOku (tek parça <audio> → uzun cevap kesilmez).
   Gelmezse eski tarayıcı sesine düşer. NOT: worker'da B164'te eklenen /seslendir (OpenAI) KULLANILMIYOR
   ama zararsız duruyor — kullanıcı OpenAI kredisi eklemek istemedi, Google'ı seçti.
-- ⏳ **(2) FOTOĞRAFA BAKSIN (sıradaki):** Gloxoo sohbetinde kullanıcı foto ekleyip "bu ne / bana yakışır mı"
-  diye sorabilsin; Gloxoo görsele bakıp yorumlasın. NOT: görsel ZATEN worker→Claude'a image bloğu olarak
-  gidebiliyor (hikâye öneri akışı öyle yapıyor). Sohbet ekindeki fotoğrafın vision olarak gönderilip
-  gönderilmediğine bak; gitmiyorsa yardimciGonder'e image bloğu ekle.
-- ⏳ **(3) BELGE/PDF OKUSUN** — Claude document bloğu; worker mesajlar'ı zaten iletiyor (worker değişmeyebilir).
-- ⏳ **(4) RESİM ÜRETMEYİ AÇ** — Google tarafı; test edilip çalışır hale getirilecek.
+- ✅ **(2) FOTOĞRAFA BAKSIN — BİTTİ, KULLANICI ONAYLADI** ("gördü doğru anlattı"). Zaten vardı (ataç→foto→Claude vision); kredi açılınca çalıştı.
+- ✅ **(3) BELGE/PDF OKUSUN — BİTTİ, KULLANICI ONAYLADI** ("PDF'i de gördü"). Ataç→Dosya→Claude document bloğu.
+- ✅ **(4) RESİM ÜRETSİN — BİTTİ, KULLANICI ONAYLADI** ("resim de geldi"). Google/Gemini; kredi açık.
+
+## ✅ 2026-07-27 GECE BİTENLER (moral — kullanıcıya hatırlat)
+- **Gerçek insan sesi (Google TTS)** B165–B166: hemen başlar (cümle cümle), kelime imleci balonda yürür, ses seçimi (B168).
+- **Sayfa hızlandırıldı** B167: sw.js /static JS/CSS önbelleğe alıyor → tekrar açılışlar hızlı.
+- **Foto/konu hafızası** B168–B169: Gloxoo yenilemeden sonra da fotoğrafı/konuyu hatırlar; yüz düzenlemede son fotoğrafı otomatik kullanır.
+- **ELİTE PAZAR (1. parça) B170 KURULDU** (kullanıcı mockup onayladı + firestore.rules YAYINLADI + ilk ilanı verdi).
+  src/ElitePazar.js(+css). Renkli kategoriler, ilan verme (foto/video/fiyat/etiket), Gloxoo ilan yazma+fiyat önerisi,
+  favori, detay, Satıcıya Yaz (Glome). **Kullanıcı ekran fotoğrafı GÖSTEREMEDİ (internet zayıf) → yarın görünümü kontrol et.**
+
+## 🛒 ELİTE PAZAR — SIRADAKİ PARÇALAR (yarın)
+1. **Kullanıcıdan ekran görüntüsü al**, görünüm/hizalama düzelt (gerçek app'te canlı önizlenemiyor, foto şart).
+2. Alıcıya **"bu fiyat uygun mu?"** (Gloxoo değerlendirir) + **pazarlık mesajı önerisi** (Satıcıya Yaz'da).
+3. **Akıllı arama:** "20 bin altı temiz telefon bul" → Gloxoo filtreler.
+4. Şüpheli ilan **güvenlik uyarısı**; ilanlarım/favorilerim sekmesi; (ileride) ödeme.
+5. Diğer boş sayfalar da sırayla doldurulacak (kullanıcı: "sayfa sayfa dolduralım").
 
 ## 🎯 YAPILACAKLAR (öncelik sırası — kullanıcının istediği gibi)
 
