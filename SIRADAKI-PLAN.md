@@ -23,6 +23,22 @@
 - ⚠️ Bilgisayar düzeni CANLI önizlenemiyor (giriş+veri lazım) → mock ile göster, ONAYLA, sonra kur.
   B80'de çok-sütun yaptım → kullanıcı çok kızdı, geri alındı (B81). Bir daha körlemesine yayınlama.
 
+## 🆕 GLOXOO YETENEK EKLEME (2026-07-27 — kullanıcı 4'ünü de istedi, SIRAYLA)
+
+> Kredi (Anthropic yazı beyni) düzeldikten sonra kullanıcı "Gloxoo'ya ne ekleyebiliriz" dedi;
+> 4 yetenek seçildi: (1) gerçek insan sesi (2) fotoğrafa baksın (3) belge/PDF okusun (4) resim üretmeyi aç.
+- ✅ **(1) GERÇEK İNSAN SESİ — B165 BİTTİ, KULLANICI ONAYLADI ("ses doğal geldi, harika oldu").**
+  Google/Gemini TTS (gemini-2.5-flash-preview-tts, ses "Aoede"); resimle AYNI Google kredisi, worker
+  gerekmez. firebase.js gloxooSesUret + Anasayfa gercekSesOku (tek parça <audio> → uzun cevap kesilmez).
+  Gelmezse eski tarayıcı sesine düşer. NOT: worker'da B164'te eklenen /seslendir (OpenAI) KULLANILMIYOR
+  ama zararsız duruyor — kullanıcı OpenAI kredisi eklemek istemedi, Google'ı seçti.
+- ⏳ **(2) FOTOĞRAFA BAKSIN (sıradaki):** Gloxoo sohbetinde kullanıcı foto ekleyip "bu ne / bana yakışır mı"
+  diye sorabilsin; Gloxoo görsele bakıp yorumlasın. NOT: görsel ZATEN worker→Claude'a image bloğu olarak
+  gidebiliyor (hikâye öneri akışı öyle yapıyor). Sohbet ekindeki fotoğrafın vision olarak gönderilip
+  gönderilmediğine bak; gitmiyorsa yardimciGonder'e image bloğu ekle.
+- ⏳ **(3) BELGE/PDF OKUSUN** — Claude document bloğu; worker mesajlar'ı zaten iletiyor (worker değişmeyebilir).
+- ⏳ **(4) RESİM ÜRETMEYİ AÇ** — Google tarafı; test edilip çalışır hale getirilecek.
+
 ## 🎯 YAPILACAKLAR (öncelik sırası — kullanıcının istediği gibi)
 
 1. ✅ **(B73 BİTTİ) GLOME kişi listesi (WhatsApp gibi):** Bütün kişiler alt alta, **fotoğraflı**,
