@@ -1,24 +1,46 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A12B166";
+const SW_SURUM = "A12B167";
+// ONBELLEK ADI SW_SURUM'e bağlı → her yeni yayında YENİ önbellek; eskisi activate'te silinir (eski sürümde takılma OLMAZ).
+const ONBELLEK = "glox-onbellek-" + SW_SURUM;
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
-  // Eski onbellekleri temizle (kullanici bir daha ESKI surumde takilmasin)
-  try { const anahtarlar = await caches.keys(); await Promise.all(anahtarlar.map((k) => caches.delete(k))); } catch (x) {}
+  // SADECE ESKİ SÜRÜMLERİN önbelleğini sil; bu sürümünkini KORU (böylece hız için sakladıklarımız durur).
+  try { const anahtarlar = await caches.keys(); await Promise.all(anahtarlar.filter((k) => k !== ONBELLEK).map((k) => caches.delete(k))); } catch (x) {}
   await self.clients.claim();
   // Yeni surum devraldi → acik sayfalara "yenile" haberi gonder (kullanici hep guncel gorur, elle yenilemesi gerekmez)
   try { const cl = await self.clients.matchAll({ type: "window", includeUncontrolled: true }); cl.forEach((c) => { try { c.postMessage({ tip: "sw-guncellendi", surum: SW_SURUM }); } catch (x) {} }); } catch (x) {}
 })()); });
 
-// SAYFA GEZINMESI icin ONCE AGDAN getir (index.html asla onbellekte takilmasin → her guncelleme ANINDA gorunur).
-// Cevrimdisi/hata olursa tarayici onbellegine dus. Diger istekler (hash'li JS/CSS) normal akisla gider.
+// FETCH stratejisi:
+//  1) SAYFA GEZINMESI (index.html): ÖNCE AĞDAN (no-store) → her güncelleme ANINDA görünür; ağ yoksa önbelleğe düş.
+//  2) AYNI SİTE + /static/ (hash'li JS/CSS/resim — içeriği ASLA değişmez): ÖNCE ÖNBELLEK → bir kez inip saklanır,
+//     sonraki açılışlar ANINDA (5.3MB'ı her seferinde indirmez). Yeni yayında dosya adı(hash) değişir → yenisi inip saklanır.
+//  3) Diğer her şey (Firebase, AI köprüsü, Google, dış istekler): DOKUNMA, normal aksın.
 self.addEventListener("fetch", (e) => {
   const istek = e.request;
+  if (istek.method !== "GET") return;
+  let url; try { url = new URL(istek.url); } catch (x) { return; }
   if (istek.mode === "navigate") {
     e.respondWith((async () => {
       try { return await fetch(istek, { cache: "no-store" }); }
       catch (x) { const c = await caches.match(istek); return c || Response.error(); }
+    })());
+    return;
+  }
+  if (url.origin === self.location.origin && url.pathname.indexOf("/static/") !== -1) {
+    e.respondWith((async () => {
+      const bulunan = await caches.match(istek);
+      if (bulunan) return bulunan;                                    // önbellekte varsa ANINDA ver
+      try {
+        const cevap = await fetch(istek);
+        if (cevap && cevap.ok && cevap.type === "basic") {            // sadece geçerli, aynı-site cevabı sakla
+          const kopya = cevap.clone();
+          try { const c = await caches.open(ONBELLEK); await c.put(istek, kopya); } catch (x) {}
+        }
+        return cevap;
+      } catch (x) { const c = await caches.match(istek); return c || Response.error(); }
     })());
   }
 });
