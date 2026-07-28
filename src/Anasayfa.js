@@ -1660,6 +1660,10 @@ export default function Anasayfa({ pro = false }) {
   const gloxSesRef = useRef(gloxSes);
   useEffect(() => { gloxSesRef.current = gloxSes; try { localStorage.setItem("gw_gloxSes", gloxSes); } catch (e) {} }, [gloxSes]);
   const [gloxSesAcik, setGloxSesAcik] = useState(false); // ses seçici açık mı
+  // GLOXOO KONUŞMA HIZI — kullanıcı ayarlar (çok hızlı bulmuştu). 0.8 yavaş · 0.9 normal · 1.05 hızlı
+  const [gloxHiz, setGloxHiz] = useState(() => { try { const v = parseFloat(localStorage.getItem("gw_gloxHiz")); return (v >= 0.6 && v <= 1.5) ? v : 0.9; } catch (e) { return 0.9; } });
+  const gloxHizRef = useRef(gloxHiz);
+  useEffect(() => { gloxHizRef.current = gloxHiz; try { localStorage.setItem("gw_gloxHiz", String(gloxHiz)); } catch (e) {} }, [gloxHiz]);
   const aiKarsiladiRef = useRef(false); // bu açılışta karşılama yapıldı mı (tekrar etmesin)
   const [yardimciFoto, setYardimciFoto] = useState(null); // asistana eklenen foto {dataURL, base64, mediaType}
   const yardimciFotoRef = useRef(null);
@@ -5031,6 +5035,8 @@ export default function Anasayfa({ pro = false }) {
         }
         sesGetir(idx + 1);                                            // SONRAKİNİ şimdiden hazırla (arka planda)
         const audio = new Audio(url);
+        // DAHA YAVAŞ + DOĞAL KONUŞ (kullanıcı: "çok hızlı konuşuyor"). preservesPitch → ses inceltmeden yavaşlar.
+        try { audio.preservesPitch = true; audio.mozPreservesPitch = true; audio.webkitPreservesPitch = true; audio.playbackRate = gloxHizRef.current || 0.9; } catch (e) {}
         aiSesElemRef.current = audio;
         const buBas = oncekiChar;
         audio.onplay = () => { aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now(); if (idx === 0 && typeof onCumle === "function") { try { onCumle(0); } catch (e) {} } };
@@ -9608,15 +9614,25 @@ export default function Anasayfa({ pro = false }) {
                   </button>
                   {gloxSesAcik && (
                     <div className="ai-dil-liste ai-dil-yukari">
+                      <div className="ai-ses-baslik">🔊 Gloxoo Sesi</div>
                       {GLOX_SESLER.map((s) => (
                         <button key={s.id} className={"ai-dil-oge" + (s.id === gloxSes ? " sec" : "")} onClick={() => {
-                          setGloxSes(s.id); gloxSesRef.current = s.id; gercekSesKapaliRef.current = false; setGloxSesAcik(false);
+                          setGloxSes(s.id); gloxSesRef.current = s.id; gercekSesKapaliRef.current = false;
                           // KISA ÖRNEK: seçilen sesi HEMEN duy (yeni sesle okunur)
                           try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
                         }}>
                           <span className="ai-dil-oge-ad">{s.id === gloxSes ? "✓ " : ""}{s.ad} · {s.cins}</span>
                         </button>
                       ))}
+                      <div className="ai-ses-baslik">🐢 Konuşma Hızı</div>
+                      <div className="ai-ses-hiz">
+                        {[{ v: 0.8, ad: "🐢 Yavaş" }, { v: 0.9, ad: "Normal" }, { v: 1.05, ad: "🐇 Hızlı" }].map((h) => (
+                          <button key={h.v} className={"ai-ses-hiz-btn" + (Math.abs(gloxHiz - h.v) < 0.03 ? " sec" : "")} onClick={() => {
+                            setGloxHiz(h.v); gloxHizRef.current = h.v;
+                            try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
+                          }}>{h.ad}</button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

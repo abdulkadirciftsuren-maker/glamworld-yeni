@@ -94,6 +94,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
   const [ara, setAra] = useState("");
   const [akilliYuk, setAkilliYuk] = useState(false);
   const [akilliFiltre, setAkilliFiltre] = useState(null); // {kategori, maxFiyat, minFiyat, anahtar, ozet}
+  const [akilliMesaj, setAkilliMesaj] = useState("");     // kullanıcıya geri bildirim (boş/hata/normal arama)
   const [detay, setDetay] = useState(null);       // detay için seçilen ürün
   const [satAcik, setSatAcik] = useState(false);   // ilan verme formu
   const [favSet, setFavSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("gw_pazarFav") || "[]")); } catch (e) { return new Set(); } });
@@ -114,20 +115,28 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
 
   // AKILLI ARAMA — "20 bin altı temiz telefon bul" gibi bir cümleyi Gloxoo filtreye çevirir; yerelde uygulanır (ucuz + hızlı)
   const akilliAra = async () => {
-    const q = (ara || "").trim(); if (!q || akilliYuk) return;
-    setAkilliYuk(true);
+    const q = (ara || "").trim();
+    if (!q) { setAkilliMesaj("Önce ne aradığını yaz — örn: 20 bin altı temiz telefon 🙂"); return; }
+    if (akilliYuk) return;
+    setAkilliYuk(true); setAkilliMesaj("");
     const katListe = KATEGORILER.filter((k) => k.id !== "tumu").map((k) => k.id + "=" + k.ad).join(", ");
     const t = `Kullanıcı bir alışveriş pazarında şunu aradı: "${q}". Bunu arama filtresine çevir. Kategori id listesi: ${katListe}. Yanıtı SADECE şu JSON biçiminde ver, başka HİÇBİR şey yazma: {"kategori":"<uygun id ya da boş>","maxFiyat":<üst fiyat TL sayı ya da 0>,"minFiyat":<alt fiyat TL sayı ya da 0>,"anahtar":"<üründe aranacak kelimeler, boşlukla>"}`;
     const c = await gloxSor({ prompt: t, sistem: "Sen Gloxoo'sun. SADECE istenen JSON'u ver, açıklama ekleme." });
+    let f = null;
     try {
       const j = JSON.parse((c.match(/\{[\s\S]*\}/) || ["{}"])[0]);
-      const f = { kategori: (j.kategori || "").trim(), maxFiyat: parseInt(j.maxFiyat, 10) || 0, minFiyat: parseInt(j.minFiyat, 10) || 0, anahtar: (j.anahtar || "").trim() };
-      setAkilliFiltre(f);
-      if (f.kategori && KATEGORILER.some((k) => k.id === f.kategori)) setKat(f.kategori); else setKat("tumu");
-    } catch (e) { setAkilliFiltre(null); }
+      f = { kategori: (j.kategori || "").trim(), maxFiyat: parseInt(j.maxFiyat, 10) || 0, minFiyat: parseInt(j.minFiyat, 10) || 0, anahtar: (j.anahtar || "").trim() };
+    } catch (e) { f = null; }
+    // Gloxoo çözemediyse (boş/hatalı) → düz kelime aramasına düş (yine de sonuç ver)
+    if (!f || (!f.kategori && !f.maxFiyat && !f.minFiyat && !f.anahtar)) {
+      f = { kategori: "", maxFiyat: 0, minFiyat: 0, anahtar: q };
+      setAkilliMesaj("Gloxoo tam çözemedi — kelimeyle arıyorum.");
+    }
+    setAkilliFiltre(f);
+    if (f.kategori && KATEGORILER.some((k) => k.id === f.kategori)) setKat(f.kategori); else setKat("tumu");
     setAkilliYuk(false);
   };
-  const akilliTemizle = () => { setAkilliFiltre(null); setAra(""); setKat("tumu"); };
+  const akilliTemizle = () => { setAkilliFiltre(null); setAkilliMesaj(""); setAra(""); setKat("tumu"); };
 
   const filtreli = useMemo(() => {
     const a = (ara || "").trim().toLowerCase();
@@ -174,16 +183,18 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
           onKeyDown={(e) => { if (e.key === "Enter") akilliAra(); }} placeholder="Ara ya da Gloxoo'ya sor: 20 bin altı temiz telefon" />
         {(ara || akilliFiltre) && <button className="ep-ara-x" onClick={akilliTemizle}>✕</button>}
       </div>
-      <button className="ep-akilli" onClick={akilliAra} disabled={akilliYuk || !ara.trim()}>
+      <button className="ep-akilli" onClick={akilliAra} disabled={akilliYuk}>
         {akilliYuk ? "💎 Gloxoo arıyor…" : "💎 Gloxoo ile akıllı ara"}
       </button>
+      {akilliMesaj && !akilliFiltre && <div className="ep-akilli-ozet">{akilliMesaj}</div>}
       {akilliFiltre && (
         <div className="ep-akilli-ozet">
-          💎 Gloxoo'nun bulduğu: {akilliFiltre.kategori ? (KAT(akilliFiltre.kategori).ad + " · ") : ""}
-          {akilliFiltre.maxFiyat ? ("₺" + akilliFiltre.maxFiyat.toLocaleString("tr") + " altı") : ""}
-          {akilliFiltre.minFiyat ? (" · ₺" + akilliFiltre.minFiyat.toLocaleString("tr") + " üstü") : ""}
-          {akilliFiltre.anahtar ? (" · \"" + akilliFiltre.anahtar + "\"") : ""}
-          {" — "}{filtreli.length} ilan
+          💎 Gloxoo: {akilliFiltre.kategori ? (KAT(akilliFiltre.kategori).ad + " · ") : ""}
+          {akilliFiltre.maxFiyat ? ("₺" + akilliFiltre.maxFiyat.toLocaleString("tr") + " altı ") : ""}
+          {akilliFiltre.minFiyat ? ("· ₺" + akilliFiltre.minFiyat.toLocaleString("tr") + " üstü ") : ""}
+          {akilliFiltre.anahtar ? ("· \"" + akilliFiltre.anahtar + "\" ") : ""}
+          {"— "}<b>{filtreli.length > 0 ? (filtreli.length + " ilan bulundu") : "uygun ilan yok (henüz)"}</b>
+          {akilliMesaj ? (" · " + akilliMesaj) : ""}
         </div>
       )}
 
