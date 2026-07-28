@@ -7946,7 +7946,7 @@ export default function Anasayfa({ pro = false }) {
             benFoto={(profilBilgi && profilBilgi.fotoUrl) || ""}
             konum={(profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir].filter(Boolean).join(", ")) || ""}
             dil={dil}
-            saticiyaYaz={(satici) => sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto })}
+            saticiyaYaz={(satici, mesaj) => { sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto }); if (mesaj) { try { setSohbetYazi(mesaj); } catch (e) {} } }}
             onPencere={setPazarPencereAcik}
             kapatRef={pazarKapatRef}
             benLat={konumLat}

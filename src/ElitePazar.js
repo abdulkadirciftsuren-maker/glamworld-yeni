@@ -17,6 +17,14 @@ function mesafeKm(la1, lo1, la2, lo2) {
 function pazarPin() { return L.divIcon({ className: "ep-pin-div", html: "<span class='ep-pin'>📍</span>", iconSize: [30, 30], iconAnchor: [15, 30] }); }
 
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
+// GLOXOO'YA SOR — ortak yardımcı (fiyat değerlendirme, pazarlık mesajı, akıllı arama). body: {prompt/mesajlar, sistem}
+async function gloxSor(body) {
+  try {
+    const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    return (j && j.metin) || "";
+  } catch (e) { return ""; }
+}
 
 // RENKLİ + İKONLU KATEGORİLER — her birine ayrı renk ve ikon (yazı da yanında)
 export const KATEGORILER = [
@@ -84,6 +92,8 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
   const [yuk, setYuk] = useState(true);
   const [kat, setKat] = useState("tumu");
   const [ara, setAra] = useState("");
+  const [akilliYuk, setAkilliYuk] = useState(false);
+  const [akilliFiltre, setAkilliFiltre] = useState(null); // {kategori, maxFiyat, minFiyat, anahtar, ozet}
   const [detay, setDetay] = useState(null);       // detay için seçilen ürün
   const [satAcik, setSatAcik] = useState(false);   // ilan verme formu
   const [favSet, setFavSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("gw_pazarFav") || "[]")); } catch (e) { return new Set(); } });
@@ -102,14 +112,43 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
   // Elite'den çıkınca (bileşen kalkınca) temizle
   useEffect(() => () => { if (onPencere) onPencere(false); if (kapatRef) kapatRef.current = null; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // AKILLI ARAMA — "20 bin altı temiz telefon bul" gibi bir cümleyi Gloxoo filtreye çevirir; yerelde uygulanır (ucuz + hızlı)
+  const akilliAra = async () => {
+    const q = (ara || "").trim(); if (!q || akilliYuk) return;
+    setAkilliYuk(true);
+    const katListe = KATEGORILER.filter((k) => k.id !== "tumu").map((k) => k.id + "=" + k.ad).join(", ");
+    const t = `Kullanıcı bir alışveriş pazarında şunu aradı: "${q}". Bunu arama filtresine çevir. Kategori id listesi: ${katListe}. Yanıtı SADECE şu JSON biçiminde ver, başka HİÇBİR şey yazma: {"kategori":"<uygun id ya da boş>","maxFiyat":<üst fiyat TL sayı ya da 0>,"minFiyat":<alt fiyat TL sayı ya da 0>,"anahtar":"<üründe aranacak kelimeler, boşlukla>"}`;
+    const c = await gloxSor({ prompt: t, sistem: "Sen Gloxoo'sun. SADECE istenen JSON'u ver, açıklama ekleme." });
+    try {
+      const j = JSON.parse((c.match(/\{[\s\S]*\}/) || ["{}"])[0]);
+      const f = { kategori: (j.kategori || "").trim(), maxFiyat: parseInt(j.maxFiyat, 10) || 0, minFiyat: parseInt(j.minFiyat, 10) || 0, anahtar: (j.anahtar || "").trim() };
+      setAkilliFiltre(f);
+      if (f.kategori && KATEGORILER.some((k) => k.id === f.kategori)) setKat(f.kategori); else setKat("tumu");
+    } catch (e) { setAkilliFiltre(null); }
+    setAkilliYuk(false);
+  };
+  const akilliTemizle = () => { setAkilliFiltre(null); setAra(""); setKat("tumu"); };
+
   const filtreli = useMemo(() => {
     const a = (ara || "").trim().toLowerCase();
+    const af = akilliFiltre;
     return urunler.filter((u) => {
       if (kat !== "tumu" && u.kategori !== kat) return false;
+      if (af) {
+        const fy = parseInt(u.fiyat, 10) || 0;
+        if (af.maxFiyat && fy && fy > af.maxFiyat) return false;
+        if (af.minFiyat && fy < af.minFiyat) return false;
+        if (af.anahtar) {
+          const kelimeler = af.anahtar.toLowerCase().split(/\s+/).filter(Boolean);
+          const metin = ((u.urunAd || "") + " " + (u.aciklama || "")).toLowerCase();
+          if (kelimeler.length && !kelimeler.some((kel) => metin.includes(kel))) return false;
+        }
+        return true;
+      }
       if (a && !((u.urunAd || "").toLowerCase().includes(a) || (u.aciklama || "").toLowerCase().includes(a))) return false;
       return true;
     });
-  }, [urunler, kat, ara]);
+  }, [urunler, kat, ara, akilliFiltre]);
 
   const favToggle = (u) => {
     setFavSet((prev) => {
@@ -128,12 +167,25 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
       {/* SLİM BAŞLIK — üst barda zaten "Elite Pazar" yazıyor, tekrar etme; sadece kısa tanıtım */}
       <div className="ep-ust"><span className="ep-elmas">💎</span><span className="ep-tag">Seçkin ürünler · <b>al, sat, kazan</b></span></div>
 
-      {/* ARAMA */}
+      {/* ARAMA + AKILLI ARAMA (Gloxoo) */}
       <div className="ep-ara">
         <span className="ep-lup">🔍</span>
-        <input value={ara} onChange={(e) => setAra(e.target.value)} placeholder="Ara: telefon, araba, kolye…" />
-        {ara && <button className="ep-ara-x" onClick={() => setAra("")}>✕</button>}
+        <input value={ara} onChange={(e) => { setAra(e.target.value); if (akilliFiltre) setAkilliFiltre(null); }}
+          onKeyDown={(e) => { if (e.key === "Enter") akilliAra(); }} placeholder="Ara ya da Gloxoo'ya sor: 20 bin altı temiz telefon" />
+        {(ara || akilliFiltre) && <button className="ep-ara-x" onClick={akilliTemizle}>✕</button>}
       </div>
+      <button className="ep-akilli" onClick={akilliAra} disabled={akilliYuk || !ara.trim()}>
+        {akilliYuk ? "💎 Gloxoo arıyor…" : "💎 Gloxoo ile akıllı ara"}
+      </button>
+      {akilliFiltre && (
+        <div className="ep-akilli-ozet">
+          💎 Gloxoo'nun bulduğu: {akilliFiltre.kategori ? (KAT(akilliFiltre.kategori).ad + " · ") : ""}
+          {akilliFiltre.maxFiyat ? ("₺" + akilliFiltre.maxFiyat.toLocaleString("tr") + " altı") : ""}
+          {akilliFiltre.minFiyat ? (" · ₺" + akilliFiltre.minFiyat.toLocaleString("tr") + " üstü") : ""}
+          {akilliFiltre.anahtar ? (" · \"" + akilliFiltre.anahtar + "\"") : ""}
+          {" — "}{filtreli.length} ilan
+        </div>
+      )}
 
       {/* RENKLİ + İKONLU KATEGORİLER (yana kayan; yazı sığmazsa kesilmez → yürür) */}
       <div className="ep-kats">
@@ -200,7 +252,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
       {/* DETAY */}
       {detay && <PazarDetay urun={detay} benim={detay.sahipUid === uid} favli={favSet.has(detay.id)} benLat={benLat} benLon={benLon}
         onKapat={() => setDetay(null)} onFav={() => favToggle(detay)}
-        onYaz={() => { setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid, ad: detay.satici, foto: detay.saticiFoto }, detay); }}
+        onYaz={(mesaj) => { setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid, ad: detay.satici, foto: detay.saticiFoto }, typeof mesaj === "string" ? mesaj : ""); }}
         onSil={async () => { if (window.confirm("Bu ilanı silmek istiyor musun?")) { await pazarUrunSil(detay.id); setDetay(null); yukle(); } }} />}
 
       {/* İLAN VER FORMU */}
@@ -217,6 +269,23 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
   const [aktif, setAktif] = useState(0);
   const ucretsiz = etk.includes("ucretsiz");
   const m = medyalar[aktif] || medyalar[0];
+  const il = urun.iletisim || {}; // satıcı iletişim (telefon/email/adres) — ne koyduysa o
+  const [gloxDurum, setGloxDurum] = useState("");   // "fiyat" | "pazarlik" | ""
+  const [gloxCevap, setGloxCevap] = useState("");   // "fiyat uygun mu" sonucu
+  const [pazarlik, setPazarlik] = useState("");     // Gloxoo'nun yazdığı pazarlık mesajı
+  const fiyatUygunMu = async () => {
+    if (gloxDurum) return; setGloxDurum("fiyat"); setGloxCevap("");
+    const t = `Bir alıcı bu ürünün fiyatını değerlendirmeni istiyor. Ürün: "${urun.urunAd}". İstenen fiyat: ${urun.fiyat || "?"} TL. ${urun.aciklama ? ("Açıklama: " + urun.aciklama + ". ") : ""}Kategori: ${k.ad}. Türkiye piyasasına göre bu fiyat UYGUN mu, PAHALI mı, yoksa UCUZ (kelepir) mi? 1-2 cümlede dürüst ve net söyle, makul bir fiyat aralığı da ver. "Bilmiyorum" DEME, en iyi tahminini ver.`;
+    const c = await gloxSor({ prompt: t, sistem: "Sen Gloxoo'sun — GLOXORG Elite Pazar asistanı. Kısa, net, dürüst, Türkçe." });
+    setGloxCevap(c || "Şu an değerlendiremedim, birazdan tekrar dene."); setGloxDurum("");
+  };
+  const pazarlikYaz = async () => {
+    if (gloxDurum) return; setGloxDurum("pazarlik"); setPazarlik("");
+    const t = `Bir alıcı, satıcıya kibar bir PAZARLIK mesajı yazmak istiyor. Ürün: "${urun.urunAd}", istenen fiyat ${urun.fiyat || "?"} TL. Satıcıyı kırmadan, saygılı ve kısa (2-3 cümle) bir pazarlık mesajı yaz; makul bir indirim iste. Türkçe. SADECE mesajın kendisini yaz, başına/sonuna açıklama ekleme.`;
+    const c = await gloxSor({ prompt: t, sistem: "Sen Gloxoo'sun — GLOXORG Elite Pazar asistanı. Kısa, kibar, Türkçe." });
+    setPazarlik((c || "").trim()); setGloxDurum("");
+  };
+  const kopyala = (metin) => { try { navigator.clipboard && navigator.clipboard.writeText(metin); } catch (e) {} };
   return (
     <div className="ep-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
       <div className="ep-detay">
@@ -251,11 +320,40 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
             <span className="ep-kavatar buyuk">{urun.saticiFoto ? <img src={urun.saticiFoto} alt="" /> : (urun.satici || "?").slice(0, 1).toUpperCase()}</span>
             <div><div className="ep-dsatici-ad">{urun.satici || "Satıcı"}</div><div className="ep-dsatici-yer">{urun.konum || ""}</div></div>
           </div>
+
+          {/* GLOXOO YARDIMI (alıcı için) — fiyat uygun mu + pazarlık mesajı */}
+          {!benim && (
+            <div className="ep-dglox">
+              <div className="ep-dglox-btnlar">
+                <button className="ep-dgb" onClick={fiyatUygunMu} disabled={!!gloxDurum}>{gloxDurum === "fiyat" ? "💎 Bakıyor…" : "💎 Bu fiyat uygun mu?"}</button>
+                <button className="ep-dgb" onClick={pazarlikYaz} disabled={!!gloxDurum}>{gloxDurum === "pazarlik" ? "🤝 Yazıyor…" : "🤝 Pazarlık mesajı"}</button>
+              </div>
+              {gloxCevap && <div className="ep-dglox-cevap">💎 {gloxCevap}</div>}
+              {pazarlik && (
+                <div className="ep-dpazarlik">
+                  <div className="ep-dpazarlik-metin">{pazarlik}</div>
+                  <div className="ep-dpazarlik-arac">
+                    <button className="ep-dp-btn kul" onClick={() => onYaz(pazarlik)}>💬 Bu mesajla yaz</button>
+                    <button className="ep-dp-btn kop" onClick={() => kopyala(pazarlik)}>Kopyala</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* İLETİŞİM — satıcı ne koyduysa: Mesaj (hep) + Ara / E-posta / Adres */}
+          {!benim && (
+            <div className="ep-diletisim">
+              <button className="ep-di-mesaj" onClick={() => onYaz()}>💬 Mesaj Gönder</button>
+              {il.telefon && <a className="ep-di-ara" href={"tel:" + il.telefon.replace(/[^\d+]/g, "")}>📞 Ara<span className="ep-di-alt">{il.telefon}</span></a>}
+              {il.email && <a className="ep-di-email" href={"mailto:" + il.email}>✉️ E-posta<span className="ep-di-alt">{il.email}</span></a>}
+              {il.adres && <div className="ep-di-adres">🏠 <span>{il.adres}</span></div>}
+            </div>
+          )}
+
           <div className="ep-dbtnlar">
             <button className={"ep-dfav" + (favli ? " dolu" : "")} onClick={onFav}>{favli ? "❤️ Favorimde" : "🤍 Favori"}</button>
-            {benim
-              ? <button className="ep-dsil" onClick={onSil}>🗑️ İlanı Sil</button>
-              : <button className="ep-dyaz" onClick={onYaz}>💬 Satıcıya Yaz</button>}
+            {benim && <button className="ep-dsil" onClick={onSil}>🗑️ İlanı Sil</button>}
           </div>
         </div>
       </div>
@@ -275,6 +373,9 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
   const [konumYazi, setKonumYazi] = useState(konum || ""); // NEREDEN satılıyor (profilden gelir, düzenlenebilir)
   const [konumLL, setKonumLL] = useState(null); // haritadan seçilen {lat, lon}
   const [haritaAcik, setHaritaAcik] = useState(false);
+  const [telefon, setTelefon] = useState(""); // satıcı iletişim (isteğe bağlı)
+  const [email, setEmail] = useState("");
+  const [adres, setAdres] = useState("");
   const [etiketler, setEtiketler] = useState(new Set());
   const [gloxDurum, setGloxDurum] = useState(""); // "yaziyor" | "fiyat" | ""
   const [gloxFiyat, setGloxFiyat] = useState("");
@@ -366,6 +467,7 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
         fiyat: ucretsiz ? "" : String(fiyat).replace(/[^\d]/g, ""), paraBirimi: "TL",
         kategori: kategori, durum, etiketler: [...etiketler], medyalar: temizMedya, kapak, konum: (konumYazi || konum || "").trim(),
         ...(konumLL ? { lat: konumLL.lat, lon: konumLL.lon } : {}),
+        iletisim: { mesaj: true, telefon: telefon.trim(), email: email.trim(), adres: adres.trim() },
       });
       onYayin();
     } catch (e) {
@@ -454,6 +556,12 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
                 <button key={et.id} className={"ep-es " + et.sinif + (etiketler.has(et.id) ? " sec" : "")} onClick={() => etkToggle(et.id)}>{et.ad}{etiketler.has(et.id) ? " ✓" : ""}</button>
               ))}
             </div>
+
+            <div className="ep-etk" style={{ marginTop: 13 }}>📞 İLETİŞİM (alıcı sana nasıl ulaşsın)</div>
+            <div className="ep-iletisim-not">💬 <b>Uygulama içi mesaj</b> her zaman açık. İstersen telefon / e-posta / adres de ekle — alıcı hangisini koyduysan onu görür, ona göre yazar ya da arar.</div>
+            <input className="ep-inp" style={{ marginTop: 7 }} inputMode="tel" value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder="📞 Telefon (isteğe bağlı)" />
+            <input className="ep-inp" style={{ marginTop: 7 }} inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="✉️ E-posta (isteğe bağlı)" />
+            <input className="ep-inp" style={{ marginTop: 7 }} value={adres} onChange={(e) => setAdres(e.target.value)} placeholder="🏠 Adres (isteğe bağlı)" />
           </div>
 
           {hata && <div className="ep-hata">{hata}</div>}
