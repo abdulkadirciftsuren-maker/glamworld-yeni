@@ -68,7 +68,7 @@ function fotoKucult(file, max = 1200) {
   });
 }
 
-export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYaz }) {
+export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYaz, onPencere, kapatRef }) {
   const [urunler, setUrunler] = useState([]);
   const [yuk, setYuk] = useState(true);
   const [kat, setKat] = useState("tumu");
@@ -80,6 +80,16 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
   // Ürünleri yükle
   const yukle = async () => { setYuk(true); const l = await pazarUrunleriOku(200); setUrunler(l); setYuk(false); };
   useEffect(() => { yukle(); }, []);
+
+  // ANDROID GERİ DÜĞMESİ: detay/ilan formu açıkken geri basınca onu KAPAT, Elite'de KAL (ana sayfaya atma).
+  // Parent'a (Anasayfa) pencere açık mı bildir + kapatma fonksiyonunu ver.
+  useEffect(() => {
+    const acik = !!(detay || satAcik);
+    if (onPencere) onPencere(acik);
+    if (kapatRef) kapatRef.current = acik ? () => { setSatAcik(false); setDetay(null); } : null;
+  }, [detay, satAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Elite'den çıkınca (bileşen kalkınca) temizle
+  useEffect(() => () => { if (onPencere) onPencere(false); if (kapatRef) kapatRef.current = null; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtreli = useMemo(() => {
     const a = (ara || "").trim().toLowerCase();

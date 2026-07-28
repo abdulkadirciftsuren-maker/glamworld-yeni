@@ -6514,7 +6514,10 @@ export default function Anasayfa({ pro = false }) {
   // FEED VİDEOLARI: ekrana gelince KENDİ oynar (sessiz, döngü), çıkınca durur — düğmeye basmaya gerek yok.
   // ⚡ PARLAMA: ana sayfa ÜZERİNDE bir pencere açıkken (menü/ayarlar/panel...) feed videosu arkada oynamaya devam ederse
   // telefonda pencere açılışında PARLAMA yapıyordu → pencere açıkken TÜM feed videoları DURDUR; pencere kapanınca yeniden oynar.
-  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!onizGaleri || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi || !!aramaDurum || !!gelenArama;
+  // ELİTE PAZAR kendi pencereleri (detay/ilan formu) → geri düğmesi bunları kapatıp Elite'de KALSIN (ana sayfaya atmasın)
+  const [pazarPencereAcik, setPazarPencereAcik] = useState(false);
+  const pazarKapatRef = useRef(null); // ElitePazar açık pencereyi kapatan fonksiyonu buraya koyar; onPop çağırır
+  const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!onizGaleri || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi || !!aramaDurum || !!gelenArama || pazarPencereAcik;
   useEffect(() => {
     if (aktifKod !== "home") return;
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)
@@ -6724,7 +6727,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -6732,7 +6735,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -6765,6 +6768,7 @@ export default function Anasayfa({ pro = false }) {
         menuAcikRef.current = false; profilAcikRef.current = false; bildirimAcikRef.current = false; araAcikRef.current = false; mesajAcikRef.current = false; ayarlarAcikRef.current = false;
         setMenuAcik(false); setProfilAcik(false); setBildirimAcik(false); setAraAcik(false); setMesajAcik(false); setAyarlarAcik(false);
       }
+      else if (pazarKapatRef.current) { try { pazarKapatRef.current(); } catch (e) {} } // ELİTE PAZAR penceresini kapat, Elite'de KAL (ana sayfaya atma)
       else if (aktifKodRef.current !== "home") { aktifKodRef.current = "home"; setAktifKod("home"); }
       // else: ANA SAYFA TABANI → HİÇBİR ŞEY YAPMA (geri tarayıcıya kalır = Chrome arka plan).
       // ⛔ Burada history.back()/go() ASLA YOK — sekme sıfırlanamaz.
@@ -7943,6 +7947,8 @@ export default function Anasayfa({ pro = false }) {
             konum={(profilBilgi && profilBilgi.konum && [profilBilgi.konum.ilce, profilBilgi.konum.sehir].filter(Boolean).join(", ")) || ""}
             dil={dil}
             saticiyaYaz={(satici) => sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto })}
+            onPencere={setPazarPencereAcik}
+            kapatRef={pazarKapatRef}
           />
         </div>
       ) : (
