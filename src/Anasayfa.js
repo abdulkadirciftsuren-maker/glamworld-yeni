@@ -6928,7 +6928,7 @@ export default function Anasayfa({ pro = false }) {
     // Parmak ne yapıyorsa ORADA kalsın, alt sayfa görülmesin.
     if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || aktifKod === "profil") { dokunRef.current = null; return; }
     try {
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-sar")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }

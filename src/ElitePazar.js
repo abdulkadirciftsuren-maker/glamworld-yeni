@@ -2,24 +2,36 @@
 // Ayrı bileşen → dev Anasayfa dosyasını bozmadan, temiz ve modüler. Firestore: pazarUrunleri.
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { pazarUrunEkle, pazarUrunleriOku, pazarUrunSil, pazarFavGuncelle, gorselYukle, videoYukle } from "./veri";
+import KayanYazi from "./KayanYazi";
 import "./ElitePazar.css";
 
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
 
-// RENKLİ KATEGORİLER — her birine ayrı renk
+// RENKLİ + İKONLU KATEGORİLER — her birine ayrı renk ve ikon (yazı da yanında)
 export const KATEGORILER = [
   { id: "tumu", ad: "Tümü", renk: "#FFD700", ik: "✦" },
   { id: "moda", ad: "Moda", renk: "#e0348b", ik: "👗" },
+  { id: "ayakkabi", ad: "Ayakkabı & Çanta", renk: "#c0398b", ik: "👜" },
   { id: "elektronik", ad: "Elektronik", renk: "#2f7fd8", ik: "💻" },
   { id: "telefon", ad: "Telefon", renk: "#00a6a6", ik: "📱" },
   { id: "ev", ad: "Ev & Yaşam", renk: "#2ca85a", ik: "🛋️" },
   { id: "arac", ad: "Araç", renk: "#e0492f", ik: "🚗" },
+  { id: "moto", ad: "Motosiklet", renk: "#d13a3a", ik: "🏍️" },
+  { id: "yedek", ad: "Yedek Parça", renk: "#6b7280", ik: "🔧" },
   { id: "emlak", ad: "Emlak", renk: "#7a5cd0", ik: "🏠" },
   { id: "bebek", ad: "Bebek", renk: "#ff7aa8", ik: "🍼" },
-  { id: "spor", ad: "Spor", renk: "#ff8c1a", ik: "🚲" },
+  { id: "spor", ad: "Spor", renk: "#ff8c1a", ik: "⚽" },
   { id: "hayvan", ad: "Hayvan", renk: "#b5651d", ik: "🐾" },
+  { id: "kozmetik", ad: "Kozmetik", renk: "#e84ea8", ik: "💄" },
+  { id: "saglik", ad: "Sağlık", renk: "#d6336c", ik: "💊" },
+  { id: "kitap", ad: "Kitap & Hobi", renk: "#3a7d44", ik: "📚" },
+  { id: "oyun", ad: "Oyun & Konsol", renk: "#5a4fd0", ik: "🎮" },
+  { id: "muzik", ad: "Müzik", renk: "#b5417a", ik: "🎸" },
+  { id: "bahce", ad: "Bahçe & Yapı", renk: "#4a8c2a", ik: "🌿" },
+  { id: "antika", ad: "Antika", renk: "#a0722e", ik: "🏺" },
   { id: "hizmet", ad: "İş / Hizmet", renk: "#1f9e8c", ik: "🧰" },
   { id: "luks", ad: "Lüks", renk: "#d4a017", ik: "💎" },
+  { id: "diger", ad: "Diğer", renk: "#8a8a8a", ik: "📦" },
 ];
 const KAT = (id) => KATEGORILER.find((k) => k.id === id) || KATEGORILER[0];
 
@@ -98,15 +110,18 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
       {/* ARAMA */}
       <div className="ep-ara">
         <span className="ep-lup">🔍</span>
-        <input value={ara} onChange={(e) => setAra(e.target.value)} placeholder="Ne arıyorsun? (telefon, araba, kolye…)" />
+        <input value={ara} onChange={(e) => setAra(e.target.value)} placeholder="Ara: telefon, araba, kolye…" />
         {ara && <button className="ep-ara-x" onClick={() => setAra("")}>✕</button>}
       </div>
 
-      {/* RENKLİ KATEGORİLER (yana kayan) */}
+      {/* RENKLİ + İKONLU KATEGORİLER (yana kayan; yazı sığmazsa kesilmez → yürür) */}
       <div className="ep-kats">
         {KATEGORILER.map((k) => (
           <button key={k.id} className={"ep-chip" + (kat === k.id ? " sec" : "") + (k.id === "tumu" ? " tumu" : "")}
-            style={{ "--c": k.renk }} onClick={() => setKat(k.id)}>{k.ad}</button>
+            style={{ "--c": k.renk }} onClick={() => setKat(k.id)}>
+            <span className="ep-chip-ik" aria-hidden="true">{k.ik}</span>
+            <span className="ep-chip-ad"><KayanYazi>{k.ad}</KayanYazi></span>
+          </button>
         ))}
       </div>
 
@@ -139,11 +154,11 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
                   <button className={"ep-fav" + (favli ? " dolu" : "")} onClick={(e) => { e.stopPropagation(); favToggle(u); }}>
                     <span className="ep-kalp">{favli ? "❤️" : "🤍"}</span><b>{u.favSayi || 0}</b>
                   </button>
-                  <span className="ep-kkat" style={{ background: k.renk }}>{k.ad}</span>
+                  <span className="ep-kkat" style={{ background: k.renk }}><span className="ep-kkat-ik">{k.ik}</span><KayanYazi>{k.ad}</KayanYazi></span>
                   {videoVar && <span className="ep-vid">▶</span>}
                 </div>
                 <div className="ep-kbil">
-                  <div className="ep-kad">{u.urunAd || "İlan"}</div>
+                  <div className="ep-kad"><KayanYazi>{u.urunAd || "İlan"}</KayanYazi></div>
                   {etk.length > 0 && (
                     <div className="ep-etks">
                       {etk.slice(0, 2).map((eid) => { const et = ETIKETLER.find((x) => x.id === eid); return et ? <span key={eid} className={"ep-et " + et.sinif}>{et.ad}</span> : null; })}
@@ -152,7 +167,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
                   <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? "Ücretsiz" : ("₺" + (u.fiyat || "—"))}</div>
                   <div className="ep-ksat">
                     <span className="ep-kavatar">{(u.saticiFoto) ? <img src={u.saticiFoto} alt="" /> : (u.satici || "?").slice(0, 1).toUpperCase()}</span>
-                    <span className="ep-kyer">{u.konum || ""}</span>
+                    <span className="ep-kyer"><KayanYazi>{u.konum || ""}</KayanYazi></span>
                   </div>
                 </div>
               </div>
@@ -235,6 +250,7 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
   const [fiyat, setFiyat] = useState("");
   const [kategori, setKategori] = useState("");
   const [durum, setDurum] = useState("ikinci");
+  const [konumYazi, setKonumYazi] = useState(konum || ""); // NEREDEN satılıyor (profilden gelir, düzenlenebilir)
   const [etiketler, setEtiketler] = useState(new Set());
   const [gloxDurum, setGloxDurum] = useState(""); // "yaziyor" | "fiyat" | ""
   const [gloxFiyat, setGloxFiyat] = useState("");
@@ -324,7 +340,7 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
         uid, satici: benAd || "Satıcı", saticiFoto: benFoto || "",
         urunAd: baslik.trim(), aciklama: aciklama.trim(),
         fiyat: ucretsiz ? "" : String(fiyat).replace(/[^\d]/g, ""), paraBirimi: "TL",
-        kategori: kategori, durum, etiketler: [...etiketler], medyalar: temizMedya, kapak, konum: konum || "",
+        kategori: kategori, durum, etiketler: [...etiketler], medyalar: temizMedya, kapak, konum: (konumYazi || konum || "").trim(),
       });
       onYayin();
     } catch (e) {
@@ -400,7 +416,11 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
               <button className={"ep-dc" + (durum === "yeni" ? " sec" : "")} onClick={() => setDurum("yeni")}>Yeni</button>
             </div>
 
-            <div className="ep-etk" style={{ marginTop: 13 }}>ETİKETLER</div>
+            <div className="ep-etk" style={{ marginTop: 13 }}>📍 KONUM (nereden satıyorsun)</div>
+            <input className="ep-inp" value={konumYazi} onChange={(e) => setKonumYazi(e.target.value)} placeholder="Şehir / İlçe (örn: İstanbul, Kadıköy)" />
+            <div className="ep-ipucu">Alıcı nereden aldığını görür. <b>Kargo</b> = her yere gönderirim · <b>Elden</b> = yüz yüze teslim.</div>
+
+            <div className="ep-etk" style={{ marginTop: 13 }}>🏷️ ETİKETLER (nereye/nasıl)</div>
             <div className="ep-etsec">
               {ETIKETLER.map((et) => (
                 <button key={et.id} className={"ep-es " + et.sinif + (etiketler.has(et.id) ? " sec" : "")} onClick={() => etkToggle(et.id)}>{et.ad}{etiketler.has(et.id) ? " ✓" : ""}</button>
