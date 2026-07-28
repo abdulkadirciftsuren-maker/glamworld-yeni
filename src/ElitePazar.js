@@ -265,7 +265,9 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
 // ---------- ÜRÜN DETAYI ----------
 function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz, onSil }) {
   const k = KAT(urun.kategori); const etk = urun.etiketler || [];
-  const medyalar = urun.medyalar && urun.medyalar.length ? urun.medyalar : (urun.kapak ? [{ tip: "foto", url: urun.kapak }] : []);
+  // Sadece GEÇERLİ (url'i olan) medyaları göster; kapak yedek. Bozuk/boş öğe elenir → şeritte "mavi/boş" kutu kalmaz.
+  const medyalar = ((urun.medyalar && urun.medyalar.length ? urun.medyalar : (urun.kapak ? [{ tip: "foto", url: urun.kapak }] : [])) || [])
+    .filter((x) => x && x.url && typeof x.url === "string" && x.url.indexOf("http") === 0);
   const [aktif, setAktif] = useState(0);
   const ucretsiz = etk.includes("ucretsiz");
   const m = medyalar[aktif] || medyalar[0];
@@ -299,8 +301,11 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
         {medyalar.length > 1 && (
           <div className="ep-dkucuk">
             {medyalar.map((mm, i) => (
-              <button key={i} className={"ep-dk" + (i === aktif ? " sec" : "")} onClick={() => setAktif(i)}
-                style={mm.tip !== "video" ? { backgroundImage: `url(${mm.url})` } : {}}>{mm.tip === "video" ? "▶" : ""}</button>
+              <button key={i} className={"ep-dk" + (i === aktif ? " sec" : "")} onClick={() => setAktif(i)}>
+                {mm.tip === "video"
+                  ? <span className="ep-dk-vd">▶</span>
+                  : <img src={mm.url} alt="" referrerPolicy="no-referrer" />}
+              </button>
             ))}
           </div>
         )}
