@@ -20,6 +20,7 @@ import { MESLEK_EK } from "./meslekCevirEk";
 import { MESLEK_EK2 } from "./meslekCevirEk2";
 import { MESLEK_EK3 } from "./meslekCevirEk3";
 import { MESLEK_EK4 } from "./meslekCevirEk4";
+import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
 export const DILLER = [
@@ -2426,6 +2427,12 @@ const resources = {
     if (!resources[lng]) resources[lng] = { translation: {} };
     Object.assign(resources[lng].translation, paket[lng]);
   });
+});
+
+// ELİTE PAZAR çevirileri (13 dil) — bu paketin yapısı { lng: { translation: {...} } } biçiminde.
+Object.keys(CEVIRI_ELITEPAZAR).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  Object.assign(resources[lng].translation, CEVIRI_ELITEPAZAR[lng].translation);
 });
 
 i18n
