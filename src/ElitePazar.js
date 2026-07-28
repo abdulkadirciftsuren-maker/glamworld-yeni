@@ -3,7 +3,18 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { pazarUrunEkle, pazarUrunleriOku, pazarUrunSil, pazarFavGuncelle, gorselYukle, videoYukle } from "./veri";
 import KayanYazi from "./KayanYazi";
+import L from "leaflet";
 import "./ElitePazar.css";
+
+// İki nokta arası mesafe (km) — haversine
+function mesafeKm(la1, lo1, la2, lo2) {
+  const R = 6371, d2r = Math.PI / 180;
+  const dLa = (la2 - la1) * d2r, dLo = (lo2 - lo1) * d2r;
+  const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * d2r) * Math.cos(la2 * d2r) * Math.sin(dLo / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+// Leaflet varsayılan ikon resmi (bundler'da) kırılabilir → basit emoji pin (kesin görünür)
+function pazarPin() { return L.divIcon({ className: "ep-pin-div", html: "<span class='ep-pin'>📍</span>", iconSize: [30, 30], iconAnchor: [15, 30] }); }
 
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
 
@@ -68,7 +79,7 @@ function fotoKucult(file, max = 1200) {
   });
 }
 
-export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYaz, onPencere, kapatRef }) {
+export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYaz, onPencere, kapatRef, benLat, benLon }) {
   const [urunler, setUrunler] = useState([]);
   const [yuk, setYuk] = useState(true);
   const [kat, setKat] = useState("tumu");
@@ -187,7 +198,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
       )}
 
       {/* DETAY */}
-      {detay && <PazarDetay urun={detay} benim={detay.sahipUid === uid} favli={favSet.has(detay.id)}
+      {detay && <PazarDetay urun={detay} benim={detay.sahipUid === uid} favli={favSet.has(detay.id)} benLat={benLat} benLon={benLon}
         onKapat={() => setDetay(null)} onFav={() => favToggle(detay)}
         onYaz={() => { setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid, ad: detay.satici, foto: detay.saticiFoto }, detay); }}
         onSil={async () => { if (window.confirm("Bu ilanı silmek istiyor musun?")) { await pazarUrunSil(detay.id); setDetay(null); yukle(); } }} />}
@@ -200,7 +211,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
 }
 
 // ---------- ÜRÜN DETAYI ----------
-function PazarDetay({ urun, benim, favli, onKapat, onFav, onYaz, onSil }) {
+function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz, onSil }) {
   const k = KAT(urun.kategori); const etk = urun.etiketler || [];
   const medyalar = urun.medyalar && urun.medyalar.length ? urun.medyalar : (urun.kapak ? [{ tip: "foto", url: urun.kapak }] : []);
   const [aktif, setAktif] = useState(0);
@@ -235,6 +246,7 @@ function PazarDetay({ urun, benim, favli, onKapat, onFav, onYaz, onSil }) {
             </div>
           )}
           {urun.aciklama && <p className="ep-daciklama">{urun.aciklama}</p>}
+          {(typeof urun.lat === "number" && typeof urun.lon === "number") && <HaritaGoster lat={urun.lat} lon={urun.lon} benLat={benLat} benLon={benLon} />}
           <div className="ep-dsatici">
             <span className="ep-kavatar buyuk">{urun.saticiFoto ? <img src={urun.saticiFoto} alt="" /> : (urun.satici || "?").slice(0, 1).toUpperCase()}</span>
             <div><div className="ep-dsatici-ad">{urun.satici || "Satıcı"}</div><div className="ep-dsatici-yer">{urun.konum || ""}</div></div>
@@ -261,6 +273,8 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
   const [kategori, setKategori] = useState("");
   const [durum, setDurum] = useState("ikinci");
   const [konumYazi, setKonumYazi] = useState(konum || ""); // NEREDEN satılıyor (profilden gelir, düzenlenebilir)
+  const [konumLL, setKonumLL] = useState(null); // haritadan seçilen {lat, lon}
+  const [haritaAcik, setHaritaAcik] = useState(false);
   const [etiketler, setEtiketler] = useState(new Set());
   const [gloxDurum, setGloxDurum] = useState(""); // "yaziyor" | "fiyat" | ""
   const [gloxFiyat, setGloxFiyat] = useState("");
@@ -351,6 +365,7 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
         urunAd: baslik.trim(), aciklama: aciklama.trim(),
         fiyat: ucretsiz ? "" : String(fiyat).replace(/[^\d]/g, ""), paraBirimi: "TL",
         kategori: kategori, durum, etiketler: [...etiketler], medyalar: temizMedya, kapak, konum: (konumYazi || konum || "").trim(),
+        ...(konumLL ? { lat: konumLL.lat, lon: konumLL.lon } : {}),
       });
       onYayin();
     } catch (e) {
@@ -428,7 +443,10 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
 
             <div className="ep-etk" style={{ marginTop: 13 }}>📍 KONUM (nereden satıyorsun)</div>
             <input className="ep-inp" value={konumYazi} onChange={(e) => setKonumYazi(e.target.value)} placeholder="Şehir / İlçe (örn: İstanbul, Kadıköy)" />
-            <div className="ep-ipucu">Alıcı nereden aldığını görür. <b>Kargo</b> = her yere gönderirim · <b>Elden</b> = yüz yüze teslim.</div>
+            <button className={"ep-harita-sec-btn" + (konumLL ? " secili" : "")} onClick={() => setHaritaAcik(true)}>
+              🗺️ {konumLL ? "Konum haritada işaretlendi ✓ (değiştir)" : "Haritadan Konum Seç"}
+            </button>
+            <div className="ep-ipucu">Haritadan seçersen alıcı ürünün yerini <b>haritada + kaç km uzakta</b> görür. <b>Kargo</b> = her yere · <b>Elden</b> = yüz yüze.</div>
 
             <div className="ep-etk" style={{ marginTop: 13 }}>🏷️ ETİKETLER (nereye/nasıl)</div>
             <div className="ep-etsec">
@@ -441,6 +459,84 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
           {hata && <div className="ep-hata">{hata}</div>}
           <button className="ep-yayinla" onClick={yayinla} disabled={gonderiliyor || medyaYuk}>{gonderiliyor ? "Yayınlanıyor…" : "✦ İlanı Yayınla"}</button>
         </div>
+      </div>
+      {haritaAcik && <HaritaSecici baslaLat={konumLL && konumLL.lat} baslaLon={konumLL && konumLL.lon}
+        onKapat={() => setHaritaAcik(false)}
+        onSec={(lat, lon) => { setKonumLL({ lat, lon }); setHaritaAcik(false); }} />}
+    </div>
+  );
+}
+
+// ---------- HARİTADAN KONUM SEÇ (satıcı ilan verirken) ----------
+function HaritaSecici({ baslaLat, baslaLon, onSec, onKapat }) {
+  const ref = useRef(null), haritaRef = useRef(null), markerRef = useRef(null);
+  const [sec, setSec] = useState(baslaLat && baslaLon ? { lat: baslaLat, lon: baslaLon } : null);
+  const secRef = useRef(sec); useEffect(() => { secRef.current = sec; }, [sec]);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const s = secRef.current;
+    const h = L.map(el, { attributionControl: false }).setView(s ? [s.lat, s.lon] : [39, 35], s ? 13 : 4);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(h);
+    const koy = (lat, lon) => {
+      setSec({ lat, lon });
+      if (markerRef.current) markerRef.current.setLatLng([lat, lon]);
+      else markerRef.current = L.marker([lat, lon], { icon: pazarPin() }).addTo(h);
+    };
+    if (s) koy(s.lat, s.lon);
+    h.on("click", (e) => koy(e.latlng.lat, e.latlng.lng));
+    haritaRef.current = h;
+    setTimeout(() => { try { h.invalidateSize(); } catch (x) {} }, 250);
+    return () => { try { h.remove(); } catch (x) {} };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const gps = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((p) => {
+      const lat = p.coords.latitude, lon = p.coords.longitude;
+      setSec({ lat, lon });
+      const h = haritaRef.current; if (h) { h.setView([lat, lon], 15); if (markerRef.current) markerRef.current.setLatLng([lat, lon]); else markerRef.current = L.marker([lat, lon], { icon: pazarPin() }).addTo(h); }
+    }, () => {}, { enableHighAccuracy: true, timeout: 10000 });
+  };
+  return (
+    <div className="ep-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
+      <div className="ep-harita-pen">
+        <div className="ep-sat-bas"><button className="ep-detay-x" onClick={onKapat}>‹</button><h2>Konum Seç</h2></div>
+        <div className="ep-harita-not">Haritaya dokunarak yerini işaretle, ya da <b>Konumumu Kullan</b>'a bas. Alıcı bunu haritada + kaç km uzakta görecek.</div>
+        <div ref={ref} className="ep-harita"></div>
+        <div className="ep-harita-btnlar">
+          <button className="ep-hg-gps" onClick={gps}>📍 Konumumu Kullan</button>
+          <button className="ep-hg-sec" disabled={!sec} onClick={() => sec && onSec(sec.lat, sec.lon)}>✓ Bu Konumu Seç</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- KONUMU HARİTADA GÖSTER + MESAFE (alıcı detayda görür) ----------
+function HaritaGoster({ lat, lon, benLat, benLon }) {
+  const ref = useRef(null);
+  const [ben, setBen] = useState((benLat && benLon) ? { lat: benLat, lon: benLon } : null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const h = L.map(el, { attributionControl: false, zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, tap: false, keyboard: false }).setView([lat, lon], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(h);
+    L.marker([lat, lon], { icon: pazarPin() }).addTo(h);
+    setTimeout(() => { try { h.invalidateSize(); } catch (x) {} }, 250);
+    return () => { try { h.remove(); } catch (x) {} };
+  }, [lat, lon]);
+  useEffect(() => {
+    if (ben || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((p) => setBen({ lat: p.coords.latitude, lon: p.coords.longitude }), () => {}, { timeout: 9000 });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const km = ben ? mesafeKm(ben.lat, ben.lon, lat, lon) : null;
+  return (
+    <div className="ep-harita-goster">
+      <div className="ep-etk" style={{ marginBottom: 6 }}>📍 KONUM</div>
+      <div ref={ref} className="ep-harita ep-harita-kucuk"></div>
+      <div className="ep-harita-bilgi">
+        {km != null
+          ? <span className="ep-km">📍 Sana yaklaşık <b>{km < 1 ? (Math.round(km * 1000) + " m") : (km.toFixed(1) + " km")}</b> uzaklıkta</span>
+          : <span className="ep-km">📍 Ürünün konumu</span>}
+        <a className="ep-yol" href={`https://www.google.com/maps?q=${lat},${lon}`} target="_blank" rel="noreferrer">Yol tarifi ↗</a>
       </div>
     </div>
   );

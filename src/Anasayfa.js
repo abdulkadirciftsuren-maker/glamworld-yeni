@@ -7949,6 +7949,8 @@ export default function Anasayfa({ pro = false }) {
             saticiyaYaz={(satici) => sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto })}
             onPencere={setPazarPencereAcik}
             kapatRef={pazarKapatRef}
+            benLat={konumLat}
+            benLon={konumLon}
           />
         </div>
       ) : (
