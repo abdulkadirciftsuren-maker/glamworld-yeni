@@ -64,20 +64,34 @@ const ETIKETLER = [
   { id: "ucretsiz", ad: "🎁 Ücretsiz", sinif: "uc" },
 ];
 
-// Fotoğrafı küçült → dataURL (yükleme hızlı + AI görsün)
-function fotoKucult(file, max = 1200) {
-  return new Promise((cz) => {
+// Fotoğrafı küçült → dataURL (yükleme hızlı + AI görsün). EXIF/dönme sorununu düzeltir (siyah şerit/yan dönme olmaz).
+async function fotoKucult(file, max = 1200) {
+  const cizVeVer = (kaynak, gw, gh) => {
+    let w = gw, h = gh;
+    if (w > max || h > max) { const o = Math.min(max / w, max / h); w = Math.round(w * o); h = Math.round(h * o); }
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const x = c.getContext("2d");
+    // önce ALTIN doldur (herhangi bir boşluk siyah değil altın olsun — anayasa) sonra resmi çiz
+    x.fillStyle = "#fff6df"; x.fillRect(0, 0, w, h);
+    x.drawImage(kaynak, 0, 0, w, h);
+    return c.toDataURL("image/jpeg", 0.85);
+  };
+  // 1) EN SAĞLAM: createImageBitmap ile EXIF yönünü düzelt (yan dönme/siyah bar olmaz)
+  try {
+    if (typeof createImageBitmap === "function") {
+      const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+      const url = cizVeVer(bmp, bmp.width, bmp.height);
+      try { bmp.close(); } catch (e) {}
+      if (url) return url;
+    }
+  } catch (e) {}
+  // 2) YEDEK: FileReader + Image
+  return await new Promise((cz) => {
     try {
       const rd = new FileReader();
       rd.onload = () => {
         const img = new Image();
-        img.onload = () => {
-          let w = img.width, h = img.height;
-          if (w > max || h > max) { const o = Math.min(max / w, max / h); w = Math.round(w * o); h = Math.round(h * o); }
-          const c = document.createElement("canvas"); c.width = w; c.height = h;
-          c.getContext("2d").drawImage(img, 0, 0, w, h);
-          cz(c.toDataURL("image/jpeg", 0.85));
-        };
+        img.onload = () => { try { cz(cizVeVer(img, img.naturalWidth || img.width, img.naturalHeight || img.height)); } catch (e) { cz(""); } };
         img.onerror = () => cz("");
         img.src = rd.result;
       };
