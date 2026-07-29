@@ -161,11 +161,15 @@
 .ep-hg-sec{ flex:1; padding:14px; border:none; border-radius:13px; background:linear-gradient(180deg,#25c268,#0f9e4e); color:#fff; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 4px 12px rgba(15,120,60,.4); }
 .ep-hg-sec:disabled{ opacity:.55; }
 .ep-harita-goster{ margin-top:14px; }
-.ep-harita-kucuk{ height:170px; min-height:170px; border-radius:13px; overflow:hidden; border:1px solid rgba(150,110,20,.4); }
+.ep-harita-kucuk{ height:170px; min-height:170px; border-radius:13px; overflow:hidden; border:1px solid rgba(150,110,20,.4); pointer-events:none; }
+/* Önizleme: dokununca tam ekran açılır; sağ üstte genişlet rozeti */
+.ep-harita-onizleme{ position:relative; cursor:pointer; }
+.ep-harita-genislet{ position:absolute; top:8px; right:8px; z-index:500; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#4a3a0d; background:linear-gradient(135deg,#fff3cf,#f0d886); border:1.5px solid #caa23f; border-radius:9px; box-shadow:0 2px 6px rgba(60,40,4,.35); }
+.ep-harita-tam{ flex:1; min-height:320px; }
 .ep-harita-bilgi{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; flex-wrap:wrap; }
 .ep-km{ font-size:13.5px; color:#2a2008; font-weight:700; }
 .ep-km b{ color:#b25a00; }
-.ep-yol{ font-size:13px; font-weight:800; color:#1f6fb0; text-decoration:none; background:#eaf4ff; padding:7px 12px; border-radius:10px; border:1px solid #8fc5ef; }
+.ep-yol{ font-size:13px; font-weight:800; color:#1f6fb0; text-decoration:none; background:#eaf4ff; padding:7px 12px; border-radius:10px; border:1px solid #8fc5ef; cursor:pointer; }
 .ep-pin{ font-size:26px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
 .ep-pin-div{ background:none; border:none; }
 /* Leaflet katmanları pencerelerin üstünde kalmasın (z çakışması) */

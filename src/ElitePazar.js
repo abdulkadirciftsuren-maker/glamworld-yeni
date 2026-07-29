@@ -32,6 +32,14 @@ function mesafeKm(la1, lo1, la2, lo2) {
 // Leaflet varsayılan ikon resmi (bundler'da) kırılabilir → basit emoji pin (kesin görünür)
 function pazarPin() { return L.divIcon({ className: "ep-pin-div", html: "<span class='ep-pin'>📍</span>", iconSize: [30, 30], iconAnchor: [15, 30] }); }
 
+// YOL TARİFİ'ni GÜVENİLİR aç: uygulama içi (PWA/webview) target=_blank çoğu zaman AÇILMIYOR.
+// Google Haritalar YÖN (directions) bağlantısı + window.open, olmazsa location.href (kesin gider → harita uygulaması/tarayıcı açılır).
+function yolTarifiAc(lat, lon) {
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+  try { const w = window.open(url, "_blank", "noopener,noreferrer"); if (!w) window.location.href = url; }
+  catch (e) { try { window.location.href = url; } catch (x) {} }
+}
+
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
 // GLOXOO'YA SOR — ortak yardımcı (fiyat değerlendirme, pazarlık mesajı, akıllı arama). body: {prompt/mesajlar, sistem}
 async function gloxSor(body) {
@@ -715,12 +723,16 @@ function HaritaGoster({ lat, lon, benLat, benLon }) {
   const { t } = useTranslation();
   const ref = useRef(null);
   const [ben, setBen] = useState((benLat && benLon) ? { lat: benLat, lon: benLon } : null);
+  const [tam, setTam] = useState(false); // tam ekran harita açık mı
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    const h = L.map(el, { attributionControl: false, zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, tap: false, keyboard: false }).setView([lat, lon], 13);
+    // Önizleme: dokununca tam ekran açılır (bu yüzden kendisi sabit — sürükleme kapalı)
+    const h = L.map(el, { attributionControl: false, zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, tap: false, keyboard: false }).setView([lat, lon], 14);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(h);
     L.marker([lat, lon], { icon: pazarPin() }).addTo(h);
-    setTimeout(() => { try { h.invalidateSize(); } catch (x) {} }, 250);
+    // Modal açılışında kutu boyutu geç oturuyordu → harita GRİ kalıyordu. Birkaç kez invalidateSize ile düzelt.
+    const fix = () => { try { h.invalidateSize(); } catch (x) {} };
+    setTimeout(fix, 100); setTimeout(fix, 400); setTimeout(fix, 900);
     return () => { try { h.remove(); } catch (x) {} };
   }, [lat, lon]);
   useEffect(() => {
@@ -731,12 +743,43 @@ function HaritaGoster({ lat, lon, benLat, benLon }) {
   return (
     <div className="ep-harita-goster">
       <div className="ep-etk" style={{ marginBottom: 6 }}>📍 {t("epKonum")}</div>
-      <div ref={ref} className="ep-harita ep-harita-kucuk"></div>
+      {/* Önizleme haritası — dokununca TAM EKRAN açılır (yeri gezerek görebilesin) */}
+      <div className="ep-harita-onizleme" onClick={() => setTam(true)}>
+        <div ref={ref} className="ep-harita ep-harita-kucuk"></div>
+        <span className="ep-harita-genislet" aria-hidden="true">⛶</span>
+      </div>
       <div className="ep-harita-bilgi">
         {km != null
           ? <span className="ep-km">📍 {t("epUzaklik", { mesafe: (km < 1 ? (Math.round(km * 1000) + " m") : (km.toFixed(1) + " km")) })}</span>
           : <span className="ep-km">📍 {t("epUrununKonumu")}</span>}
-        <a className="ep-yol" href={`https://www.google.com/maps?q=${lat},${lon}`} target="_blank" rel="noreferrer">{t("epYolTarifi")} ↗</a>
+        <button className="ep-yol" onClick={() => yolTarifiAc(lat, lon)}>{t("epYolTarifi")} ↗</button>
+      </div>
+      {tam && <HaritaTamEkran lat={lat} lon={lon} onKapat={() => setTam(false)} baslik={t("epUrununKonumu")} yolYazi={t("epYolTarifi")} />}
+    </div>
+  );
+}
+
+// ---------- TAM EKRAN HARİTA (alıcı yeri gezerek görür + yol tarifi) ----------
+function HaritaTamEkran({ lat, lon, onKapat, baslik, yolYazi }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    // TAM interaktif: sürükle + yakınlaştır (yeri istediğin gibi gör)
+    const h = L.map(el, { attributionControl: false, zoomControl: true }).setView([lat, lon], 15);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(h);
+    L.marker([lat, lon], { icon: pazarPin() }).addTo(h);
+    const fix = () => { try { h.invalidateSize(); } catch (x) {} };
+    setTimeout(fix, 100); setTimeout(fix, 400); setTimeout(fix, 900);
+    return () => { try { h.remove(); } catch (x) {} };
+  }, [lat, lon]);
+  return (
+    <div className="ep-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
+      <div className="ep-harita-pen">
+        <div className="ep-sat-bas"><button className="ep-detay-x" onClick={onKapat}>‹</button><h2>📍 {baslik}</h2></div>
+        <div ref={ref} className="ep-harita ep-harita-tam"></div>
+        <div className="ep-harita-btnlar">
+          <button className="ep-hg-sec" onClick={() => yolTarifiAc(lat, lon)}>➡️ {yolYazi}</button>
+        </div>
       </div>
     </div>
   );
