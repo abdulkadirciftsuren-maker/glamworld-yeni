@@ -308,6 +308,21 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
   const [gloxDurum, setGloxDurum] = useState("");   // "fiyat" | "pazarlik" | ""
   const [gloxCevap, setGloxCevap] = useState("");   // "fiyat uygun mu" sonucu
   const [pazarlik, setPazarlik] = useState("");     // Gloxoo'nun yazdığı pazarlık mesajı
+  // İLANI KENDİ DİLİNE ÇEVİR — ilan başka dilde yazılmışsa okuyabilmen için (başlık + açıklama)
+  const [cev, setCev] = useState({ acik: false, yuk: false, baslik: "", aciklama: "" });
+  const ilaniCevir = async () => {
+    if (cev.yuk) return;
+    if (cev.acik) { setCev({ acik: false, yuk: false, baslik: "", aciklama: "" }); return; } // orijinale dön
+    setCev({ acik: true, yuk: true, baslik: "", aciklama: "" });
+    const kaynak = `BASLIK: ${urun.urunAd || ""}\nACIKLAMA: ${urun.aciklama || ""}`;
+    const istem = `Aşağıdaki ürün ilanını ${aktifDil} diline çevir. Anlamı koru, doğal ve akıcı çevir. Marka/model adlarını olduğu gibi bırak. Yanıtı SADECE şu biçimde ver (BASLIK/ACIKLAMA etiketleri aynen kalsın):\nBASLIK: ...\nACIKLAMA: ...\n\n${kaynak}`;
+    const c = await gloxSor({ prompt: istem, sistem: `Sen bir çevirmensin. Metni ${aktifDil} diline çevir; başka hiçbir şey ekleme.` });
+    const bm = (c.match(/BASLIK\s*:\s*(.+)/i) || [])[1];
+    const am = (c.match(/ACIKLAMA\s*:\s*([\s\S]+)/i) || [])[1];
+    setCev({ acik: true, yuk: false, baslik: (bm || "").trim(), aciklama: (am || "").trim() });
+  };
+  const gosterBaslik = (cev.acik && cev.baslik) ? cev.baslik : urun.urunAd;
+  const gosterAciklama = (cev.acik && cev.aciklama) ? cev.aciklama : urun.aciklama;
   const fiyatUygunMu = async () => {
     if (gloxDurum) return; setGloxDurum("fiyat"); setGloxCevap("");
     const istem = `Bir alıcı bu ürünün fiyatını değerlendirmeni istiyor. Ürün: "${urun.urunAd}". İstenen fiyat: ${urun.fiyat || "?"} TL. ${urun.aciklama ? ("Açıklama: " + urun.aciklama + ". ") : ""}Kategori: ${k.ad}. Türkiye piyasasına göre bu fiyat UYGUN mu, PAHALI mı, yoksa UCUZ (kelepir) mi? 1-2 cümlede dürüst ve net söyle, makul bir fiyat aralığı da ver. "Bilmiyorum" DEME, en iyi tahminini ver. Yanıtı ${aktifDil} dilinde ver.`;
@@ -344,7 +359,7 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
         )}
         <div className="ep-dbil">
           <span className="ep-dkat" style={{ background: k.renk }}>{t("epKat_" + k.id)}</span>
-          <h2 className="ep-dad">{urun.urunAd}</h2>
+          <h2 className="ep-dad">{cev.yuk ? t("ceviriliyor", "Çevriliyor…") : gosterBaslik}</h2>
           <div className={"ep-dfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? (t("epUcretsiz") + " 🎁") : ("₺" + (urun.fiyat || "—"))}</div>
           {etk.length > 0 && (
             <div className="ep-etks">
@@ -352,7 +367,13 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
               {urun.durum && <span className="ep-et dr">{urun.durum === "yeni" ? ("✨ " + t("epYeni")) : t("epIkinciEl")}</span>}
             </div>
           )}
-          {urun.aciklama && <p className="ep-daciklama">{urun.aciklama}</p>}
+          {gosterAciklama && <p className="ep-daciklama">{cev.yuk ? t("ceviriliyor", "Çevriliyor…") : gosterAciklama}</p>}
+          {/* İLANI KENDİ DİLİNE ÇEVİR — başka dilde yazılmış ilanı okuyabilmen için */}
+          {(urun.urunAd || urun.aciklama) && (
+            <button className={"ep-cevir" + (cev.acik ? " acik" : "")} onClick={ilaniCevir} disabled={cev.yuk}>
+              🌐 {cev.yuk ? t("ceviriliyor", "Çevriliyor…") : (cev.acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
+            </button>
+          )}
           {(typeof urun.lat === "number" && typeof urun.lon === "number") && <HaritaGoster lat={urun.lat} lon={urun.lon} benLat={benLat} benLon={benLon} />}
           <div className="ep-dsatici">
             <span className="ep-kavatar buyuk">{urun.saticiFoto ? <img src={urun.saticiFoto} alt="" /> : (urun.satici || "?").slice(0, 1).toUpperCase()}</span>

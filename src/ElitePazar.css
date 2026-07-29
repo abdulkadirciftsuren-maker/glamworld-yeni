@@ -98,6 +98,11 @@
 .ep-dfiyat{ font-family:'Playfair Display',serif; font-weight:800; font-size:26px; color:#b25a00; }
 .ep-dfiyat.bedava{ color:#0f9e4e; }
 .ep-daciklama{ margin-top:10px; font-size:14px; line-height:1.5; color:#3d3117; white-space:pre-wrap; }
+/* İLANI KENDİ DİLİNE ÇEVİR düğmesi — altın, kare köşeli (anayasa) */
+.ep-cevir{ margin-top:10px; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; border:1.5px solid #caa23f; background:linear-gradient(135deg,#fff3cf,#f0d886); color:#5a4718; font-weight:800; font-size:13.5px; cursor:pointer; }
+.ep-cevir.acik{ background:linear-gradient(135deg,#f0d886,#e0bf62); }
+.ep-cevir:disabled{ opacity:.7; }
+@media (min-width:560px){ .ep-cevir{ font-size:15px; padding:10px 16px; } }
 .ep-dsatici{ display:flex; align-items:center; gap:10px; margin-top:14px; padding:10px; background:rgba(255,250,228,.7); border-radius:13px; border:1px solid rgba(150,110,20,.3); }
 .ep-dsatici-ad{ font-weight:800; color:#2a2008; font-size:14.5px; }
 .ep-dsatici-yer{ font-size:12px; color:#6a5010; font-weight:600; }
