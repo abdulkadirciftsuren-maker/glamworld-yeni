@@ -182,6 +182,11 @@
 .ep-kc{ font-size:12px; font-weight:800; color:var(--c); padding:7px 12px; border-radius:20px; cursor:pointer;
   background:color-mix(in srgb, var(--c) 14%, #fff); border:1.4px solid color-mix(in srgb, var(--c) 55%, transparent); }
 .ep-kc.sec{ color:#fff; background:linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 78%, #000 8%)); box-shadow:0 2px 8px color-mix(in srgb, var(--c) 45%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.3); }
+/* PARA BİRİMİ SEÇİCİ — altın, kare köşeli; seçili olan belirgin */
+.ep-parasec{ display:flex; gap:7px; flex-wrap:wrap; margin-top:9px; }
+.ep-pc{ font-size:12.5px; font-weight:800; color:#7a5c10; padding:7px 11px; border-radius:10px; cursor:pointer; background:linear-gradient(135deg,#fff3cf,#f0d886); border:1.5px solid #caa23f; }
+.ep-pc.sec{ color:#4a3a0d; background:linear-gradient(135deg,#f0cf7a,#dcae4a); box-shadow:0 2px 8px rgba(180,140,40,.4); }
+@media (min-width:560px){ .ep-pc{ font-size:14px; padding:9px 13px; } }
 .ep-durum-sec{ display:flex; gap:9px; }
 .ep-dc{ flex:1; text-align:center; font-size:13px; font-weight:800; padding:10px; border-radius:11px; cursor:pointer; border:1.4px solid rgba(120,90,20,.5); color:#7a5c10; background:rgba(255,245,210,.5); }
 .ep-dc.sec{ color:#3a2c00; background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#E6BD52); border-color:#b8860b; }

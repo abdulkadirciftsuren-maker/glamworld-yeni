@@ -7966,6 +7966,9 @@ export default function Anasayfa({ pro = false }) {
             kapatRef={pazarKapatRef}
             benLat={konumLat}
             benLon={konumLon}
+            para={myPara}
+            paraSym={myParaSym}
+            ulkeAd={(konum && (konum.sehir || konum.bolge)) || ""}
           />
           </Suspense>
         </div>

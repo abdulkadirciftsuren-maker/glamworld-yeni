@@ -10,6 +10,17 @@ import "./ElitePazar.css";
 // Gloxoo hangi dilde cevap versin — aktif arayüz diline göre (kullanıcı dili değiştirince Gloxoo da o dilde yazar)
 const DIL_ADI = { tr:"Türkçe", en:"English", de:"Deutsch (German)", ar:"العربية (Arabic)", ru:"Русский (Russian)", uk:"Українська (Ukrainian)", es:"Español (Spanish)", fr:"Français (French)", it:"Italiano (Italian)", zh:"中文 (Chinese)", hi:"हिन्दी (Hindi)", pt:"Português (Portuguese)", ja:"日本語 (Japanese)" };
 const dilAdi = (k) => DIL_ADI[String(k || "en").slice(0, 2)] || "English";
+// GÜÇLÜ dil talimatı (İngilizce meta-talimat) — istem Türkçe yazılı olsa bile model CEVABI seçilen dilde versin.
+// (Eskiden "Yanıtı X dilinde ver" tek başına zayıftı; istem Türkçe olunca model Türkçe'ye kayıyordu.)
+const dilTalimati = (ad) => `Reply ONLY in ${ad}. This is mandatory: write your ENTIRE answer in ${ad}, and do NOT use any other language even though these instructions are written in another language.`;
+// PARA BİRİMLERİ — ilan verenin ÜLKESİNİN parası (sabit TL DEĞİL). Kullanıcının kendi parası öntanımlı gelir.
+const PARALAR = [
+  { kod: "UAH", sim: "₴" }, { kod: "TRY", sim: "₺" }, { kod: "EUR", sim: "€" }, { kod: "USD", sim: "$" },
+  { kod: "GBP", sim: "£" }, { kod: "RUB", sim: "₽" }, { kod: "PLN", sim: "zł" }, { kod: "AZN", sim: "₼" },
+  { kod: "KZT", sim: "₸" }, { kod: "GEL", sim: "₾" }, { kod: "AED", sim: "د.إ" }, { kod: "SAR", sim: "﷼" },
+];
+// Bir ilanın para sembolü: kayıtlı simge > kod->simge > eski "TL" > ne yazılıysa
+const paraSimEP = (kod) => { const b = PARALAR.find((x) => x.kod === kod); return b ? b.sim : (kod === "TL" ? "₺" : (kod || "₺")); };
 
 // İki nokta arası mesafe (km) — haversine
 function mesafeKm(la1, lo1, la2, lo2) {
@@ -106,7 +117,7 @@ async function fotoKucult(file, max = 1200) {
   });
 }
 
-export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYaz, onPencere, kapatRef, benLat, benLon }) {
+export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYaz, onPencere, kapatRef, benLat, benLon, para, paraSym, ulkeAd }) {
   const { t, i18n } = useTranslation();
   const [urunler, setUrunler] = useState([]);
   const [yuk, setYuk] = useState(true);
@@ -210,8 +221,8 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
       {akilliFiltre && (
         <div className="ep-akilli-ozet">
           💎 {t("epGloxPre")} {akilliFiltre.kategori ? (t("epKat_" + akilliFiltre.kategori) + " · ") : ""}
-          {akilliFiltre.maxFiyat ? ("₺" + akilliFiltre.maxFiyat.toLocaleString() + " " + t("epAlti") + " ") : ""}
-          {akilliFiltre.minFiyat ? ("· ₺" + akilliFiltre.minFiyat.toLocaleString() + " " + t("epUstu") + " ") : ""}
+          {akilliFiltre.maxFiyat ? ((paraSym || "₺") + akilliFiltre.maxFiyat.toLocaleString() + " " + t("epAlti") + " ") : ""}
+          {akilliFiltre.minFiyat ? ("· " + (paraSym || "₺") + akilliFiltre.minFiyat.toLocaleString() + " " + t("epUstu") + " ") : ""}
           {akilliFiltre.anahtar ? ("· \"" + akilliFiltre.anahtar + "\" ") : ""}
           {"— "}<b>{filtreli.length > 0 ? t("epIlanBulundu", { n: filtreli.length }) : t("epUygunYok")}</b>
           {akilliMesaj ? (" · " + akilliMesaj) : ""}
@@ -268,7 +279,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
                       {etk.slice(0, 2).map((eid) => { const et = ETIKETLER.find((x) => x.id === eid); return et ? <span key={eid} className={"ep-et " + et.sinif}>{et.emoji + " " + t("epEt_" + et.id)}</span> : null; })}
                     </div>
                   )}
-                  <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? t("epUcretsiz") : ("₺" + (u.fiyat || "—"))}</div>
+                  <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? t("epUcretsiz") : ((u.paraSimge || paraSimEP(u.paraBirimi)) + (u.fiyat || "—"))}</div>
                   <div className="ep-ksat">
                     <span className="ep-kavatar">{(u.saticiFoto) ? <img src={u.saticiFoto} alt="" /> : (u.satici || "?").slice(0, 1).toUpperCase()}</span>
                     <span className="ep-kyer"><KayanYazi>{u.konum || ""}</KayanYazi></span>
@@ -281,23 +292,25 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
       )}
 
       {/* DETAY */}
-      {detay && <PazarDetay urun={detay} benim={detay.sahipUid === uid} favli={favSet.has(detay.id)} benLat={benLat} benLon={benLon}
+      {detay && <PazarDetay urun={detay} benim={detay.sahipUid === uid} favli={favSet.has(detay.id)} benLat={benLat} benLon={benLon} ulkeAd={ulkeAd}
         onKapat={() => setDetay(null)} onFav={() => favToggle(detay)}
         onYaz={(mesaj) => { setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid, ad: detay.satici, foto: detay.saticiFoto }, typeof mesaj === "string" ? mesaj : ""); }}
         onSil={async () => { if (window.confirm(t("epSilOnay"))) { await pazarUrunSil(detay.id); setDetay(null); yukle(); } }} />}
 
       {/* İLAN VER FORMU */}
-      {satAcik && <SatForm uid={uid} benAd={benAd} benFoto={benFoto} konum={konum} dil={dil}
+      {satAcik && <SatForm uid={uid} benAd={benAd} benFoto={benFoto} konum={konum} dil={dil} para={para} paraSym={paraSym} ulkeAd={ulkeAd}
         onKapat={() => setSatAcik(false)} onYayin={() => { setSatAcik(false); yukle(); }} />}
     </div>
   );
 }
 
 // ---------- ÜRÜN DETAYI ----------
-function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz, onSil }) {
+function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz, onSil, ulkeAd }) {
   const { t, i18n } = useTranslation();
   const aktifDil = dilAdi(i18n.language);
   const k = KAT(urun.kategori); const etk = urun.etiketler || [];
+  const parSim = urun.paraSimge || paraSimEP(urun.paraBirimi); // bu ilanın para sembolü (₴/₺/€…), sabit ₺ DEĞİL
+  const nerede = urun.konum || ulkeAd || "";                    // ürünün satıldığı yer (Gloxoo buna göre değerlendirir)
   // Sadece GEÇERLİ (url'i olan) medyaları göster; kapak yedek. Bozuk/boş öğe elenir → şeritte "mavi/boş" kutu kalmaz.
   const medyalar = ((urun.medyalar && urun.medyalar.length ? urun.medyalar : (urun.kapak ? [{ tip: "foto", url: urun.kapak }] : [])) || [])
     .filter((x) => x && x.url && typeof x.url === "string" && x.url.indexOf("http") === 0);
@@ -325,14 +338,14 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
   const gosterAciklama = (cev.acik && cev.aciklama) ? cev.aciklama : urun.aciklama;
   const fiyatUygunMu = async () => {
     if (gloxDurum) return; setGloxDurum("fiyat"); setGloxCevap("");
-    const istem = `Bir alıcı bu ürünün fiyatını değerlendirmeni istiyor. Ürün: "${urun.urunAd}". İstenen fiyat: ${urun.fiyat || "?"} TL. ${urun.aciklama ? ("Açıklama: " + urun.aciklama + ". ") : ""}Kategori: ${k.ad}. Türkiye piyasasına göre bu fiyat UYGUN mu, PAHALI mı, yoksa UCUZ (kelepir) mi? 1-2 cümlede dürüst ve net söyle, makul bir fiyat aralığı da ver. "Bilmiyorum" DEME, en iyi tahminini ver. Yanıtı ${aktifDil} dilinde ver.`;
-    const c = await gloxSor({ prompt: istem, sistem: `Sen Gloxoo'sun — GLOXORG Elite Pazar asistanı. Kısa, net, dürüst. Yanıtı ${aktifDil} dilinde ver.` });
+    const istem = `${dilTalimati(aktifDil)}\n\nBir alıcı bu ürünün fiyatını değerlendirmeni istiyor. Ürün: "${urun.urunAd}". İstenen fiyat: ${urun.fiyat || "?"} ${parSim} (${urun.paraBirimi || "yerel para"}). ${urun.aciklama ? ("Açıklama: " + urun.aciklama + ". ") : ""}Kategori: ${k.ad}. ${nerede ? ("Ürünün satıldığı yer: " + nerede + ". ") : ""}Bu ürünün SATILDIĞI ÜLKENİN/BÖLGENİN güncel piyasasına göre değerlendir — TÜRKİYE'yi VARSAYMA. Fiyat UYGUN mu, PAHALI mı, yoksa UCUZ (kelepir) mi? 1-2 cümlede dürüst ve net söyle; makul bir fiyat aralığını da AYNI para birimi (${parSim}) cinsinden ver. "Bilmiyorum" DEME, en iyi tahminini ver.\n\n${dilTalimati(aktifDil)}`;
+    const c = await gloxSor({ prompt: istem, sistem: `You are Gloxoo, the GLOXORG Elite Pazar assistant. ${dilTalimati(aktifDil)} Be short, clear and honest. Judge the price by the LOCAL market of where the item is sold — never assume Turkey. Use the item's own currency (${parSim}).` });
     setGloxCevap(c || t("epDegerlendiremedim")); setGloxDurum("");
   };
   const pazarlikYaz = async () => {
     if (gloxDurum) return; setGloxDurum("pazarlik"); setPazarlik("");
-    const istem = `Bir alıcı, satıcıya kibar bir PAZARLIK mesajı yazmak istiyor. Ürün: "${urun.urunAd}", istenen fiyat ${urun.fiyat || "?"} TL. Satıcıyı kırmadan, saygılı ve kısa (2-3 cümle) bir pazarlık mesajı yaz; makul bir indirim iste. SADECE mesajın kendisini yaz, başına/sonuna açıklama ekleme. Mesajı ${aktifDil} dilinde yaz.`;
-    const c = await gloxSor({ prompt: istem, sistem: `Sen Gloxoo'sun — GLOXORG Elite Pazar asistanı. Kısa, kibar. Yanıtı ${aktifDil} dilinde ver.` });
+    const istem = `${dilTalimati(aktifDil)}\n\nBir alıcı, satıcıya kibar bir PAZARLIK mesajı yazmak istiyor. Ürün: "${urun.urunAd}", istenen fiyat ${urun.fiyat || "?"} ${parSim}. Satıcıyı kırmadan, saygılı ve kısa (2-3 cümle) bir pazarlık mesajı yaz; makul bir indirim iste. SADECE mesajın kendisini yaz, başına/sonuna açıklama ekleme.\n\n${dilTalimati(aktifDil)}`;
+    const c = await gloxSor({ prompt: istem, sistem: `You are Gloxoo, the GLOXORG Elite Pazar assistant. ${dilTalimati(aktifDil)} Be short and polite.` });
     setPazarlik((c || "").trim()); setGloxDurum("");
   };
   const kopyala = (metin) => { try { navigator.clipboard && navigator.clipboard.writeText(metin); } catch (e) {} };
@@ -360,7 +373,7 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
         <div className="ep-dbil">
           <span className="ep-dkat" style={{ background: k.renk }}>{t("epKat_" + k.id)}</span>
           <h2 className="ep-dad">{cev.yuk ? t("ceviriliyor", "Çevriliyor…") : gosterBaslik}</h2>
-          <div className={"ep-dfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? (t("epUcretsiz") + " 🎁") : ("₺" + (urun.fiyat || "—"))}</div>
+          <div className={"ep-dfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? (t("epUcretsiz") + " 🎁") : (parSim + (urun.fiyat || "—"))}</div>
           {etk.length > 0 && (
             <div className="ep-etks">
               {etk.map((eid) => { const et = ETIKETLER.find((x) => x.id === eid); return et ? <span key={eid} className={"ep-et " + et.sinif}>{et.emoji + " " + t("epEt_" + et.id)}</span> : null; })}
@@ -421,9 +434,18 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
 }
 
 // ---------- İLAN VER FORMU (Gloxoo yardımıyla) ----------
-function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
+function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin, para, paraSym, ulkeAd }) {
   const { t, i18n } = useTranslation();
   const aktifDil = dilAdi(i18n.language);
+  // PARA BİRİMİ: öntanımlı KULLANICININ KENDİ parası (Ukrayna'daysan ₴ UAH), sabit TL DEĞİL. İstersen değiştir.
+  const kullaniciParaKod = (() => { const k = String(para || "").toUpperCase(); return k === "TL" ? "TRY" : (k || "TRY"); })();
+  // Seçici listesi: kullanıcının kendi parası (listede yoksa gerçek sembolüyle) en başta + yaygın paralar
+  const paraListesi = useMemo(() => {
+    if (kullaniciParaKod && !PARALAR.some((x) => x.kod === kullaniciParaKod)) return [{ kod: kullaniciParaKod, sim: paraSym || kullaniciParaKod }, ...PARALAR];
+    return PARALAR;
+  }, [kullaniciParaKod, paraSym]);
+  const [paraKod, setParaKod] = useState(kullaniciParaKod);
+  const parSim = (paraListesi.find((x) => x.kod === paraKod) || {}).sim || paraSimEP(paraKod);
   const [medyalar, setMedyalar] = useState([]);   // [{tip, url, b64?}]
   const [medyaYuk, setMedyaYuk] = useState(false);
   const [baslik, setBaslik] = useState("");
@@ -477,7 +499,7 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
     parcalar.push({ type: "text", text: talimat });
     const mesajlar = [{ role: "user", content: parcalar.length > 1 ? parcalar : talimat }];
     try {
-      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: `Sen Gloxoo'sun — GLOXORG Elite Pazar satış asistanı. Kısa, net, dürüst ol ve yanıtı ${aktifDil} dilinde ver. Ekte ürün fotoğrafı varsa DİKKATLİCE bak ve SADECE gördüğün ürüne göre yaz.` }) });
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: `You are Gloxoo, the GLOXORG Elite Pazar selling assistant. ${dilTalimati(aktifDil)} Be short, clear, honest. If a product photo is attached, look CAREFULLY and write ONLY about the item you actually see.` }) });
       const j = await r.json().catch(() => ({}));
       return (j && j.metin) || "";
     } catch (e) { return ""; }
@@ -486,7 +508,7 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
     if (gloxDurum) return;
     if (!kapakB64 && !baslik) { setHata(t("epHataFoto")); return; }
     setGloxDurum("yaziyor"); setHata("");
-    const talimat = `Bu bir Elite Pazar ürün ilanı. ${kapakB64 ? "Ekteki fotoğrafa dikkatlice bak" : ("Ürün: " + baslik)} ve satışa uygun, çekici ama DÜRÜST (abartısız) bir ilan yaz. Kısa bir BAŞLIK (en fazla 8 kelime) ve 2-3 cümlelik bir AÇIKLAMA ver. Metinleri ${aktifDil} dilinde yaz. Yanıtı SADECE şu biçimde ver, başka bir şey yazma (BASLIK/ACIKLAMA etiketleri aynen kalsın):\nBASLIK: ...\nACIKLAMA: ...`;
+    const talimat = `${dilTalimati(aktifDil)}\n\nBu bir Elite Pazar ürün ilanı. ${kapakB64 ? "Ekteki fotoğrafa dikkatlice bak" : ("Ürün: " + baslik)} ve satışa uygun, çekici ama DÜRÜST (abartısız) bir ilan yaz. Kısa bir BAŞLIK (en fazla 8 kelime) ve 2-3 cümlelik bir AÇIKLAMA ver. BASLIK ve ACIKLAMA metinlerini ${aktifDil} dilinde yaz. Yanıtı SADECE şu biçimde ver, başka bir şey yazma (BASLIK/ACIKLAMA etiketleri aynen kalsın):\nBASLIK: ...\nACIKLAMA: ...`;
     const cevap = await gloxCagir(talimat, kapakB64);
     const bm = cevap.match(/BASLIK\s*:\s*(.+)/i);
     const am = cevap.match(/ACIKLAMA\s*:\s*([\s\S]+)/i);
@@ -499,8 +521,8 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
     if (gloxDurum) return;
     if (!kapakB64 && !baslik) { setHata(t("epHataFotoFiyat")); return; }
     setGloxDurum("fiyat"); setHata("");
-    const talimat = `Bu ürünün Türkiye'deki güncel ikinci el / piyasa değerini TAHMİN et. Ürün: "${baslik || "(fotoğraftaki ürün)"}".${aciklama ? (" Açıklama: " + aciklama) : ""} Makul bir fiyat ARALIĞI ver. Yanıtı SADECE şu biçimde ver: FIYAT: <alt sayı> - <üst sayı> TL. Emin değilsen bile en iyi tahminini ver, "bilmiyorum" DEME.`;
-    // Not: fiyat aralığı sayısal olduğu için dil önemli değil; TL cinsinden verilir.
+    const nerede = (konumYazi || konum || ulkeAd || "").trim();
+    const talimat = `Bu ürünün ${nerede ? ("\"" + nerede + "\" bölgesindeki/ülkesindeki") : "satıldığı ülkedeki"} güncel ikinci el / piyasa değerini TAHMİN et — TÜRKİYE'yi VARSAYMA. Ürün: "${baslik || "(fotoğraftaki ürün)"}".${aciklama ? (" Açıklama: " + aciklama) : ""} Makul bir fiyat ARALIĞI ver ve fiyatı ${paraKod} (${parSim}) para biriminde ver. Yanıtı SADECE şu biçimde ver: FIYAT: <alt sayı> - <üst sayı> ${parSim}. Emin değilsen bile en iyi tahminini ver, "bilmiyorum" DEME.`;
     const cevap = await gloxCagir(talimat, kapakB64);
     const fm = cevap.match(/FIYAT\s*:\s*(.+)/i);
     setGloxFiyat((fm ? fm[1] : cevap).trim());
@@ -526,7 +548,7 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
       await pazarUrunEkle({
         uid, satici: benAd || t("epSatici"), saticiFoto: benFoto || "",
         urunAd: baslik.trim(), aciklama: aciklama.trim(),
-        fiyat: ucretsiz ? "" : String(fiyat).replace(/[^\d]/g, ""), paraBirimi: "TL",
+        fiyat: ucretsiz ? "" : String(fiyat).replace(/[^\d]/g, ""), paraBirimi: paraKod, paraSimge: parSim,
         kategori: kategori, durum, etiketler: [...etiketler], medyalar: temizMedya, kapak, konum: (konumYazi || konum || "").trim(),
         ...(konumLL ? { lat: konumLL.lat, lon: konumLL.lon } : {}),
         iletisim: { mesaj: true, telefon: telefon.trim(), email: email.trim(), adres: adres.trim() },
@@ -581,9 +603,15 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin }) {
 
           {/* FİYAT + GLOXOO ÖNERİSİ */}
           <div className="ep-kutu">
-            <div className="ep-etk">💰 {t("epFiyatEtk")}</div>
-            <div className="ep-fiyat-in"><span className="ep-tl">₺</span>
+            <div className="ep-etk">💰 {t("epFiyatEtk")} ({parSim})</div>
+            <div className="ep-fiyat-in"><span className="ep-tl">{parSim}</span>
               <input className="ep-fiyat-val" inputMode="numeric" value={fiyat} onChange={(e) => setFiyat(e.target.value.replace(/[^\d]/g, ""))} placeholder="0" /></div>
+            {/* PARA BİRİMİ SEÇİCİ — öntanımlı senin paran; istersen değiştir (satılan ülkenin parası) */}
+            <div className="ep-parasec">
+              {paraListesi.map((pp) => (
+                <button key={pp.kod} className={"ep-pc" + (paraKod === pp.kod ? " sec" : "")} onClick={() => setParaKod(pp.kod)}>{pp.sim} {pp.kod}</button>
+              ))}
+            </div>
             {gloxFiyat && (
               <div className="ep-glox-fiyat">
                 <div className="ep-gf-bas">💎 {t("epGloxFiyatOneri")}</div>
