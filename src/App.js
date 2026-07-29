@@ -5,8 +5,9 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import Acilis from "./Acilis";
 import Giris from "./Giris";
-import MusteriForm from "./MusteriForm";
-import ProfesyonelForm from "./ProfesyonelForm";
+// NOT: MusteriForm ve ProfesyonelForm artık akışta DEĞİL (kayıt tek kart Giris'te). İçe aktarımları
+// kaldırıldı çünkü hiçbir yerde render edilmiyordu ama ana pakete ~2850 satır yük biniyordu → paket küçüldü.
+// (Dosyalar duruyor; ileride gerekirse geri bağlanır.)
 import AltinCerceve from "./AltinCerceve";
 import KayitTamam from "./KayitTamam";
 import Anasayfa from "./Anasayfa";

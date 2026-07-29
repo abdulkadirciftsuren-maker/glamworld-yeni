@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment, Component } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment, Component, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -19,7 +19,6 @@ import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
-import ElitePazar from "./ElitePazar";
 import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
 import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
@@ -39,6 +38,10 @@ import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvar
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
+
+// ElitePazar AYRI PARÇA (code-split): ilk açılışta inmez, sadece Elite'e girince yüklenir.
+// Böylece ana paket küçülür + Elite'i her düzenlediğimizde kullanıcı tüm paketi değil sadece bu küçük parçayı indirir.
+const ElitePazar = lazy(() => import("./ElitePazar"));
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
@@ -7946,6 +7949,7 @@ export default function Anasayfa({ pro = false }) {
       ) : aktifKod === "elite" ? (
         /* ELİTE PAZAR — ürün ilanları (al, sat, kazan) + Gloxoo her yerde */
         <div className="ana-pencere" key="elite">
+          <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5c12", fontWeight: 800, fontSize: 16 }}>💎 …</div>}>
           <ElitePazar
             uid={(u && u.uid) || ""}
             benAd={benimAdGetir()}
@@ -7958,6 +7962,7 @@ export default function Anasayfa({ pro = false }) {
             benLat={konumLat}
             benLon={konumLon}
           />
+          </Suspense>
         </div>
       ) : (
         /* Diğer bölümlerin penceresi — kendi ikonu ve adıyla açılır (içerikler sırayla yapılacak) */
