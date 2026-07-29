@@ -2454,7 +2454,7 @@ export default function Anasayfa({ pro = false }) {
   };
   // Hikâyeleri oku + kişiye göre grupla + "yeni" işaretle (kendi grubun en başta)
   const hikayeleriYukle = async () => {
-    const l = await hikayeleriOku(300);
+    const l = await hikayeleriOku(80); // HIZ: 300 çok fazlaydı (açılışta akışla yarışıp bağlantıyı tıkıyordu); 80 ekran için fazlasıyla yeter
     const gor = hikayeGorulenSet();
     const harita = new Map();
     l.forEach((h) => { if (!harita.has(h.uid)) harita.set(h.uid, { uid: h.uid, ad: h.ad, foto: h.foto, amblem: h.amblem, ogeler: [] }); harita.get(h.uid).ogeler.push(h); });
@@ -3670,8 +3670,13 @@ export default function Anasayfa({ pro = false }) {
     return Object.keys(say).sort((a, b) => say[b] - say[a]).slice(0, 14);
   }, [gercekAkis]);
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
+  // HIZ: ÖNCE az gönderi (24) çek → akış HEMEN dolsun (uzun bekleme biter). SONRA arkada tümünü (150) getir.
   useEffect(() => {
-    gonderileriOku({}, 150).then((l) => { const arr = l || []; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} }).catch(() => {});
+    let iptal = false;
+    const yaz = (arr) => { if (iptal || !arr || !arr.length) return; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} };
+    gonderileriOku({}, 24).then(yaz).catch(() => {});                                   // 1) hızlı ilk dolum
+    const zmn = setTimeout(() => { gonderileriOku({}, 150).then(yaz).catch(() => {}); }, 1500); // 2) arkada tümü
+    return () => { iptal = true; clearTimeout(zmn); };
   }, []);
   // TAKİP ETTİKLERİM — giriş yapınca yükle (akış filtresi + düğme durumu için)
   useEffect(() => {
