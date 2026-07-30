@@ -88,8 +88,8 @@ function _filigranEkle(dataUrl) {
           const x = c.getContext("2d");
           x.drawImage(img, 0, 0, g, h);
           const yazi = "GLOXORG";
-          const boy = Math.max(20, Math.round(g * 0.055));       // resim boyuna göre yazı boyu (daha BÜYÜK → net görünür)
-          const pay = Math.round(g * 0.030);                     // köşe boşluğu
+          const boy = Math.max(20, Math.round(Math.min(g, h) * 0.05)); // yazı boyu (kısa kenara göre — çok büyüyüp taşmasın)
+          const pay = Math.round(Math.min(g, h) * 0.055);        // köşe boşluğu DAHA GENİŞ (kısa kenara göre) → alt/sağ kenarda KESİLMEZ
           x.font = "800 " + boy + "px Arial, Helvetica, sans-serif";
           x.textAlign = "right"; x.textBaseline = "alphabetic";
           const yaziEn = x.measureText(yazi).width;

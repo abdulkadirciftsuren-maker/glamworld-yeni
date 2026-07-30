@@ -5002,7 +5002,8 @@ export default function Anasayfa({ pro = false }) {
   // Önce worker'dan DOĞAL insan sesi ister; gelirse <audio> ile çalar (maskot ağzı oynar + yazı kelime kelime yürür).
   // Ses gelmezse (anahtar yok / kredi yok / ağ hatası) → onBasarisiz ile tarayıcının KENDİ sesine düşer; Gloxoo ASLA susmaz.
   const gercekSesOku = async (metin, onBitti, onCumle, onIlerleme, onBasarisiz) => {
-    const dus = () => { try { aiHazirlaniyorRef.current = false; } catch (e) {} try { onBasarisiz(); } catch (e) {} };
+    let dusuldu = false;
+    const dus = () => { if (dusuldu) return; dusuldu = true; try { aiHazirlaniyorRef.current = false; } catch (e) {} try { onBasarisiz(); } catch (e) {} };
     try {
       // Okunacak metni temizle: yıldız/markdown/emoji atılır, marka adları doğru telaffuz edilir
       const temiz = String(metin || "")
@@ -5066,8 +5067,13 @@ export default function Anasayfa({ pro = false }) {
         const oynat = audio.play();
         if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { dus(); return; } oncekiChar += uzun[idx]; oynatSira(idx + 1); });
       };
-      // BAŞTA ilk parçaları PARALEL hazırla (worker sesleri aynı anda üretsin) → ilk ses hızlı başlar, sonrakiler hazır bekler.
+      // BAŞTA ilk parçaları PARALEL hazırla (Gemini/Vertex sesleri aynı anda üretsin) → ilk ses hızlı başlar, sonrakiler hazır bekler.
       for (let j = 0; j < Math.min(5, parcalar.length); j++) sesGetir(j);
+      // ⏱️ İLK PARÇA HIZLI GELMEZSE TARAYICI SESİNE DÜŞ: Gemini/Vertex bazen 30-60 sn takılıyor (zaman aşımı yok).
+      // 6.5 sn içinde gerçek ses gelmezse tarayıcının KENDİ sesiyle HEMEN konuşmaya başla (kullanıcı: "yazı gelir gelmez tak diye konuşsun").
+      let ilkGeldiMi = false;
+      try { sesGetir(0).then((r) => { if (typeof r === "string") ilkGeldiMi = true; }); } catch (e) {}
+      setTimeout(() => { if (!ilkGeldiMi && !durduruldu && oncekiChar === 0) { durduruldu = true; try { sesZinciriIptalRef.current = null; } catch (e) {} dus(); } }, 6500);
       oynatSira(0);
     } catch (e) { dus(); }
   };
