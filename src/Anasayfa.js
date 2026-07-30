@@ -5078,8 +5078,8 @@ export default function Anasayfa({ pro = false }) {
           konusIlerRef.current = Date.now();
           if (typeof onIlerleme === "function" && audio.duration && isFinite(audio.duration)) {
             // İMLEÇ SESLE EŞLEŞSİN: TTS sesinin SONUNDA sessiz kuyruk oluyor; süreye TAM oranlarsak imleç GERİDE kalıyor.
-            // Etkin süreyi ~%15 kısaltıp (0.85) imleci konuşma hızına yaklaştırıyoruz → konuşma bitince imleç de sonda olur.
-            const ic = Math.min(1, audio.currentTime / (audio.duration * 0.85));
+            // Etkin süreyi ~%7 kısaltıp (0.93) imleci konuşmayla eşliyoruz (0.85 fazla öne alıyordu, 1.0 geride bırakıyordu → orta değer).
+            const ic = Math.min(1, audio.currentTime / (audio.duration * 0.93));
             let f = (buBas + ic * uzun[idx]) / toplamChar; if (f < 0) f = 0; if (f > 1) f = 1;
             try { onIlerleme(f); } catch (e) {}
           }
