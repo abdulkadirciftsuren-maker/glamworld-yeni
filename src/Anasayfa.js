@@ -5068,10 +5068,16 @@ export default function Anasayfa({ pro = false }) {
             try { onIlerleme(f); } catch (e) {}
           }
         };
-        audio.onended = () => { if (durduruldu) return; oncekiChar += uzun[idx]; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; oynatSira(idx + 1); };
-        audio.onerror = () => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { dus(); return; } oncekiChar += uzun[idx]; oynatSira(idx + 1); };
+        // SONRAKİ PARÇAYA GEÇ (tek sefer) — normalde onended çağırır; ses TAKILIRSA emniyet zaman aşımı da çağırır → ASLA kilitlenmez.
+        let ilerledi = false, capId = null;
+        const sonraGec = () => { if (ilerledi || durduruldu) return; ilerledi = true; try { clearTimeout(capId); } catch (e) {} oncekiChar += uzun[idx]; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; oynatSira(idx + 1); };
+        audio.onended = () => { if (!durduruldu) sonraGec(); };
+        audio.onerror = () => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { try { clearTimeout(capId); } catch (e) {} dus(); return; } sonraGec(); };
+        // PLAYBACK EMNİYETİ: "bitti" (onended) gelmezse (ses takılırsa) ZORLA sonraki parçaya geç → mavi/okunmamış kısım da okunur, konuşma ortada DONMAZ.
+        capId = setTimeout(sonraGec, 20000); // üst sınır; süre bilinince aşağıda daraltılır (kısa cümle 6-8 sn'de ilerler)
+        audio.onloadedmetadata = () => { try { if (audio.duration && isFinite(audio.duration)) { clearTimeout(capId); capId = setTimeout(sonraGec, Math.max(6000, (audio.duration / (gloxHizRef.current || 0.9)) * 1000 + 4000)); } } catch (e) {} };
         const oynat = audio.play();
-        if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { dus(); return; } oncekiChar += uzun[idx]; oynatSira(idx + 1); });
+        if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { try { clearTimeout(capId); } catch (e) {} dus(); return; } sonraGec(); });
       };
       // BAŞTA ilk parçaları PARALEL hazırla (Gemini/Vertex sesleri aynı anda üretsin) → ilk ses hızlı başlar, sonrakiler hazır bekler.
       for (let j = 0; j < Math.min(5, parcalar.length); j++) sesGetir(j);
