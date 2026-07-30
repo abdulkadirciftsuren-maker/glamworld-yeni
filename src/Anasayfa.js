@@ -2257,9 +2257,14 @@ export default function Anasayfa({ pro = false }) {
   // GÜVENLİ YENİLEME — sayfayı en fazla 30 SANİYEDE BİR yeniler. GitHub sunucuları yeni yayından sonra bir süre
   // FARKLI sürüm gösterebiliyor; eski kod bunu görünce "yeni var→yenile→eski→yenile" diye SÜREKLİ yeniliyordu →
   // sayfa PARLIYOR, konuşma kesiliyor, hiçbir şey yapılamıyordu. Bu, o döngüyü kırar.
+  const yenileBekleRef = useRef(false); // güncelleme geldi ama kullanıcı meşguldü → boşalınca yenile
+  const mesgulRef = useRef(false);      // foto/paylaşım/pencere açık ya da Gloxoo konuşuyor mu (yenilemeyi ertele → foto/konuşma kaybı OLMASIN)
   const guvenliYenile = () => {
     try {
       if (window.__groxYenilendi) return;
+      // ⛔ MEŞGULKEN YENİLEME YOK: kullanıcı fotoğraf ekliyor/paylaşım yazıyor ya da Gloxoo konuşuyorsa
+      // sayfayı yenilemek FOTOĞRAFLARI SİLER / konuşmayı KESER. Ertele; işi bitince (boşalınca) yenile.
+      if (mesgulRef.current) { yenileBekleRef.current = true; return; }
       const simdi = Date.now();
       let son = 0; try { son = parseInt(sessionStorage.getItem("groxSonYenileMs") || "0", 10); } catch (e) {}
       if (son && simdi - son < 30000) return; // 30 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
@@ -6534,6 +6539,13 @@ export default function Anasayfa({ pro = false }) {
   const [pazarPencereAcik, setPazarPencereAcik] = useState(false);
   const pazarKapatRef = useRef(null); // ElitePazar açık pencereyi kapatan fonksiyonu buraya koyar; onPop çağırır
   const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!onizGaleri || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi || !!aramaDurum || !!gelenArama || pazarPencereAcik;
+  // MEŞGUL MÜ? — bir pencere/paylaşım/foto açık VEYA Gloxoo konuşuyor/duraklamış. Meşgulken güncelleme yenilemesi ERTELENİR
+  // (foto ve konuşma kaybı olmasın). Boşalınca bekleyen yenileme yapılır → kullanıcı yine güncel sürüme geçer.
+  useEffect(() => {
+    const mesgul = !!(ustPencereVar || paylasAcik || duzenAcik || aiKonusuyor || aiDuraklat);
+    mesgulRef.current = mesgul;
+    if (!mesgul && yenileBekleRef.current) { yenileBekleRef.current = false; try { guvenliYenile(); } catch (e) {} }
+  }, [ustPencereVar, paylasAcik, duzenAcik, aiKonusuyor, aiDuraklat]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (aktifKod !== "home") return;
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)
