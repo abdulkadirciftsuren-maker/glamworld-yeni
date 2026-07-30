@@ -5041,7 +5041,7 @@ export default function Anasayfa({ pro = false }) {
           }
           oncekiChar += uzun[idx]; return oynatSira(idx + 1);          // ortadaki parça gelmediyse atla
         }
-        sesGetir(idx + 1);                                            // SONRAKİNİ şimdiden hazırla (arka planda)
+        sesGetir(idx + 1); sesGetir(idx + 2); sesGetir(idx + 3);      // SONRAKİ 3 parçayı şimdiden PARALEL hazırla → aradaki bekleme/kesilme biter
         const audio = new Audio(url);
         // DAHA YAVAŞ + DOĞAL KONUŞ (kullanıcı: "çok hızlı konuşuyor"). preservesPitch → ses inceltmeden yavaşlar.
         try { audio.preservesPitch = true; audio.mozPreservesPitch = true; audio.webkitPreservesPitch = true; audio.playbackRate = gloxHizRef.current || 0.9; } catch (e) {}
@@ -5061,6 +5061,8 @@ export default function Anasayfa({ pro = false }) {
         const oynat = audio.play();
         if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { dus(); return; } oncekiChar += uzun[idx]; oynatSira(idx + 1); });
       };
+      // BAŞTA ilk parçaları PARALEL hazırla (worker sesleri aynı anda üretsin) → ilk ses hızlı başlar, sonrakiler hazır bekler.
+      for (let j = 0; j < Math.min(5, parcalar.length); j++) sesGetir(j);
       oynatSira(0);
     } catch (e) { dus(); }
   };
@@ -6944,9 +6946,11 @@ export default function Anasayfa({ pro = false }) {
     // ⛔ PENCERE/PANEL AÇIKKEN sayfa kaydırma YOK: ayar/paylaş/arama/profil/üye penceresi açıkken
     // parmağı sağa-sola gezdirmek ALT sayfayı kaydırıp başka sekmeye atıyordu (ayar yapmayı engelliyordu).
     // Parmak ne yapıyorsa ORADA kalsın, alt sayfa görülmesin.
-    if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || aktifKod === "profil") { dokunRef.current = null; return; }
+    if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || pazarPencereAcik || aktifKod === "profil") { dokunRef.current = null; return; }
     try {
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-sar")) { dokunRef.current = null; return; }
+      // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
+      // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
