@@ -1640,7 +1640,7 @@ export default function Anasayfa({ pro = false }) {
   const [arsivAcik, setArsivAcik] = useState(false); // AYLIK ARŞİV penceresi (tüm konuşma geçmişi)
   const [arsivGun, setArsivGun] = useState(null);     // açık aylık dosya (null=liste)
   // KALICI ARŞİV: tüm konuşma geçmişi (ikisiyle de) — "yeni konuşma" görünümü temizlese bile burada KALIR, sıfırlanmaz
-  const [arsivTum, setArsivTum] = useState(() => { try { return JSON.parse(localStorage.getItem("groxArsivTum") || "[]"); } catch (e) { return []; } });
+  const [arsivTum, setArsivTum] = useState([]); // KALICI ARŞİV — hesaba (uid) göre yüklenir (groxArsivTum_<uid>); başlangıçta boş
   // KAYITLI KONUŞMALAR (oturumlar) — her "yeni konuşma"da eski konuşma buraya kaydedilir; üstte "Konuşmalarım" düğmesinden bulunur
   const [oturumlar, setOturumlar] = useState(() => { try { return JSON.parse(localStorage.getItem("groxOturumlar") || "[]"); } catch (e) { return []; } });
   const [oturumAcik, setOturumAcik] = useState(false); // Konuşmalarım paneli açık mı
@@ -1701,17 +1701,11 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => { setCeviri({}); }, [dil]);
   // GLOXORG YARDIMCISI — gerçek Claude ile sohbet (sağ alt balon)
   const [yardimciAcik, setYardimciAcik] = useState(false);
-  const [yardimciMesajlar, setYardimciMesajlar] = useState(() => {
-    // {rol:'user'|'ai', metin} — kalıcı (yenilense silinmez)
-    // TAKILI ÇEMBER DÜZELTMESİ: kaydedilmiş "resim hazırlanıyor" (resimYuk:true) mesajları sayfa
-    // yeniden açılınca SONSUZA DEK döner (üretim işlemi yeniden başlamadığı için asla bitmez).
-    // Yüklerken bu takılı yükleniyor halini KAPAT; resmi yoksa "tekrar iste" notu göster (dönme biter).
-    try {
-      const arr = JSON.parse(localStorage.getItem("groxSohbet") || "[]");
-      if (!Array.isArray(arr)) return [];
-      return arr.map((m) => (m && m.resimYuk && !m.resimData) ? { ...m, resimYuk: false, resimHata: m.resimHata || "__eski__" } : m);
-    } catch (e) { return []; }
-  });
+  // {rol:'user'|'ai', metin} — kalıcı (yenilense silinmez). ARTIK HESABA (uid) göre ayrı yüklenir (aşağıdaki effect);
+  // başlangıçta BOŞ; uid belli olunca o hesabın kendi geçmişi yüklenir → hesaplar birbirini GÖRMEZ.
+  const [yardimciMesajlar, setYardimciMesajlar] = useState([]);
+  const aiUidRef = useRef("");        // AI sohbet geçmişinin AİT OLDUĞU hesap (uid) — kayıt/okuma bu kimliğe göre
+  const aiYuklendiRef = useRef(false); // hesabın geçmişi yüklendi mi (yüklenmeden BOŞ [] KAYDEDİP silmeyelim)
   const [yardimciYazi, setYardimciYazi] = useState("");
   const [yardimciYukleniyor, setYardimciYukleniyor] = useState(false);
   const yardimciAltRef = useRef(null);
@@ -1732,7 +1726,7 @@ export default function Anasayfa({ pro = false }) {
     const el = yardimciInputRef.current; if (!el) return;
     try { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 200) + "px"; } catch (e) {}
   }, [yardimciYazi, yardimciAcik]);
-  const [siteMesajlar, setSiteMesajlar] = useState(() => { try { return JSON.parse(localStorage.getItem("groxSiteSohbet") || "[]"); } catch (e) { return []; } });
+  const [siteMesajlar, setSiteMesajlar] = useState([]); // hesaba göre yüklenir (aşağıdaki effect); başlangıçta boş
   // Yardımcı balonu parmakla TAŞINIR (sabit değil) — konum hatırlanır
   const [balonYer, setBalonYer] = useState(() => { try { return JSON.parse(localStorage.getItem("groxAiBalon") || "null"); } catch (e) { return null; } });
   const balonRef = useRef(null);
@@ -2222,18 +2216,30 @@ export default function Anasayfa({ pro = false }) {
     }).catch(() => {});
     return () => { iptal = true; };
   }, [u]);
-  // HESAP DEĞİŞİNCE AI SOHBETİNİ SIFIRLA — sohbet tarayıcıda global tutuluyordu (groxSohbet/groxSiteSohbet),
-  // başka hesapla girince ESKİ konuşmalar görünüyordu. Artık sohbet sahibi uid'e bağlı; farklı kullanıcı → temiz balon.
+  // AI SOHBET GEÇMİŞİ HESABA (uid) GÖRE — her hesabın KENDİ geçmişi (groxSohbet_<uid>). Eskiden tek ortak anahtardı
+  // (groxSohbet), o yüzden AYNI tarayıcıdaki BÜTÜN hesaplar aynı konuşmaları görüyordu. Artık her hesap AYRI, birbirini görmez.
   useEffect(() => {
     const kid = (u && u.uid) || "";
     if (!kid) return;
+    aiUidRef.current = kid;
     try {
-      if ((localStorage.getItem("gw_aiSahip") || "") !== kid) {
-        localStorage.removeItem("groxSohbet"); localStorage.removeItem("groxSiteSohbet");
-        localStorage.setItem("gw_aiSahip", kid);
-        setYardimciMesajlar([]); setSiteMesajlar([]);
+      // ESKİ tek-ortak veri (groxSohbet): SADECE sahibiyse (gw_aiSahip===kid) bu hesaba taşı; sonra ORTAK anahtarları SİL (başka hesaplar bir daha görmesin)
+      if ((localStorage.getItem("gw_aiSahip") || "") === kid) {
+        const g1 = localStorage.getItem("groxSohbet"), g2 = localStorage.getItem("groxSiteSohbet"), g3 = localStorage.getItem("groxArsivTum");
+        if (g1 && !localStorage.getItem("groxSohbet_" + kid)) localStorage.setItem("groxSohbet_" + kid, g1);
+        if (g2 && !localStorage.getItem("groxSiteSohbet_" + kid)) localStorage.setItem("groxSiteSohbet_" + kid, g2);
+        if (g3 && !localStorage.getItem("groxArsivTum_" + kid)) localStorage.setItem("groxArsivTum_" + kid, g3);
       }
-    } catch (e) {}
+      localStorage.removeItem("groxSohbet"); localStorage.removeItem("groxSiteSohbet"); localStorage.removeItem("gw_aiSahip"); localStorage.removeItem("groxArsivTum");
+      // BU hesabın kendi geçmişini + arşivini yükle (takılı "resim hazırlanıyor" halini kapat → sonsuz dönme olmaz)
+      const arr = JSON.parse(localStorage.getItem("groxSohbet_" + kid) || "[]");
+      const site = JSON.parse(localStorage.getItem("groxSiteSohbet_" + kid) || "[]");
+      const ars = JSON.parse(localStorage.getItem("groxArsivTum_" + kid) || "[]");
+      setYardimciMesajlar(Array.isArray(arr) ? arr.map((m) => (m && m.resimYuk && !m.resimData) ? { ...m, resimYuk: false, resimHata: m.resimHata || "__eski__" } : m) : []);
+      setSiteMesajlar(Array.isArray(site) ? site : []);
+      setArsivTum(Array.isArray(ars) ? ars : []);
+    } catch (e) { setYardimciMesajlar([]); setSiteMesajlar([]); setArsivTum([]); }
+    aiYuklendiRef.current = true;
   }, [u]);
   // AÇILIŞ KARŞILAMASI: büyük Gloxoo ORTADA çıkıp SESLİ karşılar. AMA her yenilemede/tekrar girişte DEĞİL —
   // sadece YENİ oturumda (son karşılamadan 3 saatten fazla geçmişse). Böylece bir gün/2 gün sonra girince
@@ -6772,18 +6778,21 @@ export default function Anasayfa({ pro = false }) {
     // en kötü ihtimal: daha az mesaj + fotosuz
     try { localStorage.setItem(anahtar, JSON.stringify(son.slice(-50).map((m) => { const mm = ekHafif(m); return mm.foto ? { ...mm, foto: null } : mm; }))); } catch (e) {}
   };
-  useEffect(() => { aiSohbetKaydet("groxSohbet", yardimciMesajlar); }, [yardimciMesajlar]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { aiSohbetKaydet("groxSiteSohbet", siteMesajlar); }, [siteMesajlar]); // eslint-disable-line react-hooks/exhaustive-deps
+  // KAYIT hesaba (uid) göre → groxSohbet_<uid>. uid yoksa ya da geçmiş HENÜZ yüklenmediyse KAYDETME (boş [] ile üzerine yazıp silme).
+  useEffect(() => { if (!aiUidRef.current || !aiYuklendiRef.current) return; aiSohbetKaydet("groxSohbet_" + aiUidRef.current, yardimciMesajlar); }, [yardimciMesajlar]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!aiUidRef.current || !aiYuklendiRef.current) return; aiSohbetKaydet("groxSiteSohbet_" + aiUidRef.current, siteMesajlar); }, [siteMesajlar]); // eslint-disable-line react-hooks/exhaustive-deps
   // KALICI ARŞİV: her yeni mesajı (her iki sohbetten) arsivTum'a EKLE (zamanMs ile tekilleştir) → "yeni konuşma" temizlese bile geçmiş KALIR
   useEffect(() => {
+    if (!aiUidRef.current || !aiYuklendiRef.current) return; // uid yok/yüklenmedi → arşive yazma (hesaplar karışmasın)
     const gelen = [...yardimciMesajlar, ...siteMesajlar].filter((m) => m && m.zamanMs && m.metin);
     if (!gelen.length) return;
+    const arsAnahtar = "groxArsivTum_" + aiUidRef.current; // ARŞİV de hesaba (uid) göre
     setArsivTum((eski) => {
       const anahtar = new Set(eski.map((m) => m.zamanMs + "|" + m.rol));
       const yeni = gelen.filter((m) => !anahtar.has(m.zamanMs + "|" + m.rol)).map((m) => ({ rol: m.rol, metin: m.metin, zamanMs: m.zamanMs, konum: m.konum || "" }));
       if (!yeni.length) return eski;
       const birlesik = [...eski, ...yeni].sort((a, b) => a.zamanMs - b.zamanMs).slice(-500); // kota şişmesin (sohbet kaydı başarısız olmasın diye düşük)
-      try { localStorage.setItem("groxArsivTum", JSON.stringify(birlesik)); } catch (e) { try { localStorage.setItem("groxArsivTum", JSON.stringify(birlesik.slice(-200))); } catch (e2) {} }
+      try { localStorage.setItem(arsAnahtar, JSON.stringify(birlesik)); } catch (e) { try { localStorage.setItem(arsAnahtar, JSON.stringify(birlesik.slice(-200))); } catch (e2) {} }
       return birlesik;
     });
   }, [yardimciMesajlar, siteMesajlar]);
