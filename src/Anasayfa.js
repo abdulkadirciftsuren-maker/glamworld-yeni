@@ -5955,6 +5955,13 @@ export default function Anasayfa({ pro = false }) {
     // Artık video ORİJİNAL URL ile saklanır (dönüşüm yok) → Cloudinary kredisi korunur.
     const gorselSon = (duzenlenen && duzenlenen.id) ? (paylasGorsel || "") : (paylasGorsel ? (filigranEkle ? await fotoFiligranla(paylasGorsel) : paylasGorsel) : "");
     const videoSon = videoSade(videoURL || "");
+    // ANA FOTOĞRAFI da Storage'a YÜKLE → URL sakla. ESKİDEN base64 doğrudan gönderiye gömülüyordu; iPhone fotoğrafları
+    // büyük olduğu için belge 1MB Firestore sınırını AŞIYOR ve paylaşım SESSİZCE GİTMİYORDU. Storage'da boyut sınırı yok.
+    let gorselSonUrl = gorselSon;
+    if (gorselSon && /^data:/.test(gorselSon)) {
+      try { setPaylasDurum("dosya"); setPaylasYukleme(0); const up = await gorselYukle(gorselSon, uu.uid, (y) => setPaylasYukleme(y)); if (up) gorselSonUrl = up; setPaylasDurum("gonderiliyor"); }
+      catch (e) { setPaylasHataDetay((e && (e.code || e.message)) || "foto yüklenemedi"); setPaylasDurum("hata"); return; }
+    }
     // ÇOK FOTOĞRAF: ek fotoğrafları Storage'a yükle (Firestore 1MB'a sığmaz). MEVCUT (http) URL'ler yeniden yüklenmez.
     let ekFotoUrller = [];
     if (paylasEkFotolar.length > 0) {
@@ -5971,7 +5978,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // MEDYALAR dizisi. VİDEO ilk seçildiyse BAŞA (kullanıcı: "video ilk seçmişsem ilk planda olsun"), değilse fotoğraflardan sonra.
     const fotoOgeleri = [];
-    if (gorselSon) fotoOgeleri.push({ tip: "foto", data: gorselSon });
+    if (gorselSonUrl) fotoOgeleri.push({ tip: "foto", url: gorselSonUrl });
     ekFotoUrller.forEach((u2) => fotoOgeleri.push({ tip: "foto", url: u2 }));
     const videoOgesi = videoSon ? { tip: "video", url: videoSon, poster: ((paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : "") } : null;
     const medyalar = [];
@@ -5984,7 +5991,7 @@ export default function Anasayfa({ pro = false }) {
       ulke: (paylasKonum && paylasKonum.ulke) || (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       konum: paylasKonum ? { yer: paylasKonum.yer || "", sehir: paylasKonum.sehir || "", ulke: paylasKonum.ulke || "", tam: paylasKonum.tam || "", enlem: paylasKonum.enlem, boylam: paylasKonum.boylam } : null,
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
-      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSon, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
+      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSonUrl, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
       duzen: paylasDuzen || null, yaziUstunde: !!yaziMedyaUstunde, gitLinki: !!gitLinki,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",

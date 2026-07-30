@@ -229,7 +229,8 @@
 .adm-durum{ font-size:12.5px; text-align:center; }
 .adm-durum.ok{ color:#5fe08a; } .adm-durum.hata{ color:#ff8a94; }
 /* MESAJ / PAYLAŞ PENCERELERİ (ortalı modal) */
-.msj-fon{ position:fixed; inset:0; z-index:100016; display:flex; align-items:center; justify-content:center; padding:18px;
+.msj-fon{ position:fixed; inset:0; z-index:100016; display:flex; align-items:center; justify-content:center;
+  padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom)); /* iPhone çentiği/alt çubuğu: pencere üstten/alttan KESİLMESİN */
   background:rgba(4,9,20,.97); animation:adFon .25s ease; }
 /* YORUM penceresi tam ekran fotonun (z:100010) ÜSTÜNDE açılsın — fotoğrafın altında kalmasın */
 .msj-fon.yorum-fon{ z-index:100014; }
@@ -237,7 +238,8 @@
   background:linear-gradient(180deg,rgba(10,24,48,.99),rgba(5,14,30,.99)); border:1px solid rgba(255,215,0,.35); border-radius:20px;
   box-shadow:0 24px 60px rgba(0,0,0,.7); animation:adKart .4s cubic-bezier(.16,1,.3,1); overflow:hidden; }
 /* PAYLAŞ penceresi: üst (başlık + foto/yazı) SABİT; ayarlar ORTADA kayar; Paylaş düğmesi ALTTA sabit */
-.msj-pencere.paylas{ padding:0; overflow:hidden; width:min(480px,96vw); height:94vh; max-height:94vh; position:relative; }
+/* PAYLAŞ: yüksekliği GÜVENLİ ALANA sığdır (94vh iPhone'da üst/altı kesiyordu) → fon'un boşluklu içine %100 otur */
+.msj-pencere.paylas{ padding:0; overflow:hidden; width:min(480px,96vw); height:100%; max-height:100%; position:relative; }
 .pyl-kaydir{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:12px 16px 4px; display:flex; flex-direction:column; }
 .pyl-kaydir::-webkit-scrollbar{ display:none; }
 .msj-bas{ display:flex; align-items:center; justify-content:space-between; padding:15px 16px 11px; border-bottom:1px solid rgba(255,215,0,.18); }
