@@ -1784,10 +1784,24 @@ export default function Anasayfa({ pro = false }) {
   // Kullanıcı parmağıyla kaydırdıysa (elleKaydirRef) oto-kaydırma YAPMA — serbest bıraktık.
   const maskotKaydirKelime = (wi) => {
     if (elleKaydirRef.current) return;
-    const b = maskotBalonRef.current; if (!b) return;
-    const el = b.querySelector('[data-wi="' + wi + '"]'); if (!el) return;
-    const hedef = el.offsetTop - b.clientHeight / 2 + el.offsetHeight / 2; // OKUNAN kelime balonun ORTASINDA kalır
-    try { b.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { b.scrollTop = Math.max(0, hedef); }
+    // 1) BÜYÜK maskot balonu açıksa ONU kaydır (eski davranış)
+    const bal = maskotBalonRef.current;
+    if (bal && bal.querySelector) {
+      const el = bal.querySelector('[data-wi="' + wi + '"]');
+      if (el) { const hedef = el.offsetTop - bal.clientHeight / 2 + el.offsetHeight / 2; try { bal.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { bal.scrollTop = Math.max(0, hedef); } return; }
+    }
+    // 2) SOHBET mesajı okunuyorsa: okunan kelimeyi KENDİ kaydırılabilir kabında ORTAYA getir → yazı okundukça YUKARI yürür (sonuna kadar)
+    try {
+      const kap = document.querySelector('.ai-msj-okunan');
+      const el = kap && kap.querySelector ? kap.querySelector('[data-wi="' + wi + '"]') : null;
+      if (!el) return;
+      let sc = el.parentElement;
+      while (sc && sc !== document.body) { const st = getComputedStyle(sc); if ((st.overflowY === "auto" || st.overflowY === "scroll") && sc.scrollHeight > sc.clientHeight + 4) break; sc = sc.parentElement; }
+      if (!sc || sc === document.body) return;
+      const scR = sc.getBoundingClientRect(), elR = el.getBoundingClientRect();
+      const hedef = sc.scrollTop + (elR.top - scR.top) - sc.clientHeight / 2 + elR.height / 2; // okunan kelime kabın ORTASINDA
+      try { sc.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { sc.scrollTop = Math.max(0, hedef); }
+    } catch (e) {}
   };
   // TTS ilerlemesi (0..1) → kaçıncı kelimede olduğumuzu bul, VURGULA + ortaya KAYDIR (kelime kelime ilerler)
   const teleIlerleme = (frac) => {
@@ -5051,7 +5065,7 @@ export default function Anasayfa({ pro = false }) {
             if (/permission|denied|invalid|401|403|quota|billing|not.?enabled|not found|access|api key|unauthenticated|resource.?exhausted/.test(h)) gercekSesKapaliRef.current = true;
             dus(); return;
           }
-          oncekiChar += uzun[idx]; return oynatSira(idx + 1);          // ortadaki parça gelmediyse atla
+          oncekiChar += uzun[idx]; try { if (typeof onIlerleme === "function") onIlerleme(Math.min(1, oncekiChar / toplamChar)); } catch (e) {} return oynatSira(idx + 1); // ortadaki parça gelmediyse atla (imleç de ilerlesin)
         }
         sesGetir(idx + 1); sesGetir(idx + 2); sesGetir(idx + 3);      // SONRAKİ 3 parçayı şimdiden PARALEL hazırla → aradaki bekleme/kesilme biter
         const audio = new Audio(url);
@@ -5070,7 +5084,7 @@ export default function Anasayfa({ pro = false }) {
         };
         // SONRAKİ PARÇAYA GEÇ (tek sefer) — normalde onended çağırır; ses TAKILIRSA emniyet zaman aşımı da çağırır → ASLA kilitlenmez.
         let ilerledi = false, capId = null;
-        const sonraGec = () => { if (ilerledi || durduruldu) return; ilerledi = true; try { clearTimeout(capId); } catch (e) {} oncekiChar += uzun[idx]; if (aiSesElemRef.current === audio) aiSesElemRef.current = null; oynatSira(idx + 1); };
+        const sonraGec = () => { if (ilerledi || durduruldu) return; ilerledi = true; try { clearTimeout(capId); } catch (e) {} oncekiChar += uzun[idx]; try { if (typeof onIlerleme === "function") onIlerleme(Math.min(1, oncekiChar / toplamChar)); } catch (e) {} if (aiSesElemRef.current === audio) aiSesElemRef.current = null; oynatSira(idx + 1); };
         audio.onended = () => { if (!durduruldu) sonraGec(); };
         audio.onerror = () => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { try { clearTimeout(capId); } catch (e) {} dus(); return; } sonraGec(); };
         // PLAYBACK EMNİYETİ: "bitti" (onended) gelmezse (ses takılırsa) ZORLA sonraki parçaya geç → mavi/okunmamış kısım da okunur, konuşma ortada DONMAZ.
