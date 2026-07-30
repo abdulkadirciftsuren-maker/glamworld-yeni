@@ -5097,11 +5097,9 @@ export default function Anasayfa({ pro = false }) {
       };
       // BAŞTA ilk parçaları PARALEL hazırla (Gemini/Vertex sesleri aynı anda üretsin) → ilk ses hızlı başlar, sonrakiler hazır bekler.
       for (let j = 0; j < Math.min(5, parcalar.length); j++) sesGetir(j);
-      // ⏱️ İLK PARÇA HIZLI GELMEZSE TARAYICI SESİNE DÜŞ: Gemini/Vertex bazen 30-60 sn takılıyor (zaman aşımı yok).
-      // 6.5 sn içinde gerçek ses gelmezse tarayıcının KENDİ sesiyle HEMEN konuşmaya başla (kullanıcı: "yazı gelir gelmez tak diye konuşsun").
-      let ilkGeldiMi = false;
-      try { sesGetir(0).then((r) => { if (typeof r === "string") ilkGeldiMi = true; }); } catch (e) {}
-      setTimeout(() => { if (!ilkGeldiMi && !durduruldu && oncekiChar === 0) { durduruldu = true; try { sesZinciriIptalRef.current = null; } catch (e) {} dus(); } }, 4500);
+      // NOT: Eskiden 4.5 sn'de tarayıcı (robotik) sesine düşüyordu → kullanıcı "ses robotik oldu" dedi. O erken düşme KALDIRILDI.
+      // Artık GÜZEL ses (Google) ÖNCELİK: ilk parça için parça-başı 9 sn zaman aşımı yeter (o da gelmezse sesGetir null döner
+      // → oynatSira ilk parçada tarayıcı sesine düşer). Böylece internet makulse HEP güzel ses, sadece gerçekten yavaşsa yedek.
       oynatSira(0);
     } catch (e) { dus(); }
   };
@@ -5157,7 +5155,7 @@ export default function Anasayfa({ pro = false }) {
         // Böylece Android onboundary desteklemese bile yazı kelime kelime akmaya DEVAM eder (sonuna kadar).
         const toplamChar = temiz.length || 1;
         const temizKelimeSay = (temiz.split(/\s+/).filter(Boolean).length) || 1; // konuşulan metnin KELİME sayısı (kelime senkronu için)
-        const tahminMs = Math.max(1400, toplamChar * 72); // ~72ms/karakter: 90 ÇOK YAVAŞTI → imleç sesin GERİSİNDE kalıyordu (kullanıcı: "Gloxoo daha hızlı okuyor, ikon yavaş kalmasın"). 62 çok hızlıydı; 72 ortada. Sondaki 0.9 emniyeti imlecin sesten ÖNCE bitmesini yine engeller.
+        const tahminMs = Math.max(1400, toplamChar * 85); // ~85ms/karakter: kullanıcı "imleç hızlı gidiyor" dedi (72 fazla öne alıyordu) → 85 ile yavaşlatıp konuşmayla eşle. İmlecin sesten ÖNE geçmesi engellenir (öne kaçmasındansa azıcık geriden gelsin).
         let basMs = Date.now(), duraklaTop = 0, duraklaBas = 0, boundaryChar = -1, ilerTimer = null, ilerBitti = false;
         const durdurIler = () => { if (ilerTimer) { clearInterval(ilerTimer); ilerTimer = null; } if (!ilerBitti) { ilerBitti = true; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } } };
         if (typeof onIlerleme === "function") {
