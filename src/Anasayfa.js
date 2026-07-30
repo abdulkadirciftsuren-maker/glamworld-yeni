@@ -5029,7 +5029,13 @@ export default function Anasayfa({ pro = false }) {
       const sesCache = new Array(parcalar.length).fill(null);       // parça sesleri (Promise<dataUrl|null>) — önden getirilir
       const sesGetir = (idx) => {
         if (idx < 0 || idx >= parcalar.length) return Promise.resolve(null);
-        if (!sesCache[idx]) sesCache[idx] = gloxooSesUret(parcalar[idx], dilK, gloxSesRef.current).then((r) => (r && r.dataUrl) ? r.dataUrl : { _hata: (r && r.hata) || "" }).catch(() => null);
+        if (!sesCache[idx]) {
+          // Ses üretimi (Gemini/Vertex) — parça başına ZAMAN AŞIMI: 9 sn'de gelmezse null döner → o parça ATLANIR,
+          // zincir DEVAM eder. Böylece bir parça takılsa bile konuşma ortada donup kalmaz (kullanıcı: "yarıda kesilip takılıyor").
+          const uret = gloxooSesUret(parcalar[idx], dilK, gloxSesRef.current).then((r) => (r && r.dataUrl) ? r.dataUrl : { _hata: (r && r.hata) || "" }).catch(() => null);
+          const zamanAsimi = new Promise((res) => setTimeout(() => res(null), 9000));
+          sesCache[idx] = Promise.race([uret, zamanAsimi]);
+        }
         return sesCache[idx];
       };
       const bitir = () => { durduruldu = true; if (sesZinciriIptalRef.current) sesZinciriIptalRef.current = null; aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = false; setAiKonusuyor(false); if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
@@ -5073,7 +5079,7 @@ export default function Anasayfa({ pro = false }) {
       // 6.5 sn içinde gerçek ses gelmezse tarayıcının KENDİ sesiyle HEMEN konuşmaya başla (kullanıcı: "yazı gelir gelmez tak diye konuşsun").
       let ilkGeldiMi = false;
       try { sesGetir(0).then((r) => { if (typeof r === "string") ilkGeldiMi = true; }); } catch (e) {}
-      setTimeout(() => { if (!ilkGeldiMi && !durduruldu && oncekiChar === 0) { durduruldu = true; try { sesZinciriIptalRef.current = null; } catch (e) {} dus(); } }, 6500);
+      setTimeout(() => { if (!ilkGeldiMi && !durduruldu && oncekiChar === 0) { durduruldu = true; try { sesZinciriIptalRef.current = null; } catch (e) {} dus(); } }, 4500);
       oynatSira(0);
     } catch (e) { dus(); }
   };
