@@ -10,6 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
+import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem } from "./tanismaAI";
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
@@ -1481,6 +1482,15 @@ export default function Anasayfa({ pro = false }) {
   const [tKArayis, setTKArayis] = useState("");   // ne için (isteğe bağlı): arkadaslik/flort/evlilik/sohbet
   const [tanismaKaydediliyor, setTanismaKaydediliyor] = useState(false);
   const [tanFotoIdx, setTanFotoIdx] = useState({}); // her kartta hangi fotoğraf gösteriliyor (uid→index)
+  // TANIŞMA — YAPAY ZEKÂ sohbet arkadaşları (10 kadın + 10 erkek, açıkça "🤖 Yapay Zekâ" etiketli)
+  const [aiFoto, setAiFoto] = useState({});         // karakter avatarları {id→dataURL} (cihazda saklanır)
+  const [aiCins, setAiCins] = useState("hepsi");    // AI karakter filtresi: hepsi | k | e
+  const [aiSohbetKisi, setAiSohbetKisi] = useState(null);   // açık AI sohbetinin karakteri
+  const [aiSohbetMesajlar, setAiSohbetMesajlar] = useState([]); // {rol:'ben'|'ai', metin}
+  const [aiSohbetYazi, setAiSohbetYazi] = useState("");
+  const [aiSohbetYaziliyor, setAiSohbetYaziliyor] = useState(false);
+  const aiFotoUretiliyorRef = useRef(false);        // avatar üretimi aynı anda bir kez çalışsın
+  const aiSohbetAkisRef = useRef(null);             // AI sohbet akışı — otomatik en alta kaydır
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
@@ -3685,6 +3695,37 @@ export default function Anasayfa({ pro = false }) {
     if (aktifKod !== "topluluk" || topKisiler !== null) return;
     tumKullanicilar(200).then((l) => setTopKisiler(l || [])).catch(() => setTopKisiler([]));
   }, [aktifKod]); // eslint-disable-line react-hooks/exhaustive-deps
+  // AI karakter avatarlarını cihazdan yükle (bir kez)
+  useEffect(() => {
+    try { const y = {}; TANISMA_AI.forEach((k) => { const v = localStorage.getItem("gw_taniAIfoto_" + k.id); if (v) y[k.id] = v; }); if (Object.keys(y).length) setAiFoto((o) => ({ ...y, ...o })); } catch (e) {}
+  }, []);
+  // AI sohbet akışını yeni mesajda en alta kaydır
+  useEffect(() => { const el = aiSohbetAkisRef.current; if (el) el.scrollTop = el.scrollHeight; }, [aiSohbetMesajlar, aiSohbetYaziliyor]);
+  // Topluluk açılınca EKSİK yapay zekâ avatarlarını arka planda TEK TEK üret → Storage'a yükle → kısa URL'yi cihazda sakla.
+  useEffect(() => {
+    if (aktifKod !== "topluluk" || aiFotoUretiliyorRef.current) return;
+    aiFotoUretiliyorRef.current = true; let iptal = false;
+    (async () => {
+      for (const k of TANISMA_AI) {
+        if (iptal) break;
+        let cached = null; try { cached = localStorage.getItem("gw_taniAIfoto_" + k.id); } catch (e) {}
+        if (cached) continue;
+        try {
+          const r = await gloxooResimUret(tanismaAIFotoIstem(k));
+          const durl = r && r.dataUrl;
+          if (durl) {
+            let url = durl; const uu = auth.currentUser;
+            if (uu) { try { const up = await gorselYukle(durl, uu.uid); if (up) url = up; } catch (e) {} } // Storage'a yükle (localStorage şişmesin)
+            try { localStorage.setItem("gw_taniAIfoto_" + k.id, url); } catch (e) {}
+            if (!iptal) setAiFoto((o) => ({ ...o, [k.id]: url }));
+          }
+        } catch (e) {}
+        await new Promise((res) => setTimeout(res, 900)); // API'yi yormamak için ara
+      }
+      aiFotoUretiliyorRef.current = false;
+    })();
+    return () => { iptal = true; };
+  }, [aktifKod]); // eslint-disable-line react-hooks/exhaustive-deps
   // Profesyoneller: mesleği olan üyeler (kendisi hariç). KONUMA GÖRE yakındakiler ÖNCE (aynı şehir > aynı ülke > diğer).
   // Her karta MESLEK RENGİ + MESLEK İKONU eklenir (kullanıcı: "renk ver, beyaz değil, yazıya göre ikon koy").
   const profesyoneller = useMemo(() => {
@@ -3759,6 +3800,14 @@ export default function Anasayfa({ pro = false }) {
   }, [topKisiler, topAra, benUid]);
   // Kendi tanışma kartım var mı (profilimde)?
   const benimTanismaVar = !!(profilBilgi && profilBilgi.tanismaAktif && Array.isArray(profilBilgi.tanismaFotolar) && profilBilgi.tanismaFotolar.length);
+  // YAPAY ZEKÂ tanışma arkadaşları (açıkça etiketli) — cinsiyet filtresi + arama
+  const aiTanisanlar = useMemo(() => {
+    const q = topAra.trim().toLowerCase();
+    let l = TANISMA_AI.map((k) => ({ uid: k.id, ad: k.ad, yas: k.yas, sehir: k.sehir, ulke: k.ulke, arayis: k.arayis, bio: k.bio, foto: aiFoto[k.id] || "", persona: k }));
+    if (aiCins !== "hepsi") l = l.filter((k) => k.persona.c === aiCins);
+    if (q) l = l.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
+    return l;
+  }, [aiFoto, aiCins, topAra]);
   // İş İlanları: tur === "is" olan paylaşımlar
   const ilanlar = useMemo(() => gercekAkis.filter((p) => p.tur === "is").slice(0, 12), [gercekAkis]);
   // Trend: paylaşım metinlerindeki #etiketler (en çok geçenler)
@@ -4460,6 +4509,36 @@ export default function Anasayfa({ pro = false }) {
     setProfilBilgi((p) => ({ ...(p || {}), tanismaAktif: false }));
     setTopKisiler((arr) => (Array.isArray(arr) ? arr.map((k) => ((k.id || k.uid) === uu.uid ? { ...k, tanismaAktif: false } : k)) : arr));
     setTanismaKartAcik(false);
+  }
+  // ── TANIŞMA — YAPAY ZEKÂ SOHBET (açıkça etiketli; gerçek kişi DEĞİL) ──
+  function _tanDilAd() {
+    const m = { tr: "Türkçe", en: "İngilizce (English)", de: "Almanca (Deutsch)", fr: "Fransızca (Français)", es: "İspanyolca (Español)", it: "İtalyanca (Italiano)", pt: "Portekizce (Português)", ru: "Rusça (Русский)", uk: "Ukraynaca (Українська)", ar: "Arapça (العربية)", zh: "Çince (中文)", ja: "Japonca (日本語)", hi: "Hintçe (हिन्दी)" };
+    return m[dil] || "Türkçe";
+  }
+  function kaydetAIsohbet(id, liste) { try { localStorage.setItem("gw_taniAIsohbet_" + id, JSON.stringify(liste.slice(-40))); } catch (e) {} }
+  function aiSohbetAc(k) {
+    setAiSohbetKisi(k); setAiSohbetYazi("");
+    let gecmis = []; try { const v = localStorage.getItem("gw_taniAIsohbet_" + k.id); if (v) gecmis = JSON.parse(v) || []; } catch (e) {}
+    setAiSohbetMesajlar(gecmis);
+    if (!gecmis.length) aiSohbetIste(k, [], true); // ilk açılış → AI selam versin, tanıtsın
+  }
+  async function aiSohbetIste(k, gecmis, selam) {
+    setAiSohbetYaziliyor(true);
+    try {
+      const mesajlar = (gecmis || []).map((m) => ({ role: m.rol === "ai" ? "assistant" : "user", content: m.metin }));
+      if (selam) mesajlar.push({ role: "user", content: "(Kullanıcı seninle sohbeti yeni açtı. Ona sıcak, KISA bir selam ver, kendini bir cümleyle tanıt ve bir soru sor.)" });
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: tanismaAISistem(k, _tanDilAd()) }) });
+      let metin = ""; if (r.ok) { const v = await r.json(); metin = ((v && v.metin) || "").trim(); }
+      if (metin) setAiSohbetMesajlar((eski) => { const yeni = [...eski, { rol: "ai", metin }]; kaydetAIsohbet(k.id, yeni); return yeni; });
+    } catch (e) {}
+    setAiSohbetYaziliyor(false);
+  }
+  function aiSohbetGonder() {
+    const tx = (aiSohbetYazi || "").trim(); const k = aiSohbetKisi;
+    if (!tx || !k || aiSohbetYaziliyor) return;
+    const yeni = [...aiSohbetMesajlar, { rol: "ben", metin: tx }];
+    setAiSohbetYazi(""); setAiSohbetMesajlar(yeni); kaydetAIsohbet(k.id, yeni);
+    aiSohbetIste(k, yeni, false);
   }
   // PAYLAŞ — telefonun yerel paylaş menüsü. FOTO/VİDEO varsa DOSYA olarak paylaş (filigranlı GLOXORG karşı platforma/WhatsApp'a gider); yoksa link.
   async function paylasNative(p) {
@@ -8290,6 +8369,37 @@ export default function Anasayfa({ pro = false }) {
               })}
             </div>
           )}
+          {/* ── YAPAY ZEKÂ SOHBET ARKADAŞLARI — açıkça "🤖 Yapay Zekâ" etiketli (gerçek kişi DEĞİL) ── */}
+          <div className="tan-ai-bolum-bas">🤖 {t("tanisAIbas", "Yapay Zekâ sohbet arkadaşları")}</div>
+          <p className="tan-ai-not">{t("tanisAInot", "Bunlar gerçek kişi değil — GLOXORG'un yapay zekâ arkadaşları. İstediğin zaman sohbet edebilirsin, kendini tanıtır 💬")}</p>
+          <div className="top-filtreler tan-ai-filtre">
+            {[["hepsi", "👥 " + t("tanisHepsi2", "Hepsi")], ["k", "👩 " + t("tanisKadinlar", "Kadınlar")], ["e", "👨 " + t("tanisErkekler", "Erkekler")]].map(([kk, et]) => (
+              <button key={kk} className={"top-cip" + (aiCins === kk ? " aktif" : "")} onClick={() => setAiCins(kk)}>{et}</button>
+            ))}
+          </div>
+          <div className="tan-liste">
+            {aiTanisanlar.map((k) => {
+              const arayisEt = { arkadaslik: "🤝 " + t("arArkadaslik", "Arkadaşlık"), sohbet: "💬 " + t("arSohbet", "Sohbet"), flort: "💘 " + t("arFlort", "Flört"), evlilik: "💍 " + t("arEvlilik", "Evlilik") }[k.arayis];
+              return (
+                <div className="tan-kisi tan-kisi-ai" key={k.uid}>
+                  <div className="tan-foto" onClick={() => aiSohbetAc(k.persona)}>
+                    {k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
+                      : <div className="tan-foto-bekle"><span className="tan-foto-bekle-harf">{(k.ad[0] || "?").toUpperCase()}</span><span className="tan-foto-bekle-yaz">🎨 {t("tanisFotoHaz", "fotoğraf hazırlanıyor…")}</span></div>}
+                    <span className="tan-ai-rozet">🤖 {t("yapayZeka", "Yapay Zekâ")}</span>
+                    <div className="tan-golge">
+                      <div className="tan-ad notranslate" translate="no">{k.ad}<span className="tan-yas"> · {k.yas}</span></div>
+                      <div className="tan-rozetler">{arayisEt && <span className="tan-rozet arayis">{arayisEt}</span>}</div>
+                      {(k.sehir || k.ulke) && <div className="tan-yer">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}</div>}
+                      {k.bio && <div className="tan-bio">{k.bio}</div>}
+                    </div>
+                  </div>
+                  <div className="tan-islem">
+                    <button className="tan-mesaj tan-tek" onClick={() => aiSohbetAc(k.persona)}>💬 {t("tanisSohbetEt", "Sohbet et")}</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           {/* KART OLUŞTUR/DÜZENLE FORMU */}
           {tanismaKartAcik && (
             <div className="tan-form-fon" onClick={(e) => { if (e.target === e.currentTarget) setTanismaKartAcik(false); }}>
@@ -8327,6 +8437,33 @@ export default function Anasayfa({ pro = false }) {
                 <textarea className="tan-form-bio" value={tKBio} onChange={(e) => setTKBio(e.target.value)} maxLength={240} rows={3} placeholder={t("tanisBioYer", "Kısa tanıtım: kendinden bahset…")} />
                 <button className="tan-form-kaydet" onClick={tanismaKartKaydet} disabled={tanismaKaydediliyor}>{tanismaKaydediliyor ? t("tanisKaydediliyor", "Kaydediliyor…") : t("tanisKaydet", "Kaydet ve Yayınla")}</button>
                 {benimTanismaVar && <button className="tan-form-kaldir" onClick={tanismaKartKaldir}>{t("tanisKaldir", "Listeden gizlen")}</button>}
+              </div>
+            </div>
+          )}
+          {/* ── YAPAY ZEKÂ SOHBET PENCERESİ (açıkça etiketli) ── */}
+          {aiSohbetKisi && (
+            <div className="ai-sohbet-fon" onClick={(e) => { if (e.target === e.currentTarget) setAiSohbetKisi(null); }}>
+              <div className="ai-sohbet">
+                <div className="ai-sohbet-bas">
+                  <span className="ai-sohbet-av">{aiFoto[aiSohbetKisi.id] ? <img src={aiFoto[aiSohbetKisi.id]} alt="" referrerPolicy="no-referrer" /> : (aiSohbetKisi.ad[0] || "?").toUpperCase()}</span>
+                  <span className="ai-sohbet-kim">
+                    <b className="notranslate" translate="no">{aiSohbetKisi.ad}<span className="ai-sohbet-yas"> · {aiSohbetKisi.yas}</span></b>
+                    <i>🤖 {t("yapayZeka", "Yapay Zekâ")} · {[aiSohbetKisi.sehir, aiSohbetKisi.ulke].filter(Boolean).join(", ")}</i>
+                  </span>
+                  <button className="ai-sohbet-kapat" onClick={() => setAiSohbetKisi(null)} aria-label={t("kapat", "Kapat")}>✕</button>
+                </div>
+                <div className="ai-sohbet-uyari">🤖 {t("tanisAIsohbetUyari", "Bu bir yapay zekâ — gerçek kişi değil. Kişisel bilgi/para verme.")}</div>
+                <div className="ai-sohbet-akis" ref={aiSohbetAkisRef}>
+                  {aiSohbetMesajlar.length === 0 && !aiSohbetYaziliyor && <div className="ai-sohbet-bos">💬 {t("tanisAIbasla", "Selam yaz, sohbete başla!")}</div>}
+                  {aiSohbetMesajlar.map((m, mi) => (
+                    <div key={mi} className={"ai-sohbet-balon " + (m.rol === "ben" ? "ben" : "ai")}>{m.metin}</div>
+                  ))}
+                  {aiSohbetYaziliyor && <div className="ai-sohbet-balon ai ai-yaziyor"><span></span><span></span><span></span></div>}
+                </div>
+                <div className="ai-sohbet-giris">
+                  <input value={aiSohbetYazi} onChange={(e) => setAiSohbetYazi(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") aiSohbetGonder(); }} placeholder={t("tanisAIyaz", "Mesaj yaz…")} />
+                  <button onClick={aiSohbetGonder} disabled={aiSohbetYaziliyor || !aiSohbetYazi.trim()} aria-label={t("gonder", "Gönder")}>➤</button>
+                </div>
               </div>
             </div>
           )}

@@ -4332,6 +4332,45 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-rozet{ background:rgba(255,255,255,.22); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); color:#fff; font-size:12.5px; font-weight:700; padding:4px 10px; border-radius:9px; text-shadow:0 1px 2px rgba(0,0,0,.4); }
 .tan-rozet.arayis{ background:linear-gradient(160deg,rgba(255,233,168,.9),rgba(230,189,82,.9)); color:#4a3208; text-shadow:none; }
 @media (min-width:560px){ .tan-ad{ font-size:24px; } .tan-bio{ font-size:15px; } .tan-kartim-btn{ font-size:16px; } }
+
+/* ── YAPAY ZEKÂ arkadaşlar bölümü ── */
+.tan-ai-bolum-bas{ color:#bfe3ff; font-weight:800; font-size:16px; margin:24px 4px 3px; display:flex; align-items:center; gap:6px; }
+.tan-ai-not{ color:#c3d4f0; font-size:12.5px; line-height:1.4; margin:0 4px 11px; }
+.tan-ai-filtre{ margin-bottom:12px; }
+.tan-kisi-ai{ border-color:rgba(120,190,255,.55); }
+.tan-ai-rozet{ position:absolute; top:12px; left:12px; z-index:2; background:linear-gradient(160deg,#5aa6ff,#2b6fd0); color:#fff; font-weight:800; font-size:12px; padding:5px 11px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.4); text-shadow:0 1px 2px rgba(0,0,0,.3); }
+/* Avatar üretilene kadar bekleme (foto hazırlanıyor) */
+.tan-foto-bekle{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:radial-gradient(circle at 50% 34%, #3d63a0, #1a3560); }
+.tan-foto-bekle-harf{ width:96px; height:96px; border-radius:20px; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:800; font-size:40px; color:#4a3208; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c); box-shadow:0 4px 14px rgba(0,0,0,.35); }
+.tan-foto-bekle-yaz{ color:#cfe0ff; font-size:13px; font-style:italic; }
+/* AI SOHBET PENCERESİ */
+.ai-sohbet-fon{ position:fixed; inset:0; z-index:1450; display:flex; align-items:flex-end; justify-content:center; background:rgba(8,18,38,.72); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.ai-sohbet{ width:100%; max-width:520px; height:86vh; display:flex; flex-direction:column; box-sizing:border-box;
+  background:radial-gradient(ellipse at 50% 0%, #33568f, #1e386a 66%, #142b4f); border-radius:22px 22px 0 0; border:1.5px solid rgba(255,215,0,.45); box-shadow:0 -12px 44px rgba(0,0,0,.5); overflow:hidden; animation:tanFormGel .3s cubic-bezier(.16,1,.3,1); }
+.ai-sohbet-bas{ display:flex; align-items:center; gap:11px; padding:12px 13px; border-bottom:1px solid rgba(255,215,0,.25); }
+.ai-sohbet-av{ width:46px; height:46px; flex:none; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:800; font-size:20px; color:#4a3208; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c); }
+.ai-sohbet-av img{ width:100%; height:100%; object-fit:cover; }
+.ai-sohbet-kim{ flex:1; min-width:0; display:flex; flex-direction:column; }
+.ai-sohbet-kim b{ color:#fff; font-size:16.5px; font-weight:800; }
+.ai-sohbet-yas{ color:#ffe9a8; font-weight:700; }
+.ai-sohbet-kim i{ color:#bfe3ff; font-size:12px; font-style:normal; }
+.ai-sohbet-kapat{ flex:none; border:none; background:rgba(255,233,168,.16); color:#ffe9a8; width:32px; height:32px; border-radius:10px; font-size:16px; font-weight:800; cursor:pointer; }
+.ai-sohbet-uyari{ background:rgba(90,166,255,.16); color:#dbeaff; font-size:11.5px; padding:7px 13px; text-align:center; }
+.ai-sohbet-akis{ flex:1; overflow-y:auto; padding:14px 12px; display:flex; flex-direction:column; gap:9px; scrollbar-width:none; }
+.ai-sohbet-akis::-webkit-scrollbar{ display:none; }
+.ai-sohbet-bos{ text-align:center; color:#bcd0ef; font-style:italic; font-size:14px; margin:auto 0; }
+.ai-sohbet-balon{ max-width:80%; padding:10px 14px; border-radius:16px; font-size:15px; line-height:1.4; word-break:break-word; box-shadow:0 2px 7px rgba(0,10,30,.28); }
+.ai-sohbet-balon.ai{ align-self:flex-start; background:#fffdf5; color:#2a2008; border-bottom-left-radius:5px; }
+.ai-sohbet-balon.ben{ align-self:flex-end; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:600; border-bottom-right-radius:5px; }
+.ai-yaziyor{ display:flex; gap:4px; align-items:center; }
+.ai-yaziyor span{ width:7px; height:7px; border-radius:50%; background:#9fb2d6; animation:aiNokta 1s infinite; }
+.ai-yaziyor span:nth-child(2){ animation-delay:.2s; } .ai-yaziyor span:nth-child(3){ animation-delay:.4s; }
+@keyframes aiNokta{ 0%,60%,100%{ opacity:.3; transform:translateY(0); } 30%{ opacity:1; transform:translateY(-3px); } }
+.ai-sohbet-giris{ display:flex; gap:8px; padding:10px 11px calc(11px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,215,0,.25); }
+.ai-sohbet-giris input{ flex:1; min-width:0; border:1.4px solid rgba(255,215,0,.5); border-radius:22px; padding:12px 16px; font-size:15px; font-family:inherit; background:#fffdf5; color:#3a2c08; outline:none; }
+.ai-sohbet-giris input::placeholder{ color:#9a8446; }
+.ai-sohbet-giris button{ flex:none; width:46px; height:46px; border:none; border-radius:14px; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-size:19px; font-weight:800; cursor:pointer; }
+.ai-sohbet-giris button:disabled{ opacity:.5; }
 /* BİLGİSAYAR: şeritler feed ile AYNI ortalı genişlikte (kullanıcı: "geniş ekranda o kadar yayma, sağdan sola geniş yapma"). Yayma İPTAL. */
 @media (min-width:1000px){
   .alt-serit-bas h3{ font-size:18px; }
