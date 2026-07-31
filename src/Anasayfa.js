@@ -1476,6 +1476,9 @@ export default function Anasayfa({ pro = false }) {
   const [tKAd, setTKAd] = useState("");           // tanışmada görünecek isim (istediği)
   const [tKBio, setTKBio] = useState("");         // kısa tanıtım
   const [tKFotolar, setTKFotolar] = useState([]); // 1-3 fotoğraf (dataURL veya yüklenmiş URL)
+  const [tKYas, setTKYas] = useState("");         // yaş (isteğe bağlı)
+  const [tKDurum, setTKDurum] = useState("");     // medeni durum (isteğe bağlı): bekar/evli/iliskisi/bosanmis
+  const [tKArayis, setTKArayis] = useState("");   // ne için (isteğe bağlı): arkadaslik/flort/evlilik/sohbet
   const [tanismaKaydediliyor, setTanismaKaydediliyor] = useState(false);
   const [tanFotoIdx, setTanFotoIdx] = useState({}); // her kartta hangi fotoğraf gösteriliyor (uid→index)
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
@@ -3748,7 +3751,7 @@ export default function Anasayfa({ pro = false }) {
         const ad = k.tanismaAd || [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
         const sehir = k.sehir || (k.konum && k.konum.sehir) || "";
         const ulke = k.ulke || (k.konum && k.konum.ulke) || "";
-        return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, ben: id === benUid };
+        return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, yas: k.tanismaYas || "", durum: k.tanismaDurum || "", arayis: k.tanismaArayis || "", ben: id === benUid };
       });
     let f = liste;
     if (q) f = f.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
@@ -4410,6 +4413,9 @@ export default function Anasayfa({ pro = false }) {
     setTKAd(p.tanismaAd || benimAdGetir() || "");
     setTKBio(p.tanismaBio || "");
     setTKFotolar(Array.isArray(p.tanismaFotolar) ? p.tanismaFotolar.slice(0, 3) : []);
+    setTKYas(p.tanismaYas ? String(p.tanismaYas) : "");
+    setTKDurum(p.tanismaDurum || "");
+    setTKArayis(p.tanismaArayis || "");
     setTanismaKartAcik(true);
   }
   function tanismaFotoSec(e) {
@@ -4430,7 +4436,9 @@ export default function Anasayfa({ pro = false }) {
         try { const up = await gorselYukle(f, uu.uid); if (up) urls.push(up); } catch (e) {}
       }
       if (!urls.length) { setTanismaKaydediliyor(false); bilgiBalonu(t("tanismaHata", "Fotoğraf yüklenemedi, tekrar dene.")); return; }
-      const yeni = { tanismaAktif: true, tanismaAd: (tKAd || benimAdGetir() || "").slice(0, 40), tanismaBio: (tKBio || "").slice(0, 240), tanismaFotolar: urls };
+      const yasN = parseInt(tKYas, 10);
+      const yeni = { tanismaAktif: true, tanismaAd: (tKAd || benimAdGetir() || "").slice(0, 40), tanismaBio: (tKBio || "").slice(0, 240), tanismaFotolar: urls,
+        tanismaYas: (yasN >= 18 && yasN <= 99) ? yasN : "", tanismaDurum: tKDurum || "", tanismaArayis: tKArayis || "" };
       await profilKaydet(uu.uid, yeni);
       setProfilBilgi((p) => ({ ...(p || {}), ...yeni }));
       setTopKisiler((arr) => {
@@ -8249,6 +8257,8 @@ export default function Anasayfa({ pro = false }) {
             <div className="tan-liste">
               {tanismacilar.map((k) => {
                 const fi = k.fotolar.length ? ((tanFotoIdx[k.uid] || 0) % k.fotolar.length) : 0;
+                const durumEt = { bekar: t("durBekar", "Bekar"), evli: t("durEvli", "Evli"), iliskisi: t("durIliski", "İlişkisi var"), bosanmis: t("durBosanmis", "Boşanmış") }[k.durum];
+                const arayisEt = { arkadaslik: "🤝 " + t("arArkadaslik", "Arkadaşlık"), sohbet: "💬 " + t("arSohbet", "Sohbet"), flort: "💘 " + t("arFlort", "Flört"), evlilik: "💍 " + t("arEvlilik", "Evlilik") }[k.arayis];
                 return (
                   <div className="tan-kisi" key={k.uid}>
                     <div className="tan-foto" onClick={() => { if (k.fotolar.length > 1) setTanFotoIdx((m) => ({ ...m, [k.uid]: (((m[k.uid] || 0) + 1) % k.fotolar.length) })); }}>
@@ -8256,7 +8266,13 @@ export default function Anasayfa({ pro = false }) {
                       {k.fotolar.length > 1 && <div className="tan-dots">{k.fotolar.map((_, di) => <i key={di} className={di === fi ? "akt" : ""} />)}</div>}
                       {k.ben && <span className="tan-benim">{t("tanisSeninKartin", "Senin kartın")}</span>}
                       <div className="tan-golge">
-                        <div className="tan-ad notranslate" translate="no">{k.ad}</div>
+                        <div className="tan-ad notranslate" translate="no">{k.ad}{k.yas ? <span className="tan-yas"> · {k.yas}</span> : null}</div>
+                        {(durumEt || arayisEt) && (
+                          <div className="tan-rozetler">
+                            {durumEt && <span className="tan-rozet">{durumEt}</span>}
+                            {arayisEt && <span className="tan-rozet arayis">{arayisEt}</span>}
+                          </div>
+                        )}
                         {(k.sehir || k.ulke) && <div className="tan-yer">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}</div>}
                         {k.bio && <div className="tan-bio">{k.bio}</div>}
                       </div>
@@ -8292,6 +8308,22 @@ export default function Anasayfa({ pro = false }) {
                   ))}
                 </div>
                 <input className="tan-form-ad" value={tKAd} onChange={(e) => setTKAd(e.target.value)} maxLength={40} placeholder={t("tanisAdYer", "Görünecek isim (ne istersen)")} />
+                {/* İSTEĞE BAĞLI bilgiler — isteyen doldurur, istemeyen boş bırakır */}
+                <div className="tan-form-etiket">{t("tanisIstege", "İsteğe bağlı — istersen doldur")}</div>
+                <div className="tan-form-satir">
+                  <input className="tan-form-yas" type="number" inputMode="numeric" min="18" max="99" value={tKYas} onChange={(e) => setTKYas(e.target.value)} placeholder={t("tanisYas", "Yaş")} />
+                  <div className="tan-secim">
+                    {[["bekar", t("durBekar", "Bekar")], ["evli", t("durEvli", "Evli")], ["iliskisi", t("durIliski", "İlişkisi var")], ["bosanmis", t("durBosanmis", "Boşanmış")]].map(([k, et]) => (
+                      <button key={k} type="button" className={"tan-secim-cip" + (tKDurum === k ? " sec" : "")} onClick={() => setTKDurum((d) => (d === k ? "" : k))}>{et}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="tan-form-etiket">{t("tanisNeIcin", "Ne için tanışmak istiyorsun?")}</div>
+                <div className="tan-secim">
+                  {[["arkadaslik", "🤝 " + t("arArkadaslik", "Arkadaşlık")], ["sohbet", "💬 " + t("arSohbet", "Sohbet")], ["flort", "💘 " + t("arFlort", "Flört")], ["evlilik", "💍 " + t("arEvlilik", "Evlilik")]].map(([k, et]) => (
+                    <button key={k} type="button" className={"tan-secim-cip" + (tKArayis === k ? " sec" : "")} onClick={() => setTKArayis((d) => (d === k ? "" : k))}>{et}</button>
+                  ))}
+                </div>
                 <textarea className="tan-form-bio" value={tKBio} onChange={(e) => setTKBio(e.target.value)} maxLength={240} rows={3} placeholder={t("tanisBioYer", "Kısa tanıtım: kendinden bahset…")} />
                 <button className="tan-form-kaydet" onClick={tanismaKartKaydet} disabled={tanismaKaydediliyor}>{tanismaKaydediliyor ? t("tanisKaydediliyor", "Kaydediliyor…") : t("tanisKaydet", "Kaydet ve Yayınla")}</button>
                 {benimTanismaVar && <button className="tan-form-kaldir" onClick={tanismaKartKaldir}>{t("tanisKaldir", "Listeden gizlen")}</button>}

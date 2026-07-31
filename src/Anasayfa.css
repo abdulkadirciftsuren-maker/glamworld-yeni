@@ -4317,6 +4317,20 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-form-kaydet{ width:100%; border:none; border-radius:13px; padding:14px; font-weight:800; font-size:16px; font-family:inherit; cursor:pointer; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; box-shadow:0 3px 11px rgba(0,10,30,.35); }
 .tan-form-kaydet:disabled{ opacity:.6; }
 .tan-form-kaldir{ width:100%; border:none; background:none; color:#ffb3bd; font-weight:700; font-size:13.5px; padding:12px 0 2px; cursor:pointer; text-decoration:underline; }
+/* İsteğe bağlı bilgiler (yaş / durum / arayış) */
+.tan-form-etiket{ color:#ffe9a8; font-weight:700; font-size:13px; margin:2px 2px 7px; }
+.tan-form-satir{ display:flex; gap:9px; align-items:flex-start; margin-bottom:6px; }
+.tan-form-yas{ width:78px; flex:none; box-sizing:border-box; border:1.4px solid rgba(255,215,0,.5); border-radius:12px; padding:12px 10px; font-size:15px; font-family:inherit; background:#fffdf5; color:#3a2c08; font-weight:700; outline:none; text-align:center; }
+.tan-form-yas::placeholder{ color:#9a8446; }
+.tan-secim{ display:flex; flex-wrap:wrap; gap:7px; flex:1; margin-bottom:9px; }
+.tan-secim-cip{ border:1.3px solid rgba(255,215,0,.5); cursor:pointer; font-family:inherit; background:rgba(255,255,255,.1); color:#dbe7ff; border-radius:11px; padding:9px 13px; font-size:13.5px; font-weight:700; }
+.tan-secim-cip.sec{ background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; border-color:#fff3cf; }
+.tan-secim-cip:active{ transform:scale(.95); }
+/* Kartta yaş + rozetler */
+.tan-yas{ color:#ffe9a8; font-weight:700; font-size:18px; }
+.tan-rozetler{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.tan-rozet{ background:rgba(255,255,255,.22); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); color:#fff; font-size:12.5px; font-weight:700; padding:4px 10px; border-radius:9px; text-shadow:0 1px 2px rgba(0,0,0,.4); }
+.tan-rozet.arayis{ background:linear-gradient(160deg,rgba(255,233,168,.9),rgba(230,189,82,.9)); color:#4a3208; text-shadow:none; }
 @media (min-width:560px){ .tan-ad{ font-size:24px; } .tan-bio{ font-size:15px; } .tan-kartim-btn{ font-size:16px; } }
 /* BİLGİSAYAR: şeritler feed ile AYNI ortalı genişlikte (kullanıcı: "geniş ekranda o kadar yayma, sağdan sola geniş yapma"). Yayma İPTAL. */
 @media (min-width:1000px){
