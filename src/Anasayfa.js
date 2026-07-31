@@ -2221,6 +2221,9 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     const kid = (u && u.uid) || "";
     if (!kid) return;
+    // AYNI hesap için SADECE BİR KEZ yükle → u (profil/oturum) her güncellendiğinde sohbeti tarayıcıdan tekrar yükleyip
+    // KONUŞMANIN ORTASINDA sıfırlamasın (kullanıcı: "bir önceki konuşmayı unutuyor"). Sadece HESAP DEĞİŞİRSE yeniden yükle.
+    if (aiUidRef.current === kid && aiYuklendiRef.current) return;
     aiUidRef.current = kid;
     try {
       // ESKİ tek-ortak veri (groxSohbet): SADECE sahibiyse (gw_aiSahip===kid) bu hesaba taşı; sonra ORTAK anahtarları SİL (başka hesaplar bir daha görmesin)
@@ -4924,7 +4927,13 @@ export default function Anasayfa({ pro = false }) {
         const olumsuz = /(çizemem|cizemem|çizemiyorum|cizemiyorum|yapamam|üretemem|uretemem|edemem|veremem|göremem|goremem)/i.test(mtDus);
         const vaatSoz = /(al sana|işte|iste|buyur|çizdim|cizdim|çiziyorum|ciziyorum|oluşturdum|olusturdum|hazırladım|hazirladim|hazırlıyorum|hazirliyorum|hazır|hazir|sürpriz|surpriz)/i;
         const aiVaat = !olumsuz && vaatSoz.test(mtDus) && gorselSoz.test(mtDus);
-        if (kulGorselIstedi && aiVaat) resimIstem = sonKul.slice(0, 300);
+        if (kulGorselIstedi && aiVaat) {
+          // TAKİP İSTEĞİ: "beğenmedim / başka ver / bir daha / farklı" gibi KISA istekse, o yazıyı resim betimi SANMA →
+          // ÖNCEKİ resmin betimini kullan (konu kaybolmasın: cuma namazı isterken yeni resim de cumayla İLGİLİ olsun).
+          const oncekiResim = [...yeniListe].reverse().find((m) => m && m.rol === "ai" && m.resimIstem);
+          const kisaTakip = sonKul.trim().length < 45 && /(başka|baska|beğenmedim|begenmedim|güzel değil|guzel degil|olmad|bir daha|tekrar|yeni bir|değiştir|degistir|farkl|sevmedim|beğenme|begenme|daha güzel|daha iyi)/i.test(kulDus);
+          resimIstem = (kisaTakip && oncekiResim && oncekiResim.resimIstem) ? oncekiResim.resimIstem : sonKul.slice(0, 300);
+        }
       }
       if (!metin && resimIstem) metin = t("resimUretiliyor", "Resmi hazırlıyorum 🎨");
       const resimId = resimIstem ? ("r" + Date.now() + "-" + Math.round(Math.random() * 1e6)) : "";
