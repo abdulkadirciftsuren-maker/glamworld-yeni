@@ -1155,7 +1155,11 @@
 .apf-paylasimlar{ width:100%; max-width:600px; margin:18px auto 0; display:flex; flex-direction:column; gap:11px; }
 .apf-pay-bas{ display:flex; align-items:center; gap:8px; font-family:'Cinzel',serif; font-weight:800; font-size:15px; color:#FFE9A8; letter-spacing:.03em; padding:0 2px; }
 .apf-pay-say{ background:linear-gradient(180deg,#FFE9A8,#FFD700); color:#1a1206; font-size:11px; font-weight:800; padding:1px 9px; border-radius:11px; }
-.apf-pay-kart{ display:flex; gap:11px; align-items:flex-start; text-align:left; background:linear-gradient(150deg,rgba(8,30,55,.6),rgba(4,16,32,.6)); border:1px solid rgba(255,235,170,.18); border-radius:12px; border-left:4px solid #5aa6e0; padding:10px 12px; box-sizing:border-box; max-width:100%; }
+/* HIZ: Ekranda GÖRÜNMEYEN paylaşım kartlarını tarayıcı çizmez/çözmez (content-visibility:auto) —
+   sadece görünenler hazırlanır, kaydırınca gerisi gelir. Böylece 60 paylaşımın tam boy fotoğrafı
+   aynı anda çözülüp telefonu dondurmaz (profil dakikalarca beklemez). contain-intrinsic-size ile
+   görünmeyen kartlara ~120px yer ayrılır → kaydırma çubuğu zıplamaz. Eski tarayıcıda yok sayılır (güvenli). */
+.apf-pay-kart{ display:flex; gap:11px; align-items:flex-start; text-align:left; background:linear-gradient(150deg,rgba(8,30,55,.6),rgba(4,16,32,.6)); border:1px solid rgba(255,235,170,.18); border-radius:12px; border-left:4px solid #5aa6e0; padding:10px 12px; box-sizing:border-box; max-width:100%; content-visibility:auto; contain-intrinsic-size:auto 120px; }
 .apf-paylasimlar{ box-sizing:border-box; width:100%; }
 .apf-pay-foto{ width:70px; height:auto; max-height:92px; flex:none; border-radius:9px; object-fit:contain; background:rgba(0,0,0,.28); cursor:pointer; } /* KESİK GELMESİN → contain (foto tam görünür) */
 .apf-pay-icerik{ flex:1; min-width:0; }

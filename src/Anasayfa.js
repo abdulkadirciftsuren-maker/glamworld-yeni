@@ -7935,7 +7935,7 @@ export default function Anasayfa({ pro = false }) {
                       return (
                         <div className="apf-pay-kart" key={g.id} style={{ borderLeftColor: gk }}>
                           {g.gorsel
-                            ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setTamFoto(g)} />
+                            ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" onClick={() => setTamFoto(g)} />
                             : g.video
                               ? <span className="apf-pay-foto apf-pay-vid" onClick={() => setTamFoto(g)}><video src={videoSade(g.video)} poster={g.videoPoster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
@@ -9282,7 +9282,7 @@ export default function Anasayfa({ pro = false }) {
                       return (
                         <div className="apf-pay-kart" key={g.id} style={{ borderLeftColor: gk }}>
                           {g.gorsel
-                            ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" onClick={ac} />
+                            ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" onClick={ac} />
                             : g.video
                               ? <span className="apf-pay-foto apf-pay-vid" onClick={ac}><video src={videoSade(g.video)} poster={g.videoPoster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
