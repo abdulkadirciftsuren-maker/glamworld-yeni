@@ -1477,6 +1477,7 @@ export default function Anasayfa({ pro = false }) {
   const [tKAd, setTKAd] = useState("");           // tanışmada görünecek isim (istediği)
   const [tKBio, setTKBio] = useState("");         // kısa tanıtım
   const [tKFotolar, setTKFotolar] = useState([]); // 1-3 fotoğraf (dataURL veya yüklenmiş URL)
+  const [tKCins, setTKCins] = useState("");       // cinsiyet: k/e (filtre için)
   const [tKYas, setTKYas] = useState("");         // yaş (isteğe bağlı)
   const [tKDurum, setTKDurum] = useState("");     // medeni durum (isteğe bağlı): bekar/evli/iliskisi/bosanmis
   const [tKArayis, setTKArayis] = useState("");   // ne için (isteğe bağlı): arkadaslik/flort/evlilik/sohbet
@@ -3794,13 +3795,16 @@ export default function Anasayfa({ pro = false }) {
         const ad = k.tanismaAd || [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
         const sehir = k.sehir || (k.konum && k.konum.sehir) || "";
         const ulke = k.ulke || (k.konum && k.konum.ulke) || "";
-        return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, yas: k.tanismaYas || "", durum: k.tanismaDurum || "", arayis: k.tanismaArayis || "", ben: id === benUid };
+        return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, cins: k.tanismaCins || "", yas: k.tanismaYas || "", durum: k.tanismaDurum || "", arayis: k.tanismaArayis || "", ben: id === benUid };
       });
     let f = liste;
     if (aiAramaSonuc) { const s = new Set(aiAramaSonuc); f = f.filter((k) => s.has(k.uid)); } // AKILLI ARAMA: AI'nın bulduğu kişiler
-    else if (q) f = f.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
+    else {
+      if (aiCins !== "hepsi") f = f.filter((k) => k.cins === aiCins); // CİNSİYET filtresi (herkes için — üstteki düğmeler)
+      if (q) f = f.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
+    }
     return f.sort((a, b) => (b.ben ? 1 : 0) - (a.ben ? 1 : 0)); // kendi kartım üstte
-  }, [topKisiler, topAra, benUid, aiAramaSonuc]);
+  }, [topKisiler, topAra, benUid, aiAramaSonuc, aiCins]);
   // Kendi tanışma kartım var mı (profilimde)?
   const benimTanismaVar = !!(profilBilgi && profilBilgi.tanismaAktif && Array.isArray(profilBilgi.tanismaFotolar) && profilBilgi.tanismaFotolar.length);
   // YAPAY ZEKÂ tanışma arkadaşları (açıkça etiketli) — cinsiyet filtresi + arama
@@ -4465,6 +4469,7 @@ export default function Anasayfa({ pro = false }) {
     setTKAd(p.tanismaAd || benimAdGetir() || "");
     setTKBio(p.tanismaBio || "");
     setTKFotolar(Array.isArray(p.tanismaFotolar) ? p.tanismaFotolar.slice(0, 3) : []);
+    setTKCins(p.tanismaCins || "");
     setTKYas(p.tanismaYas ? String(p.tanismaYas) : "");
     setTKDurum(p.tanismaDurum || "");
     setTKArayis(p.tanismaArayis || "");
@@ -4490,7 +4495,7 @@ export default function Anasayfa({ pro = false }) {
       if (!urls.length) { setTanismaKaydediliyor(false); bilgiBalonu(t("tanismaHata", "Fotoğraf yüklenemedi, tekrar dene.")); return; }
       const yasN = parseInt(tKYas, 10);
       const yeni = { tanismaAktif: true, tanismaAd: (tKAd || benimAdGetir() || "").slice(0, 40), tanismaBio: (tKBio || "").slice(0, 240), tanismaFotolar: urls,
-        tanismaYas: (yasN >= 18 && yasN <= 99) ? yasN : "", tanismaDurum: tKDurum || "", tanismaArayis: tKArayis || "" };
+        tanismaCins: tKCins || "", tanismaYas: (yasN >= 18 && yasN <= 99) ? yasN : "", tanismaDurum: tKDurum || "", tanismaArayis: tKArayis || "" };
       await profilKaydet(uu.uid, yeni);
       setProfilBilgi((p) => ({ ...(p || {}), ...yeni }));
       setTopKisiler((arr) => {
@@ -8360,6 +8365,12 @@ export default function Anasayfa({ pro = false }) {
               <button onClick={akilliAramaTemizle}>{t("temizle", "Temizle")} ✕</button>
             </div>
           )}
+          {/* CİNSİYET FİLTRESİ — EN ÜSTTE, HERKES için (gerçek üyeler + yapay zekâ). Sayfaya SIĞAR, yatay KAYMAZ (kayınca başka sayfa açılıyordu). */}
+          <div className="tan-cins-filtre">
+            {[["hepsi", "👥", t("tanisHepsi2", "Hepsi")], ["k", "👩", t("tanisKadinlar", "Kadınlar")], ["e", "👨", t("tanisErkekler", "Erkekler")]].map(([kk, ik, et]) => (
+              <button key={kk} className={"tan-cins-cip" + (aiCins === kk ? " aktif" : "")} onClick={() => setAiCins(kk)}><span aria-hidden="true">{ik}</span> {et}</button>
+            ))}
+          </div>
           {/* KENDİ KARTIM — oluştur/düzenle (opt-in) */}
           <button className={"tan-kartim-btn" + (benimTanismaVar ? " var" : "")} onClick={tanismaKartiAc}>
             <span className="tkb-ik" aria-hidden="true">🪪</span>
@@ -8409,14 +8420,9 @@ export default function Anasayfa({ pro = false }) {
               })}
             </div>
           )}
-          {/* ── YAPAY ZEKÂ SOHBET ARKADAŞLARI — açıkça "🤖 Yapay Zekâ" etiketli (gerçek kişi DEĞİL) ── */}
+          {/* ── YAPAY ZEKÂ SOHBET ARKADAŞLARI — açıkça "🤖 Yapay Zekâ" etiketli (gerçek kişi DEĞİL). Filtre YUKARIDA (herkes için). ── */}
           <div className="tan-ai-bolum-bas">🤖 {t("tanisAIbas", "Yapay Zekâ sohbet arkadaşları")}</div>
           <p className="tan-ai-not">{t("tanisAInot", "Bunlar gerçek kişi değil — GLOXORG'un yapay zekâ arkadaşları. İstediğin zaman sohbet edebilirsin, kendini tanıtır 💬")}</p>
-          <div className="top-filtreler tan-ai-filtre">
-            {[["hepsi", "👥 " + t("tanisHepsi2", "Hepsi")], ["k", "👩 " + t("tanisKadinlar", "Kadınlar")], ["e", "👨 " + t("tanisErkekler", "Erkekler")]].map(([kk, et]) => (
-              <button key={kk} className={"top-cip" + (aiCins === kk ? " aktif" : "")} onClick={() => setAiCins(kk)}>{et}</button>
-            ))}
-          </div>
           <div className="tan-liste">
             {aiTanisanlar.map((k) => {
               const arayisEt = { arkadaslik: "🤝 " + t("arArkadaslik", "Arkadaşlık"), sohbet: "💬 " + t("arSohbet", "Sohbet"), flort: "💘 " + t("arFlort", "Flört"), evlilik: "💍 " + t("arEvlilik", "Evlilik") }[k.arayis];
@@ -8458,6 +8464,13 @@ export default function Anasayfa({ pro = false }) {
                   ))}
                 </div>
                 <input className="tan-form-ad" value={tKAd} onChange={(e) => setTKAd(e.target.value)} maxLength={40} placeholder={t("tanisAdYer", "Görünecek isim (ne istersen)")} />
+                {/* CİNSİYET — filtrede (Kadınlar/Erkekler) doğru çıkman için */}
+                <div className="tan-form-etiket">{t("tanisCinsiyet", "Cinsiyet")}</div>
+                <div className="tan-secim">
+                  {[["k", "👩 " + t("tanisKadin", "Kadın")], ["e", "👨 " + t("tanisErkek", "Erkek")]].map(([k, et]) => (
+                    <button key={k} type="button" className={"tan-secim-cip" + (tKCins === k ? " sec" : "")} onClick={() => setTKCins((d) => (d === k ? "" : k))}>{et}</button>
+                  ))}
+                </div>
                 {/* İSTEĞE BAĞLI bilgiler — isteyen doldurur, istemeyen boş bırakır */}
                 <div className="tan-form-etiket">{t("tanisIstege", "İsteğe bağlı — istersen doldur")}</div>
                 <div className="tan-form-satir">

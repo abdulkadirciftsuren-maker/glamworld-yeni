@@ -4337,6 +4337,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-ai-bolum-bas{ color:#bfe3ff; font-weight:800; font-size:16px; margin:24px 4px 3px; display:flex; align-items:center; gap:6px; }
 .tan-ai-not{ color:#c3d4f0; font-size:12.5px; line-height:1.4; margin:0 4px 11px; }
 .tan-ai-filtre{ margin-bottom:12px; }
+/* CİNSİYET FİLTRESİ (üstte, herkes için) — 3 eşit düğme, SAYFAYA SIĞAR, yatay KAYMAZ */
+.tan-cins-filtre{ display:flex; gap:7px; margin:2px 0 13px; }
+.tan-cins-cip{ flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center; gap:4px; border:1.4px solid rgba(255,215,0,.5); cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#3d63a0,#294a7d); color:#ffe9a8; border-radius:12px; padding:10px 4px; font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:clip; }
+.tan-cins-cip.aktif{ background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; border-color:#fff3cf; box-shadow:0 0 0 2px rgba(255,233,168,.4); }
+.tan-cins-cip:active{ transform:scale(.96); }
+@media (min-width:400px){ .tan-cins-cip{ font-size:14.5px; padding:11px 6px; gap:6px; } }
 /* AKILLI ARAMA düğmesi + sonuç şeridi */
 .tan-ai-ara-btn{ width:100%; border:1.5px solid rgba(160,120,255,.7); cursor:pointer; font-family:inherit; font-weight:800; font-size:15px; padding:12px; border-radius:14px; margin:0 0 6px; color:#fff; background:linear-gradient(135deg,#7d5cff,#5a3fd0); box-shadow:0 4px 13px rgba(30,10,80,.4); }
 .tan-ai-ara-btn:disabled{ opacity:.55; }
