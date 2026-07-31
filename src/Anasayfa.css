@@ -1667,7 +1667,9 @@
 /* HER PENCERENİN ALT ZEMİNİ KENDİ İKONUNUN RENGİNDE (ANAYASA: her sayfa kendine has).
    SADECE zemin değişir; ana sayfa (sayfa-home) gece mavisi AYNEN kalır. */
 .ana-kok.sayfa-elite{ background:radial-gradient(140% 120% at 50% 28%, #4a3a0e 0%, #2e2408 45%, #16110a 78%, #0b0805 100%); }
-.ana-kok.sayfa-topluluk{ background:radial-gradient(140% 120% at 50% 28%, #0e3f26 0%, #0a2a18 45%, #07160d 78%, #040b07 100%); }
+/* TOPLULUK zemini: AÇIK GECE MAVİSİ (kullanıcı: "siyah/koyu/beyaz olmasın, açık mavi/gece mavisi kullan"). Eski koyu yeşil (siyaha yakın) KALDIRILDI. */
+.ana-kok.sayfa-topluluk{ background:radial-gradient(ellipse at 50% 20%, #3d63a0 0%, #294a7d 42%, #1a3560 72%, #142b4f 100%) !important; }
+.ana-kok.sayfa-topluluk .ana-arka-foto{ display:none !important; }
 .ana-kok.sayfa-video{ background:radial-gradient(140% 120% at 50% 28%, #2e1340 0%, #1e0d2e 45%, #110718 78%, #08040e 100%); }
 .ana-kok.sayfa-konum{ background:radial-gradient(140% 120% at 50% 28%, #0a3a44 0%, #08262e 45%, #06151a 78%, #030b0e 100%); }
 .ana-kok.sayfa-akademi{ background:radial-gradient(140% 120% at 50% 28%, #2f3310 0%, #20240a 45%, #131506 78%, #080a04 100%); }
@@ -4205,11 +4207,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .alt-cip:active{ transform:scale(.95); }
 
 /* ═══════════ TOPLULUK — üyelerle tanışma alanı (kare avatar, altın, canlı zemin; siyah YOK) ═══════════ */
-.top-pencere{ padding:14px 12px 96px; }
-.top-bas-sar{ display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; margin:4px 0 14px; }
-.top-bas-ik svg{ width:44px; height:44px; color:#FFD700; filter:drop-shadow(0 0 12px rgba(255,215,0,.5)); }
-.top-bas{ margin:2px 0 0; font-family:'Cinzel',serif; color:#FFE9A8; font-size:22px; letter-spacing:.05em; }
-.top-alt{ margin:0; color:#cfe0ff; font-style:italic; font-size:14px; }
+.top-pencere{ padding:4px 12px 96px; }
+.top-bas-sar{ display:flex; flex-direction:column; align-items:center; gap:1px; text-align:center; margin:0 0 9px; }
+.top-bas-ik svg{ width:32px; height:32px; color:#FFD700; filter:drop-shadow(0 0 10px rgba(255,215,0,.55)); }
+.top-bas{ margin:1px 0 0; font-family:'Cinzel',serif; color:#FFE9A8; font-size:20px; letter-spacing:.05em; }
+.top-alt{ margin:0; color:#dbe7ff; font-style:italic; font-size:14px; }
 /* Arama kutusu — altın çerçeve, açık zemin (siyah yok) */
 .top-ara-sar{ position:relative; display:flex; align-items:center; margin:0 2px 12px; }
 .top-ara-ik{ position:absolute; left:13px; width:19px; height:19px; color:#b28e34; pointer-events:none; }
