@@ -1471,6 +1471,13 @@ export default function Anasayfa({ pro = false }) {
   const [topAra, setTopAra] = useState("");            // Topluluk arama kutusu
   const [topFiltre, setTopFiltre] = useState("hepsi"); // "hepsi" | "pro" | "yakin"
   const [topGoster, setTopGoster] = useState(24);      // kaç kişi gösterilsin (daha fazla ile artar)
+  // TANIŞMA KARTI — kişi kendi fotoğraf(lar)ını + istediği ismi + tanıtımını girer (opt-in). Kendi profiline kaydedilir (yeni kural gerekmez).
+  const [tanismaKartAcik, setTanismaKartAcik] = useState(false); // kart oluştur/düzenle formu açık mı
+  const [tKAd, setTKAd] = useState("");           // tanışmada görünecek isim (istediği)
+  const [tKBio, setTKBio] = useState("");         // kısa tanıtım
+  const [tKFotolar, setTKFotolar] = useState([]); // 1-3 fotoğraf (dataURL veya yüklenmiş URL)
+  const [tanismaKaydediliyor, setTanismaKaydediliyor] = useState(false);
+  const [tanFotoIdx, setTanFotoIdx] = useState({}); // her kartta hangi fotoğraf gösteriliyor (uid→index)
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
@@ -3731,6 +3738,24 @@ export default function Anasayfa({ pro = false }) {
     if (q) f = f.filter((k) => (k.ad + " " + k.meslek + " " + k.sehir).toLowerCase().indexOf(q) !== -1);
     return f.sort((a, b) => yakin(a) - yakin(b));
   }, [topKisiler, topAra, topFiltre, benUid, dil, profilBilgi, konumAdres]);
+  // TANIŞANLAR — kartını oluşturmuş (opt-in) üyeler: kendi fotoğraf(lar)ı + istediği isim + tanıtım. Kendi kartım EN ÜSTTE.
+  const tanismacilar = useMemo(() => {
+    const q = topAra.trim().toLowerCase();
+    const liste = (topKisiler || [])
+      .filter((k) => k && k.tanismaAktif && Array.isArray(k.tanismaFotolar) && k.tanismaFotolar.length)
+      .map((k) => {
+        const id = k.id || k.uid;
+        const ad = k.tanismaAd || [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
+        const sehir = k.sehir || (k.konum && k.konum.sehir) || "";
+        const ulke = k.ulke || (k.konum && k.konum.ulke) || "";
+        return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, ben: id === benUid };
+      });
+    let f = liste;
+    if (q) f = f.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
+    return f.sort((a, b) => (b.ben ? 1 : 0) - (a.ben ? 1 : 0)); // kendi kartım üstte
+  }, [topKisiler, topAra, benUid]);
+  // Kendi tanışma kartım var mı (profilimde)?
+  const benimTanismaVar = !!(profilBilgi && profilBilgi.tanismaAktif && Array.isArray(profilBilgi.tanismaFotolar) && profilBilgi.tanismaFotolar.length);
   // İş İlanları: tur === "is" olan paylaşımlar
   const ilanlar = useMemo(() => gercekAkis.filter((p) => p.tur === "is").slice(0, 12), [gercekAkis]);
   // Trend: paylaşım metinlerindeki #etiketler (en çok geçenler)
@@ -4378,6 +4403,55 @@ export default function Anasayfa({ pro = false }) {
     setUyePostlar(null);
     setUyeSayfa({ uid: hedef, ad: p.ad || "—", foto: p.foto || "", meslek: p.meslek || "", sehir: p.sehir || "", ulke: p.ulke || "", pro: !!p.pro, uyelik: p.uyelik || "", amblem: p.amblem, renk: p.renk });
     gonderilerimOku(hedef).then((l) => setUyePostlar(l || [])).catch(() => setUyePostlar([]));
+  }
+  // ── TANIŞMA KARTI (Topluluk) — kişi kendi fotoğraf(lar)ını + istediği ismi + tanıtımını girer, kendi profiline kaydolur (opt-in) ──
+  function tanismaKartiAc() {
+    const p = profilBilgi || {};
+    setTKAd(p.tanismaAd || benimAdGetir() || "");
+    setTKBio(p.tanismaBio || "");
+    setTKFotolar(Array.isArray(p.tanismaFotolar) ? p.tanismaFotolar.slice(0, 3) : []);
+    setTanismaKartAcik(true);
+  }
+  function tanismaFotoSec(e) {
+    const dosyalar = Array.from((e.target && e.target.files) || []); if (e.target) e.target.value = "";
+    if (!dosyalar.length) return;
+    const kucult = (f) => new Promise((res) => { const r = new FileReader(); r.onload = (ev) => { const img = new Image(); img.onload = () => res(imgKucult(img, 1100)); img.onerror = () => res(""); img.src = ev.target.result; }; r.onerror = () => res(""); r.readAsDataURL(f); });
+    Promise.all(dosyalar.slice(0, 3).map(kucult)).then((hepsi) => { const gecerli = hepsi.filter(Boolean); if (gecerli.length) setTKFotolar((a) => [...a, ...gecerli].slice(0, 3)); });
+  }
+  function tanismaFotoSil(i) { setTKFotolar((a) => a.filter((_, x) => x !== i)); }
+  async function tanismaKartKaydet() {
+    const uu = auth.currentUser; if (!uu) return;
+    if (!tKFotolar.length) { bilgiBalonu(t("tanismaFotoGerek", "En az 1 fotoğraf ekle.")); return; }
+    setTanismaKaydediliyor(true);
+    try {
+      const urls = [];
+      for (const f of tKFotolar.slice(0, 3)) {
+        if (typeof f === "string" && f.indexOf("http") === 0) { urls.push(f); continue; } // zaten yüklü URL
+        try { const up = await gorselYukle(f, uu.uid); if (up) urls.push(up); } catch (e) {}
+      }
+      if (!urls.length) { setTanismaKaydediliyor(false); bilgiBalonu(t("tanismaHata", "Fotoğraf yüklenemedi, tekrar dene.")); return; }
+      const yeni = { tanismaAktif: true, tanismaAd: (tKAd || benimAdGetir() || "").slice(0, 40), tanismaBio: (tKBio || "").slice(0, 240), tanismaFotolar: urls };
+      await profilKaydet(uu.uid, yeni);
+      setProfilBilgi((p) => ({ ...(p || {}), ...yeni }));
+      setTopKisiler((arr) => {
+        const base = Array.isArray(arr) ? arr.slice() : [];
+        const i = base.findIndex((k) => (k.id || k.uid) === uu.uid);
+        const benim = { ...(base[i] || {}), id: uu.uid, uid: uu.uid, ...yeni, ad: benimAdGetir(), konum: (profilBilgi && profilBilgi.konum) || (base[i] && base[i].konum) || null };
+        if (i >= 0) base[i] = benim; else base.unshift(benim);
+        return base;
+      });
+      setTanismaKartAcik(false);
+      bilgiBalonu(t("tanismaKaydedildi", "Tanışma kartın hazır! Artık Topluluk'ta görünüyorsun."));
+    } catch (e) { bilgiBalonu(t("tanismaHata", "Bir sorun oldu, tekrar dene.")); }
+    setTanismaKaydediliyor(false);
+  }
+  async function tanismaKartKaldir() {
+    const uu = auth.currentUser; if (!uu) return;
+    if (!window.confirm(t("tanismaCikOnay", "Tanışma kartını gizlemek istiyor musun? Artık listede görünmezsin (fotoğrafların silinmez, istersen tekrar açarsın)."))) return;
+    try { await profilKaydet(uu.uid, { tanismaAktif: false }); } catch (e) {}
+    setProfilBilgi((p) => ({ ...(p || {}), tanismaAktif: false }));
+    setTopKisiler((arr) => (Array.isArray(arr) ? arr.map((k) => ((k.id || k.uid) === uu.uid ? { ...k, tanismaAktif: false } : k)) : arr));
+    setTanismaKartAcik(false);
   }
   // PAYLAŞ — telefonun yerel paylaş menüsü. FOTO/VİDEO varsa DOSYA olarak paylaş (filigranlı GLOXORG karşı platforma/WhatsApp'a gider); yoksa link.
   async function paylasNative(p) {
@@ -8146,56 +8220,83 @@ export default function Anasayfa({ pro = false }) {
           </Suspense>
         </div>
       ) : aktifKod === "topluluk" ? (
-        /* TOPLULUK — üyelerle tanışma alanı: ara, filtrele, TAKİP et, MESAJ at (Glome), karta dokun→profil */
-        <div className="ana-pencere top-pencere" key="topluluk">
+        /* TANIŞMA — kişi KENDİ fotoğraf(lar)ını + istediği ismi + tanıtımını girer (opt-in, kendi profiline); büyük kartlar, Beğen + Mesaj */
+        <div className="ana-pencere tan-pencere" key="topluluk">
           <div className="top-bas-sar">
-            <div className="top-bas-ik" aria-hidden="true">{Ikon.topluluk}</div>
-            <h3 className="top-bas">{t("navTopluluk", "Topluluk")}</h3>
-            <p className="top-alt">{t("toplulukTanit", "Meslektaşlarınla tanış, keşfet, bağlan.")}</p>
+            <div className="top-bas-ik" aria-hidden="true">💞</div>
+            <h3 className="top-bas">{t("tanisBaslik", "Tanış")}</h3>
+            <p className="top-alt">{t("tanisTanit", "Kendini tanıt, yeni insanlarla tanış.")}</p>
           </div>
-          {/* ARAMA — isim/meslek/şehir */}
+          {/* ARAMA — isim/şehir/ülke/tanıtım (ülke adı yazınca o ülkedekiler gelir) */}
           <div className="top-ara-sar">
             <svg className="top-ara-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-            <input className="top-ara-input" value={topAra} onChange={(e) => { setTopAra(e.target.value); setTopGoster(24); }} placeholder={t("toplulukAra", "İsim, meslek veya şehir ara…")} />
+            <input className="top-ara-input" value={topAra} onChange={(e) => setTopAra(e.target.value)} placeholder={t("tanisAra", "İsim, şehir veya ülke ara…")} />
             {topAra && <button className="top-ara-temizle" onClick={() => setTopAra("")} aria-label={t("temizle", "Temizle")}>✕</button>}
           </div>
-          {/* FİLTRELER */}
-          <div className="top-filtreler">
-            <button className={"top-cip" + (topFiltre === "hepsi" ? " aktif" : "")} onClick={() => { setTopFiltre("hepsi"); setTopGoster(24); }}><span className="top-mik" aria-hidden="true">👥</span> {t("toplulukHepsi", "Herkes")}</button>
-            <button className={"top-cip" + (topFiltre === "pro" ? " aktif" : "")} onClick={() => { setTopFiltre("pro"); setTopGoster(24); }}><span className="top-mik" aria-hidden="true">💼</span> {t("toplulukPro", "Profesyoneller")}</button>
-            <button className={"top-cip" + (topFiltre === "yakin" ? " aktif" : "")} onClick={() => { setTopFiltre("yakin"); setTopGoster(24); }}><span className="top-mik" aria-hidden="true">📍</span> {t("toplulukYakin", "Yakınımdakiler")}</button>
-          </div>
-          {/* LİSTE */}
+          {/* KENDİ KARTIM — oluştur/düzenle (opt-in) */}
+          <button className={"tan-kartim-btn" + (benimTanismaVar ? " var" : "")} onClick={tanismaKartiAc}>
+            <span className="tkb-ik" aria-hidden="true">🪪</span>
+            <span className="tkb-yazi">{benimTanismaVar ? t("tanisKartDuzenle", "Tanışma kartımı düzenle") : t("tanisKartOlustur", "Tanışma kartımı oluştur")}</span>
+            <span className="tkb-ok" aria-hidden="true">›</span>
+          </button>
+          <div className="tan-bolum-bas">✨ {t("tanisanlar", "Tanışmak isteyenler")}</div>
+          {/* LİSTE — büyük fotoğraf kartları */}
           {topKisiler === null ? (
-            <div className="top-bos">💎 {t("toplulukYukleniyor", "Üyeler geliyor…")}</div>
-          ) : topluluktakiler.length === 0 ? (
-            <div className="top-bos">{topAra ? t("toplulukAramaBos", "Aramana uygun kimse bulunamadı.") : t("toplulukBos", "Henüz gösterilecek üye yok. Sen paylaştıkça topluluk büyür.")}</div>
+            <div className="top-bos">💞 {t("tanisYukleniyor", "Yükleniyor…")}</div>
+          ) : tanismacilar.length === 0 ? (
+            <div className="top-bos">{topAra ? t("tanisAramaBos", "Aramana uygun kimse yok.") : t("tanisBos", "Henüz kimse kart oluşturmadı. İlk sen ol — yukarıdan kendi kartını oluştur!")}</div>
           ) : (
-            <>
-              <div className="top-say">{topluluktakiler.length} {t("toplulukKisi", "kişi")}</div>
-              <div className="top-izgara">
-                {topluluktakiler.slice(0, topGoster).map((k) => {
-                  const takipli = takipSet.has(k.uid);
-                  return (
-                    <div className="top-kart" key={k.uid} style={{ "--mrenk": k.renk }}>
-                      <button className="top-kart-ust" onClick={() => uyeyiAc(k)}>
-                        <span className="top-kart-bant" style={{ background: k.bg }} aria-hidden="true" />
-                        <span className="top-av" style={{ boxShadow: "0 0 0 2.5px " + k.renk }}>{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" /> : k.bas}</span>
-                        <b className="top-ad notranslate" translate="no"><KayanYazi>{k.ad}</KayanYazi></b>
-                        <i className="top-meslek"><span className="top-mik" aria-hidden="true">{k.ik}</span> <KayanYazi>{(k.meslek || t("uye", "Üye")) + (k.sehir ? " · " + k.sehir : "")}</KayanYazi></i>
-                      </button>
-                      <div className="top-kart-islem">
-                        <button className={"top-takip" + (takipli ? " ediliyor" : "")} onClick={() => takipToggle(k)} aria-label={takipli ? t("takipEdiliyor", "Takip ✓") : t("takipEt", "+ Takip")}><KayanYazi>{takipli ? t("takipEdiliyor", "Takip ✓") : t("takipEt", "+ Takip")}</KayanYazi></button>
-                        <button className="top-mesaj" onClick={() => sohbetAc({ uid: k.uid, ad: k.ad, foto: k.foto })} aria-label={t("mesaj", "Mesaj")}><span aria-hidden="true">💬</span> <KayanYazi>{t("mesaj", "Mesaj")}</KayanYazi></button>
+            <div className="tan-liste">
+              {tanismacilar.map((k) => {
+                const fi = k.fotolar.length ? ((tanFotoIdx[k.uid] || 0) % k.fotolar.length) : 0;
+                return (
+                  <div className="tan-kisi" key={k.uid}>
+                    <div className="tan-foto" onClick={() => { if (k.fotolar.length > 1) setTanFotoIdx((m) => ({ ...m, [k.uid]: (((m[k.uid] || 0) + 1) % k.fotolar.length) })); }}>
+                      <img src={k.fotolar[fi]} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
+                      {k.fotolar.length > 1 && <div className="tan-dots">{k.fotolar.map((_, di) => <i key={di} className={di === fi ? "akt" : ""} />)}</div>}
+                      {k.ben && <span className="tan-benim">{t("tanisSeninKartin", "Senin kartın")}</span>}
+                      <div className="tan-golge">
+                        <div className="tan-ad notranslate" translate="no">{k.ad}</div>
+                        {(k.sehir || k.ulke) && <div className="tan-yer">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}</div>}
+                        {k.bio && <div className="tan-bio">{k.bio}</div>}
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="tan-islem">
+                      {k.ben ? (
+                        <button className="tan-mesaj tan-tek" onClick={tanismaKartiAc}>✏️ {t("tanisDuzenle", "Kartımı düzenle")}</button>
+                      ) : (<>
+                        <button className={"tan-begen" + (takipSet.has(k.uid) ? " ediliyor" : "")} onClick={() => takipToggle({ uid: k.uid, ad: k.ad, foto: k.fotolar[0] })}>❤️ {takipSet.has(k.uid) ? t("tanisBegenildi", "Beğenildi") : t("tanisBegen", "Beğen")}</button>
+                        <button className="tan-mesaj" onClick={() => sohbetAc({ uid: k.uid, ad: k.ad, foto: k.fotolar[0] })}>💬 {t("mesaj", "Mesaj")}</button>
+                      </>)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {/* KART OLUŞTUR/DÜZENLE FORMU */}
+          {tanismaKartAcik && (
+            <div className="tan-form-fon" onClick={(e) => { if (e.target === e.currentTarget) setTanismaKartAcik(false); }}>
+              <div className="tan-form" onClick={(e) => e.stopPropagation()}>
+                <div className="tan-form-bas">
+                  <span>🪪 {t("tanisKartim", "Tanışma Kartım")}</span>
+                  <button className="tan-form-kapat" onClick={() => setTanismaKartAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+                </div>
+                <p className="tan-form-not">{t("tanisFormNot", "Kendi fotoğraflarını yükle (1-3), istediğin ismi yaz, kısaca kendini tanıt. İstemezsen listede görünmezsin.")}</p>
+                <div className="tan-form-fotolar">
+                  {[0, 1, 2].map((i) => (
+                    <div className="tan-slot" key={i}>
+                      {tKFotolar[i] ? (<><img src={tKFotolar[i]} alt="" /><button className="tan-slot-sil" onClick={() => tanismaFotoSil(i)} aria-label={t("sil", "Sil")}>✕</button></>)
+                        : <label className="tan-slot-ekle">＋<input type="file" accept="image/*" multiple style={{ display: "none" }} onChange={tanismaFotoSec} /></label>}
+                    </div>
+                  ))}
+                </div>
+                <input className="tan-form-ad" value={tKAd} onChange={(e) => setTKAd(e.target.value)} maxLength={40} placeholder={t("tanisAdYer", "Görünecek isim (ne istersen)")} />
+                <textarea className="tan-form-bio" value={tKBio} onChange={(e) => setTKBio(e.target.value)} maxLength={240} rows={3} placeholder={t("tanisBioYer", "Kısa tanıtım: kendinden bahset…")} />
+                <button className="tan-form-kaydet" onClick={tanismaKartKaydet} disabled={tanismaKaydediliyor}>{tanismaKaydediliyor ? t("tanisKaydediliyor", "Kaydediliyor…") : t("tanisKaydet", "Kaydet ve Yayınla")}</button>
+                {benimTanismaVar && <button className="tan-form-kaldir" onClick={tanismaKartKaldir}>{t("tanisKaldir", "Listeden gizlen")}</button>}
               </div>
-              {topluluktakiler.length > topGoster && (
-                <button className="top-daha" onClick={() => setTopGoster((n) => n + 24)}>{t("dahaGoster", "Daha fazla göster")}</button>
-              )}
-            </>
+            </div>
           )}
         </div>
       ) : (

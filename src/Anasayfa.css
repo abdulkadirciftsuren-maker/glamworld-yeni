@@ -4265,6 +4265,59 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 }
 @media (min-width:900px){ .top-izgara{ grid-template-columns:repeat(4,1fr); } }
 @media (min-width:1200px){ .top-pencere{ max-width:1100px; margin:0 auto; } }
+
+/* ═══════════ TANIŞMA (Topluluk) — kendi fotoğrafını yükle, tanış (dating gibi büyük kartlar) ═══════════ */
+.tan-pencere{ padding:4px 12px 96px; }
+@media (min-width:900px){ .tan-pencere{ max-width:720px; margin:0 auto; } }
+/* Kendi kartım düğmesi */
+.tan-kartim-btn{ width:100%; display:flex; align-items:center; gap:10px; border:1.6px solid #bff0d2; cursor:pointer; font-family:inherit;
+  background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; border-radius:15px; padding:14px 15px; margin-bottom:15px; box-shadow:0 4px 13px rgba(0,10,30,.35); }
+.tan-kartim-btn.var{ background:linear-gradient(160deg,#2b7fd0,#1c5aa0); border-color:#bcdcff; }
+.tan-kartim-btn:active{ transform:scale(.98); }
+.tkb-ik{ font-size:22px; }
+.tkb-yazi{ flex:1; text-align:left; font-weight:800; font-size:15.5px; }
+.tkb-ok{ font-size:22px; opacity:.85; }
+.tan-bolum-bas{ color:#ffe9a8; font-weight:800; font-size:15.5px; margin:2px 4px 12px; }
+/* Büyük tanışma kartı */
+.tan-liste{ display:flex; flex-direction:column; gap:16px; }
+.tan-kisi{ border-radius:20px; overflow:hidden; box-shadow:0 8px 22px rgba(0,10,30,.5); border:1px solid rgba(255,215,0,.35); background:#1a2f57; }
+.tan-foto{ position:relative; width:100%; aspect-ratio:4/5; display:flex; align-items:flex-end; cursor:pointer; background:radial-gradient(circle at 50% 34%, #3d63a0, #1a3560); overflow:hidden; }
+.tan-foto>img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.tan-dots{ position:absolute; top:12px; left:0; right:0; display:flex; gap:5px; justify-content:center; z-index:2; }
+.tan-dots i{ width:26px; height:4px; border-radius:3px; background:rgba(255,255,255,.5); box-shadow:0 1px 3px rgba(0,0,0,.4); }
+.tan-dots i.akt{ background:#ffe9a8; }
+.tan-benim{ position:absolute; top:12px; left:12px; z-index:2; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:12px; padding:5px 11px; border-radius:10px; box-shadow:0 2px 7px rgba(0,0,0,.35); }
+.tan-golge{ position:relative; z-index:1; width:100%; padding:38px 16px 14px; background:linear-gradient(to top, rgba(6,14,30,.86), rgba(6,14,30,.25) 68%, transparent); }
+.tan-ad{ color:#fff; font-size:22px; font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,.6); line-height:1.15; }
+.tan-yer{ color:#e6eeff; font-size:13.5px; margin-top:3px; text-shadow:0 1px 3px rgba(0,0,0,.5); }
+.tan-bio{ color:#fff; font-size:14px; margin-top:7px; opacity:.96; font-style:italic; text-shadow:0 1px 3px rgba(0,0,0,.5); line-height:1.35; }
+.tan-islem{ display:flex; gap:9px; padding:11px; background:linear-gradient(180deg,#26406e,#1a2f57); }
+.tan-islem button{ flex:1; border:none; border-radius:13px; padding:13px; font-weight:800; font-size:15px; font-family:inherit; cursor:pointer; }
+.tan-islem button:active{ transform:scale(.96); }
+.tan-begen{ background:linear-gradient(160deg,#ff8aa0,#e0293f); color:#fff; }
+.tan-begen.ediliyor{ background:linear-gradient(160deg,#ff5c78,#c81030); color:#fff; }
+.tan-mesaj{ background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; }
+.tan-tek{ flex:1; }
+/* KART OLUŞTUR/DÜZENLE FORMU (tam ekran örtü) */
+.tan-form-fon{ position:fixed; inset:0; z-index:1400; display:flex; align-items:flex-end; justify-content:center; background:rgba(8,18,38,.72); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.tan-form{ width:100%; max-width:520px; max-height:92vh; overflow-y:auto; box-sizing:border-box; padding:16px 15px calc(20px + env(safe-area-inset-bottom));
+  background:radial-gradient(ellipse at 50% 0%, #33568f, #1e386a 70%, #142b4f); border-radius:22px 22px 0 0; border:1.5px solid rgba(255,215,0,.5); box-shadow:0 -12px 44px rgba(0,0,0,.5); animation:tanFormGel .3s cubic-bezier(.16,1,.3,1); }
+@keyframes tanFormGel{ 0%{ transform:translateY(60px); opacity:0; } 100%{ transform:translateY(0); opacity:1; } }
+.tan-form-bas{ display:flex; align-items:center; justify-content:space-between; color:#ffe9a8; font-weight:800; font-size:18px; margin-bottom:6px; }
+.tan-form-kapat{ border:none; background:rgba(255,233,168,.16); color:#ffe9a8; width:32px; height:32px; border-radius:10px; font-size:17px; font-weight:800; cursor:pointer; }
+.tan-form-not{ color:#dbe7ff; font-size:13px; line-height:1.4; margin-bottom:12px; }
+.tan-form-fotolar{ display:flex; gap:9px; margin-bottom:13px; }
+.tan-slot{ position:relative; flex:1; aspect-ratio:3/4; border-radius:13px; overflow:hidden; background:rgba(255,255,255,.1); }
+.tan-slot>img{ width:100%; height:100%; object-fit:cover; }
+.tan-slot-ekle{ display:flex; align-items:center; justify-content:center; width:100%; height:100%; border:2px dashed rgba(255,233,168,.7); border-radius:13px; color:#ffe9a8; font-size:30px; cursor:pointer; }
+.tan-slot-sil{ position:absolute; top:5px; right:5px; border:none; background:rgba(10,18,36,.7); color:#fff; width:24px; height:24px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; }
+.tan-form-ad, .tan-form-bio{ width:100%; box-sizing:border-box; border:1.4px solid rgba(255,215,0,.5); border-radius:12px; padding:12px; font-size:15px; font-family:inherit; background:#fffdf5; color:#3a2c08; font-weight:600; outline:none; margin-bottom:11px; }
+.tan-form-bio{ resize:vertical; min-height:70px; }
+.tan-form-ad::placeholder, .tan-form-bio::placeholder{ color:#9a8446; }
+.tan-form-kaydet{ width:100%; border:none; border-radius:13px; padding:14px; font-weight:800; font-size:16px; font-family:inherit; cursor:pointer; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; box-shadow:0 3px 11px rgba(0,10,30,.35); }
+.tan-form-kaydet:disabled{ opacity:.6; }
+.tan-form-kaldir{ width:100%; border:none; background:none; color:#ffb3bd; font-weight:700; font-size:13.5px; padding:12px 0 2px; cursor:pointer; text-decoration:underline; }
+@media (min-width:560px){ .tan-ad{ font-size:24px; } .tan-bio{ font-size:15px; } .tan-kartim-btn{ font-size:16px; } }
 /* BİLGİSAYAR: şeritler feed ile AYNI ortalı genişlikte (kullanıcı: "geniş ekranda o kadar yayma, sağdan sola geniş yapma"). Yayma İPTAL. */
 @media (min-width:1000px){
   .alt-serit-bas h3{ font-size:18px; }
