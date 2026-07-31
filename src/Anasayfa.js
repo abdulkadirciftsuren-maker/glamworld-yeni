@@ -1972,14 +1972,17 @@ export default function Anasayfa({ pro = false }) {
       return T[dilK] || T.en;
     })();
     try { localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
-    setMaskotTanit(true); setMaskotMini(false); setYardimciMod("sohbet"); // maskot açılır; YAZI aşağıda KONUŞMAYLA BİRLİKTE gelir (erken değil)
-    // KULLANICI İSTEĞİ: "erken yazı gelmesin, konuşmayla beraber gelsin". Yazıyı, konuşma BAŞLAYINCA (onCumle) göster.
-    // idempotent (m || selam): bir kez set eder → onCumle ve emniyet zamanlayıcısı çakışmaz.
-    const yaziGoster = () => setMaskotMetni((m) => m || selam);
+    setMaskotMini(false); setYardimciMod("sohbet");
+    // KULLANICI İSTEĞİ: Gloxoo ORTADA BOŞUNA/SESSİZ çıkmasın. MASKOT + YAZI + SES hepsi BİRLİKTE gelsin.
+    // → Açılış (oto) karşılamasında maskot HEMEN açılmaz; KONUŞMA BAŞLAYINCA (onCumle) maskot+yazı+ses birlikte çıkar.
+    //   Kullanıcı KENDİSİ dokunduysa (oto değil) maskot HEMEN açılır (dokunmaya cevap), yazı yine konuşmayla gelir.
+    let gosterildi = false;
+    const goster = () => { if (gosterildi) return; gosterildi = true; try { setMaskotMetni(selam); setMaskotTanit(true); } catch (e) {} };
+    if (!oto) goster(); // kullanıcı dokundu → maskot hemen görünsün
     // İLK AÇILIŞ (oto) karşılaması SESLİ BİTİNCE maskot kendini KAPATIR. Kullanıcı KENDİSİ dokununca BÜYÜK kalır.
     const bitince = oto ? () => { try { setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); } catch (e) {} } : undefined;
-    try { sesliOku(selam, bitince, yaziGoster, teleIlerleme); } catch (e) { yaziGoster(); }
-    setTimeout(yaziGoster, 3500); // EMNİYET: ses hiç gelmezse yazı en geç 3.5 sn'de çıksın (görünmeden kalmasın)
+    try { sesliOku(selam, bitince, goster, teleIlerleme); } catch (e) { goster(); } // onCumle=goster → konuşma başlayınca maskot+yazı birlikte
+    if (oto) setTimeout(goster, 4000); // EMNİYET: ses hiç gelmezse en geç 4 sn'de maskot+yazı yine çıksın (görünmeden kalmasın)
     if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
   };
   // YENİ ÜYE KARŞILAMASI — ilk kez kayıt olan kişi: Gloxoo BÜYÜK açılır, KAPANMAZ (okusun); kendini + GLOXORG + gloxorg.com
