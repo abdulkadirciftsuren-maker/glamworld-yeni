@@ -1972,11 +1972,14 @@ export default function Anasayfa({ pro = false }) {
       return T[dilK] || T.en;
     })();
     try { localStorage.setItem("groxMaskotTanitildi", "1"); } catch (e) {}
-    setMaskotMetni(selam); setMaskotTanit(true); setMaskotMini(false); setYardimciMod("sohbet");
-    // İLK AÇILIŞ (oto) karşılaması SESLİ BİTİNCE maskot kendini KAPATIR (köşedeki yerine çekilir, ortada büyük durmaz).
-    // Kullanıcı KENDİSİ dokununca (oto değil) BÜYÜK kalır, kapatmayı kullanıcı yapar.
+    setMaskotTanit(true); setMaskotMini(false); setYardimciMod("sohbet"); // maskot açılır; YAZI aşağıda KONUŞMAYLA BİRLİKTE gelir (erken değil)
+    // KULLANICI İSTEĞİ: "erken yazı gelmesin, konuşmayla beraber gelsin". Yazıyı, konuşma BAŞLAYINCA (onCumle) göster.
+    // idempotent (m || selam): bir kez set eder → onCumle ve emniyet zamanlayıcısı çakışmaz.
+    const yaziGoster = () => setMaskotMetni((m) => m || selam);
+    // İLK AÇILIŞ (oto) karşılaması SESLİ BİTİNCE maskot kendini KAPATIR. Kullanıcı KENDİSİ dokununca BÜYÜK kalır.
     const bitince = oto ? () => { try { setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); } catch (e) {} } : undefined;
-    try { sesliOku(selam, bitince, undefined, teleIlerleme); } catch (e) {}
+    try { sesliOku(selam, bitince, yaziGoster, teleIlerleme); } catch (e) { yaziGoster(); }
+    setTimeout(yaziGoster, 3500); // EMNİYET: ses hiç gelmezse yazı en geç 3.5 sn'de çıksın (görünmeden kalmasın)
     if (!oto) maskotCanliBaslat(); // karşılama bitince mikrofonu aç (OTOMATİK açılışta DEĞİL — mikrofon izni ilk dokunuşta istenir)
   };
   // YENİ ÜYE KARŞILAMASI — ilk kez kayıt olan kişi: Gloxoo BÜYÜK açılır, KAPANMAZ (okusun); kendini + GLOXORG + gloxorg.com
