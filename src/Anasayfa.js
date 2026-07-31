@@ -7353,7 +7353,6 @@ export default function Anasayfa({ pro = false }) {
     /* DİKKAT: köke "ana-pro" sınıfı VERME — CSS'te eski yatay kaydırma sınıfı (.ana-pro)
        ile çakışır, bütün sayfayı yana dizer (B108 siyah ekran hatasının sebebi buydu). */
     <div ref={kokRef} className={"ana-kok" + (pro ? " ana-kok-pro" : "") + " sayfa-" + aktifKod + (ustPencereVar ? " pencere-acik" : "")} onTouchStart={kaydirBas} onTouchEnd={kaydirBit}
-      style={{ background: "#f3ead6" }}
       onContextMenu={(e) => { try { if (!(e.target.closest && e.target.closest('input, textarea, [contenteditable="true"]'))) e.preventDefault(); } catch (x) {} }}>
       {/* ARKA PLAN FOTO — ekrana SABİT (gerçek ekran yüksekliği); sayfa kaysa/adres çubuğu oynasa ZIPLAMAZ, alttan açıklık vermez */}
       {/* Arka plan: şehir fotoğrafı ama ÜSTÜNDE AÇIK GECE MAVİSİ perde (derin) — kullanıcı zemin mavi olsun dedi; foto hafif doku verir, renk mavidir. */}
