@@ -1491,6 +1491,8 @@ export default function Anasayfa({ pro = false }) {
   const [aiSohbetYaziliyor, setAiSohbetYaziliyor] = useState(false);
   const aiFotoUretiliyorRef = useRef(false);        // avatar üretimi aynı anda bir kez çalışsın
   const aiSohbetAkisRef = useRef(null);             // AI sohbet akışı — otomatik en alta kaydır
+  const [aiAramaSonuc, setAiAramaSonuc] = useState(null); // AKILLI ARAMA sonucu: null=normal, [id...]=AI'nın bulduğu kişiler (sıralı)
+  const [aiAraniyor, setAiAraniyor] = useState(false);    // akıllı arama sürüyor mu
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
@@ -3795,19 +3797,20 @@ export default function Anasayfa({ pro = false }) {
         return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, yas: k.tanismaYas || "", durum: k.tanismaDurum || "", arayis: k.tanismaArayis || "", ben: id === benUid };
       });
     let f = liste;
-    if (q) f = f.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
+    if (aiAramaSonuc) { const s = new Set(aiAramaSonuc); f = f.filter((k) => s.has(k.uid)); } // AKILLI ARAMA: AI'nın bulduğu kişiler
+    else if (q) f = f.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
     return f.sort((a, b) => (b.ben ? 1 : 0) - (a.ben ? 1 : 0)); // kendi kartım üstte
-  }, [topKisiler, topAra, benUid]);
+  }, [topKisiler, topAra, benUid, aiAramaSonuc]);
   // Kendi tanışma kartım var mı (profilimde)?
   const benimTanismaVar = !!(profilBilgi && profilBilgi.tanismaAktif && Array.isArray(profilBilgi.tanismaFotolar) && profilBilgi.tanismaFotolar.length);
   // YAPAY ZEKÂ tanışma arkadaşları (açıkça etiketli) — cinsiyet filtresi + arama
   const aiTanisanlar = useMemo(() => {
     const q = topAra.trim().toLowerCase();
     let l = TANISMA_AI.map((k) => ({ uid: k.id, ad: k.ad, yas: k.yas, sehir: k.sehir, ulke: k.ulke, arayis: k.arayis, bio: k.bio, foto: aiFoto[k.id] || "", persona: k }));
-    if (aiCins !== "hepsi") l = l.filter((k) => k.persona.c === aiCins);
-    if (q) l = l.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
+    if (aiAramaSonuc) { const s = new Set(aiAramaSonuc); l = l.filter((k) => s.has(k.uid)); } // AKILLI ARAMA
+    else { if (aiCins !== "hepsi") l = l.filter((k) => k.persona.c === aiCins); if (q) l = l.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1); }
     return l;
-  }, [aiFoto, aiCins, topAra]);
+  }, [aiFoto, aiCins, topAra, aiAramaSonuc]);
   // İş İlanları: tur === "is" olan paylaşımlar
   const ilanlar = useMemo(() => gercekAkis.filter((p) => p.tur === "is").slice(0, 12), [gercekAkis]);
   // Trend: paylaşım metinlerindeki #etiketler (en çok geçenler)
@@ -4540,6 +4543,33 @@ export default function Anasayfa({ pro = false }) {
     setAiSohbetYazi(""); setAiSohbetMesajlar(yeni); kaydetAIsohbet(k.id, yeni);
     aiSohbetIste(k, yeni, false);
   }
+  // ── AKILLI ARAMA — doğal cümleyi yapay zekâya ver, uygun kişileri (gerçek + AI) bulsun ──
+  const arayisMetin = { arkadaslik: "arkadaşlık", sohbet: "sohbet", flort: "flört", evlilik: "evlilik" };
+  async function aiAkilliAra() {
+    const q = (topAra || "").trim();
+    if (!q || aiAraniyor) return;
+    setAiAraniyor(true);
+    try {
+      // ADAYLAR: gerçek (opt-in) üyeler + yapay zekâ arkadaşları
+      const gercekler = (topKisiler || [])
+        .filter((k) => k && k.tanismaAktif && Array.isArray(k.tanismaFotolar) && k.tanismaFotolar.length && (k.id || k.uid) !== benUid)
+        .map((k) => ({ id: k.id || k.uid, ad: k.tanismaAd || k.ad || "—", yas: k.tanismaYas || "?", sehir: k.sehir || (k.konum && k.konum.sehir) || "", ulke: k.ulke || (k.konum && k.konum.ulke) || "", durum: k.tanismaDurum || "", arayis: k.tanismaArayis || "", bio: k.tanismaBio || "", tur: "gerçek üye" }));
+      const ailer = TANISMA_AI.map((k) => ({ id: k.id, ad: k.ad, yas: k.yas, sehir: k.sehir, ulke: k.ulke, durum: "", arayis: k.arayis, cins: k.c === "k" ? "kadın" : "erkek", bio: k.bio, tur: "yapay zekâ arkadaşı" }));
+      const adaylar = [...gercekler, ...ailer];
+      const satirlar = adaylar.map((a) => `${a.id} | ${a.ad}, ${a.yas} yaş, ${a.cins || ""} ${[a.sehir, a.ulke].filter(Boolean).join("/")}, durum:${a.durum || "-"}, arayış:${arayisMetin[a.arayis] || "-"}, "${(a.bio || "").slice(0, 80)}"`).join("\n");
+      const sistem = "Sen bir tanışma arama yardımcısısın. Aşağıda kişi listesi var (her satır: id | özellikler). Kullanıcının isteğine EN UYGUN kişilerin SADECE id'lerini, en uygundan başlayarak, VİRGÜLLE ayırıp ver. Yaş/şehir/ülke/medeni durum/arayış (arkadaşlık/sohbet/flört/evlilik) ve ilgi alanlarına göre eşleştir. Sadece id listesi yaz (örn: ai_k2, ai_e1). Hiç uygun yoksa 'YOK' yaz. Başka HİÇBİR şey yazma.";
+      const mesaj = `İSTEK: "${q}"\n\nKİŞİLER:\n${satirlar}`;
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar: [{ role: "user", content: mesaj }], sistem }) });
+      let cevap = ""; if (r.ok) { const v = await r.json(); cevap = ((v && v.metin) || "").trim(); }
+      const gecerli = new Set(adaylar.map((a) => a.id));
+      const idler = (cevap.match(/(ai_[ke]\d+|[A-Za-z0-9]{6,})/g) || []).filter((x) => gecerli.has(x));
+      // sıralamayı koru + tekilleştir
+      const sonuc = []; idler.forEach((x) => { if (!sonuc.includes(x)) sonuc.push(x); });
+      setAiAramaSonuc(sonuc); // boş dizi olsa bile: "sonuç yok" gösterilir
+    } catch (e) { setAiAramaSonuc([]); }
+    setAiAraniyor(false);
+  }
+  function akilliAramaTemizle() { setAiAramaSonuc(null); setTopAra(""); }
   // PAYLAŞ — telefonun yerel paylaş menüsü. FOTO/VİDEO varsa DOSYA olarak paylaş (filigranlı GLOXORG karşı platforma/WhatsApp'a gider); yoksa link.
   async function paylasNative(p) {
     const metin = (p && (p.yazi || p.baslik || p.ad)) || "";
@@ -8314,12 +8344,22 @@ export default function Anasayfa({ pro = false }) {
             <h3 className="top-bas">{t("tanisBaslik", "Tanış")}</h3>
             <p className="top-alt">{t("tanisTanit", "Kendini tanıt, yeni insanlarla tanış.")}</p>
           </div>
-          {/* ARAMA — isim/şehir/ülke/tanıtım (ülke adı yazınca o ülkedekiler gelir) */}
+          {/* ARAMA — hem hızlı metin araması hem YAPAY ZEKÂ ile akıllı arama (doğal cümle) */}
           <div className="top-ara-sar">
             <svg className="top-ara-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-            <input className="top-ara-input" value={topAra} onChange={(e) => setTopAra(e.target.value)} placeholder={t("tanisAra", "İsim, şehir veya ülke ara…")} />
-            {topAra && <button className="top-ara-temizle" onClick={() => setTopAra("")} aria-label={t("temizle", "Temizle")}>✕</button>}
+            <input className="top-ara-input" value={topAra} onChange={(e) => { setTopAra(e.target.value); if (aiAramaSonuc) setAiAramaSonuc(null); }} onKeyDown={(e) => { if (e.key === "Enter") aiAkilliAra(); }} placeholder={t("tanisAra3", "Ara veya yapay zekâya sor…")} />
+            {topAra && <button className="top-ara-temizle" onClick={akilliAramaTemizle} aria-label={t("temizle", "Temizle")}>✕</button>}
           </div>
+          <button className="tan-ai-ara-btn" onClick={aiAkilliAra} disabled={aiAraniyor || !topAra.trim()}>
+            {aiAraniyor ? "⏳ " + t("aiAraniyor", "Yapay zekâ arıyor…") : "✨ " + t("aiIleAra", "Yapay zekâ ile akıllı ara")}
+          </button>
+          <p className="tan-ai-ara-ipuc">{t("aiAraIpuc", "Örn: “Ukrayna'da bekar, 30-40 yaş, evlilik için biri”")}</p>
+          {aiAramaSonuc && (
+            <div className="tan-ai-sonuc-serit">
+              <span>🔍 {aiAramaSonuc.length ? t("aiAramaSonucVar", "Yapay zekâ senin için buldu") : t("aiSonucYok", "Yapay zekâ uygun kimse bulamadı")}</span>
+              <button onClick={akilliAramaTemizle}>{t("temizle", "Temizle")} ✕</button>
+            </div>
+          )}
           {/* KENDİ KARTIM — oluştur/düzenle (opt-in) */}
           <button className={"tan-kartim-btn" + (benimTanismaVar ? " var" : "")} onClick={tanismaKartiAc}>
             <span className="tkb-ik" aria-hidden="true">🪪</span>

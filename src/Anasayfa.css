@@ -4337,6 +4337,14 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-ai-bolum-bas{ color:#bfe3ff; font-weight:800; font-size:16px; margin:24px 4px 3px; display:flex; align-items:center; gap:6px; }
 .tan-ai-not{ color:#c3d4f0; font-size:12.5px; line-height:1.4; margin:0 4px 11px; }
 .tan-ai-filtre{ margin-bottom:12px; }
+/* AKILLI ARAMA düğmesi + sonuç şeridi */
+.tan-ai-ara-btn{ width:100%; border:1.5px solid rgba(160,120,255,.7); cursor:pointer; font-family:inherit; font-weight:800; font-size:15px; padding:12px; border-radius:14px; margin:0 0 6px; color:#fff; background:linear-gradient(135deg,#7d5cff,#5a3fd0); box-shadow:0 4px 13px rgba(30,10,80,.4); }
+.tan-ai-ara-btn:disabled{ opacity:.55; }
+.tan-ai-ara-btn:active{ transform:scale(.98); }
+.tan-ai-ara-ipuc{ color:#c3d4f0; font-size:12px; font-style:italic; margin:0 4px 12px; text-align:center; }
+.tan-ai-sonuc-serit{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 2px 12px; padding:10px 13px; border-radius:13px; background:linear-gradient(135deg,#5a3fd0,#3a2694); border:1.4px solid rgba(190,160,255,.6); }
+.tan-ai-sonuc-serit span{ color:#fff; font-weight:700; font-size:13.5px; }
+.tan-ai-sonuc-serit button{ flex:none; border:none; cursor:pointer; background:rgba(255,255,255,.2); color:#fff; font-weight:800; font-size:12.5px; padding:7px 12px; border-radius:10px; }
 .tan-kisi-ai{ border-color:rgba(120,190,255,.55); }
 .tan-ai-rozet{ position:absolute; top:12px; left:12px; z-index:2; background:linear-gradient(160deg,#5aa6ff,#2b6fd0); color:#fff; font-weight:800; font-size:12px; padding:5px 11px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.4); text-shadow:0 1px 2px rgba(0,0,0,.3); }
 /* Avatar üretilene kadar bekleme (foto hazırlanıyor) */
