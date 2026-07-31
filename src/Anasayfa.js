@@ -149,6 +149,16 @@ const GEM_RENK = ["#dfeaff", "#2f6fd6", "#9b4fd6", "#1ea64f", "#f2a900", "#ff7ab
 const POST_RENK = ["#2f7fd6", "#1fc2c2", "#9b59b6", "#1ea64f", "#f2a900", "#ff7ab0", "#e0707a", "#5aa6e0", "#46d37a", "#c98bff"];
 // GERÇEK CLAUDE yapay zeka köprüsü (Cloudflare Worker) — anahtar köprüde GİZLİ, siteye yazılmaz
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
+// İki GPS noktası arası KUŞ UÇUŞU mesafe (km) — tanışma kartlarında "X km uzağında" için
+function _kmUzaklik(lat1, lon1, lat2, lon2) {
+  if ([lat1, lon1, lat2, lon2].some((v) => typeof v !== "number" || isNaN(v))) return null;
+  const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return km < 1 ? Math.max(1, Math.round(km * 10) / 10) : Math.round(km);
+}
+// Yapay zekâ karakteri için sabit (deterministik) yaklaşık km — id'den türetilir (her seferinde aynı, rastgele değil)
+function _aiKm(id) { let h = 0; for (let i = 0; i < (id || "").length; i++) h = (h * 31 + id.charCodeAt(i)) % 100000; return 2 + (h % 94); }
 // Uygulama sürümü (Gloxoo SADECE yeni sürümde/güncelleme sonrası ilk açılışta selamlar)
 const AKTIF_SURUM = (buildGecmisi && buildGecmisi[0]) ? (buildGecmisi[0].surum + ".B" + buildGecmisi[0].build) : "";
 // Hikâye YAZI STİLLERİ (Facebook gibi) — seçili yazıya uygulanır
@@ -3788,6 +3798,9 @@ export default function Anasayfa({ pro = false }) {
   // TANIŞANLAR — kartını oluşturmuş (opt-in) üyeler: kendi fotoğraf(lar)ı + istediği isim + tanıtım. Kendi kartım EN ÜSTTE.
   const tanismacilar = useMemo(() => {
     const q = topAra.trim().toLowerCase();
+    const pk = (profilBilgi && profilBilgi.konum) || {};
+    const benLat = konumLat != null ? konumLat : (typeof pk.lat === "number" ? pk.lat : null);
+    const benLon = konumLon != null ? konumLon : (typeof pk.lon === "number" ? pk.lon : null);
     const liste = (topKisiler || [])
       .filter((k) => k && k.tanismaAktif && Array.isArray(k.tanismaFotolar) && k.tanismaFotolar.length)
       .map((k) => {
@@ -3795,7 +3808,9 @@ export default function Anasayfa({ pro = false }) {
         const ad = k.tanismaAd || [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
         const sehir = k.sehir || (k.konum && k.konum.sehir) || "";
         const ulke = k.ulke || (k.konum && k.konum.ulke) || "";
-        return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, cins: k.tanismaCins || "", yas: k.tanismaYas || "", durum: k.tanismaDurum || "", arayis: k.tanismaArayis || "", ben: id === benUid };
+        const kl = k.konum && typeof k.konum.lat === "number" ? k.konum.lat : null, kn = k.konum && typeof k.konum.lon === "number" ? k.konum.lon : null;
+        const km = (benLat != null && benLon != null && kl != null && kn != null) ? _kmUzaklik(benLat, benLon, kl, kn) : null;
+        return { uid: id, ad, bio: k.tanismaBio || "", fotolar: k.tanismaFotolar.slice(0, 3), sehir, ulke, cins: k.tanismaCins || "", yas: k.tanismaYas || "", durum: k.tanismaDurum || "", arayis: k.tanismaArayis || "", km, ben: id === benUid };
       });
     let f = liste;
     if (aiAramaSonuc) { const s = new Set(aiAramaSonuc); f = f.filter((k) => s.has(k.uid)); } // AKILLI ARAMA: AI'nın bulduğu kişiler
@@ -3804,13 +3819,13 @@ export default function Anasayfa({ pro = false }) {
       if (q) f = f.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1);
     }
     return f.sort((a, b) => (b.ben ? 1 : 0) - (a.ben ? 1 : 0)); // kendi kartım üstte
-  }, [topKisiler, topAra, benUid, aiAramaSonuc, aiCins]);
+  }, [topKisiler, topAra, benUid, aiAramaSonuc, aiCins, konumLat, konumLon, profilBilgi]);
   // Kendi tanışma kartım var mı (profilimde)?
   const benimTanismaVar = !!(profilBilgi && profilBilgi.tanismaAktif && Array.isArray(profilBilgi.tanismaFotolar) && profilBilgi.tanismaFotolar.length);
   // YAPAY ZEKÂ tanışma arkadaşları (açıkça etiketli) — cinsiyet filtresi + arama
   const aiTanisanlar = useMemo(() => {
     const q = topAra.trim().toLowerCase();
-    let l = TANISMA_AI.map((k) => ({ uid: k.id, ad: k.ad, yas: k.yas, sehir: k.sehir, ulke: k.ulke, arayis: k.arayis, bio: k.bio, foto: aiFoto[k.id] || "", persona: k }));
+    let l = TANISMA_AI.map((k) => ({ uid: k.id, ad: k.ad, yas: k.yas, sehir: k.sehir, ulke: k.ulke, arayis: k.arayis, bio: k.bio, km: _aiKm(k.id), foto: aiFoto[k.id] || "", persona: k }));
     if (aiAramaSonuc) { const s = new Set(aiAramaSonuc); l = l.filter((k) => s.has(k.uid)); } // AKILLI ARAMA
     else { if (aiCins !== "hepsi") l = l.filter((k) => k.persona.c === aiCins); if (q) l = l.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1); }
     return l;
@@ -7311,7 +7326,7 @@ export default function Anasayfa({ pro = false }) {
     try {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, .tan-cins-filtre, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -8403,7 +8418,7 @@ export default function Anasayfa({ pro = false }) {
                             {arayisEt && <span className="tan-rozet arayis">{arayisEt}</span>}
                           </div>
                         )}
-                        {(k.sehir || k.ulke) && <div className="tan-yer">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}</div>}
+                        {(k.sehir || k.ulke || (!k.ben && k.km != null)) && <div className="tan-yer">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}{!k.ben && k.km != null ? <span className="tan-km"> · {k.km} km {t("uzaginda", "uzağında")}</span> : null}</div>}
                         {k.bio && <div className="tan-bio">{k.bio}</div>}
                       </div>
                     </div>
@@ -8423,28 +8438,22 @@ export default function Anasayfa({ pro = false }) {
           {/* ── YAPAY ZEKÂ SOHBET ARKADAŞLARI — açıkça "🤖 Yapay Zekâ" etiketli (gerçek kişi DEĞİL). Filtre YUKARIDA (herkes için). ── */}
           <div className="tan-ai-bolum-bas">🤖 {t("tanisAIbas", "Yapay Zekâ sohbet arkadaşları")}</div>
           <p className="tan-ai-not">{t("tanisAInot", "Bunlar gerçek kişi değil — GLOXORG'un yapay zekâ arkadaşları. İstediğin zaman sohbet edebilirsin, kendini tanıtır 💬")}</p>
-          <div className="tan-liste">
-            {aiTanisanlar.map((k) => {
-              const arayisEt = { arkadaslik: "🤝 " + t("arArkadaslik", "Arkadaşlık"), sohbet: "💬 " + t("arSohbet", "Sohbet"), flort: "💘 " + t("arFlort", "Flört"), evlilik: "💍 " + t("arEvlilik", "Evlilik") }[k.arayis];
-              return (
-                <div className="tan-kisi tan-kisi-ai" key={k.uid}>
-                  <div className="tan-foto" onClick={() => aiSohbetAc(k.persona)}>
-                    {k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
-                      : <div className="tan-foto-bekle"><span className="tan-foto-bekle-harf">{(k.ad[0] || "?").toUpperCase()}</span><span className="tan-foto-bekle-yaz">🎨 {t("tanisFotoHaz", "fotoğraf hazırlanıyor…")}</span></div>}
-                    <span className="tan-ai-rozet">🤖 {t("yapayZeka", "Yapay Zekâ")}</span>
-                    <div className="tan-golge">
-                      <div className="tan-ad notranslate" translate="no">{k.ad}<span className="tan-yas"> · {k.yas}</span></div>
-                      <div className="tan-rozetler">{arayisEt && <span className="tan-rozet arayis">{arayisEt}</span>}</div>
-                      {(k.sehir || k.ulke) && <div className="tan-yer">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}</div>}
-                      {k.bio && <div className="tan-bio">{k.bio}</div>}
-                    </div>
-                  </div>
-                  <div className="tan-islem">
-                    <button className="tan-mesaj tan-tek" onClick={() => aiSohbetAc(k.persona)}>💬 {t("tanisSohbetEt", "Sohbet et")}</button>
-                  </div>
+          {/* SOLDAN-SAĞA kayan şerit (yukarı-aşağı değil). .tan-ai-serit swipe-muaf listede → kaydırınca SAYFA DEĞİŞMEZ. */}
+          <div className="tan-ai-serit">
+            {aiTanisanlar.map((k) => (
+              <div className="tan-ai-kart" key={k.uid} onClick={() => aiSohbetAc(k.persona)}>
+                <div className="tan-ai-kart-foto">
+                  {k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
+                    : <div className="tan-foto-bekle"><span className="tan-foto-bekle-harf">{(k.ad[0] || "?").toUpperCase()}</span></div>}
+                  <span className="tan-ai-rozet-mini">🤖 {t("yapayZeka", "Yapay Zekâ")}</span>
                 </div>
-              );
-            })}
+                <div className="tan-ai-kart-bilgi">
+                  <b className="notranslate" translate="no">{k.ad}<span className="tan-yas"> · {k.yas}</span></b>
+                  <i className="tan-km">📍 ≈ {k.km} km {t("uzaginda", "uzağında")}</i>
+                </div>
+                <button className="tan-ai-kart-btn" onClick={(e) => { e.stopPropagation(); aiSohbetAc(k.persona); }}>💬 {t("tanisSohbetEt", "Sohbet et")}</button>
+              </div>
+            ))}
           </div>
           {/* KART OLUŞTUR/DÜZENLE FORMU */}
           {tanismaKartAcik && (
