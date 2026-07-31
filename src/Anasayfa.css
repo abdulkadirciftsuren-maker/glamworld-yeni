@@ -1670,10 +1670,11 @@
 /* TOPLULUK zemini: CANLI YEŞİL — Topluluk ikonunun rengi (kullanıcı: "zemin ikonun renginde olsun, yeşil"). Parlak/canlı, siyaha yakın DEĞİL. */
 .ana-kok.sayfa-topluluk{ background:radial-gradient(ellipse at 50% 20%, #35c46e 0%, #1f9d54 42%, #167a40 72%, #0f5e31 100%) !important; }
 .ana-kok.sayfa-topluluk .ana-arka-foto{ display:none !important; }
-.ana-kok.sayfa-video{ background:radial-gradient(140% 120% at 50% 28%, #2e1340 0%, #1e0d2e 45%, #110718 78%, #08040e 100%); }
-.ana-kok.sayfa-konum{ background:radial-gradient(140% 120% at 50% 28%, #0a3a44 0%, #08262e 45%, #06151a 78%, #030b0e 100%); }
-.ana-kok.sayfa-akademi{ background:radial-gradient(140% 120% at 50% 28%, #2f3310 0%, #20240a 45%, #131506 78%, #080a04 100%); }
-.ana-kok.sayfa-profil{ background:radial-gradient(140% 120% at 50% 28%, #1c2738 0%, #131c2a 45%, #0b121c 78%, #06090f 100%); }
+/* HER SAYFA KENDİ NAV İKONUNUN CANLI RENGİNDE (kullanıcı: "bütün sayfalar ikon renginde olsun"). Siyaha yakın koyu tonlar KALDIRILDI. */
+.ana-kok.sayfa-video{ background:radial-gradient(ellipse at 50% 20%, #a55cf0 0%, #7d3fd0 42%, #5a2aa0 72%, #3f1c78 100%); }   /* mor ikon */
+.ana-kok.sayfa-konum{ background:radial-gradient(ellipse at 50% 20%, #34c4c4 0%, #1f9d9d 42%, #167a7a 72%, #0f5e5e 100%); }   /* turkuaz ikon */
+.ana-kok.sayfa-akademi{ background:radial-gradient(ellipse at 50% 20%, #97a82b 0%, #78891c 42%, #5c6c14 72%, #46540e 100%); } /* zeytin ikon (altın yazı okunsun diye biraz koyu) */
+.ana-kok.sayfa-profil{ background:radial-gradient(ellipse at 50% 20%, #3a5488 0%, #263a63 45%, #1a2b4d 78%, #122038 100%); }  /* profil (beyaz ikon → zarif mavi; açık yazılar okunur kalsın) */
 /* ANA SAYFA (home): AÇIK GECE MAVİSİ derin zemin — kullanıcı seçti (krem/sarı gitti). Home'a ÖZEL kural (base ezilmesin). */
 /* ⛔ ZEMİN — BEJ (kullanıcı: "bej yap zemini") + koyu-açık DERİNLİK: üstten hafif AÇIK bej → alta biraz KOYU bej, yumuşak geçiş.
    Sıcak, zarif, sade; başlığa (gold GLOXORG) dokunulmadı. Bejde okunmayan açık başlıklar aşağıda koyulaştırıldı. */
