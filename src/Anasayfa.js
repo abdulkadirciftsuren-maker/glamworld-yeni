@@ -5076,27 +5076,50 @@ export default function Anasayfa({ pro = false }) {
           // Ses üretimi (Gemini/Vertex) — parça başına ZAMAN AŞIMI: 9 sn'de gelmezse null döner → o parça ATLANIR,
           // zincir DEVAM eder. Böylece bir parça takılsa bile konuşma ortada donup kalmaz (kullanıcı: "yarıda kesilip takılıyor").
           const uret = gloxooSesUret(parcalar[idx], dilK, gloxSesRef.current).then((r) => (r && r.dataUrl) ? r.dataUrl : { _hata: (r && r.hata) || "" }).catch(() => null);
-          const zamanAsimi = new Promise((res) => setTimeout(() => res(null), 9000));
+          const zamanAsimi = new Promise((res) => setTimeout(() => res(null), 20000)); // 9->20 sn: yavaş gelen cümle ATILMASIN (yine gelmezse tarayıcı sesiyle okunur, atlanmaz)
           sesCache[idx] = Promise.race([uret, zamanAsimi]);
         }
         return sesCache[idx];
       };
       const bitir = () => { durduruldu = true; if (sesZinciriIptalRef.current) sesZinciriIptalRef.current = null; aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = false; setAiKonusuyor(false); if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
+      // BİR CÜMLEYİ TARAYICI SESİYLE OKU (gerçek ses o parçaya gelmezse) → HİÇBİR renkli cümle sessiz ATLANMASIN.
+      // (kullanıcı: "yazıyı hepsini okumuyor, bazı renkli cümleleri es geçip başka renge atlıyor".) İmleç de bu cümlede ilerler.
+      const tarayiciParcaOku = (txt, buBas, cLen, next) => {
+        let gecti = false, ilerIv = null, guard = null;
+        const bit = () => { if (gecti) return; gecti = true; try { clearInterval(ilerIv); } catch (e) {} try { clearTimeout(guard); } catch (e) {} try { if (typeof onIlerleme === "function") onIlerleme(Math.min(1, (buBas + cLen) / toplamChar)); } catch (e) {} try { next(); } catch (e) {} };
+        try {
+          if (durduruldu || !("speechSynthesis" in window) || !txt) { bit(); return; }
+          const utter = new SpeechSynthesisUtterance(String(txt).replace(/Gloxoo/gi, "Gloksu").replace(/GLOXORG/gi, "Gloksorg"));
+          try { utter.lang = aiSesKodu(aiDilRef.current); } catch (e) {}
+          utter.rate = 1; utter.pitch = 1;
+          try { const vs = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || []; const lk = (utter.lang || "tr").toLowerCase(), kok = lk.split("-")[0]; const dl = vs.filter((v) => v.lang && (v.lang.toLowerCase() === lk || v.lang.toLowerCase().startsWith(kok))); const v = dl.find((vv) => /natural|neural|online|google/i.test(vv.name || "")) || dl.find((vv) => vv.localService === false) || dl[0]; if (v) utter.voice = v; } catch (e) {}
+          aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now();
+          const sure = Math.max(1200, cLen * 90), t0 = Date.now();
+          if (typeof onIlerleme === "function") ilerIv = setInterval(() => { const fr = Math.min(0.95, (Date.now() - t0) / sure); try { onIlerleme(Math.min(1, (buBas + fr * cLen) / toplamChar)); } catch (e) {} konusIlerRef.current = Date.now(); }, 90);
+          utter.onend = bit; utter.onerror = bit;
+          guard = setTimeout(bit, sure + 8000);     // ne olursa olsun asla takılmasın → sonraki cümleye geç
+          try { window.speechSynthesis.speak(utter); } catch (e) { bit(); }
+        } catch (e) { bit(); }
+      };
       const oynatSira = async (idx) => {
         if (durduruldu) return;
         if (idx >= parcalar.length) { bitir(); return; }             // hepsi bitti
-        const sonuc = await sesGetir(idx);
+        let sonuc = await sesGetir(idx);
         if (durduruldu) return;
-        const url = (typeof sonuc === "string") ? sonuc : null;
+        let url = (typeof sonuc === "string") ? sonuc : null;
         if (!url) {
           if (idx === 0 && oncekiChar === 0) {                        // İLK parça hiç gelmedi → tarayıcı sesine düş
             const h = (sonuc && sonuc._hata ? String(sonuc._hata) : "").toLowerCase();
             if (/permission|denied|invalid|401|403|quota|billing|not.?enabled|not found|access|api key|unauthenticated|resource.?exhausted/.test(h)) gercekSesKapaliRef.current = true;
             dus(); return;
           }
-          oncekiChar += uzun[idx]; try { if (typeof onIlerleme === "function") onIlerleme(Math.min(1, oncekiChar / toplamChar)); } catch (e) {} return oynatSira(idx + 1); // ortadaki parça gelmediyse atla (imleç de ilerlesin)
+          // ORTADAKİ parça gelmedi → CÜMLEYİ ATLAMA! Önce BİR KEZ taze dene; yine gelmezse bu cümleyi TARAYICI sesiyle oku.
+          sesCache[idx] = null; sonuc = await sesGetir(idx);
+          if (durduruldu) return;
+          url = (typeof sonuc === "string") ? sonuc : null;
+          if (!url) { sesGetir(idx + 1); tarayiciParcaOku(parcalar[idx], oncekiChar, uzun[idx], () => { if (durduruldu) return; oncekiChar += uzun[idx]; oynatSira(idx + 1); }); return; }
         }
-        sesGetir(idx + 1); sesGetir(idx + 2); sesGetir(idx + 3);      // SONRAKİ 3 parçayı şimdiden PARALEL hazırla → aradaki bekleme/kesilme biter
+        sesGetir(idx + 1); sesGetir(idx + 2);                         // SONRAKİ 2 parçayı şimdiden hazırla (3->2: aynı anda az istek → API takılıp cümle DÜŞÜRMESİN)
         const audio = new Audio(url);
         // DAHA YAVAŞ + DOĞAL KONUŞ (kullanıcı: "çok hızlı konuşuyor"). preservesPitch → ses inceltmeden yavaşlar.
         try { audio.preservesPitch = true; audio.mozPreservesPitch = true; audio.webkitPreservesPitch = true; audio.playbackRate = gloxHizRef.current || 0.9; } catch (e) {}
@@ -5125,7 +5148,7 @@ export default function Anasayfa({ pro = false }) {
         if (oynat && typeof oynat.catch === "function") oynat.catch(() => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { try { clearTimeout(capId); } catch (e) {} dus(); return; } sonraGec(); });
       };
       // BAŞTA ilk parçaları PARALEL hazırla (Gemini/Vertex sesleri aynı anda üretsin) → ilk ses hızlı başlar, sonrakiler hazır bekler.
-      for (let j = 0; j < Math.min(5, parcalar.length); j++) sesGetir(j);
+      for (let j = 0; j < Math.min(2, parcalar.length); j++) sesGetir(j);
       // NOT: Eskiden 4.5 sn'de tarayıcı (robotik) sesine düşüyordu → kullanıcı "ses robotik oldu" dedi. O erken düşme KALDIRILDI.
       // Artık GÜZEL ses (Google) ÖNCELİK: ilk parça için parça-başı 9 sn zaman aşımı yeter (o da gelmezse sesGetir null döner
       // → oynatSira ilk parçada tarayıcı sesine düşer). Böylece internet makulse HEP güzel ses, sadece gerçekten yavaşsa yedek.
