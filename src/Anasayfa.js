@@ -3703,10 +3703,18 @@ export default function Anasayfa({ pro = false }) {
   // GERÇEK AKIŞ — açılışta kayıtlı gönderileri oku (varsa örnek akışın ÜSTÜNE eklenir)
   // HIZ: ÖNCE az gönderi (24) çek → akış HEMEN dolsun (uzun bekleme biter). SONRA arkada tümünü (150) getir.
   useEffect(() => {
-    let iptal = false;
-    const yaz = (arr) => { if (iptal || !arr || !arr.length) return; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} };
-    gonderileriOku({}, 24).then(yaz).catch(() => {});                                   // 1) hızlı ilk dolum
-    const zmn = setTimeout(() => { gonderileriOku({}, 150).then(yaz).catch(() => {}); }, 1500); // 2) arkada tümü
+    let iptal = false, denedi = 0, doldu = false;
+    const yaz = (arr) => { if (iptal || !arr || !arr.length) return false; doldu = true; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} return true; };
+    // İLK DOLUM (24) — AĞ TAKILIP boş/başarısız dönerse TEKRAR DENE (artan bekleme). Böylece akış "Gönderiler geliyor…"da
+    // sonsuza kadar TAKILI KALMAZ; bağlantı düzelince gönderiler gelir (kullanıcı: "sayfa hiç yüklemiyor").
+    const cek = () => {
+      if (iptal || doldu) return;
+      gonderileriOku({}, 24)
+        .then((arr) => { if (!yaz(arr) && !iptal && !doldu && denedi < 6) { denedi++; setTimeout(cek, Math.min(8000, 1200 * denedi)); } })
+        .catch(() => { if (!iptal && !doldu && denedi < 6) { denedi++; setTimeout(cek, Math.min(8000, 1200 * denedi)); } });
+    };
+    cek();
+    const zmn = setTimeout(() => { if (!iptal) gonderileriOku({}, 150).then(yaz).catch(() => {}); }, 3000); // arkada tümü (150)
     return () => { iptal = true; clearTimeout(zmn); };
   }, []);
   // TAKİP ETTİKLERİM — giriş yapınca yükle (akış filtresi + düğme durumu için)
