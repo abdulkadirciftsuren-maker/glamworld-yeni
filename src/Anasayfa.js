@@ -7435,6 +7435,10 @@ export default function Anasayfa({ pro = false }) {
             {feedFiltre === "takip" && gercekAkis.filter((p) => { const h = p.uid || p.sahipUid; return h && takipSet.has(h); }).length === 0 && (
               <div className="ana-feed-bos">{t("feedTakipBos", "Henüz kimseyi takip etmiyorsun. Gönderilerdeki + Takip düğmesine bas; burada onların paylaşımları görünür.")}</div>
             )}
+            {/* AKIŞ İNERKEN boş beyaz kalmasın → nazik "geliyor" göstergesi (boş/bozuk gibi durmasın). Akışa DOKUNMAZ, sadece gösterge. */}
+            {feedFiltre !== "takip" && !etiketFiltre && gercekAkis.length === 0 && (
+              <div className="ana-feed-bos">💎 {t("feedYukleniyor", "Gönderiler geliyor…")}</div>
+            )}
             {/* ETİKET FİLTRE ÇUBUĞU — Trend/Popüler düğmesine basınca "#huzur gösteriliyor · Temizle" */}
             {etiketFiltre && (
               <div className="etiket-filtre-cubuk">
