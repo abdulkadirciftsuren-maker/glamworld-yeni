@@ -7326,7 +7326,7 @@ export default function Anasayfa({ pro = false }) {
     try {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, .tan-cins-filtre, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -8360,8 +8360,7 @@ export default function Anasayfa({ pro = false }) {
         /* TANIŞMA — kişi KENDİ fotoğraf(lar)ını + istediği ismi + tanıtımını girer (opt-in, kendi profiline); büyük kartlar, Beğen + Mesaj */
         <div className="ana-pencere tan-pencere" key="topluluk">
           <div className="top-bas-sar">
-            <div className="top-bas-ik" aria-hidden="true">💞</div>
-            <h3 className="top-bas">{t("tanisBaslik", "Tanış")}</h3>
+            <h3 className="top-bas"><span className="top-bas-kalp" aria-hidden="true">💞</span> {t("tanisBaslik", "Tanış")} <span className="top-bas-kalp" aria-hidden="true">💞</span></h3>
             <p className="top-alt">{t("tanisTanit", "Kendini tanıt, yeni insanlarla tanış.")}</p>
           </div>
           {/* ARAMA — hem hızlı metin araması hem YAPAY ZEKÂ ile akıllı arama (doğal cümle) */}

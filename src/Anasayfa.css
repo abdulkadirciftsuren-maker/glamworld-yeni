@@ -1667,8 +1667,8 @@
 /* HER PENCERENİN ALT ZEMİNİ KENDİ İKONUNUN RENGİNDE (ANAYASA: her sayfa kendine has).
    SADECE zemin değişir; ana sayfa (sayfa-home) gece mavisi AYNEN kalır. */
 .ana-kok.sayfa-elite{ background:radial-gradient(140% 120% at 50% 28%, #4a3a0e 0%, #2e2408 45%, #16110a 78%, #0b0805 100%); }
-/* TOPLULUK zemini: AÇIK GECE MAVİSİ (kullanıcı: "siyah/koyu/beyaz olmasın, açık mavi/gece mavisi kullan"). Eski koyu yeşil (siyaha yakın) KALDIRILDI. */
-.ana-kok.sayfa-topluluk{ background:radial-gradient(ellipse at 50% 20%, #3d63a0 0%, #294a7d 42%, #1a3560 72%, #142b4f 100%) !important; }
+/* TOPLULUK zemini: CANLI YEŞİL — Topluluk ikonunun rengi (kullanıcı: "zemin ikonun renginde olsun, yeşil"). Parlak/canlı, siyaha yakın DEĞİL. */
+.ana-kok.sayfa-topluluk{ background:radial-gradient(ellipse at 50% 20%, #35c46e 0%, #1f9d54 42%, #167a40 72%, #0f5e31 100%) !important; }
 .ana-kok.sayfa-topluluk .ana-arka-foto{ display:none !important; }
 .ana-kok.sayfa-video{ background:radial-gradient(140% 120% at 50% 28%, #2e1340 0%, #1e0d2e 45%, #110718 78%, #08040e 100%); }
 .ana-kok.sayfa-konum{ background:radial-gradient(140% 120% at 50% 28%, #0a3a44 0%, #08262e 45%, #06151a 78%, #030b0e 100%); }
@@ -4210,8 +4210,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .top-pencere{ padding:4px 12px 96px; }
 .top-bas-sar{ display:flex; flex-direction:column; align-items:center; gap:1px; text-align:center; margin:0 0 9px; }
 .top-bas-ik svg{ width:32px; height:32px; color:#FFD700; filter:drop-shadow(0 0 10px rgba(255,215,0,.55)); }
-.top-bas{ margin:1px 0 0; font-family:'Cinzel',serif; color:#FFE9A8; font-size:20px; letter-spacing:.05em; }
-.top-alt{ margin:0; color:#dbe7ff; font-style:italic; font-size:14px; }
+.top-bas{ margin:2px 0 0; font-family:'Cinzel',serif; color:#FFE9A8; font-size:22px; letter-spacing:.04em; display:flex; align-items:center; justify-content:center; gap:8px; }
+.top-bas-kalp{ font-size:20px; line-height:1; }
+.top-alt{ margin:0; color:#f0fff5; font-style:italic; font-size:14px; }
 /* Arama kutusu — altın çerçeve, açık zemin (siyah yok) */
 .top-ara-sar{ position:relative; display:flex; align-items:center; margin:0 2px 12px; }
 .top-ara-ik{ position:absolute; left:13px; width:19px; height:19px; color:#b28e34; pointer-events:none; }
@@ -4270,9 +4271,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-pencere{ padding:4px 12px 96px; }
 @media (min-width:900px){ .tan-pencere{ max-width:720px; margin:0 auto; } }
 /* Kendi kartım düğmesi */
-.tan-kartim-btn{ width:100%; display:flex; align-items:center; gap:10px; border:1.6px solid #bff0d2; cursor:pointer; font-family:inherit;
-  background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; border-radius:15px; padding:14px 15px; margin-bottom:15px; box-shadow:0 4px 13px rgba(0,10,30,.35); }
-.tan-kartim-btn.var{ background:linear-gradient(160deg,#2b7fd0,#1c5aa0); border-color:#bcdcff; }
+/* ALTIN — yeşil zeminde belirgin dursun (yeşil düğme yeşil zemine karışıyordu) */
+.tan-kartim-btn{ width:100%; display:flex; align-items:center; gap:10px; border:1.6px solid #fff3cf; cursor:pointer; font-family:inherit;
+  background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; border-radius:15px; padding:14px 15px; margin-bottom:15px; box-shadow:0 4px 13px rgba(0,10,30,.35); }
+.tan-kartim-btn.var{ background:linear-gradient(160deg,#2b7fd0,#1c5aa0); color:#fff; border-color:#bcdcff; }
 .tan-kartim-btn:active{ transform:scale(.98); }
 .tkb-ik{ font-size:22px; }
 .tkb-yazi{ flex:1; text-align:left; font-weight:800; font-size:15.5px; }
@@ -4344,7 +4346,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-cins-cip:active{ transform:scale(.96); }
 @media (min-width:400px){ .tan-cins-cip{ font-size:14.5px; padding:11px 6px; gap:6px; } }
 /* YAPAY ZEKÂ arkadaşlar SOLDAN-SAĞA kayan şerit (yukarı-aşağı değil). Kaydırınca sayfa değişmez (JS'te swipe-muaf). */
-.tan-ai-serit{ display:flex; gap:12px; overflow-x:auto; padding:2px 2px 14px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; overscroll-behavior-x:contain; touch-action:pan-x; }
+/* touch-action: yatay şeridi kaydırırken DİKEY (sayfa yukarı-aşağı) da çalışsın (kullanıcı: "yapay zekâ üzerinde aşağı-yukarı sayfa kalkmıyordu"). pan-x pan-y ikisine de izin verir. */
+.tan-ai-serit{ display:flex; gap:12px; overflow-x:auto; padding:2px 2px 14px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; overscroll-behavior-x:contain; touch-action:pan-x pan-y; }
 .tan-ai-serit::-webkit-scrollbar{ display:none; }
 .tan-ai-kart{ flex:0 0 auto; width:185px; scroll-snap-align:start; border-radius:16px; overflow:hidden; background:#1a2f57; border:1px solid rgba(120,190,255,.5); box-shadow:0 5px 14px rgba(0,10,30,.4); cursor:pointer; display:flex; flex-direction:column; }
 .tan-ai-kart:active{ transform:scale(.98); }
