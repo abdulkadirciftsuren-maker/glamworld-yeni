@@ -5377,30 +5377,49 @@ export default function Anasayfa({ pro = false }) {
     if (SR) {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
-        const rec = new SR();
-        rec.lang = aiSesKodu(aiDilRef.current); // SEÇİLİ AI dili — gürültüde İngilizce'ye kaymaz (dil kilidi)
-        rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
-        recognitionRef.current = rec;
-        let bitti = false;
-        const sonlan = (tekrarDinle) => {
+        // DÜŞÜNME MOLASI: kullanıcı cümle ortasında DURUP düşünebilsin — duraklamayı HEMEN "bitti" sayma.
+        // Her kelimede 1.7 sn SESSİZLİK sayacı yenilenir; SADECE 1.7 sn hiç yeni kelime gelmezse gönderilir.
+        // continuous=false her turda biter (Android "10x tekrar" hatası bundan kaçınır); her turda YENİ SR ile
+        // dinlemeye DEVAM ederiz, mola sayacı gönderimi yönetir → kullanıcının sözü yarıda KESİLMEZ.
+        let bitti = false, birikmis = "", molaTimer = null, aktifRec = null;
+        const basT = Date.now();
+        const kapat = () => { try { if (aktifRec) { aktifRec.onresult = aktifRec.onend = aktifRec.onerror = null; aktifRec.abort(); } } catch (e) {} aktifRec = null; recognitionRef.current = null; };
+        const gonder = () => {
           if (bitti) return; bitti = true;
-          recognitionRef.current = null; setDinliyor(false);
-          if (tekrarDinle && canliSohbetRef.current && !gloxKonusuyor()) canliDinle();
+          if (molaTimer) { clearTimeout(molaTimer); molaTimer = null; }
+          kapat(); setDinliyor(false);
+          const tx = tekrarSil((birikmis || "").trim());
+          if (tx && canliSohbetRef.current) { bosSesRef.current = 0; yardimciGonder(tx, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
+          else if (canliSohbetRef.current && !gloxKonusuyor()) canliDinle(); // hiç kelime gelmediyse tekrar dinle
         };
-        rec.onresult = (e) => {
+        const molaKur = () => { if (molaTimer) clearTimeout(molaTimer); molaTimer = setTimeout(gonder, 1700); }; // 1.7 sn sessizlik → gönder
+        const dongu = () => {
           if (bitti) return;
-          const son = e.results && e.results[e.results.length - 1];
-          const metin = tekrarSil(((son && son[0] && son[0].transcript) || "").trim()); // sadece SON sonuç → biriktirmez
-          if (metin && canliSohbetRef.current) { bitti = true; recognitionRef.current = null; setDinliyor(false); bosSesRef.current = 0; yardimciGonder(metin, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
-          else sonlan(true); // boş → tekrar dinle
+          if (!canliSohbetRef.current || gloxKonusuyor()) { gonder(); return; }
+          if (Date.now() - basT > 25000) { gonder(); return; } // en fazla 25 sn (sonsuz döngü olmasın)
+          let rec; try { rec = new SR(); } catch (e) { gonder(); return; }
+          try { rec.lang = aiSesKodu(aiDilRef.current); } catch (e) {} // SEÇİLİ AI dili (gürültüde kaymaz)
+          rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
+          aktifRec = rec; recognitionRef.current = rec;
+          rec.onresult = (e) => {
+            if (bitti) return;
+            const son = e.results && e.results[e.results.length - 1];
+            const parca = ((son && son[0] && son[0].transcript) || "").trim();
+            if (parca) { birikmis = birikmis ? (birikmis + " " + parca) : parca; molaKur(); } // kelime geldi → mola sayacını YENİLE (kesme)
+          };
+          rec.onerror = (ev) => {
+            if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; kapat(); setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
+            // no-speech / aborted / network → onend zaten dinlemeye devam ettirir
+          };
+          rec.onend = () => {
+            if (bitti) return;
+            aktifRec = null;
+            if (!birikmis && !molaTimer) molaKur(); // hiç konuşma yok → uzun sessizlikte gönder/tekrar dinle
+            setTimeout(dongu, 120); // KÜÇÜK ara ile yeniden dinle → duraklamada söz KESİLMEZ
+          };
+          try { setDinliyor(true); rec.start(); } catch (e) { aktifRec = null; recognitionRef.current = null; setTimeout(dongu, 200); }
         };
-        rec.onerror = (ev) => {
-          if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; recognitionRef.current = null; setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
-          sonlan(true); // no-speech / aborted / network → tekrar dinle
-        };
-        rec.onend = () => sonlan(true);
-        setDinliyor(true);
-        rec.start();
+        dongu();
         return;
       } catch (e) { try { recognitionRef.current = null; } catch (e2) {} /* başlatılamadı → aşağıdaki Whisper yoluna düş */ }
     }
@@ -5432,7 +5451,7 @@ export default function Anasayfa({ pro = false }) {
           if (!kalibre) { kalibre = true; const ort = tabanN ? taban / tabanN : 0.02; esik = Math.max(0.045, Math.min(0.12, ort * 1.9 + 0.015)); } // arka gürültünün ~1.9 katı → yakın konuşma net geçer (fazla yüksek eşikte ses takılmasın)
           // KONUŞMA = eşiği AŞAN (yakın) ses; sabit arka gürültü eşiğin ALTINDA kalır → yanlış tetiklenmez
           if (rms > esik) { yuksek++; if (yuksek >= 2) { konustu = true; sessizBas = 0; } }
-          else { yuksek = 0; if (konustu && !sessizBas) sessizBas = simdi; else if (konustu && sessizBas && simdi - sessizBas > 1200) { try { mr.stop(); } catch (e) {} return; } } // 1.2sn SESSİZLİK → bitti
+          else { yuksek = 0; if (konustu && !sessizBas) sessizBas = simdi; else if (konustu && sessizBas && simdi - sessizBas > 2200) { try { mr.stop(); } catch (e) {} return; } } // 2.2sn SESSİZLİK → bitti (düşünürken/durakladığında KESME)
           if (simdi - basT > 30000) { try { mr.stop(); } catch (e) {} return; } // en fazla 30sn
           raf = requestAnimationFrame(izle);
         };
