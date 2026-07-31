@@ -10,7 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
-import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem } from "./tanismaAI";
+import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
@@ -1502,6 +1502,8 @@ export default function Anasayfa({ pro = false }) {
   const [aiSohbetYaziliyor, setAiSohbetYaziliyor] = useState(false);
   const aiFotoUretiliyorRef = useRef(false);        // avatar üretimi aynı anda bir kez çalışsın
   const aiSohbetAkisRef = useRef(null);             // AI sohbet akışı — otomatik en alta kaydır
+  const [taniCevriDamga, setTaniCevriDamga] = useState(0); // çeviri yüklenince yeniden çiz
+  const taniCevriRef = useRef({});                  // hangi diller çevrildi (tekrar çevirme)
   const [aiAramaSonuc, setAiAramaSonuc] = useState(null); // AKILLI ARAMA sonucu: null=normal, [id...]=AI'nın bulduğu kişiler (sıralı)
   const [aiAraniyor, setAiAraniyor] = useState(false);    // akıllı arama sürüyor mu
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
@@ -3714,6 +3716,27 @@ export default function Anasayfa({ pro = false }) {
   }, []);
   // AI sohbet akışını yeni mesajda en alta kaydır
   useEffect(() => { const el = aiSohbetAkisRef.current; if (el) el.scrollTop = el.scrollHeight; }, [aiSohbetMesajlar, aiSohbetYaziliyor]);
+  // DİL: Tanış sayfası başka dildeyken metinleri YAPAY ZEKÂ ile BİR KEZ çevir → i18n'e ekle (t() otomatik gösterir) → cihaza kaydet. Türkçe hiç dokunulmaz.
+  useEffect(() => {
+    if (aktifKod !== "topluluk" || dil === "tr" || taniCevriRef.current[dil]) return;
+    taniCevriRef.current[dil] = true;
+    try { const c = localStorage.getItem("gw_taniCeviri_" + dil); if (c) { const o = JSON.parse(c); if (o && typeof o === "object") { i18n.addResourceBundle(dil, "translation", o, true, true); setTaniCevriDamga((x) => x + 1); return; } } } catch (e) {}
+    (async () => {
+      try {
+        const sistem = "Sen bir çevirmensin. Sana bir JSON nesnesi verilir; SADECE DEĞERLERİ hedef dile çevir, ANAHTARLARI ve emojileri AYNEN koru. Doğal, samimi bir 'tanışma' uygulaması diliyle çevir. SADECE geçerli JSON döndür — kod bloğu YOK, açıklama YOK.";
+        const mesaj = "Hedef dil: " + _tanDilAd() + "\n\nJSON:\n" + JSON.stringify(TANISMA_METINLER);
+        const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar: [{ role: "user", content: mesaj }], sistem }) });
+        let metin = ""; if (r.ok) { const v = await r.json(); metin = ((v && v.metin) || "").trim(); }
+        metin = metin.replace(/^```[a-z]*\s*/i, "").replace(/\s*```$/i, "").trim();
+        const o = JSON.parse(metin);
+        if (o && typeof o === "object") {
+          i18n.addResourceBundle(dil, "translation", o, true, true);
+          try { localStorage.setItem("gw_taniCeviri_" + dil, JSON.stringify(o)); } catch (e) {}
+          setTaniCevriDamga((x) => x + 1);
+        }
+      } catch (e) { taniCevriRef.current[dil] = false; } // başarısız → sonra tekrar denenir
+    })();
+  }, [aktifKod, dil]); // eslint-disable-line react-hooks/exhaustive-deps
   // Topluluk açılınca EKSİK yapay zekâ avatarlarını arka planda TEK TEK üret → Storage'a yükle → kısa URL'yi cihazda sakla.
   useEffect(() => {
     if (aktifKod !== "topluluk" || aiFotoUretiliyorRef.current) return;
