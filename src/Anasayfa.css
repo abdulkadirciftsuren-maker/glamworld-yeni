@@ -4203,6 +4203,66 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .efc-temizle{ flex:none; border:none; cursor:pointer; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:13px; padding:7px 13px; border-radius:10px; box-shadow:0 2px 7px rgba(0,0,0,.3); }
 .efc-temizle:active{ transform:scale(.93); }
 .alt-cip:active{ transform:scale(.95); }
+
+/* ═══════════ TOPLULUK — üyelerle tanışma alanı (kare avatar, altın, canlı zemin; siyah YOK) ═══════════ */
+.top-pencere{ padding:14px 12px 96px; }
+.top-bas-sar{ display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; margin:4px 0 14px; }
+.top-bas-ik svg{ width:44px; height:44px; color:#FFD700; filter:drop-shadow(0 0 12px rgba(255,215,0,.5)); }
+.top-bas{ margin:2px 0 0; font-family:'Cinzel',serif; color:#FFE9A8; font-size:22px; letter-spacing:.05em; }
+.top-alt{ margin:0; color:#cfe0ff; font-style:italic; font-size:14px; }
+/* Arama kutusu — altın çerçeve, açık zemin (siyah yok) */
+.top-ara-sar{ position:relative; display:flex; align-items:center; margin:0 2px 12px; }
+.top-ara-ik{ position:absolute; left:13px; width:19px; height:19px; color:#b28e34; pointer-events:none; }
+.top-ara-input{ width:100%; box-sizing:border-box; padding:13px 40px 13px 40px; border-radius:14px; border:1.6px solid rgba(255,215,0,.6);
+  background:linear-gradient(180deg,#fffdf5,#f4ecd6); color:#3a2c08; font-size:15px; font-weight:600; font-family:inherit; outline:none; box-shadow:0 3px 10px rgba(0,15,35,.28); }
+.top-ara-input::placeholder{ color:#9a8446; font-weight:600; }
+.top-ara-temizle{ position:absolute; right:9px; border:none; cursor:pointer; background:rgba(120,90,20,.16); color:#7a5c12; width:26px; height:26px; border-radius:8px; font-size:14px; font-weight:800; }
+/* Filtre çipleri — sola-sağa kayabilir, kesilmez */
+.top-filtreler{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 10px; -webkit-overflow-scrolling:touch; }
+.top-filtreler::-webkit-scrollbar{ display:none; }
+.top-cip{ flex:0 0 auto; display:inline-flex; align-items:center; gap:5px; border:1.4px solid rgba(255,215,0,.5); cursor:pointer; font-family:inherit;
+  background:linear-gradient(160deg,#3d63a0,#294a7d); color:#ffe9a8; border-radius:13px; padding:9px 15px; font-size:14px; font-weight:800; box-shadow:0 3px 9px rgba(0,15,35,.3); white-space:nowrap; transition:transform .12s ease; }
+.top-cip:active{ transform:scale(.94); }
+.top-cip.aktif{ background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; border-color:#fff3cf; box-shadow:0 0 0 2px rgba(255,233,168,.5), 0 4px 12px rgba(0,15,35,.4); }
+.top-mik{ font-size:15px; }
+.top-say{ color:#cfe0ff; font-size:13px; font-weight:700; margin:2px 4px 10px; }
+.top-bos{ text-align:center; color:#cfe0ff; font-size:15px; font-style:italic; padding:44px 20px; }
+/* Üye kartları ızgarası — telefonda 2 sütun, kare avatar */
+.top-izgara{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.top-kart{ position:relative; overflow:hidden; border:1px solid var(--mrenk,#c9971f); border-radius:16px; display:flex; flex-direction:column;
+  background:linear-gradient(180deg,#fffdf5,#f4ecd6); box-shadow:0 5px 14px rgba(0,15,35,.32); }
+.top-kart-bant{ position:absolute; top:0; left:0; right:0; height:8px; }
+.top-kart-ust{ border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center; padding:18px 10px 8px; }
+.top-kart-ust:active{ transform:scale(.98); }
+/* KARE avatar (anayasa: yuvarlak YOK) */
+.top-av{ width:74px; height:74px; border-radius:16px; overflow:hidden; flex:none; display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-weight:800; font-size:28px; color:#4a3208; background:radial-gradient(circle at 38% 30%,#ffe9a8,#e3b73e 62%,#b98f2c); }
+.top-av img{ width:100%; height:100%; object-fit:cover; }
+.top-ad{ color:#2a2008; font-size:15px; font-weight:800; max-width:100%; display:block; }
+.top-meslek{ color:#8a7030; font-size:12.5px; font-style:normal; max-width:100%; display:flex; align-items:center; justify-content:center; gap:3px; }
+.top-ad .kayan-dis, .top-meslek .kayan-dis{ max-width:100%; }
+.top-meslek .kayan-dis{ flex:1; min-width:0; }
+/* Takip + Mesaj düğmeleri — kesilmez (KayanYazi), kare köşe */
+.top-kart-islem{ display:flex; gap:6px; padding:0 9px 11px; }
+.top-takip, .top-mesaj{ flex:1 1 0; min-width:0; border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:13px; padding:9px 6px; border-radius:11px; box-shadow:0 2px 7px rgba(0,10,30,.25); display:flex; align-items:center; justify-content:center; gap:4px; }
+.top-takip{ background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; }
+.top-takip.ediliyor{ background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; }
+.top-mesaj{ background:linear-gradient(160deg,#3d63a0,#294a7d); color:#ffe9a8; border:1px solid rgba(255,215,0,.45); }
+.top-takip:active, .top-mesaj:active{ transform:scale(.95); }
+.top-takip .kayan-dis, .top-mesaj .kayan-dis{ max-width:100%; }
+.top-daha{ display:block; margin:16px auto 4px; border:1.4px solid rgba(255,215,0,.6); cursor:pointer; font-family:inherit; font-weight:800; font-size:14px; padding:11px 26px; border-radius:13px; background:linear-gradient(160deg,#3d63a0,#294a7d); color:#ffe9a8; box-shadow:0 3px 10px rgba(0,15,35,.3); }
+.top-daha:active{ transform:scale(.96); }
+/* Dar telefonda da 2 sütun rahat dursun */
+@media (max-width:340px){ .top-izgara{ gap:8px; } .top-av{ width:64px; height:64px; } }
+/* BİLGİSAYAR/TABLET: yazı ve öğeler telefondan KÜÇÜK olmaz → büyür, 3-4 sütun (anayasa) */
+@media (min-width:560px){
+  .top-bas{ font-size:26px; } .top-alt{ font-size:16px; } .top-ara-input{ font-size:16px; }
+  .top-izgara{ grid-template-columns:repeat(3,1fr); gap:14px; }
+  .top-av{ width:88px; height:88px; font-size:32px; }
+  .top-ad{ font-size:16px; } .top-meslek{ font-size:13.5px; } .top-takip, .top-mesaj{ font-size:14px; }
+}
+@media (min-width:900px){ .top-izgara{ grid-template-columns:repeat(4,1fr); } }
+@media (min-width:1200px){ .top-pencere{ max-width:1100px; margin:0 auto; } }
 /* BİLGİSAYAR: şeritler feed ile AYNI ortalı genişlikte (kullanıcı: "geniş ekranda o kadar yayma, sağdan sola geniş yapma"). Yayma İPTAL. */
 @media (min-width:1000px){
   .alt-serit-bas h3{ font-size:18px; }

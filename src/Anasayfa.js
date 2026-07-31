@@ -1466,6 +1466,11 @@ export default function Anasayfa({ pro = false }) {
   // AKIŞ SAYFALAMA (ölçeklenebilirlik): tümünü birden yükleme — ilk 6, aşağı kaydırdıkça +6 (yüzbinlerce gönderi olsa da telefon donmaz)
   const [feedGoster, setFeedGoster] = useState(6);
   const [homeUyeler, setHomeUyeler] = useState([]); // Ana sayfa "Yakındaki Profesyoneller" bölümü için üye listesi
+  // TOPLULUK sayfası — üyelerle tanışma alanı (kişi kartları: takip + mesaj + profil aç)
+  const [topKisiler, setTopKisiler] = useState(null); // null=henüz yüklenmedi, []=boş, [...]=üyeler
+  const [topAra, setTopAra] = useState("");            // Topluluk arama kutusu
+  const [topFiltre, setTopFiltre] = useState("hepsi"); // "hepsi" | "pro" | "yakin"
+  const [topGoster, setTopGoster] = useState(24);      // kaç kişi gösterilsin (daha fazla ile artar)
   const feedSonRef = useRef(null); // "daha yükle" nöbetçisi (görününce artır)
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
@@ -3665,6 +3670,11 @@ export default function Anasayfa({ pro = false }) {
     if (aktifKod !== "home" || homeUyeler.length) return;
     tumKullanicilar(80).then((l) => setHomeUyeler(l || [])).catch(() => {});
   }, [aktifKod]); // eslint-disable-line react-hooks/exhaustive-deps
+  // TOPLULUK açılınca üyeleri yükle (bir kez). Ayrı liste → Glome/ana sayfa listesini BOZMAZ.
+  useEffect(() => {
+    if (aktifKod !== "topluluk" || topKisiler !== null) return;
+    tumKullanicilar(200).then((l) => setTopKisiler(l || [])).catch(() => setTopKisiler([]));
+  }, [aktifKod]); // eslint-disable-line react-hooks/exhaustive-deps
   // Profesyoneller: mesleği olan üyeler (kendisi hariç). KONUMA GÖRE yakındakiler ÖNCE (aynı şehir > aynı ülke > diğer).
   // Her karta MESLEK RENGİ + MESLEK İKONU eklenir (kullanıcı: "renk ver, beyaz değil, yazıya göre ikon koy").
   const profesyoneller = useMemo(() => {
@@ -3691,6 +3701,36 @@ export default function Anasayfa({ pro = false }) {
       .sort((a, b) => a.yak - b.yak)
       .slice(0, 18);
   }, [homeUyeler, benUid, dil, profilBilgi, konumAdres]);
+  // TOPLULUK listesi — üyeler (kendisi hariç), arama + filtre (Herkes/Profesyoneller/Yakınımdakiler), yakınlık sıralı.
+  const topluluktakiler = useMemo(() => {
+    const benimSehir = ((profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || konumAdres || "").toLowerCase();
+    const benimUlke = ((profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "").toLowerCase();
+    const q = topAra.trim().toLowerCase();
+    const yakin = (k) => {
+      const s = (k.sehir || "").toLowerCase(), u = (k.ulke || "").toLowerCase();
+      if (benimSehir && s && s === benimSehir) return 0;   // aynı şehir → en yakın
+      if (benimUlke && u && u === benimUlke) return 1;      // aynı ülke
+      return 2;
+    };
+    const liste = (topKisiler || [])
+      .map((k) => {
+        const id = k.id || k.uid;
+        const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
+        const foto = k.foto || k.avatarFoto || k.isFoto || (k.pro && k.pro.foto) || "";
+        const meslekRaw = (k.pro && k.pro.meslek) || k.meslek || "";
+        const sehir = k.sehir || (k.konum && k.konum.sehir) || "";
+        const ulke = k.ulke || (k.konum && k.konum.ulke) || "";
+        return { uid: id, ad, foto, meslekRaw, meslek: mc(meslekRaw, dil), sehir, ulke,
+          bas: (String(ad).trim()[0] || "?").toUpperCase(), pro: !!(k.pro || meslekRaw),
+          renk: MESLEK_RENK[meslekRaw] || "#c9971f", bg: MESLEK_BG[meslekRaw] || "linear-gradient(135deg,#d9b64a,#b28e34)", ik: MESLEK_IK[meslekRaw] || "💎" };
+      })
+      .filter((k) => k.uid && k.uid !== benUid);
+    let f = liste;
+    if (topFiltre === "pro") f = f.filter((k) => k.pro);
+    else if (topFiltre === "yakin") f = f.filter((k) => yakin(k) < 2);
+    if (q) f = f.filter((k) => (k.ad + " " + k.meslek + " " + k.sehir).toLowerCase().indexOf(q) !== -1);
+    return f.sort((a, b) => yakin(a) - yakin(b));
+  }, [topKisiler, topAra, topFiltre, benUid, dil, profilBilgi, konumAdres]);
   // İş İlanları: tur === "is" olan paylaşımlar
   const ilanlar = useMemo(() => gercekAkis.filter((p) => p.tur === "is").slice(0, 12), [gercekAkis]);
   // Trend: paylaşım metinlerindeki #etiketler (en çok geçenler)
@@ -8104,6 +8144,59 @@ export default function Anasayfa({ pro = false }) {
             ulkeAd={(konum && (konum.sehir || konum.bolge)) || ""}
           />
           </Suspense>
+        </div>
+      ) : aktifKod === "topluluk" ? (
+        /* TOPLULUK — üyelerle tanışma alanı: ara, filtrele, TAKİP et, MESAJ at (Glome), karta dokun→profil */
+        <div className="ana-pencere top-pencere" key="topluluk">
+          <div className="top-bas-sar">
+            <div className="top-bas-ik" aria-hidden="true">{Ikon.topluluk}</div>
+            <h3 className="top-bas">{t("navTopluluk", "Topluluk")}</h3>
+            <p className="top-alt">{t("toplulukTanit", "Meslektaşlarınla tanış, keşfet, bağlan.")}</p>
+          </div>
+          {/* ARAMA — isim/meslek/şehir */}
+          <div className="top-ara-sar">
+            <svg className="top-ara-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+            <input className="top-ara-input" value={topAra} onChange={(e) => { setTopAra(e.target.value); setTopGoster(24); }} placeholder={t("toplulukAra", "İsim, meslek veya şehir ara…")} />
+            {topAra && <button className="top-ara-temizle" onClick={() => setTopAra("")} aria-label={t("temizle", "Temizle")}>✕</button>}
+          </div>
+          {/* FİLTRELER */}
+          <div className="top-filtreler">
+            <button className={"top-cip" + (topFiltre === "hepsi" ? " aktif" : "")} onClick={() => { setTopFiltre("hepsi"); setTopGoster(24); }}><span className="top-mik" aria-hidden="true">👥</span> {t("toplulukHepsi", "Herkes")}</button>
+            <button className={"top-cip" + (topFiltre === "pro" ? " aktif" : "")} onClick={() => { setTopFiltre("pro"); setTopGoster(24); }}><span className="top-mik" aria-hidden="true">💼</span> {t("toplulukPro", "Profesyoneller")}</button>
+            <button className={"top-cip" + (topFiltre === "yakin" ? " aktif" : "")} onClick={() => { setTopFiltre("yakin"); setTopGoster(24); }}><span className="top-mik" aria-hidden="true">📍</span> {t("toplulukYakin", "Yakınımdakiler")}</button>
+          </div>
+          {/* LİSTE */}
+          {topKisiler === null ? (
+            <div className="top-bos">💎 {t("toplulukYukleniyor", "Üyeler geliyor…")}</div>
+          ) : topluluktakiler.length === 0 ? (
+            <div className="top-bos">{topAra ? t("toplulukAramaBos", "Aramana uygun kimse bulunamadı.") : t("toplulukBos", "Henüz gösterilecek üye yok. Sen paylaştıkça topluluk büyür.")}</div>
+          ) : (
+            <>
+              <div className="top-say">{topluluktakiler.length} {t("toplulukKisi", "kişi")}</div>
+              <div className="top-izgara">
+                {topluluktakiler.slice(0, topGoster).map((k) => {
+                  const takipli = takipSet.has(k.uid);
+                  return (
+                    <div className="top-kart" key={k.uid} style={{ "--mrenk": k.renk }}>
+                      <button className="top-kart-ust" onClick={() => uyeyiAc(k)}>
+                        <span className="top-kart-bant" style={{ background: k.bg }} aria-hidden="true" />
+                        <span className="top-av" style={{ boxShadow: "0 0 0 2.5px " + k.renk }}>{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" /> : k.bas}</span>
+                        <b className="top-ad notranslate" translate="no"><KayanYazi>{k.ad}</KayanYazi></b>
+                        <i className="top-meslek"><span className="top-mik" aria-hidden="true">{k.ik}</span> <KayanYazi>{(k.meslek || t("uye", "Üye")) + (k.sehir ? " · " + k.sehir : "")}</KayanYazi></i>
+                      </button>
+                      <div className="top-kart-islem">
+                        <button className={"top-takip" + (takipli ? " ediliyor" : "")} onClick={() => takipToggle(k)} aria-label={takipli ? t("takipEdiliyor", "Takip ✓") : t("takipEt", "+ Takip")}><KayanYazi>{takipli ? t("takipEdiliyor", "Takip ✓") : t("takipEt", "+ Takip")}</KayanYazi></button>
+                        <button className="top-mesaj" onClick={() => sohbetAc({ uid: k.uid, ad: k.ad, foto: k.foto })} aria-label={t("mesaj", "Mesaj")}><span aria-hidden="true">💬</span> <KayanYazi>{t("mesaj", "Mesaj")}</KayanYazi></button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {topluluktakiler.length > topGoster && (
+                <button className="top-daha" onClick={() => setTopGoster((n) => n + 24)}>{t("dahaGoster", "Daha fazla göster")}</button>
+              )}
+            </>
+          )}
         </div>
       ) : (
         /* Diğer bölümlerin penceresi — kendi ikonu ve adıyla açılır (içerikler sırayla yapılacak) */
