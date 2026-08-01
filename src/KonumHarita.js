@@ -18,6 +18,13 @@ function googleYolAc(bLat, bLon, hLat, hLon) {
   catch (e) { try { window.location.href = url; } catch (x) {} }
 }
 
+// İki nokta arası kuş uçuşu km (düz-çizgi yedeği için)
+function kmArasi(la1, lo1, la2, lo2) {
+  const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLo = (lo2 - lo1) * Math.PI / 180;
+  const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dLo / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b", bank: "#f7b500", atm: "#f7b500", hotel: "#00b8d4", motel: "#00b8d4", guest_house: "#00b8d4", hostel: "#00b8d4", fast_food: "#e74c3c", restaurant: "#ff6b3d", cafe: "#e67e22", supermarket: "#27ae60", convenience: "#2ecc71", marketplace: "#27ae60", pharmacy: "#8e44ad", hospital: "#e91e63", clinic: "#e91e63", post_office: "#16a085", fuel: "#d35400", school: "#3498db", university: "#3498db", bakery: "#e8a33d", mosque: "#2ecc71", church: "#bdc3c7", clothes: "#9b59b6", jewelry: "#f1c40f", townhall: "#2980b9", courthouse: "#9b59b6", police: "#34495e", fire_station: "#c0392b", library: "#16a085", government: "#2980b9", tax: "#2980b9" };
 
 export default function KonumHarita({ benLat, benLon }) {
@@ -28,6 +35,7 @@ export default function KonumHarita({ benLat, benLon }) {
   const hedefPinRef = useRef(null);
   const poiMarksRef = useRef([]);
   const poiZmnRef = useRef(null);
+  const araZmnRef = useRef(null); // yazarken otomatik arama gecikmesi
   const [hazir, setHazir] = useState(false);
   const [ara, setAra] = useState("");
   const [sonuclar, setSonuclar] = useState(null);
@@ -85,7 +93,7 @@ export default function KonumHarita({ benLat, benLon }) {
       });
     } catch (e) { return; }
     haritaRef.current = map;
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
+    // Yakınlaştırma okları/pusula KALDIRILDI (üstte arama+tam ekran ile çakışıyordu). İki parmakla yakınlaş/döndür yeter.
     map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} });
     // Harita ilk açılışta kabı 0 boyutlu ölçebilir → birkaç kez resize (boş/gri kalmasın)
     setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
@@ -116,13 +124,19 @@ export default function KonumHarita({ benLat, benLon }) {
     }, () => { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 16 }); }, { enableHighAccuracy: true, timeout: 8000 });
   }
 
-  function yerAra() {
-    const q = (ara || "").trim(); if (q.length < 2 || araniyor) return;
+  function yerAra(sorgu) {
+    const q = ((typeof sorgu === "string" ? sorgu : ara) || "").trim(); if (q.length < 2) return;
     setAraniyor(true); setSonuclar(null);
-    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=tr&q=" + encodeURIComponent(q);
+    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=7&accept-language=tr&q=" + encodeURIComponent(q);
     fetch(url, { headers: { "Accept": "application/json" } }).then((r) => r.json()).then((liste) => {
       setSonuclar((Array.isArray(liste) ? liste : []).map((y) => ({ lat: parseFloat(y.lat), lon: parseFloat(y.lon), ad: y.display_name || q })));
     }).catch(() => setSonuclar([])).finally(() => setAraniyor(false));
+  }
+  // Yazarken OTOMATİK ara (düğmeye basmaya gerek yok) — 650ms bekleyip arar
+  function araDegisti(v) {
+    setAra(v); clearTimeout(araZmnRef.current);
+    if (v.trim().length < 3) { setSonuclar(null); return; }
+    araZmnRef.current = setTimeout(() => yerAra(v), 650);
   }
 
   function sonucaGit(y) {
@@ -131,7 +145,22 @@ export default function KonumHarita({ benLat, benLon }) {
     hedefKoy(y.lat, y.lon);
   }
 
-  // UYGULAMA İÇİNDE YOL TARİFİ — OSRM ile rota çiz (mavi çizgi) + km/dk göster
+  // Düz-çizgi yedeği — OSRM çalışmazsa: kuş uçuşu hat + yaklaşık km/dk (yine UYGULAMA İÇİNDE, Google'a atmaz)
+  function duzRotaCiz() {
+    const map = haritaRef.current, ben = benRef.current; if (!map || !ben || !hedef) return;
+    const gj = { type: "Feature", geometry: { type: "LineString", coordinates: [[ben.lon, ben.lat], [hedef.lon, hedef.lat]] } };
+    try {
+      rotaTemizle();
+      map.addSource("rota", { type: "geojson", data: gj });
+      map.addLayer({ id: "rota", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#1f6fd0", "line-width": 6, "line-opacity": 0.85, "line-dasharray": [2, 2] } });
+      const b = new maplibregl.LngLatBounds([ben.lon, ben.lat], [ben.lon, ben.lat]).extend([hedef.lon, hedef.lat]);
+      map.fitBounds(b, { padding: 70, maxZoom: 16 });
+    } catch (e) {}
+    const km = kmArasi(ben.lat, ben.lon, hedef.lat, hedef.lon);
+    setRotaBilgi({ km: km.toFixed(1), dk: Math.max(1, Math.round(km / 0.5)), yaklasik: true }); // ~30 km/s kaba tahmin
+  }
+
+  // UYGULAMA İÇİNDE YOL TARİFİ — OSRM ile gerçek yol rotası (mavi çizgi) + km/dk; olmazsa düz-çizgi yedeği
   async function rotaCiz() {
     const map = haritaRef.current, ben = benRef.current;
     if (!map || !hedef) return;
@@ -152,8 +181,8 @@ export default function KonumHarita({ benLat, benLon }) {
           map.fitBounds(b, { padding: 70, maxZoom: 16 });
         }
         setRotaBilgi({ km: (rota.distance / 1000).toFixed(1), dk: Math.max(1, Math.round(rota.duration / 60)) });
-      } else { setRotaBilgi({ hata: true }); }
-    } catch (e) { setRotaBilgi({ hata: true }); }
+      } else { duzRotaCiz(); } // OSRM boş → düz-çizgi
+    } catch (e) { duzRotaCiz(); } // OSRM hata → düz-çizgi (Google'a atmadan içeride göster)
     setRotaYukleniyor(false);
   }
 
@@ -163,7 +192,7 @@ export default function KonumHarita({ benLat, benLon }) {
       {/* ARAMA */}
       <div className="knh-ara-sar">
         <svg className="knh-ara-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-        <input className="knh-ara-in" value={ara} onChange={(e) => setAra(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") yerAra(); }} placeholder={t("knhAra", "Yer, adres, mekân ara…")} />
+        <input className="knh-ara-in" value={ara} onChange={(e) => araDegisti(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { clearTimeout(araZmnRef.current); yerAra(); } }} placeholder={t("knhAra", "Yer, adres, mekân ara…")} />
         {ara && <button className="knh-ara-temizle" onClick={() => { setAra(""); setSonuclar(null); }} aria-label={t("temizle", "Temizle")}>✕</button>}
         <button className="knh-ara-btn" onClick={yerAra} disabled={araniyor}>{araniyor ? "…" : t("knhBul", "Bul")}</button>
       </div>
@@ -200,8 +229,7 @@ export default function KonumHarita({ benLat, benLon }) {
       {/* Rota bilgi şeridi (km · dk) + Google'da adım adım aç */}
       {rotaBilgi && (
         <div className="knh-rota-serit">
-          {rotaBilgi.hata ? <span className="knh-rota-bilgi">{t("knhRotaYok", "Rota bulunamadı")}</span>
-            : <span className="knh-rota-bilgi">🚗 {rotaBilgi.km} km · {rotaBilgi.dk} {t("knhDk", "dk")}</span>}
+          <span className="knh-rota-bilgi">🚗 {rotaBilgi.yaklasik ? "~" : ""}{rotaBilgi.km} km · {rotaBilgi.yaklasik ? "~" : ""}{rotaBilgi.dk} {t("knhDk", "dk")}</span>
           <button className="knh-rota-google" onClick={() => googleYolAc(ben && ben.lat, ben && ben.lon, hedef.lat, hedef.lon)}>{t("knhAdimAdim", "Adım adım (Google)")} ↗</button>
           <button className="knh-rota-kapat" onClick={() => { setRotaBilgi(null); rotaTemizle(); }} aria-label={t("temizle", "Temizle")}>✕</button>
         </div>
