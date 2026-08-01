@@ -42,6 +42,7 @@ export default function KonumHarita({ benLat, benLon }) {
   const [hedef, setHedef] = useState(null);
   const [rotaBilgi, setRotaBilgi] = useState(null);
   const [rotaYukleniyor, setRotaYukleniyor] = useState(false);
+  const [mod, setMod] = useState("araba"); // ulaşım türü: araba | yurume | bisiklet
   const benRef = useRef((typeof benLat === "number" && typeof benLon === "number") ? { lat: benLat, lon: benLon } : null);
 
   function poiYukle(lat, lon) {
@@ -130,6 +131,8 @@ export default function KonumHarita({ benLat, benLon }) {
   }
 
   function sureYaz(dk) { dk = Math.max(1, Math.round(dk)); if (dk < 60) return dk + " " + t("knhDk", "dk"); const sa = Math.floor(dk / 60), k = dk % 60; return sa + " " + t("knhSaat", "sa") + (k ? " " + k + " " + t("knhDk", "dk") : ""); }
+  // Ulaşım türüne göre süre (dk): araba=gerçek OSRM süresi; yürüme ~5 km/s; bisiklet ~15 km/s
+  function modSure(m, km, arabaDk) { km = Number(km) || 0; if (m === "yurume") return Math.max(1, Math.round(km / 5 * 60)); if (m === "bisiklet") return Math.max(1, Math.round(km / 15 * 60)); return arabaDk || Math.max(1, Math.round(km / 0.5)); }
 
   async function yerAra(sorgu) {
     const q = ((typeof sorgu === "string" ? sorgu : ara) || "").trim(); if (q.length < 2) return;
@@ -151,7 +154,7 @@ export default function KonumHarita({ benLat, benLon }) {
     const ben = benRef.current; if (!ben || !hedef) return;
     cizgiKoy([[ben.lon, ben.lat], [hedef.lon, hedef.lat]]); // düz çizgi (rota alınamadıysa)
     const km = kmArasi(ben.lat, ben.lon, hedef.lat, hedef.lon);
-    setRotaBilgi({ km: km.toFixed(1), dk: Math.max(1, Math.round(km / 0.5)), yaklasik: true });
+    setRotaBilgi({ km: km.toFixed(1), arabaDk: Math.max(1, Math.round(km / 0.5)), yaklasik: true });
   }
   async function rotaCiz() {
     const map = haritaRef.current, ben = benRef.current; if (!map || !hedef) return; if (!ben) { konumumaGit(); return; }
@@ -162,7 +165,7 @@ export default function KonumHarita({ benLat, benLon }) {
       const coords = rota && rota.geometry && rota.geometry.coordinates;
       if (Array.isArray(coords) && coords.length > 1 && Array.isArray(coords[0])) {
         cizgiKoy(coords); // gerçek yol rotası — dolu mavi hat
-        setRotaBilgi({ km: (rota.distance / 1000).toFixed(1), dk: Math.max(1, Math.round(rota.duration / 60)) });
+        setRotaBilgi({ km: (rota.distance / 1000).toFixed(1), arabaDk: Math.max(1, Math.round(rota.duration / 60)) });
       } else duzRotaCiz(); // geometri yok/bozuk → düz çizgi yedeği
     } catch (e) { duzRotaCiz(); }
     setRotaYukleniyor(false);
@@ -211,8 +214,18 @@ export default function KonumHarita({ benLat, benLon }) {
         )}
         {rotaBilgi && (
           <div className="knh-rota-serit">
-            <span className="knh-rota-bilgi">🚗 {rotaBilgi.yaklasik ? "~" : ""}{rotaBilgi.km} km · {rotaBilgi.yaklasik ? "~" : ""}{sureYaz(rotaBilgi.dk)}</span>
-            <button className="knh-rota-kapat" onClick={() => { setRotaBilgi(null); rotaTemizle(); }} aria-label={t("temizle", "Temizle")}>✕</button>
+            <div className="knh-mod-satir">
+              <div className="knh-mod-sec">
+                {[["araba", "🚗", t("knhAraba", "Araba")], ["yurume", "🚶", t("knhYurume", "Yürü")], ["bisiklet", "🚴", t("knhBisiklet", "Bisiklet")]].map(([m, ik, et]) => (
+                  <button key={m} className={"knh-mod" + (mod === m ? " sec" : "")} onClick={() => setMod(m)}><span aria-hidden="true">{ik}</span> {et}</button>
+                ))}
+              </div>
+              <button className="knh-rota-kapat" onClick={() => { setRotaBilgi(null); rotaTemizle(); }} aria-label={t("temizle", "Temizle")}>✕</button>
+            </div>
+            <div className="knh-rota-bilgi">
+              <span className="knh-rota-ik" aria-hidden="true">{mod === "yurume" ? "🚶" : mod === "bisiklet" ? "🚴" : "🚗"}</span>
+              {rotaBilgi.km} km · {mod === "araba" && rotaBilgi.yaklasik ? "~" : ""}{sureYaz(modSure(mod, rotaBilgi.km, rotaBilgi.arabaDk))}
+            </div>
           </div>
         )}
       </>)}

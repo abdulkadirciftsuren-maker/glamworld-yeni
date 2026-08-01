@@ -4409,11 +4409,16 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* KAPAT (✕) — tam ekrandan küçük önizlemeye dön (sağ üst, arama çubuğunun yanında) */
 .knh-kapat{ position:absolute; right:12px; top:10px; z-index:8; width:44px; height:44px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:20px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); display:flex; align-items:center; justify-content:center; }
 .knh-kapat:active{ transform:scale(.94); }
-/* Rota bilgi şeridi (km · dk · adım adım) — düğmelerin ÜSTÜNDE (Konumum ile çakışmaz) */
-.knh-rota-serit{ position:absolute; left:12px; right:12px; bottom:72px; z-index:6; display:flex; align-items:center; gap:9px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.65); border-radius:14px; padding:10px 12px; box-shadow:0 5px 16px rgba(0,20,15,.45); }
-.knh-rota-bilgi{ flex:1; min-width:0; color:#2a2008; font-weight:800; font-size:15px; }
-.knh-rota-google{ flex:none; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2b7fd0,#1c5aa0); color:#fff; font-weight:800; font-size:12.5px; padding:8px 11px; border-radius:10px; }
-.knh-rota-kapat{ flex:none; border:none; cursor:pointer; background:rgba(120,90,20,.16); color:#7a5c12; width:28px; height:28px; border-radius:9px; font-size:13px; font-weight:800; }
+/* Rota bilgi şeridi — ulaşım türü seçimi (araba/yürü/bisiklet) + km·süre. Düğmelerin ÜSTÜNDE (Konumum ile çakışmaz) */
+.knh-rota-serit{ position:absolute; left:12px; right:12px; bottom:72px; z-index:6; display:flex; flex-direction:column; gap:8px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.65); border-radius:14px; padding:10px 12px; box-shadow:0 5px 16px rgba(0,20,15,.45); }
+.knh-mod-satir{ display:flex; align-items:center; gap:8px; }
+.knh-mod-sec{ flex:1; display:flex; gap:6px; }
+.knh-mod{ flex:1; display:inline-flex; align-items:center; justify-content:center; gap:4px; border:1.3px solid rgba(120,90,20,.3); cursor:pointer; font-family:inherit; background:rgba(255,255,255,.6); color:#5a4712; font-weight:800; font-size:12.5px; padding:8px 4px; border-radius:10px; white-space:nowrap; }
+.knh-mod.sec{ background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; border-color:#1f7d4c; }
+.knh-mod:active{ transform:scale(.95); }
+.knh-rota-bilgi{ color:#2a2008; font-weight:800; font-size:16px; display:flex; align-items:center; gap:6px; }
+.knh-rota-ik{ font-size:18px; }
+.knh-rota-kapat{ flex:none; border:none; cursor:pointer; background:rgba(120,90,20,.16); color:#7a5c12; width:30px; height:30px; border-radius:9px; font-size:14px; font-weight:800; }
 @media (min-width:900px){ .knh-sar:not(.knh-tam){ max-width:900px; margin:0 auto; } }
 /* AKILLI ARAMA düğmesi + sonuç şeridi */
 .tan-ai-ara-btn{ width:100%; border:1.5px solid rgba(160,120,255,.7); cursor:pointer; font-family:inherit; font-weight:800; font-size:15px; padding:12px; border-radius:14px; margin:0 0 6px; color:#fff; background:linear-gradient(135deg,#7d5cff,#5a3fd0); box-shadow:0 4px 13px rgba(30,10,80,.4); }
