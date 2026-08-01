@@ -4419,6 +4419,22 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .knh-rota-bilgi{ color:#2a2008; font-weight:800; font-size:16px; display:flex; align-items:center; gap:6px; }
 .knh-rota-ik{ font-size:18px; }
 .knh-rota-kapat{ flex:none; border:none; cursor:pointer; background:rgba(120,90,20,.16); color:#7a5c12; width:30px; height:30px; border-radius:9px; font-size:14px; font-weight:800; }
+.knh-rota-alt{ display:flex; align-items:center; gap:9px; }
+.knh-rota-alt .knh-rota-bilgi{ flex:1; }
+/* GİT (navigasyonu başlat) düğmesi */
+.knh-git{ flex:none; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ff5a3c,#d61f1f); color:#fff; font-weight:800; font-size:16px; padding:11px 22px; border-radius:12px; box-shadow:0 3px 10px rgba(120,10,10,.35); }
+.knh-git:active{ transform:scale(.96); }
+/* NAVİGASYON — üstte dönüş talimatı */
+.knh-nav-ust{ position:absolute; top:10px; left:10px; right:10px; z-index:8; display:flex; align-items:center; gap:13px; background:linear-gradient(160deg,#1f6fd0,#134a8f); color:#fff; border-radius:16px; padding:13px 16px; box-shadow:0 5px 18px rgba(0,20,50,.5); }
+.knh-nav-ok{ font-size:38px; line-height:1; flex:none; }
+.knh-nav-ic{ flex:1; min-width:0; }
+.knh-nav-mesafe{ font-size:22px; font-weight:800; }
+.knh-nav-talimat{ font-size:15px; opacity:.96; }
+/* NAVİGASYON — altta kalan + bitir */
+.knh-nav-alt{ position:absolute; left:12px; right:12px; bottom:16px; z-index:8; display:flex; align-items:center; gap:10px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.65); border-radius:14px; padding:11px 14px; box-shadow:0 5px 16px rgba(0,20,15,.45); }
+.knh-nav-kalan{ flex:1; color:#2a2008; font-weight:800; font-size:16px; }
+.knh-nav-bitir{ flex:none; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#e0202c,#a3121b); color:#fff; font-weight:800; font-size:15px; padding:11px 20px; border-radius:12px; }
+.knh-nav-bitir:active{ transform:scale(.96); }
 @media (min-width:900px){ .knh-sar:not(.knh-tam){ max-width:900px; margin:0 auto; } }
 /* AKILLI ARAMA düğmesi + sonuç şeridi */
 .tan-ai-ara-btn{ width:100%; border:1.5px solid rgba(160,120,255,.7); cursor:pointer; font-family:inherit; font-weight:800; font-size:15px; padding:12px; border-radius:14px; margin:0 0 6px; color:#fff; background:linear-gradient(135deg,#7d5cff,#5a3fd0); box-shadow:0 4px 13px rgba(30,10,80,.4); }
