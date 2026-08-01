@@ -4435,6 +4435,20 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .knh-ark-yaz:active, .knh-ark-yol:active{ transform:scale(.96); }
 .knh-ark-kart-kapat{ border:none; cursor:pointer; background:rgba(120,90,20,.16); color:#7a5c12; width:100%; height:26px; border-radius:9px; font-size:13px; font-weight:800; }
 @media (min-width:560px){ .knh-ark-yazi{ font-size:14px; } .knh-ark-kart-ad{ font-size:17px; } .knh-ark-kart-uzak{ font-size:14px; } .knh-ark-yaz, .knh-ark-yol{ font-size:14px; } }
+/* YAKINDAKİLER ŞERİDİ — arkadaşlar uzaklık sırasına göre, altta yatay kayan fotoğraflar */
+.knh-yakin-serit{ position:absolute; left:0; right:0; bottom:74px; z-index:6; display:flex; gap:9px; overflow-x:auto; padding:8px 12px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.knh-yakin-serit::-webkit-scrollbar{ display:none; }
+.knh-yakin-oge{ flex:none; width:64px; display:flex; flex-direction:column; align-items:center; gap:3px; border:none; cursor:pointer; font-family:inherit; background:transparent; padding:0; }
+.knh-yakin-foto{ width:52px; height:52px; border-radius:12px; overflow:hidden; border:2.5px solid #FFD700; background:#0f5e31; display:flex; align-items:center; justify-content:center; color:#FFD700; font-weight:900; font-size:20px; box-shadow:0 3px 10px rgba(0,20,15,.5); }
+.knh-yakin-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.knh-yakin-ad{ max-width:64px; color:#fff; font-weight:800; font-size:11.5px; white-space:nowrap; overflow:hidden; text-shadow:0 1px 3px rgba(0,0,0,.8); }
+.knh-yakin-km{ background:#FFD700; color:#0f5e31; font-weight:900; font-size:10.5px; padding:1px 7px; border-radius:7px; }
+/* BOŞ DURUM — yakında arkadaş yokken açıklama (sen buradasın) */
+.knh-bos-bilgi{ position:absolute; left:12px; right:12px; bottom:74px; z-index:6; display:flex; align-items:flex-start; gap:10px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.8px solid rgba(255,215,0,.7); border-radius:15px; padding:12px 14px; box-shadow:0 5px 16px rgba(0,20,15,.4); }
+.knh-bos-ik{ font-size:24px; flex:none; }
+.knh-bos-bilgi b{ color:#2a2008; font-size:15px; }
+.knh-bos-bilgi p{ margin:4px 0 0; color:#5a4712; font-size:13px; font-weight:600; line-height:1.45; }
+@media (min-width:560px){ .knh-bos-bilgi b{ font-size:16px; } .knh-bos-bilgi p{ font-size:14px; } .knh-yakin-ad{ font-size:12.5px; } }
 /* KAPAT (✕) — tam ekrandan küçük önizlemeye dön (sağ üst, arama çubuğunun yanında) */
 .knh-kapat{ position:absolute; right:12px; top:10px; z-index:8; width:44px; height:44px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:20px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); display:flex; align-items:center; justify-content:center; }
 .knh-kapat:active{ transform:scale(.94); }

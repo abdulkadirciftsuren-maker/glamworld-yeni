@@ -180,6 +180,21 @@ export async function profilKaydet(uid, veri) {
   } catch (e) { return false; }
 }
 
+// CANLI KONUM — kullanıcının ŞU ANKİ yerini yaz (arkadaşları haritada "yanında" görsün).
+// zaman: tazelik (eski konumları elemek için). merge → profilin gerisini bozmaz.
+export async function canliKonumYaz(uid, lat, lon) {
+  if (!uid || typeof lat !== "number" || typeof lon !== "number") return false;
+  try {
+    await setDoc(doc(db, KULLANICILAR, uid), { canliKonum: { lat, lon, zaman: Date.now() } }, { merge: true });
+    return true;
+  } catch (e) { return false; }
+}
+// CANLI KONUM PAYLAŞIMINI KAPAT — konumu sil (artık haritada görünmesin).
+export async function canliKonumSil(uid) {
+  if (!uid) return false;
+  try { await setDoc(doc(db, KULLANICILAR, uid), { canliKonum: null }, { merge: true }); return true; } catch (e) { return false; }
+}
+
 // Meslek Pasaportu (profesyonel ayrıntıları) — kullanicilar/{uid}.pro altına
 export async function pasaportKaydet(uid, pro) {
   if (!uid) return false;

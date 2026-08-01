@@ -24,8 +24,11 @@ const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b",
 const ETKILER = ["dragPan", "scrollZoom", "boxZoom", "dragRotate", "keyboard", "doubleClickZoom", "touchZoomRotate"];
 function haritaEtkilesim(map, ac) { ETKILER.forEach((n) => { try { if (map[n]) ac ? map[n].enable() : map[n].disable(); } catch (e) {} }); }
 
-export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz }) {
+export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, benFoto, benAd }) {
   const { t } = useTranslation();
+  const benFotoRef = useRef(benFoto || "");
+  const benAdRef = useRef(benAd || "");
+  useEffect(() => { benFotoRef.current = benFoto || ""; benAdRef.current = benAd || ""; }, [benFoto, benAd]);
   const kapRef = useRef(null);
   const haritaRef = useRef(null);
   const benPinRef = useRef(null);
@@ -50,6 +53,8 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz })
   const [rotaYukleniyor, setRotaYukleniyor] = useState(false);
   const [mod, setMod] = useState("araba"); // araba | yurume | bisiklet (çizgi rengi/deseni)
   const benRef = useRef((typeof benLat === "number" && typeof benLon === "number") ? { lat: benLat, lon: benLon } : null);
+  const [benNokta, setBenNokta] = useState(benRef.current); // kendi konumum (uzaklık hesabı ekranda güncellensin)
+  function benGuncelle(la, lo) { benRef.current = { lat: la, lon: lo }; setBenNokta({ lat: la, lon: lo }); }
 
   function poiYukle(lat, lon) {
     const q = `[out:json][timeout:16];(node["amenity"~"^(restaurant|cafe|fast_food|pharmacy|hospital|clinic|bank|atm|post_office|fuel|school|university|bakery|marketplace|mosque|church|supermarket|townhall|courthouse|police|fire_station|library)$"](around:1400,${lat},${lon});node["tourism"~"^(hotel|motel|guest_house|hostel)$"](around:1400,${lat},${lon});node["shop"~"^(supermarket|convenience|hairdresser|beauty|barber|clothes|bakery|jewelry)$"](around:1400,${lat},${lon}););out body 120;`;
@@ -71,6 +76,27 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz })
   }
   function hedefKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (hedefPinRef.current) hedefPinRef.current.setLngLat([lon, lat]); else hedefPinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
   function hedefPinKaldir() { if (hedefPinRef.current) { try { hedefPinRef.current.remove(); } catch (e) {} hedefPinRef.current = null; } }
+
+  // ── KENDİ İŞARETİM: kendi FOTOĞRAFIM (kare, MAVİ çerçeve, "Sen" etiketi) — sarı iğne yerine ──
+  function benKaresi() {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateY(-6px)";
+    const kare = document.createElement("div");
+    kare.style.cssText = "width:54px;height:54px;border-radius:12px;border:3.5px solid #1f9dff;background:#0f5e31;box-shadow:0 3px 11px rgba(0,0,0,.55);overflow:hidden;display:flex;align-items:center;justify-content:center";
+    if (benFotoRef.current) {
+      const im = document.createElement("img"); im.src = benFotoRef.current; im.referrerPolicy = "no-referrer"; im.alt = "";
+      im.style.cssText = "width:100%;height:100%;object-fit:cover;display:block"; kare.appendChild(im);
+    } else { kare.textContent = "🙂"; kare.style.fontSize = "28px"; }
+    const et = document.createElement("div");
+    et.textContent = t("knhSen", "Sen"); et.style.cssText = "margin-top:3px;padding:1px 10px;background:#1f9dff;color:#fff;font-weight:800;font-size:11px;line-height:1.6;border-radius:7px;box-shadow:0 1px 4px rgba(0,0,0,.4)";
+    wrap.appendChild(kare); wrap.appendChild(et);
+    return wrap;
+  }
+  function benPinYerlestir(lat, lon) {
+    const map = haritaRef.current; if (!map) return;
+    if (benPinRef.current) { try { benPinRef.current.setLngLat([lon, lat]); } catch (e) {} return; }
+    try { benPinRef.current = new maplibregl.Marker({ element: benKaresi(), anchor: "bottom" }).setLngLat([lon, lat]).addTo(map); } catch (e) {}
+  }
 
   // ── ARKADAŞLARI HARİTAYA KOY (kare fotoğraf işaretleri; KURAL: yuvarlak DEĞİL, kare) ──
   function arkadasKaresi(a) {
@@ -158,11 +184,11 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz })
     setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
     map.on("click", (e) => { if (!acikRef.current) return; setSecilenArkadas(null); const la = e.lngLat.lat, lo = e.lngLat.lng; setHedef({ lat: la, lon: lo, ad: "" }); hedefKoy(la, lo); setRotaBilgi(null); rotaTemizle(); });
     map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 13) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
-    if (ben) benPinRef.current = new maplibregl.Marker({ color: "#FFD700" }).setLngLat([bLon, bLat]).addTo(map);
-    if (!ben && navigator.geolocation) navigator.geolocation.getCurrentPosition((pos) => {
+    if (ben) benPinYerlestir(bLat, bLon);
+    if (navigator.geolocation) navigator.geolocation.getCurrentPosition((pos) => {
       const la = pos.coords.latitude, lo = pos.coords.longitude; if (!haritaRef.current) return;
-      benRef.current = { lat: la, lon: lo }; map.flyTo({ center: [lo, la], zoom: 13 });
-      benPinRef.current = new maplibregl.Marker({ color: "#FFD700" }).setLngLat([lo, la]).addTo(map);
+      benGuncelle(la, lo); if (!ben) map.flyTo({ center: [lo, la], zoom: 13 });
+      benPinYerlestir(la, lo);
       setTimeout(hepsiniGoster, 150);
     }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
     return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
@@ -188,8 +214,8 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz })
     const map = haritaRef.current; if (!map) return;
     if (!navigator.geolocation) { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 15 }); return; }
     navigator.geolocation.getCurrentPosition((pos) => {
-      const la = pos.coords.latitude, lo = pos.coords.longitude; benRef.current = { lat: la, lon: lo }; map.flyTo({ center: [lo, la], zoom: 15 });
-      if (benPinRef.current) benPinRef.current.setLngLat([lo, la]); else benPinRef.current = new maplibregl.Marker({ color: "#FFD700" }).setLngLat([lo, la]).addTo(map);
+      const la = pos.coords.latitude, lo = pos.coords.longitude; benGuncelle(la, lo); map.flyTo({ center: [lo, la], zoom: 15 });
+      benPinYerlestir(la, lo);
       poiYukle(la, lo);
     }, () => { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 15 }); }, { enableHighAccuracy: true, timeout: 8000 });
   }
@@ -235,6 +261,18 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz })
   }
 
   const arkSayi = (Array.isArray(arkadaslar) ? arkadaslar : []).length;
+  // Arkadaşları UZAKLIĞA göre sırala (en yakın önce) — "yanıma yaklaşan arkadaş" için.
+  const yakinlar = (Array.isArray(arkadaslar) ? arkadaslar : []).map((a) => {
+    const km = benNokta ? kmArasi(benNokta.lat, benNokta.lon, a.lat, a.lon) : null;
+    return { ...a, km };
+  }).sort((x, y) => (x.km == null ? 1e9 : x.km) - (y.km == null ? 1e9 : y.km));
+  const enYakin = yakinlar[0] || null;
+  function kmYaz(km) { if (km == null) return ""; return km < 1 ? Math.round(km * 1000) + " m" : (km < 10 ? km.toFixed(1) : Math.round(km)) + " km"; }
+  function arkadasaGit(a) {
+    const map = haritaRef.current; hedefPinKaldir(); setRotaBilgi(null); rotaTemizle();
+    setSecilenArkadas(a); setHedef({ lat: a.lat, lon: a.lon, ad: a.ad, arkadas: true });
+    if (map) try { map.flyTo({ center: [a.lon, a.lat], zoom: Math.max(map.getZoom(), 14) }); } catch (e) {}
+  }
 
   return (
     <div className={"knh-sar" + (acik ? " knh-tam" : " knh-oniz-sar")} onClick={!acik ? () => setAcik(true) : undefined}>
@@ -245,7 +283,7 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz })
       {!acik && (
         <div className="knh-oniz-ipuc" onClick={() => setAcik(true)}>
           <span className="knh-oniz-ik" aria-hidden="true">🗺️</span>
-          <span>{arkSayi ? (arkSayi + " " + t("knhArkadasHaritada", "arkadaşın haritada — dokun")) : t("knhAcHarita", "Haritayı açmak için dokun")}</span>
+          <span>{arkSayi ? (arkSayi + " " + t("knhArkadasHaritada", "arkadaşın haritada — dokun")) : t("knhAcHaritaSen", "Kendini ve yakındaki arkadaşları gör — dokun")}</span>
           <span className="knh-oniz-buyut" aria-hidden="true">⛶</span>
         </div>
       )}
@@ -258,14 +296,40 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz })
           <button className="knh-ara-btn" onClick={() => yerAra()} disabled={araniyor}>{araniyor ? "…" : t("knhBul", "Bul")}</button>
         </div>
 
-        {/* Arkadaş bilgi şeridi — kaç arkadaşın haritada + "Hepsini göster" */}
+        {/* Arkadaş bilgi şeridi — en yakın arkadaş + "Hepsini göster" */}
         <div className="knh-ark-serit">
           <span className="knh-ark-kalp" aria-hidden="true">💛</span>
           <span className="knh-ark-yazi">
-            {arkSayi ? (arkSayi + " " + t("knhArkadasVar", "arkadaşın haritada")) : t("knhArkadasYok", "Konumunu paylaşan arkadaşın yok")}
+            {arkSayi === 0 ? t("knhArkadasYok", "Yakınında arkadaş yok")
+              : enYakin && enYakin.km != null ? (t("knhEnYakin", "En yakın") + ": " + ((enYakin.ad || "").split(/\s+/)[0] || t("knhArkadas", "Arkadaş")) + " · " + kmYaz(enYakin.km))
+              : (arkSayi + " " + t("knhArkadasVar", "arkadaşın haritada"))}
           </span>
           {arkSayi > 0 && <button className="knh-ark-hepsi" onClick={() => { setSecilenArkadas(null); hedefPinKaldir(); setHedef(null); setRotaBilgi(null); rotaTemizle(); hepsiniGoster(); }}>{t("knhHepsiniGoster", "Hepsini göster")}</button>}
         </div>
+
+        {/* YAKINDAKİLER şeridi — arkadaşlar UZAKLIK sırasına göre, fotoğraflarıyla; dokun → git */}
+        {arkSayi > 0 && !secilenArkadas && !rotaBilgi && (
+          <div className="knh-yakin-serit">
+            {yakinlar.map((a) => (
+              <button className="knh-yakin-oge" key={a.uid} onClick={() => arkadasaGit(a)}>
+                <span className="knh-yakin-foto">{a.foto ? <img src={a.foto} alt="" referrerPolicy="no-referrer" /> : <span>{((a.ad || "?").trim()[0] || "?").toUpperCase()}</span>}</span>
+                <span className="knh-yakin-ad">{(a.ad || "").split(/\s+/)[0]}</span>
+                {a.km != null && <span className="knh-yakin-km">{kmYaz(a.km)}</span>}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Yakında arkadaş yoksa: sen buradasın + arkadaşlar uygulamayı açınca burada görünecek */}
+        {arkSayi === 0 && !sonuclar && (
+          <div className="knh-bos-bilgi">
+            <span className="knh-bos-ik" aria-hidden="true">📍</span>
+            <div>
+              <b>{t("knhSenBurada", "Sen buradasın 🙂")}</b>
+              <p>{t("knhBosArkadas", "Takip ettiğin arkadaşlar uygulamayı açıp konumlarını paylaşınca, sana ne kadar yakın oldukları (km) ile burada fotoğraflarıyla görünecekler.")}</p>
+            </div>
+          </div>
+        )}
 
         {sonuclar && (
           <div className="knh-sonuc">
