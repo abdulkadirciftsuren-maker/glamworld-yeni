@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.css": "./static/css/main.38e99165.css",
-    "main.js": "./static/js/main.9f0abbfa.js",
+    "main.css": "./static/css/main.b093bd5d.css",
+    "main.js": "./static/js/main.4176c450.js",
     "static/css/922.d63e7500.chunk.css": "./static/css/922.d63e7500.chunk.css",
     "static/js/922.79b72309.chunk.js": "./static/js/922.79b72309.chunk.js",
-    "static/js/95.dcb6d78e.chunk.js": "./static/js/95.dcb6d78e.chunk.js",
+    "static/js/95.8b5a0e82.chunk.js": "./static/js/95.8b5a0e82.chunk.js",
     "static/js/453.d745a41a.chunk.js": "./static/js/453.d745a41a.chunk.js",
     "static/media/profilCerceveMavi.png": "./static/media/profilCerceveMavi.0b25c849ca29eb692e24.png",
     "static/media/profilCerceveYesil.png": "./static/media/profilCerceveYesil.634920b132be92e49644.png",
@@ -25,15 +25,15 @@
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
     "index.html": "./index.html",
-    "main.38e99165.css.map": "./static/css/main.38e99165.css.map",
-    "main.9f0abbfa.js.map": "./static/js/main.9f0abbfa.js.map",
+    "main.b093bd5d.css.map": "./static/css/main.b093bd5d.css.map",
+    "main.4176c450.js.map": "./static/js/main.4176c450.js.map",
     "922.d63e7500.chunk.css.map": "./static/css/922.d63e7500.chunk.css.map",
     "922.79b72309.chunk.js.map": "./static/js/922.79b72309.chunk.js.map",
-    "95.dcb6d78e.chunk.js.map": "./static/js/95.dcb6d78e.chunk.js.map",
+    "95.8b5a0e82.chunk.js.map": "./static/js/95.8b5a0e82.chunk.js.map",
     "453.d745a41a.chunk.js.map": "./static/js/453.d745a41a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.38e99165.css",
-    "static/js/main.9f0abbfa.js"
+    "static/css/main.b093bd5d.css",
+    "static/js/main.4176c450.js"
   ]
 }
