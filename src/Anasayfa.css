@@ -4367,13 +4367,18 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-km{ color:#9fe6c0; font-weight:700; }
 
 /* ═══════════ KONUM — navigasyon haritası ═══════════ */
-.knh-pencere{ padding:6px 6px 92px; }
-.knh-sar{ position:relative; width:100%; height:calc(100dvh - 250px); min-height:520px; }
-/* TAM EKRAN — harita bütün ekranı kaplar (üst başlık + alt menü dahil), üstte ✕ ile çıkılır */
+.knh-pencere{ padding:10px 12px 92px; }
+.knh-sar{ position:relative; width:100%; }
+/* KÜÇÜK ÖNİZLEME — açılışta bu görünür; üstünde parmak = SAYFA kayar (harita pointer-events:none), DOKUNUNCA açılır */
+.knh-oniz-sar{ height:230px; cursor:pointer; }
+.knh-oniz-sar .knh-harita{ pointer-events:none; }
+.knh-oniz-ipuc{ position:absolute; left:0; right:0; bottom:12px; z-index:3; pointer-events:none; display:flex; align-items:center; justify-content:center; gap:9px; margin:0 auto; width:max-content; max-width:90%; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:800; font-size:14.5px; padding:11px 18px; border-radius:14px; box-shadow:0 4px 14px rgba(0,20,15,.5); }
+.knh-oniz-ik{ font-size:18px; } .knh-oniz-buyut{ font-size:18px; opacity:.9; }
+/* TAM EKRAN — harita bütün ekranı kaplar (üst başlık + alt menü dahil), ✕ ile çıkılır */
 .knh-sar.knh-tam{ position:fixed; inset:0; z-index:3000; width:100vw; height:100dvh; height:100vh; margin:0; }
 .knh-sar.knh-tam .knh-harita{ border-radius:0; border:none; }
-.knh-harita{ position:absolute; inset:0; border-radius:18px; overflow:hidden; box-shadow:0 6px 20px rgba(0,20,15,.4); border:2px solid rgba(255,255,255,.35); }
-.knh-harita .maplibregl-canvas{ border-radius:16px; }
+.knh-harita{ position:absolute; inset:0; border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(0,20,15,.4); border:2px solid rgba(255,255,255,.4); }
+.knh-harita .maplibregl-canvas{ border-radius:14px; }
 .knh-yukleniyor{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#0f5e31; font-weight:800; font-size:16px; background:linear-gradient(180deg,#eafff3,#cdeede); z-index:1; }
 /* Arama — haritanın ÜSTÜNDE yüzen çubuk */
 .knh-ara-sar{ position:absolute; top:10px; left:10px; right:62px; z-index:5; display:flex; align-items:center; gap:7px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.6); border-radius:14px; padding:7px 8px 7px 12px; box-shadow:0 4px 14px rgba(0,20,15,.35); }
@@ -4397,9 +4402,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Yol tarifi düğmesi (sol alt, hedef seçilince çıkar) */
 .knh-yol{ position:absolute; left:14px; bottom:16px; z-index:5; display:flex; align-items:center; gap:6px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:15px; padding:12px 17px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
 .knh-yol:active{ transform:scale(.96); }
-/* TAM EKRAN düğmesi (sağ üst — arama çubuğunun yanında, çakışmaz) */
-.knh-tamekran{ position:absolute; right:12px; top:10px; z-index:6; width:44px; height:44px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:20px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); display:flex; align-items:center; justify-content:center; }
-.knh-tamekran:active{ transform:scale(.94); }
+/* KAPAT (✕) — tam ekrandan küçük önizlemeye dön (sağ üst, arama çubuğunun yanında) */
+.knh-kapat{ position:absolute; right:12px; top:10px; z-index:8; width:44px; height:44px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:20px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); display:flex; align-items:center; justify-content:center; }
+.knh-kapat:active{ transform:scale(.94); }
 /* Rota bilgi şeridi (km · dk · adım adım) — düğmelerin ÜSTÜNDE (Konumum ile çakışmaz) */
 .knh-rota-serit{ position:absolute; left:12px; right:12px; bottom:72px; z-index:6; display:flex; align-items:center; gap:9px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.65); border-radius:14px; padding:10px 12px; box-shadow:0 5px 16px rgba(0,20,15,.45); }
 .knh-rota-bilgi{ flex:1; min-width:0; color:#2a2008; font-weight:800; font-size:15px; }
