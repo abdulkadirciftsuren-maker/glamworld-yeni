@@ -4379,6 +4379,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .knh-sar.knh-tam .knh-harita{ border-radius:0; border:none; }
 .knh-harita{ position:absolute; inset:0; border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(0,20,15,.4); border:2px solid rgba(255,255,255,.4); }
 .knh-harita .maplibregl-canvas{ border-radius:14px; }
+/* ROTA ÇİZGİSİ — haritanın üstünde SVG katmanı (MapLibre vektör çizgisi bazı cihazlarda görünmüyordu → SVG kesin görünür) */
+.knh-rota-svg{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; overflow:visible; }
+.knh-rota-kenar{ fill:none; stroke:#ffffff; stroke-width:11; stroke-linejoin:round; stroke-linecap:round; opacity:.95; }
+.knh-rota-cizgi{ fill:none; stroke:#1f6fd0; stroke-width:6.5; stroke-linejoin:round; stroke-linecap:round; }
 .knh-yukleniyor{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#0f5e31; font-weight:800; font-size:16px; background:linear-gradient(180deg,#eafff3,#cdeede); z-index:1; }
 /* Arama — haritanın ÜSTÜNDE yüzen çubuk */
 .knh-ara-sar{ position:absolute; top:10px; left:10px; right:62px; z-index:5; display:flex; align-items:center; gap:7px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.6); border-radius:14px; padding:7px 8px 7px 12px; box-shadow:0 4px 14px rgba(0,20,15,.35); }

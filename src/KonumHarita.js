@@ -31,6 +31,9 @@ export default function KonumHarita({ benLat, benLon }) {
   const poiZmnRef = useRef(null);
   const araZmnRef = useRef(null);
   const acikRef = useRef(false);
+  const rotaCoordsRef = useRef(null); // rota koordinatları (SVG ile çizmek için)
+  const pathRef = useRef(null);       // mavi çizgi SVG path
+  const pathKenarRef = useRef(null);  // beyaz kenar SVG path
   const [acik, setAcik] = useState(false); // false=küçük önizleme, true=tam ekran (işlem yapılır)
   const [hazir, setHazir] = useState(false);
   const [ara, setAra] = useState("");
@@ -60,36 +63,26 @@ export default function KonumHarita({ benLat, benLon }) {
     }).catch(() => {});
   }
   function hedefKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (hedefPinRef.current) hedefPinRef.current.setLngLat([lon, lat]); else hedefPinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
-  // Rota KATMANINI baştan (boş) hazırla — çalışma anında katman EKLEMEK yerine sadece verisini güncelleriz (en güvenilir yöntem)
-  function rotaKatmanHazirla() {
-    const m = haritaRef.current; if (!m) return false;
-    try {
-      if (!m.getSource("rota")) m.addSource("rota", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      if (!m.getLayer("rota-kenar")) m.addLayer({ id: "rota-kenar", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 12, "line-opacity": 0.95 } });
-      if (!m.getLayer("rota")) m.addLayer({ id: "rota", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#1f6fd0", "line-width": 7.5, "line-opacity": 0.98 } });
-      return true;
-    } catch (e) { return false; }
+  // ROTAYI SVG İLE ÇİZ — MapLibre vektör çizgisi bazı cihazlarda görünmüyordu; çizgiyi haritanın ÜSTÜNE
+  // SVG olarak çiziyoruz (pinler gibi DOM → kesin görünür). Her harita hareketinde ("render") yeniden hizalanır.
+  function rotaCizSVG() {
+    const map = haritaRef.current, cizgi = pathRef.current, kenar = pathKenarRef.current;
+    if (!cizgi || !kenar) return;
+    const coords = rotaCoordsRef.current;
+    if (!map || !coords || coords.length < 2) { cizgi.setAttribute("d", ""); kenar.setAttribute("d", ""); return; }
+    let d = "";
+    try { for (let i = 0; i < coords.length; i++) { const p = map.project(coords[i]); d += (i ? " L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1); } } catch (e) { return; }
+    kenar.setAttribute("d", d); cizgi.setAttribute("d", d);
   }
-  function rotaTemizle() { const m = haritaRef.current; if (!m) return; try { const s = m.getSource("rota"); if (s && s.setData) s.setData({ type: "FeatureCollection", features: [] }); } catch (e) {} }
-  // ROTA ÇİZGİSİNİ KOY — katman zaten hazır; sadece verisini güncelle (setData). Kaynak yoksa hazırla.
+  function rotaTemizle() { rotaCoordsRef.current = null; rotaCizSVG(); }
   function cizgiKoy(coords) {
-    const m0 = haritaRef.current; if (!m0 || !Array.isArray(coords) || coords.length < 2) return;
+    const map = haritaRef.current; if (!Array.isArray(coords)) return;
     coords = coords.map((c) => [Number(c[0]), Number(c[1])]).filter((c) => isFinite(c[0]) && isFinite(c[1]));
     if (coords.length < 2) return;
-    const gj = { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } };
-    const koy = () => {
-      const m = haritaRef.current; if (!m) return;
-      if (!rotaKatmanHazirla()) return;
-      try {
-        const s = m.getSource("rota"); if (s && s.setData) s.setData(gj);
-        if (m.getLayer("rota-kenar")) m.moveLayer("rota-kenar"); if (m.getLayer("rota")) m.moveLayer("rota");
-        const b = coords.reduce((bb, c) => bb.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
-        m.fitBounds(b, { padding: 80, maxZoom: 16 });
-        try { m.triggerRepaint(); } catch (e) {}
-      } catch (e) {}
-    };
-    koy();
-    setTimeout(koy, 500); // stil/döşeme geç hazırsa yeniden veri koy (zararsız)
+    rotaCoordsRef.current = coords;
+    if (map) { try { const b = coords.reduce((bb, c) => bb.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0])); map.fitBounds(b, { padding: 80, maxZoom: 16 }); } catch (e) {} }
+    rotaCizSVG();
+    setTimeout(rotaCizSVG, 400); // fitBounds bitince tekrar hizala
   }
 
   useEffect(() => {
@@ -101,7 +94,8 @@ export default function KonumHarita({ benLat, benLon }) {
     } catch (e) { return; }
     haritaRef.current = map;
     haritaEtkilesim(map, false); // AÇILIŞ = önizleme (dokunma kapalı → parmak sayfayı kaydırır)
-    map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} try { rotaKatmanHazirla(); } catch (e) {} });
+    map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} });
+    map.on("render", rotaCizSVG); // harita her çizildiğinde/oynadığında rota SVG'sini yeniden hizala
     setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
     map.on("click", (e) => { if (!acikRef.current) return; const la = e.lngLat.lat, lo = e.lngLat.lng; setHedef({ lat: la, lon: lo, ad: "" }); hedefKoy(la, lo); setRotaBilgi(null); rotaTemizle(); });
     map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 13) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
@@ -179,6 +173,8 @@ export default function KonumHarita({ benLat, benLon }) {
       {/* HARİTA (küçük önizleme ya da tam ekran). Önizlemede pointer-events:none → parmak sayfayı kaydırır; dokununca sarmalayıcı açar. */}
       <div className={"knh-harita" + (acik ? " knh-harita-tam" : "")} ref={kapRef}>
         {!hazir && <div className="knh-yukleniyor">🗺️ {t("knhYukleniyor", "Harita geliyor…")}</div>}
+        {/* ROTA ÇİZGİSİ — haritanın üstünde SVG (kesin görünür) */}
+        <svg className="knh-rota-svg" aria-hidden="true"><path ref={pathKenarRef} className="knh-rota-kenar" d="" /><path ref={pathRef} className="knh-rota-cizgi" d="" /></svg>
       </div>
       {/* ÖNİZLEME: "dokun aç" ipucu (üstünde parmak sağa-sola = sayfa değişir) */}
       {!acik && (
