@@ -239,8 +239,8 @@ export default function KonumHarita({ benLat, benLon }) {
       {/* HARİTA (küçük önizleme ya da tam ekran). Önizlemede pointer-events:none → parmak sayfayı kaydırır; dokununca sarmalayıcı açar. */}
       <div className={"knh-harita" + (acik ? " knh-harita-tam" : "")} ref={kapRef}>
         {!hazir && <div className="knh-yukleniyor">🗺️ {t("knhYukleniyor", "Harita geliyor…")}</div>}
-        {/* ROTA ÇİZGİSİ — haritanın üstünde SVG (kesin görünür) */}
-        <svg className="knh-rota-svg" aria-hidden="true"><path ref={pathKenarRef} className="knh-rota-kenar" d="" /><path ref={pathRef} className="knh-rota-cizgi" d="" /></svg>
+        {/* ROTA ÇİZGİSİ — haritanın üstünde SVG (kesin görünür). Renk/desen ulaşım türüne göre (mod-*) CSS'ten. */}
+        <svg className={"knh-rota-svg mod-" + mod} aria-hidden="true"><path ref={pathKenarRef} className="knh-rota-kenar" d="" /><path ref={pathRef} className="knh-rota-cizgi" d="" /></svg>
       </div>
       {/* ÖNİZLEME: "dokun aç" ipucu (üstünde parmak sağa-sola = sayfa değişir) */}
       {!acik && (
@@ -268,10 +268,16 @@ export default function KonumHarita({ benLat, benLon }) {
         {/* Kapat (küçük önizlemeye dön) */}
         {!navAktif && <button className="knh-kapat" onClick={() => setAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>}
         {/* Konumum */}
-        {!navAktif && <button className="knh-konumum" onClick={konumumaGit} aria-label={t("knhKonumum", "Konumum")}>
+        {!navAktif && <button className="knh-konumum" onClick={konumumaGit} aria-label={t("knhKonumum", "Ortala")}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
-          <span>{t("knhKonumum", "Konumum")}</span>
+          <span>{t("knhKonumum", "Ortala")}</span>
         </button>}
+        {/* SAĞ DÜĞMELER — pusula (kuzeye çevir) + yakınlaştır/uzaklaştır */}
+        <div className="knh-kontrol">
+          <button className="knh-kbtn" onClick={() => { const m = haritaRef.current; if (m) try { m.easeTo({ bearing: 0, pitch: 0, duration: 400 }); } catch (e) {} }} aria-label={t("knhPusula", "Kuzey")}>🧭</button>
+          <button className="knh-kbtn" onClick={() => { const m = haritaRef.current; if (m) try { m.zoomIn(); } catch (e) {} }} aria-label={t("knhYakin", "Yakınlaştır")}>＋</button>
+          <button className="knh-kbtn" onClick={() => { const m = haritaRef.current; if (m) try { m.zoomOut(); } catch (e) {} }} aria-label={t("knhUzak", "Uzaklaştır")}>－</button>
+        </div>
         {hedef && !rotaBilgi && (
           <button className="knh-yol" onClick={rotaCiz} disabled={rotaYukleniyor}><span aria-hidden="true">🧭</span> {rotaYukleniyor ? t("knhRotaHesap", "Rota çiziliyor…") : t("knhYolTarifi", "Yol tarifi")}</button>
         )}
