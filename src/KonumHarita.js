@@ -1,10 +1,13 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// KONUM SAYFASI — sade harita (MapLibre GL)
+// KONUM SAYFASI — ARKADAŞ HARİTASI (MapLibre GL)
 // ─────────────────────────────────────────────────────────────────────────────
-// AÇILIŞ: KÜÇÜK önizleme (konumunun üzerinde). Üstünde parmak sağa-sola = SAYFA
-// değişir. DOKUNUNCA harita TAM EKRAN açılır: kendi konumun, yakın yerler, yer ARAMA,
-// yakınlaştır/uzaklaştır, pusula, ortala + istersen bir yere ROTA ÇİZGİSİ (km/süre).
-// NOT: Adım-adım "git" navigasyonu KULLANICI İSTEMEDİĞİ İÇİN KALDIRILDI.
+// AMAÇ (kullanıcının isteği): En yakın arkadaşların haritada FOTOĞRAFLARIYLA
+// görünsün — kim nerede, bir bakışta. Bir arkadaşa dokununca ismi çıkar, "Mesaj"
+// ile yazabilirsin ya da "Yol tarifi" ile ne kadar uzak olduğunu görürsün.
+// AÇILIŞ: KÜÇÜK önizleme (arkadaşların da görünür). Üstünde parmak sağa-sola =
+// SAYFA değişir. DOKUNUNCA harita TAM EKRAN açılır: arkadaşların, kendi konumun,
+// yakın yerler, yer ARAMA, yakınlaştır/uzaklaştır, pusula, ortala.
+// NOT: Adım-adım "git" navigasyonu KULLANICI İSTEMEDİĞİ İÇİN YOK.
 // ═══════════════════════════════════════════════════════════════════════════
 import React, { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
@@ -21,13 +24,15 @@ const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b",
 const ETKILER = ["dragPan", "scrollZoom", "boxZoom", "dragRotate", "keyboard", "doubleClickZoom", "touchZoomRotate"];
 function haritaEtkilesim(map, ac) { ETKILER.forEach((n) => { try { if (map[n]) ac ? map[n].enable() : map[n].disable(); } catch (e) {} }); }
 
-export default function KonumHarita({ benLat, benLon }) {
+export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz }) {
   const { t } = useTranslation();
   const kapRef = useRef(null);
   const haritaRef = useRef(null);
   const benPinRef = useRef(null);
   const hedefPinRef = useRef(null);
   const poiMarksRef = useRef([]);
+  const arkMarksRef = useRef([]);      // arkadaş fotoğraf işaretleri
+  const arkRef = useRef([]);           // güncel arkadaş listesi (olay işleyicileri için)
   const poiZmnRef = useRef(null);
   const araZmnRef = useRef(null);
   const acikRef = useRef(false);
@@ -40,6 +45,7 @@ export default function KonumHarita({ benLat, benLon }) {
   const [sonuclar, setSonuclar] = useState(null);
   const [araniyor, setAraniyor] = useState(false);
   const [hedef, setHedef] = useState(null);
+  const [secilenArkadas, setSecilenArkadas] = useState(null); // dokunulan arkadaş kartı
   const [rotaBilgi, setRotaBilgi] = useState(null);
   const [rotaYukleniyor, setRotaYukleniyor] = useState(false);
   const [mod, setMod] = useState("araba"); // araba | yurume | bisiklet (çizgi rengi/deseni)
@@ -55,15 +61,68 @@ export default function KonumHarita({ benLat, benLon }) {
       (d.elements || []).forEach((el) => {
         const tur = el.tags && (el.tags.amenity || el.tags.tourism || el.tags.shop || ""); if (!tur) return;
         const renk = POI_RENK[tur] || "#7f8c8d";
-        const dot = document.createElement("div"); dot.style.cssText = `background:${renk};width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.6);cursor:pointer`;
+        const dot = document.createElement("div"); dot.style.cssText = `background:${renk};width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.6);cursor:pointer`;
         const ad = (el.tags && el.tags.name) || tur;
         const mk = new maplibregl.Marker({ element: dot }).setLngLat([el.lon, el.lat]).setPopup(new maplibregl.Popup({ offset: 14, closeButton: false }).setHTML(`<b>${ad}</b>`)).addTo(map);
-        mk.getElement().addEventListener("click", () => { if (!acikRef.current) return; setHedef({ lat: el.lat, lon: el.lon, ad }); hedefKoy(el.lat, el.lon); setRotaBilgi(null); rotaTemizle(); });
+        mk.getElement().addEventListener("click", () => { if (!acikRef.current) return; setSecilenArkadas(null); setHedef({ lat: el.lat, lon: el.lon, ad }); hedefKoy(el.lat, el.lon); setRotaBilgi(null); rotaTemizle(); });
         poiMarksRef.current.push(mk);
       });
     }).catch(() => {});
   }
   function hedefKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (hedefPinRef.current) hedefPinRef.current.setLngLat([lon, lat]); else hedefPinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
+  function hedefPinKaldir() { if (hedefPinRef.current) { try { hedefPinRef.current.remove(); } catch (e) {} hedefPinRef.current = null; } }
+
+  // ── ARKADAŞLARI HARİTAYA KOY (kare fotoğraf işaretleri; KURAL: yuvarlak DEĞİL, kare) ──
+  function arkadasKaresi(a) {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateY(-6px)";
+    const kare = document.createElement("div");
+    kare.style.cssText = "width:48px;height:48px;border-radius:11px;border:3px solid #FFD700;background:#0f5e31;box-shadow:0 2px 9px rgba(0,0,0,.55);overflow:hidden;display:flex;align-items:center;justify-content:center";
+    if (a.foto) {
+      const im = document.createElement("img");
+      im.src = a.foto; im.referrerPolicy = "no-referrer"; im.alt = "";
+      im.style.cssText = "width:100%;height:100%;object-fit:cover;display:block";
+      kare.appendChild(im);
+    } else {
+      kare.textContent = ((a.ad || "?").trim()[0] || "?").toUpperCase();
+      kare.style.color = "#FFD700"; kare.style.fontWeight = "900"; kare.style.fontSize = "22px";
+    }
+    // İsim etiketi — KESİLMEZ: sadece İLK AD gösterilir (kısa), tam görünür (… ile kesme yok).
+    const ilkAd = ((a.ad || "").trim().split(/\s+/)[0]) || "";
+    if (ilkAd) {
+      const et = document.createElement("div");
+      et.textContent = ilkAd;
+      et.style.cssText = "margin-top:3px;padding:1px 7px;background:rgba(15,94,49,.94);color:#FFD700;font-weight:800;font-size:11px;line-height:1.5;border-radius:7px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.4)";
+      wrap.appendChild(kare); wrap.appendChild(et);
+    } else { wrap.appendChild(kare); }
+    return wrap;
+  }
+  function arkadaslariKoy() {
+    const map = haritaRef.current; if (!map) return;
+    arkMarksRef.current.forEach((m) => { try { m.remove(); } catch (e) {} }); arkMarksRef.current = [];
+    (arkRef.current || []).forEach((a) => {
+      if (typeof a.lat !== "number" || typeof a.lon !== "number") return;
+      const el = arkadasKaresi(a);
+      const mk = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat([a.lon, a.lat]).addTo(map);
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (!acikRef.current) { setAcik(true); return; }
+        hedefPinKaldir(); setRotaBilgi(null); rotaTemizle();
+        setSecilenArkadas(a); setHedef({ lat: a.lat, lon: a.lon, ad: a.ad, arkadas: true });
+        try { map.flyTo({ center: [a.lon, a.lat], zoom: Math.max(map.getZoom(), 14) }); } catch (e) {}
+      });
+      arkMarksRef.current.push(mk);
+    });
+  }
+  // Herkesi (ben + arkadaşlar) ekrana sığdır
+  function hepsiniGoster() {
+    const map = haritaRef.current; if (!map) return;
+    const pts = []; const ben = benRef.current; if (ben) pts.push([ben.lon, ben.lat]);
+    (arkRef.current || []).forEach((a) => { if (typeof a.lat === "number" && typeof a.lon === "number") pts.push([a.lon, a.lat]); });
+    if (!pts.length) return;
+    if (pts.length === 1) { try { map.flyTo({ center: pts[0], zoom: 14 }); } catch (e) {} return; }
+    try { const b = pts.reduce((bb, p) => bb.extend(p), new maplibregl.LngLatBounds(pts[0], pts[0])); map.fitBounds(b, { padding: 90, maxZoom: 15, duration: 600 }); } catch (e) {}
+  }
 
   // Rota çizgisini SVG ile çiz (haritanın üstünde — kesin görünür). Her harita hareketinde ("render") yeniden hizalanır.
   function rotaCizSVG() {
@@ -90,42 +149,49 @@ export default function KonumHarita({ benLat, benLon }) {
     const ben = benRef.current; const bLat = ben ? ben.lat : 39, bLon = ben ? ben.lon : 35;
     let map;
     try {
-      map = new maplibregl.Map({ container: kapRef.current, style: { version: 8, sources: { osm: { type: "raster", tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png", "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png", "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19, attribution: "© OpenStreetMap" } }, layers: [{ id: "osm", type: "raster", source: "osm", paint: { "raster-fade-duration": 0 } }] }, center: [bLon, bLat], zoom: ben ? 15 : 4, attributionControl: false, fadeDuration: 0 });
+      map = new maplibregl.Map({ container: kapRef.current, style: { version: 8, sources: { osm: { type: "raster", tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png", "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png", "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19, attribution: "© OpenStreetMap" } }, layers: [{ id: "osm", type: "raster", source: "osm", paint: { "raster-fade-duration": 0 } }] }, center: [bLon, bLat], zoom: ben ? 13 : 4, attributionControl: false, fadeDuration: 0 });
     } catch (e) { return; }
     haritaRef.current = map;
     haritaEtkilesim(map, false); // önizlemede dokunma kapalı → parmak sayfayı kaydırır
-    map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} });
+    map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} arkadaslariKoy(); setTimeout(hepsiniGoster, 120); });
     map.on("render", rotaCizSVG);
     setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
-    map.on("click", (e) => { if (!acikRef.current) return; const la = e.lngLat.lat, lo = e.lngLat.lng; setHedef({ lat: la, lon: lo, ad: "" }); hedefKoy(la, lo); setRotaBilgi(null); rotaTemizle(); });
+    map.on("click", (e) => { if (!acikRef.current) return; setSecilenArkadas(null); const la = e.lngLat.lat, lo = e.lngLat.lng; setHedef({ lat: la, lon: lo, ad: "" }); hedefKoy(la, lo); setRotaBilgi(null); rotaTemizle(); });
     map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 13) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
     if (ben) benPinRef.current = new maplibregl.Marker({ color: "#FFD700" }).setLngLat([bLon, bLat]).addTo(map);
     if (!ben && navigator.geolocation) navigator.geolocation.getCurrentPosition((pos) => {
       const la = pos.coords.latitude, lo = pos.coords.longitude; if (!haritaRef.current) return;
-      benRef.current = { lat: la, lon: lo }; map.flyTo({ center: [lo, la], zoom: 15 });
+      benRef.current = { lat: la, lon: lo }; map.flyTo({ center: [lo, la], zoom: 13 });
       benPinRef.current = new maplibregl.Marker({ color: "#FFD700" }).setLngLat([lo, la]).addTo(map);
+      setTimeout(hepsiniGoster, 150);
     }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
     return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Arkadaş listesi değişince (yüklenince) haritadaki fotoğrafları yenile
+  useEffect(() => {
+    arkRef.current = Array.isArray(arkadaslar) ? arkadaslar : [];
+    if (haritaRef.current && hazir) { arkadaslariKoy(); if (!acikRef.current) setTimeout(hepsiniGoster, 100); }
+  }, [arkadaslar, hazir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     acikRef.current = acik; const map = haritaRef.current; if (!map) return;
     haritaEtkilesim(map, acik);
     const z = setTimeout(() => {
       try { map.resize(); } catch (e) {}
-      if (acik) { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 15 }); poiYukle(ben.lat, ben.lon); } else konumumaGit(); }
+      if (acik) { if ((arkRef.current || []).length) hepsiniGoster(); else { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 14 }); poiYukle(ben.lat, ben.lon); } else konumumaGit(); } }
     }, 90);
     return () => clearTimeout(z);
   }, [acik]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function konumumaGit() {
     const map = haritaRef.current; if (!map) return;
-    if (!navigator.geolocation) { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 16 }); return; }
+    if (!navigator.geolocation) { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 15 }); return; }
     navigator.geolocation.getCurrentPosition((pos) => {
-      const la = pos.coords.latitude, lo = pos.coords.longitude; benRef.current = { lat: la, lon: lo }; map.flyTo({ center: [lo, la], zoom: 16 });
+      const la = pos.coords.latitude, lo = pos.coords.longitude; benRef.current = { lat: la, lon: lo }; map.flyTo({ center: [lo, la], zoom: 15 });
       if (benPinRef.current) benPinRef.current.setLngLat([lo, la]); else benPinRef.current = new maplibregl.Marker({ color: "#FFD700" }).setLngLat([lo, la]).addTo(map);
       poiYukle(la, lo);
-    }, () => { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 16 }); }, { enableHighAccuracy: true, timeout: 8000 });
+    }, () => { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 15 }); }, { enableHighAccuracy: true, timeout: 8000 });
   }
 
   function sureYaz(dk) { dk = Math.max(1, Math.round(dk)); if (dk < 60) return dk + " " + t("knhDk", "dk"); const sa = Math.floor(dk / 60), k = dk % 60; return sa + " " + t("knhSaat", "sa") + (k ? " " + k + " " + t("knhDk", "dk") : ""); }
@@ -145,7 +211,7 @@ export default function KonumHarita({ benLat, benLon }) {
     setAraniyor(false);
   }
   function araDegisti(v) { setAra(v); clearTimeout(araZmnRef.current); if (v.trim().length < 3) { setSonuclar(null); return; } araZmnRef.current = setTimeout(() => yerAra(v), 650); }
-  function sonucaGit(y) { const map = haritaRef.current; setSonuclar(null); setHedef(y); setRotaBilgi(null); rotaTemizle(); if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 16 }); hedefKoy(y.lat, y.lon); }
+  function sonucaGit(y) { const map = haritaRef.current; setSonuclar(null); setSecilenArkadas(null); setHedef(y); setRotaBilgi(null); rotaTemizle(); if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 16 }); hedefKoy(y.lat, y.lon); }
 
   function duzRotaCiz() {
     const ben = benRef.current; if (!ben || !hedef) return;
@@ -168,6 +234,8 @@ export default function KonumHarita({ benLat, benLon }) {
     setRotaYukleniyor(false);
   }
 
+  const arkSayi = (Array.isArray(arkadaslar) ? arkadaslar : []).length;
+
   return (
     <div className={"knh-sar" + (acik ? " knh-tam" : " knh-oniz-sar")} onClick={!acik ? () => setAcik(true) : undefined}>
       <div className={"knh-harita" + (acik ? " knh-harita-tam" : "")} ref={kapRef}>
@@ -177,7 +245,7 @@ export default function KonumHarita({ benLat, benLon }) {
       {!acik && (
         <div className="knh-oniz-ipuc" onClick={() => setAcik(true)}>
           <span className="knh-oniz-ik" aria-hidden="true">🗺️</span>
-          <span>{t("knhAcHarita", "Haritayı açmak için dokun")}</span>
+          <span>{arkSayi ? (arkSayi + " " + t("knhArkadasHaritada", "arkadaşın haritada — dokun")) : t("knhAcHarita", "Haritayı açmak için dokun")}</span>
           <span className="knh-oniz-buyut" aria-hidden="true">⛶</span>
         </div>
       )}
@@ -189,12 +257,23 @@ export default function KonumHarita({ benLat, benLon }) {
           {ara && <button className="knh-ara-temizle" onClick={() => { setAra(""); setSonuclar(null); }} aria-label={t("temizle", "Temizle")}>✕</button>}
           <button className="knh-ara-btn" onClick={() => yerAra()} disabled={araniyor}>{araniyor ? "…" : t("knhBul", "Bul")}</button>
         </div>
+
+        {/* Arkadaş bilgi şeridi — kaç arkadaşın haritada + "Hepsini göster" */}
+        <div className="knh-ark-serit">
+          <span className="knh-ark-kalp" aria-hidden="true">💛</span>
+          <span className="knh-ark-yazi">
+            {arkSayi ? (arkSayi + " " + t("knhArkadasVar", "arkadaşın haritada")) : t("knhArkadasYok", "Konumunu paylaşan arkadaşın yok")}
+          </span>
+          {arkSayi > 0 && <button className="knh-ark-hepsi" onClick={() => { setSecilenArkadas(null); hedefPinKaldir(); setHedef(null); setRotaBilgi(null); rotaTemizle(); hepsiniGoster(); }}>{t("knhHepsiniGoster", "Hepsini göster")}</button>}
+        </div>
+
         {sonuclar && (
           <div className="knh-sonuc">
             {sonuclar.length === 0 ? <div className="knh-sonuc-bos">{t("knhSonucYok", "Sonuç bulunamadı.")}</div>
               : sonuclar.map((y, i) => (<button className="knh-sonuc-oge" key={i} onClick={() => sonucaGit(y)}><span className="knh-sonuc-ik" aria-hidden="true">📍</span><span className="knh-sonuc-ad">{y.ad}</span></button>))}
           </div>
         )}
+
         <button className="knh-kapat" onClick={() => setAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
         <div className="knh-kontrol">
           <button className="knh-kbtn" onClick={() => { const m = haritaRef.current; if (m) try { m.easeTo({ bearing: 0, pitch: 0, duration: 400 }); } catch (e) {} }} aria-label={t("knhPusula", "Kuzey")}>🧭</button>
@@ -205,7 +284,26 @@ export default function KonumHarita({ benLat, benLon }) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
           <span>{t("knhKonumum", "Ortala")}</span>
         </button>
-        {hedef && !rotaBilgi && (
+
+        {/* Dokunulan ARKADAŞ kartı — foto + isim + Mesaj + ne kadar uzak (rota şeridi açıkken gizlenir) */}
+        {secilenArkadas && !rotaBilgi && (
+          <div className="knh-ark-kart">
+            <div className="knh-ark-kart-foto">
+              {secilenArkadas.foto ? <img src={secilenArkadas.foto} alt="" referrerPolicy="no-referrer" /> : <span>{((secilenArkadas.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
+            </div>
+            <div className="knh-ark-kart-bilgi">
+              <div className="knh-ark-kart-ad">{secilenArkadas.ad || t("knhArkadas", "Arkadaş")}</div>
+              {(() => { const ben = benRef.current; if (ben) { const km = kmArasi(ben.lat, ben.lon, secilenArkadas.lat, secilenArkadas.lon); return <div className="knh-ark-kart-uzak">📍 {km < 1 ? Math.round(km * 1000) + " m" : km.toFixed(1) + " km"} {t("knhUzakta", "uzakta")}{secilenArkadas.sehir ? " · " + secilenArkadas.sehir : ""}</div>; } return secilenArkadas.sehir ? <div className="knh-ark-kart-uzak">📍 {secilenArkadas.sehir}</div> : null; })()}
+            </div>
+            <div className="knh-ark-kart-dugmeler">
+              {arkadasaYaz && <button className="knh-ark-yaz" onClick={() => arkadasaYaz(secilenArkadas)}>💬 {t("knhMesaj", "Mesaj")}</button>}
+              <button className="knh-ark-yol" onClick={rotaCiz} disabled={rotaYukleniyor}>🧭 {rotaYukleniyor ? "…" : t("knhNeKadarUzak", "Ne kadar uzak")}</button>
+              <button className="knh-ark-kart-kapat" onClick={() => { setSecilenArkadas(null); setHedef(null); setRotaBilgi(null); rotaTemizle(); }} aria-label={t("kapat", "Kapat")}>✕</button>
+            </div>
+          </div>
+        )}
+
+        {hedef && !secilenArkadas && !rotaBilgi && (
           <button className="knh-yol" onClick={rotaCiz} disabled={rotaYukleniyor}><span aria-hidden="true">🧭</span> {rotaYukleniyor ? t("knhRotaHesap", "Rota çiziliyor…") : t("knhYolTarifi", "Yol tarifi")}</button>
         )}
         {rotaBilgi && (

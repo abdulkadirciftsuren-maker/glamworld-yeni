@@ -4415,6 +4415,26 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Yol tarifi düğmesi (sol alt, hedef seçilince çıkar) */
 .knh-yol{ position:absolute; left:14px; bottom:16px; z-index:5; display:flex; align-items:center; gap:6px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:15px; padding:12px 17px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
 .knh-yol:active{ transform:scale(.96); }
+/* ARKADAŞ ŞERİDİ — kaç arkadaşın haritada + "Hepsini göster" (arama çubuğunun hemen altında) */
+.knh-ark-serit{ position:absolute; left:12px; right:64px; top:62px; z-index:6; display:flex; align-items:center; gap:8px; background:linear-gradient(160deg,#0f5e31,#127a41); border:1.6px solid rgba(255,215,0,.7); border-radius:13px; padding:8px 11px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
+.knh-ark-kalp{ font-size:16px; flex:none; }
+.knh-ark-yazi{ flex:1; min-width:0; color:#FFD700; font-weight:800; font-size:13px; white-space:nowrap; overflow:hidden; }
+.knh-ark-hepsi{ flex:none; border:none; cursor:pointer; font-family:inherit; background:#FFD700; color:#0f5e31; font-weight:800; font-size:12px; padding:6px 11px; border-radius:9px; }
+.knh-ark-hepsi:active{ transform:scale(.95); }
+/* ARKADAŞ KARTI — bir arkadaşa dokununca çıkar (foto + isim + uzaklık + Mesaj/Yol tarifi) */
+.knh-ark-kart{ position:absolute; left:12px; right:12px; bottom:16px; z-index:7; display:flex; align-items:center; gap:11px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:2px solid rgba(255,215,0,.8); border-radius:16px; padding:11px 12px; box-shadow:0 6px 20px rgba(0,20,15,.5); }
+.knh-ark-kart-foto{ flex:none; width:56px; height:56px; border-radius:12px; overflow:hidden; border:2.5px solid #FFD700; background:#0f5e31; display:flex; align-items:center; justify-content:center; color:#FFD700; font-weight:900; font-size:24px; }
+.knh-ark-kart-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.knh-ark-kart-bilgi{ flex:1; min-width:0; }
+.knh-ark-kart-ad{ color:#2a2008; font-weight:900; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.knh-ark-kart-uzak{ color:#5a4712; font-weight:700; font-size:13px; margin-top:2px; }
+.knh-ark-kart-dugmeler{ flex:none; display:flex; flex-direction:column; gap:6px; }
+.knh-ark-yaz, .knh-ark-yol{ border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:13px; padding:8px 12px; border-radius:11px; white-space:nowrap; }
+.knh-ark-yaz{ background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; }
+.knh-ark-yol{ background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; }
+.knh-ark-yaz:active, .knh-ark-yol:active{ transform:scale(.96); }
+.knh-ark-kart-kapat{ border:none; cursor:pointer; background:rgba(120,90,20,.16); color:#7a5c12; width:100%; height:26px; border-radius:9px; font-size:13px; font-weight:800; }
+@media (min-width:560px){ .knh-ark-yazi{ font-size:14px; } .knh-ark-kart-ad{ font-size:17px; } .knh-ark-kart-uzak{ font-size:14px; } .knh-ark-yaz, .knh-ark-yol{ font-size:14px; } }
 /* KAPAT (✕) — tam ekrandan küçük önizlemeye dön (sağ üst, arama çubuğunun yanında) */
 .knh-kapat{ position:absolute; right:12px; top:10px; z-index:8; width:44px; height:44px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:20px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); display:flex; align-items:center; justify-content:center; }
 .knh-kapat:active{ transform:scale(.94); }

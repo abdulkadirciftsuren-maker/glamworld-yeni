@@ -3644,6 +3644,14 @@ export default function Anasayfa({ pro = false }) {
     return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
   }, [mesajlarimTum, benUid]);
   const okunmamisMesaj = useMemo(() => sohbetListesi.reduce((s, g) => s + g.okunmamis, 0), [sohbetListesi]);
+  // KONUM HARİTASI İÇİN ARKADAŞLAR — takip ettiklerimden KONUMU olanlar → haritada fotoğraflarıyla görünecekler.
+  // (Sadece profilinde konum girmiş olanlar çıkar; konum girmemiş arkadaş haritada görünmez.)
+  const haritaArkadaslar = useMemo(() => {
+    if (!takipSet || !takipSet.size || !mmKisiler || !mmKisiler.length) return [];
+    return mmKisiler
+      .filter((k) => k && k.uid && k.uid !== benUid && takipSet.has(k.uid) && k.konum && typeof k.konum.lat === "number" && typeof k.konum.lon === "number")
+      .map((k) => ({ uid: k.uid, ad: k.ad || k.isim || [k.isim, k.soyisim].filter(Boolean).join(" ") || "", foto: k.foto || k.fotoUrl || "", lat: k.konum.lat, lon: k.konum.lon, sehir: (k.konum && (k.konum.sehir || k.konum.ilce)) || "" }));
+  }, [takipSet, mmKisiler, benUid]);
   // Sohbet açıkken: o kişiden gelen okunmamışları OKUNDU yap (karşı tarafa çift tik ✓✓)
   useEffect(() => {
     if (!sohbetKisi) return;
@@ -8384,7 +8392,12 @@ export default function Anasayfa({ pro = false }) {
         /* KONUM — navigasyon haritası (kendi konumun, yakın yerler, yer arama, yol tarifi) */
         <div className="ana-pencere knh-pencere" key="konum">
           <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#eafff5", fontWeight: 800, fontSize: 16 }}>🗺️ …</div>}>
-            <KonumHarita benLat={konumLat != null ? konumLat : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lat)} benLon={konumLon != null ? konumLon : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lon)} />
+            <KonumHarita
+              benLat={konumLat != null ? konumLat : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lat)}
+              benLon={konumLon != null ? konumLon : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lon)}
+              arkadaslar={haritaArkadaslar}
+              arkadasaYaz={(a) => { if (a && a.uid) sohbetAc({ uid: a.uid, ad: a.ad, foto: a.foto }); }}
+            />
           </Suspense>
         </div>
       ) : aktifKod === "topluluk" ? (
