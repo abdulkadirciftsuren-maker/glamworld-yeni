@@ -60,7 +60,22 @@ export default function KonumHarita({ benLat, benLon }) {
     }).catch(() => {});
   }
   function hedefKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (hedefPinRef.current) hedefPinRef.current.setLngLat([lon, lat]); else hedefPinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
-  function rotaTemizle() { const map = haritaRef.current; if (!map) return; try { if (map.getLayer("rota")) map.removeLayer("rota"); if (map.getSource("rota")) map.removeSource("rota"); } catch (e) {} }
+  function rotaTemizle() { const map = haritaRef.current; if (!map) return; try { ["rota", "rota-kenar"].forEach((id) => { if (map.getLayer(id)) map.removeLayer(id); }); if (map.getSource("rota")) map.removeSource("rota"); } catch (e) {} }
+  // ROTA ÇİZGİSİNİ KOY — beyaz kenarlık + kalın mavi hat (kesin görünür); stil hazır değilse hazır olunca çizer
+  function cizgiKoy(coords, kesikli) {
+    const map = haritaRef.current; if (!map || !Array.isArray(coords) || coords.length < 2) return;
+    const koy = () => {
+      try {
+        rotaTemizle();
+        map.addSource("rota", { type: "geojson", data: { type: "Feature", geometry: { type: "LineString", coordinates: coords } } });
+        map.addLayer({ id: "rota-kenar", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 12, "line-opacity": 0.95 } });
+        map.addLayer({ id: "rota", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#1f6fd0", "line-width": 7.5, "line-opacity": 0.98, ...(kesikli ? { "line-dasharray": [1.6, 1.4] } : {}) } });
+        const b = coords.reduce((bb, c) => bb.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+        map.fitBounds(b, { padding: 80, maxZoom: 16 });
+      } catch (e) {}
+    };
+    if (map.isStyleLoaded && map.isStyleLoaded()) koy(); else map.once("idle", koy);
+  }
 
   useEffect(() => {
     if (!kapRef.current || haritaRef.current) return;
@@ -124,9 +139,8 @@ export default function KonumHarita({ benLat, benLon }) {
   function sonucaGit(y) { const map = haritaRef.current; setSonuclar(null); setHedef(y); setRotaBilgi(null); rotaTemizle(); if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 16 }); hedefKoy(y.lat, y.lon); }
 
   function duzRotaCiz() {
-    const map = haritaRef.current, ben = benRef.current; if (!map || !ben || !hedef) return;
-    const gj = { type: "Feature", geometry: { type: "LineString", coordinates: [[ben.lon, ben.lat], [hedef.lon, hedef.lat]] } };
-    try { rotaTemizle(); map.addSource("rota", { type: "geojson", data: gj }); map.addLayer({ id: "rota", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#1f6fd0", "line-width": 6, "line-opacity": 0.85, "line-dasharray": [2, 2] } }); const b = new maplibregl.LngLatBounds([ben.lon, ben.lat], [ben.lon, ben.lat]).extend([hedef.lon, hedef.lat]); map.fitBounds(b, { padding: 70, maxZoom: 16 }); } catch (e) {}
+    const ben = benRef.current; if (!ben || !hedef) return;
+    cizgiKoy([[ben.lon, ben.lat], [hedef.lon, hedef.lat]], true); // kesik düz çizgi
     const km = kmArasi(ben.lat, ben.lon, hedef.lat, hedef.lon);
     setRotaBilgi({ km: km.toFixed(1), dk: Math.max(1, Math.round(km / 0.5)), yaklasik: true });
   }
@@ -136,12 +150,11 @@ export default function KonumHarita({ benLat, benLon }) {
     try {
       const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${ben.lon},${ben.lat};${hedef.lon},${hedef.lat}?overview=full&geometries=geojson`);
       const d = await r.json(); const rota = d && d.routes && d.routes[0];
-      if (rota && rota.geometry) {
-        rotaTemizle(); map.addSource("rota", { type: "geojson", data: { type: "Feature", geometry: rota.geometry } });
-        map.addLayer({ id: "rota", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#1f6fd0", "line-width": 7, "line-opacity": 0.9 } });
-        const coords = rota.geometry.coordinates || []; if (coords.length) { const b = coords.reduce((bb, c) => bb.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0])); map.fitBounds(b, { padding: 70, maxZoom: 16 }); }
+      const coords = rota && rota.geometry && rota.geometry.coordinates;
+      if (Array.isArray(coords) && coords.length > 1 && Array.isArray(coords[0])) {
+        cizgiKoy(coords, false); // gerçek yol rotası — dolu mavi hat
         setRotaBilgi({ km: (rota.distance / 1000).toFixed(1), dk: Math.max(1, Math.round(rota.duration / 60)) });
-      } else duzRotaCiz();
+      } else duzRotaCiz(); // geometri yok/bozuk → düz çizgi yedeği
     } catch (e) { duzRotaCiz(); }
     setRotaYukleniyor(false);
   }
