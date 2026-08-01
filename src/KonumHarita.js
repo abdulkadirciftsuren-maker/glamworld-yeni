@@ -124,13 +124,38 @@ export default function KonumHarita({ benLat, benLon }) {
     }, () => { if (benRef.current) map.flyTo({ center: [benRef.current.lon, benRef.current.lat], zoom: 16 }); }, { enableHighAccuracy: true, timeout: 8000 });
   }
 
-  function yerAra(sorgu) {
+  // Süreyi SAAT + dakika yaz (2039 dk gibi anlamsız sayı yerine "33 sa 59 dk")
+  function sureYaz(dk) {
+    dk = Math.max(1, Math.round(dk));
+    if (dk < 60) return dk + " " + t("knhDk", "dk");
+    const sa = Math.floor(dk / 60), k = dk % 60;
+    return sa + " " + t("knhSaat", "sa") + (k ? " " + k + " " + t("knhDk", "dk") : "");
+  }
+  // YER ARA — önce Photon (kısmi/çok dilli yazımda güçlü, konuma göre yakın sonuç), olmazsa Nominatim yedek
+  async function yerAra(sorgu) {
     const q = ((typeof sorgu === "string" ? sorgu : ara) || "").trim(); if (q.length < 2) return;
     setAraniyor(true); setSonuclar(null);
-    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=7&accept-language=tr&q=" + encodeURIComponent(q);
-    fetch(url, { headers: { "Accept": "application/json" } }).then((r) => r.json()).then((liste) => {
-      setSonuclar((Array.isArray(liste) ? liste : []).map((y) => ({ lat: parseFloat(y.lat), lon: parseFloat(y.lon), ad: y.display_name || q })));
-    }).catch(() => setSonuclar([])).finally(() => setAraniyor(false));
+    const ben = benRef.current;
+    const photonMap = (d) => ((d && d.features) || []).map((f) => {
+      const c = (f.geometry && f.geometry.coordinates) || []; const p = f.properties || {};
+      const yer = p.name || [p.street, p.housenumber].filter(Boolean).join(" ");
+      const yerel = [p.city || p.town || p.village || p.county, p.state, p.country].filter(Boolean).join(", ");
+      return { lat: c[1], lon: c[0], ad: [yer, yerel].filter(Boolean).join(" · ") || q };
+    }).filter((x) => typeof x.lat === "number" && typeof x.lon === "number");
+    const nominAra = async () => {
+      const r2 = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=8&q=" + encodeURIComponent(q), { headers: { Accept: "application/json" } });
+      const l = await r2.json();
+      return (Array.isArray(l) ? l : []).map((y) => ({ lat: parseFloat(y.lat), lon: parseFloat(y.lon), ad: y.display_name || q }));
+    };
+    try {
+      const r = await fetch("https://photon.komoot.io/api/?limit=8&q=" + encodeURIComponent(q) + (ben ? "&lat=" + ben.lat + "&lon=" + ben.lon : ""));
+      const d = await r.json(); let arr = photonMap(d);
+      if (!arr.length) { try { arr = await nominAra(); } catch (e) {} }
+      setSonuclar(arr);
+    } catch (e) {
+      try { setSonuclar(await nominAra()); } catch (e2) { setSonuclar([]); }
+    }
+    setAraniyor(false);
   }
   // Yazarken OTOMATİK ara (düğmeye basmaya gerek yok) — 650ms bekleyip arar
   function araDegisti(v) {
@@ -229,7 +254,7 @@ export default function KonumHarita({ benLat, benLon }) {
       {/* Rota bilgi şeridi (km · dk) + Google'da adım adım aç */}
       {rotaBilgi && (
         <div className="knh-rota-serit">
-          <span className="knh-rota-bilgi">🚗 {rotaBilgi.yaklasik ? "~" : ""}{rotaBilgi.km} km · {rotaBilgi.yaklasik ? "~" : ""}{rotaBilgi.dk} {t("knhDk", "dk")}</span>
+          <span className="knh-rota-bilgi">🚗 {rotaBilgi.yaklasik ? "~" : ""}{rotaBilgi.km} km · {rotaBilgi.yaklasik ? "~" : ""}{sureYaz(rotaBilgi.dk)}</span>
           <button className="knh-rota-google" onClick={() => googleYolAc(ben && ben.lat, ben && ben.lon, hedef.lat, hedef.lon)}>{t("knhAdimAdim", "Adım adım (Google)")} ↗</button>
           <button className="knh-rota-kapat" onClick={() => { setRotaBilgi(null); rotaTemizle(); }} aria-label={t("temizle", "Temizle")}>✕</button>
         </div>
