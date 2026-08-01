@@ -4365,6 +4365,36 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-ai-kart-btn:active{ transform:scale(.96); }
 /* Kartta km rozeti (gerçek üye kartındaki) */
 .tan-km{ color:#9fe6c0; font-weight:700; }
+
+/* ═══════════ KONUM — navigasyon haritası ═══════════ */
+.knh-pencere{ padding:8px 10px 96px; }
+.knh-sar{ position:relative; width:100%; height:calc(100dvh - 300px); min-height:460px; }
+.knh-harita{ position:absolute; inset:0; border-radius:18px; overflow:hidden; box-shadow:0 6px 20px rgba(0,20,15,.4); border:2px solid rgba(255,255,255,.35); }
+.knh-harita .maplibregl-canvas{ border-radius:16px; }
+.knh-yukleniyor{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#0f5e31; font-weight:800; font-size:16px; background:linear-gradient(180deg,#eafff3,#cdeede); z-index:1; }
+/* Arama — haritanın ÜSTÜNDE yüzen çubuk */
+.knh-ara-sar{ position:absolute; top:10px; left:10px; right:10px; z-index:5; display:flex; align-items:center; gap:7px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.6); border-radius:14px; padding:7px 8px 7px 12px; box-shadow:0 4px 14px rgba(0,20,15,.35); }
+.knh-ara-ik{ width:18px; height:18px; flex:none; color:#b28e34; }
+.knh-ara-in{ flex:1; min-width:0; border:none; background:none; outline:none; font-family:inherit; font-size:15px; font-weight:600; color:#3a2c08; }
+.knh-ara-in::placeholder{ color:#9a8446; }
+.knh-ara-temizle{ flex:none; border:none; cursor:pointer; background:rgba(120,90,20,.14); color:#7a5c12; width:26px; height:26px; border-radius:8px; font-size:13px; font-weight:800; }
+.knh-ara-btn{ flex:none; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:800; font-size:14px; padding:9px 15px; border-radius:11px; box-shadow:0 2px 7px rgba(0,20,15,.3); }
+.knh-ara-btn:disabled{ opacity:.6; }
+/* Arama sonuç listesi (aramanın altında) */
+.knh-sonuc{ position:absolute; top:60px; left:10px; right:10px; z-index:6; background:#fffdf7; border:1.5px solid rgba(255,215,0,.6); border-radius:14px; box-shadow:0 8px 24px rgba(0,20,15,.4); max-height:260px; overflow-y:auto; }
+.knh-sonuc-bos{ padding:16px; text-align:center; color:#8a7030; font-style:italic; }
+.knh-sonuc-oge{ display:flex; align-items:flex-start; gap:9px; width:100%; text-align:left; border:none; border-bottom:1px solid rgba(120,90,20,.12); background:none; cursor:pointer; font-family:inherit; padding:11px 13px; }
+.knh-sonuc-oge:active{ background:rgba(255,233,168,.4); }
+.knh-sonuc-ik{ flex:none; font-size:16px; }
+.knh-sonuc-ad{ color:#3a2c08; font-size:13.5px; font-weight:600; line-height:1.3; }
+/* Konumum düğmesi (sağ alt) */
+.knh-konumum{ position:absolute; right:14px; bottom:16px; z-index:5; display:flex; align-items:center; gap:7px; border:1.6px solid #bff0d2; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:800; font-size:14px; padding:11px 15px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
+.knh-konumum svg{ width:19px; height:19px; }
+.knh-konumum:active{ transform:scale(.96); }
+/* Yol tarifi düğmesi (sol alt, hedef seçilince çıkar) */
+.knh-yol{ position:absolute; left:14px; bottom:16px; z-index:5; display:flex; align-items:center; gap:6px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:15px; padding:12px 17px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
+.knh-yol:active{ transform:scale(.96); }
+@media (min-width:900px){ .knh-sar{ max-width:900px; margin:0 auto; } }
 /* AKILLI ARAMA düğmesi + sonuç şeridi */
 .tan-ai-ara-btn{ width:100%; border:1.5px solid rgba(160,120,255,.7); cursor:pointer; font-family:inherit; font-weight:800; font-size:15px; padding:12px; border-radius:14px; margin:0 0 6px; color:#fff; background:linear-gradient(135deg,#7d5cff,#5a3fd0); box-shadow:0 4px 13px rgba(30,10,80,.4); }
 .tan-ai-ara-btn:disabled{ opacity:.55; }

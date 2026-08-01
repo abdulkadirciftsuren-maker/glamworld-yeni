@@ -43,6 +43,8 @@ import "./Anasayfa.css";
 // ElitePazar AYRI PARÇA (code-split): ilk açılışta inmez, sadece Elite'e girince yüklenir.
 // Böylece ana paket küçülür + Elite'i her düzenlediğimizde kullanıcı tüm paketi değil sadece bu küçük parçayı indirir.
 const ElitePazar = lazy(() => import("./ElitePazar"));
+// KONUM sayfası (navigasyon haritası) — AYRI PARÇA (code-split): sadece Konum'a girince yüklenir.
+const KonumHarita = lazy(() => import("./KonumHarita"));
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
@@ -7349,7 +7351,7 @@ export default function Anasayfa({ pro = false }) {
     try {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita, .maplibregl-map")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -8376,6 +8378,13 @@ export default function Anasayfa({ pro = false }) {
             paraSym={myParaSym}
             ulkeAd={(konum && (konum.sehir || konum.bolge)) || ""}
           />
+          </Suspense>
+        </div>
+      ) : aktifKod === "konum" ? (
+        /* KONUM — navigasyon haritası (kendi konumun, yakın yerler, yer arama, yol tarifi) */
+        <div className="ana-pencere knh-pencere" key="konum">
+          <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#eafff5", fontWeight: 800, fontSize: 16 }}>🗺️ …</div>}>
+            <KonumHarita benLat={konumLat != null ? konumLat : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lat)} benLon={konumLon != null ? konumLon : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lon)} />
           </Suspense>
         </div>
       ) : aktifKod === "topluluk" ? (
