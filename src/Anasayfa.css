@@ -4367,8 +4367,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-km{ color:#9fe6c0; font-weight:700; }
 
 /* ═══════════ KONUM — navigasyon haritası ═══════════ */
-.knh-pencere{ padding:8px 10px 96px; }
-.knh-sar{ position:relative; width:100%; height:calc(100dvh - 300px); min-height:460px; }
+.knh-pencere{ padding:6px 6px 92px; }
+.knh-sar{ position:relative; width:100%; height:calc(100dvh - 250px); min-height:520px; }
+/* TAM EKRAN — harita bütün ekranı kaplar (üst başlık + alt menü dahil), üstte ✕ ile çıkılır */
+.knh-sar.knh-tam{ position:fixed; inset:0; z-index:3000; width:100vw; height:100dvh; height:100vh; margin:0; }
+.knh-sar.knh-tam .knh-harita{ border-radius:0; border:none; }
 .knh-harita{ position:absolute; inset:0; border-radius:18px; overflow:hidden; box-shadow:0 6px 20px rgba(0,20,15,.4); border:2px solid rgba(255,255,255,.35); }
 .knh-harita .maplibregl-canvas{ border-radius:16px; }
 .knh-yukleniyor{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#0f5e31; font-weight:800; font-size:16px; background:linear-gradient(180deg,#eafff3,#cdeede); z-index:1; }
@@ -4394,7 +4397,16 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Yol tarifi düğmesi (sol alt, hedef seçilince çıkar) */
 .knh-yol{ position:absolute; left:14px; bottom:16px; z-index:5; display:flex; align-items:center; gap:6px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:15px; padding:12px 17px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
 .knh-yol:active{ transform:scale(.96); }
-@media (min-width:900px){ .knh-sar{ max-width:900px; margin:0 auto; } }
+/* TAM EKRAN düğmesi (sağ üst, pusulanın altında) */
+.knh-tamekran{ position:absolute; right:14px; top:96px; z-index:5; width:42px; height:42px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:19px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); display:flex; align-items:center; justify-content:center; }
+.knh-tamekran:active{ transform:scale(.94); }
+.knh-tam .knh-tamekran{ top:14px; }
+/* Rota bilgi şeridi (km · dk · adım adım) — alt orta */
+.knh-rota-serit{ position:absolute; left:12px; right:12px; bottom:16px; z-index:6; display:flex; align-items:center; gap:9px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.6px solid rgba(255,215,0,.65); border-radius:14px; padding:10px 12px; box-shadow:0 5px 16px rgba(0,20,15,.45); }
+.knh-rota-bilgi{ flex:1; min-width:0; color:#2a2008; font-weight:800; font-size:15px; }
+.knh-rota-google{ flex:none; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2b7fd0,#1c5aa0); color:#fff; font-weight:800; font-size:12.5px; padding:8px 11px; border-radius:10px; }
+.knh-rota-kapat{ flex:none; border:none; cursor:pointer; background:rgba(120,90,20,.16); color:#7a5c12; width:28px; height:28px; border-radius:9px; font-size:13px; font-weight:800; }
+@media (min-width:900px){ .knh-sar:not(.knh-tam){ max-width:900px; margin:0 auto; } }
 /* AKILLI ARAMA düğmesi + sonuç şeridi */
 .tan-ai-ara-btn{ width:100%; border:1.5px solid rgba(160,120,255,.7); cursor:pointer; font-family:inherit; font-weight:800; font-size:15px; padding:12px; border-radius:14px; margin:0 0 6px; color:#fff; background:linear-gradient(135deg,#7d5cff,#5a3fd0); box-shadow:0 4px 13px rgba(30,10,80,.4); }
 .tan-ai-ara-btn:disabled{ opacity:.55; }
