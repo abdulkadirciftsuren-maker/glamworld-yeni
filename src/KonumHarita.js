@@ -61,20 +61,28 @@ export default function KonumHarita({ benLat, benLon }) {
   }
   function hedefKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (hedefPinRef.current) hedefPinRef.current.setLngLat([lon, lat]); else hedefPinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
   function rotaTemizle() { const map = haritaRef.current; if (!map) return; try { ["rota", "rota-kenar"].forEach((id) => { if (map.getLayer(id)) map.removeLayer(id); }); if (map.getSource("rota")) map.removeSource("rota"); } catch (e) {} }
-  // ROTA ÇİZGİSİNİ KOY — beyaz kenarlık + kalın mavi hat (kesin görünür); stil hazır değilse hazır olunca çizer
+  // ROTA ÇİZGİSİNİ KOY — beyaz kenarlık + kalın mavi hat (kesin görünür). Çok savunmacı: kaynak varsa güncelle, katmanı en üste al, tekrar boya, gecikmeli tekrar dene.
   function cizgiKoy(coords, kesikli) {
     const map = haritaRef.current; if (!map || !Array.isArray(coords) || coords.length < 2) return;
+    const gj = { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } };
     const koy = () => {
+      const m = haritaRef.current; if (!m) return;
       try {
-        rotaTemizle();
-        map.addSource("rota", { type: "geojson", data: { type: "Feature", geometry: { type: "LineString", coordinates: coords } } });
-        map.addLayer({ id: "rota-kenar", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 12, "line-opacity": 0.95 } });
-        map.addLayer({ id: "rota", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#1f6fd0", "line-width": 7.5, "line-opacity": 0.98, ...(kesikli ? { "line-dasharray": [1.6, 1.4] } : {}) } });
+        const src = m.getSource("rota");
+        if (src && src.setData) { src.setData(gj); }
+        else {
+          if (!m.getSource("rota")) m.addSource("rota", { type: "geojson", data: gj });
+          if (!m.getLayer("rota-kenar")) m.addLayer({ id: "rota-kenar", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 12, "line-opacity": 0.95 } });
+          if (!m.getLayer("rota")) m.addLayer({ id: "rota", type: "line", source: "rota", layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#1f6fd0", "line-width": 7.5, "line-opacity": 0.98, ...(kesikli ? { "line-dasharray": [1.6, 1.4] } : {}) } });
+        }
+        try { if (m.getLayer("rota-kenar")) m.moveLayer("rota-kenar"); if (m.getLayer("rota")) m.moveLayer("rota"); } catch (e) {} // en üste
         const b = coords.reduce((bb, c) => bb.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
-        map.fitBounds(b, { padding: 80, maxZoom: 16 });
+        m.fitBounds(b, { padding: 80, maxZoom: 16 });
+        try { m.triggerRepaint(); } catch (e) {}
       } catch (e) {}
     };
-    if (map.isStyleLoaded && map.isStyleLoaded()) koy(); else map.once("idle", koy);
+    koy();
+    setTimeout(koy, 500);  // stil/döşeme geç hazırsa yeniden çiz (kaynak varsa setData ile günceller, zararsız)
   }
 
   useEffect(() => {
