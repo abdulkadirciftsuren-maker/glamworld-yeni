@@ -248,7 +248,11 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
     haritaEtkilesim(map, acik);
     const z = setTimeout(() => {
       try { map.resize(); } catch (e) {}
-      if (acik) { if ((arkRef.current || []).length) hepsiniGoster(); else { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 14 }); poiYukle(ben.lat, ben.lon); } else konumumaGit(); } }
+      if (acik) {
+        if ((arkRef.current || []).length) hepsiniGoster(); else { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 14 }); poiYukle(ben.lat, ben.lon); } else konumumaGit(); }
+        // KENDİ KONUMUMU TAZELE → uzaklıklar (km) gerçek anlık yerinden hesaplansın
+        if (navigator.geolocation) navigator.geolocation.getCurrentPosition((pos) => { benGuncelle(pos.coords.latitude, pos.coords.longitude); benPinYerlestir(pos.coords.latitude, pos.coords.longitude); }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+      }
     }, 90);
     return () => clearTimeout(z);
   }, [acik]); // eslint-disable-line react-hooks/exhaustive-deps
