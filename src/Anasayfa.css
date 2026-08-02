@@ -4449,6 +4449,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .knh-bos-bilgi b{ color:#2a2008; font-size:15px; }
 .knh-bos-bilgi p{ margin:4px 0 0; color:#5a4712; font-size:13px; font-weight:600; line-height:1.45; }
 @media (min-width:560px){ .knh-bos-bilgi b{ font-size:16px; } .knh-bos-bilgi p{ font-size:14px; } .knh-yakin-ad{ font-size:12.5px; } }
+/* KONUM PAYLAŞIMI AÇ/KAPA — arkadaş şeridinin altında sol köşede */
+.knh-paylas{ position:absolute; left:12px; top:106px; z-index:6; display:inline-flex; align-items:center; gap:6px; border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:12.5px; padding:8px 13px; border-radius:12px; box-shadow:0 3px 11px rgba(0,20,15,.4); }
+.knh-paylas.acik{ background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; }
+.knh-paylas.kapali{ background:linear-gradient(160deg,#fff3cf,#e6c766); color:#5a4712; }
+.knh-paylas:active{ transform:scale(.96); }
+@media (min-width:560px){ .knh-paylas{ font-size:13.5px; } }
 /* KAPAT (✕) — tam ekrandan küçük önizlemeye dön (sağ üst, arama çubuğunun yanında) */
 .knh-kapat{ position:absolute; right:12px; top:10px; z-index:8; width:44px; height:44px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:20px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); display:flex; align-items:center; justify-content:center; }
 .knh-kapat:active{ transform:scale(.94); }

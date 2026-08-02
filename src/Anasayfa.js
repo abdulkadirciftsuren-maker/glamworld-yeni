@@ -11,7 +11,7 @@ import { feature as topoFeature } from "topojson-client"; // ülke sınırları 
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
+import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -3659,20 +3659,28 @@ export default function Anasayfa({ pro = false }) {
       })
       .filter(Boolean);
   }, [takipSet, mmKisiler, benUid]);
-  // KONUM AÇILINCA: (1) kendi ŞU ANKİ konumumu yaz (arkadaşlar yanında görsün — elle konum SEÇMEK YOK, otomatik),
-  // (2) arkadaşların TAZE konumu için listeyi yenile. Konum paylaşımı kapalıysa (localStorage) yazmaz.
+  // KONUM PAYLAŞIMI aç/kapa — müşteri konumunu paylaşmak istemeyebilir. Varsayılan AÇIK.
+  const [konumPaylas, setKonumPaylas] = useState(() => { try { return localStorage.getItem("gw_konumPaylas") !== "0"; } catch (e) { return true; } });
+  function benKonumumuYaz() {
+    if (!benUid || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const la = pos.coords.latitude, lo = pos.coords.longitude;
+      setKonumLat(la); setKonumLon(lo); canliKonumYaz(benUid, la, lo).catch(() => {});
+    }, () => {}, { enableHighAccuracy: true, timeout: 9000 });
+  }
+  function konumPaylasimDegis(acik) {
+    setKonumPaylas(acik);
+    try { localStorage.setItem("gw_konumPaylas", acik ? "1" : "0"); } catch (e) {}
+    if (acik) benKonumumuYaz();
+    else if (benUid) canliKonumSil(benUid).catch(() => {}); // kapatınca konumu SİL → arkadaşların haritasından kalkar
+  }
+  // KONUM AÇILINCA: (1) paylaşım AÇIKSA kendi ŞU ANKİ konumumu yaz (elle seçmek YOK, otomatik),
+  // (2) arkadaşların TAZE konumu için listeyi yenile.
   useEffect(() => {
     if (aktifKod !== "konum") return;
-    const paylas = localStorage.getItem("gw_konumPaylas") !== "0"; // varsayılan AÇIK
-    if (paylas && benUid && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const la = pos.coords.latitude, lo = pos.coords.longitude;
-        setKonumLat(la); setKonumLon(lo);
-        canliKonumYaz(benUid, la, lo).catch(() => {});
-      }, () => {}, { enableHighAccuracy: true, timeout: 9000 });
-    }
+    if (konumPaylas) benKonumumuYaz();
     tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
-  }, [aktifKod, benUid]);
+  }, [aktifKod, benUid]); // eslint-disable-line react-hooks/exhaustive-deps
   // Sohbet açıkken: o kişiden gelen okunmamışları OKUNDU yap (karşı tarafa çift tik ✓✓)
   useEffect(() => {
     if (!sohbetKisi) return;
@@ -8420,6 +8428,8 @@ export default function Anasayfa({ pro = false }) {
               benFoto={(profilBilgi && profilBilgi.fotoUrl) || (profilBilgi && profilBilgi.foto) || ""}
               benAd={benimAdGetir()}
               arkadasaYaz={(a) => { if (a && a.uid) sohbetAc({ uid: a.uid, ad: a.ad, foto: a.foto }); }}
+              konumPaylasAcik={konumPaylas}
+              konumPaylasDegis={konumPaylasimDegis}
             />
           </Suspense>
         </div>

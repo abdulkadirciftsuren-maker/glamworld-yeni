@@ -24,7 +24,7 @@ const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b",
 const ETKILER = ["dragPan", "scrollZoom", "boxZoom", "dragRotate", "keyboard", "doubleClickZoom", "touchZoomRotate"];
 function haritaEtkilesim(map, ac) { ETKILER.forEach((n) => { try { if (map[n]) ac ? map[n].enable() : map[n].disable(); } catch (e) {} }); }
 
-export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, benFoto, benAd }) {
+export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, benFoto, benAd, konumPaylasAcik, konumPaylasDegis }) {
   const { t } = useTranslation();
   const benFotoRef = useRef(benFoto || "");
   const benAdRef = useRef(benAd || "");
@@ -339,6 +339,14 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
         )}
 
         <button className="knh-kapat" onClick={() => setAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+
+        {/* KONUM PAYLAŞIMI aç/kapa — müşteri konumunu paylaşmak istemeyebilir */}
+        {konumPaylasDegis && (
+          <button className={"knh-paylas" + (konumPaylasAcik ? " acik" : " kapali")} onClick={() => konumPaylasDegis(!konumPaylasAcik)}>
+            <span aria-hidden="true">{konumPaylasAcik ? "📍" : "🚫"}</span>
+            {konumPaylasAcik ? t("knhPaylasimAcik", "Konumum açık") : t("knhPaylasimKapali", "Konumum kapalı")}
+          </button>
+        )}
         <div className="knh-kontrol">
           <button className="knh-kbtn" onClick={() => { const m = haritaRef.current; if (m) try { m.easeTo({ bearing: 0, pitch: 0, duration: 400 }); } catch (e) {} }} aria-label={t("knhPusula", "Kuzey")}>🧭</button>
           <button className="knh-kbtn" onClick={() => { const m = haritaRef.current; if (m) try { m.zoomIn(); } catch (e) {} }} aria-label={t("knhYakin", "Yakınlaştır")}>＋</button>
