@@ -11,6 +11,7 @@ import { feature as topoFeature } from "topojson-client"; // ülke sınırları 
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
+import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
 import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
@@ -45,6 +46,8 @@ import "./Anasayfa.css";
 const ElitePazar = lazy(() => import("./ElitePazar"));
 // KONUM sayfası (navigasyon haritası) — AYRI PARÇA (code-split): sadece Konum'a girince yüklenir.
 const KonumHarita = lazy(() => import("./KonumHarita"));
+// ADRES HARİTASI (kapı numaralı adres bul + kopyala, HERE) — arkadaş haritasının ALTINDA
+const AdresHarita = lazy(() => import("./AdresHarita"));
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
@@ -7388,7 +7391,7 @@ export default function Anasayfa({ pro = false }) {
     try {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -8432,6 +8435,14 @@ export default function Anasayfa({ pro = false }) {
               konumPaylasDegis={konumPaylasimDegis}
             />
           </Suspense>
+          {ADRES_KOPRU ? (
+            <Suspense fallback={<div style={{ padding: "20px", textAlign: "center", color: "#eafff5", fontWeight: 800 }}>📋 …</div>}>
+              <AdresHarita
+                benLat={konumLat != null ? konumLat : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lat)}
+                benLon={konumLon != null ? konumLon : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lon)}
+              />
+            </Suspense>
+          ) : null}
         </div>
       ) : aktifKod === "topluluk" ? (
         /* TANIŞMA — kişi KENDİ fotoğraf(lar)ını + istediği ismi + tanıtımını girer (opt-in, kendi profiline); büyük kartlar, Beğen + Mesaj */

@@ -4449,6 +4449,31 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .knh-bos-bilgi b{ color:#2a2008; font-size:15px; }
 .knh-bos-bilgi p{ margin:4px 0 0; color:#5a4712; font-size:13px; font-weight:600; line-height:1.45; }
 @media (min-width:560px){ .knh-bos-bilgi b{ font-size:16px; } .knh-bos-bilgi p{ font-size:14px; } .knh-yakin-ad{ font-size:12.5px; } }
+/* ═══ ADRES HARİTASI (kapı numaralı adres bul + kopyala, HERE) — arkadaş haritasının ALTINDA ═══ */
+.adh-sar{ position:relative; margin:14px 10px 24px; border-radius:18px; overflow:hidden; background:linear-gradient(180deg,#0f5e31,#0b4a27); border:2px solid rgba(255,215,0,.5); box-shadow:0 5px 18px rgba(0,20,15,.35); }
+.adh-tam{ position:fixed; inset:0; margin:0; z-index:60; border-radius:0; border:none; }
+.adh-baslik{ padding:11px 14px; color:#FFD700; font-weight:900; font-size:15px; display:flex; align-items:center; gap:8px; }
+.adh-tam .adh-baslik{ position:absolute; top:0; left:0; right:0; z-index:6; background:linear-gradient(180deg,rgba(15,94,49,.96),rgba(15,94,49,.75)); }
+.adh-harita{ width:100%; height:210px; position:relative; }
+.adh-harita-tam{ height:100dvh; }
+.adh-yukleniyor{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:800; font-size:15px; }
+.adh-ipuc{ display:flex; align-items:center; gap:8px; justify-content:center; padding:10px; color:#FFD700; font-weight:800; font-size:13.5px; cursor:pointer; }
+.adh-buyut{ margin-left:auto; }
+.adh-kapat{ position:absolute; right:12px; top:10px; z-index:8; width:44px; height:44px; border:none; cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:20px; font-weight:800; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.4); }
+.adh-kapat:active{ transform:scale(.94); }
+.adh-ust-ipuc{ position:absolute; top:56px; left:12px; right:64px; z-index:6; background:linear-gradient(160deg,#0f5e31,#127a41); border:1.6px solid rgba(255,215,0,.7); color:#FFD700; font-weight:800; font-size:12.5px; padding:8px 11px; border-radius:12px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
+.adh-konumum{ position:absolute; right:14px; bottom:16px; z-index:6; display:inline-flex; align-items:center; gap:7px; border:1.6px solid #bff0d2; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:800; font-size:13.5px; padding:11px 15px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
+.adh-konumum svg{ width:18px; height:18px; }
+.adh-konumum:active{ transform:scale(.96); }
+.adh-sonuc{ position:absolute; left:12px; right:12px; bottom:76px; z-index:7; display:flex; flex-direction:column; gap:9px; max-height:52dvh; overflow-y:auto; }
+.adh-yukl{ background:linear-gradient(180deg,#fffdf5,#f4ecd6); color:#4a3208; font-weight:800; font-size:14px; padding:12px 14px; border-radius:14px; text-align:center; box-shadow:0 4px 13px rgba(0,20,15,.4); }
+.adh-kart{ background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.8px solid rgba(255,215,0,.7); border-radius:15px; padding:11px 13px; box-shadow:0 5px 16px rgba(0,20,15,.45); }
+.adh-kart-et{ color:#7a5c12; font-weight:900; font-size:12.5px; margin-bottom:4px; }
+.adh-kart-adres{ color:#2a2008; font-weight:700; font-size:14px; line-height:1.4; word-break:break-word; }
+.adh-kopya{ margin-top:9px; width:100%; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:900; font-size:14px; padding:10px; border-radius:12px; }
+.adh-kopya:active{ transform:scale(.98); }
+.adh-kopyalandi{ background:#1f7d4c; color:#fff; font-weight:800; font-size:13.5px; padding:10px 14px; border-radius:12px; text-align:center; }
+@media (min-width:560px){ .adh-baslik{ font-size:16px; } .adh-kart-adres{ font-size:15px; } .adh-konumum{ font-size:14px; } }
 /* KONUM PAYLAŞIMI AÇ/KAPA — arkadaş şeridinin altında sol köşede */
 .knh-paylas{ position:absolute; left:12px; top:106px; z-index:6; display:inline-flex; align-items:center; gap:6px; border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:12.5px; padding:8px 13px; border-radius:12px; box-shadow:0 3px 11px rgba(0,20,15,.4); }
 .knh-paylas.acik{ background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; }
