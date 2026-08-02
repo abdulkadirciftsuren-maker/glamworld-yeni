@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // ADRES HARİTASI — haritaya dokun → o noktanın ADRESİ (kapı numaralı) çıkar,
-// hem O ÜLKENİN DİLİNDE hem İNGİLİZCE, KOPYALA düğmeleriyle. (HERE adres servisi)
+// hem O ÜLKENİN DİLİNDE hem İNGİLİZCE, KOPYALA düğmeleriyle. (HERE — güvenli köprü)
 // ─────────────────────────────────────────────────────────────────────────────
-// Konum sayfasında ARKADAŞ haritasının ALTINDA durur. Küçük önizleme → dokun → tam ekran.
-// HERE anahtarı yoksa ücretsiz Nominatim'e düşer (yedek; ama kapı numarası çoğu ülkede yok).
+// + Mekân noktaları (banka/kafe/restoran…) isimleriyle görünür, dokununca adı+adresi gelir.
+// + Yazıyla adres/mekân ARAMA. + Temizle (yanlış adresi silip yeniden ara).
+// Arkadaş haritasıyla AYNI boyutta önizleme. HERE köprüsü yoksa Nominatim yedeği.
 // ═══════════════════════════════════════════════════════════════════════════
 import React, { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
@@ -19,6 +20,8 @@ const CC3_LANG = { TUR: "tr", UKR: "uk", RUS: "ru", BLR: "be", KAZ: "ru", AZE: "
   MEX: "es", ARG: "es", NLD: "nl", POL: "pl", ROU: "ro", BGR: "bg", HUN: "hu", HRV: "hr", SRB: "sr",
   IND: "hi", PAK: "ur", BGD: "bn", GBR: "en", USA: "en", AUS: "en", CAN: "en", IRL: "en", NZL: "en" };
 
+const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b", bank: "#f7b500", atm: "#f7b500", hotel: "#00b8d4", motel: "#00b8d4", guest_house: "#00b8d4", hostel: "#00b8d4", fast_food: "#e74c3c", restaurant: "#ff6b3d", cafe: "#e67e22", supermarket: "#27ae60", convenience: "#2ecc71", marketplace: "#27ae60", pharmacy: "#8e44ad", hospital: "#e91e63", clinic: "#e91e63", post_office: "#16a085", fuel: "#d35400", school: "#3498db", university: "#3498db", bakery: "#e8a33d", mosque: "#2ecc71", church: "#bdc3c7", clothes: "#9b59b6", jewelry: "#f1c40f", townhall: "#2980b9", courthouse: "#9b59b6", police: "#34495e", fire_station: "#c0392b", library: "#16a085" };
+
 const ETKILER = ["dragPan", "scrollZoom", "boxZoom", "dragRotate", "keyboard", "doubleClickZoom", "touchZoomRotate"];
 function etkilesim(map, ac) { ETKILER.forEach((n) => { try { if (map[n]) ac ? map[n].enable() : map[n].disable(); } catch (e) {} }); }
 
@@ -27,18 +30,47 @@ export default function AdresHarita({ benLat, benLon }) {
   const kapRef = useRef(null);
   const haritaRef = useRef(null);
   const pinRef = useRef(null);
+  const poiMarksRef = useRef([]);
+  const poiZmnRef = useRef(null);
+  const araZmnRef = useRef(null);
   const acikRef = useRef(false);
   const [acik, setAcik] = useState(false);
   const [hazir, setHazir] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(false);
+  const [yerAdi, setYerAdi] = useState("");   // dokunulan mekânın adı (banka/kafe…)
   const [yerel, setYerel] = useState("");     // o ülkenin dilinde adres
   const [enAdres, setEnAdres] = useState(""); // İngilizce adres
   const [kopyalandi, setKopyalandi] = useState("");
+  const [ara, setAra] = useState("");
+  const [sonuclar, setSonuclar] = useState(null);
+  const [araniyor, setAraniyor] = useState(false);
   const benRef = useRef((typeof benLat === "number" && typeof benLon === "number") ? { lat: benLat, lon: benLon } : null);
 
   function pinKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (pinRef.current) pinRef.current.setLngLat([lon, lat]); else pinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
+  function pinKaldir() { if (pinRef.current) { try { pinRef.current.remove(); } catch (e) {} pinRef.current = null; } }
+  function temizle() { setYerAdi(""); setYerel(""); setEnAdres(""); setKopyalandi(""); pinKaldir(); }
 
-  // NOMİNATİM yedek (HERE anahtarı yoksa) — kapı numarası çoğu ülkede olmayabilir ama en azından çalışır
+  // Çevredeki MEKÂNLARI (banka/kafe/restoran…) isimleriyle göster (Overpass)
+  function poiYukle(lat, lon) {
+    const q = `[out:json][timeout:16];(node["amenity"~"^(restaurant|cafe|fast_food|pharmacy|hospital|clinic|bank|atm|post_office|fuel|school|university|bakery|marketplace|mosque|church|supermarket|townhall|courthouse|police|fire_station|library)$"](around:1200,${lat},${lon});node["tourism"~"^(hotel|motel|guest_house|hostel)$"](around:1200,${lat},${lon});node["shop"~"^(supermarket|convenience|hairdresser|beauty|barber|clothes|bakery|jewelry)$"](around:1200,${lat},${lon}););out body 110;`;
+    const sunucu = ["https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://overpass.osm.ch/api/interpreter"];
+    const dene = (i) => { if (i >= sunucu.length) return Promise.resolve(null); return fetch(sunucu[i] + "?data=" + encodeURIComponent(q)).then((r) => { if (!r.ok) throw new Error("op"); return r.json(); }).then((d) => ((!d || !d.elements || !d.elements.length) && i + 1 < sunucu.length) ? dene(i + 1) : d).catch(() => dene(i + 1)); };
+    dene(0).then((d) => {
+      const map = haritaRef.current; if (!map || !d) return;
+      poiMarksRef.current.forEach((m) => { try { m.remove(); } catch (e) {} }); poiMarksRef.current = [];
+      (d.elements || []).forEach((el) => {
+        const tur = el.tags && (el.tags.amenity || el.tags.tourism || el.tags.shop || ""); if (!tur) return;
+        const renk = POI_RENK[tur] || "#7f8c8d";
+        const dot = document.createElement("div"); dot.style.cssText = `background:${renk};width:17px;height:17px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.6);cursor:pointer`;
+        const ad = (el.tags && el.tags.name) || "";
+        const mk = new maplibregl.Marker({ element: dot }).setLngLat([el.lon, el.lat]).addTo(map);
+        mk.getElement().addEventListener("click", (ev) => { ev.stopPropagation(); if (!acikRef.current) return; pinKoy(el.lat, el.lon); adresCoz(el.lat, el.lon, ad); try { map.flyTo({ center: [el.lon, el.lat], zoom: Math.max(map.getZoom(), 17) }); } catch (e) {} });
+        poiMarksRef.current.push(mk);
+      });
+    }).catch(() => {});
+  }
+
+  // NOMİNATİM yedek (köprü yoksa)
   async function nominatimCoz(lat, lon) {
     const base = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
     const rEn = await fetch(base + "&accept-language=en", { headers: { Accept: "application/json" } }); const dEn = await rEn.json();
@@ -49,10 +81,9 @@ export default function AdresHarita({ benLat, benLon }) {
     else setYerel((dEn && dEn.display_name) || "");
   }
 
-  // HERE ters coğrafi kodlama — GÜVENLİ KÖPRÜ (worker) üzerinden. Anahtar sitede DEĞİL, worker'da gizli.
-  // İngilizce + yerel dil (kapı numaralı label). Köprü yoksa Nominatim yedeği.
-  async function adresCoz(lat, lon) {
-    setYukleniyor(true); setYerel(""); setEnAdres(""); setKopyalandi("");
+  // HERE ters coğrafi kodlama — GÜVENLİ KÖPRÜ üzerinden (anahtar sitede değil)
+  async function adresCoz(lat, lon, poiAdi) {
+    setYukleniyor(true); setYerel(""); setEnAdres(""); setKopyalandi(""); setSonuclar(null); setYerAdi(poiAdi || "");
     try {
       if (!ADRES_KOPRU) { await nominatimCoz(lat, lon); setYukleniyor(false); return; }
       const ayrac = ADRES_KOPRU.indexOf("?") === -1 ? "?" : "&";
@@ -61,6 +92,7 @@ export default function AdresHarita({ benLat, benLon }) {
       const enItem = dEn && dEn.items && dEn.items[0];
       const enLabel = (enItem && enItem.address && enItem.address.label) || "";
       setEnAdres(enLabel);
+      if (!poiAdi && enItem && enItem.title && enItem.resultType && enItem.resultType !== "street" && enItem.resultType !== "houseNumber" && enItem.resultType !== "administrativeArea") setYerAdi(enItem.title);
       const cc = (enItem && enItem.address && enItem.address.countryCode) || "";
       const lang = CC3_LANG[cc] || "";
       if (lang && lang !== "en") {
@@ -70,6 +102,27 @@ export default function AdresHarita({ benLat, benLon }) {
     } catch (e) { try { await nominatimCoz(lat, lon); } catch (e2) {} }
     setYukleniyor(false);
   }
+
+  // YAZIYLA ARAMA — köprü ?q= (HERE geocode). Köprü yoksa Nominatim.
+  async function yerAra(sorgu) {
+    const q = ((typeof sorgu === "string" ? sorgu : ara) || "").trim(); if (q.length < 2) return;
+    setAraniyor(true); setSonuclar(null); const ben = benRef.current;
+    try {
+      if (ADRES_KOPRU) {
+        const ayrac = ADRES_KOPRU.indexOf("?") === -1 ? "?" : "&";
+        const r = await fetch(`${ADRES_KOPRU}${ayrac}q=${encodeURIComponent(q)}&lang=tr`);
+        const d = await r.json();
+        const arr = ((d && d.items) || []).map((it) => ({ ad: it.title || (it.address && it.address.label) || q, adres: (it.address && it.address.label) || "", lat: it.position && it.position.lat, lon: it.position && it.position.lng })).filter((x) => typeof x.lat === "number" && typeof x.lon === "number");
+        setSonuclar(arr);
+      } else {
+        const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=8&q=" + encodeURIComponent(q) + (ben ? "&viewbox=" : ""), { headers: { Accept: "application/json" } });
+        const l = await r.json(); setSonuclar((Array.isArray(l) ? l : []).map((y) => ({ ad: y.display_name || q, adres: y.display_name || "", lat: parseFloat(y.lat), lon: parseFloat(y.lon) })));
+      }
+    } catch (e) { setSonuclar([]); }
+    setAraniyor(false);
+  }
+  function araDegisti(v) { setAra(v); clearTimeout(araZmnRef.current); if (v.trim().length < 3) { setSonuclar(null); return; } araZmnRef.current = setTimeout(() => yerAra(v), 650); }
+  function sonucaGit(y) { const map = haritaRef.current; setSonuclar(null); setAra(""); if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 17 }); pinKoy(y.lat, y.lon); adresCoz(y.lat, y.lon, y.ad); }
 
   function kopyala(metin) {
     const a = (metin || "").trim(); if (!a) return;
@@ -81,7 +134,7 @@ export default function AdresHarita({ benLat, benLon }) {
     const map = haritaRef.current; if (!map || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition((pos) => {
       const la = pos.coords.latitude, lo = pos.coords.longitude; benRef.current = { lat: la, lon: lo };
-      map.flyTo({ center: [lo, la], zoom: 17 }); pinKoy(la, lo); adresCoz(la, lo);
+      map.flyTo({ center: [lo, la], zoom: 17 }); pinKoy(la, lo); adresCoz(la, lo); poiYukle(la, lo);
     }, () => {}, { enableHighAccuracy: true, timeout: 9000 });
   }
 
@@ -97,8 +150,9 @@ export default function AdresHarita({ benLat, benLon }) {
     map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} });
     setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
     map.on("click", (e) => { if (!acikRef.current) return; const la = e.lngLat.lat, lo = e.lngLat.lng; pinKoy(la, lo); adresCoz(la, lo); });
+    map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 14) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
     if (ben) pinKoy(bLat, bLon);
-    return () => { try { map.remove(); } catch (e) {} haritaRef.current = null; };
+    return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -106,16 +160,16 @@ export default function AdresHarita({ benLat, benLon }) {
     etkilesim(map, acik);
     const z = setTimeout(() => {
       try { map.resize(); } catch (e) {}
-      if (acik) { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 16 }); } else konumumuBul(); }
+      if (acik) { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 16 }); poiYukle(ben.lat, ben.lon); } else konumumuBul(); }
     }, 90);
     return () => clearTimeout(z);
   }, [acik]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const sonucVar = yukleniyor || yerel || enAdres;
+
   return (
     <div className={"adh-sar" + (acik ? " adh-tam" : " adh-oniz")} onClick={!acik ? () => setAcik(true) : undefined}>
-      <div className={"adh-baslik"}>
-        <span aria-hidden="true">📋</span> {t("adhBaslik", "Adres bul ve kopyala")}
-      </div>
+      <div className="adh-baslik"><span aria-hidden="true">📋</span> {t("adhBaslik", "Adres bul ve kopyala")}</div>
       <div className={"adh-harita" + (acik ? " adh-harita-tam" : "")} ref={kapRef}>
         {!hazir && <div className="adh-yukleniyor">🗺️ {t("knhYukleniyor", "Harita geliyor…")}</div>}
       </div>
@@ -129,30 +183,46 @@ export default function AdresHarita({ benLat, benLon }) {
 
       {acik && (<>
         <button className="adh-kapat" onClick={(e) => { e.stopPropagation(); setAcik(false); }} aria-label={t("kapat", "Kapat")}>✕</button>
-        <div className="adh-ust-ipuc">📍 {t("adhDokun", "Adresini istediğin yere haritada dokun")}</div>
+
+        {/* Yazıyla arama */}
+        <div className="adh-ara-sar" onClick={(e) => e.stopPropagation()}>
+          <svg className="adh-ara-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+          <input className="adh-ara-in" value={ara} onChange={(e) => araDegisti(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { clearTimeout(araZmnRef.current); yerAra(); } }} placeholder={t("adhAraYaz", "Adres/mekân yaz ara…")} />
+          {ara && <button className="adh-ara-temizle" onClick={() => { setAra(""); setSonuclar(null); }} aria-label={t("temizle", "Temizle")}>✕</button>}
+        </div>
+        {sonuclar && (
+          <div className="adh-arasonuc" onClick={(e) => e.stopPropagation()}>
+            {sonuclar.length === 0 ? <div className="adh-arasonuc-bos">{t("knhSonucYok", "Sonuç bulunamadı.")}</div>
+              : sonuclar.map((y, i) => (<button className="adh-arasonuc-oge" key={i} onClick={() => sonucaGit(y)}><span aria-hidden="true">📍</span><span>{y.ad}</span></button>))}
+          </div>
+        )}
+
+        {!sonucVar && !sonuclar && <div className="adh-ust-ipuc">📍 {t("adhDokun", "Bir yere/mekâna dokun ya da yukarıdan ara")}</div>}
         <button className="adh-konumum" onClick={(e) => { e.stopPropagation(); konumumuBul(); }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
           {t("adhKonumum", "Konumumu bul")}
         </button>
 
-        {(yukleniyor || yerel || enAdres) && (
+        {sonucVar && (
           <div className="adh-sonuc" onClick={(e) => e.stopPropagation()}>
             {yukleniyor ? <div className="adh-yukl">⏳ {t("adhAraniyor", "Adres bulunuyor…")}</div> : (<>
+              {yerAdi && <div className="adh-yeradi">📌 {yerAdi}</div>}
               {yerel && (
                 <div className="adh-kart">
                   <div className="adh-kart-et">🌍 {t("adhYerel", "Yerel dilde")}</div>
                   <div className="adh-kart-adres">{yerel}</div>
-                  <button className="adh-kopya" onClick={() => kopyala(yerel)}>📋 {t("adhKopyala", "Kopyala")}</button>
+                  <button className="adh-kopya" onClick={() => kopyala((yerAdi ? yerAdi + " — " : "") + yerel)}>📋 {t("adhKopyala", "Kopyala")}</button>
                 </div>
               )}
               {enAdres && (
                 <div className="adh-kart">
                   <div className="adh-kart-et">🇬🇧 {t("adhEn", "İngilizce")}</div>
                   <div className="adh-kart-adres">{enAdres}</div>
-                  <button className="adh-kopya" onClick={() => kopyala(enAdres)}>📋 {t("adhKopyala", "Kopyala")}</button>
+                  <button className="adh-kopya" onClick={() => kopyala((yerAdi ? yerAdi + " — " : "") + enAdres)}>📋 {t("adhKopyala", "Kopyala")}</button>
                 </div>
               )}
               {kopyalandi && <div className="adh-kopyalandi">✓ {t("adhKopyalandi", "Adres kopyalandı")}</div>}
+              <button className="adh-yeni" onClick={temizle}>🔄 {t("adhYeni", "Temizle / yeniden ara")}</button>
             </>)}
           </div>
         )}
