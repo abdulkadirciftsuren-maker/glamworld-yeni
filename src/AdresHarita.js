@@ -122,7 +122,7 @@ export default function AdresHarita({ benLat, benLon }) {
     setAraniyor(false);
   }
   function araDegisti(v) { setAra(v); clearTimeout(araZmnRef.current); if (v.trim().length < 3) { setSonuclar(null); return; } araZmnRef.current = setTimeout(() => yerAra(v), 650); }
-  function sonucaGit(y) { const map = haritaRef.current; setSonuclar(null); setAra(""); if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 17 }); pinKoy(y.lat, y.lon); adresCoz(y.lat, y.lon, y.ad); }
+  function sonucaGit(y) { const map = haritaRef.current; setSonuclar(null); setAra(""); if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 17 }); pinKoy(y.lat, y.lon); adresCoz(y.lat, y.lon, y.ad); poiYukle(y.lat, y.lon); }
 
   function kopyala(metin) {
     const a = (metin || "").trim(); if (!a) return;
@@ -150,10 +150,19 @@ export default function AdresHarita({ benLat, benLon }) {
     map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} });
     setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
     map.on("click", (e) => { if (!acikRef.current) return; const la = e.lngLat.lat, lo = e.lngLat.lng; pinKoy(la, lo); adresCoz(la, lo); });
-    map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 14) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
+    map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 13) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
     if (ben) pinKoy(bLat, bLon);
     return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ANDROID GERİ TUŞU: harita TAM EKRAN açıkken geri → sadece haritayı kapat (Konum sayfasında KAL, ana sayfaya atma)
+  useEffect(() => {
+    if (!acik) return;
+    try { window.history.pushState({ adhTam: true }, ""); } catch (e) {}
+    const geri = () => setAcik(false);
+    window.addEventListener("popstate", geri);
+    return () => window.removeEventListener("popstate", geri);
+  }, [acik]);
 
   useEffect(() => {
     acikRef.current = acik; const map = haritaRef.current; if (!map) return;
@@ -182,7 +191,7 @@ export default function AdresHarita({ benLat, benLon }) {
       )}
 
       {acik && (<>
-        <button className="adh-kapat" onClick={(e) => { e.stopPropagation(); setAcik(false); }} aria-label={t("kapat", "Kapat")}>✕</button>
+        <button className="adh-kapat" onClick={(e) => { e.stopPropagation(); try { window.history.back(); } catch (x) { setAcik(false); } }} aria-label={t("kapat", "Kapat")}>✕</button>
 
         {/* Yazıyla arama */}
         <div className="adh-ara-sar" onClick={(e) => e.stopPropagation()}>
@@ -205,6 +214,7 @@ export default function AdresHarita({ benLat, benLon }) {
 
         {sonucVar && (
           <div className="adh-sonuc" onClick={(e) => e.stopPropagation()}>
+            <button className="adh-sonuc-kapat" onClick={temizle} aria-label={t("temizle", "Temizle")}>✕</button>
             {yukleniyor ? <div className="adh-yukl">⏳ {t("adhAraniyor", "Adres bulunuyor…")}</div> : (<>
               {yerAdi && <div className="adh-yeradi">📌 {yerAdi}</div>}
               {yerel && (

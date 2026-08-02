@@ -200,6 +200,15 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
     if (haritaRef.current && hazir) { arkadaslariKoy(); if (!acikRef.current) setTimeout(hepsiniGoster, 100); }
   }, [arkadaslar, hazir]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ANDROID GERİ TUŞU: harita TAM EKRAN açıkken geri → sadece haritayı kapat (Konum sayfasında KAL)
+  useEffect(() => {
+    if (!acik) return;
+    try { window.history.pushState({ knhTam: true }, ""); } catch (e) {}
+    const geri = () => setAcik(false);
+    window.addEventListener("popstate", geri);
+    return () => window.removeEventListener("popstate", geri);
+  }, [acik]);
+
   useEffect(() => {
     acikRef.current = acik; const map = haritaRef.current; if (!map) return;
     haritaEtkilesim(map, acik);
@@ -338,7 +347,7 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
           </div>
         )}
 
-        <button className="knh-kapat" onClick={() => setAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+        <button className="knh-kapat" onClick={() => { try { window.history.back(); } catch (x) { setAcik(false); } }} aria-label={t("kapat", "Kapat")}>✕</button>
 
         {/* KONUM PAYLAŞIMI aç/kapa — müşteri konumunu paylaşmak istemeyebilir */}
         {konumPaylasDegis && (
