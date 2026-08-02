@@ -24,7 +24,7 @@ const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b",
 const ETKILER = ["dragPan", "scrollZoom", "boxZoom", "dragRotate", "keyboard", "doubleClickZoom", "touchZoomRotate"];
 function haritaEtkilesim(map, ac) { ETKILER.forEach((n) => { try { if (map[n]) ac ? map[n].enable() : map[n].disable(); } catch (e) {} }); }
 
-export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, benFoto, benAd, konumPaylasAcik, konumPaylasDegis }) {
+export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, benFoto, benAd, konumPaylasAcik, konumPaylasDegis, onTam }) {
   const { t } = useTranslation();
   const benFotoRef = useRef(benFoto || "");
   const benAdRef = useRef(benAd || "");
@@ -200,14 +200,8 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
     if (haritaRef.current && hazir) { arkadaslariKoy(); if (!acikRef.current) setTimeout(hepsiniGoster, 100); }
   }, [arkadaslar, hazir]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ANDROID GERİ TUŞU: harita TAM EKRAN açıkken geri → sadece haritayı kapat (Konum sayfasında KAL)
-  useEffect(() => {
-    if (!acik) return;
-    try { window.history.pushState({ knhTam: true }, ""); } catch (e) {}
-    const geri = () => setAcik(false);
-    window.addEventListener("popstate", geri);
-    return () => window.removeEventListener("popstate", geri);
-  }, [acik]);
+  // Harita tam ekran açılınca/kapanınca ANA UYGULAMAYA haber ver (geri tuşu = katman sistemine bağlanır)
+  useEffect(() => { if (onTam) onTam(acik, () => setAcik(false)); }, [acik]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     acikRef.current = acik; const map = haritaRef.current; if (!map) return;
@@ -347,7 +341,7 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
           </div>
         )}
 
-        <button className="knh-kapat" onClick={() => { try { window.history.back(); } catch (x) { setAcik(false); } }} aria-label={t("kapat", "Kapat")}>✕</button>
+        <button className="knh-kapat" onClick={() => setAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
 
         {/* KONUM PAYLAŞIMI aç/kapa — müşteri konumunu paylaşmak istemeyebilir */}
         {konumPaylasDegis && (

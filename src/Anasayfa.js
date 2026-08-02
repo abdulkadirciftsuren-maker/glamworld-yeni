@@ -3677,6 +3677,11 @@ export default function Anasayfa({ pro = false }) {
     if (acik) benKonumumuYaz();
     else if (benUid) canliKonumSil(benUid).catch(() => {}); // kapatınca konumu SİL → arkadaşların haritasından kalkar
   }
+  // HARİTA TAM EKRAN durumu — geri tuşu (katman) sistemine bağlanır: tam ekranken geri → sadece haritayı kapat, Konum'da KAL
+  const [haritaTam, setHaritaTam] = useState(false);
+  const haritaTamRef = useRef(false);
+  const haritaKapatRef = useRef(null);
+  const haritaTamDegis = (a, kapatFn) => { haritaTamRef.current = !!a; setHaritaTam(!!a); haritaKapatRef.current = a ? (kapatFn || null) : null; };
   // KONUM AÇILINCA: (1) paylaşım AÇIKSA kendi ŞU ANKİ konumumu yaz (elle seçmek YOK, otomatik),
   // (2) arkadaşların TAZE konumu için listeyi yenile.
   useEffect(() => {
@@ -7184,7 +7189,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -7192,7 +7197,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -7204,6 +7209,7 @@ export default function Anasayfa({ pro = false }) {
       if (gelenAramaRef.current) { aramaReddet(); }
       else if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
       else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
+      else if (haritaTamRef.current) { haritaTamRef.current = false; setHaritaTam(false); if (haritaKapatRef.current) { try { haritaKapatRef.current(); } catch (e) {} haritaKapatRef.current = null; } } // Konum haritası tam ekran → sadece kapat, Konum'da KAL
       else if (telHaritaAcikRef.current) { telHaritaAcikRef.current = false; setTelHaritaAcik(false); }
       else if (uyelikKartAcikRef.current) { uyelikKartAcikRef.current = false; setUyelikKartAcik(false); }
       else if (sektorListeRef.current) { sektorListeRef.current = ""; setSektorListe(""); }
@@ -8433,6 +8439,7 @@ export default function Anasayfa({ pro = false }) {
               arkadasaYaz={(a) => { if (a && a.uid) sohbetAc({ uid: a.uid, ad: a.ad, foto: a.foto }); }}
               konumPaylasAcik={konumPaylas}
               konumPaylasDegis={konumPaylasimDegis}
+              onTam={haritaTamDegis}
             />
           </Suspense>
           {ADRES_KOPRU ? (
@@ -8440,6 +8447,7 @@ export default function Anasayfa({ pro = false }) {
               <AdresHarita
                 benLat={konumLat != null ? konumLat : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lat)}
                 benLon={konumLon != null ? konumLon : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lon)}
+                onTam={haritaTamDegis}
               />
             </Suspense>
           ) : null}

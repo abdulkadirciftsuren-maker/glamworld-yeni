@@ -25,7 +25,7 @@ const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b",
 const ETKILER = ["dragPan", "scrollZoom", "boxZoom", "dragRotate", "keyboard", "doubleClickZoom", "touchZoomRotate"];
 function etkilesim(map, ac) { ETKILER.forEach((n) => { try { if (map[n]) ac ? map[n].enable() : map[n].disable(); } catch (e) {} }); }
 
-export default function AdresHarita({ benLat, benLon }) {
+export default function AdresHarita({ benLat, benLon, onTam }) {
   const { t } = useTranslation();
   const kapRef = useRef(null);
   const haritaRef = useRef(null);
@@ -155,14 +155,8 @@ export default function AdresHarita({ benLat, benLon }) {
     return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ANDROID GERİ TUŞU: harita TAM EKRAN açıkken geri → sadece haritayı kapat (Konum sayfasında KAL, ana sayfaya atma)
-  useEffect(() => {
-    if (!acik) return;
-    try { window.history.pushState({ adhTam: true }, ""); } catch (e) {}
-    const geri = () => setAcik(false);
-    window.addEventListener("popstate", geri);
-    return () => window.removeEventListener("popstate", geri);
-  }, [acik]);
+  // Harita tam ekran açılınca/kapanınca ANA UYGULAMAYA haber ver (geri tuşu = katman sistemine bağlanır)
+  useEffect(() => { if (onTam) onTam(acik, () => setAcik(false)); }, [acik]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     acikRef.current = acik; const map = haritaRef.current; if (!map) return;
@@ -191,7 +185,7 @@ export default function AdresHarita({ benLat, benLon }) {
       )}
 
       {acik && (<>
-        <button className="adh-kapat" onClick={(e) => { e.stopPropagation(); try { window.history.back(); } catch (x) { setAcik(false); } }} aria-label={t("kapat", "Kapat")}>✕</button>
+        <button className="adh-kapat" onClick={(e) => { e.stopPropagation(); setAcik(false); }} aria-label={t("kapat", "Kapat")}>✕</button>
 
         {/* Yazıyla arama */}
         <div className="adh-ara-sar" onClick={(e) => e.stopPropagation()}>
