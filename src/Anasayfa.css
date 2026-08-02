@@ -4521,6 +4521,25 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .adh-mekan-btn:disabled{ opacity:.6; }
 .adh-mekan-btn:active{ transform:scale(.96); }
 @media (min-width:560px){ .adh-mekan-aciklama{ font-size:14.5px; } }
+/* ═══ BİLGİSAYAR (geniş ekran): tam ekran harita panelleri EKRANI KAPLAMASIN — dar, düzgün, sol köşede ═══ */
+/* (Yazı boyutu küçültülmez — kural; sadece paneller genişlik kaplamaz, zarif durur.) */
+@media (min-width:760px){
+  /* Arkadaş (Konum) haritası — tam ekran üst paneller */
+  .knh-tam .knh-ara-sar{ right:auto; width:min(500px, 52vw); }
+  .knh-tam .knh-ark-serit{ right:auto; width:min(500px, 52vw); }
+  .knh-tam .knh-bos-bilgi{ left:16px; right:auto; width:min(460px, 48vw); }
+  .knh-tam .knh-ark-kart{ left:16px; right:auto; width:min(500px, 52vw); }
+  .knh-tam .knh-rota-serit{ left:16px; right:auto; width:min(500px, 52vw); }
+  .knh-tam .knh-yakin-serit{ right:auto; width:min(70vw, 900px); }
+  .knh-tam .knh-sonuc{ left:16px; right:auto; width:min(500px, 52vw); }
+  /* Adres haritası — tam ekran paneller */
+  .adh-tam .adh-ara-sar{ right:auto; width:min(500px, 52vw); }
+  .adh-tam .adh-ust-ipuc{ left:16px; right:auto; width:min(460px, 48vw); text-align:left; }
+  .adh-tam .adh-arasonuc{ left:16px; right:auto; width:min(500px, 52vw); }
+  .adh-tam .adh-sonuc{ left:16px; right:auto; width:min(460px, 46vw); }
+  .adh-tam .adh-mekan-kart{ left:16px; right:auto; width:min(460px, 46vw); }
+  .adh-tam .adh-ekle-panel{ left:16px; right:auto; width:min(460px, 46vw); }
+}
 .adh-konumum{ position:absolute; right:14px; bottom:16px; z-index:6; display:inline-flex; align-items:center; gap:7px; border:1.6px solid #bff0d2; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:800; font-size:13.5px; padding:11px 15px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
 .adh-konumum svg{ width:18px; height:18px; }
 .adh-konumum:active{ transform:scale(.96); }

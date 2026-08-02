@@ -3693,8 +3693,16 @@ export default function Anasayfa({ pro = false }) {
     try { canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false); } catch (e) {}
     try { if (recognitionRef.current) recognitionRef.current.stop(); } catch (e) {}
     try { if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop(); } catch (e) {}
+    const paylasAcikMi = () => { try { return localStorage.getItem("gw_konumPaylas") !== "0"; } catch (e) { return true; } };
     if (konumPaylas) benKonumumuYaz();
     tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
+    // CANLI TAZELE: Konum sayfası açıkken her ~18sn kendi konumumu yaz + herkesin listesini yenile
+    // → başkaları sonradan konum paylaşınca (ya da yer değiştirince) haritanda BİRKAÇ SANİYEDE görünür.
+    const tazele = setInterval(() => {
+      if (paylasAcikMi()) benKonumumuYaz();
+      tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
+    }, 18000);
+    return () => clearInterval(tazele);
   }, [aktifKod, benUid]); // eslint-disable-line react-hooks/exhaustive-deps
   // UYGULAMA AÇILINCA (hangi sayfada olursa olsun): konum izni ZATEN verilmişse canlı konumu yaz →
   // kişi Konum sayfasına girmese bile arkadaşlarının haritasında görünür (son yeri kalır). Yeni izin İSTEMEZ.
