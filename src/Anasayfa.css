@@ -4521,24 +4521,49 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .adh-mekan-btn:disabled{ opacity:.6; }
 .adh-mekan-btn:active{ transform:scale(.96); }
 @media (min-width:560px){ .adh-mekan-aciklama{ font-size:14.5px; } }
-/* ═══ BİLGİSAYAR (geniş ekran): tam ekran harita panelleri EKRANI KAPLAMASIN — dar, düzgün, sol köşede ═══ */
-/* (Yazı boyutu küçültülmez — kural; sadece paneller genişlik kaplamaz, zarif durur.) */
+/* ═══ BİLGİSAYAR (geniş ekran): tam ekran harita panelleri — YAZILAR BÜYÜK/OKUNUR (masaüstü telefondan KÜÇÜK OLMAZ — kural) ═══ */
+/* Sorun: px yazılar geniş ekranda küçük görünür. Çözüm: masaüstünde harita panel yazılarını BÜYÜT. */
 @media (min-width:760px){
-  /* Arkadaş (Konum) haritası — tam ekran üst paneller */
-  .knh-tam .knh-ara-sar{ right:auto; width:min(500px, 52vw); }
-  .knh-tam .knh-ark-serit{ right:auto; width:min(500px, 52vw); }
-  .knh-tam .knh-bos-bilgi{ left:16px; right:auto; width:min(460px, 48vw); }
-  .knh-tam .knh-ark-kart{ left:16px; right:auto; width:min(500px, 52vw); }
-  .knh-tam .knh-rota-serit{ left:16px; right:auto; width:min(500px, 52vw); }
-  .knh-tam .knh-yakin-serit{ right:auto; width:min(70vw, 900px); }
-  .knh-tam .knh-sonuc{ left:16px; right:auto; width:min(500px, 52vw); }
-  /* Adres haritası — tam ekran paneller */
-  .adh-tam .adh-ara-sar{ right:auto; width:min(500px, 52vw); }
-  .adh-tam .adh-ust-ipuc{ left:16px; right:auto; width:min(460px, 48vw); text-align:left; }
-  .adh-tam .adh-arasonuc{ left:16px; right:auto; width:min(500px, 52vw); }
-  .adh-tam .adh-sonuc{ left:16px; right:auto; width:min(460px, 46vw); }
-  .adh-tam .adh-mekan-kart{ left:16px; right:auto; width:min(460px, 46vw); }
-  .adh-tam .adh-ekle-panel{ left:16px; right:auto; width:min(460px, 46vw); }
+  /* Arkadaş (Konum) haritası */
+  .knh-tam .knh-ara-sar{ right:auto; width:min(640px, 62vw); padding:12px 16px; }
+  .knh-tam .knh-ara-in{ font-size:20px; }
+  .knh-tam .knh-ara-btn{ font-size:19px; padding:12px 20px; }
+  .knh-tam .knh-ark-serit{ right:auto; width:min(640px, 62vw); padding:12px 15px; }
+  .knh-tam .knh-ark-yazi{ font-size:19px; }
+  .knh-tam .knh-ark-hepsi{ font-size:17px; padding:9px 15px; }
+  .knh-tam .knh-paylas{ font-size:18px; padding:12px 18px; }
+  .knh-tam .knh-bos-bilgi{ left:16px; right:auto; width:min(600px, 56vw); padding:16px 18px; }
+  .knh-tam .knh-bos-bilgi b{ font-size:21px; }
+  .knh-tam .knh-bos-bilgi p{ font-size:18px; }
+  .knh-tam .knh-konumum{ font-size:19px; padding:14px 20px; }
+  .knh-tam .knh-konumum svg{ width:23px; height:23px; }
+  .knh-tam .knh-kbtn{ width:52px; height:52px; font-size:24px; }
+  .knh-tam .knh-yakin-foto{ width:64px; height:64px; }
+  .knh-tam .knh-yakin-ad{ font-size:14.5px; max-width:80px; }
+  .knh-tam .knh-yakin-km{ font-size:13px; }
+  .knh-tam .knh-ark-kart{ left:16px; right:auto; width:min(600px, 56vw); }
+  .knh-tam .knh-ark-kart-ad{ font-size:21px; }
+  .knh-tam .knh-ark-kart-uzak{ font-size:16px; }
+  .knh-tam .knh-ark-yaz, .knh-tam .knh-ark-yol{ font-size:16px; padding:10px 15px; }
+  .knh-tam .knh-rota-serit{ left:16px; right:auto; width:min(600px, 56vw); }
+  .knh-tam .knh-rota-bilgi{ font-size:19px; }
+  .knh-tam .knh-mod{ font-size:15px; }
+  .knh-tam .knh-kapat{ width:52px; height:52px; font-size:24px; }
+  /* Adres haritası */
+  .adh-tam .adh-baslik{ font-size:20px; }
+  .adh-tam .adh-ara-sar{ right:auto; width:min(640px, 62vw); }
+  .adh-tam .adh-ara-in{ font-size:19px; }
+  .adh-tam .adh-ust-ipuc{ left:16px; right:auto; width:min(600px, 56vw); font-size:17px; text-align:left; }
+  .adh-tam .adh-arasonuc{ left:16px; right:auto; width:min(640px, 62vw); }
+  .adh-tam .adh-arasonuc-oge{ font-size:16px; }
+  .adh-tam .adh-konumum{ font-size:18px; padding:13px 18px; }
+  .adh-tam .adh-ekle-btn{ font-size:17px; padding:13px 18px; }
+  .adh-tam .adh-sonuc{ left:16px; right:auto; width:min(560px, 52vw); }
+  .adh-tam .adh-mekan-kart{ left:16px; right:auto; width:min(560px, 52vw); }
+  .adh-tam .adh-ekle-panel{ left:16px; right:auto; width:min(560px, 52vw); }
+  .adh-tam .adh-kart-adres{ font-size:16px; }
+  .adh-tam .adh-mekan-ad{ font-size:20px; }
+  .adh-tam .adh-kapat{ width:52px; height:52px; font-size:24px; }
 }
 .adh-konumum{ position:absolute; right:14px; bottom:16px; z-index:6; display:inline-flex; align-items:center; gap:7px; border:1.6px solid #bff0d2; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:800; font-size:13.5px; padding:11px 15px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
 .adh-konumum svg{ width:18px; height:18px; }

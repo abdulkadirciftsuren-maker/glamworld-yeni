@@ -3654,13 +3654,16 @@ export default function Anasayfa({ pro = false }) {
     // Konumunu PAYLAŞAN herkes haritada görünür (takip şartı YOK; uzakta/başka ülkede olsa da).
     // Gizlilik: konum paylaşımını kapatan (canliKonum silinen) + profil konumu olmayan görünmez.
     return mmKisiler
-      .filter((k) => k && k.uid && k.uid !== benUid)
       .map((k) => {
+        // KİMLİK: kullanıcı belgesinde uid, doc id'sindedir → k.id (k.uid genelde YOK). Bu yüzden herkes eleniyordu!
+        const kuid = k && (k.id || k.uid); if (!kuid || kuid === benUid) return null;
         // ÖNCE canlı konum (şu anki yeri), yoksa profil konumu (adres). İkisi de yoksa haritada görünmez.
         const ck = (k.canliKonum && typeof k.canliKonum.lat === "number" && typeof k.canliKonum.lon === "number") ? k.canliKonum : null;
         const pk = (k.konum && typeof k.konum.lat === "number" && typeof k.konum.lon === "number") ? k.konum : null;
         const yer = ck || pk; if (!yer) return null;
-        return { uid: k.uid, ad: k.ad || k.isim || [k.isim, k.soyisim].filter(Boolean).join(" ") || "", foto: k.foto || k.fotoUrl || "", lat: yer.lat, lon: yer.lon, sehir: (k.konum && (k.konum.sehir || k.konum.ilce)) || "", canli: !!ck, zaman: (ck && ck.zaman) || 0 };
+        const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || k.isim || "";
+        const foto = k.foto || k.avatarFoto || k.isFoto || k.fotoUrl || (k.pro && k.pro.foto) || "";
+        return { uid: kuid, ad, foto, lat: yer.lat, lon: yer.lon, sehir: (k.konum && (k.konum.sehir || k.konum.ilce)) || "", canli: !!ck, zaman: (ck && ck.zaman) || 0 };
       })
       .filter(Boolean);
   }, [mmKisiler, benUid]);
