@@ -122,7 +122,10 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
     if (!yeniNokta || !yeniAd.trim()) return;
     setKaydediyor(true);
     try {
-      await mekanEkle({ uid, ekleyenAd: benAd || "", ad: yeniAd.trim().slice(0, 80), tur: yeniTur, telefon: yeniTel.trim().slice(0, 40), aciklama: yeniAciklama.trim().slice(0, 600), fotolar: yeniFotolar, lat: yeniNokta.lat, lon: yeniNokta.lon });
+      // yerin ADRESİNİ de otomatik bul (kaydet) — sonra bilgi kartında görünür
+      let adresMetin = "";
+      try { if (ADRES_KOPRU) { const ay = ADRES_KOPRU.indexOf("?") === -1 ? "?" : "&"; const rr = await fetch(`${ADRES_KOPRU}${ay}at=${yeniNokta.lat},${yeniNokta.lon}&lang=tr`); const dd = await rr.json(); adresMetin = (dd && dd.items && dd.items[0] && dd.items[0].address && dd.items[0].address.label) || ""; } } catch (x) {}
+      await mekanEkle({ uid, ekleyenAd: benAd || "", ad: yeniAd.trim().slice(0, 80), tur: yeniTur, telefon: yeniTel.trim().slice(0, 40), aciklama: yeniAciklama.trim().slice(0, 600), adres: adresMetin, fotolar: yeniFotolar, lat: yeniNokta.lat, lon: yeniNokta.lon });
       ekleIptal(); mekanlariYukle();
     } catch (e) { alert(t("adhKaydOlmadi", "Kaydedilemedi, tekrar dene.")); }
     setKaydediyor(false);
@@ -244,22 +247,32 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
   async function yerAra(sorgu) {
     const q = ((typeof sorgu === "string" ? sorgu : ara) || "").trim(); if (q.length < 2) return;
     setAraniyor(true); setSonuclar(null); const ben = benRef.current;
+    // ÖNCE kullanıcıların eklediği mekânlarda ara (isimde geçen) → en üstte göster
+    const qk = q.toLocaleLowerCase("tr");
+    const yerelMekan = (benMekanlar || []).filter((m) => typeof m.lat === "number" && (((m.ad || "").toLocaleLowerCase("tr").indexOf(qk) !== -1) || ((m.tur || "").toLocaleLowerCase("tr").indexOf(qk) !== -1))).slice(0, 6)
+      .map((m) => ({ ad: "⭐ " + (m.ad || "") + (m.tur ? " · " + m.tur : ""), lat: m.lat, lon: m.lon, mekan: m }));
     try {
+      let disArr = [];
       if (ADRES_KOPRU) {
         const ayrac = ADRES_KOPRU.indexOf("?") === -1 ? "?" : "&";
         const r = await fetch(`${ADRES_KOPRU}${ayrac}q=${encodeURIComponent(q)}&lang=tr`);
         const d = await r.json();
-        const arr = ((d && d.items) || []).map((it) => ({ ad: it.title || (it.address && it.address.label) || q, adres: (it.address && it.address.label) || "", lat: it.position && it.position.lat, lon: it.position && it.position.lng })).filter((x) => typeof x.lat === "number" && typeof x.lon === "number");
-        setSonuclar(arr);
+        disArr = ((d && d.items) || []).map((it) => ({ ad: it.title || (it.address && it.address.label) || q, adres: (it.address && it.address.label) || "", lat: it.position && it.position.lat, lon: it.position && it.position.lng })).filter((x) => typeof x.lat === "number" && typeof x.lon === "number");
       } else {
-        const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=8&q=" + encodeURIComponent(q) + (ben ? "&viewbox=" : ""), { headers: { Accept: "application/json" } });
-        const l = await r.json(); setSonuclar((Array.isArray(l) ? l : []).map((y) => ({ ad: y.display_name || q, adres: y.display_name || "", lat: parseFloat(y.lat), lon: parseFloat(y.lon) })));
+        const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=8&q=" + encodeURIComponent(q), { headers: { Accept: "application/json" } });
+        const l = await r.json(); disArr = (Array.isArray(l) ? l : []).map((y) => ({ ad: y.display_name || q, adres: y.display_name || "", lat: parseFloat(y.lat), lon: parseFloat(y.lon) }));
       }
-    } catch (e) { setSonuclar([]); }
+      setSonuclar([...yerelMekan, ...disArr]);
+    } catch (e) { setSonuclar(yerelMekan.length ? yerelMekan : []); }
     setAraniyor(false);
   }
   function araDegisti(v) { setAra(v); clearTimeout(araZmnRef.current); if (v.trim().length < 3) { setSonuclar(null); return; } araZmnRef.current = setTimeout(() => yerAra(v), 650); }
-  function sonucaGit(y) { const map = haritaRef.current; setSonuclar(null); setAra(""); if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 17 }); pinKoy(y.lat, y.lon); adresCoz(y.lat, y.lon, y.ad); poiYukle(y.lat, y.lon); }
+  function sonucaGit(y) {
+    const map = haritaRef.current; setSonuclar(null); setAra("");
+    if (map) map.flyTo({ center: [y.lon, y.lat], zoom: 17 });
+    if (y.mekan) { setSecilenMekan(y.mekan); return; } // kullanıcı ekli mekân → bilgi kartını aç
+    pinKoy(y.lat, y.lon); adresCoz(y.lat, y.lon, y.ad); poiYukle(y.lat, y.lon);
+  }
 
   function kopyala(metin) {
     const a = (metin || "").trim(); if (!a) return;
@@ -398,6 +411,7 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
               <button className="adh-sonuc-kapat" onClick={() => { setSecilenMekan(null); setKartDuzen(false); }} aria-label={t("kapat", "Kapat")}>✕</button>
               <div className="adh-mekan-ad">⭐ {secilenMekan.ad}</div>
               <div className="adh-mekan-tur">{secilenMekan.tur || ""}{secilenMekan.telefon ? " · ☎ " + secilenMekan.telefon : ""}</div>
+              {secilenMekan.adres && <div className="adh-mekan-adres">📍 {secilenMekan.adres} <button className="adh-mekan-kopya" onClick={() => kopyala(secilenMekan.adres)}>📋</button></div>}
               {fotolar.length > 0 && (
                 <div className="adh-mekan-fotolar">
                   {fotolar.map((u, i) => (<a href={u} target="_blank" rel="noreferrer" key={i} className="adh-mekan-foto"><img src={u} alt="" referrerPolicy="no-referrer" /></a>))}

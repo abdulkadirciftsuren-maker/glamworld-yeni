@@ -3686,6 +3686,11 @@ export default function Anasayfa({ pro = false }) {
   // (2) arkadaşların TAZE konumu için listeyi yenile.
   useEffect(() => {
     if (aktifKod !== "konum") return;
+    // HARİTA sayfasında sesli asistan (Gloxoo canlı) mikrofonu KAPANSIN — yoksa mikrofon her 2sn açılıp
+    // Chrome "site mikrofonu kullanıyor" bildirimi + ses döngüsü çıkıyordu. Maps sayfası sesli bağlam değil.
+    try { canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false); } catch (e) {}
+    try { if (recognitionRef.current) recognitionRef.current.stop(); } catch (e) {}
+    try { if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop(); } catch (e) {}
     if (konumPaylas) benKonumumuYaz();
     tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
   }, [aktifKod, benUid]); // eslint-disable-line react-hooks/exhaustive-deps
