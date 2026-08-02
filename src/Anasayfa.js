@@ -3650,9 +3650,11 @@ export default function Anasayfa({ pro = false }) {
   // KONUM HARİTASI İÇİN ARKADAŞLAR — takip ettiklerimden KONUMU olanlar → haritada fotoğraflarıyla görünecekler.
   // (Sadece profilinde konum girmiş olanlar çıkar; konum girmemiş arkadaş haritada görünmez.)
   const haritaArkadaslar = useMemo(() => {
-    if (!takipSet || !takipSet.size || !mmKisiler || !mmKisiler.length) return [];
+    if (!mmKisiler || !mmKisiler.length) return [];
+    // Konumunu PAYLAŞAN herkes haritada görünür (takip şartı YOK; uzakta/başka ülkede olsa da).
+    // Gizlilik: konum paylaşımını kapatan (canliKonum silinen) + profil konumu olmayan görünmez.
     return mmKisiler
-      .filter((k) => k && k.uid && k.uid !== benUid && takipSet.has(k.uid))
+      .filter((k) => k && k.uid && k.uid !== benUid)
       .map((k) => {
         // ÖNCE canlı konum (şu anki yeri), yoksa profil konumu (adres). İkisi de yoksa haritada görünmez.
         const ck = (k.canliKonum && typeof k.canliKonum.lat === "number" && typeof k.canliKonum.lon === "number") ? k.canliKonum : null;
@@ -3661,7 +3663,7 @@ export default function Anasayfa({ pro = false }) {
         return { uid: k.uid, ad: k.ad || k.isim || [k.isim, k.soyisim].filter(Boolean).join(" ") || "", foto: k.foto || k.fotoUrl || "", lat: yer.lat, lon: yer.lon, sehir: (k.konum && (k.konum.sehir || k.konum.ilce)) || "", canli: !!ck, zaman: (ck && ck.zaman) || 0 };
       })
       .filter(Boolean);
-  }, [takipSet, mmKisiler, benUid]);
+  }, [mmKisiler, benUid]);
   // KONUM PAYLAŞIMI aç/kapa — müşteri konumunu paylaşmak istemeyebilir. Varsayılan AÇIK.
   const [konumPaylas, setKonumPaylas] = useState(() => { try { return localStorage.getItem("gw_konumPaylas") !== "0"; } catch (e) { return true; } });
   function benKonumumuYaz() {
@@ -3694,6 +3696,21 @@ export default function Anasayfa({ pro = false }) {
     if (konumPaylas) benKonumumuYaz();
     tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
   }, [aktifKod, benUid]); // eslint-disable-line react-hooks/exhaustive-deps
+  // UYGULAMA AÇILINCA (hangi sayfada olursa olsun): konum izni ZATEN verilmişse canlı konumu yaz →
+  // kişi Konum sayfasına girmese bile arkadaşlarının haritasında görünür (son yeri kalır). Yeni izin İSTEMEZ.
+  useEffect(() => {
+    if (!benUid || !navigator.geolocation) return;
+    let iptal = false;
+    const paylas = (() => { try { return localStorage.getItem("gw_konumPaylas") !== "0"; } catch (e) { return true; } })();
+    if (!paylas) return;
+    const yaz = () => { if (iptal) return; navigator.geolocation.getCurrentPosition((pos) => { if (!iptal) canliKonumYaz(benUid, pos.coords.latitude, pos.coords.longitude).catch(() => {}); }, () => {}, { enableHighAccuracy: true, timeout: 9000 }); };
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: "geolocation" }).then((r) => { if (r.state === "granted") yaz(); }).catch(() => {});
+      }
+    } catch (e) {}
+    return () => { iptal = true; };
+  }, [benUid]); // eslint-disable-line react-hooks/exhaustive-deps
   // Sohbet açıkken: o kişiden gelen okunmamışları OKUNDU yap (karşı tarafa çift tik ✓✓)
   useEffect(() => {
     if (!sohbetKisi) return;

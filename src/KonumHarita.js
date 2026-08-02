@@ -369,7 +369,7 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
             <span className="knh-bos-ik" aria-hidden="true">📍</span>
             <div>
               <b>{t("knhSenBurada", "Sen buradasın 🙂")}</b>
-              <p>{t("knhBosArkadas", "Takip ettiğin arkadaşlar uygulamayı açıp konumlarını paylaşınca, sana ne kadar yakın oldukları (km) ile burada fotoğraflarıyla görünecekler.")}</p>
+              <p>{t("knhBosArkadas", "Uygulamayı açıp konumunu paylaşan kişiler — uzakta ya da yakında — sana kaç km olduklarıyla burada fotoğraflarıyla görünecek.")}</p>
             </div>
           </div>
         )}
