@@ -8448,6 +8448,8 @@ export default function Anasayfa({ pro = false }) {
                 benLat={konumLat != null ? konumLat : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lat)}
                 benLon={konumLon != null ? konumLon : (profilBilgi && profilBilgi.konum && profilBilgi.konum.lon)}
                 onTam={haritaTamDegis}
+                uid={benUid}
+                benAd={benimAdGetir()}
               />
             </Suspense>
           ) : null}

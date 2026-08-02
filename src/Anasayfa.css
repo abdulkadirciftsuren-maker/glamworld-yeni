@@ -4477,6 +4477,29 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .adh-sonuc{ position:relative; }
 .adh-sonuc-kapat{ position:absolute; top:-12px; right:-2px; z-index:9; width:40px; height:40px; border:2px solid rgba(255,215,0,.85); cursor:pointer; background:linear-gradient(160deg,#fffdf5,#f4ecd6); color:#4a3208; font-size:18px; font-weight:900; border-radius:12px; box-shadow:0 3px 10px rgba(0,20,15,.5); }
 .adh-sonuc-kapat:active{ transform:scale(.92); }
+/* YERİMİ EKLE — sol alt düğme */
+.adh-ekle-btn{ position:absolute; left:14px; bottom:16px; z-index:6; border:2px solid #7a5c12; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:900; font-size:13.5px; padding:11px 15px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
+.adh-ekle-btn:active{ transform:scale(.96); }
+/* EKLEME paneli/form */
+.adh-ekle-panel{ position:absolute; left:12px; right:12px; bottom:16px; z-index:8; }
+.adh-ekle-ipuc{ display:flex; align-items:center; gap:10px; background:linear-gradient(160deg,#0f5e31,#127a41); border:1.8px solid rgba(255,215,0,.75); color:#FFD700; font-weight:800; font-size:13.5px; padding:12px 14px; border-radius:15px; box-shadow:0 5px 16px rgba(0,20,15,.45); }
+.adh-ekle-ipuc span{ flex:1; }
+.adh-ekle-iptal{ flex:none; border:none; cursor:pointer; font-family:inherit; background:rgba(255,255,255,.22); color:#fff; font-weight:800; font-size:12.5px; padding:8px 12px; border-radius:10px; }
+.adh-ekle-form{ background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:2px solid rgba(255,215,0,.8); border-radius:16px; padding:13px; box-shadow:0 6px 20px rgba(0,20,15,.5); display:flex; flex-direction:column; gap:9px; }
+.adh-ekle-baslik{ color:#4a3208; font-weight:900; font-size:16px; }
+.adh-ekle-in, .adh-ekle-sec{ width:100%; border:1.6px solid rgba(120,90,20,.4); border-radius:11px; padding:11px 12px; font-family:inherit; font-size:14px; color:#2a2008; background:#fff; font-weight:600; }
+.adh-ekle-dugmeler{ display:flex; gap:9px; margin-top:2px; }
+.adh-ekle-vazgec{ flex:1; border:1.5px solid rgba(120,90,20,.35); cursor:pointer; font-family:inherit; background:rgba(255,255,255,.6); color:#5a4712; font-weight:800; font-size:14px; padding:11px; border-radius:12px; }
+.adh-ekle-kaydet{ flex:2; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:900; font-size:14px; padding:11px; border-radius:12px; }
+.adh-ekle-kaydet:disabled{ opacity:.55; }
+.adh-ekle-kaydet:active, .adh-ekle-vazgec:active{ transform:scale(.97); }
+/* Kullanıcı MEKÂN bilgi kartı */
+.adh-mekan-kart{ position:absolute; left:12px; right:12px; bottom:16px; z-index:7; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:2px solid rgba(255,215,0,.85); border-radius:16px; padding:13px 14px; box-shadow:0 6px 20px rgba(0,20,15,.5); }
+.adh-mekan-ad{ color:#2a2008; font-weight:900; font-size:17px; }
+.adh-mekan-tur{ color:#5a4712; font-weight:700; font-size:14px; margin-top:3px; }
+.adh-mekan-ekleyen{ color:#7a5c12; font-weight:600; font-size:12px; margin-top:3px; font-style:italic; }
+.adh-mekan-sil{ margin-top:10px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#e0202c,#a3121b); color:#fff; font-weight:800; font-size:13.5px; padding:9px 14px; border-radius:11px; }
+.adh-mekan-sil:active{ transform:scale(.96); }
 .adh-konumum{ position:absolute; right:14px; bottom:16px; z-index:6; display:inline-flex; align-items:center; gap:7px; border:1.6px solid #bff0d2; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#2e9d63,#1f7d4c); color:#fff; font-weight:800; font-size:13.5px; padding:11px 15px; border-radius:14px; box-shadow:0 4px 13px rgba(0,20,15,.4); }
 .adh-konumum svg{ width:18px; height:18px; }
 .adh-konumum:active{ transform:scale(.96); }

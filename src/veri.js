@@ -438,6 +438,25 @@ export async function tumKullanicilar(adet = 400) {
     return liste;
   } catch (e) { return []; }
 }
+// ---------- KULLANICI EKLİ MEKANLAR (kendi dükkanını/işini haritaya ekle) ----------
+// Herkes OKUR (haritada görsün); giriş yapan KENDİ mekânını ekler; sahibi siler. (firestore.rules: mekanlar)
+export async function mekanEkle(veri) {
+  const ref = doc(collection(db, "mekanlar"));
+  await setDoc(ref, { zamanMs: Date.now(), ...veri, olusturma: serverTimestamp() });
+  return ref.id;
+}
+export async function mekanlariOku(adet = 800) {
+  try {
+    const q = query(collection(db, "mekanlar"), fsLimit(adet));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (e) { return []; }
+}
+export async function mekanSil(id) {
+  if (!id) return false;
+  try { await deleteDoc(doc(db, "mekanlar", id)); return true; } catch (e) { return false; }
+}
+
 // Kullanıcı (profil) belgesini sil — SADECE yönetici (Firestore kuralında sahip e-posta) — hayalet/eski kayıtları temizlemek için
 // Hesap sil → o kullanıcının TÜM gönderileri + medyaları (video/dosya) da silinir (silinen hesabın paylaşımları kalmasın)
 export async function kullaniciSil(uid) {

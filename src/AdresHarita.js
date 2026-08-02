@@ -10,6 +10,10 @@ import React, { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import { useTranslation } from "react-i18next";
 import { ADRES_KOPRU } from "./hereConfig";
+import { mekanEkle, mekanlariOku, mekanSil } from "./veri";
+
+// Kullanıcının ekleyebileceği mekân türleri (renk poiRenk ile eşleşir)
+const MEKAN_TURLERI = ["Banka", "Kafe", "Restoran", "Bar", "Market / Bakkal", "Mağaza", "Fabrika", "Otel", "Eczane", "Kuaför / Berber", "Elektronikçi", "Beyaz Eşya", "Anahtarcı / Çilingir", "Fırın / Pastane", "Akaryakıt", "Okul", "Hastane / Klinik", "Diğer"];
 
 // Ülke kodu (HERE 3 harfli ISO) → o ülkenin ana dili (yerel adres bu dilde gelsin)
 const CC3_LANG = { TUR: "tr", UKR: "uk", RUS: "ru", BLR: "be", KAZ: "ru", AZE: "az", GEO: "ka", ARM: "hy",
@@ -25,12 +29,15 @@ const POI_RENK = { hairdresser: "#ff2d9b", beauty: "#ff2d9b", barber: "#ff2d9b",
 const ETKILER = ["dragPan", "scrollZoom", "boxZoom", "dragRotate", "keyboard", "doubleClickZoom", "touchZoomRotate"];
 function etkilesim(map, ac) { ETKILER.forEach((n) => { try { if (map[n]) ac ? map[n].enable() : map[n].disable(); } catch (e) {} }); }
 
-export default function AdresHarita({ benLat, benLon, onTam }) {
+export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
   const { t } = useTranslation();
   const kapRef = useRef(null);
   const haritaRef = useRef(null);
   const pinRef = useRef(null);
   const poiMarksRef = useRef([]);
+  const mekanMarksRef = useRef([]);   // kullanıcı ekli mekân işaretleri
+  const yeniMarkRef = useRef(null);   // ekleme sırasında geçici işaret
+  const ekleModuRef = useRef(false);
   const poiZmnRef = useRef(null);
   const araZmnRef = useRef(null);
   const acikRef = useRef(false);
@@ -44,11 +51,65 @@ export default function AdresHarita({ benLat, benLon, onTam }) {
   const [ara, setAra] = useState("");
   const [sonuclar, setSonuclar] = useState(null);
   const [araniyor, setAraniyor] = useState(false);
+  const [benMekanlar, setBenMekanlar] = useState([]);   // kullanıcıların eklediği mekânlar
+  const [ekleModu, setEkleModu] = useState(false);       // "yerimi ekle" modu
+  const [yeniNokta, setYeniNokta] = useState(null);      // eklenecek yerin konumu {lat,lon}
+  const [yeniAd, setYeniAd] = useState("");
+  const [yeniTur, setYeniTur] = useState(MEKAN_TURLERI[0]);
+  const [yeniTel, setYeniTel] = useState("");
+  const [kaydediyor, setKaydediyor] = useState(false);
+  const [secilenMekan, setSecilenMekan] = useState(null); // dokunulan kullanıcı mekânı (bilgi kartı)
   const benRef = useRef((typeof benLat === "number" && typeof benLon === "number") ? { lat: benLat, lon: benLon } : null);
 
   function pinKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (pinRef.current) pinRef.current.setLngLat([lon, lat]); else pinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
   function pinKaldir() { if (pinRef.current) { try { pinRef.current.remove(); } catch (e) {} pinRef.current = null; } }
-  function temizle() { setYerAdi(""); setYerel(""); setEnAdres(""); setKopyalandi(""); pinKaldir(); }
+  function temizle() { setYerAdi(""); setYerel(""); setEnAdres(""); setKopyalandi(""); setSecilenMekan(null); pinKaldir(); }
+
+  // KULLANICI EKLİ MEKANLAR — altın KARE işaret (HERE'nin yuvarlak noktalarından ayrı dursun) + isim
+  function mekanlariGoster(liste) {
+    const map = haritaRef.current; if (!map) return;
+    mekanMarksRef.current.forEach((m) => { try { m.remove(); } catch (e) {} }); mekanMarksRef.current = [];
+    (liste || []).forEach((m) => {
+      if (typeof m.lat !== "number" || typeof m.lon !== "number") return;
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateY(-4px)";
+      const kare = document.createElement("div");
+      kare.style.cssText = "width:26px;height:26px;border-radius:7px;border:2.5px solid #7a5c12;background:linear-gradient(160deg,#ffe9a8,#e6bd52);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 7px rgba(0,0,0,.5)";
+      kare.textContent = "⭐";
+      const et = document.createElement("div");
+      et.textContent = (m.ad || "").split(/\s+/).slice(0, 2).join(" ");
+      et.style.cssText = "margin-top:2px;padding:1px 6px;background:rgba(122,92,18,.95);color:#fff;font-weight:800;font-size:10.5px;line-height:1.5;border-radius:6px;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis";
+      wrap.appendChild(kare); if (m.ad) wrap.appendChild(et);
+      const mk = new maplibregl.Marker({ element: wrap, anchor: "bottom" }).setLngLat([m.lon, m.lat]).addTo(map);
+      wrap.addEventListener("click", (ev) => { ev.stopPropagation(); if (!acikRef.current) return; setSecilenMekan(m); try { map.flyTo({ center: [m.lon, m.lat], zoom: Math.max(map.getZoom(), 16) }); } catch (e) {} });
+      mekanMarksRef.current.push(mk);
+    });
+  }
+  function mekanlariYukle() { mekanlariOku(800).then((l) => { setBenMekanlar(l || []); mekanlariGoster(l || []); }).catch(() => {}); }
+
+  function ekleBaslat() { setSecilenMekan(null); temizle(); setSonuclar(null); ekleModuRef.current = true; setEkleModu(true); setYeniNokta(null); setYeniAd(""); setYeniTur(MEKAN_TURLERI[0]); setYeniTel(""); }
+  function ekleIptal() { ekleModuRef.current = false; setEkleModu(false); setYeniNokta(null); if (yeniMarkRef.current) { try { yeniMarkRef.current.remove(); } catch (e) {} yeniMarkRef.current = null; } }
+  function yeniNoktaKoy(lat, lon) {
+    const map = haritaRef.current; if (!map) return;
+    if (yeniMarkRef.current) yeniMarkRef.current.setLngLat([lon, lat]);
+    else yeniMarkRef.current = new maplibregl.Marker({ color: "#e6bd52" }).setLngLat([lon, lat]).addTo(map);
+    setYeniNokta({ lat, lon });
+  }
+  async function mekanKaydet() {
+    if (!uid) { alert(t("adhGiris", "Mekân eklemek için giriş yapmalısın.")); return; }
+    if (!yeniNokta || !yeniAd.trim()) return;
+    setKaydediyor(true);
+    try {
+      await mekanEkle({ uid, ekleyenAd: benAd || "", ad: yeniAd.trim().slice(0, 80), tur: yeniTur, telefon: yeniTel.trim().slice(0, 40), lat: yeniNokta.lat, lon: yeniNokta.lon });
+      ekleIptal(); mekanlariYukle();
+    } catch (e) { alert(t("adhKaydOlmadi", "Kaydedilemedi, tekrar dene.")); }
+    setKaydediyor(false);
+  }
+  async function mekanSilDene(m) {
+    if (!m || !m.id) return;
+    if (!window.confirm(t("adhSilOnay", "Bu mekânı silmek istiyor musun?"))) return;
+    try { await mekanSil(m.id); setSecilenMekan(null); mekanlariYukle(); } catch (e) {}
+  }
 
   // HERE kategori adına göre nokta rengi
   function poiRenk(kat) {
@@ -187,7 +248,7 @@ export default function AdresHarita({ benLat, benLon, onTam }) {
     etkilesim(map, false); // önizlemede dokunma kapalı → parmak sayfayı kaydırır
     map.on("load", () => { setHazir(true); try { map.resize(); } catch (e) {} });
     setTimeout(() => { try { map.resize(); } catch (e) {} }, 250);
-    map.on("click", (e) => { if (!acikRef.current) return; const la = e.lngLat.lat, lo = e.lngLat.lng; pinKoy(la, lo); adresCoz(la, lo); });
+    map.on("click", (e) => { if (!acikRef.current) return; const la = e.lngLat.lat, lo = e.lngLat.lng; if (ekleModuRef.current) { yeniNoktaKoy(la, lo); return; } pinKoy(la, lo); adresCoz(la, lo); });
     map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 13) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
     if (ben) pinKoy(bLat, bLon);
     return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
@@ -201,7 +262,7 @@ export default function AdresHarita({ benLat, benLon, onTam }) {
     etkilesim(map, acik);
     const z = setTimeout(() => {
       try { map.resize(); } catch (e) {}
-      if (acik) { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 16 }); poiYukle(ben.lat, ben.lon); } else konumumuBul(); }
+      if (acik) { const ben = benRef.current; if (ben) { map.flyTo({ center: [ben.lon, ben.lat], zoom: 16 }); poiYukle(ben.lat, ben.lon); } else konumumuBul(); mekanlariYukle(); }
     }, 90);
     return () => clearTimeout(z);
   }, [acik]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -238,11 +299,54 @@ export default function AdresHarita({ benLat, benLon, onTam }) {
           </div>
         )}
 
-        {!sonucVar && !sonuclar && <div className="adh-ust-ipuc">📍 {t("adhDokun", "Bir yere/mekâna dokun ya da yukarıdan ara")}</div>}
-        <button className="adh-konumum" onClick={(e) => { e.stopPropagation(); konumumuBul(); }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
-          {t("adhKonumum", "Konumumu bul")}
-        </button>
+        {!sonucVar && !sonuclar && !ekleModu && !secilenMekan && <div className="adh-ust-ipuc">📍 {t("adhDokun", "Bir yere/mekâna dokun ya da yukarıdan ara")}</div>}
+        {!ekleModu && (
+          <button className="adh-konumum" onClick={(e) => { e.stopPropagation(); konumumuBul(); }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
+            {t("adhKonumum", "Konumumu bul")}
+          </button>
+        )}
+
+        {/* YERİMİ EKLE düğmesi (sol alt) */}
+        {!ekleModu && !sonucVar && !secilenMekan && (
+          <button className="adh-ekle-btn" onClick={(e) => { e.stopPropagation(); ekleBaslat(); }}>➕ {t("adhYerEkle", "Yerimi ekle")}</button>
+        )}
+
+        {/* EKLEME MODU: önce haritaya dokun, sonra form */}
+        {ekleModu && (
+          <div className="adh-ekle-panel" onClick={(e) => e.stopPropagation()}>
+            {!yeniNokta ? (
+              <div className="adh-ekle-ipuc">
+                <span>👆 {t("adhEkleDokun", "İşyerinin/yerin haritada olduğu noktaya dokun")}</span>
+                <button className="adh-ekle-iptal" onClick={ekleIptal}>{t("vazgec", "Vazgeç")}</button>
+              </div>
+            ) : (
+              <div className="adh-ekle-form">
+                <div className="adh-ekle-baslik">⭐ {t("adhYeniYer", "Yeni yer ekle")}</div>
+                <input className="adh-ekle-in" value={yeniAd} onChange={(e) => setYeniAd(e.target.value)} placeholder={t("adhYerAdi", "Yerin adı (örn: Ahmet Market)")} maxLength={80} />
+                <select className="adh-ekle-sec" value={yeniTur} onChange={(e) => setYeniTur(e.target.value)}>
+                  {MEKAN_TURLERI.map((x) => <option key={x} value={x}>{x}</option>)}
+                </select>
+                <input className="adh-ekle-in" value={yeniTel} onChange={(e) => setYeniTel(e.target.value)} placeholder={t("adhTelefon", "Telefon (isteğe bağlı)")} maxLength={40} />
+                <div className="adh-ekle-dugmeler">
+                  <button className="adh-ekle-vazgec" onClick={ekleIptal}>{t("vazgec", "Vazgeç")}</button>
+                  <button className="adh-ekle-kaydet" onClick={mekanKaydet} disabled={kaydediyor || !yeniAd.trim()}>{kaydediyor ? "…" : "✓ " + t("kaydet", "Kaydet")}</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* KULLANICI MEKÂNI bilgi kartı */}
+        {secilenMekan && (
+          <div className="adh-mekan-kart" onClick={(e) => e.stopPropagation()}>
+            <button className="adh-sonuc-kapat" onClick={() => setSecilenMekan(null)} aria-label={t("kapat", "Kapat")}>✕</button>
+            <div className="adh-mekan-ad">⭐ {secilenMekan.ad}</div>
+            <div className="adh-mekan-tur">{secilenMekan.tur || ""}{secilenMekan.telefon ? " · ☎ " + secilenMekan.telefon : ""}</div>
+            {secilenMekan.ekleyenAd && <div className="adh-mekan-ekleyen">{t("adhEkleyen", "Ekleyen")}: {secilenMekan.ekleyenAd}</div>}
+            {uid && secilenMekan.uid === uid && <button className="adh-mekan-sil" onClick={() => mekanSilDene(secilenMekan)}>🗑 {t("sil", "Sil")}</button>}
+          </div>
+        )}
 
         {sonucVar && (
           <div className="adh-sonuc" onClick={(e) => e.stopPropagation()}>
