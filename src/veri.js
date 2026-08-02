@@ -452,6 +452,10 @@ export async function mekanlariOku(adet = 800) {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   } catch (e) { return []; }
 }
+export async function mekanGuncelle(id, veri) {
+  if (!id) return false;
+  try { await setDoc(doc(db, "mekanlar", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+}
 export async function mekanSil(id) {
   if (!id) return false;
   try { await deleteDoc(doc(db, "mekanlar", id)); return true; } catch (e) { return false; }

@@ -10,7 +10,10 @@ import React, { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import { useTranslation } from "react-i18next";
 import { ADRES_KOPRU } from "./hereConfig";
-import { mekanEkle, mekanlariOku, mekanSil } from "./veri";
+import { mekanEkle, mekanlariOku, mekanSil, mekanGuncelle, gorselYukle } from "./veri";
+
+// Dosyayı base64'e oku (sonra gorselYukle ile Firebase'e yüklenir)
+function dosyaOku(file) { return new Promise((res) => { try { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(""); r.readAsDataURL(file); } catch (e) { res(""); } }); }
 
 // Kullanıcının ekleyebileceği mekân türleri (renk poiRenk ile eşleşir)
 const MEKAN_TURLERI = ["Banka", "Kafe", "Restoran", "Bar", "Market / Bakkal", "Mağaza", "Fabrika", "Otel", "Eczane", "Kuaför / Berber", "Elektronikçi", "Beyaz Eşya", "Anahtarcı / Çilingir", "Fırın / Pastane", "Akaryakıt", "Okul", "Hastane / Klinik", "Diğer"];
@@ -57,8 +60,16 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
   const [yeniAd, setYeniAd] = useState("");
   const [yeniTur, setYeniTur] = useState(MEKAN_TURLERI[0]);
   const [yeniTel, setYeniTel] = useState("");
+  const [yeniAciklama, setYeniAciklama] = useState("");
+  const [yeniFotolar, setYeniFotolar] = useState([]);    // eklenen yerin fotoğraf URL'leri
+  const [fotoYukleniyor, setFotoYukleniyor] = useState(false);
   const [kaydediyor, setKaydediyor] = useState(false);
   const [secilenMekan, setSecilenMekan] = useState(null); // dokunulan kullanıcı mekânı (bilgi kartı)
+  const [kartAciklama, setKartAciklama] = useState("");   // bilgi kartında sahibi açıklamayı düzenler
+  const [kartDuzen, setKartDuzen] = useState(false);
+  const [kartYukleniyor, setKartYukleniyor] = useState(false);
+  const foInpRef = useRef(null);
+  const kartFoInpRef = useRef(null);
   const benRef = useRef((typeof benLat === "number" && typeof benLon === "number") ? { lat: benLat, lon: benLon } : null);
 
   function pinKoy(lat, lon) { const map = haritaRef.current; if (!map) return; if (pinRef.current) pinRef.current.setLngLat([lon, lat]); else pinRef.current = new maplibregl.Marker({ color: "#e0202c" }).setLngLat([lon, lat]).addTo(map); }
@@ -74,8 +85,10 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
       const wrap = document.createElement("div");
       wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateY(-4px)";
       const kare = document.createElement("div");
-      kare.style.cssText = "width:26px;height:26px;border-radius:7px;border:2.5px solid #7a5c12;background:linear-gradient(160deg,#ffe9a8,#e6bd52);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 7px rgba(0,0,0,.5)";
-      kare.textContent = "⭐";
+      const foto = (m.fotolar && m.fotolar[0]) || m.foto || "";
+      kare.style.cssText = "width:32px;height:32px;border-radius:8px;border:2.5px solid #e6bd52;background:linear-gradient(160deg,#ffe9a8,#e6bd52);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.55);overflow:hidden";
+      if (foto) { const im = document.createElement("img"); im.src = foto; im.referrerPolicy = "no-referrer"; im.alt = ""; im.style.cssText = "width:100%;height:100%;object-fit:cover;display:block"; kare.appendChild(im); }
+      else kare.textContent = "⭐";
       const et = document.createElement("div");
       et.textContent = (m.ad || "").split(/\s+/).slice(0, 2).join(" ");
       et.style.cssText = "margin-top:2px;padding:1px 6px;background:rgba(122,92,18,.95);color:#fff;font-weight:800;font-size:10.5px;line-height:1.5;border-radius:6px;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis";
@@ -87,8 +100,17 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
   }
   function mekanlariYukle() { mekanlariOku(800).then((l) => { setBenMekanlar(l || []); mekanlariGoster(l || []); }).catch(() => {}); }
 
-  function ekleBaslat() { setSecilenMekan(null); temizle(); setSonuclar(null); ekleModuRef.current = true; setEkleModu(true); setYeniNokta(null); setYeniAd(""); setYeniTur(MEKAN_TURLERI[0]); setYeniTel(""); }
-  function ekleIptal() { ekleModuRef.current = false; setEkleModu(false); setYeniNokta(null); if (yeniMarkRef.current) { try { yeniMarkRef.current.remove(); } catch (e) {} yeniMarkRef.current = null; } }
+  function ekleBaslat() { setSecilenMekan(null); temizle(); setSonuclar(null); ekleModuRef.current = true; setEkleModu(true); setYeniNokta(null); setYeniAd(""); setYeniTur(MEKAN_TURLERI[0]); setYeniTel(""); setYeniAciklama(""); setYeniFotolar([]); }
+  function ekleIptal() { ekleModuRef.current = false; setEkleModu(false); setYeniNokta(null); setYeniFotolar([]); setYeniAciklama(""); if (yeniMarkRef.current) { try { yeniMarkRef.current.remove(); } catch (e) {} yeniMarkRef.current = null; } }
+  // Yeni yer için fotoğraf seç (en fazla 3) → Firebase'e yükle → URL sakla
+  async function yeniFotoSec(e) {
+    const dosyalar = Array.from((e.target && e.target.files) || []); if (!dosyalar.length || !uid) return;
+    setFotoYukleniyor(true);
+    for (const f of dosyalar.slice(0, 3 - yeniFotolar.length)) {
+      try { const durl = await dosyaOku(f); if (!durl) continue; const url = await gorselYukle(durl, uid); if (url) setYeniFotolar((a) => [...a, url].slice(0, 3)); } catch (x) {}
+    }
+    setFotoYukleniyor(false); if (foInpRef.current) foInpRef.current.value = "";
+  }
   function yeniNoktaKoy(lat, lon) {
     const map = haritaRef.current; if (!map) return;
     if (yeniMarkRef.current) yeniMarkRef.current.setLngLat([lon, lat]);
@@ -100,10 +122,26 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
     if (!yeniNokta || !yeniAd.trim()) return;
     setKaydediyor(true);
     try {
-      await mekanEkle({ uid, ekleyenAd: benAd || "", ad: yeniAd.trim().slice(0, 80), tur: yeniTur, telefon: yeniTel.trim().slice(0, 40), lat: yeniNokta.lat, lon: yeniNokta.lon });
+      await mekanEkle({ uid, ekleyenAd: benAd || "", ad: yeniAd.trim().slice(0, 80), tur: yeniTur, telefon: yeniTel.trim().slice(0, 40), aciklama: yeniAciklama.trim().slice(0, 600), fotolar: yeniFotolar, lat: yeniNokta.lat, lon: yeniNokta.lon });
       ekleIptal(); mekanlariYukle();
     } catch (e) { alert(t("adhKaydOlmadi", "Kaydedilemedi, tekrar dene.")); }
     setKaydediyor(false);
+  }
+  // Bilgi kartında SAHİBİ sonradan fotoğraf ekler
+  async function kartFotoSec(e) {
+    const dosyalar = Array.from((e.target && e.target.files) || []); if (!dosyalar.length || !uid || !secilenMekan) return;
+    setKartYukleniyor(true);
+    let mevcut = (secilenMekan.fotolar || []).slice();
+    for (const f of dosyalar.slice(0, 3 - mevcut.length)) {
+      try { const durl = await dosyaOku(f); if (!durl) continue; const url = await gorselYukle(durl, uid); if (url) mevcut = [...mevcut, url].slice(0, 3); } catch (x) {}
+    }
+    try { await mekanGuncelle(secilenMekan.id, { fotolar: mevcut }); setSecilenMekan((m) => ({ ...m, fotolar: mevcut })); mekanlariYukle(); } catch (x) {}
+    setKartYukleniyor(false); if (kartFoInpRef.current) kartFoInpRef.current.value = "";
+  }
+  // Bilgi kartında SAHİBİ açıklamayı kaydeder
+  async function kartAciklamaKaydet() {
+    if (!secilenMekan) return;
+    try { await mekanGuncelle(secilenMekan.id, { aciklama: kartAciklama.trim().slice(0, 600) }); setSecilenMekan((m) => ({ ...m, aciklama: kartAciklama.trim().slice(0, 600) })); setKartDuzen(false); mekanlariYukle(); } catch (x) {}
   }
   async function mekanSilDene(m) {
     if (!m || !m.id) return;
@@ -328,6 +366,20 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
                   {MEKAN_TURLERI.map((x) => <option key={x} value={x}>{x}</option>)}
                 </select>
                 <input className="adh-ekle-in" value={yeniTel} onChange={(e) => setYeniTel(e.target.value)} placeholder={t("adhTelefon", "Telefon (isteğe bağlı)")} maxLength={40} />
+                <textarea className="adh-ekle-in adh-ekle-yazi" value={yeniAciklama} onChange={(e) => setYeniAciklama(e.target.value)} placeholder={t("adhHakkinda", "Hakkında (isteğe bağlı) — ne satıyorsun, çalışma saatleri…")} maxLength={600} rows={2} />
+                {/* Fotoğraflar (en fazla 3) */}
+                <div className="adh-foto-serit">
+                  {yeniFotolar.map((u, i) => (
+                    <div className="adh-foto-kucuk" key={i}>
+                      <img src={u} alt="" referrerPolicy="no-referrer" />
+                      <button className="adh-foto-sil" onClick={() => setYeniFotolar((a) => a.filter((_, j) => j !== i))} aria-label={t("sil", "Sil")}>✕</button>
+                    </div>
+                  ))}
+                  {yeniFotolar.length < 3 && (
+                    <button className="adh-foto-ekle" onClick={() => foInpRef.current && foInpRef.current.click()} disabled={fotoYukleniyor}>{fotoYukleniyor ? "…" : "📷 +"}</button>
+                  )}
+                  <input ref={foInpRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={yeniFotoSec} />
+                </div>
                 <div className="adh-ekle-dugmeler">
                   <button className="adh-ekle-vazgec" onClick={ekleIptal}>{t("vazgec", "Vazgeç")}</button>
                   <button className="adh-ekle-kaydet" onClick={mekanKaydet} disabled={kaydediyor || !yeniAd.trim()}>{kaydediyor ? "…" : "✓ " + t("kaydet", "Kaydet")}</button>
@@ -338,15 +390,41 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
         )}
 
         {/* KULLANICI MEKÂNI bilgi kartı */}
-        {secilenMekan && (
-          <div className="adh-mekan-kart" onClick={(e) => e.stopPropagation()}>
-            <button className="adh-sonuc-kapat" onClick={() => setSecilenMekan(null)} aria-label={t("kapat", "Kapat")}>✕</button>
-            <div className="adh-mekan-ad">⭐ {secilenMekan.ad}</div>
-            <div className="adh-mekan-tur">{secilenMekan.tur || ""}{secilenMekan.telefon ? " · ☎ " + secilenMekan.telefon : ""}</div>
-            {secilenMekan.ekleyenAd && <div className="adh-mekan-ekleyen">{t("adhEkleyen", "Ekleyen")}: {secilenMekan.ekleyenAd}</div>}
-            {uid && secilenMekan.uid === uid && <button className="adh-mekan-sil" onClick={() => mekanSilDene(secilenMekan)}>🗑 {t("sil", "Sil")}</button>}
-          </div>
-        )}
+        {secilenMekan && (() => {
+          const sahip = uid && secilenMekan.uid === uid;
+          const fotolar = secilenMekan.fotolar || (secilenMekan.foto ? [secilenMekan.foto] : []);
+          return (
+            <div className="adh-mekan-kart" onClick={(e) => e.stopPropagation()}>
+              <button className="adh-sonuc-kapat" onClick={() => { setSecilenMekan(null); setKartDuzen(false); }} aria-label={t("kapat", "Kapat")}>✕</button>
+              <div className="adh-mekan-ad">⭐ {secilenMekan.ad}</div>
+              <div className="adh-mekan-tur">{secilenMekan.tur || ""}{secilenMekan.telefon ? " · ☎ " + secilenMekan.telefon : ""}</div>
+              {fotolar.length > 0 && (
+                <div className="adh-mekan-fotolar">
+                  {fotolar.map((u, i) => (<a href={u} target="_blank" rel="noreferrer" key={i} className="adh-mekan-foto"><img src={u} alt="" referrerPolicy="no-referrer" /></a>))}
+                </div>
+              )}
+              {!kartDuzen && secilenMekan.aciklama && <div className="adh-mekan-aciklama">{secilenMekan.aciklama}</div>}
+              {kartDuzen && (
+                <div className="adh-mekan-duzen">
+                  <textarea className="adh-ekle-in adh-ekle-yazi" value={kartAciklama} onChange={(e) => setKartAciklama(e.target.value)} placeholder={t("adhHakkinda", "Hakkında — ne satıyorsun, çalışma saatleri…")} maxLength={600} rows={3} />
+                  <div className="adh-ekle-dugmeler">
+                    <button className="adh-ekle-vazgec" onClick={() => setKartDuzen(false)}>{t("vazgec", "Vazgeç")}</button>
+                    <button className="adh-ekle-kaydet" onClick={kartAciklamaKaydet}>✓ {t("kaydet", "Kaydet")}</button>
+                  </div>
+                </div>
+              )}
+              {secilenMekan.ekleyenAd && <div className="adh-mekan-ekleyen">{t("adhEkleyen", "Ekleyen")}: {secilenMekan.ekleyenAd}</div>}
+              {sahip && !kartDuzen && (
+                <div className="adh-mekan-sahip">
+                  {fotolar.length < 3 && <button className="adh-mekan-btn" onClick={() => kartFoInpRef.current && kartFoInpRef.current.click()} disabled={kartYukleniyor}>{kartYukleniyor ? "…" : "📷 " + t("adhFotoEkle", "Fotoğraf ekle")}</button>}
+                  <button className="adh-mekan-btn" onClick={() => { setKartAciklama(secilenMekan.aciklama || ""); setKartDuzen(true); }}>✏️ {t("adhYaziDuzenle", "Yazıyı düzenle")}</button>
+                  <button className="adh-mekan-sil" onClick={() => mekanSilDene(secilenMekan)}>🗑 {t("sil", "Sil")}</button>
+                  <input ref={kartFoInpRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={kartFotoSec} />
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {sonucVar && (
           <div className="adh-sonuc" onClick={(e) => e.stopPropagation()}>
