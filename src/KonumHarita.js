@@ -12,6 +12,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import { useTranslation } from "react-i18next";
+import { ADRES_KOPRU } from "./hereConfig";
 
 function kmArasi(la1, lo1, la2, lo2) {
   const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLo = (lo2 - lo1) * Math.PI / 180;
@@ -56,7 +57,46 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
   const [benNokta, setBenNokta] = useState(benRef.current); // kendi konumum (uzaklık hesabı ekranda güncellensin)
   function benGuncelle(la, lo) { benRef.current = { lat: la, lon: lo }; setBenNokta({ lat: la, lon: lo }); }
 
+  // HERE kategori adına göre nokta rengi
+  function poiRenk(kat) {
+    const s = (kat || "").toLowerCase();
+    if (/bank|atm|finan/.test(s)) return "#f7b500";
+    if (/pharma|eczane|drug/.test(s)) return "#8e44ad";
+    if (/hospital|clinic|health|hastane|medical|doctor|sağlık/.test(s)) return "#e91e63";
+    if (/hotel|motel|hostel|lodg|konaklama/.test(s)) return "#00b8d4";
+    if (/coffee|cafe|kahve|çay|tea/.test(s)) return "#e67e22";
+    if (/fast/.test(s)) return "#e74c3c";
+    if (/restaur|food|eat|lokanta|yemek|dining|kebab|pizza/.test(s)) return "#ff6b3d";
+    if (/baker|fırın|firin|pastane/.test(s)) return "#e8a33d";
+    if (/fuel|gas|petrol|benzin|akaryak/.test(s)) return "#d35400";
+    if (/school|univers|educat|okul|üniversite|kolej|eğitim/.test(s)) return "#3498db";
+    if (/mosque|church|worship|cami|kilise|ibadet|religio/.test(s)) return "#2ecc71";
+    if (/police|polis/.test(s)) return "#34495e";
+    if (/hair|beauty|barber|kuaför|berber|güzellik|salon/.test(s)) return "#ff2d9b";
+    if (/market|grocery|supermarket|shop|store|mall|mağaza|alışveriş|retail/.test(s)) return "#27ae60";
+    return "#7f8c8d";
+  }
+  // Çevredeki yerler — ÖNCE HERE (zengin veri), olmazsa Overpass yedeği
   function poiYukle(lat, lon) {
+    if (!ADRES_KOPRU) { poiOverpass(lat, lon); return; }
+    const ayrac = ADRES_KOPRU.indexOf("?") === -1 ? "?" : "&";
+    fetch(`${ADRES_KOPRU}${ayrac}browse=${lat},${lon}&lang=tr`).then((r) => r.json()).then((d) => {
+      const map = haritaRef.current; if (!map) return;
+      if (!d || !Array.isArray(d.items) || !d.items.length) { poiOverpass(lat, lon); return; }
+      poiMarksRef.current.forEach((m) => { try { m.remove(); } catch (e) {} }); poiMarksRef.current = [];
+      d.items.forEach((it) => {
+        const pos = it.position; if (!pos || typeof pos.lat !== "number") return;
+        const kat = (it.categories && it.categories[0] && it.categories[0].name) || "";
+        const renk = poiRenk(kat); const ad = it.title || kat;
+        const dot = document.createElement("div"); dot.style.cssText = `background:${renk};width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.6);cursor:pointer`;
+        const mk = new maplibregl.Marker({ element: dot }).setLngLat([pos.lng, pos.lat]).setPopup(new maplibregl.Popup({ offset: 14, closeButton: false }).setHTML(`<b>${ad}</b>`)).addTo(map);
+        mk.getElement().addEventListener("click", () => { if (!acikRef.current) return; setSecilenArkadas(null); setHedef({ lat: pos.lat, lon: pos.lng, ad }); hedefKoy(pos.lat, pos.lng); setRotaBilgi(null); rotaTemizle(); });
+        poiMarksRef.current.push(mk);
+      });
+    }).catch(() => poiOverpass(lat, lon));
+  }
+  // YEDEK: Overpass
+  function poiOverpass(lat, lon) {
     const q = `[out:json][timeout:16];(node["amenity"~"^(restaurant|cafe|fast_food|pharmacy|hospital|clinic|bank|atm|post_office|fuel|school|university|bakery|marketplace|mosque|church|supermarket|townhall|courthouse|police|fire_station|library)$"](around:1400,${lat},${lon});node["tourism"~"^(hotel|motel|guest_house|hostel)$"](around:1400,${lat},${lon});node["shop"~"^(supermarket|convenience|hairdresser|beauty|barber|clothes|bakery|jewelry)$"](around:1400,${lat},${lon}););out body 120;`;
     const sunucu = ["https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://overpass.osm.ch/api/interpreter"];
     const dene = (i) => { if (i >= sunucu.length) return Promise.resolve(null); return fetch(sunucu[i] + "?data=" + encodeURIComponent(q)).then((r) => { if (!r.ok) throw new Error("op"); return r.json(); }).then((d) => ((!d || !d.elements || !d.elements.length) && i + 1 < sunucu.length) ? dene(i + 1) : d).catch(() => dene(i + 1)); };

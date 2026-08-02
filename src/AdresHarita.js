@@ -50,8 +50,46 @@ export default function AdresHarita({ benLat, benLon, onTam }) {
   function pinKaldir() { if (pinRef.current) { try { pinRef.current.remove(); } catch (e) {} pinRef.current = null; } }
   function temizle() { setYerAdi(""); setYerel(""); setEnAdres(""); setKopyalandi(""); pinKaldir(); }
 
-  // Çevredeki MEKÂNLARI (banka/kafe/restoran…) isimleriyle göster (Overpass)
+  // HERE kategori adına göre nokta rengi
+  function poiRenk(kat) {
+    const s = (kat || "").toLowerCase();
+    if (/bank|atm|finan/.test(s)) return "#f7b500";
+    if (/pharma|eczane|drug/.test(s)) return "#8e44ad";
+    if (/hospital|clinic|health|hastane|medical|doctor|sağlık/.test(s)) return "#e91e63";
+    if (/hotel|motel|hostel|lodg|konaklama/.test(s)) return "#00b8d4";
+    if (/coffee|cafe|kahve|çay|tea/.test(s)) return "#e67e22";
+    if (/fast/.test(s)) return "#e74c3c";
+    if (/restaur|food|eat|lokanta|yemek|dining|kebab|pizza/.test(s)) return "#ff6b3d";
+    if (/baker|fırın|firin|pastane/.test(s)) return "#e8a33d";
+    if (/fuel|gas|petrol|benzin|akaryak/.test(s)) return "#d35400";
+    if (/school|univers|educat|okul|üniversite|kolej|eğitim/.test(s)) return "#3498db";
+    if (/mosque|church|worship|cami|kilise|ibadet|religio/.test(s)) return "#2ecc71";
+    if (/police|polis/.test(s)) return "#34495e";
+    if (/hair|beauty|barber|kuaför|berber|güzellik|salon/.test(s)) return "#ff2d9b";
+    if (/market|grocery|supermarket|shop|store|mall|mağaza|alışveriş|retail/.test(s)) return "#27ae60";
+    return "#7f8c8d";
+  }
+  // Çevredeki MEKÂNLARI (banka/kafe/restoran…) isimleriyle göster — ÖNCE HERE (zengin veri), olmazsa Overpass yedeği
   function poiYukle(lat, lon) {
+    if (!ADRES_KOPRU) { poiOverpass(lat, lon); return; }
+    const ayrac = ADRES_KOPRU.indexOf("?") === -1 ? "?" : "&";
+    fetch(`${ADRES_KOPRU}${ayrac}browse=${lat},${lon}&lang=tr`).then((r) => r.json()).then((d) => {
+      const map = haritaRef.current; if (!map) return;
+      if (!d || !Array.isArray(d.items) || !d.items.length) { poiOverpass(lat, lon); return; }
+      poiMarksRef.current.forEach((m) => { try { m.remove(); } catch (e) {} }); poiMarksRef.current = [];
+      d.items.forEach((it) => {
+        const pos = it.position; if (!pos || typeof pos.lat !== "number") return;
+        const kat = (it.categories && it.categories[0] && it.categories[0].name) || "";
+        const renk = poiRenk(kat); const ad = it.title || "";
+        const dot = document.createElement("div"); dot.style.cssText = `background:${renk};width:17px;height:17px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.6);cursor:pointer`;
+        const mk = new maplibregl.Marker({ element: dot }).setLngLat([pos.lng, pos.lat]).addTo(map);
+        mk.getElement().addEventListener("click", (ev) => { ev.stopPropagation(); if (!acikRef.current) return; pinKoy(pos.lat, pos.lng); adresCoz(pos.lat, pos.lng, ad); try { map.flyTo({ center: [pos.lng, pos.lat], zoom: Math.max(map.getZoom(), 17) }); } catch (e) {} });
+        poiMarksRef.current.push(mk);
+      });
+    }).catch(() => poiOverpass(lat, lon));
+  }
+  // YEDEK: Overpass (HERE erişilemezse)
+  function poiOverpass(lat, lon) {
     const q = `[out:json][timeout:16];(node["amenity"~"^(restaurant|cafe|fast_food|pharmacy|hospital|clinic|bank|atm|post_office|fuel|school|university|bakery|marketplace|mosque|church|supermarket|townhall|courthouse|police|fire_station|library)$"](around:1200,${lat},${lon});node["tourism"~"^(hotel|motel|guest_house|hostel)$"](around:1200,${lat},${lon});node["shop"~"^(supermarket|convenience|hairdresser|beauty|barber|clothes|bakery|jewelry)$"](around:1200,${lat},${lon}););out body 110;`;
     const sunucu = ["https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://overpass.osm.ch/api/interpreter"];
     const dene = (i) => { if (i >= sunucu.length) return Promise.resolve(null); return fetch(sunucu[i] + "?data=" + encodeURIComponent(q)).then((r) => { if (!r.ok) throw new Error("op"); return r.json(); }).then((d) => ((!d || !d.elements || !d.elements.length) && i + 1 < sunucu.length) ? dene(i + 1) : d).catch(() => dene(i + 1)); };
