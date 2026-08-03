@@ -59,12 +59,15 @@ function sesTemizle(m) {
 }
 // SESLİ ANLATIM — ANA UYGULAMADAKİ ÇALIŞAN yöntemin aynısı: sesler yüklenene kadar BEKLE, en iyi sesi seç,
 // CÜMLELERE böl ve hepsini KUYRUĞA koy, resume() ile uyandır. (Motor "uyandırma" Anasayfa'da global zaten var.)
-function SesliMetin({ metin, className, sesDili }) {
+function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
   const [okunuyor, setOkunuyor] = useState(false);
   const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
-  function dur() { try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
-  useEffect(() => () => { try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
+  const besleIvRef = useRef(null);
+  function besleDur() { if (besleIvRef.current) { clearInterval(besleIvRef.current); besleIvRef.current = null; } }
+  function dur() { besleDur(); try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
+  useEffect(() => () => { besleDur(); try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
   useEffect(() => { dur(); }, [metin]); // eslint-disable-line react-hooks/exhaustive-deps
+  function besle() { try { onSesIlerleme && onSesIlerleme(); } catch (e) {} } // ana uygulamanın "14sn bekçisini" besle (yoksa Akademi sesini kesiyordu)
   function oku() {
     if (!metin || !varMi) return;
     const temiz = sesTemizle(metin);
@@ -79,6 +82,9 @@ function SesliMetin({ metin, className, sesDili }) {
     };
     const parcalar = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
     setOkunuyor(true);
+    // Ana uygulamanın bekçisini SÜREKLİ besle (her 3sn) → ses konuşurken 14sn bekçisi devreye girip KESMESİN.
+    besleDur(); besle();
+    besleIvRef.current = setInterval(() => { try { if (window.speechSynthesis.speaking || window.speechSynthesis.pending) { besle(); try { window.speechSynthesis.resume(); } catch (e) {} } else { besleDur(); } } catch (e) {} }, 3000);
     let basladi = false;
     const konus = () => {
       if (basladi) return; basladi = true;
@@ -86,7 +92,9 @@ function SesliMetin({ metin, className, sesDili }) {
       parcalar.forEach((p, idx) => {
         const u = new window.SpeechSynthesisUtterance(p);
         u.lang = sesDili || "tr-TR"; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-        if (idx === parcalar.length - 1) u.onend = () => setOkunuyor(false);
+        u.onstart = () => besle();
+        u.onboundary = () => besle();
+        if (idx === parcalar.length - 1) u.onend = () => { besleDur(); setOkunuyor(false); };
         try { window.speechSynthesis.speak(u); } catch (e) {}
       });
       try { window.speechSynthesis.resume(); } catch (e) {}
@@ -120,7 +128,7 @@ function KonuFoto({ src, ad, ik }) {
   );
 }
 
-export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir, onKatman }) {
+export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir, onKatman, onSesIlerleme }) {
   const { t } = useTranslation();
   const [gorunum, setGorunum] = useState("liste"); // liste | kurs | sertifikalarim
   const [ara, setAra] = useState("");
@@ -428,7 +436,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           <div className="ak-adim-alt">{t("akTemelAlt", "Gloxoo bu meslek hakkında genel bilgiyi öğretir.")}</div>
           {!ders && !dersYuk && <button className="ak-btn" onClick={egitimAl}>{t("akEgitimAl", "Eğitimi başlat")}</button>}
           {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor2", "Gloxoo eğitimi hazırlıyor")}{dersAsama ? " %" + Math.round((dersAsama / 3) * 100) : "…"}</div>}
-          {ders && <SesliMetin metin={ders} className="ak-ders" sesDili={dil} />}
+          {ders && <SesliMetin metin={ders} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
           {ders && !dersYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
         </div>
 
@@ -454,7 +462,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
                 ) : null}
                 {konuYuk
                   ? <div className="ak-yuk">⏳ {t("akKonuYuk3", "Gloxoo tarifi hazırlıyor")}{konuAsama ? " %" + Math.round((konuAsama / 5) * 100) : "…"}</div>
-                  : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
+                  : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
                 {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
               </div>
             )}

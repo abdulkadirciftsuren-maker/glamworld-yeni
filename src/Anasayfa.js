@@ -8557,6 +8557,7 @@ export default function Anasayfa({ pro = false }) {
               ulke={(profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || (konum && konum.ulke) || ""}
               sehir={(profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || (konum && konum.sehir) || ""}
               onKatman={akademiKatmanDegis}
+              onSesIlerleme={() => { konusIlerRef.current = Date.now(); }}
             />
           </Suspense>
         </div>
