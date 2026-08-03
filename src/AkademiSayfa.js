@@ -46,16 +46,19 @@ function ucretsizGorselUrl(istem, anahtar) {
   return "https://image.pollinations.ai/prompt/" + p + "?width=1024&height=1024&nologo=true&model=flux&seed=" + tohumUret(anahtar || istem);
 }
 
-// Metni SATIR/CÜMLE parçalarına böl (sesli okuma için) → kısa parçalar: Chrome takılmaz, okunan parça vurgulanır.
+// Metni okuma parçalarına böl → cümlelere ayır, sonra ~220 karaktere kadar BİRLEŞTİR
+// (çok kısa parçalar Android'de "kesik kesik/atlıyor" yapıyordu; orta boy parça daha akıcı).
 function cumlelereBol(m) {
-  const out = [];
+  const ham = [];
   for (const sat of String(m || "").split(/\n+/).map((x) => x.trim()).filter(Boolean)) {
-    if (sat.length <= 180) { out.push(sat); continue; }
-    const parcalar = sat.match(/[^.!?]+[.!?]*/g) || [sat];
-    let buf = "";
-    for (const p of parcalar) { if ((buf + p).length > 180 && buf) { out.push(buf.trim()); buf = p; } else buf += p; }
-    if (buf.trim()) out.push(buf.trim());
+    for (const c of (sat.match(/[^.!?]+[.!?]*/g) || [sat])) { if (c.trim()) ham.push(c.trim()); }
   }
+  const out = []; let buf = "";
+  for (const c of ham) {
+    if ((buf + " " + c).trim().length > 220 && buf) { out.push(buf.trim()); buf = c; }
+    else buf = buf ? buf + " " + c : c;
+  }
+  if (buf.trim()) out.push(buf.trim());
   return out;
 }
 // SESLİ ANLATIM — Gloxoo yazıyı SESLİ okur (tarayıcının kendi sesi, ÜCRETSİZ, anahtar YOK), CÜMLE CÜMLE
@@ -74,14 +77,18 @@ function SesliMetin({ metin, className, sesDili }) {
     if (!cumleler.length || !varMi) return;
     durRef.current = false; setOkunuyor(true); setAktif(0);
     try { window.speechSynthesis.cancel(); } catch (e) {}
-    // TÜM parçaları sıraya koy (chaining yerine kuyruk → atlama/kesilme olmaz); okunan parçayı onstart vurgular.
-    cumleler.forEach((c, i) => {
-      const u = new window.SpeechSynthesisUtterance(c);
+    // Orta boy parçaları SIRAYLA oku (biri bitince öteki): Android'de kuyruğu düşürüp yarıda kesiyordu; bu daha sağlam.
+    let i = 0;
+    const soyle = () => {
+      if (durRef.current || i >= cumleler.length) { setOkunuyor(false); setAktif(-1); return; }
+      setAktif(i);
+      const u = new window.SpeechSynthesisUtterance(cumleler[i]);
       u.lang = sesDili || "tr-TR"; u.rate = 0.95; u.pitch = 1; sesSec(u);
-      u.onstart = () => { if (!durRef.current) setAktif(i); };
-      if (i === cumleler.length - 1) u.onend = () => { setOkunuyor(false); setAktif(-1); };
-      try { window.speechSynthesis.speak(u); } catch (e) {}
-    });
+      u.onend = () => { i++; soyle(); };
+      u.onerror = () => { i++; soyle(); };
+      try { window.speechSynthesis.speak(u); } catch (e) { i++; soyle(); }
+    };
+    soyle();
   }
   // Chrome uzun kuyruğu ~15sn sonra kendiliğinden duraklatır → canlı tut (aksi halde yarıda kesiliyordu).
   useEffect(() => {
@@ -96,6 +103,24 @@ function SesliMetin({ metin, className, sesDili }) {
         ? <div className={className}>{cumleler.map((c, k) => <div key={k} className={"ak-cumle" + (k === aktif ? " ak-okunan" : "")}>{c}</div>)}</div>
         : <div className={className}>{metin}</div>}
     </>
+  );
+}
+
+// Izgara çeşit fotoğrafı — ücretsiz servis yüklenmezse 2 kez daha DENER (gecikmeli), yine olmazsa ikon gösterir (kırık kutu OLMAZ).
+function KonuFoto({ src, ad, ik }) {
+  const [durum, setDurum] = useState("yuk"); // yuk | ok | hata
+  const [src2, setSrc2] = useState(src);
+  const denemeRef = useRef(0);
+  useEffect(() => { setSrc2(src); setDurum("yuk"); denemeRef.current = 0; }, [src]);
+  if (durum === "hata") return <span className="ak-konu-kart-foto ak-konu-kart-ik">{ik || "🖼️"}</span>;
+  return (
+    <span className="ak-konu-kart-foto">
+      {durum === "yuk" && <span className="ak-konu-kart-yuk">…</span>}
+      <img src={src2} alt={ad} loading="lazy" referrerPolicy="no-referrer"
+        style={durum === "ok" ? undefined : { opacity: 0 }}
+        onLoad={() => setDurum("ok")}
+        onError={() => { if (denemeRef.current < 2) { denemeRef.current++; const n = denemeRef.current; setTimeout(() => setSrc2(src + "&yeniden=" + n), 3000 * n); } else setDurum("hata"); }} />
+    </span>
   );
 }
 
@@ -221,7 +246,14 @@ EKSİKSİZ doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
   async function konulariYukle() {
     if (konularYuk || !meslek) return; setKonularYuk(true); setKonular(null); setAktifKonu(""); setKonuDers("");
     const sistem = "Sen Gloxoo'sun. SADECE geçerli JSON döndür, başka hiçbir şey yazma.";
-    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken çeşitleri/ürünleri/modelleri listele. ÇOK ÖNEMLİ: her başlık TEK ve SOMUT bir çeşit olsun (örn. "Fransız Bageti", "Çavdar Ekmeği", "Simit", "Peynirli Poğaça"); GENEL KATEGORİ YAZMA (örn. "Dünya Ekmekleri", "Glutensiz Ürünler", "Ekmek Çeşitleri" gibi TOPLU başlıklar OLMASIN). Dar alana sıkışma, mesleğin bütün alt dallarından SOMUT örnekler ver; dünyadan/uluslararası somut çeşitler de kat. Her çeşit için bir de İngilizce FOTOĞRAF tarifi ("g") ver: gerçekçi bir referans fotoğrafı; ürün YEMEK/EŞYA ise net ürün fotoğrafı + "no people, no text"; SAÇ/GÜZELLİK modeli ise o modeli taşıyan bir kişi. ${dilAd} dilinde başlık yaz. SADECE şu JSON: {"konular":[{"ad":"Somut Çeşit","g":"english photo prompt, no text"}]} — en az 12, en çok 20 öğe, dengeli. Başka açıklama yazma.`;
+    const bolge = [sehir, ulke].filter(Boolean).join(", ") || "bilinmiyor";
+    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken çeşitleri/ürünleri/modelleri listele.
+ÇOK ÖNEMLİ KURALLAR:
+1) Her başlık TEK ve SOMUT bir çeşit olsun (örn. "Fransız Bageti", "Çavdar Ekmeği", "Simit", "Peynirli Poğaça"); GENEL KATEGORİ YAZMA ("Dünya Ekmekleri", "Ekmek Çeşitleri" gibi TOPLU başlık OLMASIN).
+2) SADECE bu mesleğin ASIL ürünlerini ver; alakasız/yan ürün KATMA (örn. fırın/ekmek mesleğinde SÜTLAÇ, dondurma gibi TATLILAR yazma — asıl iş EKMEK ve HAMUR İŞİ: çeşitli ekmekler, poğaça, açma, börek, simit, pide, lavaş vb.).
+3) BÖLGE: kullanıcı "${bolge}" bölgesinde. O ÜLKEDE/BÖLGEDE en çok yapılan/tüketilen yerel çeşitleri MUTLAKA ve ÖNCE ekle (yerel klasikler baştan gelsin), sonra tanınmış diğer çeşitler.
+4) Her çeşit için İngilizce FOTOĞRAF tarifi ("g") ver: gerçekçi referans fotoğrafı; YEMEK/EŞYA ise net ürün fotoğrafı ve MUTLAKA sonuna "no people, no person, no text" ekle; SAÇ/GÜZELLİK modeli ise o modeli taşıyan bir kişi.
+${dilAd} dilinde başlık yaz. SADECE şu JSON: {"konular":[{"ad":"Somut Çeşit","g":"english photo prompt"}]} — en az 12, en çok 20 öğe. Başka açıklama yazma.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
     try {
@@ -419,7 +451,7 @@ Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
                   const foto = ucretsizGorselUrl((k && k.g) || `a realistic detailed photo of ${ad} (${meslek.ad}), no text, no watermark`, "v3|" + meslek.ad + "|" + ad);
                   return (
                     <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} onClick={() => konuAc(k)}>
-                      <span className="ak-konu-kart-foto"><img src={foto} alt={ad} loading="lazy" referrerPolicy="no-referrer" /></span>
+                      <KonuFoto src={foto} ad={ad} ik={meslek.ik} />
                       <span className="ak-konu-kart-ad">{ad}</span>
                     </button>
                   );

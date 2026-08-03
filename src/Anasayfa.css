@@ -1769,8 +1769,10 @@
 .ak-konu-kart{ border:2px solid rgba(120,140,30,.4); cursor:pointer; font-family:inherit; background:#fffdf3; border-radius:14px; overflow:hidden; padding:0; display:flex; flex-direction:column; box-shadow:0 3px 10px rgba(40,50,10,.22); }
 .ak-konu-kart:active{ transform:scale(.97); }
 .ak-konu-kart.aktif{ border-color:#556614; box-shadow:0 0 0 3px rgba(122,140,34,.5); }
-.ak-konu-kart-foto{ width:100%; aspect-ratio:1/1; background:linear-gradient(135deg,#e8e2c4,#d8d0a8); display:block; }
+.ak-konu-kart-foto{ position:relative; width:100%; aspect-ratio:1/1; background:linear-gradient(135deg,#e8e2c4,#d8d0a8); display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .ak-konu-kart-foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+.ak-konu-kart-ik{ font-size:40px; }
+.ak-konu-kart-yuk{ position:absolute; color:#7a6a2a; font-weight:900; font-size:22px; }
 .ak-konu-kart-ad{ padding:9px 10px; color:#3d3406; font-weight:900; font-size:13.5px; line-height:1.25; text-align:center; word-break:break-word; }
 .ak-konu-detay{ margin-top:12px; background:#fbf8ea; border:2px solid rgba(120,140,30,.35); border-radius:14px; padding:12px 14px; }
 .ak-konu-bas{ color:#3d3406; font-weight:900; font-size:15.5px; margin-bottom:8px; }
