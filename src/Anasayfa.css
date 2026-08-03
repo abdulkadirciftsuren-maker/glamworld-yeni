@@ -1756,7 +1756,8 @@
 /* Sesli anlat (Gloxoo okur) + okunan kelime vurgusu + tamamlandı işareti */
 .ak-sesli-btn{ display:inline-flex; align-items:center; gap:6px; margin:10px 0 8px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3d08; font-weight:900; font-size:14px; padding:10px 16px; border-radius:12px; box-shadow:0 3px 10px rgba(40,50,10,.3); }
 .ak-sesli-btn:active{ transform:scale(.96); }
-.ak-okunan{ background:#ffe14d; color:#3d2c00; border-radius:5px; box-shadow:0 0 0 2px #ffe14d; }
+.ak-cumle{ padding:2px 4px; border-radius:6px; transition:background .15s; }
+.ak-okunan{ background:#ffe14d; color:#3d2c00; box-shadow:0 0 0 2px #ffe14d; }
 .ak-bitti{ display:inline-block; margin-top:10px; background:linear-gradient(160deg,#d6ecb0,#a9d16f); color:#2f4708; font-weight:900; font-size:13px; padding:6px 13px; border-radius:11px; border:1.5px solid #6fa02e; }
 /* Çeşitler (konular) — çip düğmeler + açılan detay */
 .ak-konu-cipler{ display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }

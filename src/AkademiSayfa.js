@@ -46,41 +46,52 @@ function ucretsizGorselUrl(istem, anahtar) {
   return "https://image.pollinations.ai/prompt/" + p + "?width=1024&height=1024&nologo=true&model=flux&seed=" + tohumUret(anahtar || istem);
 }
 
-// SESLİ ANLATIM — Gloxoo yazıyı SESLİ okur (tarayıcının kendi sesi, ÜCRETSİZ, anahtar YOK) ve
-// okuduğu kelimeyi VURGULAR (nerede olduğu görünür). "🔊 Sesli anlat" / "⏸ Durdur".
+// Metni SATIR/CÜMLE parçalarına böl (sesli okuma için) → kısa parçalar: Chrome takılmaz, okunan parça vurgulanır.
+function cumlelereBol(m) {
+  const out = [];
+  for (const sat of String(m || "").split(/\n+/).map((x) => x.trim()).filter(Boolean)) {
+    if (sat.length <= 180) { out.push(sat); continue; }
+    const parcalar = sat.match(/[^.!?]+[.!?]*/g) || [sat];
+    let buf = "";
+    for (const p of parcalar) { if ((buf + p).length > 180 && buf) { out.push(buf.trim()); buf = p; } else buf += p; }
+    if (buf.trim()) out.push(buf.trim());
+  }
+  return out;
+}
+// SESLİ ANLATIM — Gloxoo yazıyı SESLİ okur (tarayıcının kendi sesi, ÜCRETSİZ, anahtar YOK), CÜMLE CÜMLE
+// (Chrome uzun metinde takılıyor → kısa parçalarla akıcı olur) ve okuduğu SATIRI VURGULAR (nerede olduğu görünür).
 function SesliMetin({ metin, className, sesDili }) {
   const [okunuyor, setOkunuyor] = useState(false);
-  const [pos, setPos] = useState(-1);
+  const [aktif, setAktif] = useState(-1);
+  const durRef = useRef(false);
   const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
-  function dur() { try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); setPos(-1); }
+  const cumleler = useMemo(() => cumlelereBol(metin), [metin]);
+  function dur() { durRef.current = true; try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); setAktif(-1); }
   useEffect(() => () => { try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
   useEffect(() => { dur(); }, [metin]); // eslint-disable-line react-hooks/exhaustive-deps
+  function sesSec(u) { try { const sesler = window.speechSynthesis.getVoices() || []; const s = sesler.find((v) => v.lang && v.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0); if (s) u.voice = s; } catch (e) {} }
   function oku() {
-    if (!metin || !varMi) return;
+    if (!cumleler.length || !varMi) return;
+    durRef.current = false; setOkunuyor(true);
     try { window.speechSynthesis.cancel(); } catch (e) {}
-    const u = new window.SpeechSynthesisUtterance(metin);
-    u.lang = sesDili || "tr-TR"; u.rate = 0.95; u.pitch = 1;
-    try { const sesler = window.speechSynthesis.getVoices() || []; const s = sesler.find((v) => v.lang && v.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0); if (s) u.voice = s; } catch (e) {}
-    u.onboundary = (e) => { if (typeof e.charIndex === "number") setPos(e.charIndex); };
-    u.onend = () => { setOkunuyor(false); setPos(-1); };
-    u.onerror = () => { setOkunuyor(false); setPos(-1); };
-    setOkunuyor(true); setPos(0);
-    try { window.speechSynthesis.speak(u); } catch (e) { setOkunuyor(false); }
+    let i = 0;
+    const soyle = () => {
+      if (durRef.current || i >= cumleler.length) { setOkunuyor(false); setAktif(-1); return; }
+      setAktif(i);
+      const u = new window.SpeechSynthesisUtterance(cumleler[i]);
+      u.lang = sesDili || "tr-TR"; u.rate = 0.95; u.pitch = 1; sesSec(u);
+      u.onend = () => { i++; soyle(); };
+      u.onerror = () => { i++; soyle(); };
+      try { window.speechSynthesis.speak(u); } catch (e) { i++; soyle(); }
+    };
+    soyle();
   }
-  // metni kelimelere böl (offsetleriyle) → okunan kelimeyi vurgula
-  const parcalar = useMemo(() => {
-    const arr = []; let idx = 0;
-    for (const tok of String(metin || "").split(/(\s+)/)) { arr.push({ t: tok, i: idx }); idx += tok.length; }
-    return arr;
-  }, [metin]);
   return (
     <>
       {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ Durdur" : "🔊 Sesli anlat"}</button> : null}
-      <div className={className}>
-        {okunuyor
-          ? parcalar.map((p, k) => { const bit = p.i + p.t.length; const aktif = pos >= p.i && pos < bit && p.t.trim(); return <span key={k} className={aktif ? "ak-okunan" : undefined}>{p.t}</span>; })
-          : metin}
-      </div>
+      {okunuyor
+        ? <div className={className}>{cumleler.map((c, k) => <div key={k} className={"ak-cumle" + (k === aktif ? " ak-okunan" : "")}>{c}</div>)}</div>
+        : <div className={className}>{metin}</div>}
     </>
   );
 }
@@ -184,11 +195,11 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
 BU MESLEK NEDİR: ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.
 GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar.
 TEMEL KURALLAR VE HİJYEN / GÜVENLİK: uyulması gerekenler.
-Bu 3 başlığı doldur; en fazla ~12 madde, son cümleyi TAMAMLA (nokta ile bitir). Sonraki bölümü YAZMA.`;
+Bu 3 başlığı EKSİKSİZ doldur; son cümleyi TAMAMLA (nokta ile bitir). Sonraki bölümü YAZMA.`;
     const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleği temel eğitiminin 2. BÖLÜMÜNÜ yaz (1. bölümü tekrarlama). Şu başlıklar:
 GENEL ÇALIŞMA AKIŞI: işin baştan sona genel sırası.
 USTA İPUÇLARI: yeni başlayana altın öğütler.
-Doldur; en fazla ~10 madde, son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
+EKSİKSİZ doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
     const c1 = await gloxSor(p1, sistem);
     if (c1) setDers(duzelt(c1));
     const c2 = await gloxSor(p2, sistem);
@@ -212,25 +223,29 @@ Doldur; en fazla ~10 madde, son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
     if (aktifKonu === k) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
     const no = ++istekNoRef.current;
     setAktifKonu(k); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
-    // GÖRSEL (paralel — metni bekletmesin): o modelin önden/yandan örnek fotoğrafı
-    const gIstem = `Professional realistic reference photo of the "${k}" style/product in the profession "${meslek.ad}". Show a clear front view and a side view side by side of the same result. Clean neutral studio background, natural lighting, photorealistic, high detail, no text, no watermark, no logo.`;
-    gorselUret(meslek.ad + "|" + k, gIstem).then((res) => { if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); } }).catch(() => {}).finally(() => { if (istekNoRef.current === no) setKonuGorselYuk(false); });
-    // METİN — TAM ve UZUN; kesilmesin diye 2 PARÇA çekilip birleştirilir (her parça kendi içinde tamamlanır).
-    const sistem = "Sen Gloxoo'sun — usta eğitmen. Bir konuyu gerçek bir ustanın çırağına anlattığı gibi EKSİKSİZ, DOĞRU ve DETAYLI öğretirsin. Sadece istenen bölümleri yaz, son cümleyi MUTLAKA tamamla (asla yarıda kesme). Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta yap, maddeleri • ile.";
-    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 1. BÖLÜMÜNÜ EKSİKSİZ anlat. Şu başlıklar:
-NEDİR / TANIM: "${k}" nedir, neyin nesidir, özellikleri nelerdir, nerede/ne için kullanılır, kaç çeşidi/türü var.
-MALZEME / ÖLÇÜLER: gerekli her şey + KESİN rakamlar (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; fırın kaç derece, kaç dakika, kaç saat mayalanır). "Biraz/az" DEME, hep RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) bu başlığı "GEREKENLER" yap ve gereken alet/malzemeleri say.
-En fazla ~12 madde; son cümleyi TAMAMLA ve nokta ile bitir. SONRAKİ bölümü (yapılış) YAZMA.`;
-    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 2. BÖLÜMÜNÜ anlat (1. bölümü/malzemeleri TEKRARLAMA). Şu başlıklar:
-ADIM ADIM YAPILIŞ: baştan sona her adım (hazırlık → uygulama → şekil verme → bitirme), sırayla ve detaylı.
-PÜF NOKTALARI VE SIK HATALAR: kaliteyi artıran sırlar + yeni başlayanın yaptığı hatalar ve nasıl önlenir.
-VARYASYONLAR / İPUÇLARI: farklı yapılış/çeşit veya ustaca ipuçları.
-En fazla ~12 madde; son cümleyi MUTLAKA TAMAMLA ve nokta ile bitir.`;
+    // GÖRSEL (paralel — metni bekletmesin): KONU NEYSE onun net fotoğrafı (ekmekse ekmek, saç modeliyse o saç).
+    const gIstem = `A realistic, high-quality photograph that clearly shows "${k}" (in the field of "${meslek.ad}"). The main subject "${k}" fills the frame, well-lit, photorealistic, sharp detail, no text, no writing, no watermark, no logo.`;
+    gorselUret("v2|" + meslek.ad + "|" + k, gIstem).then((res) => { if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); } }).catch(() => {}).finally(() => { if (istekNoRef.current === no) setKonuGorselYuk(false); });
+    // METİN — TAM ve DETAYLI; kesilmeden BİTMESİ için 3 ODAKLI PARÇA çekilip birleştirilir. HİÇ kısıtlama yok,
+    // her parça KENDİ konusunda eksiksiz anlatır (hiçbir adım atlanmaz), her parça kendi içinde tamamlanır.
+    const sistem = "Sen Gloxoo'sun — usta eğitmen (HER meslek için). Bir konuyu gerçek bir ustanın çırağına anlattığı gibi EKSİKSİZ, DOĞRU ve DETAYLI öğretirsin. HİÇBİR adımı/aşamayı ATLAMAZSIN. Sadece istenen bölümü yaz; SON CÜMLEYİ MUTLAKA TAMAMLA ve noktayla bitir, ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta yap, maddeleri • ile.";
+    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 1. BÖLÜMÜNÜ eksiksiz anlat. Şu başlıklar:
+NEDİR / TANIM: "${k}" nedir, neyin nesidir, özellikleri, nerede/ne için kullanılır.
+MALZEME / ÖLÇÜLER: gereken HER şey + varsa KESİN rakamlar (örn. bir hamur/yemek ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ vb.). Ölçü varsa "biraz/az" DEME, RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) başlığı "GEREKENLER" yap.
+Bu 2 başlığı EKSİKSİZ doldur; son cümleyi TAMAMLA (nokta ile bitir). Yapılışı burada YAZMA (o 2. bölümde).`;
+    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 2. BÖLÜMÜ: ADIM ADIM YAPILIŞ. 1. bölümü (malzeme) tekrarlama. Baştan sona HER aşamayı SIRAYLA ve eksiksiz anlat; HİÇBİR adımı atlama. Uygunsa şu aşamaları MUTLAKA ayrı ayrı yaz: hazırlık, karıştırma/yoğurma, MAYALANMA/DİNLENDİRME (kaç dakika/saat, nasıl anlaşılır), şekil verme, PİŞİRME/UYGULAMA (kaç derece, kaç dakika), bitirme/servis. (Yemek değilse: hazırlık → uygulama adımları → bitirme.) Son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
+    const p3 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 3. BÖLÜMÜ (öncekileri tekrarlama). Şu başlıklar:
+PÜF NOKTALARI: kaliteyi artıran ustalık sırları.
+SIK YAPILAN HATALAR: yeni başlayanın hataları ve nasıl önlenir.
+VARYASYONLAR / İPUÇLARI: farklı yapılış/çeşitler veya ekstra öneriler.
+Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
     const c1 = await gloxSor(p1, sistem);
     if (istekNoRef.current === no && c1) { setKonuDers(duzelt(c1)); setKonuYuk(false); } // 1. bölüm gelince hemen göster
     const c2 = await gloxSor(p2, sistem);
+    if (istekNoRef.current === no && (c1 || c2)) setKonuDers([c1, c2].filter(Boolean).map(duzelt).join("\n\n"));
+    const c3 = await gloxSor(p3, sistem);
     if (istekNoRef.current === no) {
-      const tam = [c1, c2].filter(Boolean).map(duzelt).join("\n\n");
+      const tam = [c1, c2, c3].filter(Boolean).map(duzelt).join("\n\n");
       setKonuDers(tam || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
     }
   }
