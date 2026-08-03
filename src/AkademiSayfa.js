@@ -34,7 +34,7 @@ function duzelt(m) {
     .trim();
 }
 
-export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir }) {
+export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir, onKatman }) {
   const { t } = useTranslation();
   const [gorunum, setGorunum] = useState("liste"); // liste | kurs | sertifikalarim
   const [ara, setAra] = useState("");
@@ -63,6 +63,18 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const GECME = 0.7; // sertifika için geçme oranı (%70) — ciddi sınav
 
   useEffect(() => { if (uid) akademiKayitlarimOku(uid).then((l) => setKayitlarim(l || [])).catch(() => {}); }, [uid]);
+
+  // ANDROID GERİ TUŞU: Akademi içi derinliği ana ekrana bildir → alt pencere (kurs/sertifikalarım/sertifika)
+  // açıkken geri tuşu SADECE onu kapatır, Akademi'de kalınır (ana sayfaya atmaz). 0 liste, 1 alt, 2 sertifika.
+  useEffect(() => {
+    const derinlik = aktifSertifika ? 2 : (gorunum === "liste" ? 0 : 1);
+    const geri = () => {
+      if (aktifSertifika) { setAktifSertifika(null); return; }
+      if (gorunum !== "liste") { setGorunum("liste"); return; }
+    };
+    if (onKatman) onKatman(derinlik, geri);
+  }, [gorunum, aktifSertifika]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { if (onKatman) onKatman(0, null); }, []); // Akademi'den çıkınca derinliği sıfırla // eslint-disable-line react-hooks/exhaustive-deps
 
   async function gloxSor(prompt, sistem) {
     try {
@@ -108,14 +120,14 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // (2) TEMEL EĞİTİM — genel; TAMAMLANIR (yarım kesilmez), sınırlı uzunluk → tek çağrıya sığar
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers("");
-    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Doğru, ölçülü, uygulanabilir bilgi verirsin. Verilen uzunluğu AŞMAZSIN ve yazını MUTLAKA tamamlarsın, cümleyi yarıda BIRAKMAZSIN. Markdown/yıldız (**) KULLANMA, düz yaz.";
-    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine TEMEL eğitim ver (genel tanıtım). Şu başlıkları kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
-1) BU MESLEK NEDİR — ne iş yapılır, neyi bilmek şart.
-2) GEREKLİ MALZEME VE ARAÇLAR — isim isim.
-3) TEMEL KURALLAR VE HİJYEN / GÜVENLİK.
-4) GENEL ÇALIŞMA AKIŞI — işin baştan sona genel sırası.
-5) USTA İPUÇLARI — yeni başlayana altın öğütler.
-ÇOK ÖNEMLİ: TOPLAM 220 KELİMEYİ GEÇME, her madde KISA (tek satır) ve MUTLAKA tamamla (son cümleyi yarıda bırakma). Çeşitlerin ölçülü-detaylı anlatımını YAPMA (o ayrı bölümde). Yıldız/markdown kullanma.`;
+    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Doğru ve uygulanabilir bilgiyi EKSİKSİZ öğretirsin. Yazını MUTLAKA tamamlarsın, cümleyi yarıda BIRAKMAZSIN. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta, maddeleri • ile.";
+    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine TEMEL eğitim ver (genel tanıtım, DETAYLI). Şu başlıkları kullan:
+BU MESLEK NEDİR: ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.
+GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar.
+TEMEL KURALLAR VE HİJYEN / GÜVENLİK: uyulması gerekenler.
+GENEL ÇALIŞMA AKIŞI: işin baştan sona genel sırası.
+USTA İPUÇLARI: yeni başlayana altın öğütler.
+Eksiksiz ve yeterince uzun yaz; her başlığı doldur ve SON CÜMLEYİ MUTLAKA TAMAMLA (yarıda bırakma). Tek tek çeşitlerin ölçülü tarifini burada verme (o "Çeşitler" bölümünde). Yıldız/markdown kullanma.`;
     const c = await gloxSor(p, sistem);
     setDers(duzelt(c) || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
@@ -139,15 +151,24 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     // GÖRSEL (paralel — metni bekletmesin): o modelin önden/yandan örnek fotoğrafı
     const gIstem = `Professional realistic reference photo of the "${k}" style/product in the profession "${meslek.ad}". Show a clear front view and a side view side by side of the same result. Clean neutral studio background, natural lighting, photorealistic, high detail, no text, no watermark, no logo.`;
     gorselUret(meslek.ad + "|" + k, gIstem).then((res) => { if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); } }).catch(() => {}).finally(() => { if (istekNoRef.current === no) setKonuGorselYuk(false); });
-    // METİN — KISA ama ölçülü; MUTLAKA tamamlanır (yarıda kesilmesin diye sınırlı uzunluk)
-    const sistem = "Sen Gloxoo'sun — usta eğitmen. Bir tek konuyu ölçüleri ve adımlarıyla GERÇEK, DOĞRU ve KISA anlatırsın. Verilen uzunluğu AŞMAZSIN ve yazını MUTLAKA tamamlarsın, ASLA yarıda kesmezsin. Markdown/yıldız (**) KULLANMA, düz yaz.";
-    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" nasıl yapılır — kısa ve öz anlat. Şu 3 başlığı kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
-1) MALZEME / ÖLÇÜLER — KESİN rakamlarla (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; kaç derece, kaç dakika mayalanır/pişer). "Biraz/az" DEME, RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) başlığı "GEREKENLER" yap.
-2) ADIM ADIM YAPILIŞ — 4-7 kısa adım (hazırlık → uygulama → şekil → bitirme).
-3) PÜF NOKTASI — 1-2 cümle ustalık sırrı.
-ÇOK ÖNEMLİ: TOPLAM 220 KELİMEYİ GEÇME. Her madde KISA (tek satır). Son maddeyi MUTLAKA tamamla, yarım cümle bırakma. Yıldız/markdown kullanma.`;
-    const c = await gloxSor(p, sistem);
-    if (istekNoRef.current === no) { setKonuDers(duzelt(c) || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false); }
+    // METİN — TAM ve UZUN; kesilmesin diye 2 PARÇA çekilip birleştirilir (her parça kendi içinde tamamlanır).
+    const sistem = "Sen Gloxoo'sun — usta eğitmen. Bir konuyu gerçek bir ustanın çırağına anlattığı gibi EKSİKSİZ, DOĞRU ve DETAYLI öğretirsin. Sadece istenen bölümleri yaz, son cümleyi MUTLAKA tamamla (asla yarıda kesme). Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta yap, maddeleri • ile.";
+    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 1. BÖLÜMÜNÜ EKSİKSİZ anlat. Şu başlıklar:
+NEDİR / TANIM: "${k}" nedir, neyin nesidir, özellikleri nelerdir, nerede/ne için kullanılır, kaç çeşidi/türü var.
+MALZEME / ÖLÇÜLER: gerekli her şey + KESİN rakamlar (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; fırın kaç derece, kaç dakika, kaç saat mayalanır). "Biraz/az" DEME, hep RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) bu başlığı "GEREKENLER" yap ve gereken alet/malzemeleri say.
+DETAYLI yaz, eksik bırakma; son cümleyi tamamla. SONRAKİ bölümü (yapılış) YAZMA.`;
+    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 2. BÖLÜMÜNÜ anlat (1. bölümü/malzemeleri TEKRARLAMA). Şu başlıklar:
+ADIM ADIM YAPILIŞ: baştan sona her adım (hazırlık → uygulama → şekil verme → bitirme), sırayla ve detaylı.
+PÜF NOKTALARI VE SIK HATALAR: kaliteyi artıran sırlar + yeni başlayanın yaptığı hatalar ve nasıl önlenir.
+VARYASYONLAR / İPUÇLARI: farklı yapılış/çeşit veya ustaca ipuçları.
+DETAYLI yaz, eksik bırakma; son cümleyi MUTLAKA tamamla.`;
+    const c1 = await gloxSor(p1, sistem);
+    if (istekNoRef.current === no && c1) { setKonuDers(duzelt(c1)); setKonuYuk(false); } // 1. bölüm gelince hemen göster
+    const c2 = await gloxSor(p2, sistem);
+    if (istekNoRef.current === no) {
+      const tam = [c1, c2].filter(Boolean).map(duzelt).join("\n\n");
+      setKonuDers(tam || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
+    }
   }
 
   // (4) CİDDİ SINAV — profesyonel, zor; anlatılan içerikten; 8 soru

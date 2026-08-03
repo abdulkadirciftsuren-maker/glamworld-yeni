@@ -3691,6 +3691,12 @@ export default function Anasayfa({ pro = false }) {
   const haritaTamRef = useRef(false);
   const haritaKapatRef = useRef(null);
   const haritaTamDegis = (a, kapatFn) => { haritaTamRef.current = !!a; setHaritaTam(!!a); haritaKapatRef.current = a ? (kapatFn || null) : null; };
+  // AKADEMİ içi DERİNLİK — geri tuşu (katman) sistemine bağlanır: Akademi'de bir alt pencere (kurs/sertifikalarım/sertifika)
+  // açıkken Android geri → sadece o pencereyi kapat, Akademi'de KAL (ana sayfaya atma). Derinlik: 0 liste, 1 alt, 2 sertifika.
+  const [akademiDerinlik, setAkademiDerinlik] = useState(0);
+  const akademiDerinlikRef = useRef(0);
+  const akademiGeriRef = useRef(null);
+  const akademiKatmanDegis = (d, geriFn) => { akademiDerinlikRef.current = d || 0; setAkademiDerinlik(d || 0); akademiGeriRef.current = geriFn || null; };
   // KONUM AÇILINCA: (1) paylaşım AÇIKSA kendi ŞU ANKİ konumumu yaz (elle seçmek YOK, otomatik),
   // (2) arkadaşların TAZE konumu için listeyi yenile.
   useEffect(() => {
@@ -7227,7 +7233,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0) + (akademiDerinlik || 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -7235,7 +7241,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -7270,6 +7276,7 @@ export default function Anasayfa({ pro = false }) {
         setMenuAcik(false); setProfilAcik(false); setBildirimAcik(false); setAraAcik(false); setMesajAcik(false); setAyarlarAcik(false);
       }
       else if (pazarKapatRef.current) { try { pazarKapatRef.current(); } catch (e) {} } // ELİTE PAZAR penceresini kapat, Elite'de KAL (ana sayfaya atma)
+      else if (akademiDerinlikRef.current > 0) { if (akademiGeriRef.current) { try { akademiGeriRef.current(); } catch (e) {} } } // AKADEMİ alt penceresi (kurs/sertifika) → sadece kapat, Akademi'de KAL
       else if (aktifKodRef.current !== "home") { aktifKodRef.current = "home"; setAktifKod("home"); }
       // else: ANA SAYFA TABANI → HİÇBİR ŞEY YAPMA (geri tarayıcıya kalır = Chrome arka plan).
       // ⛔ Burada history.back()/go() ASLA YOK — sekme sıfırlanamaz.
@@ -8549,6 +8556,7 @@ export default function Anasayfa({ pro = false }) {
               aiKopru={AI_KOPRU}
               ulke={(profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || (konum && konum.ulke) || ""}
               sehir={(profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || (konum && konum.sehir) || ""}
+              onKatman={akademiKatmanDegis}
             />
           </Suspense>
         </div>
