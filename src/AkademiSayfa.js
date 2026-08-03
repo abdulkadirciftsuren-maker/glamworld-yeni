@@ -11,7 +11,7 @@
 // DÜRÜST: Bu GLOXORG belgesidir; "uluslararası resmî" DEĞİL (o ancak resmî akreditasyonla olur).
 // GÖRSELLİ/VİDEOLU gösterim + "kendi fotoğrafında dene" görsel yapay zekâ ister (paralı) → SIRADA.
 // ═══════════════════════════════════════════════════════════════════════════
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { MESLEK_LISTESI } from "./meslekler";
 import qrOlustur from "qrcode-generator";
@@ -46,6 +46,45 @@ function ucretsizGorselUrl(istem, anahtar) {
   return "https://image.pollinations.ai/prompt/" + p + "?width=1024&height=1024&nologo=true&model=flux&seed=" + tohumUret(anahtar || istem);
 }
 
+// SESLİ ANLATIM — Gloxoo yazıyı SESLİ okur (tarayıcının kendi sesi, ÜCRETSİZ, anahtar YOK) ve
+// okuduğu kelimeyi VURGULAR (nerede olduğu görünür). "🔊 Sesli anlat" / "⏸ Durdur".
+function SesliMetin({ metin, className, sesDili }) {
+  const [okunuyor, setOkunuyor] = useState(false);
+  const [pos, setPos] = useState(-1);
+  const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
+  function dur() { try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); setPos(-1); }
+  useEffect(() => () => { try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
+  useEffect(() => { dur(); }, [metin]); // eslint-disable-line react-hooks/exhaustive-deps
+  function oku() {
+    if (!metin || !varMi) return;
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    const u = new window.SpeechSynthesisUtterance(metin);
+    u.lang = sesDili || "tr-TR"; u.rate = 0.95; u.pitch = 1;
+    try { const sesler = window.speechSynthesis.getVoices() || []; const s = sesler.find((v) => v.lang && v.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0); if (s) u.voice = s; } catch (e) {}
+    u.onboundary = (e) => { if (typeof e.charIndex === "number") setPos(e.charIndex); };
+    u.onend = () => { setOkunuyor(false); setPos(-1); };
+    u.onerror = () => { setOkunuyor(false); setPos(-1); };
+    setOkunuyor(true); setPos(0);
+    try { window.speechSynthesis.speak(u); } catch (e) { setOkunuyor(false); }
+  }
+  // metni kelimelere böl (offsetleriyle) → okunan kelimeyi vurgula
+  const parcalar = useMemo(() => {
+    const arr = []; let idx = 0;
+    for (const tok of String(metin || "").split(/(\s+)/)) { arr.push({ t: tok, i: idx }); idx += tok.length; }
+    return arr;
+  }, [metin]);
+  return (
+    <>
+      {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ Durdur" : "🔊 Sesli anlat"}</button> : null}
+      <div className={className}>
+        {okunuyor
+          ? parcalar.map((p, k) => { const bit = p.i + p.t.length; const aktif = pos >= p.i && pos < bit && p.t.trim(); return <span key={k} className={aktif ? "ak-okunan" : undefined}>{p.t}</span>; })
+          : metin}
+      </div>
+    </>
+  );
+}
+
 export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir, onKatman }) {
   const { t } = useTranslation();
   const [gorunum, setGorunum] = useState("liste"); // liste | kurs | sertifikalarim
@@ -56,6 +95,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // ÇEŞİTLER / KONULAR (her tür tek tek anlatım)
   const [konular, setKonular] = useState(null); const [konularYuk, setKonularYuk] = useState(false);
   const [aktifKonu, setAktifKonu] = useState(""); const [konuDers, setKonuDers] = useState(""); const [konuYuk, setKonuYuk] = useState(false);
+  const [konuAra, setKonuAra] = useState(""); // listede olmayan çeşidi kullanıcı kendi yazıp sorar
   // GÖRSEL (yapay zekâ ile üretilen örnek/model fotoğrafı — bir kez üretilir, saklanır)
   const [kapakGorsel, setKapakGorsel] = useState(""); // mesleğe göre kapak
   const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false); const [konuGorselHata, setKonuGorselHata] = useState("");
@@ -138,23 +178,29 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // (2) TEMEL EĞİTİM — genel; TAMAMLANIR (yarım kesilmez), sınırlı uzunluk → tek çağrıya sığar
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers("");
-    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Doğru ve uygulanabilir bilgiyi EKSİKSİZ öğretirsin. Yazını MUTLAKA tamamlarsın, cümleyi yarıda BIRAKMAZSIN. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta, maddeleri • ile.";
-    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine TEMEL eğitim ver (genel tanıtım, DETAYLI). Şu başlıkları kullan:
+    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). Doğru ve uygulanabilir bilgiyi öğretirsin. Sadece istenen başlıkları yaz; SON CÜMLEYİ MUTLAKA TAMAMLA ve cümleyi noktayla bitir, ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta, maddeleri • ile.";
+    // 2 PARÇA → kesilmeden tam biter (worker sınırına rahat sığar).
+    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine TEMEL eğitimin 1. BÖLÜMÜNÜ yaz. Şu başlıklar:
 BU MESLEK NEDİR: ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.
 GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar.
 TEMEL KURALLAR VE HİJYEN / GÜVENLİK: uyulması gerekenler.
+Bu 3 başlığı doldur; en fazla ~12 madde, son cümleyi TAMAMLA (nokta ile bitir). Sonraki bölümü YAZMA.`;
+    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleği temel eğitiminin 2. BÖLÜMÜNÜ yaz (1. bölümü tekrarlama). Şu başlıklar:
 GENEL ÇALIŞMA AKIŞI: işin baştan sona genel sırası.
 USTA İPUÇLARI: yeni başlayana altın öğütler.
-Eksiksiz ve yeterince uzun yaz; her başlığı doldur ve SON CÜMLEYİ MUTLAKA TAMAMLA (yarıda bırakma). Tek tek çeşitlerin ölçülü tarifini burada verme (o "Çeşitler" bölümünde). Yıldız/markdown kullanma.`;
-    const c = await gloxSor(p, sistem);
-    setDers(duzelt(c) || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
+Doldur; en fazla ~10 madde, son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
+    const c1 = await gloxSor(p1, sistem);
+    if (c1) setDers(duzelt(c1));
+    const c2 = await gloxSor(p2, sistem);
+    const tam = [c1, c2].filter(Boolean).map(duzelt).join("\n\n");
+    setDers(tam || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
   // (3a) ÇEŞİTLERİ getir — bu meslekteki tüm tür/ürün/konu listesi (JSON)
   async function konulariYukle() {
     if (konularYuk || !meslek) return; setKonularYuk(true); setKonular(null); setAktifKonu(""); setKonuDers("");
     const sistem = "Sen Gloxoo'sun. SADECE geçerli JSON döndür, başka hiçbir şey yazma.";
-    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken TÜM tür/ürün/konu başlıklarını listele. Dar bir alana SIKIŞMA, mesleğin BÜTÜN alt dallarını kapsa. Örnekler: "Fırın / Ekmek / Unlu Mamüller" ise SADECE ekmek değil → çeşitli ekmekler + poğaça/açma + börek çeşitleri + simit + kek/pasta + kurabiye + hamur tatlıları (baklava, tulumba…) + pizza/pide hamuru vb. HEPSİ. Kuaför ise her saç kesimi/modeli; tırnak ise her tırnak modeli. ${dilAd} dilinde YAZ. SADECE şu JSON'u döndür: {"konular":["başlık1","başlık2","başlık3"]} — en az 10, en çok 20 başlık, farklı çeşitlerden dengeli, her biri kısa (1-4 kelime). Başka açıklama yazma.`;
+    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken TÜM tür/ürün/konu başlıklarını listele. Dar bir alana SIKIŞMA, mesleğin BÜTÜN alt dallarını kapsa. Örnekler: "Fırın / Ekmek / Unlu Mamüller" ise SADECE ekmek değil → çeşitli ekmekler + poğaça/açma + börek çeşitleri + simit + kek/pasta + kurabiye + hamur tatlıları (baklava, tulumba…) + pizza/pide hamuru vb. HEPSİ. Kuaför ise her saç kesimi/modeli; tırnak ise her tırnak modeli. DÜNYADAN / uluslararası çeşitleri de kat (örn. farklı ülkelerin ekmekleri, dünyaca bilinen modeller). ${dilAd} dilinde YAZ. SADECE şu JSON'u döndür: {"konular":["başlık1","başlık2","başlık3"]} — en az 12, en çok 20 başlık, farklı çeşitlerden dengeli, her biri kısa (1-4 kelime). Başka açıklama yazma.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
     try { const temiz = c.replace(/```json|```/g, "").trim(); const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1)); if (o && Array.isArray(o.konular)) arr = o.konular.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim()).slice(0, 20); } catch (e) {}
@@ -174,12 +220,12 @@ Eksiksiz ve yeterince uzun yaz; her başlığı doldur ve SON CÜMLEYİ MUTLAKA 
     const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 1. BÖLÜMÜNÜ EKSİKSİZ anlat. Şu başlıklar:
 NEDİR / TANIM: "${k}" nedir, neyin nesidir, özellikleri nelerdir, nerede/ne için kullanılır, kaç çeşidi/türü var.
 MALZEME / ÖLÇÜLER: gerekli her şey + KESİN rakamlar (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; fırın kaç derece, kaç dakika, kaç saat mayalanır). "Biraz/az" DEME, hep RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) bu başlığı "GEREKENLER" yap ve gereken alet/malzemeleri say.
-DETAYLI yaz, eksik bırakma; son cümleyi tamamla. SONRAKİ bölümü (yapılış) YAZMA.`;
+En fazla ~12 madde; son cümleyi TAMAMLA ve nokta ile bitir. SONRAKİ bölümü (yapılış) YAZMA.`;
     const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 2. BÖLÜMÜNÜ anlat (1. bölümü/malzemeleri TEKRARLAMA). Şu başlıklar:
 ADIM ADIM YAPILIŞ: baştan sona her adım (hazırlık → uygulama → şekil verme → bitirme), sırayla ve detaylı.
 PÜF NOKTALARI VE SIK HATALAR: kaliteyi artıran sırlar + yeni başlayanın yaptığı hatalar ve nasıl önlenir.
 VARYASYONLAR / İPUÇLARI: farklı yapılış/çeşit veya ustaca ipuçları.
-DETAYLI yaz, eksik bırakma; son cümleyi MUTLAKA tamamla.`;
+En fazla ~12 madde; son cümleyi MUTLAKA TAMAMLA ve nokta ile bitir.`;
     const c1 = await gloxSor(p1, sistem);
     if (istekNoRef.current === no && c1) { setKonuDers(duzelt(c1)); setKonuYuk(false); } // 1. bölüm gelince hemen göster
     const c2 = await gloxSor(p2, sistem);
@@ -308,14 +354,20 @@ DETAYLI yaz, eksik bırakma; son cümleyi MUTLAKA tamamla.`;
           <div className="ak-adim-alt">{t("akTemelAlt", "Gloxoo bu meslek hakkında genel bilgiyi öğretir.")}</div>
           {!ders && !dersYuk && <button className="ak-btn" onClick={egitimAl}>{t("akEgitimAl", "Eğitimi başlat")}</button>}
           {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor", "Gloxoo eğitimi hazırlıyor…")}</div>}
-          {ders && <div className="ak-ders">{ders}</div>}
+          {ders && <SesliMetin metin={ders} className="ak-ders" sesDili={dil} />}
+          {ders && !dersYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
         </div>
 
         {/* 2) ÇEŞİTLER — her tür tek tek ölçü + yapılışıyla */}
         {ders && (
           <div className="ak-adim">
             <div className="ak-adim-bas"><span className="ak-adim-no">2</span> 🧩 {t("akCesitler", "Çeşitler — hepsi tek tek")}</div>
-            <div className="ak-adim-alt">{t("akCesitAlt", "Bir çeşide dokun; Gloxoo onu ölçüsü ve adım adım yapılışıyla anlatır.")}</div>
+            <div className="ak-adim-alt">{t("akCesitAlt2", "Bir çeşide dokun; Gloxoo onu ölçüsü ve adım adım yapılışıyla anlatır. Listede yoksa aşağıya kendin yaz, Gloxoo onu da anlatır + fotoğrafını verir.")}</div>
+            {/* LİSTEDE OLMAYAN ÇEŞİDİ KENDİN SOR */}
+            <div className="ak-konu-ara">
+              <input value={konuAra} onChange={(e) => setKonuAra(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && konuAra.trim()) { konuAc(konuAra.trim()); } }} placeholder={t("akKonuAraYer", "Başka bir çeşit/model yaz (örn. dünyadan bir ekmek)…")} />
+              <button className="ak-konu-ara-btn" disabled={!konuAra.trim() || konuYuk} onClick={() => { if (konuAra.trim()) konuAc(konuAra.trim()); }}>{t("akSor", "Sor")}</button>
+            </div>
             {!konular && !konularYuk && <button className="ak-btn" onClick={konulariYukle}>{t("akCesitGetir", "Çeşitleri getir")}</button>}
             {konularYuk && <div className="ak-yuk">⏳ {t("akCesitYuk", "Çeşitler getiriliyor…")}</div>}
             {konular && konular.length === 0 && <div className="ak-yuk">{t("akCesitOlmadi", "Alınamadı.")} <button className="ak-btn kucuk" onClick={konulariYukle}>{t("tekrar", "Tekrar")}</button></div>}
@@ -337,7 +389,8 @@ DETAYLI yaz, eksik bırakma; son cümleyi MUTLAKA tamamla.`;
                 ) : konuGorselHata ? (
                   <div className="ak-gorsel-yuk ak-gorsel-hata">📷 {t("akGorselHata", "Fotoğraf gelmedi. Sebep")}: {konuGorselHata}</div>
                 ) : null}
-                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor…")}</div> : <div className="ak-ders">{konuDers}</div>}
+                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor…")}</div> : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
+                {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
               </div>
             )}
           </div>
