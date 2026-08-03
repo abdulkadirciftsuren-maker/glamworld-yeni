@@ -1467,6 +1467,7 @@ export default function Anasayfa({ pro = false }) {
   const [reelSesAcik, setReelSesAcik] = useState(true);         // reels sesi AÇIK başlar (kullanıcı istedi); tarayıcı engellerse sessize düşer, kullanıcı alttaki düğmeyle açar
   const [reelAktif, setReelAktif] = useState(0);                // o an ekranda olan reel index
   const reelsAcikRef = useRef(reelsAcik); useEffect(() => { reelsAcikRef.current = reelsAcik; }, [reelsAcik]);
+  const [canliYayinBilgi, setCanliYayinBilgi] = useState(false); // "Canlı yayın başlat" bilgi kutusu (gerçek canlı yayın yakında)
   const reelSarRef = useRef(null);                              // reels kaydırma kabı
   const [kaydetSet, setKaydetSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxKaydet") || "[]")); } catch (e) { return new Set(); } });
   const [yorumAcik, setYorumAcik] = useState(null);    // yorum penceresi açık gönderi
@@ -8436,6 +8437,51 @@ export default function Anasayfa({ pro = false }) {
                 </div>
               )}
             </>
+          )}
+        </div>
+      ) : aktifKod === "video" ? (
+        /* CANLI AKIŞ — (1) kısa videolar (şimdi) + (2) gerçek canlı yayın (yakında, paralı servis) */
+        <div className="ana-pencere cy-pencere" key="video">
+          {/* CANLI YAYIN bölümü */}
+          <div className="cy-hero">
+            <div className="cy-hero-sol">
+              <div className="cy-hero-ust"><span className="cy-nokta" aria-hidden="true" /> {t("cyCanli", "CANLI YAYIN")}</div>
+              <div className="cy-hero-alt">{t("cyHeroAlt", "Telefonundan canlı yayın aç, herkes seni anlık izlesin.")}</div>
+            </div>
+            <button className="cy-baslat" onClick={() => setCanliYayinBilgi((v) => !v)}>🔴 {t("cyBaslat", "Canlı yayın başlat")}</button>
+          </div>
+          {canliYayinBilgi && (
+            <div className="cy-bilgi">
+              <b>🔴 {t("cyYakindaBas", "Gerçek canlı yayın çok yakında!")}</b>
+              <p>{t("cyYakinda", "Bunun için özel bir canlı-yayın servisi kuruluyor (izleyicilere anlık, kesintisiz video). Hazır olunca buradan tek dokunuşla canlı yayın açacaksın. Şimdilik aşağıdaki kısa videoları izle, kendi videonu paylaş.")}</p>
+              <button className="cy-bilgi-kapat" onClick={() => setCanliYayinBilgi(false)}>{t("anladim", "Anladım")}</button>
+            </div>
+          )}
+          {/* KISA VİDEOLAR */}
+          <div className="cy-bas-satir">
+            <div className="cy-bas">📹 {t("cyKisaVideolar", "Kısa Videolar")}</div>
+            <button className="cy-paylas" onClick={() => setPaylasAcik(true)}>＋ {t("cyVideoPaylas", "Video paylaş")}</button>
+          </div>
+          {reelListesi.length === 0 ? (
+            <div className="cy-bos">
+              <span className="cy-bos-ik" aria-hidden="true">🎬</span>
+              <div className="cy-bos-yazi">{t("cyBosYazi", "Henüz kısa video yok. İlk videoyu sen paylaş!")}</div>
+              <button className="cy-bos-btn" onClick={() => setPaylasAcik(true)}>＋ {t("cyVideoPaylas", "Video paylaş")}</button>
+            </div>
+          ) : (
+            <div className="cy-izgara">
+              {reelListesi.map((r, i) => (
+                <button className="cy-kare" key={r.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
+                  <video className="cy-vid" src={videoSade(r._reelVideo)} poster={r._reelPoster || undefined} muted playsInline preload="metadata" tabIndex={-1} />
+                  <span className="cy-oynat" aria-hidden="true">▶</span>
+                  {typeof r.begeni === "number" && r.begeni > 0 && <span className="cy-begeni">❤ {r.begeni}</span>}
+                  <span className="cy-alt">
+                    <span className="cy-avatar">{r.foto ? <img src={r.foto} alt="" referrerPolicy="no-referrer" /> : (r.ad || "?").slice(0, 1).toUpperCase()}</span>
+                    <span className="cy-ad">{r.ad || ""}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           )}
         </div>
       ) : aktifKod === "elite" ? (

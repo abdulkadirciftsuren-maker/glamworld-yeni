@@ -1672,6 +1672,40 @@
 .ana-kok.sayfa-topluluk .ana-arka-foto{ display:none !important; }
 /* HER SAYFA KENDİ NAV İKONUNUN CANLI RENGİNDE (kullanıcı: "bütün sayfalar ikon renginde olsun"). Siyaha yakın koyu tonlar KALDIRILDI. */
 .ana-kok.sayfa-video{ background:radial-gradient(ellipse at 50% 20%, #a55cf0 0%, #7d3fd0 42%, #5a2aa0 72%, #3f1c78 100%) !important; }   /* mor ikon */
+/* ═══ CANLI AKIŞ (video sayfası) — canlı yayın bölümü + kısa video ızgarası ═══ */
+.cy-pencere{ padding:12px 12px 90px; }
+.cy-hero{ display:flex; align-items:center; gap:12px; background:linear-gradient(135deg,#2a0f4d,#4a1d86); border:2px solid rgba(255,215,0,.35); border-radius:18px; padding:14px 15px; box-shadow:0 6px 20px rgba(30,10,70,.5); }
+.cy-hero-sol{ flex:1; min-width:0; }
+.cy-hero-ust{ display:flex; align-items:center; gap:8px; color:#fff; font-weight:900; font-size:17px; letter-spacing:.5px; }
+.cy-nokta{ width:12px; height:12px; border-radius:50%; background:#ff2d3d; box-shadow:0 0 0 rgba(255,45,61,.7); animation:cyNabiz 1.4s infinite; flex:none; }
+@keyframes cyNabiz{ 0%{ box-shadow:0 0 0 0 rgba(255,45,61,.7);} 70%{ box-shadow:0 0 0 10px rgba(255,45,61,0);} 100%{ box-shadow:0 0 0 0 rgba(255,45,61,0);} }
+.cy-hero-alt{ color:#e9d6ff; font-size:12.5px; font-weight:600; margin-top:4px; line-height:1.35; }
+.cy-baslat{ flex:none; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ff4d5e,#d61f2f); color:#fff; font-weight:900; font-size:13.5px; padding:12px 15px; border-radius:14px; box-shadow:0 4px 14px rgba(180,20,40,.5); }
+.cy-baslat:active{ transform:scale(.96); }
+.cy-bilgi{ margin-top:10px; background:linear-gradient(180deg,#fffdf5,#f4ecd6); border:1.8px solid rgba(255,215,0,.7); border-radius:15px; padding:13px 15px; box-shadow:0 5px 16px rgba(30,10,70,.4); }
+.cy-bilgi b{ color:#2a2008; font-size:15px; }
+.cy-bilgi p{ margin:6px 0 10px; color:#5a4712; font-size:13.5px; font-weight:600; line-height:1.5; }
+.cy-bilgi-kapat{ border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#7d3fd0,#5a2aa0); color:#fff; font-weight:800; font-size:13.5px; padding:9px 16px; border-radius:11px; }
+.cy-bas-satir{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:18px 2px 12px; }
+.cy-bas{ color:#fff; font-weight:900; font-size:18px; text-shadow:0 1px 4px rgba(0,0,0,.35); }
+.cy-paylas{ flex:none; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:900; font-size:13px; padding:10px 14px; border-radius:13px; box-shadow:0 3px 11px rgba(30,10,70,.35); }
+.cy-paylas:active{ transform:scale(.96); }
+.cy-izgara{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.cy-kare{ position:relative; border:none; cursor:pointer; padding:0; border-radius:15px; overflow:hidden; aspect-ratio:9/15; background:#1a0b33; box-shadow:0 5px 16px rgba(20,5,50,.5); border:2px solid rgba(255,215,0,.3); }
+.cy-vid{ width:100%; height:100%; object-fit:cover; display:block; background:#1a0b33; }
+.cy-oynat{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:46px; height:46px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.42); color:#fff; font-size:20px; border-radius:14px; backdrop-filter:blur(2px); }
+.cy-begeni{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,.5); color:#fff; font-weight:800; font-size:12px; padding:3px 8px; border-radius:9px; }
+.cy-alt{ position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; gap:7px; padding:20px 9px 8px; background:linear-gradient(180deg,transparent,rgba(0,0,0,.72)); }
+.cy-avatar{ flex:none; width:26px; height:26px; border-radius:8px; overflow:hidden; background:#7d3fd0; color:#fff; font-weight:900; font-size:13px; display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.6); }
+.cy-avatar img{ width:100%; height:100%; object-fit:cover; }
+.cy-ad{ color:#fff; font-weight:800; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.8); }
+.cy-bos{ display:flex; flex-direction:column; align-items:center; gap:12px; background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.05)); border:2px dashed rgba(255,215,0,.5); border-radius:18px; padding:36px 20px; margin-top:6px; }
+.cy-bos-ik{ font-size:46px; }
+.cy-bos-yazi{ color:#f0e6ff; font-weight:800; font-size:15px; text-align:center; }
+.cy-bos-btn{ border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3208; font-weight:900; font-size:15px; padding:12px 22px; border-radius:14px; box-shadow:0 4px 13px rgba(30,10,70,.4); }
+.cy-bos-btn:active{ transform:scale(.97); }
+@media (min-width:560px){ .cy-izgara{ grid-template-columns:1fr 1fr 1fr; } .cy-hero-alt{ font-size:13.5px; } .cy-bas{ font-size:20px; } .cy-baslat{ font-size:15px; } }
+@media (min-width:900px){ .cy-izgara{ grid-template-columns:repeat(4,1fr); } }
 .ana-kok.sayfa-konum{ background:radial-gradient(ellipse at 50% 20%, #34c4c4 0%, #1f9d9d 42%, #167a7a 72%, #0f5e5e 100%) !important; }   /* turkuaz ikon */
 .ana-kok.sayfa-akademi{ background:radial-gradient(ellipse at 50% 20%, #97a82b 0%, #78891c 42%, #5c6c14 72%, #46540e 100%) !important; } /* zeytin ikon (altın yazı okunsun diye biraz koyu) */
 .ana-kok.sayfa-profil{ background:radial-gradient(ellipse at 50% 20%, #3a5488 0%, #263a63 45%, #1a2b4d 78%, #122038 100%) !important; }  /* profil (beyaz ikon → zarif mavi; açık yazılar okunur kalsın) */
