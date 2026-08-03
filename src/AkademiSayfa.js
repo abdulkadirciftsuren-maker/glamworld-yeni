@@ -51,11 +51,25 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   }
 
   async function egitimAl() {
-    if (dersYuk || !meslek) return; setDersYuk(true);
-    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin eğitmeni. Sıcak, net, pratik öğretirsin.";
-    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine KISA ve PRATİK bir eğitim ver. 6-8 madde; her madde bir adım/ipucu (uygulanabilir, gerçek). Başlık/giriş/kapanış YAZMA, sadece maddeleri • ile yaz.`;
-    const c = await gloxSor(p, sistem);
-    setDers(c || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
+    if (dersYuk || !meslek) return; setDersYuk(true); setDers("");
+    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Bir mesleği sıfırdan, gerçek bir usta gibi EKSİKSİZ ve DETAYLI öğretirsin. Uydurma yok; doğru, ölçülü, uygulanabilir bilgi verirsin. Yüzeysel/kısa geçmezsin. Sadece istenen bölümü yaz, tekrar etme.";
+    // Eğitim TEK cevaba sığmasın diye 2 BÖLÜM halinde çekilir (worker sınırı ~1600 jeton) → çok daha DOLU, kesilmez.
+    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğini SIFIRDAN öğrenen birine GERÇEK bir usta gibi DETAYLI eğitimin 1. BÖLÜMÜNÜ yaz. Yüzeysel/dandik DEĞİL, dolu ve doğru. Şu 3 başlığı kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
+1) TEMEL BİLGİLER — meslek ne, neyi bilmek şart, hangi kurallar.
+2) GEREKLİ MALZEME VE ARAÇLAR — isim isim, ne işe yarar.
+3) TARİFLER / FORMÜLLER — KESİN ÖLÇÜLERLE. Örn. hamurcu/fırıncı için: 1 kg una kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; fırın kaç derece, kaç dakika; kaç saat mayalanır. "Biraz/az" DEME, hep RAKAM ver. Birkaç temel tarifi ölçüleriyle yaz.
+Sadece bu 3 başlığı yaz, uzun ve eksiksiz. Sonraki bölümü YAZMA.`;
+    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleği eğitiminin 2. BÖLÜMÜNÜ yaz (1. bölümü TEKRARLAMA). Şu 4 başlığı kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
+4) ÜRÜN / İŞ ÇEŞİTLERİ — bu meslekteki TÜM ürünleri/çeşitleri TEK TEK say. Örn. fırıncıda: ekmek çeşitleri (beyaz, tam buğday, çavdar, kepekli, somun, baget, lavaş, mısır…), poğaça çeşitleri ve İÇLERİ (peynirli, patatesli, zeytinli, kıymalı…), börek, simit, açma, kurabiye, kek, tatlılar… Her biri için kısa fark/püf noktası, varsa ölçü.
+5) ADIM ADIM YAPILIŞ — baştan sona teknik (hazırlık, yoğurma/uygulama, mayalama/bekleme, şekil verme, pişirme/bitirme).
+6) SIK YAPILAN HATALAR — ve nasıl önlenir.
+7) USTA İPUÇLARI — kaliteyi artıran profesyonel sırlar.
+Uzun yaz, eksik bırakma, gerçek bilgi ver.`;
+    const c1 = await gloxSor(p1, sistem);
+    if (c1) setDers(c1); // 1. bölüm gelince hemen göster
+    const c2 = await gloxSor(p2, sistem);
+    const tam = [c1, c2].filter(Boolean).join("\n\n");
+    setDers(tam || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
   async function sinavaGir() {
