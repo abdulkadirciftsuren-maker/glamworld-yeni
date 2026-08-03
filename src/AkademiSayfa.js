@@ -102,6 +102,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [konular, setKonular] = useState(null); const [konularYuk, setKonularYuk] = useState(false);
   const [aktifKonu, setAktifKonu] = useState(""); const [konuDers, setKonuDers] = useState(""); const [konuYuk, setKonuYuk] = useState(false);
   const [konuAra, setKonuAra] = useState(""); // listede olmayan çeşidi kullanıcı kendi yazıp sorar
+  const [konuAsama, setKonuAsama] = useState(0); // tarif hazırlanırken ilerleme (2/5 gibi)
   // GÖRSEL (yapay zekâ ile üretilen örnek/model fotoğrafı — bir kez üretilir, saklanır)
   const [kapakGorsel, setKapakGorsel] = useState(""); // mesleğe göre kapak
   const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false); const [konuGorselHata, setKonuGorselHata] = useState("");
@@ -251,12 +252,13 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
       `${on} — ŞEKİL VERME VE PİŞİRME: şekil verme, 2. mayalanma, PİŞİRME (kaç derece, kaç dakika, buhar/su). Yemek değilse son uygulama ve bitirme adımları.`,
       `${on} — PÜF NOKTALARI VE SIK HATALAR: kaliteyi artıran ustalık sırları + sık yapılan hatalar ve nasıl önlenir.`,
     ];
-    // Hepsi hazır OLUNCA tek seferde göster (parça parça belirme yok; "yükleniyor" görünür).
-    const parcalar = [];
+    // Hepsi hazır OLUNCA tek seferde göster (parça parça belirme yok; ilerleme "2/5" görünür).
+    const parcalar = []; let ilerle = 0; setKonuAsama(0);
     for (const b of bolumler) {
       if (istekNoRef.current !== no) return; // kullanıcı başka çeşide geçtiyse bırak
       const c = await gloxSor(b, sistem);
       if (c) parcalar.push(duzelt(c));
+      ilerle++; if (istekNoRef.current === no) setKonuAsama(ilerle);
     }
     if (istekNoRef.current === no) {
       setKonuDers(parcalar.join("\n\n") || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
@@ -423,7 +425,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
                 ) : konuGorselYuk ? (
                   <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir", "Örnek fotoğraf hazırlanıyor…")}</div>
                 ) : null)}
-                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor, birkaç saniye…")}</div> : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
+                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk2", "Gloxoo tarifi hazırlıyor")}{konuAsama ? " (" + konuAsama + "/5)" : "…"}</div> : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
                 {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
               </div>
             )}
