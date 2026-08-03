@@ -119,6 +119,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const fotoInpRef = useRef(null); const videoInpRef = useRef(null);
   const dilAd = DIL_AD[dil] || "English";
   const GECME = 0.7; // sertifika için geçme oranı (%70) — ciddi sınav
+  // FOTOĞRAF: ücretsiz servis yanlış/bozuk resim veriyordu (Lavaş'a dağ, bagete kadın) → KAPALI, temiz ikon gösterilir.
+  // OpenAI anahtarı eklenince açılıp gerçek/kaliteli resim gelir → o zaman true yapılır.
+  const FOTO_ACIK = false;
 
   useEffect(() => { if (uid) akademiKayitlarimOku(uid).then((l) => setKayitlarim(l || [])).catch(() => {}); }, [uid]);
 
@@ -173,7 +176,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
 
   // Mesleğe girince o mesleğe uygun KAPAK fotoğrafı (bir kez üretilir, saklanır)
   useEffect(() => {
-    if (gorunum !== "kurs" || !meslek) return;
+    if (!FOTO_ACIK || gorunum !== "kurs" || !meslek) return; // foto kapalıyken kapak da üretilmez
     let iptal = false; setKapakGorsel("");
     const istem = `Professional realistic cover photo representing the profession "${meslek.ad}": a person skillfully working at their craft in a beautiful, tidy workspace. Warm inviting lighting, photorealistic, high quality, no text, no watermark, no logo.`;
     gorselUret("kapak|" + meslek.ad, istem).then((res) => { if (!iptal) setKapakGorsel(res.url || ""); }).catch(() => {});
@@ -200,8 +203,8 @@ Bu 3 başlığı EKSİKSİZ doldur; son cümleyi TAMAMLA (nokta ile bitir). Sonr
 GENEL ÇALIŞMA AKIŞI: işin baştan sona genel sırası.
 USTA İPUÇLARI: yeni başlayana altın öğütler.
 EKSİKSİZ doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
+    // İki parça da hazır OLUNCA tek seferde göster (parça parça belirmesin).
     const c1 = await gloxSor(p1, sistem);
-    if (c1) setDers(duzelt(c1));
     const c2 = await gloxSor(p2, sistem);
     const tam = [c1, c2].filter(Boolean).map(duzelt).join("\n\n");
     setDers(tam || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
@@ -234,13 +237,15 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
     const ad = (k && typeof k === "object") ? k.ad : String(k);
     if (aktifKonu === ad) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
     const no = ++istekNoRef.current;
-    setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
-    // GÖRSEL (paralel): ızgaradaki KÜÇÜK resimle AYNI (tutarlı) — büyük hali.
-    (async () => {
-      const istem = fotoIstem(ad);
-      const res = await gorselUret("v3|" + meslek.ad + "|" + ad, istem);
-      if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
-    })();
+    setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(false);
+    // GÖRSEL sadece FOTO_ACIK iken (OpenAI anahtarı varken) üretilir; ücretsiz servis kapalı.
+    if (FOTO_ACIK) {
+      setKonuGorselYuk(true);
+      (async () => {
+        const res = await gorselUret("v3|" + meslek.ad + "|" + ad, fotoIstem(ad));
+        if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
+      })();
+    }
     // METİN — TAM ve DETAYLI; kesilmeden BİTMESİ için 3 ODAKLI PARÇA çekilip birleştirilir. HİÇ kısıtlama yok,
     // her parça KENDİ konusunda eksiksiz anlatır (hiçbir adım atlanmaz), her parça kendi içinde tamamlanır.
     const sistem = "Sen Gloxoo'sun — usta eğitmen (HER meslek için). Bir konuyu gerçek bir ustanın çırağına anlattığı gibi EKSİKSİZ, DOĞRU ve DETAYLI öğretirsin. HİÇBİR adımı/aşamayı ATLAMAZSIN. Sadece istenen bölümü yaz; SON CÜMLEYİ MUTLAKA TAMAMLA ve noktayla bitir, ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta yap, maddeleri • ile.";
@@ -254,10 +259,9 @@ PÜF NOKTALARI: kaliteyi artıran ustalık sırları.
 SIK YAPILAN HATALAR: yeni başlayanın hataları ve nasıl önlenir.
 VARYASYONLAR / İPUÇLARI: farklı yapılış/çeşitler veya ekstra öneriler.
 Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
+    // 3 parça da hazır OLUNCA tek seferde göster (parça parça belirmesin, "yükleniyor" görünsün).
     const c1 = await gloxSor(p1, sistem);
-    if (istekNoRef.current === no && c1) { setKonuDers(duzelt(c1)); setKonuYuk(false); } // 1. bölüm gelince hemen göster
     const c2 = await gloxSor(p2, sistem);
-    if (istekNoRef.current === no && (c1 || c2)) setKonuDers([c1, c2].filter(Boolean).map(duzelt).join("\n\n"));
     const c3 = await gloxSor(p3, sistem);
     if (istekNoRef.current === no) {
       const tam = [c1, c2, c3].filter(Boolean).map(duzelt).join("\n\n");
@@ -405,10 +409,11 @@ Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
               <div className="ak-konu-izgara">
                 {konular.map((k, i) => {
                   const ad = (k && typeof k === "object") ? k.ad : String(k);
-                  const foto = ucretsizGorselUrl(fotoIstem(ad), "v3|" + meslek.ad + "|" + ad);
                   return (
                     <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} onClick={() => konuAc(k)}>
-                      <KonuFoto src={foto} ad={ad} ik={meslek.ik} />
+                      {FOTO_ACIK
+                        ? <KonuFoto src={ucretsizGorselUrl(fotoIstem(ad), "v3|" + meslek.ad + "|" + ad)} ad={ad} ik={meslek.ik} />
+                        : <span className="ak-konu-kart-foto ak-konu-kart-ik">{meslek.ik}</span>}
                       <span className="ak-konu-kart-ad">{ad}</span>
                     </button>
                   );
@@ -418,15 +423,13 @@ Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
             {aktifKonu && (
               <div className="ak-konu-detay">
                 <div className="ak-konu-bas">📌 {aktifKonu}</div>
-                {/* ÖRNEK FOTOĞRAF (önden/yandan) — yapay zekâ, bir kez üretilir */}
-                {konuGorsel ? (
+                {/* ÖRNEK FOTOĞRAF — yalnız FOTO_ACIK iken (OpenAI anahtarı varken). Ücretsiz servis yanlış resim verdiği için kapalı. */}
+                {FOTO_ACIK && (konuGorsel ? (
                   <img className="ak-konu-gorsel" src={konuGorsel} alt={aktifKonu} referrerPolicy="no-referrer" />
                 ) : konuGorselYuk ? (
                   <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir", "Örnek fotoğraf hazırlanıyor…")}</div>
-                ) : konuGorselHata ? (
-                  <div className="ak-gorsel-yuk ak-gorsel-hata">📷 {t("akGorselHata", "Fotoğraf gelmedi. Sebep")}: {konuGorselHata}</div>
-                ) : null}
-                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor…")}</div> : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
+                ) : null)}
+                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor, birkaç saniye…")}</div> : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
                 {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
               </div>
             )}
