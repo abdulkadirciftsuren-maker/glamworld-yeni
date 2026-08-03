@@ -261,6 +261,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
       `${on} — BU MESLEK NEDİR: ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.`,
       `${on} — GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar; ve TEMEL HİJYEN / GÜVENLİK kuralları.`,
       `${on} — GENEL ÇALIŞMA AKIŞI VE USTA İPUÇLARI: işin baştan sona genel sırası + yeni başlayana altın öğütler.`,
+      `${on} — SÖZLÜK: bu meslekte geçen YABANCI/TEKNİK/zor kelimeleri seç ve her birini "Kelime: basit Türkçe anlamı" biçiminde • ile açıkla. Yeni öğrenen anlasın diye sade anlat.`,
     ];
     const parcalar = []; let il = 0;
     for (const b of bolumler) { const c = await gloxSor(b, sistem); if (c) parcalar.push(duzelt(c)); il++; setDersAsama(il); }
@@ -274,10 +275,10 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     const bolge = [sehir, ulke].filter(Boolean).join(", ") || "bilinmiyor";
     const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken çeşitleri/ürünleri/modelleri listele.
 ÇOK ÖNEMLİ KURALLAR:
-1) Her başlık TEK ve SOMUT bir çeşit olsun (örn. "Fransız Bageti", "Çavdar Ekmeği", "Simit", "Peynirli Poğaça"); GENEL KATEGORİ YAZMA ("Dünya Ekmekleri", "Ekmek Çeşitleri" gibi TOPLU başlık OLMASIN).
-2) SADECE bu mesleğin ASIL ürünlerini ver; alakasız/yan ürün KATMA (örn. fırın/ekmek mesleğinde SÜTLAÇ, dondurma gibi TATLILAR yazma — asıl iş EKMEK ve HAMUR İŞİ: çeşitli ekmekler, poğaça, açma, börek, simit, pide, lavaş vb.).
-3) BÖLGE ÖNCE (çok önemli): kullanıcı "${bolge}" bölgesinde. O ÜLKEDE/BÖLGEDE en çok yapılan/tüketilen YEREL çeşitleri LİSTENİN BAŞINA koy (ilk sıralar yerel klasikler), SONRA tanınmış diğer/dünya çeşitleri.
-4) ÇOK ÇEŞİT ver, dar kalma: fırın/ekmek ise çeşitli ekmekler + POĞAÇA çeşitleri ve İÇLERİ (peynirli, kaşarlı, patatesli, zeytinli, kıymalı) + açma + simit + BÖREK çeşitleri + pide/lavaş + tatlı/şekerli hamurlar + kek/çörek gibi HEPSİNDEN somut örnekler.
+1) SADECE "${meslek.ad}" mesleğinin GERÇEK ürünlerini/çeşitlerini ver — BAŞKA mesleğin ürününü ASLA KATMA. Meslek NE İSE ONUN ürünleri: meslek PASTANE/tatlı ise pastalar, yaş pasta, kek, tart, turta, ekler, profiterol, kurabiye, baklava, sütlü tatlılar gibi TATLILAR (EKMEK YAZMA); meslek FIRIN/EKMEK ise ekmek çeşitleri, poğaça, simit, açma, börek gibi HAMUR İŞLERİ; meslek KUAFÖR ise saç kesim/modelleri; meslek TIRNAK ise tırnak modelleri; vb.
+2) Her başlık TEK ve SOMUT bir çeşit olsun (örn. pastane: "Çikolatalı Yaş Pasta", "Limonlu Tart", "Ekler"); GENEL KATEGORİ YAZMA ("Pastalar", "Tatlı Çeşitleri" gibi TOPLU başlık OLMASIN).
+3) BÖLGE ÖNCE: kullanıcı "${bolge}" bölgesinde. O ülke/bölgede en çok yapılan YEREL çeşitleri (ama YİNE bu mesleğin ürünü olmalı) LİSTENİN BAŞINA koy, sonra tanınmış diğer/dünya çeşitleri.
+4) ÇOK ÇEŞİT ver (dar kalma), bu mesleğin tüm alt dallarından SOMUT örnekler.
 ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşit 1","Somut Çeşit 2"]} — en az 20, en çok 30 öğe, KISA isimler, YEREL olanlar BAŞTA. Başka hiçbir şey EKLEME.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
@@ -450,7 +451,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           <div className="ak-adim-bas"><span className="ak-adim-no">1</span> 📚 {t("akTemelEgitim", "Temel Eğitim")}</div>
           <div className="ak-adim-alt">{t("akTemelAlt", "Gloxoo bu meslek hakkında genel bilgiyi öğretir.")}</div>
           {!ders && !dersYuk && <button className="ak-btn" onClick={egitimAl}>{t("akEgitimAl", "Eğitimi başlat")}</button>}
-          {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor2", "Gloxoo eğitimi hazırlıyor")}{dersAsama ? " %" + Math.round((dersAsama / 3) * 100) : "…"}</div>}
+          {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor2", "Gloxoo eğitimi hazırlıyor")}{dersAsama ? " %" + Math.round((dersAsama / 4) * 100) : "…"}</div>}
           {ders && <SesliMetin metin={ders} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
           {ders && !dersYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
         </div>
