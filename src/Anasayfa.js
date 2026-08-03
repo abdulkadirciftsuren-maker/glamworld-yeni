@@ -2326,21 +2326,8 @@ export default function Anasayfa({ pro = false }) {
       if (!yeniSurum) { karsilandiRef.current = true; return; }
       karsilandiRef.current = true;
       try { maskotTanitYap(true); } catch (e) {}
-    }, 3500); // GECİKME: önce sayfa+profil yüklensin, SONRA Gloxoo karşılasın (karşılama yüklemeyi kesmesin — kullanıcı isteği)
+    }, 1400);
     return () => clearTimeout(ti);
-  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
-  // HESAP DEĞİŞİNCE Gloxoo/maskotu SIFIRLA — eski hesabın konuşması/kimliği yeni hesaba TAŞINMASIN (kullanıcı: "başka hesaba geçince Gloxoo aynı hesapta kalıyor").
-  const oncekiUidRef = useRef(null);
-  useEffect(() => {
-    const yeniUid = (u && u.uid) || null;
-    if (oncekiUidRef.current && oncekiUidRef.current !== yeniUid) {
-      try { setMaskotTanit(false); setMaskotSelam(false); setMaskotMini(false); } catch (e) {}
-      try { canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false); } catch (e) {}
-      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
-      try { if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop(); } catch (e) {}
-      karsilandiRef.current = false; // yeni hesap için karşılama yeniden mümkün (ama gecikmeli — profili kesmez)
-    }
-    oncekiUidRef.current = yeniUid;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   // GÜVENLİ YENİLEME — sayfayı en fazla 30 SANİYEDE BİR yeniler. GitHub sunucuları yeni yayından sonra bir süre
   // FARKLI sürüm gösterebiliyor; eski kod bunu görünce "yeni var→yenile→eski→yenile" diye SÜREKLİ yeniliyordu →
@@ -6614,22 +6601,8 @@ export default function Anasayfa({ pro = false }) {
   };
   useEffect(() => {
     if (!u) { setProfilBilgi(null); return; }
-    let iptal = false;
-    // PROFİL YÜKLE — başarısız olursa (Firestore geç hazır / anlık ağ hatası) TEKRAR DENE (yoksa profil "takılı" kalıp
-    // fotoğraf gelmiyordu; çıkış-giriş yapınca düzeliyordu). En fazla 6 deneme, artan bekleme.
-    const yukle = (deneme) => {
-      profilOku(u.uid).then((p) => {
-        if (iptal) return;
-        if (p) setProfilBilgi(p);
-        else if (deneme < 6) setTimeout(() => yukle(deneme + 1), 1200 * (deneme + 1));
-      }).catch(() => { if (!iptal && deneme < 6) setTimeout(() => yukle(deneme + 1), 1200 * (deneme + 1)); });
-    };
-    yukle(0);
-    // Uygulamaya geri dönünce (arka plandan) profil boşsa TEKRAR yükle
-    const geriDon = () => { if (document.visibilityState === "visible" && !iptal) yukle(0); };
-    document.addEventListener("visibilitychange", geriDon);
-    return () => { iptal = true; document.removeEventListener("visibilitychange", geriDon); };
-  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+    profilOku(u.uid).then((p) => { if (p) setProfilBilgi(p); });
+  }, [u]);
 
   const saglayiciAd = (() => {
     const id = (u && u.providerData && u.providerData[0] && u.providerData[0].providerId) || "";
