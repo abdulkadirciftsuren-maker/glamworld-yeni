@@ -199,11 +199,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     } catch (e) { return { url: "", hata: String(e) }; }
   }
 
-  // Konuya uygun İngilizce FOTOĞRAF tarifi üret (yemekse insansız ürün fotosu; saç/güzellik modeliyse kişi) → doğru resim gelsin.
-  async function gorselIstemGetir(ad, meslekAd) {
-    const p = `Give ONE short English image-generation prompt (max 25 words) for a realistic reference photo of "${ad}" in the field of "${meslekAd}". If it is food or an object, describe the object/dish clearly and END with "no people, no text, no watermark". If it is a hairstyle or beauty look, show a person wearing that look. Output ONLY the prompt text, nothing else.`;
-    const c = await gloxSor(p, "Sadece İngilizce istem cümlesini ver; başka hiçbir şey yazma, tırnak koyma.");
-    return duzelt(c || "").replace(/\n/g, " ").replace(/^["']|["']$/g, "").trim().slice(0, 300);
+  // Bir çeşidin fotoğraf istemi (ızgara küçük resmi + detay büyük resmi AYNI olsun diye TEK yerden).
+  function fotoIstem(ad) {
+    return `a realistic, detailed photograph of "${ad}" (${meslek.ad}), no text, no watermark, no logo`;
   }
 
   // Mesleğe girince o mesleğe uygun KAPAK fotoğrafı (bir kez üretilir, saklanır)
@@ -252,18 +250,13 @@ EKSİKSİZ doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
 1) Her başlık TEK ve SOMUT bir çeşit olsun (örn. "Fransız Bageti", "Çavdar Ekmeği", "Simit", "Peynirli Poğaça"); GENEL KATEGORİ YAZMA ("Dünya Ekmekleri", "Ekmek Çeşitleri" gibi TOPLU başlık OLMASIN).
 2) SADECE bu mesleğin ASIL ürünlerini ver; alakasız/yan ürün KATMA (örn. fırın/ekmek mesleğinde SÜTLAÇ, dondurma gibi TATLILAR yazma — asıl iş EKMEK ve HAMUR İŞİ: çeşitli ekmekler, poğaça, açma, börek, simit, pide, lavaş vb.).
 3) BÖLGE: kullanıcı "${bolge}" bölgesinde. O ÜLKEDE/BÖLGEDE en çok yapılan/tüketilen yerel çeşitleri MUTLAKA ve ÖNCE ekle (yerel klasikler baştan gelsin), sonra tanınmış diğer çeşitler.
-4) Her çeşit için İngilizce FOTOĞRAF tarifi ("g") ver: gerçekçi referans fotoğrafı; YEMEK/EŞYA ise net ürün fotoğrafı ve MUTLAKA sonuna "no people, no person, no text" ekle; SAÇ/GÜZELLİK modeli ise o modeli taşıyan bir kişi.
-${dilAd} dilinde başlık yaz. SADECE şu JSON: {"konular":[{"ad":"Somut Çeşit","g":"english photo prompt"}]} — en az 12, en çok 20 öğe. Başka açıklama yazma.`;
+${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşit 1","Somut Çeşit 2"]} — en az 12, en çok 18 öğe, KISA isimler. Başka hiçbir şey (fotoğraf tarifi vb.) EKLEME.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
     try {
       const temiz = c.replace(/```json|```/g, "").trim();
       const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1));
-      if (o && Array.isArray(o.konular)) arr = o.konular.map((x) => {
-        if (typeof x === "string") return { ad: x.trim(), g: "" };
-        if (x && x.ad) return { ad: String(x.ad).trim(), g: (x.g ? String(x.g) : "").slice(0, 300) };
-        return null;
-      }).filter((x) => x && x.ad).slice(0, 20);
+      if (o && Array.isArray(o.konular)) arr = o.konular.map((x) => (typeof x === "string" ? x : (x && x.ad) || "")).map((x) => String(x).trim()).filter(Boolean).slice(0, 18);
     } catch (e) {}
     setKonular(arr && arr.length ? arr : []); setKonularYuk(false);
   }
@@ -272,15 +265,12 @@ ${dilAd} dilinde başlık yaz. SADECE şu JSON: {"konular":[{"ad":"Somut Çeşit
   // k: {ad, g} objesi VEYA düz metin (kullanıcı kendi yazınca).
   async function konuAc(k) {
     const ad = (k && typeof k === "object") ? k.ad : String(k);
-    const gTarif = (k && typeof k === "object" && k.g) ? k.g : "";
     if (aktifKonu === ad) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
     const no = ++istekNoRef.current;
     setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
-    // GÖRSEL (paralel): KONU NEYSE onun net fotoğrafı. Fotoğraf tarifi varsa onu kullan; yoksa Gloxoo'dan uygun tarif iste (yemekse insansız).
+    // GÖRSEL (paralel): ızgaradaki KÜÇÜK resimle AYNI (tutarlı) — büyük hali.
     (async () => {
-      let istem = gTarif;
-      if (!istem) { try { istem = await gorselIstemGetir(ad, meslek.ad); } catch (e) {} }
-      if (!istem) istem = `a realistic, detailed reference photograph of ${ad} (${meslek.ad}), no text, no watermark`;
+      const istem = fotoIstem(ad);
       const res = await gorselUret("v3|" + meslek.ad + "|" + ad, istem);
       if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
     })();
@@ -448,7 +438,7 @@ Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
               <div className="ak-konu-izgara">
                 {konular.map((k, i) => {
                   const ad = (k && typeof k === "object") ? k.ad : String(k);
-                  const foto = ucretsizGorselUrl((k && k.g) || `a realistic detailed photo of ${ad} (${meslek.ad}), no text, no watermark`, "v3|" + meslek.ad + "|" + ad);
+                  const foto = ucretsizGorselUrl(fotoIstem(ad), "v3|" + meslek.ad + "|" + ad);
                   return (
                     <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} onClick={() => konuAc(k)}>
                       <KonuFoto src={foto} ad={ad} ik={meslek.ik} />
