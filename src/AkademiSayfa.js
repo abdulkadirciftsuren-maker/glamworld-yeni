@@ -34,6 +34,18 @@ function duzelt(m) {
     .trim();
 }
 
+// Metinden sabit bir sayı (tohum) üret → aynı model hep AYNI fotoğrafı versin.
+function tohumUret(s) {
+  let h = 0; const m = String(s || "");
+  for (let i = 0; i < m.length; i++) { h = (h * 31 + m.charCodeAt(i)) | 0; }
+  return Math.abs(h) % 1000000;
+}
+// ÜCRETSİZ görsel (anahtar/ücret YOK) — Pollinations. İstemden doğrudan resim URL'si üretir.
+function ucretsizGorselUrl(istem, anahtar) {
+  const p = encodeURIComponent(String(istem || "").slice(0, 500));
+  return "https://image.pollinations.ai/prompt/" + p + "?width=1024&height=1024&nologo=true&model=flux&seed=" + tohumUret(anahtar || istem);
+}
+
 export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir, onKatman }) {
   const { t } = useTranslation();
   const [gorunum, setGorunum] = useState("liste"); // liste | kurs | sertifikalarim
@@ -88,17 +100,23 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // Böylece her model/çeşit fotoğrafı DÜNYADA BİR KEZ üretilir; sonra herkes hazırdan görür (ücret 1 kez).
   // Dönüş: { url, hata } — hata varsa ekrana yazıp sebebi göstereceğiz.
   async function gorselUret(anahtar, istem) {
+    // 1) Önbellek — daha önce üretilmiş URL varsa onu ver (tekrar üretme).
+    try { const eski = await akademiGorselOku(anahtar); if (eski) return { url: eski, hata: "" }; } catch (e) {}
+    // 2) Worker + OpenAI (anahtar TANIMLIYSA kaliteli üretir; yoksa boş döner → 3. adıma geçilir).
     try {
-      const eski = await akademiGorselOku(anahtar);
-      if (eski) return { url: eski, hata: "" }; // hazır — üretme
       const r = await fetch(aiKopru, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gorsel: istem }) });
       const j = await r.json().catch(() => ({}));
       if (j && j.gorsel) {
         const url = await gorselYukle("data:image/png;base64," + j.gorsel, uid || "akademi");
         if (url) { akademiGorselYaz(anahtar, url).catch(() => {}); return { url, hata: "" }; }
-        return { url: "", hata: "Fotoğraf yüklenemedi (depolama)." };
       }
-      return { url: "", hata: (j && j.hata) || "Görsel üretilemedi." };
+    } catch (e) {}
+    // 3) ÜCRETSİZ yedek — Pollinations (anahtar/ücret YOK, herkeste çalışır). Resmi ÖNCEDEN yükle (boş kutu görünmesin), sonra URL'yi önbelleğe yaz.
+    try {
+      const url = ucretsizGorselUrl(istem, anahtar);
+      await new Promise((res) => { try { const im = new Image(); im.onload = res; im.onerror = res; im.src = url; setTimeout(res, 22000); } catch (e) { res(); } });
+      akademiGorselYaz(anahtar, url).catch(() => {});
+      return { url, hata: "" };
     } catch (e) { return { url: "", hata: String(e) }; }
   }
 
