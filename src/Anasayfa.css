@@ -1764,12 +1764,13 @@
 .ak-konu-cip{ border:2px solid rgba(120,140,30,.4); cursor:pointer; font-family:inherit; background:#fffdf3; color:#3d3406; font-weight:800; font-size:13.5px; padding:9px 14px; border-radius:12px; box-shadow:0 2px 7px rgba(40,50,10,.18); }
 .ak-konu-cip:active{ transform:scale(.96); }
 .ak-konu-cip.aktif{ background:linear-gradient(160deg,#7a8c22,#556614); color:#fff; border-color:#556614; box-shadow:0 3px 10px rgba(40,50,10,.4); }
-/* Çeşitler KOMPAKT IZGARA — sadece isim (fotoğraf yok → yer tutmaz, çok çeşit sığar) */
-.ak-konu-izgara{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px; }
-.ak-konu-kart{ border:2px solid rgba(120,140,30,.4); cursor:pointer; font-family:inherit; background:#fffdf3; border-radius:13px; padding:12px 12px; min-height:52px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(40,50,10,.18); }
-.ak-konu-kart:active{ transform:scale(.97); }
-.ak-konu-kart.aktif{ border-color:#556614; background:linear-gradient(160deg,#f3f5df,#e6ecc4); box-shadow:0 0 0 3px rgba(122,140,34,.5); }
-.ak-konu-kart-ad{ color:#3d3406; font-weight:900; font-size:14px; line-height:1.25; text-align:center; word-break:break-word; }
+/* Çeşitler RENKLİ + İKONLU kompakt ızgara (yer tutmaz, çok çeşit sığar) */
+.ak-konu-izgara{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+.ak-konu-kart{ border:2px solid rgba(255,255,255,.35); cursor:pointer; font-family:inherit; border-radius:14px; padding:12px 10px; min-height:76px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; box-shadow:0 4px 12px rgba(40,50,10,.32); }
+.ak-konu-kart:active{ transform:scale(.96); }
+.ak-konu-kart.aktif{ border-color:#fff; box-shadow:0 0 0 3px rgba(255,225,77,.9), 0 4px 12px rgba(40,50,10,.32); }
+.ak-konu-kart-ik2{ font-size:28px; line-height:1; filter:drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+.ak-konu-kart-ad{ color:#fff; font-weight:900; font-size:13.5px; line-height:1.2; text-align:center; word-break:break-word; text-shadow:0 1px 4px rgba(0,0,0,.45); }
 .ak-konu-detay{ margin-top:12px; background:#fbf8ea; border:2px solid rgba(120,140,30,.35); border-radius:14px; padding:12px 14px; }
 .ak-konu-bas{ color:#3d3406; font-weight:900; font-size:15.5px; margin-bottom:8px; }
 .ak-konu-detay .ak-ders{ margin-top:0; }

@@ -34,6 +34,28 @@ function duzelt(m) {
     .trim();
 }
 
+// Çeşit adına göre uygun bir EMOJİ seç (renkli kartlarda ikon olarak) → yoksa meslek ikonuna düşülür.
+function cesitIkon(ad) {
+  const s = (ad || "").toLocaleLowerCase("tr");
+  const kv = [
+    [/pasta|yaş pasta|gato|tort|cheesecake/, "🎂"], [/kek|muffin|cupcake|brownie/, "🧁"], [/kurabiye|biscu|cookie/, "🍪"],
+    [/tart|turta|pie/, "🥧"], [/çikolata|choco|trüf/, "🍫"], [/dondurma|ice ?cream/, "🍨"], [/baklava|şerbet|tatlı|şeker|helva|lokum|revani|kadayıf/, "🍮"],
+    [/ekler|profiterol|krema|sufle|magnol|puf/, "🍥"], [/ekmek|bread|khlib|baget|somun|lavaş|paska|kalach/, "🍞"], [/poğaça|açma|börek|pyrizhky|çörek|simit|gözleme/, "🥐"],
+    [/pizza|pide|lahmacun/, "🍕"], [/saç|kesim|fön|perma|röfle|model|topuz/, "💇"], [/tırnak|nail|oje|manikür|jel/, "💅"],
+    [/kaş|kirpik|makyaj/, "💄"], [/masaj|spa|cilt|bakım/, "💆"], [/dövme|tattoo|piercing/, "🎨"], [/kahve|coffee|espresso|latte/, "☕"],
+    [/çay|tea/, "🍵"], [/et|kebap|köfte|döner|izgara|steak/, "🍖"], [/tavuk|piliç/, "🍗"], [/balık|fish|deniz/, "🐟"], [/salata|sebze|vegan/, "🥗"], [/meyve|fruit|çilek/, "🍓"],
+    [/süt|peynir|yoğurt|kaymak/, "🧀"], [/bal|reçel|marmelat/, "🍯"], [/çorba|soup/, "🍲"], [/makarna|pasta|noodle|erişte/, "🍝"], [/hamburger|sandviç|tost/, "🍔"],
+  ];
+  for (const [re, em] of kv) if (re.test(s)) return em;
+  return null;
+}
+// Renkli kart zeminleri (çeşitler sırayla bu renkleri alır → renkli görünür)
+const CESIT_RENK = [
+  "linear-gradient(135deg,#e0115f,#b3094c)", "linear-gradient(135deg,#7a4a2a,#5c3720)", "linear-gradient(135deg,#16a085,#0e7c65)",
+  "linear-gradient(135deg,#e67e22,#c9611a)", "linear-gradient(135deg,#8e44ad,#6c3483)", "linear-gradient(135deg,#2980b9,#1f6391)",
+  "linear-gradient(135deg,#c0392b,#96271c)", "linear-gradient(135deg,#27ae60,#1e8449)", "linear-gradient(135deg,#d6336c,#a82554)",
+  "linear-gradient(135deg,#e84393,#b93172)", "linear-gradient(135deg,#f39c12,#c87f0a)", "linear-gradient(135deg,#00838f,#005f68)",
+];
 // Metinden sabit bir sayı (tohum) üret → aynı model hep AYNI fotoğrafı versin.
 function tohumUret(s) {
   let h = 0; const m = String(s || "");
@@ -489,8 +511,10 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
               <div className="ak-konu-izgara">
                 {konular.map((k, i) => {
                   const ad = (k && typeof k === "object") ? k.ad : String(k);
+                  const ik = cesitIkon(ad) || meslek.ik;
                   return (
-                    <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} onClick={() => konuAc(k)}>
+                    <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} style={{ background: CESIT_RENK[i % CESIT_RENK.length] }} onClick={() => konuAc(k)}>
+                      <span className="ak-konu-kart-ik2" aria-hidden="true">{ik}</span>
                       <span className="ak-konu-kart-ad">{ad}</span>
                     </button>
                   );
