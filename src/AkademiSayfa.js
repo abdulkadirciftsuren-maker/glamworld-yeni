@@ -61,17 +61,25 @@ function sesTemizle(m) {
 // CÜMLELERE böl ve hepsini KUYRUĞA koy, resume() ile uyandır. (Motor "uyandırma" Anasayfa'da global zaten var.)
 function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
   const [okunuyor, setOkunuyor] = useState(false);
+  const [aktif, setAktif] = useState(-1); // okunan cümle/satır (vurgu)
   const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
   const besleIvRef = useRef(null);
+  // Metni görüntülenecek cümle/satır parçalarına böl (vurgu bunun üstünde yürür)
+  const cumleler = useMemo(() => {
+    const arr = [];
+    for (const sat of String(metin || "").split(/\n+/)) {
+      const s = sat.trim(); if (!s) continue;
+      for (const c of (s.match(/[^.!?…]+[.!?…]*/g) || [s])) { const t = c.trim(); if (t) arr.push(t); }
+    }
+    return arr;
+  }, [metin]);
   function besleDur() { if (besleIvRef.current) { clearInterval(besleIvRef.current); besleIvRef.current = null; } }
-  function dur() { besleDur(); try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
+  function dur() { besleDur(); try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); setAktif(-1); }
   useEffect(() => () => { besleDur(); try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
   useEffect(() => { dur(); }, [metin]); // eslint-disable-line react-hooks/exhaustive-deps
-  function besle() { try { onSesIlerleme && onSesIlerleme(); } catch (e) {} } // ana uygulamanın "14sn bekçisini" besle (yoksa Akademi sesini kesiyordu)
+  function besle() { try { onSesIlerleme && onSesIlerleme(); } catch (e) {} } // ana uygulamanın "14sn bekçisini" besle
   function oku() {
-    if (!metin || !varMi) return;
-    const temiz = sesTemizle(metin);
-    if (!temiz) return;
+    if (!cumleler.length || !varMi) return;
     try { window.speechSynthesis.cancel(); } catch (e) {}
     const lk = (sesDili || "tr").toLowerCase(); const kok = lk.split("-")[0];
     const sesSec = () => {
@@ -80,21 +88,20 @@ function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
       const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || "");
       return dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
     };
-    const parcalar = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
-    setOkunuyor(true);
-    // Ana uygulamanın bekçisini SÜREKLİ besle (her 3sn) → ses konuşurken 14sn bekçisi devreye girip KESMESİN.
+    setOkunuyor(true); setAktif(0);
     besleDur(); besle();
     besleIvRef.current = setInterval(() => { try { if (window.speechSynthesis.speaking || window.speechSynthesis.pending) { besle(); try { window.speechSynthesis.resume(); } catch (e) {} } else { besleDur(); } } catch (e) {} }, 3000);
     let basladi = false;
     const konus = () => {
       if (basladi) return; basladi = true;
       const ses = sesSec();
-      parcalar.forEach((p, idx) => {
-        const u = new window.SpeechSynthesisUtterance(p);
-        u.lang = sesDili || "tr-TR"; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-        u.onstart = () => besle();
+      cumleler.forEach((cumle, idx) => {
+        const soku = sesTemizle(cumle); if (!soku) return;
+        const u = new window.SpeechSynthesisUtterance(soku);
+        u.lang = sesDili || "tr-TR"; u.rate = 0.9; u.pitch = 1; if (ses) u.voice = ses; // biraz YAVAŞ (kullanıcı: hızlı okuyor)
+        u.onstart = () => { besle(); setAktif(idx); }; // OKUNAN cümleyi vurgula (nerede olduğu görünür)
         u.onboundary = () => besle();
-        if (idx === parcalar.length - 1) u.onend = () => { besleDur(); setOkunuyor(false); };
+        if (idx === cumleler.length - 1) u.onend = () => { besleDur(); setOkunuyor(false); setAktif(-1); };
         try { window.speechSynthesis.speak(u); } catch (e) {}
       });
       try { window.speechSynthesis.resume(); } catch (e) {}
@@ -105,7 +112,9 @@ function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
   return (
     <>
       {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ Durdur" : "🔊 Sesli anlat"}</button> : null}
-      <div className={className}>{metin}</div>
+      {okunuyor
+        ? <div className={className}>{cumleler.map((c, k) => <div key={k} className={"ak-cumle" + (k === aktif ? " ak-okunan" : "")}>{c}</div>)}</div>
+        : <div className={className}>{metin}</div>}
     </>
   );
 }
@@ -146,6 +155,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false); const [konuGorselHata, setKonuGorselHata] = useState("");
   const istekNoRef = useRef(0); // çeşitler arası yarış (race) koruması
   const konuDetayRef = useRef(null); // bir çeşide basınca tarife otomatik kaydır (aşağıda kaybolmasın)
+  const sorulanRef = useRef([]); // daha önce sorulan sınav soruları (her denemede farklı sorulsun diye)
   // SINAV
   const [sorular, setSorular] = useState(null); const [sinavYuk, setSinavYuk] = useState(false);
   const [cevaplar, setCevaplar] = useState({}); const [sonuc, setSonuc] = useState(null); // {dogru, toplam, gecti}
@@ -239,7 +249,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   function kursAc(m) {
     setMeslek(m); setGorunum("kurs");
     setDers(""); setKonular(null); setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKapakGorsel("");
-    setSorular(null); setCevaplar({}); setSonuc(null); setIsFoto(""); setIsVideo(""); setAktifSertifika(null);
+    setSorular(null); setCevaplar({}); setSonuc(null); setIsFoto(""); setIsVideo(""); setAktifSertifika(null); sorulanRef.current = [];
   }
 
   // (2) TEMEL EĞİTİM — kesilmesin diye KÜÇÜK başlıklara bölünür (her başlık kısa+tam), birleşince eksiksiz olur.
@@ -303,6 +313,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
       `${on} — HAZIRLIK VE MAYALANMA: bir hamur/ekmekse yoğurma, 1. MAYALANMA (kaç saat, kaç derece, hacim kaç katı), gerekiyorsa SOĞUK FERMANTASYON/buzdolabında dinlendirme (kaç saat, neden). Yemek değilse hazırlık ve ilk uygulama adımları.`,
       `${on} — ŞEKİL VERME VE PİŞİRME: şekil verme, 2. mayalanma, PİŞİRME (kaç derece, kaç dakika, buhar/su). Yemek değilse son uygulama ve bitirme adımları.`,
       `${on} — PÜF NOKTALARI VE SIK HATALAR: kaliteyi artıran ustalık sırları + sık yapılan hatalar ve nasıl önlenir.`,
+      `${on} — SÖZLÜK: bu konuda geçen YABANCI/TEKNİK/zor kelimeleri seç ve her birini "Kelime: basit Türkçe anlamı" biçiminde • ile açıkla (örn. "Fermantasyon: hamurun mayayla kabarıp olgunlaşması"). Yeni öğrenen anlasın diye sade anlat.`,
     ];
     // Hepsi hazır OLUNCA tek seferde göster (parça parça belirme yok; ilerleme "2/5" görünür).
     const parcalar = []; let ilerle = 0; setKonuAsama(0);
@@ -317,14 +328,18 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
     }
   }
 
-  // (4) CİDDİ SINAV — profesyonel, zor; anlatılan içerikten; 8 soru
+  // (4) CİDDİ SINAV — profesyonel, zor; HER DENEMEDE FARKLI sorular (ezberleyip geçmesin) — 8 soru
   async function sinavaGir() {
     if (sinavYuk || !meslek) return; setSinavYuk(true); setSonuc(null); setCevaplar({}); setSorular(null);
     const sistem = "Sen Gloxoo'sun — ciddi bir sınav hazırlayıcısın. SADECE geçerli JSON döndür, başka hiçbir şey yazma. Sorular kolay/çocukça DEĞİL; mesleğin gerçek bilgisini ölçen PROFESYONEL sorular olsun (ölçü, teknik, malzeme, sıra, hata).";
-    const p = `${dilAd} dilinde, "${meslek.ad}" mesleği için 8 adet CİDDİ çoktan seçmeli sınav sorusu hazırla. Sorular gerçek mesleki bilgi ölçsün (ölçüler/oranlar, doğru teknik, malzeme, işlem sırası, güvenlik/hijyen, sık yapılan hata). Kolay/genel-kültür DEĞİL. Her sorunun 4 şıkkı olsun, biri doğru. SADECE şu JSON'u döndür: {"sorular":[{"s":"soru","c":["şık1","şık2","şık3","şık4"],"d":0}]} — "d" doğru şıkkın indeksi (0-3). Başka açıklama yazma.`;
+    // ÖNCEKİ denemelerdeki soruları hatırla → tekrar sorma (kullanıcı ezberleyip 2-3. denemede geçmesin).
+    const oncekiler = (sorulanRef.current || []).slice(-40);
+    const kacinma = oncekiler.length ? ` ÇOK ÖNEMLİ: Aşağıdaki DAHA ÖNCE sorulan sorularla AYNI/BENZER soruları SORMA, TAMAMEN FARKLI ve farklı konulardan sor: ${oncekiler.map((s) => "«" + s + "»").join(" ")}.` : "";
+    const p = `${dilAd} dilinde, "${meslek.ad}" mesleği için 8 adet CİDDİ çoktan seçmeli sınav sorusu hazırla. Sorular gerçek mesleki bilgi ölçsün (ölçüler/oranlar, doğru teknik, malzeme, işlem sırası, güvenlik/hijyen, sık yapılan hata). Kolay/genel-kültür DEĞİL. Her sorunun 4 şıkkı olsun, biri doğru. Sorular ve şıkların SIRASI karışık olsun.${kacinma} SADECE şu JSON'u döndür: {"sorular":[{"s":"soru","c":["şık1","şık2","şık3","şık4"],"d":0}]} — "d" doğru şıkkın indeksi (0-3). Başka açıklama yazma.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
     try { const temiz = c.replace(/```json|```/g, "").trim(); const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1)); if (o && Array.isArray(o.sorular)) arr = o.sorular.filter((x) => x && x.s && Array.isArray(x.c) && x.c.length >= 2).slice(0, 8); } catch (e) {}
+    if (arr && arr.length) { sorulanRef.current = (sorulanRef.current || []).concat(arr.map((x) => x.s)).slice(-60); } // hatırla
     setSorular(arr && arr.length ? arr : []); setSinavYuk(false);
   }
 
@@ -461,7 +476,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
                   <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir2", "Fotoğraf hazırlanıyor…")}</div>
                 ) : null}
                 {konuYuk
-                  ? <div className="ak-yuk">⏳ {t("akKonuYuk3", "Gloxoo tarifi hazırlıyor")}{konuAsama ? " %" + Math.round((konuAsama / 5) * 100) : "…"}</div>
+                  ? <div className="ak-yuk">⏳ {t("akKonuYuk3", "Gloxoo tarifi hazırlıyor")}{konuAsama ? " %" + Math.round((konuAsama / 6) * 100) : "…"}</div>
                   : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
                 {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
               </div>
