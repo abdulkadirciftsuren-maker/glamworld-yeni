@@ -229,8 +229,8 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
       {akilliFiltre && (
         <div className="ep-akilli-ozet">
           💎 {t("epGloxPre")} {akilliFiltre.kategori ? (t("epKat_" + akilliFiltre.kategori) + " · ") : ""}
-          {akilliFiltre.maxFiyat ? ((paraSym || "₺") + akilliFiltre.maxFiyat.toLocaleString() + " " + t("epAlti") + " ") : ""}
-          {akilliFiltre.minFiyat ? ("· " + (paraSym || "₺") + akilliFiltre.minFiyat.toLocaleString() + " " + t("epUstu") + " ") : ""}
+          {akilliFiltre.maxFiyat ? (akilliFiltre.maxFiyat.toLocaleString() + " " + (paraSym || "₺") + " " + t("epAlti") + " ") : ""}
+          {akilliFiltre.minFiyat ? ("· " + akilliFiltre.minFiyat.toLocaleString() + " " + (paraSym || "₺") + " " + t("epUstu") + " ") : ""}
           {akilliFiltre.anahtar ? ("· \"" + akilliFiltre.anahtar + "\" ") : ""}
           {"— "}<b>{filtreli.length > 0 ? t("epIlanBulundu", { n: filtreli.length }) : t("epUygunYok")}</b>
           {akilliMesaj ? (" · " + akilliMesaj) : ""}
@@ -287,7 +287,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
                       {etk.slice(0, 2).map((eid) => { const et = ETIKETLER.find((x) => x.id === eid); return et ? <span key={eid} className={"ep-et " + et.sinif}>{et.emoji + " " + t("epEt_" + et.id)}</span> : null; })}
                     </div>
                   )}
-                  <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? t("epUcretsiz") : ((u.paraSimge || paraSimEP(u.paraBirimi)) + (u.fiyat || "—"))}</div>
+                  <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? t("epUcretsiz") : (u.fiyat ? (u.fiyat + " " + (u.paraSimge || paraSimEP(u.paraBirimi))) : "—")}</div>
                   <div className="ep-ksat">
                     <span className="ep-kavatar">{(u.saticiFoto) ? <img src={u.saticiFoto} alt="" /> : (u.satici || "?").slice(0, 1).toUpperCase()}</span>
                     <span className="ep-kyer"><KayanYazi>{u.konum || ""}</KayanYazi></span>
@@ -381,7 +381,7 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
         <div className="ep-dbil">
           <span className="ep-dkat" style={{ background: k.renk }}>{t("epKat_" + k.id)}</span>
           <h2 className="ep-dad">{cev.yuk ? t("ceviriliyor", "Çevriliyor…") : gosterBaslik}</h2>
-          <div className={"ep-dfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? (t("epUcretsiz") + " 🎁") : (parSim + (urun.fiyat || "—"))}</div>
+          <div className={"ep-dfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? (t("epUcretsiz") + " 🎁") : (urun.fiyat ? (urun.fiyat + " " + parSim) : "—")}</div>
           {etk.length > 0 && (
             <div className="ep-etks">
               {etk.map((eid) => { const et = ETIKETLER.find((x) => x.id === eid); return et ? <span key={eid} className={"ep-et " + et.sinif}>{et.emoji + " " + t("epEt_" + et.id)}</span> : null; })}
@@ -612,8 +612,8 @@ function SatForm({ uid, benAd, benFoto, konum, dil, onKapat, onYayin, para, para
           {/* FİYAT + GLOXOO ÖNERİSİ */}
           <div className="ep-kutu">
             <div className="ep-etk">💰 {t("epFiyatEtk")} ({parSim})</div>
-            <div className="ep-fiyat-in"><span className="ep-tl">{parSim}</span>
-              <input className="ep-fiyat-val" inputMode="numeric" value={fiyat} onChange={(e) => setFiyat(e.target.value.replace(/[^\d]/g, ""))} placeholder="0" /></div>
+            <div className="ep-fiyat-in">
+              <input className="ep-fiyat-val" inputMode="numeric" value={fiyat} onChange={(e) => setFiyat(e.target.value.replace(/[^\d]/g, ""))} placeholder="0" /><span className="ep-tl">{parSim}</span></div>
             {/* PARA BİRİMİ SEÇİCİ — öntanımlı senin paran; istersen değiştir (satılan ülkenin parası) */}
             <div className="ep-parasec">
               {paraListesi.map((pp) => (
