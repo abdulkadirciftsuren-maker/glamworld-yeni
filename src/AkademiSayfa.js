@@ -189,25 +189,19 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     setSorular(null); setCevaplar({}); setSonuc(null); setIsFoto(""); setIsVideo(""); setAktifSertifika(null);
   }
 
-  // (2) TEMEL EĞİTİM — genel; TAMAMLANIR (yarım kesilmez), sınırlı uzunluk → tek çağrıya sığar
+  // (2) TEMEL EĞİTİM — kesilmesin diye KÜÇÜK başlıklara bölünür (her başlık kısa+tam), birleşince eksiksiz olur.
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers("");
-    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). Doğru ve uygulanabilir bilgiyi öğretirsin. Sadece istenen başlıkları yaz; SON CÜMLEYİ MUTLAKA TAMAMLA ve cümleyi noktayla bitir, ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta, maddeleri • ile.";
-    // 2 PARÇA → kesilmeden tam biter (worker sınırına rahat sığar).
-    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine TEMEL eğitimin 1. BÖLÜMÜNÜ yaz. Şu başlıklar:
-BU MESLEK NEDİR: ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.
-GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar.
-TEMEL KURALLAR VE HİJYEN / GÜVENLİK: uyulması gerekenler.
-Bu 3 başlığı EKSİKSİZ doldur; son cümleyi TAMAMLA (nokta ile bitir). Sonraki bölümü YAZMA.`;
-    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleği temel eğitiminin 2. BÖLÜMÜNÜ yaz (1. bölümü tekrarlama). Şu başlıklar:
-GENEL ÇALIŞMA AKIŞI: işin baştan sona genel sırası.
-USTA İPUÇLARI: yeni başlayana altın öğütler.
-EKSİKSİZ doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
-    // İki parça da hazır OLUNCA tek seferde göster (parça parça belirmesin).
-    const c1 = await gloxSor(p1, sistem);
-    const c2 = await gloxSor(p2, sistem);
-    const tam = [c1, c2].filter(Boolean).map(duzelt).join("\n\n");
-    setDers(tam || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
+    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). SADECE istenen tek başlığı yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; başlığı BÜYÜK harf yaz, maddeleri • ile.";
+    const on = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine SADECE şu başlığı yaz`;
+    const bolumler = [
+      `${on} — BU MESLEK NEDİR: ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.`,
+      `${on} — GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar; ve TEMEL HİJYEN / GÜVENLİK kuralları.`,
+      `${on} — GENEL ÇALIŞMA AKIŞI VE USTA İPUÇLARI: işin baştan sona genel sırası + yeni başlayana altın öğütler.`,
+    ];
+    const parcalar = [];
+    for (const b of bolumler) { const c = await gloxSor(b, sistem); if (c) parcalar.push(duzelt(c)); }
+    setDers(parcalar.join("\n\n") || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
   // (3a) ÇEŞİTLERİ getir — bu meslekteki tüm tür/ürün/konu listesi (JSON)
@@ -246,26 +240,26 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
         if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
       })();
     }
-    // METİN — TAM ve DETAYLI; kesilmeden BİTMESİ için 3 ODAKLI PARÇA çekilip birleştirilir. HİÇ kısıtlama yok,
-    // her parça KENDİ konusunda eksiksiz anlatır (hiçbir adım atlanmaz), her parça kendi içinde tamamlanır.
-    const sistem = "Sen Gloxoo'sun — usta eğitmen (HER meslek için). Bir konuyu gerçek bir ustanın çırağına anlattığı gibi EKSİKSİZ, DOĞRU ve DETAYLI öğretirsin. HİÇBİR adımı/aşamayı ATLAMAZSIN. Sadece istenen bölümü yaz; SON CÜMLEYİ MUTLAKA TAMAMLA ve noktayla bitir, ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta yap, maddeleri • ile.";
-    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" konusunun 1. BÖLÜMÜNÜ eksiksiz anlat. Şu başlıklar:
-NEDİR / TANIM: "${ad}" nedir, neyin nesidir, özellikleri, hangi ülkeye/kültüre ait, nerede/ne için kullanılır.
-MALZEME / ÖLÇÜLER: gereken HER şey + varsa KESİN rakamlar (örn. bir hamur/yemek ise: 1 kg una kaç gr tuz, kaç gr maya, kaç ml su, kaç gr şeker/yağ vb.). Ölçü varsa "biraz/az" DEME, RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) başlığı "GEREKENLER" yap.
-Bu 2 başlığı EKSİKSİZ doldur; son cümleyi TAMAMLA (nokta ile bitir). Yapılışı burada YAZMA (o 2. bölümde).`;
-    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" konusunun 2. BÖLÜMÜ: ADIM ADIM YAPILIŞ. 1. bölümü (malzeme) tekrarlama. Baştan sona HER aşamayı SIRAYLA ve eksiksiz anlat; HİÇBİR adımı atlama. Bir hamur/ekmek ise şu aşamaları MUTLAKA ayrı ayrı ve detaylı yaz: yoğurma (ne kadar, nasıl), 1. MAYALANMA (kaç saat, kaç derecede, hacim kaç katına çıkmalı), gerekiyorsa SOĞUK FERMANTASYON/buzdolabında dinlendirme (kaç saat, neden lezzeti artırır), hamurun katlanması/gaz alma, şekil verme, 2. MAYALANMA, PİŞİRME (kaç derece, kaç dakika, buhar/su püskürtme). En iyi sonuç için ideal süre/sıcaklıkları ver. (Yemek değilse: hazırlık → uygulama adımları → bitirme.) Son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
-    const p3 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" konusunun 3. BÖLÜMÜ (öncekileri tekrarlama). Şu başlıklar:
-PÜF NOKTALARI: kaliteyi artıran ustalık sırları.
-SIK YAPILAN HATALAR: yeni başlayanın hataları ve nasıl önlenir.
-VARYASYONLAR / İPUÇLARI: farklı yapılış/çeşitler veya ekstra öneriler.
-Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
-    // 3 parça da hazır OLUNCA tek seferde göster (parça parça belirmesin, "yükleniyor" görünsün).
-    const c1 = await gloxSor(p1, sistem);
-    const c2 = await gloxSor(p2, sistem);
-    const c3 = await gloxSor(p3, sistem);
+    // METİN — KESİLMEMESİ için KÜÇÜK BAŞLIKLARA bölünür: her başlık KISA (~180 kelime) ve kendi içinde TAM biter,
+    // hepsi birleşince UZUN ve EKSİKSİZ olur. Böylece uzunluk sınırına takılıp yarıda kesilmez.
+    const sistem = "Sen Gloxoo'sun — usta eğitmen (HER meslek için). SADECE istenen tek başlığı yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; başlığı BÜYÜK harf yaz, maddeleri • ile.";
+    const on = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" için SADECE şu başlığı yaz`;
+    const bolumler = [
+      `${on} — NEDİR / TANIM: nedir, neyin nesidir, hangi ülke/kültüre ait, özellikleri, nerede kullanılır.`,
+      `${on} — MALZEME VE ÖLÇÜLER: gereken her şey ve KESİN rakamlar. Bir hamur/yemekse: 1 kg una kaç gr tuz, kaç gr maya, kaç gr şeker, kaç gr/ml yağ, kaç ml su; toplam ölçüler. "Biraz/az" DEME, RAKAM ver. Yemek değilse gerekli alet/malzemeler.`,
+      `${on} — HAZIRLIK VE MAYALANMA: bir hamur/ekmekse yoğurma, 1. MAYALANMA (kaç saat, kaç derece, hacim kaç katı), gerekiyorsa SOĞUK FERMANTASYON/buzdolabında dinlendirme (kaç saat, neden). Yemek değilse hazırlık ve ilk uygulama adımları.`,
+      `${on} — ŞEKİL VERME VE PİŞİRME: şekil verme, 2. mayalanma, PİŞİRME (kaç derece, kaç dakika, buhar/su). Yemek değilse son uygulama ve bitirme adımları.`,
+      `${on} — PÜF NOKTALARI VE SIK HATALAR: kaliteyi artıran ustalık sırları + sık yapılan hatalar ve nasıl önlenir.`,
+    ];
+    // Hepsi hazır OLUNCA tek seferde göster (parça parça belirme yok; "yükleniyor" görünür).
+    const parcalar = [];
+    for (const b of bolumler) {
+      if (istekNoRef.current !== no) return; // kullanıcı başka çeşide geçtiyse bırak
+      const c = await gloxSor(b, sistem);
+      if (c) parcalar.push(duzelt(c));
+    }
     if (istekNoRef.current === no) {
-      const tam = [c1, c2, c3].filter(Boolean).map(duzelt).join("\n\n");
-      setKonuDers(tam || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
+      setKonuDers(parcalar.join("\n\n") || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
     }
   }
 
