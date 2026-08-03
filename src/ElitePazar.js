@@ -287,7 +287,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
                       {etk.slice(0, 2).map((eid) => { const et = ETIKETLER.find((x) => x.id === eid); return et ? <span key={eid} className={"ep-et " + et.sinif}>{et.emoji + " " + t("epEt_" + et.id)}</span> : null; })}
                     </div>
                   )}
-                  <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? t("epUcretsiz") : (u.fiyat ? (u.fiyat + " " + (u.paraSimge || paraSimEP(u.paraBirimi))) : "—")}</div>
+                  <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? t("epUcretsiz") : (u.fiyat ? <>{u.fiyat}<span className="ep-sym">{" " + (u.paraSimge || paraSimEP(u.paraBirimi))}</span></> : "—")}</div>
                   <div className="ep-ksat">
                     <span className="ep-kavatar">{(u.saticiFoto) ? <img src={u.saticiFoto} alt="" /> : (u.satici || "?").slice(0, 1).toUpperCase()}</span>
                     <span className="ep-kyer"><KayanYazi>{u.konum || ""}</KayanYazi></span>
@@ -381,7 +381,7 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
         <div className="ep-dbil">
           <span className="ep-dkat" style={{ background: k.renk }}>{t("epKat_" + k.id)}</span>
           <h2 className="ep-dad">{cev.yuk ? t("ceviriliyor", "Çevriliyor…") : gosterBaslik}</h2>
-          <div className={"ep-dfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? (t("epUcretsiz") + " 🎁") : (urun.fiyat ? (urun.fiyat + " " + parSim) : "—")}</div>
+          <div className={"ep-dfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? (t("epUcretsiz") + " 🎁") : (urun.fiyat ? <>{urun.fiyat}<span className="ep-sym">{" " + parSim}</span></> : "—")}</div>
           {etk.length > 0 && (
             <div className="ep-etks">
               {etk.map((eid) => { const et = ETIKETLER.find((x) => x.id === eid); return et ? <span key={eid} className={"ep-et " + et.sinif}>{et.emoji + " " + t("epEt_" + et.id)}</span> : null; })}

@@ -68,8 +68,10 @@
 .ep-et.tk{ color:#0f6a86; background:#d4f2fb; border:1px solid #7fd0e6; }
 .ep-et.uc{ color:#fff; background:linear-gradient(180deg,#25c268,#0f9e4e); border:1px solid #7fe0a8; }
 .ep-et.dr{ color:#7a5c10; background:#fff2c8; border:1px solid #e0c060; }
-.ep-kfiyat{ font-family:'Playfair Display',serif; font-weight:800; font-size:19px; color:#b25a00; margin-top:7px; }
+.ep-kfiyat{ font-family:'Playfair Display',serif; font-weight:800; font-size:19px; color:#b25a00; margin-top:7px; font-variant-numeric:lining-nums tabular-nums; font-feature-settings:"lnum" 1,"tnum" 1; }
 .ep-kfiyat.bedava{ color:#0f9e4e; }
+/* Para simgesi — her para biriminde (₺/₴/€/$) aynı boyda ve rakamlarla hizalı dursun */
+.ep-sym{ font-family:'Segoe UI',Roboto,Arial,sans-serif; font-size:.8em; font-weight:800; }
 .ep-ksat{ display:flex; align-items:center; gap:6px; margin-top:8px; }
 .ep-kavatar{ width:22px; height:22px; border-radius:6px; flex:none; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); }
 .ep-kavatar img{ width:100%; height:100%; object-fit:cover; }
@@ -95,7 +97,7 @@
 .ep-dbil{ padding:12px 12px 18px; }
 .ep-dkat{ display:inline-block; font-size:11px; font-weight:800; color:#fff; padding:3px 10px; border-radius:9px; text-shadow:0 1px 1px rgba(0,0,0,.3); }
 .ep-dad{ font-family:'Playfair Display',serif; font-size:21px; color:#2a2008; margin:8px 0 4px; line-height:1.2; }
-.ep-dfiyat{ font-family:'Playfair Display',serif; font-weight:800; font-size:26px; color:#b25a00; }
+.ep-dfiyat{ font-family:'Playfair Display',serif; font-weight:800; font-size:26px; color:#b25a00; font-variant-numeric:lining-nums tabular-nums; font-feature-settings:"lnum" 1,"tnum" 1; }
 .ep-dfiyat.bedava{ color:#0f9e4e; }
 .ep-daciklama{ margin-top:10px; font-size:14px; line-height:1.5; color:#3d3117; white-space:pre-wrap; }
 /* İLANI KENDİ DİLİNE ÇEVİR düğmesi — altın, kare köşeli (anayasa) */
@@ -175,8 +177,8 @@
 /* Leaflet katmanları pencerelerin üstünde kalmasın (z çakışması) */
 .ep-harita .leaflet-pane, .ep-harita .leaflet-top, .ep-harita .leaflet-bottom{ z-index:1; }
 .ep-fiyat-in{ display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.95); border:1.5px solid #B8860B; border-radius:12px; padding:9px 12px; }
-.ep-tl{ font-family:'Playfair Display',serif; font-size:20px; font-weight:800; color:#b25a00; }
-.ep-fiyat-val{ flex:1; background:none; border:none; outline:none; font-family:'Playfair Display',serif; font-size:20px; font-weight:800; color:#2a2008; }
+.ep-tl{ font-family:'Playfair Display',serif; font-size:20px; font-weight:800; color:#b25a00; font-variant-numeric:lining-nums tabular-nums; font-feature-settings:"lnum" 1,"tnum" 1; }
+.ep-fiyat-val{ flex:1; background:none; border:none; outline:none; font-family:'Playfair Display',serif; font-size:20px; font-weight:800; color:#2a2008; font-variant-numeric:lining-nums tabular-nums; font-feature-settings:"lnum" 1,"tnum" 1; }
 .ep-glox-fiyat{ margin-top:9px; background:linear-gradient(180deg,#e9f9ef,#d1f2df); border:1px solid #7fd9a3; border-radius:12px; padding:10px 12px; }
 .ep-gf-bas{ font-size:12px; font-weight:800; color:#0d7a3a; }
 .ep-gf-ara{ font-family:'Playfair Display',serif; font-weight:800; font-size:16px; color:#0f9e4e; margin-top:3px; }
