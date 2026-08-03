@@ -46,62 +46,29 @@ function ucretsizGorselUrl(istem, anahtar) {
   return "https://image.pollinations.ai/prompt/" + p + "?width=1024&height=1024&nologo=true&model=flux&seed=" + tohumUret(anahtar || istem);
 }
 
-// Metni okuma parçalarına böl → cümlelere ayır, sonra ~220 karaktere kadar BİRLEŞTİR
-// (çok kısa parçalar Android'de "kesik kesik/atlıyor" yapıyordu; orta boy parça daha akıcı).
-function cumlelereBol(m) {
-  const ham = [];
-  for (const sat of String(m || "").split(/\n+/).map((x) => x.trim()).filter(Boolean)) {
-    for (const c of (sat.match(/[^.!?]+[.!?]*/g) || [sat])) { if (c.trim()) ham.push(c.trim()); }
-  }
-  const out = []; let buf = "";
-  for (const c of ham) {
-    if ((buf + " " + c).trim().length > 220 && buf) { out.push(buf.trim()); buf = c; }
-    else buf = buf ? buf + " " + c : c;
-  }
-  if (buf.trim()) out.push(buf.trim());
-  return out;
-}
-// SESLİ ANLATIM — Gloxoo yazıyı SESLİ okur (tarayıcının kendi sesi, ÜCRETSİZ, anahtar YOK), CÜMLE CÜMLE
-// (Chrome uzun metinde takılıyor → kısa parçalarla akıcı olur) ve okuduğu SATIRI VURGULAR (nerede olduğu görünür).
+// SESLİ ANLATIM — EN BASİT HALİ: yazıyı baştan sona TEK SEFERDE okur (tarayıcının kendi sesi, ÜCRETSİZ).
+// Parçalama/durdurma numaraları YOK (onlar sesi bozuyordu) — sadece oku.
 function SesliMetin({ metin, className, sesDili }) {
   const [okunuyor, setOkunuyor] = useState(false);
-  const [aktif, setAktif] = useState(-1);
-  const durRef = useRef(false);
   const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
-  const cumleler = useMemo(() => cumlelereBol(metin), [metin]);
-  function dur() { durRef.current = true; try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); setAktif(-1); }
+  function dur() { try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
   useEffect(() => () => { try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
   useEffect(() => { dur(); }, [metin]); // eslint-disable-line react-hooks/exhaustive-deps
-  function sesSec(u) { try { const sesler = window.speechSynthesis.getVoices() || []; const s = sesler.find((v) => v.lang && v.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0); if (s) u.voice = s; } catch (e) {} }
   function oku() {
-    if (!cumleler.length || !varMi) return;
-    durRef.current = false; setOkunuyor(true); setAktif(0);
+    if (!metin || !varMi) return;
     try { window.speechSynthesis.cancel(); } catch (e) {}
-    // Orta boy parçaları SIRAYLA oku (biri bitince öteki): Android'de kuyruğu düşürüp yarıda kesiyordu; bu daha sağlam.
-    let i = 0;
-    const soyle = () => {
-      if (durRef.current || i >= cumleler.length) { setOkunuyor(false); setAktif(-1); return; }
-      setAktif(i);
-      const u = new window.SpeechSynthesisUtterance(cumleler[i]);
-      u.lang = sesDili || "tr-TR"; u.rate = 0.95; u.pitch = 1; sesSec(u);
-      u.onend = () => { i++; soyle(); };
-      u.onerror = () => { i++; soyle(); };
-      try { window.speechSynthesis.speak(u); } catch (e) { i++; soyle(); }
-    };
-    soyle();
+    const u = new window.SpeechSynthesisUtterance(metin);
+    u.lang = sesDili || "tr-TR"; u.rate = 1; u.pitch = 1;
+    try { const sesler = window.speechSynthesis.getVoices() || []; const s = sesler.find((v) => v.lang && v.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0); if (s) u.voice = s; } catch (e) {}
+    u.onend = () => setOkunuyor(false);
+    u.onerror = () => setOkunuyor(false);
+    setOkunuyor(true);
+    try { window.speechSynthesis.speak(u); } catch (e) { setOkunuyor(false); }
   }
-  // Chrome uzun kuyruğu ~15sn sonra kendiliğinden duraklatır → canlı tut (aksi halde yarıda kesiliyordu).
-  useEffect(() => {
-    if (!okunuyor) return;
-    const iv = setInterval(() => { try { if (window.speechSynthesis.speaking) { window.speechSynthesis.pause(); window.speechSynthesis.resume(); } } catch (e) {} }, 10000);
-    return () => clearInterval(iv);
-  }, [okunuyor]);
   return (
     <>
       {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ Durdur" : "🔊 Sesli anlat"}</button> : null}
-      {okunuyor
-        ? <div className={className}>{cumleler.map((c, k) => <div key={k} className={"ak-cumle" + (k === aktif ? " ak-okunan" : "")}>{c}</div>)}</div>
-        : <div className={className}>{metin}</div>}
+      <div className={className}>{metin}</div>
     </>
   );
 }
