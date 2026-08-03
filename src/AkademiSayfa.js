@@ -24,6 +24,16 @@ function kodUret() { return "GLX-" + Date.now().toString(36).toUpperCase() + "-"
 // Dil koduna göre AI'ya "hangi dilde yaz" talimatı
 const DIL_AD = { tr: "Türkçe", en: "English", de: "Almanca (Deutsch)", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", uk: "Ukraynaca", ar: "Arapça", zh: "Çince", ja: "Japonca", hi: "Hintçe" };
 
+// Yapay zekâ metnindeki markdown işaretlerini temizle (**kalın**, #başlık, *madde → • ) → düzgün görünsün.
+function duzelt(m) {
+  return String(m || "")
+    .replace(/\*\*/g, "").replace(/__/g, "").replace(/`/g, "")
+    .replace(/(^|\n)\s*#{1,6}\s+/g, "$1")
+    .replace(/(^|\n)\s*[*\-–]\s+/g, "$1• ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir }) {
   const { t } = useTranslation();
   const [gorunum, setGorunum] = useState("liste"); // liste | kurs | sertifikalarim
@@ -36,7 +46,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [aktifKonu, setAktifKonu] = useState(""); const [konuDers, setKonuDers] = useState(""); const [konuYuk, setKonuYuk] = useState(false);
   // GÖRSEL (yapay zekâ ile üretilen örnek/model fotoğrafı — bir kez üretilir, saklanır)
   const [kapakGorsel, setKapakGorsel] = useState(""); // mesleğe göre kapak
-  const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false);
+  const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false); const [konuGorselHata, setKonuGorselHata] = useState("");
   const istekNoRef = useRef(0); // çeşitler arası yarış (race) koruması
   // SINAV
   const [sorular, setSorular] = useState(null); const [sinavYuk, setSinavYuk] = useState(false);
@@ -64,18 +74,20 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
 
   // GÖRSEL üret (ÖNCE paylaşımlı önbellek → yoksa yapay zekâ ile üret → Storage'a yükle → önbelleğe yaz).
   // Böylece her model/çeşit fotoğrafı DÜNYADA BİR KEZ üretilir; sonra herkes hazırdan görür (ücret 1 kez).
+  // Dönüş: { url, hata } — hata varsa ekrana yazıp sebebi göstereceğiz.
   async function gorselUret(anahtar, istem) {
     try {
       const eski = await akademiGorselOku(anahtar);
-      if (eski) return eski; // hazır — üretme
+      if (eski) return { url: eski, hata: "" }; // hazır — üretme
       const r = await fetch(aiKopru, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gorsel: istem }) });
       const j = await r.json().catch(() => ({}));
-      const b64 = j && j.gorsel;
-      if (!b64) return "";
-      const url = await gorselYukle("data:image/png;base64," + b64, uid || "akademi");
-      if (url) { akademiGorselYaz(anahtar, url).catch(() => {}); return url; }
-    } catch (e) {}
-    return "";
+      if (j && j.gorsel) {
+        const url = await gorselYukle("data:image/png;base64," + j.gorsel, uid || "akademi");
+        if (url) { akademiGorselYaz(anahtar, url).catch(() => {}); return { url, hata: "" }; }
+        return { url: "", hata: "Fotoğraf yüklenemedi (depolama)." };
+      }
+      return { url: "", hata: (j && j.hata) || "Görsel üretilemedi." };
+    } catch (e) { return { url: "", hata: String(e) }; }
   }
 
   // Mesleğe girince o mesleğe uygun KAPAK fotoğrafı (bir kez üretilir, saklanır)
@@ -83,7 +95,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     if (gorunum !== "kurs" || !meslek) return;
     let iptal = false; setKapakGorsel("");
     const istem = `Professional realistic cover photo representing the profession "${meslek.ad}": a person skillfully working at their craft in a beautiful, tidy workspace. Warm inviting lighting, photorealistic, high quality, no text, no watermark, no logo.`;
-    gorselUret("kapak|" + meslek.ad, istem).then((u) => { if (!iptal) setKapakGorsel(u); }).catch(() => {});
+    gorselUret("kapak|" + meslek.ad, istem).then((res) => { if (!iptal) setKapakGorsel(res.url || ""); }).catch(() => {});
     return () => { iptal = true; };
   }, [gorunum, meslek]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -96,23 +108,23 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // (2) TEMEL EĞİTİM — genel; TAMAMLANIR (yarım kesilmez), sınırlı uzunluk → tek çağrıya sığar
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers("");
-    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Doğru, ölçülü, uygulanabilir bilgi verirsin. Yazını MUTLAKA tamamlarsın, cümleyi yarıda BIRAKMAZSIN.";
+    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Doğru, ölçülü, uygulanabilir bilgi verirsin. Verilen uzunluğu AŞMAZSIN ve yazını MUTLAKA tamamlarsın, cümleyi yarıda BIRAKMAZSIN. Markdown/yıldız (**) KULLANMA, düz yaz.";
     const p = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine TEMEL eğitim ver (genel tanıtım). Şu başlıkları kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
 1) BU MESLEK NEDİR — ne iş yapılır, neyi bilmek şart.
 2) GEREKLİ MALZEME VE ARAÇLAR — isim isim.
 3) TEMEL KURALLAR VE HİJYEN / GÜVENLİK.
 4) GENEL ÇALIŞMA AKIŞI — işin baştan sona genel sırası.
 5) USTA İPUÇLARI — yeni başlayana altın öğütler.
-ÖNEMLİ: En fazla ~14 madde yaz, KISA-ÖZ tut ve MUTLAKA tamamla (yarım cümle bırakma). Çeşitlerin ölçülü-detaylı anlatımını YAPMA (o ayrı bölümde) — burada sadece genel temel.`;
+ÇOK ÖNEMLİ: TOPLAM 220 KELİMEYİ GEÇME, her madde KISA (tek satır) ve MUTLAKA tamamla (son cümleyi yarıda bırakma). Çeşitlerin ölçülü-detaylı anlatımını YAPMA (o ayrı bölümde). Yıldız/markdown kullanma.`;
     const c = await gloxSor(p, sistem);
-    setDers(c || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
+    setDers(duzelt(c) || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
   // (3a) ÇEŞİTLERİ getir — bu meslekteki tüm tür/ürün/konu listesi (JSON)
   async function konulariYukle() {
     if (konularYuk || !meslek) return; setKonularYuk(true); setKonular(null); setAktifKonu(""); setKonuDers("");
     const sistem = "Sen Gloxoo'sun. SADECE geçerli JSON döndür, başka hiçbir şey yazma.";
-    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken TÜM tür/ürün/konu başlıklarını listele (örn. fırıncı: her ekmek türü, her poğaça, börek, simit, tatlı…; kuaför: her saç kesimi/modeli; tırnak: her tırnak modeli). ${dilAd} dilinde YAZ. SADECE şu JSON'u döndür: {"konular":["başlık1","başlık2","başlık3"]} — en az 8, en çok 20 başlık, her biri kısa (1-4 kelime). Başka açıklama yazma.`;
+    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken TÜM tür/ürün/konu başlıklarını listele. Dar bir alana SIKIŞMA, mesleğin BÜTÜN alt dallarını kapsa. Örnekler: "Fırın / Ekmek / Unlu Mamüller" ise SADECE ekmek değil → çeşitli ekmekler + poğaça/açma + börek çeşitleri + simit + kek/pasta + kurabiye + hamur tatlıları (baklava, tulumba…) + pizza/pide hamuru vb. HEPSİ. Kuaför ise her saç kesimi/modeli; tırnak ise her tırnak modeli. ${dilAd} dilinde YAZ. SADECE şu JSON'u döndür: {"konular":["başlık1","başlık2","başlık3"]} — en az 10, en çok 20 başlık, farklı çeşitlerden dengeli, her biri kısa (1-4 kelime). Başka açıklama yazma.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
     try { const temiz = c.replace(/```json|```/g, "").trim(); const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1)); if (o && Array.isArray(o.konular)) arr = o.konular.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim()).slice(0, 20); } catch (e) {}
@@ -121,21 +133,21 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
 
   // (3b) Bir çeşidi AÇ — o türün ölçü + adım adım YAPILIŞI (tam, kesilmez) + ÖRNEK FOTOĞRAF (önden/yandan)
   async function konuAc(k) {
-    if (aktifKonu === k) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); return; } // aynısına dokununca kapat
+    if (aktifKonu === k) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
     const no = ++istekNoRef.current;
-    setAktifKonu(k); setKonuDers(""); setKonuGorsel(""); setKonuYuk(true); setKonuGorselYuk(true);
+    setAktifKonu(k); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
     // GÖRSEL (paralel — metni bekletmesin): o modelin önden/yandan örnek fotoğrafı
     const gIstem = `Professional realistic reference photo of the "${k}" style/product in the profession "${meslek.ad}". Show a clear front view and a side view side by side of the same result. Clean neutral studio background, natural lighting, photorealistic, high detail, no text, no watermark, no logo.`;
-    gorselUret(meslek.ad + "|" + k, gIstem).then((u) => { if (istekNoRef.current === no) setKonuGorsel(u); }).catch(() => {}).finally(() => { if (istekNoRef.current === no) setKonuGorselYuk(false); });
-    // METİN
-    const sistem = "Sen Gloxoo'sun — usta eğitmen. Bir tek konuyu, ölçüleri ve adımlarıyla GERÇEK ve DOĞRU anlatırsın. Yazını MUTLAKA tamamlarsın, yarıda kesmezsin.";
-    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" nasıl yapılır — TEK TEK, adım adım, EKSİKSİZ anlat. Şu başlıklarla (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
-1) MALZEME / ÖLÇÜLER — KESİN rakamlarla (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; kaç derece, kaç dakika, kaç saat mayalanır). "Biraz/az" DEME, hep RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) bu başlığı "GEREKENLER" yap.
-2) ADIM ADIM YAPILIŞ — baştan sona (hazırlık → uygulama → şekil verme → bitirme).
-3) PÜF NOKTASI — bu türe özel ustalık sırrı ve sık hata.
-En fazla ~16 madde, net ve MUTLAKA tamamla (yarım cümle bırakma).`;
+    gorselUret(meslek.ad + "|" + k, gIstem).then((res) => { if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); } }).catch(() => {}).finally(() => { if (istekNoRef.current === no) setKonuGorselYuk(false); });
+    // METİN — KISA ama ölçülü; MUTLAKA tamamlanır (yarıda kesilmesin diye sınırlı uzunluk)
+    const sistem = "Sen Gloxoo'sun — usta eğitmen. Bir tek konuyu ölçüleri ve adımlarıyla GERÇEK, DOĞRU ve KISA anlatırsın. Verilen uzunluğu AŞMAZSIN ve yazını MUTLAKA tamamlarsın, ASLA yarıda kesmezsin. Markdown/yıldız (**) KULLANMA, düz yaz.";
+    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" nasıl yapılır — kısa ve öz anlat. Şu 3 başlığı kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
+1) MALZEME / ÖLÇÜLER — KESİN rakamlarla (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; kaç derece, kaç dakika mayalanır/pişer). "Biraz/az" DEME, RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) başlığı "GEREKENLER" yap.
+2) ADIM ADIM YAPILIŞ — 4-7 kısa adım (hazırlık → uygulama → şekil → bitirme).
+3) PÜF NOKTASI — 1-2 cümle ustalık sırrı.
+ÇOK ÖNEMLİ: TOPLAM 220 KELİMEYİ GEÇME. Her madde KISA (tek satır). Son maddeyi MUTLAKA tamamla, yarım cümle bırakma. Yıldız/markdown kullanma.`;
     const c = await gloxSor(p, sistem);
-    if (istekNoRef.current === no) { setKonuDers(c || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false); }
+    if (istekNoRef.current === no) { setKonuDers(duzelt(c) || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false); }
   }
 
   // (4) CİDDİ SINAV — profesyonel, zor; anlatılan içerikten; 8 soru
@@ -279,10 +291,12 @@ En fazla ~16 madde, net ve MUTLAKA tamamla (yarım cümle bırakma).`;
               <div className="ak-konu-detay">
                 <div className="ak-konu-bas">📌 {aktifKonu}</div>
                 {/* ÖRNEK FOTOĞRAF (önden/yandan) — yapay zekâ, bir kez üretilir */}
-                {konuGorselYuk && !konuGorsel ? (
-                  <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir", "Örnek fotoğraf hazırlanıyor…")}</div>
-                ) : konuGorsel ? (
+                {konuGorsel ? (
                   <img className="ak-konu-gorsel" src={konuGorsel} alt={aktifKonu} referrerPolicy="no-referrer" />
+                ) : konuGorselYuk ? (
+                  <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir", "Örnek fotoğraf hazırlanıyor…")}</div>
+                ) : konuGorselHata ? (
+                  <div className="ak-gorsel-yuk ak-gorsel-hata">📷 {t("akGorselHata", "Fotoğraf gelmedi. Sebep")}: {konuGorselHata}</div>
                 ) : null}
                 {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor…")}</div> : <div className="ak-ders">{konuDers}</div>}
               </div>

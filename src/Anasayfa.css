@@ -1762,6 +1762,7 @@
 /* Konu (model/çeşit) örnek fotoğrafı */
 .ak-konu-gorsel{ display:block; width:100%; margin:0 0 11px; border-radius:12px; border:2px solid rgba(120,140,30,.4); background:#f5efd8; object-fit:cover; }
 .ak-gorsel-yuk{ background:#fffaf0; border:1.6px dashed #c9a83a; border-radius:12px; padding:22px 14px; text-align:center; color:#7a6420; font-weight:800; font-size:13.5px; margin-bottom:11px; }
+.ak-gorsel-hata{ background:#fdeee0; border-color:#d08a4a; color:#7a3a10; font-size:12.5px; padding:12px 14px; word-break:break-word; }
 .ak-ders{ margin-top:11px; background:#fffdf3; border:1.6px solid rgba(120,140,30,.3); border-radius:12px; padding:13px 15px; color:#3d3406; font-weight:600; font-size:14.5px; line-height:1.6; white-space:pre-wrap; }
 /* Sınav */
 .ak-sinav{ margin-top:11px; }
