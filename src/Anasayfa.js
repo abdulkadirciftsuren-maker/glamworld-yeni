@@ -2462,7 +2462,8 @@ export default function Anasayfa({ pro = false }) {
   // • googleFoto = Google hesabının fotosu → SADECE Google hesabı menüsünde (top-right popup) gösterilir.
   // • foto (GLOXORG avatarı) = kullanıcının Profilim'den yüklediği AYRI foto → Google fotosu ASLA gelmez.
   const googleFoto = (u && u.photoURL) || "";
-  const foto = (profilBilgi && profilBilgi.avatarFoto) || "";
+  // Profil avatarı: avatarFoto (base64) yoksa fotoUrl (http sürümü) — biri doluysa foto GÖRÜNSÜN (bazen boş kalıyordu → "G")
+  const foto = (profilBilgi && (profilBilgi.avatarFoto || profilBilgi.fotoUrl)) || "";
   const [kopyalandi, setKopyalandi] = useState(false);
   // FOTOĞRAF DÜZENLEYİCİ (Profilim penceresinde): yakınlaştır + kaydır + üstüne yazı.
   const [duzenAcik, setDuzenAcik] = useState(false);
@@ -3699,12 +3700,13 @@ export default function Anasayfa({ pro = false }) {
     try { if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop(); } catch (e) {}
     const paylasAcikMi = () => { try { return localStorage.getItem("gw_konumPaylas") !== "0"; } catch (e) { return true; } };
     if (konumPaylas) benKonumumuYaz();
-    tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
+    // GÜVENLİK: boş sonuç gelirse listeyi SİLME (profiller kaybolmasın) → sadece DOLU gelince güncelle.
+    tumKullanicilar(400).then((l) => { if (l && l.length) setMmKisiler(l); }).catch(() => {});
     // CANLI TAZELE: Konum sayfası açıkken her ~18sn kendi konumumu yaz + herkesin listesini yenile
     // → başkaları sonradan konum paylaşınca (ya da yer değiştirince) haritanda BİRKAÇ SANİYEDE görünür.
     const tazele = setInterval(() => {
       if (paylasAcikMi()) benKonumumuYaz();
-      tumKullanicilar(400).then((l) => setMmKisiler(l || [])).catch(() => {});
+      tumKullanicilar(400).then((l) => { if (l && l.length) setMmKisiler(l); }).catch(() => {});
     }, 18000);
     return () => clearInterval(tazele);
   }, [aktifKod, benUid]); // eslint-disable-line react-hooks/exhaustive-deps
