@@ -72,20 +72,23 @@ function SesliMetin({ metin, className, sesDili }) {
   function sesSec(u) { try { const sesler = window.speechSynthesis.getVoices() || []; const s = sesler.find((v) => v.lang && v.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0); if (s) u.voice = s; } catch (e) {} }
   function oku() {
     if (!cumleler.length || !varMi) return;
-    durRef.current = false; setOkunuyor(true);
+    durRef.current = false; setOkunuyor(true); setAktif(0);
     try { window.speechSynthesis.cancel(); } catch (e) {}
-    let i = 0;
-    const soyle = () => {
-      if (durRef.current || i >= cumleler.length) { setOkunuyor(false); setAktif(-1); return; }
-      setAktif(i);
-      const u = new window.SpeechSynthesisUtterance(cumleler[i]);
+    // TÜM parçaları sıraya koy (chaining yerine kuyruk → atlama/kesilme olmaz); okunan parçayı onstart vurgular.
+    cumleler.forEach((c, i) => {
+      const u = new window.SpeechSynthesisUtterance(c);
       u.lang = sesDili || "tr-TR"; u.rate = 0.95; u.pitch = 1; sesSec(u);
-      u.onend = () => { i++; soyle(); };
-      u.onerror = () => { i++; soyle(); };
-      try { window.speechSynthesis.speak(u); } catch (e) { i++; soyle(); }
-    };
-    soyle();
+      u.onstart = () => { if (!durRef.current) setAktif(i); };
+      if (i === cumleler.length - 1) u.onend = () => { setOkunuyor(false); setAktif(-1); };
+      try { window.speechSynthesis.speak(u); } catch (e) {}
+    });
   }
+  // Chrome uzun kuyruğu ~15sn sonra kendiliğinden duraklatır → canlı tut (aksi halde yarıda kesiliyordu).
+  useEffect(() => {
+    if (!okunuyor) return;
+    const iv = setInterval(() => { try { if (window.speechSynthesis.speaking) { window.speechSynthesis.pause(); window.speechSynthesis.resume(); } } catch (e) {} }, 10000);
+    return () => clearInterval(iv);
+  }, [okunuyor]);
   return (
     <>
       {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ Durdur" : "🔊 Sesli anlat"}</button> : null}
@@ -171,6 +174,13 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     } catch (e) { return { url: "", hata: String(e) }; }
   }
 
+  // Konuya uygun İngilizce FOTOĞRAF tarifi üret (yemekse insansız ürün fotosu; saç/güzellik modeliyse kişi) → doğru resim gelsin.
+  async function gorselIstemGetir(ad, meslekAd) {
+    const p = `Give ONE short English image-generation prompt (max 25 words) for a realistic reference photo of "${ad}" in the field of "${meslekAd}". If it is food or an object, describe the object/dish clearly and END with "no people, no text, no watermark". If it is a hairstyle or beauty look, show a person wearing that look. Output ONLY the prompt text, nothing else.`;
+    const c = await gloxSor(p, "Sadece İngilizce istem cümlesini ver; başka hiçbir şey yazma, tırnak koyma.");
+    return duzelt(c || "").replace(/\n/g, " ").replace(/^["']|["']$/g, "").trim().slice(0, 300);
+  }
+
   // Mesleğe girince o mesleğe uygun KAPAK fotoğrafı (bir kez üretilir, saklanır)
   useEffect(() => {
     if (gorunum !== "kurs" || !meslek) return;
@@ -211,30 +221,46 @@ EKSİKSİZ doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
   async function konulariYukle() {
     if (konularYuk || !meslek) return; setKonularYuk(true); setKonular(null); setAktifKonu(""); setKonuDers("");
     const sistem = "Sen Gloxoo'sun. SADECE geçerli JSON döndür, başka hiçbir şey yazma.";
-    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken TÜM tür/ürün/konu başlıklarını listele. Dar bir alana SIKIŞMA, mesleğin BÜTÜN alt dallarını kapsa. Örnekler: "Fırın / Ekmek / Unlu Mamüller" ise SADECE ekmek değil → çeşitli ekmekler + poğaça/açma + börek çeşitleri + simit + kek/pasta + kurabiye + hamur tatlıları (baklava, tulumba…) + pizza/pide hamuru vb. HEPSİ. Kuaför ise her saç kesimi/modeli; tırnak ise her tırnak modeli. DÜNYADAN / uluslararası çeşitleri de kat (örn. farklı ülkelerin ekmekleri, dünyaca bilinen modeller). ${dilAd} dilinde YAZ. SADECE şu JSON'u döndür: {"konular":["başlık1","başlık2","başlık3"]} — en az 12, en çok 20 başlık, farklı çeşitlerden dengeli, her biri kısa (1-4 kelime). Başka açıklama yazma.`;
+    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken çeşitleri/ürünleri/modelleri listele. ÇOK ÖNEMLİ: her başlık TEK ve SOMUT bir çeşit olsun (örn. "Fransız Bageti", "Çavdar Ekmeği", "Simit", "Peynirli Poğaça"); GENEL KATEGORİ YAZMA (örn. "Dünya Ekmekleri", "Glutensiz Ürünler", "Ekmek Çeşitleri" gibi TOPLU başlıklar OLMASIN). Dar alana sıkışma, mesleğin bütün alt dallarından SOMUT örnekler ver; dünyadan/uluslararası somut çeşitler de kat. Her çeşit için bir de İngilizce FOTOĞRAF tarifi ("g") ver: gerçekçi bir referans fotoğrafı; ürün YEMEK/EŞYA ise net ürün fotoğrafı + "no people, no text"; SAÇ/GÜZELLİK modeli ise o modeli taşıyan bir kişi. ${dilAd} dilinde başlık yaz. SADECE şu JSON: {"konular":[{"ad":"Somut Çeşit","g":"english photo prompt, no text"}]} — en az 12, en çok 20 öğe, dengeli. Başka açıklama yazma.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
-    try { const temiz = c.replace(/```json|```/g, "").trim(); const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1)); if (o && Array.isArray(o.konular)) arr = o.konular.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim()).slice(0, 20); } catch (e) {}
+    try {
+      const temiz = c.replace(/```json|```/g, "").trim();
+      const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1));
+      if (o && Array.isArray(o.konular)) arr = o.konular.map((x) => {
+        if (typeof x === "string") return { ad: x.trim(), g: "" };
+        if (x && x.ad) return { ad: String(x.ad).trim(), g: (x.g ? String(x.g) : "").slice(0, 300) };
+        return null;
+      }).filter((x) => x && x.ad).slice(0, 20);
+    } catch (e) {}
     setKonular(arr && arr.length ? arr : []); setKonularYuk(false);
   }
 
-  // (3b) Bir çeşidi AÇ — o türün ölçü + adım adım YAPILIŞI (tam, kesilmez) + ÖRNEK FOTOĞRAF (önden/yandan)
+  // (3b) Bir çeşidi AÇ — o türün ölçü + adım adım YAPILIŞI (tam, kesilmez) + KENDİ FOTOĞRAFI
+  // k: {ad, g} objesi VEYA düz metin (kullanıcı kendi yazınca).
   async function konuAc(k) {
-    if (aktifKonu === k) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
+    const ad = (k && typeof k === "object") ? k.ad : String(k);
+    const gTarif = (k && typeof k === "object" && k.g) ? k.g : "";
+    if (aktifKonu === ad) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
     const no = ++istekNoRef.current;
-    setAktifKonu(k); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
-    // GÖRSEL (paralel — metni bekletmesin): KONU NEYSE onun net fotoğrafı (ekmekse ekmek, saç modeliyse o saç).
-    const gIstem = `A realistic, high-quality photograph that clearly shows "${k}" (in the field of "${meslek.ad}"). The main subject "${k}" fills the frame, well-lit, photorealistic, sharp detail, no text, no writing, no watermark, no logo.`;
-    gorselUret("v2|" + meslek.ad + "|" + k, gIstem).then((res) => { if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); } }).catch(() => {}).finally(() => { if (istekNoRef.current === no) setKonuGorselYuk(false); });
+    setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
+    // GÖRSEL (paralel): KONU NEYSE onun net fotoğrafı. Fotoğraf tarifi varsa onu kullan; yoksa Gloxoo'dan uygun tarif iste (yemekse insansız).
+    (async () => {
+      let istem = gTarif;
+      if (!istem) { try { istem = await gorselIstemGetir(ad, meslek.ad); } catch (e) {} }
+      if (!istem) istem = `a realistic, detailed reference photograph of ${ad} (${meslek.ad}), no text, no watermark`;
+      const res = await gorselUret("v3|" + meslek.ad + "|" + ad, istem);
+      if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
+    })();
     // METİN — TAM ve DETAYLI; kesilmeden BİTMESİ için 3 ODAKLI PARÇA çekilip birleştirilir. HİÇ kısıtlama yok,
     // her parça KENDİ konusunda eksiksiz anlatır (hiçbir adım atlanmaz), her parça kendi içinde tamamlanır.
     const sistem = "Sen Gloxoo'sun — usta eğitmen (HER meslek için). Bir konuyu gerçek bir ustanın çırağına anlattığı gibi EKSİKSİZ, DOĞRU ve DETAYLI öğretirsin. HİÇBİR adımı/aşamayı ATLAMAZSIN. Sadece istenen bölümü yaz; SON CÜMLEYİ MUTLAKA TAMAMLA ve noktayla bitir, ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA, düz yaz; başlıkları BÜYÜK harf + iki nokta yap, maddeleri • ile.";
-    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 1. BÖLÜMÜNÜ eksiksiz anlat. Şu başlıklar:
-NEDİR / TANIM: "${k}" nedir, neyin nesidir, özellikleri, nerede/ne için kullanılır.
-MALZEME / ÖLÇÜLER: gereken HER şey + varsa KESİN rakamlar (örn. bir hamur/yemek ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ vb.). Ölçü varsa "biraz/az" DEME, RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) başlığı "GEREKENLER" yap.
+    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" konusunun 1. BÖLÜMÜNÜ eksiksiz anlat. Şu başlıklar:
+NEDİR / TANIM: "${ad}" nedir, neyin nesidir, özellikleri, hangi ülkeye/kültüre ait, nerede/ne için kullanılır.
+MALZEME / ÖLÇÜLER: gereken HER şey + varsa KESİN rakamlar (örn. bir hamur/yemek ise: 1 kg una kaç gr tuz, kaç gr maya, kaç ml su, kaç gr şeker/yağ vb.). Ölçü varsa "biraz/az" DEME, RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) başlığı "GEREKENLER" yap.
 Bu 2 başlığı EKSİKSİZ doldur; son cümleyi TAMAMLA (nokta ile bitir). Yapılışı burada YAZMA (o 2. bölümde).`;
-    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 2. BÖLÜMÜ: ADIM ADIM YAPILIŞ. 1. bölümü (malzeme) tekrarlama. Baştan sona HER aşamayı SIRAYLA ve eksiksiz anlat; HİÇBİR adımı atlama. Uygunsa şu aşamaları MUTLAKA ayrı ayrı yaz: hazırlık, karıştırma/yoğurma, MAYALANMA/DİNLENDİRME (kaç dakika/saat, nasıl anlaşılır), şekil verme, PİŞİRME/UYGULAMA (kaç derece, kaç dakika), bitirme/servis. (Yemek değilse: hazırlık → uygulama adımları → bitirme.) Son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
-    const p3 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" konusunun 3. BÖLÜMÜ (öncekileri tekrarlama). Şu başlıklar:
+    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" konusunun 2. BÖLÜMÜ: ADIM ADIM YAPILIŞ. 1. bölümü (malzeme) tekrarlama. Baştan sona HER aşamayı SIRAYLA ve eksiksiz anlat; HİÇBİR adımı atlama. Bir hamur/ekmek ise şu aşamaları MUTLAKA ayrı ayrı ve detaylı yaz: yoğurma (ne kadar, nasıl), 1. MAYALANMA (kaç saat, kaç derecede, hacim kaç katına çıkmalı), gerekiyorsa SOĞUK FERMANTASYON/buzdolabında dinlendirme (kaç saat, neden lezzeti artırır), hamurun katlanması/gaz alma, şekil verme, 2. MAYALANMA, PİŞİRME (kaç derece, kaç dakika, buhar/su püskürtme). En iyi sonuç için ideal süre/sıcaklıkları ver. (Yemek değilse: hazırlık → uygulama adımları → bitirme.) Son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
+    const p3 = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" konusunun 3. BÖLÜMÜ (öncekileri tekrarlama). Şu başlıklar:
 PÜF NOKTALARI: kaliteyi artıran ustalık sırları.
 SIK YAPILAN HATALAR: yeni başlayanın hataları ve nasıl önlenir.
 VARYASYONLAR / İPUÇLARI: farklı yapılış/çeşitler veya ekstra öneriler.
@@ -387,10 +413,17 @@ Eksiksiz doldur; son cümleyi MUTLAKA TAMAMLA (nokta ile bitir).`;
             {konularYuk && <div className="ak-yuk">⏳ {t("akCesitYuk", "Çeşitler getiriliyor…")}</div>}
             {konular && konular.length === 0 && <div className="ak-yuk">{t("akCesitOlmadi", "Alınamadı.")} <button className="ak-btn kucuk" onClick={konulariYukle}>{t("tekrar", "Tekrar")}</button></div>}
             {konular && konular.length > 0 && (
-              <div className="ak-konu-cipler">
-                {konular.map((k, i) => (
-                  <button key={k + i} className={"ak-konu-cip" + (aktifKonu === k ? " aktif" : "")} onClick={() => konuAc(k)}>{k}</button>
-                ))}
+              <div className="ak-konu-izgara">
+                {konular.map((k, i) => {
+                  const ad = (k && typeof k === "object") ? k.ad : String(k);
+                  const foto = ucretsizGorselUrl((k && k.g) || `a realistic detailed photo of ${ad} (${meslek.ad}), no text, no watermark`, "v3|" + meslek.ad + "|" + ad);
+                  return (
+                    <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} onClick={() => konuAc(k)}>
+                      <span className="ak-konu-kart-foto"><img src={foto} alt={ad} loading="lazy" referrerPolicy="no-referrer" /></span>
+                      <span className="ak-konu-kart-ad">{ad}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {aktifKonu && (
