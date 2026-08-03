@@ -47,23 +47,41 @@ function ucretsizGorselUrl(istem, anahtar) {
 }
 
 // SESLİ ANLATIM — EN BASİT HALİ: yazıyı baştan sona TEK SEFERDE okur (tarayıcının kendi sesi, ÜCRETSİZ).
-// Parçalama/durdurma numaraları YOK (onlar sesi bozuyordu) — sadece oku.
+// Metni ~200 karakterlik parçalara böl (Android uzun metni okumuyor; kısa parça + kuyruk daha sağlam).
+function sesParcala(m) {
+  const cumleler = String(m || "").replace(/\n+/g, ". ").match(/[^.!?]+[.!?]*/g) || [String(m || "")];
+  const out = []; let buf = "";
+  for (const c of cumleler) { const p = c.trim(); if (!p) continue; if ((buf + " " + p).trim().length > 200 && buf) { out.push(buf.trim()); buf = p; } else buf = buf ? buf + " " + p : p; }
+  if (buf.trim()) out.push(buf.trim());
+  return out;
+}
+// SESLİ ANLATIM — parçaları KUYRUĞA koyar + Android'in ~15sn sonra kendini durdurmasını engeller (canlı tutar).
 function SesliMetin({ metin, className, sesDili }) {
   const [okunuyor, setOkunuyor] = useState(false);
   const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
-  function dur() { try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
-  useEffect(() => () => { try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
+  const canliRef = useRef(false); const ivRef = useRef(null);
+  function temizle() { if (ivRef.current) { clearInterval(ivRef.current); ivRef.current = null; } }
+  function dur() { canliRef.current = false; temizle(); try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
+  useEffect(() => () => { temizle(); try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
   useEffect(() => { dur(); }, [metin]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { try { window.speechSynthesis && window.speechSynthesis.getVoices(); } catch (e) {} }, []); // sesleri önceden yükle
   function oku() {
     if (!metin || !varMi) return;
     try { window.speechSynthesis.cancel(); } catch (e) {}
-    const u = new window.SpeechSynthesisUtterance(metin);
-    u.lang = sesDili || "tr-TR"; u.rate = 1; u.pitch = 1;
-    try { const sesler = window.speechSynthesis.getVoices() || []; const s = sesler.find((v) => v.lang && v.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0); if (s) u.voice = s; } catch (e) {}
-    u.onend = () => setOkunuyor(false);
-    u.onerror = () => setOkunuyor(false);
-    setOkunuyor(true);
-    try { window.speechSynthesis.speak(u); } catch (e) { setOkunuyor(false); }
+    let ses = null;
+    try { const v = window.speechSynthesis.getVoices() || []; ses = v.find((s) => s.lang && s.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0) || null; } catch (e) {}
+    const parcalar = sesParcala(metin);
+    canliRef.current = true; setOkunuyor(true);
+    parcalar.forEach((p, i) => {
+      const u = new window.SpeechSynthesisUtterance(p);
+      u.lang = sesDili || "tr-TR"; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+      if (i === parcalar.length - 1) u.onend = () => { canliRef.current = false; temizle(); setOkunuyor(false); };
+      try { window.speechSynthesis.speak(u); } catch (e) {}
+    });
+    temizle();
+    ivRef.current = setInterval(() => {
+      try { if (!canliRef.current || !window.speechSynthesis.speaking) { temizle(); return; } window.speechSynthesis.pause(); window.speechSynthesis.resume(); } catch (e) {}
+    }, 8000);
   }
   return (
     <>
@@ -107,6 +125,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [kapakGorsel, setKapakGorsel] = useState(""); // mesleğe göre kapak
   const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false); const [konuGorselHata, setKonuGorselHata] = useState("");
   const istekNoRef = useRef(0); // çeşitler arası yarış (race) koruması
+  const konuDetayRef = useRef(null); // bir çeşide basınca tarife otomatik kaydır (aşağıda kaybolmasın)
   // SINAV
   const [sorular, setSorular] = useState(null); const [sinavYuk, setSinavYuk] = useState(false);
   const [cevaplar, setCevaplar] = useState({}); const [sonuc, setSonuc] = useState(null); // {dogru, toplam, gecti}
@@ -125,6 +144,13 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const FOTO_ACIK = false;
 
   useEffect(() => { if (uid) akademiKayitlarimOku(uid).then((l) => setKayitlarim(l || [])).catch(() => {}); }, [uid]);
+
+  // Bir çeşide/Sor'a basınca açılan tarife OTOMATİK KAYDIR (en aşağıda kaybolmasın, hemen görünsün).
+  useEffect(() => {
+    if (!aktifKonu) return;
+    const z = setTimeout(() => { try { konuDetayRef.current && konuDetayRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} }, 60);
+    return () => clearTimeout(z);
+  }, [aktifKonu]);
 
   // ANDROID GERİ TUŞU: Akademi içi derinliği ana ekrana bildir → alt pencere (kurs/sertifikalarım/sertifika)
   // açıkken geri tuşu SADECE onu kapatır, Akademi'de kalınır (ana sayfaya atmaz). 0 liste, 1 alt, 2 sertifika.
@@ -170,9 +196,15 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     } catch (e) { return { url: "", hata: String(e) }; }
   }
 
-  // Bir çeşidin fotoğraf istemi (ızgara küçük resmi + detay büyük resmi AYNI olsun diye TEK yerden).
+  // Bir çeşidin basit fotoğraf istemi (yedek).
   function fotoIstem(ad) {
     return `a realistic, detailed photograph of "${ad}" (${meslek.ad}), no text, no watermark, no logo`;
+  }
+  // TEK fotoğraf için Gloxoo'dan KONUYA UYGUN İngilizce istem al (yemekse insansız ürün fotosu → dağ/kadın gelmesin).
+  async function gorselIstemGetir(ad) {
+    const p = `Give ONE short English image prompt (max 25 words) for a realistic photo of "${ad}" in "${meslek.ad}". If it is food/an object, describe that food/object clearly and END with "close-up, food photography, no people, no person, no text". If it is a hairstyle/beauty look, show a person with that look. Output ONLY the prompt.`;
+    const c = await gloxSor(p, "Sadece İngilizce istem cümlesini ver, başka hiçbir şey yazma, tırnak koyma.");
+    return String(c || "").replace(/\n/g, " ").replace(/^["']|["']$/g, "").trim().slice(0, 300);
   }
 
   // Mesleğe girince o mesleğe uygun KAPAK fotoğrafı (bir kez üretilir, saklanır)
@@ -232,15 +264,14 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
     const ad = (k && typeof k === "object") ? k.ad : String(k);
     if (aktifKonu === ad) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
     const no = ++istekNoRef.current;
-    setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(false);
-    // GÖRSEL sadece FOTO_ACIK iken (OpenAI anahtarı varken) üretilir; ücretsiz servis kapalı.
-    if (FOTO_ACIK) {
-      setKonuGorselYuk(true);
-      (async () => {
-        const res = await gorselUret("v3|" + meslek.ad + "|" + ad, fotoIstem(ad));
-        if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
-      })();
-    }
+    setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
+    // TEK FOTOĞRAF (bu çeşide özel) — ızgarada resim yok; sadece BURADA, bastığında tek tek üretilir (Gloxoo tek tek düzgün veriyor).
+    (async () => {
+      let istem = ""; try { istem = await gorselIstemGetir(ad); } catch (e) {}
+      if (!istem) istem = fotoIstem(ad);
+      const res = await gorselUret("v4|" + meslek.ad + "|" + ad, istem);
+      if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
+    })();
     // METİN — KESİLMEMESİ için KÜÇÜK BAŞLIKLARA bölünür: her başlık KISA (~180 kelime) ve kendi içinde TAM biter,
     // hepsi birleşince UZUN ve EKSİKSİZ olur. Böylece uzunluk sınırına takılıp yarıda kesilmez.
     const sistem = "Sen Gloxoo'sun — usta eğitmen (HER meslek için). SADECE istenen tek başlığı yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; başlığı BÜYÜK harf yaz, maddeleri • ile.";
@@ -398,6 +429,22 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
               <input value={konuAra} onChange={(e) => setKonuAra(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && konuAra.trim()) { konuAc(konuAra.trim()); } }} placeholder={t("akKonuAraYer", "Başka bir çeşit/model yaz (örn. dünyadan bir ekmek)…")} />
               <button className="ak-konu-ara-btn" disabled={!konuAra.trim() || konuYuk} onClick={() => { if (konuAra.trim()) konuAc(konuAra.trim()); }}>{t("akSor", "Sor")}</button>
             </div>
+            {/* TARİF/DETAY — bir çeşide ya da Sor'a basınca HEMEN BURADA (Sor kutusunun altında) açılır; aşağıda kaybolmaz */}
+            {aktifKonu && (
+              <div className="ak-konu-detay" ref={konuDetayRef}>
+                <div className="ak-konu-bas">📌 {aktifKonu}</div>
+                {/* TEK FOTOĞRAF — bu çeşide özel, tek tek yüklenir */}
+                {konuGorsel ? (
+                  <img className="ak-konu-gorsel" src={konuGorsel} alt={aktifKonu} referrerPolicy="no-referrer" />
+                ) : konuGorselYuk ? (
+                  <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir2", "Fotoğraf hazırlanıyor…")}</div>
+                ) : null}
+                {konuYuk
+                  ? <div className="ak-yuk">⏳ {t("akKonuYuk3", "Gloxoo tarifi hazırlıyor")}{konuAsama ? " %" + Math.round((konuAsama / 5) * 100) : "…"}</div>
+                  : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
+                {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
+              </div>
+            )}
             {!konular && !konularYuk && <button className="ak-btn" onClick={konulariYukle}>{t("akCesitGetir", "Çeşitleri getir")}</button>}
             {konularYuk && <div className="ak-yuk">⏳ {t("akCesitYuk", "Çeşitler getiriliyor…")}</div>}
             {konular && konular.length === 0 && <div className="ak-yuk">{t("akCesitOlmadi", "Alınamadı.")} <button className="ak-btn kucuk" onClick={konulariYukle}>{t("tekrar", "Tekrar")}</button></div>}
@@ -407,26 +454,11 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
                   const ad = (k && typeof k === "object") ? k.ad : String(k);
                   return (
                     <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} onClick={() => konuAc(k)}>
-                      {FOTO_ACIK
-                        ? <KonuFoto src={ucretsizGorselUrl(fotoIstem(ad), "v3|" + meslek.ad + "|" + ad)} ad={ad} ik={meslek.ik} />
-                        : <span className="ak-konu-kart-foto ak-konu-kart-ik">{meslek.ik}</span>}
+                      <span className="ak-konu-kart-foto ak-konu-kart-ik">{meslek.ik}</span>
                       <span className="ak-konu-kart-ad">{ad}</span>
                     </button>
                   );
                 })}
-              </div>
-            )}
-            {aktifKonu && (
-              <div className="ak-konu-detay">
-                <div className="ak-konu-bas">📌 {aktifKonu}</div>
-                {/* ÖRNEK FOTOĞRAF — yalnız FOTO_ACIK iken (OpenAI anahtarı varken). Ücretsiz servis yanlış resim verdiği için kapalı. */}
-                {FOTO_ACIK && (konuGorsel ? (
-                  <img className="ak-konu-gorsel" src={konuGorsel} alt={aktifKonu} referrerPolicy="no-referrer" />
-                ) : konuGorselYuk ? (
-                  <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir", "Örnek fotoğraf hazırlanıyor…")}</div>
-                ) : null)}
-                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk2", "Gloxoo tarifi hazırlıyor")}{konuAsama ? " (" + konuAsama + "/5)" : "…"}</div> : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} />}
-                {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
               </div>
             )}
           </div>
