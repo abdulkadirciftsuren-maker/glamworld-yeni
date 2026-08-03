@@ -47,41 +47,52 @@ function ucretsizGorselUrl(istem, anahtar) {
 }
 
 // SESLİ ANLATIM — EN BASİT HALİ: yazıyı baştan sona TEK SEFERDE okur (tarayıcının kendi sesi, ÜCRETSİZ).
-// Metni ~200 karakterlik parçalara böl (Android uzun metni okumuyor; kısa parça + kuyruk daha sağlam).
-function sesParcala(m) {
-  const cumleler = String(m || "").replace(/\n+/g, ". ").match(/[^.!?]+[.!?]*/g) || [String(m || "")];
-  const out = []; let buf = "";
-  for (const c of cumleler) { const p = c.trim(); if (!p) continue; if ((buf + " " + p).trim().length > 200 && buf) { out.push(buf.trim()); buf = p; } else buf = buf ? buf + " " + p : p; }
-  if (buf.trim()) out.push(buf.trim());
-  return out;
+// Sesli okuma için metni temizle (ana uygulamadaki çalışan yöntemin aynısı): yıldız/markdown/emoji okunmasın.
+function sesTemizle(m) {
+  return String(m || "")
+    .replace(/\*\*?|__?|`+|#+|>|~+|\|/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/gu, "")
+    .replace(/[•★☆◆♦]/g, " ")
+    .replace(/Gloxoo/gi, "Gloksu").replace(/GLOXORG/gi, "Gloksorg")
+    .replace(/\s+/g, " ").trim();
 }
-// SESLİ ANLATIM — parçaları KUYRUĞA koyar + Android'in ~15sn sonra kendini durdurmasını engeller (canlı tutar).
+// SESLİ ANLATIM — ANA UYGULAMADAKİ ÇALIŞAN yöntemin aynısı: sesler yüklenene kadar BEKLE, en iyi sesi seç,
+// CÜMLELERE böl ve hepsini KUYRUĞA koy, resume() ile uyandır. (Motor "uyandırma" Anasayfa'da global zaten var.)
 function SesliMetin({ metin, className, sesDili }) {
   const [okunuyor, setOkunuyor] = useState(false);
   const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
-  const canliRef = useRef(false); const ivRef = useRef(null);
-  function temizle() { if (ivRef.current) { clearInterval(ivRef.current); ivRef.current = null; } }
-  function dur() { canliRef.current = false; temizle(); try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
-  useEffect(() => () => { temizle(); try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
+  function dur() { try { window.speechSynthesis.cancel(); } catch (e) {} setOkunuyor(false); }
+  useEffect(() => () => { try { window.speechSynthesis.cancel(); } catch (e) {} }, []);
   useEffect(() => { dur(); }, [metin]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { try { window.speechSynthesis && window.speechSynthesis.getVoices(); } catch (e) {} }, []); // sesleri önceden yükle
   function oku() {
     if (!metin || !varMi) return;
+    const temiz = sesTemizle(metin);
+    if (!temiz) return;
     try { window.speechSynthesis.cancel(); } catch (e) {}
-    let ses = null;
-    try { const v = window.speechSynthesis.getVoices() || []; ses = v.find((s) => s.lang && s.lang.toLowerCase().indexOf((sesDili || "tr").slice(0, 2)) === 0) || null; } catch (e) {}
-    const parcalar = sesParcala(metin);
-    canliRef.current = true; setOkunuyor(true);
-    parcalar.forEach((p, i) => {
-      const u = new window.SpeechSynthesisUtterance(p);
-      u.lang = sesDili || "tr-TR"; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-      if (i === parcalar.length - 1) u.onend = () => { canliRef.current = false; temizle(); setOkunuyor(false); };
-      try { window.speechSynthesis.speak(u); } catch (e) {}
-    });
-    temizle();
-    ivRef.current = setInterval(() => {
-      try { if (!canliRef.current || !window.speechSynthesis.speaking) { temizle(); return; } window.speechSynthesis.pause(); window.speechSynthesis.resume(); } catch (e) {}
-    }, 8000);
+    const lk = (sesDili || "tr").toLowerCase(); const kok = lk.split("-")[0];
+    const sesSec = () => {
+      const sesler = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || [];
+      const dilli = sesler.filter((v) => v.lang && (v.lang.toLowerCase() === lk || v.lang.toLowerCase().startsWith(kok)));
+      const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || "");
+      return dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
+    };
+    const parcalar = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
+    setOkunuyor(true);
+    let basladi = false;
+    const konus = () => {
+      if (basladi) return; basladi = true;
+      const ses = sesSec();
+      parcalar.forEach((p, idx) => {
+        const u = new window.SpeechSynthesisUtterance(p);
+        u.lang = sesDili || "tr-TR"; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+        if (idx === parcalar.length - 1) u.onend = () => setOkunuyor(false);
+        try { window.speechSynthesis.speak(u); } catch (e) {}
+      });
+      try { window.speechSynthesis.resume(); } catch (e) {}
+    };
+    if (((window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || []).length > 0) konus();
+    else { try { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; konus(); }; } catch (e) {} setTimeout(konus, 400); }
   }
   return (
     <>
@@ -121,6 +132,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [aktifKonu, setAktifKonu] = useState(""); const [konuDers, setKonuDers] = useState(""); const [konuYuk, setKonuYuk] = useState(false);
   const [konuAra, setKonuAra] = useState(""); // listede olmayan çeşidi kullanıcı kendi yazıp sorar
   const [konuAsama, setKonuAsama] = useState(0); // tarif hazırlanırken ilerleme (2/5 gibi)
+  const [dersAsama, setDersAsama] = useState(0); // temel eğitim yükleme ilerlemesi (3 bölüm)
   // GÖRSEL (yapay zekâ ile üretilen örnek/model fotoğrafı — bir kez üretilir, saklanır)
   const [kapakGorsel, setKapakGorsel] = useState(""); // mesleğe göre kapak
   const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false); const [konuGorselHata, setKonuGorselHata] = useState("");
@@ -224,7 +236,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
 
   // (2) TEMEL EĞİTİM — kesilmesin diye KÜÇÜK başlıklara bölünür (her başlık kısa+tam), birleşince eksiksiz olur.
   async function egitimAl() {
-    if (dersYuk || !meslek) return; setDersYuk(true); setDers("");
+    if (dersYuk || !meslek) return; setDersYuk(true); setDers(""); setDersAsama(0);
     const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). SADECE istenen tek başlığı yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; başlığı BÜYÜK harf yaz, maddeleri • ile.";
     const on = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine SADECE şu başlığı yaz`;
     const bolumler = [
@@ -232,8 +244,8 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
       `${on} — GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar; ve TEMEL HİJYEN / GÜVENLİK kuralları.`,
       `${on} — GENEL ÇALIŞMA AKIŞI VE USTA İPUÇLARI: işin baştan sona genel sırası + yeni başlayana altın öğütler.`,
     ];
-    const parcalar = [];
-    for (const b of bolumler) { const c = await gloxSor(b, sistem); if (c) parcalar.push(duzelt(c)); }
+    const parcalar = []; let il = 0;
+    for (const b of bolumler) { const c = await gloxSor(b, sistem); if (c) parcalar.push(duzelt(c)); il++; setDersAsama(il); }
     setDers(parcalar.join("\n\n") || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
@@ -246,14 +258,15 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
 ÇOK ÖNEMLİ KURALLAR:
 1) Her başlık TEK ve SOMUT bir çeşit olsun (örn. "Fransız Bageti", "Çavdar Ekmeği", "Simit", "Peynirli Poğaça"); GENEL KATEGORİ YAZMA ("Dünya Ekmekleri", "Ekmek Çeşitleri" gibi TOPLU başlık OLMASIN).
 2) SADECE bu mesleğin ASIL ürünlerini ver; alakasız/yan ürün KATMA (örn. fırın/ekmek mesleğinde SÜTLAÇ, dondurma gibi TATLILAR yazma — asıl iş EKMEK ve HAMUR İŞİ: çeşitli ekmekler, poğaça, açma, börek, simit, pide, lavaş vb.).
-3) BÖLGE: kullanıcı "${bolge}" bölgesinde. O ÜLKEDE/BÖLGEDE en çok yapılan/tüketilen yerel çeşitleri MUTLAKA ve ÖNCE ekle (yerel klasikler baştan gelsin), sonra tanınmış diğer çeşitler.
-${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşit 1","Somut Çeşit 2"]} — en az 12, en çok 18 öğe, KISA isimler. Başka hiçbir şey (fotoğraf tarifi vb.) EKLEME.`;
+3) BÖLGE ÖNCE (çok önemli): kullanıcı "${bolge}" bölgesinde. O ÜLKEDE/BÖLGEDE en çok yapılan/tüketilen YEREL çeşitleri LİSTENİN BAŞINA koy (ilk sıralar yerel klasikler), SONRA tanınmış diğer/dünya çeşitleri.
+4) ÇOK ÇEŞİT ver, dar kalma: fırın/ekmek ise çeşitli ekmekler + POĞAÇA çeşitleri ve İÇLERİ (peynirli, kaşarlı, patatesli, zeytinli, kıymalı) + açma + simit + BÖREK çeşitleri + pide/lavaş + tatlı/şekerli hamurlar + kek/çörek gibi HEPSİNDEN somut örnekler.
+${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşit 1","Somut Çeşit 2"]} — en az 20, en çok 30 öğe, KISA isimler, YEREL olanlar BAŞTA. Başka hiçbir şey EKLEME.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
     try {
       const temiz = c.replace(/```json|```/g, "").trim();
       const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1));
-      if (o && Array.isArray(o.konular)) arr = o.konular.map((x) => (typeof x === "string" ? x : (x && x.ad) || "")).map((x) => String(x).trim()).filter(Boolean).slice(0, 18);
+      if (o && Array.isArray(o.konular)) arr = o.konular.map((x) => (typeof x === "string" ? x : (x && x.ad) || "")).map((x) => String(x).trim()).filter(Boolean).slice(0, 30);
     } catch (e) {}
     setKonular(arr && arr.length ? arr : []); setKonularYuk(false);
   }
@@ -414,7 +427,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           <div className="ak-adim-bas"><span className="ak-adim-no">1</span> 📚 {t("akTemelEgitim", "Temel Eğitim")}</div>
           <div className="ak-adim-alt">{t("akTemelAlt", "Gloxoo bu meslek hakkında genel bilgiyi öğretir.")}</div>
           {!ders && !dersYuk && <button className="ak-btn" onClick={egitimAl}>{t("akEgitimAl", "Eğitimi başlat")}</button>}
-          {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor", "Gloxoo eğitimi hazırlıyor…")}</div>}
+          {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor2", "Gloxoo eğitimi hazırlıyor")}{dersAsama ? " %" + Math.round((dersAsama / 3) * 100) : "…"}</div>}
           {ders && <SesliMetin metin={ders} className="ak-ders" sesDili={dil} />}
           {ders && !dersYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
         </div>
@@ -454,7 +467,6 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
                   const ad = (k && typeof k === "object") ? k.ad : String(k);
                   return (
                     <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} onClick={() => konuAc(k)}>
-                      <span className="ak-konu-kart-foto ak-konu-kart-ik">{meslek.ik}</span>
                       <span className="ak-konu-kart-ad">{ad}</span>
                     </button>
                   );
