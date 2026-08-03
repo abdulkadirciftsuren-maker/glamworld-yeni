@@ -48,6 +48,8 @@ const ElitePazar = lazy(() => import("./ElitePazar"));
 const KonumHarita = lazy(() => import("./KonumHarita"));
 // ADRES HARİTASI (kapı numaralı adres bul + kopyala, HERE) — arkadaş haritasının ALTINDA
 const AdresHarita = lazy(() => import("./AdresHarita"));
+// AKADEMİ sayfası (eğitim + Gloxoo sınavı + işini göster + GLOXORG sertifikası) — AYRI PARÇA (code-split)
+const AkademiSayfa = lazy(() => import("./AkademiSayfa"));
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
@@ -8534,6 +8536,21 @@ export default function Anasayfa({ pro = false }) {
               />
             </Suspense>
           ) : null}
+        </div>
+      ) : aktifKod === "akademi" ? (
+        /* AKADEMİ — her meslek için eğitim + Gloxoo sınavı + işini göster + doğrulanabilir GLOXORG sertifikası */
+        <div className="ana-pencere" key="akademi">
+          <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#5a6a2a", fontWeight: 800, fontSize: 16 }}>🎓 …</div>}>
+            <AkademiSayfa
+              uid={benUid}
+              benAd={benimAdGetir()}
+              benFoto={(profilBilgi && (profilBilgi.fotoUrl || profilBilgi.avatarFoto)) || ""}
+              dil={dil}
+              aiKopru={AI_KOPRU}
+              ulke={(profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || (konum && konum.ulke) || ""}
+              sehir={(profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || (konum && konum.sehir) || ""}
+            />
+          </Suspense>
         </div>
       ) : aktifKod === "topluluk" ? (
         /* TANIŞMA — kişi KENDİ fotoğraf(lar)ını + istediği ismi + tanıtımını girer (opt-in, kendi profiline); büyük kartlar, Beğen + Mesaj */

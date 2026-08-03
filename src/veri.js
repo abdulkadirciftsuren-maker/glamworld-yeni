@@ -452,6 +452,36 @@ export async function mekanlariOku(adet = 800) {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   } catch (e) { return []; }
 }
+// ---------- AKADEMİ (eğitim + GLOXORG sertifikası) ----------
+// Herkes OKUR (sertifika doğrulama açık); giriş yapan KENDİ kaydını oluşturur; sahibi/yönetici günceller-siler.
+export async function akademiKayitEkle(veri) {
+  const ref = doc(collection(db, "akademiKayit"));
+  await setDoc(ref, { zamanMs: Date.now(), ...veri, olusturma: serverTimestamp() });
+  return ref.id;
+}
+export async function akademiKayitlarimOku(uid, adet = 100) {
+  if (!uid) return [];
+  try {
+    const q = query(collection(db, "akademiKayit"), where("uid", "==", uid), fsLimit(adet));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+  } catch (e) { return []; }
+}
+export async function akademiKayitGuncelle(id, veri) {
+  if (!id) return false;
+  try { await setDoc(doc(db, "akademiKayit", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+}
+// Sertifikayı KOD ile doğrula (herkes sorgulayabilir)
+export async function sertifikaDogrula(kod) {
+  if (!kod) return null;
+  try {
+    const q = query(collection(db, "akademiKayit"), where("sertifikaKod", "==", String(kod).trim().toUpperCase()), fsLimit(1));
+    const snap = await getDocs(q);
+    const d = snap.docs[0];
+    return d ? { id: d.id, ...d.data() } : null;
+  } catch (e) { return null; }
+}
+
 export async function mekanGuncelle(id, veri) {
   if (!id) return false;
   try { await setDoc(doc(db, "mekanlar", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }

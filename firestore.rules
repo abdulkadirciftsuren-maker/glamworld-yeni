@@ -58,6 +58,15 @@ service cloud.firestore {
       allow delete: if girisli() && (resource.data.uid == request.auth.uid || yonetici());
     }
 
+    // Akademi (eğitim + GLOXORG sertifikası) — herkes OKUR (sertifika kodu doğrulama açık);
+    // giriş yapan KENDİ kaydını oluşturur; sahibi veya yönetici günceller/siler.
+    match /akademiKayit/{id} {
+      allow read: if true;
+      allow create: if girisli() && request.resource.data.uid == request.auth.uid;
+      allow update: if girisli() && (resource.data.uid == request.auth.uid || yonetici());
+      allow delete: if girisli() && (resource.data.uid == request.auth.uid || yonetici());
+    }
+
     // Teklifler — sadece ilgili müşteri/profesyonel
     match /teklifler/{id} {
       allow read: if girisli() && (request.auth.uid == resource.data.musteriUid || request.auth.uid == resource.data.profesyonelUid);
