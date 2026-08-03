@@ -482,6 +482,27 @@ export async function sertifikaDogrula(kod) {
   } catch (e) { return null; }
 }
 
+// ---------- AKADEMİ GÖRSEL ÖNBELLEĞİ (paylaşımlı) ----------
+// Her model/çeşit fotoğrafı BİR KEZ üretilir; herkes aynı fotoğrafı görür (tekrar üretilmez → ücret sadece 1 kez).
+// Anahtar (ör. "kuafor|bob-kesimi") → güvenli belge kimliğine çevrilir.
+function _gorselAnahtar(s) {
+  return String(s || "").toLocaleLowerCase("tr")
+    .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u")
+    .replace(/[^a-z0-9|]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 200) || "genel";
+}
+// Önbellekten oku → fotoğraf URL'si (yoksa "").
+export async function akademiGorselOku(anahtar) {
+  try {
+    const s = await getDoc(doc(db, "akademiGorsel", _gorselAnahtar(anahtar)));
+    return (s.exists() && s.data() && s.data().url) || "";
+  } catch (e) { return ""; }
+}
+// Önbelleğe yaz (üretilen fotoğrafın URL'si).
+export async function akademiGorselYaz(anahtar, url) {
+  if (!url) return false;
+  try { await setDoc(doc(db, "akademiGorsel", _gorselAnahtar(anahtar)), { url, zamanMs: Date.now(), olusturma: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+}
+
 export async function mekanGuncelle(id, veri) {
   if (!id) return false;
   try { await setDoc(doc(db, "mekanlar", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }

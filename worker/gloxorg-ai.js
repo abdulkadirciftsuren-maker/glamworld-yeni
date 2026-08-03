@@ -37,6 +37,11 @@ const SES_URET_MODELLERI = [
 ];
 // Varsayılan ses: sıcak, kadın, canlı. (OpenAI sesleri: shimmer/nova/coral/sage/alloy...)
 const VARSAYILAN_SES = "shimmer";
+// Görsel (örnek/model fotoğrafı) üretme modelleri — SIRAYLA denenir; ilki olmazsa alttakine düşer.
+const GORSEL_MODELLERI = [
+  "gpt-image-1",  // EN SON (kaliteli, base64 döner)
+  "dall-e-3",     // güvenli yedek
+];
 const MAX_ARAMA = 6;    // bir cevapta en fazla kaç web araması
 
 export default {
@@ -111,6 +116,33 @@ export default {
           } catch (e) { sonHata = String(e); }
         }
         return json({ ses: "", hata: sonHata || "ses uretilemedi" }, cors);
+      }
+
+      // ================= 5) YAZI → GÖRSEL (örnek/model fotoğrafı üret) =================
+      // { gorsel: "istem metni", boyut?: "1024x1024" } → { gorsel: base64png }
+      // Akademi'de bir çeşide/modele dokununca "önden/yandan örnek fotoğraf" üretilir (bir kez üretilip saklanır).
+      if (body.gorsel) {
+        if (!env.OPENAI_API_KEY) return json({ gorsel: "", hata: "OPENAI_API_KEY yok" }, cors);
+        const istem = String(body.gorsel).slice(0, 1500);
+        if (!istem.trim()) return json({ gorsel: "" }, cors);
+        const boyut = (body.boyut && String(body.boyut).slice(0, 12)) || "1024x1024";
+        let sonHata = "";
+        for (const model of GORSEL_MODELLERI) {
+          try {
+            const govde = { model, prompt: istem, n: 1, size: boyut };
+            if (model !== "gpt-image-1") govde.response_format = "b64_json"; // dall-e base64 için gerekli
+            const ir = await fetch("https://api.openai.com/v1/images/generations", {
+              method: "POST",
+              headers: { Authorization: "Bearer " + env.OPENAI_API_KEY, "Content-Type": "application/json" },
+              body: JSON.stringify(govde),
+            });
+            const ij = await ir.json().catch(() => ({}));
+            const b64 = ij && ij.data && ij.data[0] && ij.data[0].b64_json;
+            if (b64) return json({ gorsel: b64 }, cors);
+            sonHata = (ij.error && (ij.error.message || ij.error.code)) || ("HTTP " + ir.status);
+          } catch (e) { sonHata = String(e); }
+        }
+        return json({ gorsel: "", hata: sonHata || "gorsel uretilemedi" }, cors);
       }
 
       // ================= 2/3) SOHBET / TEK ISTEK (Claude) =================

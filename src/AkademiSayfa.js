@@ -15,7 +15,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MESLEK_LISTESI } from "./meslekler";
 import qrOlustur from "qrcode-generator";
-import { akademiKayitEkle, akademiKayitlarimOku, gorselYukle, videoYukle } from "./veri";
+import { akademiKayitEkle, akademiKayitlarimOku, gorselYukle, videoYukle, akademiGorselOku, akademiGorselYaz } from "./veri";
 
 // Dosyayı base64'e oku (foto yüklemek için)
 function dosyaOku(file) { return new Promise((res) => { try { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(""); r.readAsDataURL(file); } catch (e) { res(""); } }); }
@@ -34,6 +34,10 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // ÇEŞİTLER / KONULAR (her tür tek tek anlatım)
   const [konular, setKonular] = useState(null); const [konularYuk, setKonularYuk] = useState(false);
   const [aktifKonu, setAktifKonu] = useState(""); const [konuDers, setKonuDers] = useState(""); const [konuYuk, setKonuYuk] = useState(false);
+  // GÖRSEL (yapay zekâ ile üretilen örnek/model fotoğrafı — bir kez üretilir, saklanır)
+  const [kapakGorsel, setKapakGorsel] = useState(""); // mesleğe göre kapak
+  const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false);
+  const istekNoRef = useRef(0); // çeşitler arası yarış (race) koruması
   // SINAV
   const [sorular, setSorular] = useState(null); const [sinavYuk, setSinavYuk] = useState(false);
   const [cevaplar, setCevaplar] = useState({}); const [sonuc, setSonuc] = useState(null); // {dogru, toplam, gecti}
@@ -58,9 +62,34 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     } catch (e) { return ""; }
   }
 
+  // GÖRSEL üret (ÖNCE paylaşımlı önbellek → yoksa yapay zekâ ile üret → Storage'a yükle → önbelleğe yaz).
+  // Böylece her model/çeşit fotoğrafı DÜNYADA BİR KEZ üretilir; sonra herkes hazırdan görür (ücret 1 kez).
+  async function gorselUret(anahtar, istem) {
+    try {
+      const eski = await akademiGorselOku(anahtar);
+      if (eski) return eski; // hazır — üretme
+      const r = await fetch(aiKopru, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gorsel: istem }) });
+      const j = await r.json().catch(() => ({}));
+      const b64 = j && j.gorsel;
+      if (!b64) return "";
+      const url = await gorselYukle("data:image/png;base64," + b64, uid || "akademi");
+      if (url) { akademiGorselYaz(anahtar, url).catch(() => {}); return url; }
+    } catch (e) {}
+    return "";
+  }
+
+  // Mesleğe girince o mesleğe uygun KAPAK fotoğrafı (bir kez üretilir, saklanır)
+  useEffect(() => {
+    if (gorunum !== "kurs" || !meslek) return;
+    let iptal = false; setKapakGorsel("");
+    const istem = `Professional realistic cover photo representing the profession "${meslek.ad}": a person skillfully working at their craft in a beautiful, tidy workspace. Warm inviting lighting, photorealistic, high quality, no text, no watermark, no logo.`;
+    gorselUret("kapak|" + meslek.ad, istem).then((u) => { if (!iptal) setKapakGorsel(u); }).catch(() => {});
+    return () => { iptal = true; };
+  }, [gorunum, meslek]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function kursAc(m) {
     setMeslek(m); setGorunum("kurs");
-    setDers(""); setKonular(null); setAktifKonu(""); setKonuDers("");
+    setDers(""); setKonular(null); setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKapakGorsel("");
     setSorular(null); setCevaplar({}); setSonuc(null); setIsFoto(""); setIsVideo(""); setAktifSertifika(null);
   }
 
@@ -90,11 +119,15 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     setKonular(arr && arr.length ? arr : []); setKonularYuk(false);
   }
 
-  // (3b) Bir çeşidi AÇ — o türün ölçü + adım adım YAPILIŞI (tam, kesilmez)
+  // (3b) Bir çeşidi AÇ — o türün ölçü + adım adım YAPILIŞI (tam, kesilmez) + ÖRNEK FOTOĞRAF (önden/yandan)
   async function konuAc(k) {
-    if (konuYuk) return;
-    if (aktifKonu === k) { setAktifKonu(""); setKonuDers(""); return; } // aynısına dokununca kapat
-    setAktifKonu(k); setKonuDers(""); setKonuYuk(true);
+    if (aktifKonu === k) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); return; } // aynısına dokununca kapat
+    const no = ++istekNoRef.current;
+    setAktifKonu(k); setKonuDers(""); setKonuGorsel(""); setKonuYuk(true); setKonuGorselYuk(true);
+    // GÖRSEL (paralel — metni bekletmesin): o modelin önden/yandan örnek fotoğrafı
+    const gIstem = `Professional realistic reference photo of the "${k}" style/product in the profession "${meslek.ad}". Show a clear front view and a side view side by side of the same result. Clean neutral studio background, natural lighting, photorealistic, high detail, no text, no watermark, no logo.`;
+    gorselUret(meslek.ad + "|" + k, gIstem).then((u) => { if (istekNoRef.current === no) setKonuGorsel(u); }).catch(() => {}).finally(() => { if (istekNoRef.current === no) setKonuGorselYuk(false); });
+    // METİN
     const sistem = "Sen Gloxoo'sun — usta eğitmen. Bir tek konuyu, ölçüleri ve adımlarıyla GERÇEK ve DOĞRU anlatırsın. Yazını MUTLAKA tamamlarsın, yarıda kesmezsin.";
     const p = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" nasıl yapılır — TEK TEK, adım adım, EKSİKSİZ anlat. Şu başlıklarla (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
 1) MALZEME / ÖLÇÜLER — KESİN rakamlarla (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; kaç derece, kaç dakika, kaç saat mayalanır). "Biraz/az" DEME, hep RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) bu başlığı "GEREKENLER" yap.
@@ -102,7 +135,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
 3) PÜF NOKTASI — bu türe özel ustalık sırrı ve sık hata.
 En fazla ~16 madde, net ve MUTLAKA tamamla (yarım cümle bırakma).`;
     const c = await gloxSor(p, sistem);
-    setKonuDers(c || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
+    if (istekNoRef.current === no) { setKonuDers(c || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false); }
   }
 
   // (4) CİDDİ SINAV — profesyonel, zor; anlatılan içerikten; 8 soru
@@ -213,6 +246,11 @@ En fazla ~16 madde, net ve MUTLAKA tamamla (yarım cümle bırakma).`;
       <div className="ana-pencere ak-pencere" key="ak-kurs">
         <div className="ak-ust"><button className="ak-geri" onClick={() => setGorunum("liste")}>‹ {t("geri", "Geri")}</button><div className="ak-ust-bas" style={{ background: meslek.bg }}>{meslek.ik} {meslek.ad}</div></div>
 
+        {/* MESLEK KAPAK FOTOĞRAFI (yapay zekâ, bir kez üretilir) */}
+        <div className="ak-kapak" style={{ background: meslek.bg }}>
+          {kapakGorsel ? <img src={kapakGorsel} alt="" referrerPolicy="no-referrer" /> : <span className="ak-kapak-ik">{meslek.ik}</span>}
+        </div>
+
         {/* 1) TEMEL EĞİTİM */}
         <div className="ak-adim">
           <div className="ak-adim-bas"><span className="ak-adim-no">1</span> 📚 {t("akTemelEgitim", "Temel Eğitim")}</div>
@@ -240,10 +278,15 @@ En fazla ~16 madde, net ve MUTLAKA tamamla (yarım cümle bırakma).`;
             {aktifKonu && (
               <div className="ak-konu-detay">
                 <div className="ak-konu-bas">📌 {aktifKonu}</div>
+                {/* ÖRNEK FOTOĞRAF (önden/yandan) — yapay zekâ, bir kez üretilir */}
+                {konuGorselYuk && !konuGorsel ? (
+                  <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir", "Örnek fotoğraf hazırlanıyor…")}</div>
+                ) : konuGorsel ? (
+                  <img className="ak-konu-gorsel" src={konuGorsel} alt={aktifKonu} referrerPolicy="no-referrer" />
+                ) : null}
                 {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor…")}</div> : <div className="ak-ders">{konuDers}</div>}
               </div>
             )}
-            <div className="ak-gorsel-not">📸 {t("akGorselNot", "Görselli/videolu gösterim ve kendi fotoğrafında deneme yakında eklenecek.")}</div>
           </div>
         )}
 
