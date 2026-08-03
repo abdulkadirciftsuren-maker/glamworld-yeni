@@ -1,10 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// AKADEMİ — her meslek için EĞİTİM + Gloxoo SINAVI + "işini göster" + GLOXORG SERTİFİKASI
+// AKADEMİ — İKİ KATMANLI EĞİTİM + Gloxoo CİDDİ SINAV + "işini göster" + GLOXORG SERTİFİKASI
 // ─────────────────────────────────────────────────────────────────────────────
-// Akış: (1) Meslek seç → (2) Gloxoo eğitim verir → (3) Gloxoo sınavı (geçince) →
-// (4) yaptığın işi foto/video ile göster → (5) doğrulanabilir GLOXORG sertifikası (kod + QR).
-// DÜRÜST: Bu GLOXORG sertifikasıdır (platformun belgesi); "uluslararası geçerli" DEĞİL —
-// o ancak resmî akreditasyon anlaşmasıyla olur. Sertifika kodu herkes tarafından doğrulanabilir.
+// Akış: (1) Meslek seç →
+//   (2) TEMEL EĞİTİM — Gloxoo meslek hakkında genel eğitim verir (tamamlanır, kesilmez) →
+//   (3) ÇEŞİTLER/KONULAR — her tür/ürün TEK TEK: ölçüsü + yapılışı (hamurcu: her hamur; kuaför: her kesim;
+//       tırnak: her model). Kullanıcı çeşide dokunur, Gloxoo o çeşidi ölçü/adım ile eksiksiz anlatır →
+//   (4) CİDDİ SINAV — profesyonel, zor, anlatılan içerikten (geçme ≥%70) →
+//   (5) İşini foto/video ile göster →
+//   (6) doğrulanabilir GLOXORG sertifikası (kod + QR).
+// DÜRÜST: Bu GLOXORG belgesidir; "uluslararası resmî" DEĞİL (o ancak resmî akreditasyonla olur).
+// GÖRSELLİ/VİDEOLU gösterim + "kendi fotoğrafında dene" görsel yapay zekâ ister (paralı) → SIRADA.
 // ═══════════════════════════════════════════════════════════════════════════
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,9 +29,15 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [gorunum, setGorunum] = useState("liste"); // liste | kurs | sertifikalarim
   const [ara, setAra] = useState("");
   const [meslek, setMeslek] = useState(null);
+  // TEMEL EĞİTİM
   const [ders, setDers] = useState(""); const [dersYuk, setDersYuk] = useState(false);
+  // ÇEŞİTLER / KONULAR (her tür tek tek anlatım)
+  const [konular, setKonular] = useState(null); const [konularYuk, setKonularYuk] = useState(false);
+  const [aktifKonu, setAktifKonu] = useState(""); const [konuDers, setKonuDers] = useState(""); const [konuYuk, setKonuYuk] = useState(false);
+  // SINAV
   const [sorular, setSorular] = useState(null); const [sinavYuk, setSinavYuk] = useState(false);
   const [cevaplar, setCevaplar] = useState({}); const [sonuc, setSonuc] = useState(null); // {dogru, toplam, gecti}
+  // İŞİNİ GÖSTER
   const [isFoto, setIsFoto] = useState(""); const [isVideo, setIsVideo] = useState("");
   const [yukDurum, setYukDurum] = useState(""); // "foto" | "video" | ""
   const [videoYuzde, setVideoYuzde] = useState(0);
@@ -35,6 +46,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [aktifSertifika, setAktifSertifika] = useState(null);
   const fotoInpRef = useRef(null); const videoInpRef = useRef(null);
   const dilAd = DIL_AD[dil] || "English";
+  const GECME = 0.7; // sertifika için geçme oranı (%70) — ciddi sınav
 
   useEffect(() => { if (uid) akademiKayitlarimOku(uid).then((l) => setKayitlarim(l || [])).catch(() => {}); }, [uid]);
 
@@ -47,45 +59,67 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   }
 
   function kursAc(m) {
-    setMeslek(m); setGorunum("kurs"); setDers(""); setSorular(null); setCevaplar({}); setSonuc(null); setIsFoto(""); setIsVideo(""); setAktifSertifika(null);
+    setMeslek(m); setGorunum("kurs");
+    setDers(""); setKonular(null); setAktifKonu(""); setKonuDers("");
+    setSorular(null); setCevaplar({}); setSonuc(null); setIsFoto(""); setIsVideo(""); setAktifSertifika(null);
   }
 
+  // (2) TEMEL EĞİTİM — genel; TAMAMLANIR (yarım kesilmez), sınırlı uzunluk → tek çağrıya sığar
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers("");
-    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Bir mesleği sıfırdan, gerçek bir usta gibi EKSİKSİZ ve DETAYLI öğretirsin. Uydurma yok; doğru, ölçülü, uygulanabilir bilgi verirsin. Yüzeysel/kısa geçmezsin. Sadece istenen bölümü yaz, tekrar etme.";
-    // Eğitim TEK cevaba sığmasın diye 2 BÖLÜM halinde çekilir (worker sınırı ~1600 jeton) → çok daha DOLU, kesilmez.
-    const p1 = `${dilAd} dilinde, "${meslek.ad}" mesleğini SIFIRDAN öğrenen birine GERÇEK bir usta gibi DETAYLI eğitimin 1. BÖLÜMÜNÜ yaz. Yüzeysel/dandik DEĞİL, dolu ve doğru. Şu 3 başlığı kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
-1) TEMEL BİLGİLER — meslek ne, neyi bilmek şart, hangi kurallar.
-2) GEREKLİ MALZEME VE ARAÇLAR — isim isim, ne işe yarar.
-3) TARİFLER / FORMÜLLER — KESİN ÖLÇÜLERLE. Örn. hamurcu/fırıncı için: 1 kg una kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; fırın kaç derece, kaç dakika; kaç saat mayalanır. "Biraz/az" DEME, hep RAKAM ver. Birkaç temel tarifi ölçüleriyle yaz.
-Sadece bu 3 başlığı yaz, uzun ve eksiksiz. Sonraki bölümü YAZMA.`;
-    const p2 = `${dilAd} dilinde, "${meslek.ad}" mesleği eğitiminin 2. BÖLÜMÜNÜ yaz (1. bölümü TEKRARLAMA). Şu 4 başlığı kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
-4) ÜRÜN / İŞ ÇEŞİTLERİ — bu meslekteki TÜM ürünleri/çeşitleri TEK TEK say. Örn. fırıncıda: ekmek çeşitleri (beyaz, tam buğday, çavdar, kepekli, somun, baget, lavaş, mısır…), poğaça çeşitleri ve İÇLERİ (peynirli, patatesli, zeytinli, kıymalı…), börek, simit, açma, kurabiye, kek, tatlılar… Her biri için kısa fark/püf noktası, varsa ölçü.
-5) ADIM ADIM YAPILIŞ — baştan sona teknik (hazırlık, yoğurma/uygulama, mayalama/bekleme, şekil verme, pişirme/bitirme).
-6) SIK YAPILAN HATALAR — ve nasıl önlenir.
-7) USTA İPUÇLARI — kaliteyi artıran profesyonel sırlar.
-Uzun yaz, eksik bırakma, gerçek bilgi ver.`;
-    const c1 = await gloxSor(p1, sistem);
-    if (c1) setDers(c1); // 1. bölüm gelince hemen göster
-    const c2 = await gloxSor(p2, sistem);
-    const tam = [c1, c2].filter(Boolean).join("\n\n");
-    setDers(tam || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
+    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni. Doğru, ölçülü, uygulanabilir bilgi verirsin. Yazını MUTLAKA tamamlarsın, cümleyi yarıda BIRAKMAZSIN.";
+    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine TEMEL eğitim ver (genel tanıtım). Şu başlıkları kullan (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
+1) BU MESLEK NEDİR — ne iş yapılır, neyi bilmek şart.
+2) GEREKLİ MALZEME VE ARAÇLAR — isim isim.
+3) TEMEL KURALLAR VE HİJYEN / GÜVENLİK.
+4) GENEL ÇALIŞMA AKIŞI — işin baştan sona genel sırası.
+5) USTA İPUÇLARI — yeni başlayana altın öğütler.
+ÖNEMLİ: En fazla ~14 madde yaz, KISA-ÖZ tut ve MUTLAKA tamamla (yarım cümle bırakma). Çeşitlerin ölçülü-detaylı anlatımını YAPMA (o ayrı bölümde) — burada sadece genel temel.`;
+    const c = await gloxSor(p, sistem);
+    setDers(c || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
-  async function sinavaGir() {
-    if (sinavYuk || !meslek) return; setSinavYuk(true); setSonuc(null); setCevaplar({});
+  // (3a) ÇEŞİTLERİ getir — bu meslekteki tüm tür/ürün/konu listesi (JSON)
+  async function konulariYukle() {
+    if (konularYuk || !meslek) return; setKonularYuk(true); setKonular(null); setAktifKonu(""); setKonuDers("");
     const sistem = "Sen Gloxoo'sun. SADECE geçerli JSON döndür, başka hiçbir şey yazma.";
-    const p = `${dilAd} dilinde, "${meslek.ad}" mesleği hakkında 5 çoktan seçmeli soru hazırla. SADECE şu JSON'u döndür: {"sorular":[{"s":"soru metni","c":["şık1","şık2","şık3","şık4"],"d":0}]} — "d" doğru şıkkın indeksidir (0-3). Başka açıklama yazma.`;
+    const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken TÜM tür/ürün/konu başlıklarını listele (örn. fırıncı: her ekmek türü, her poğaça, börek, simit, tatlı…; kuaför: her saç kesimi/modeli; tırnak: her tırnak modeli). ${dilAd} dilinde YAZ. SADECE şu JSON'u döndür: {"konular":["başlık1","başlık2","başlık3"]} — en az 8, en çok 20 başlık, her biri kısa (1-4 kelime). Başka açıklama yazma.`;
     const c = await gloxSor(p, sistem);
     let arr = null;
-    try { const temiz = c.replace(/```json|```/g, "").trim(); const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1)); if (o && Array.isArray(o.sorular)) arr = o.sorular.filter((x) => x && x.s && Array.isArray(x.c) && x.c.length >= 2).slice(0, 5); } catch (e) {}
+    try { const temiz = c.replace(/```json|```/g, "").trim(); const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1)); if (o && Array.isArray(o.konular)) arr = o.konular.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim()).slice(0, 20); } catch (e) {}
+    setKonular(arr && arr.length ? arr : []); setKonularYuk(false);
+  }
+
+  // (3b) Bir çeşidi AÇ — o türün ölçü + adım adım YAPILIŞI (tam, kesilmez)
+  async function konuAc(k) {
+    if (konuYuk) return;
+    if (aktifKonu === k) { setAktifKonu(""); setKonuDers(""); return; } // aynısına dokununca kapat
+    setAktifKonu(k); setKonuDers(""); setKonuYuk(true);
+    const sistem = "Sen Gloxoo'sun — usta eğitmen. Bir tek konuyu, ölçüleri ve adımlarıyla GERÇEK ve DOĞRU anlatırsın. Yazını MUTLAKA tamamlarsın, yarıda kesmezsin.";
+    const p = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${k}" nasıl yapılır — TEK TEK, adım adım, EKSİKSİZ anlat. Şu başlıklarla (her başlık BÜYÜK harf + iki nokta, altına maddeler • ile):
+1) MALZEME / ÖLÇÜLER — KESİN rakamlarla (örn. hamur ise: kaç gr un, kaç ml su, kaç gr tuz, kaç gr maya, kaç gr şeker/yağ; kaç derece, kaç dakika, kaç saat mayalanır). "Biraz/az" DEME, hep RAKAM ver. Konu ölçü içermiyorsa (örn. saç kesimi) bu başlığı "GEREKENLER" yap.
+2) ADIM ADIM YAPILIŞ — baştan sona (hazırlık → uygulama → şekil verme → bitirme).
+3) PÜF NOKTASI — bu türe özel ustalık sırrı ve sık hata.
+En fazla ~16 madde, net ve MUTLAKA tamamla (yarım cümle bırakma).`;
+    const c = await gloxSor(p, sistem);
+    setKonuDers(c || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
+  }
+
+  // (4) CİDDİ SINAV — profesyonel, zor; anlatılan içerikten; 8 soru
+  async function sinavaGir() {
+    if (sinavYuk || !meslek) return; setSinavYuk(true); setSonuc(null); setCevaplar({}); setSorular(null);
+    const sistem = "Sen Gloxoo'sun — ciddi bir sınav hazırlayıcısın. SADECE geçerli JSON döndür, başka hiçbir şey yazma. Sorular kolay/çocukça DEĞİL; mesleğin gerçek bilgisini ölçen PROFESYONEL sorular olsun (ölçü, teknik, malzeme, sıra, hata).";
+    const p = `${dilAd} dilinde, "${meslek.ad}" mesleği için 8 adet CİDDİ çoktan seçmeli sınav sorusu hazırla. Sorular gerçek mesleki bilgi ölçsün (ölçüler/oranlar, doğru teknik, malzeme, işlem sırası, güvenlik/hijyen, sık yapılan hata). Kolay/genel-kültür DEĞİL. Her sorunun 4 şıkkı olsun, biri doğru. SADECE şu JSON'u döndür: {"sorular":[{"s":"soru","c":["şık1","şık2","şık3","şık4"],"d":0}]} — "d" doğru şıkkın indeksi (0-3). Başka açıklama yazma.`;
+    const c = await gloxSor(p, sistem);
+    let arr = null;
+    try { const temiz = c.replace(/```json|```/g, "").trim(); const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1)); if (o && Array.isArray(o.sorular)) arr = o.sorular.filter((x) => x && x.s && Array.isArray(x.c) && x.c.length >= 2).slice(0, 8); } catch (e) {}
     setSorular(arr && arr.length ? arr : []); setSinavYuk(false);
   }
 
   function sinaviBitir() {
     if (!sorular || !sorular.length) return;
     let dogru = 0; sorular.forEach((s, i) => { if (cevaplar[i] === s.d) dogru++; });
-    const gecti = dogru >= Math.ceil(sorular.length * 0.6);
+    const gecti = dogru >= Math.ceil(sorular.length * GECME);
     setSonuc({ dogru, toplam: sorular.length, gecti });
   }
 
@@ -173,24 +207,51 @@ Uzun yaz, eksik bırakma, gerçek bilgi ver.`;
     );
   }
 
-  // ── KURS (eğitim + sınav + işini göster) ──
+  // ── KURS (temel eğitim + çeşitler + sınav + işini göster) ──
   if (gorunum === "kurs" && meslek) {
     return (
       <div className="ana-pencere ak-pencere" key="ak-kurs">
         <div className="ak-ust"><button className="ak-geri" onClick={() => setGorunum("liste")}>‹ {t("geri", "Geri")}</button><div className="ak-ust-bas" style={{ background: meslek.bg }}>{meslek.ik} {meslek.ad}</div></div>
 
-        {/* 1) EĞİTİM */}
+        {/* 1) TEMEL EĞİTİM */}
         <div className="ak-adim">
-          <div className="ak-adim-bas"><span className="ak-adim-no">1</span> 📚 {t("akEgitim", "Gloxoo'dan Eğitim")}</div>
+          <div className="ak-adim-bas"><span className="ak-adim-no">1</span> 📚 {t("akTemelEgitim", "Temel Eğitim")}</div>
+          <div className="ak-adim-alt">{t("akTemelAlt", "Gloxoo bu meslek hakkında genel bilgiyi öğretir.")}</div>
           {!ders && !dersYuk && <button className="ak-btn" onClick={egitimAl}>{t("akEgitimAl", "Eğitimi başlat")}</button>}
           {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor", "Gloxoo eğitimi hazırlıyor…")}</div>}
           {ders && <div className="ak-ders">{ders}</div>}
         </div>
 
-        {/* 2) SINAV */}
+        {/* 2) ÇEŞİTLER — her tür tek tek ölçü + yapılışıyla */}
         {ders && (
           <div className="ak-adim">
-            <div className="ak-adim-bas"><span className="ak-adim-no">2</span> 📝 {t("akSinav", "Gloxoo Sınavı")}</div>
+            <div className="ak-adim-bas"><span className="ak-adim-no">2</span> 🧩 {t("akCesitler", "Çeşitler — hepsi tek tek")}</div>
+            <div className="ak-adim-alt">{t("akCesitAlt", "Bir çeşide dokun; Gloxoo onu ölçüsü ve adım adım yapılışıyla anlatır.")}</div>
+            {!konular && !konularYuk && <button className="ak-btn" onClick={konulariYukle}>{t("akCesitGetir", "Çeşitleri getir")}</button>}
+            {konularYuk && <div className="ak-yuk">⏳ {t("akCesitYuk", "Çeşitler getiriliyor…")}</div>}
+            {konular && konular.length === 0 && <div className="ak-yuk">{t("akCesitOlmadi", "Alınamadı.")} <button className="ak-btn kucuk" onClick={konulariYukle}>{t("tekrar", "Tekrar")}</button></div>}
+            {konular && konular.length > 0 && (
+              <div className="ak-konu-cipler">
+                {konular.map((k, i) => (
+                  <button key={k + i} className={"ak-konu-cip" + (aktifKonu === k ? " aktif" : "")} onClick={() => konuAc(k)}>{k}</button>
+                ))}
+              </div>
+            )}
+            {aktifKonu && (
+              <div className="ak-konu-detay">
+                <div className="ak-konu-bas">📌 {aktifKonu}</div>
+                {konuYuk ? <div className="ak-yuk">⏳ {t("akKonuYuk", "Gloxoo anlatıyor…")}</div> : <div className="ak-ders">{konuDers}</div>}
+              </div>
+            )}
+            <div className="ak-gorsel-not">📸 {t("akGorselNot", "Görselli/videolu gösterim ve kendi fotoğrafında deneme yakında eklenecek.")}</div>
+          </div>
+        )}
+
+        {/* 3) CİDDİ SINAV */}
+        {ders && (
+          <div className="ak-adim">
+            <div className="ak-adim-bas"><span className="ak-adim-no">3</span> 📝 {t("akSinav", "Sınav (ciddi)")}</div>
+            <div className="ak-adim-alt">{t("akSinavAlt", "Gerçek mesleki sorular. Sertifika için en az %70 gerekir.")}</div>
             {!sorular && !sinavYuk && <button className="ak-btn" onClick={sinavaGir}>{t("akSinavaGir", "Sınava gir")}</button>}
             {sinavYuk && <div className="ak-yuk">⏳ {t("akSorular", "Sorular hazırlanıyor…")}</div>}
             {sorular && sorular.length === 0 && <div className="ak-yuk">{t("akSinavOlmadi", "Sınav alınamadı, tekrar dene.")} <button className="ak-btn kucuk" onClick={sinavaGir}>{t("tekrar", "Tekrar")}</button></div>}
@@ -219,10 +280,10 @@ Uzun yaz, eksik bırakma, gerçek bilgi ver.`;
           </div>
         )}
 
-        {/* 3) İŞİNİ GÖSTER */}
+        {/* 4) İŞİNİ GÖSTER */}
         {sonuc && sonuc.gecti && (
           <div className="ak-adim">
-            <div className="ak-adim-bas"><span className="ak-adim-no">3</span> 🎥 {t("akIsGoster", "Yaptığın işi göster")}</div>
+            <div className="ak-adim-bas"><span className="ak-adim-no">4</span> 🎥 {t("akIsGoster", "Yaptığın işi göster")}</div>
             <div className="ak-adim-alt">{t("akIsAlt", "Kendi yaptığın işi foto ve/veya video ile yükle — sertifikanda kanıt olarak kalır.")}</div>
             <div className="ak-yukle-satir">
               <button className="ak-yukle-btn" onClick={() => fotoInpRef.current && fotoInpRef.current.click()} disabled={yukDurum === "foto"}>{yukDurum === "foto" ? "…" : (isFoto ? "✓ 📷 " + t("akFoto", "Foto") : "📷 " + t("akFotoEkle", "Foto ekle"))}</button>
@@ -246,7 +307,7 @@ Uzun yaz, eksik bırakma, gerçek bilgi ver.`;
     <div className="ana-pencere ak-pencere" key="ak-liste">
       <div className="ak-hero">
         <div className="ak-hero-bas">🎓 {t("akBaslik", "GLOXORG Akademi")}</div>
-        <div className="ak-hero-alt">{t("akHeroAlt", "Her meslek için eğitim al, Gloxoo sınavını geç, işini göster — doğrulanabilir sertifikanı kazan.")}</div>
+        <div className="ak-hero-alt">{t("akHeroAlt", "Her meslek için eğitim al, çeşitleri tek tek öğren, Gloxoo sınavını geç, işini göster — doğrulanabilir sertifikanı kazan.")}</div>
         <button className="ak-sertlerim-btn" onClick={() => setGorunum("sertifikalarim")}>🏅 {t("akSertifikalarim", "Sertifikalarım")}{kayitlarim.length ? " (" + kayitlarim.length + ")" : ""}</button>
       </div>
       <div className="ak-ara-sar">

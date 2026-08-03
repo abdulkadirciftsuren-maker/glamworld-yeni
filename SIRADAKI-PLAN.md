@@ -6,6 +6,23 @@
 > KURAL: Yeni sorun aramak yerine **bu listeden** git. TEK TEK yap, her birini bitirince
 > kullanıcıya göster + onay al, öyle devam et. Her şey Türkçe, adım adım.
 
+## 🎓 AKADEMİ — kullanıcının tam vizyonu (2026-08-03, UNUTMA)
+
+> Akademi sayfası kuruldu (B253). Kullanıcı vizyonu netleştirdi. YAPILDI + SIRADA:
+- ✅ **İki katmanlı eğitim:** (a) TEMEL eğitim (meslek genel), (b) ÇEŞİTLER — her tür TEK TEK
+  ölçüsü + yapılışı ile (hamurcu: her hamur ne kadar tuz/su/maya, nasıl yoğrulur/şekil verilir;
+  kuaför: her kesim nasıl; tırnak: her model nasıl). B254'te yapıldı.
+- ✅ **Sınav CİDDİ:** "çocuk oyuncağı" sorular gitti; profesyonel, zor, anlatılan içerikten;
+  geçme ≥%70. Sertifika bu ciddi sınavdan gelir. B254.
+- ✅ **Yazı KESİLMEZ:** her ders/konu tamamlanır, yarım cümle kalmaz (bölüm bölüm + "tamamla" talimatı). B254.
+- ⏳ **GÖRSELLİ/VİDEOLU EĞİTİM (SIRADA — görsel yapay zekâ, PARALI):** her saç kesimi/tırnak/hamur
+  şeklinin FOTOĞRAFI + nasıl yapıldığının VİDEOSU. Metin var; gerçek görsel için görsel-üreten
+  yapay zekâ (paralı) gerekir — canlı yayın gibi ertelendi.
+- ⏳ **MÜŞTERİ "KENDİ FOTOĞRAFINDA DENE" (SIRADA, EĞİTİMİN DIŞINDA, PARALI görsel YZ):** müşteri saç
+  modelini/tırnağı KENDİ fotoğrafı üzerinde dener, kaydeder/indirir, kuaförüne gönderir. Bu, eğitim
+  DEĞİL; kuaförün profili/randevu akışında ayrı bir bölüm olacak (kullanıcı böyle istedi).
+- ⏳ **Uluslararası geçerli sertifika:** ancak resmî akreditasyon kurumu anlaşmasıyla (para/anlaşma).
+
 ## 🏗️ BÜYÜK YENİDEN TASARIM (2026-07-14 — kullanıcı onayladı, SIRAYLA yap, UNUTMA)
 
 > Kullanıcı bilgisayar/tablet düzeni + tema için net karar verdi. TEK TEK yap, göster, onayla.

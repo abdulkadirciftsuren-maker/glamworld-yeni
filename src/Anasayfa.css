@@ -1746,6 +1746,15 @@
 .ak-btn.kucuk{ margin-left:9px; padding:8px 14px; font-size:13.5px; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3d08; }
 .ak-btn.ak-sertifika-al{ display:block; width:100%; margin-top:14px; background:linear-gradient(160deg,#ffd54d,#e0a91f); color:#4a3608; font-size:16px; }
 .ak-yuk{ color:#6a6428; font-weight:800; font-size:14px; padding:8px 2px; }
+/* Çeşitler (konular) — çip düğmeler + açılan detay */
+.ak-konu-cipler{ display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
+.ak-konu-cip{ border:2px solid rgba(120,140,30,.4); cursor:pointer; font-family:inherit; background:#fffdf3; color:#3d3406; font-weight:800; font-size:13.5px; padding:9px 14px; border-radius:12px; box-shadow:0 2px 7px rgba(40,50,10,.18); }
+.ak-konu-cip:active{ transform:scale(.96); }
+.ak-konu-cip.aktif{ background:linear-gradient(160deg,#7a8c22,#556614); color:#fff; border-color:#556614; box-shadow:0 3px 10px rgba(40,50,10,.4); }
+.ak-konu-detay{ margin-top:12px; background:#fbf8ea; border:2px solid rgba(120,140,30,.35); border-radius:14px; padding:12px 14px; }
+.ak-konu-bas{ color:#3d3406; font-weight:900; font-size:15.5px; margin-bottom:8px; }
+.ak-konu-detay .ak-ders{ margin-top:0; }
+.ak-gorsel-not{ margin-top:12px; background:linear-gradient(180deg,#fff6d8,#f2e3a8); border:1.6px dashed #c9a83a; border-radius:12px; padding:10px 13px; color:#6a5410; font-weight:700; font-size:12.5px; line-height:1.45; }
 .ak-ders{ margin-top:11px; background:#fffdf3; border:1.6px solid rgba(120,140,30,.3); border-radius:12px; padding:13px 15px; color:#3d3406; font-weight:600; font-size:14.5px; line-height:1.6; white-space:pre-wrap; }
 /* Sınav */
 .ak-sinav{ margin-top:11px; }
@@ -1804,6 +1813,7 @@
   .ak-hero-bas{ font-size:25px; } .ak-hero-alt{ font-size:14.5px; }
   .ak-kurs-ad{ font-size:15px; } .ak-kurs-ik{ font-size:36px; }
   .ak-adim-bas{ font-size:17px; } .ak-ders{ font-size:15.5px; } .ak-soru-m{ font-size:15.5px; } .ak-secenek{ font-size:15px; }
+  .ak-konu-cip{ font-size:14.5px; } .ak-konu-bas{ font-size:16.5px; } .ak-adim-alt{ font-size:14px; } .ak-gorsel-not{ font-size:13.5px; }
   .ak-srt-ad{ font-size:25px; } .ak-srt-marka{ font-size:25px; }
 }
 @media (min-width:900px){ .ak-kurs-izgara{ grid-template-columns:repeat(4,1fr); } }
