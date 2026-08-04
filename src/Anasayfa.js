@@ -889,19 +889,19 @@ const SAYFA_ACIKLAMA = {
     hi: "यह लाइव फ़ीड है — छोटे वीडियो। देखने, लाइक और शेयर करने के लिए ऊपर स्वाइप करो।",
   },
   akademi: {
-    tr: "Burası Akademi — öğrenme ve eğitim içerikleri. Yakında.",
-    en: "This is Academy — learning and training content. Coming soon.",
-    de: "Das ist die Akademie — Lern- und Schulungsinhalte. Kommt bald.",
-    fr: "C'est l'Académie — contenus d'apprentissage et de formation. Bientôt.",
-    es: "Esto es Academia — contenido de aprendizaje y formación. Próximamente.",
-    it: "Questa è l'Accademia — contenuti di apprendimento e formazione. Presto.",
-    pt: "Isto é a Academia — conteúdos de aprendizagem e formação. Em breve.",
-    ru: "Это Академия — обучающие и учебные материалы. Скоро.",
-    uk: "Це Академія — навчальні та освітні матеріали. Незабаром.",
-    ar: "هذه صفحة الأكاديمية — محتوى تعليمي وتدريبي. قريبًا.",
-    zh: "这里是学院——学习与培训内容。敬请期待。",
-    ja: "ここはアカデミー——学習・研修コンテンツ。近日公開。",
-    hi: "यह अकादमी है — सीखने और प्रशिक्षण की सामग्री। जल्द आ रहा है।",
+    tr: "Burası Akademi — her meslek için eğitim. Bir mesleğe gir: Gloxoo temel eğitimi verir, çeşitleri tek tek ölçüsüyle öğretir, imalathane/fabrika kurulumu ve fizibiliteyi anlatır, ciddi bir sınavdan geçirir; işini gösterip doğrulanabilir GLOXORG sertifikanı alırsın.",
+    en: "This is the Academy — training for every profession. Pick a profession: Gloxoo teaches the basics, explains each variety with exact measures, covers workshop/factory setup and feasibility, gives a serious exam; show your work and earn a verifiable GLOXORG certificate.",
+    de: "Das ist die Akademie — Ausbildung für jeden Beruf. Wähle einen Beruf: Gloxoo vermittelt Grundlagen, erklärt jede Variante mit genauen Mengen, zeigt Werkstatt-/Fabrikaufbau und Machbarkeit, prüft dich ernsthaft; zeig deine Arbeit und erhalte ein prüfbares GLOXORG-Zertifikat.",
+    fr: "C'est l'Académie — une formation pour chaque métier. Choisis un métier : Gloxoo enseigne les bases, explique chaque variété avec des mesures précises, couvre la création d'atelier/usine et la faisabilité, te fait passer un vrai examen ; montre ton travail et obtiens un certificat GLOXORG vérifiable.",
+    es: "Esto es la Academia — formación para cada oficio. Elige un oficio: Gloxoo enseña lo básico, explica cada variedad con medidas exactas, cubre el montaje de taller/fábrica y la viabilidad, te toma un examen serio; muestra tu trabajo y obtén un certificado GLOXORG verificable.",
+    it: "Questa è l'Accademia — formazione per ogni mestiere. Scegli un mestiere: Gloxoo insegna le basi, spiega ogni variante con dosi precise, tratta l'avvio di laboratorio/fabbrica e la fattibilità, ti fa un esame serio; mostra il tuo lavoro e ottieni un certificato GLOXORG verificabile.",
+    pt: "Isto é a Academia — formação para cada ofício. Escolhe um ofício: o Gloxoo ensina o básico, explica cada variedade com medidas exatas, cobre a montagem de oficina/fábrica e a viabilidade, faz-te um exame sério; mostra o teu trabalho e recebe um certificado GLOXORG verificável.",
+    ru: "Это Академия — обучение для каждой профессии. Выбери профессию: Gloxoo даёт основы, объясняет каждый вид с точными мерами, показывает открытие мастерской/фабрики и ТЭО, устраивает серьёзный экзамен; покажи свою работу и получи проверяемый сертификат GLOXORG.",
+    uk: "Це Академія — навчання для кожної професії. Обери професію: Gloxoo дає основи, пояснює кожен вид з точними мірами, показує відкриття майстерні/фабрики та ТЕО, влаштовує серйозний іспит; покажи свою роботу й отримай перевірюваний сертифікат GLOXORG.",
+    ar: "هذه الأكاديمية — تدريب لكل مهنة. اختر مهنة: يعلّمك غلوكسو الأساسيات، ويشرح كل نوع بمقادير دقيقة، ويغطي تأسيس الورشة/المصنع ودراسة الجدوى، ويجري لك اختبارًا جادًا؛ اعرض عملك واحصل على شهادة GLOXORG قابلة للتحقق.",
+    zh: "这里是学院——面向每个职业的培训。选择一个职业：Gloxoo 教你基础、用精确用量讲解每个品类、介绍作坊/工厂建设与可行性、进行严肃考试；展示你的作品，获得可验证的 GLOXORG 证书。",
+    ja: "ここはアカデミー——あらゆる職業の研修。職業を選ぶと、Gloxoo が基礎を教え、各種類を正確な分量で解説し、工房・工場の設立と実現可能性を説明し、本格的な試験を行います。作品を見せて、検証できる GLOXORG 認定証を取得できます。",
+    hi: "यह अकादमी है — हर पेशे के लिए प्रशिक्षण। एक पेशा चुनो: Gloxoo बुनियादी बातें सिखाता है, हर किस्म को सटीक माप के साथ समझाता है, वर्कशॉप/फ़ैक्ट्री सेटअप और व्यवहार्यता बताता है, एक गंभीर परीक्षा लेता है; अपना काम दिखाओ और सत्यापन-योग्य GLOXORG प्रमाणपत्र पाओ।",
   },
 };
 
@@ -1323,6 +1323,7 @@ export default function Anasayfa({ pro = false }) {
   const [telKodAra, setTelKodAra] = useState("");
   const [telKodu, setTelKodu] = useState("+90");
   const [aciklama, setAciklama] = useState(""); // açıklama (?) ikonu → ne yapılacağını anlatan baloncuk (ANAYASA: her yerde bilgilendirme)
+  const [sayfaBilgiAcik, setSayfaBilgiAcik] = useState(false); // sağ üst SAYFA İKONU'na basınca → o sayfa NE İŞE YARAR + ipucu (her dilde)
   const [telHaritaAcik, setTelHaritaAcik] = useState(false); // TAM EKRAN telefon kodu HARİTASI (ülkeye dokun → kod)
   const [telHaritaSec, setTelHaritaSec] = useState(null);    // haritada seçili { iso, kod, ad }
   const telHaritaRef = useRef(null);
@@ -7549,7 +7550,7 @@ export default function Anasayfa({ pro = false }) {
               {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
             </div>
           ) : (
-            <button className="ana-ara-btn ana-sayfa-ikon" aria-label={aktifEt} title={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
+            <button className="ana-ara-btn ana-sayfa-ikon" aria-label={aktifEt} title={aktifEt} onClick={() => setSayfaBilgiAcik(true)}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
           )}
           {/* GLOME — bize has mesaj + arama düğmesi (ayının yerine); okunmamış rozetli */}
           <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label="Glome" title="Glome — Mesaj & Arama">
@@ -7558,6 +7559,27 @@ export default function Anasayfa({ pro = false }) {
           </button>
         </div>
       </header>
+
+      {/* SAYFA BİLGİ PENCERESİ — sağ üst sayfa ikonuna basınca: o sayfa NE İŞE YARAR + ne yapabilirsin (her dilde).
+          Açıklamalar SAYFA_ACIKLAMA'dan gelir (13 dil). Boş ikon artık faydalı: dokununca sayfayı anlatır. */}
+      {sayfaBilgiAcik && (() => {
+        const _ak = SAYFA_ACIKLAMA[aktifKod] ? aktifKod : "home";
+        const bilgi = (SAYFA_ACIKLAMA[_ak] && (SAYFA_ACIKLAMA[_ak][dil] || SAYFA_ACIKLAMA[_ak].en || SAYFA_ACIKLAMA[_ak].tr)) || "";
+        return (
+          <>
+            <div className="ana-profil-fon" onClick={() => setSayfaBilgiAcik(false)} />
+            <div className="sayfa-bilgi-pop" role="dialog" aria-label={aktifEt}>
+              <div className="sbp-ust">
+                <span className="sbp-ikon">{SayfaIkon[aktifKod] || Ikon.ara}</span>
+                <span className="sbp-baslik">{aktifEt}</span>
+                <button className="sbp-kapat" onClick={() => setSayfaBilgiAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+              </div>
+              <div className="sbp-metin">{bilgi}</div>
+              <button className="sbp-tamam" onClick={() => setSayfaBilgiAcik(false)}>{t("anladim", "Anladım")}</button>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Profil penceresi (menüden AYRI) — foto + ad + e-posta + Çıkış */}
       {profilAcik && (

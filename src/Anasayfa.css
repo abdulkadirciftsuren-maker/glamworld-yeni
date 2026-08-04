@@ -4873,3 +4873,15 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* PENCERE AÇILIŞ FADE'İ KALDIR — opacity 0→1 fade, ağır arka plan üstünde "parça parça belirme/parlama" yapıyordu.
    Pencereler artık ANINDA opak açılır (fade yok) → belirme sırasında arkadaki içerik sızmaz, parlamaz. */
 .tamfoto-fon, .oniz-fon, .msj-fon, .ara-detay-fon, .apf-fon, .sohbet-fon, .arama-fon, .gb-fon, .bgm-fon, .msj-merkez { animation: none !important; }
+
+/* SAYFA BİLGİ PENCERESİ — sağ üst sayfa ikonuna basınca açılır (o sayfa ne işe yarar). Altın tema, siyah zemin YOK. */
+.sayfa-bilgi-pop{ position:fixed; z-index:100060; top:50%; left:50%; transform:translate(-50%,-50%); width:min(90vw,420px); background:linear-gradient(160deg,#fffdf5,#fff2cc); border:2px solid #FFD700; border-radius:20px; box-shadow:0 14px 44px rgba(80,60,0,.38); padding:18px 18px 20px; }
+.sbp-ust{ display:flex; align-items:center; gap:11px; margin-bottom:12px; }
+.sbp-ikon{ width:42px; height:42px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background:#fff7db; border-radius:12px; border:1.5px solid rgba(255,215,0,.7); }
+.sbp-ikon svg{ width:27px; height:27px; }
+.sbp-baslik{ font-weight:900; font-size:19px; color:#7a5a00; flex:1; }
+.sbp-kapat{ background:none; border:none; font-size:20px; color:#a07800; cursor:pointer; padding:2px 6px; line-height:1; }
+.sbp-metin{ font-size:16px; line-height:1.55; color:#5a4300; font-weight:600; }
+.sbp-tamam{ margin-top:16px; width:100%; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:12px; padding:12px; font-weight:900; font-size:16px; cursor:pointer; font-family:inherit; }
+.sbp-tamam:active{ transform:scale(.97); }
+@media (min-width:560px){ .sbp-baslik{ font-size:21px; } .sbp-metin{ font-size:17px; } .sbp-ikon{ width:46px; height:46px; } .sbp-ikon svg{ width:30px; height:30px; } }
