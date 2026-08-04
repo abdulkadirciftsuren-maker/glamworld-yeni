@@ -4157,7 +4157,10 @@ export default function Anasayfa({ pro = false }) {
   };
   // Bildirimlerde gösterilecek kendi adım/fotoğrafım
   function benimAdGetir() { return (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || t("biri", "Biri"); }
-  function benimFotoGetir() { return foto || isFoto || ""; }
+  // BİLDİRİM için: önce KISA http (Storage) URL — base64 "data:" FCM 4KB sınırına sığmayıp sunucuda atılıyordu
+  // (o yüzden mesaj/beğeni/yorum/takip bildiriminde GÖNDERENİN fotoğrafı yerine logo çıkıyordu). Aramalar zaten
+  // bildirimFotoUrl kullanıyordu; artık hepsi kullanıyor → bildirimde gönderenin fotoğrafı görünür.
+  function benimFotoGetir() { return bildirimFotoUrl || foto || isFoto || ""; }
   // TEŞEKKÜR ET — seni beğenen kişiye teşekkür bildirimi gönder (o senin beğendiğini/teşekkürünü görür)
   const tesekkurEt = (b) => {
     const uu = auth.currentUser;

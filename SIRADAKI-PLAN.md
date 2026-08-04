@@ -78,12 +78,13 @@
    sağ **ALTTA** yuvarlatılmış "asılı" altın düğmeye alındı; basınca Görüntülü/Sesli menüsü açılıyor
    (.sohbet-arama-fab). **Kullanıcı onayı bekleniyor.**
 
-3. **Bildirimde GÖNDERENİN fotoğrafı:** Bildirimde hâlâ **GLOXORG logosu** çıkıyor (iki tarafta
-   da), kimden geldiği belli değil. functions foto:gonderenFoto/arayanFoto gönderiyor (B71,
-   kullanıcı functions'ı YÜKLEDİ) ve sw.js `icon:d.foto` kullanıyor — AMA hâlâ logo çıkıyor.
-   **SEBEP ARAŞTIR:** (a) gonderenFoto boş mu geliyor (mesajGonder/bildirimEkle gonderenFoto
-   dolu mu?), (b) Google foto URL'si (lh3.googleusercontent) bildirim ikonu olarak
-   yüklenemiyor mu (referrer/CORS)? Gerekirse foto'yu Storage'a al ya da uygun URL kullan.
+3. ✅ **(A13.B5 BİTTİ) Bildirimde GÖNDERENİN fotoğrafı:** KÖK SEBEP BULUNDU — `benimFotoGetir()`
+   (mesaj/beğeni/yorum/takip bildirimlerinde gonderenFoto kaynağı) `foto||isFoto` yani BASE64
+   "data:" döndürüyordu; sunucu (functions) 4KB sınırı için "data:" alanları SİLİYOR → foto boş
+   → logo çıkıyordu. Aramalar zaten `bildirimFotoUrl` (kısa http Storage URL) kullanıyordu, o yüzden
+   aramalarda foto görünüyordu. DÜZELTME: `benimFotoGetir()` artık önce `bildirimFotoUrl`'ü (kısa
+   http URL) döndürüyor → tüm bildirimlerde gönderenin fotoğrafı görünür. functions redeploy GEREKMEZ.
+   **Kullanıcı testi bekleniyor** (başka hesaptan mesaj/beğeni gelsin, foto çıkmalı).
 
 4. ✅ **(B125 BİTTİ) Sayfa AÇIKKEN pencere-içi bildirim:** Uygulama açıkken mesaj/beğeni/yorum/
    tepki/takip gelince üstten altın şerit iniyor (gönderenin KARE fotoğrafı + Türkçe metin + ✕),
