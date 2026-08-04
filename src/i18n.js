@@ -22,7 +22,7 @@ import { MESLEK_EK3 } from "./meslekCevirEk3";
 import { MESLEK_EK4 } from "./meslekCevirEk4";
 import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
 import { CEVIRI_AKADEMI, CEVIRI_AKADEMI_KURULUS } from "./ceviriAkademi";
-import { CEVIRI_HARITA_CANLI, NAV_MAKARA, SBP_SOR } from "./ceviriHaritaCanli";
+import { CEVIRI_HARITA_CANLI, NAV_MAKARA, SBP_SOR, AK_BUYUT } from "./ceviriHaritaCanli";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
 export const DILLER = [
@@ -2462,6 +2462,11 @@ Object.keys(NAV_MAKARA).forEach((lng) => {
 Object.keys(SBP_SOR).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   resources[lng].translation.sbpGloxooSor = SBP_SOR[lng];
+});
+// Fotoğraf büyütme ipucu → akBuyut anahtarı.
+Object.keys(AK_BUYUT).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  resources[lng].translation.akBuyut = AK_BUYUT[lng];
 });
 
 i18n

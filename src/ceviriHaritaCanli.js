@@ -256,6 +256,12 @@ export const NAV_MAKARA = {
   it: "Reels", pt: "Reels", ar: "مقاطع", zh: "短视频", hi: "रील्स", ja: "リール",
 };
 
+// Akademi fotoğrafı büyütme ipucu (dokununca tam ekran + zoom).
+export const AK_BUYUT = {
+  tr: "Büyütmek için dokun", en: "Tap to enlarge", de: "Zum Vergrößern tippen", ru: "Нажми, чтобы увеличить",
+  uk: "Торкнись, щоб збільшити", es: "Toca para ampliar", fr: "Touchez pour agrandir", it: "Tocca per ingrandire",
+  pt: "Toque para ampliar", ar: "اضغط للتكبير", zh: "点按放大", hi: "बड़ा करने के लिए टैप करें", ja: "タップして拡大",
+};
 // Sayfa bilgi penceresindeki "Gloxoo'ya sor" düğmesi (Gloxoo marka adı değişmez).
 export const SBP_SOR = {
   tr: "Gloxoo'ya sor", en: "Ask Gloxoo", de: "Gloxoo fragen", ru: "Спросить Gloxoo", uk: "Запитати Gloxoo",

@@ -228,8 +228,42 @@ function KonuFoto({ src, ad, ik }) {
   );
 }
 
+// TAM EKRAN FOTOĞRAF — dokununca büyür; iki parmakla ZOOM, tek parmakla kaydır (pan), çift dokunuş zoom aç/kapat.
+function FotoBuyut({ url, onKapat }) {
+  const { t } = useTranslation();
+  const [tr, setTr] = useState({ s: 1, x: 0, y: 0 });
+  const r = useRef({ mod: null, sx: 0, sy: 0, x0: 0, y0: 0, d0: 0, s0: 1, sonDokun: 0 });
+  const mes = (tt) => Math.hypot(tt[0].clientX - tt[1].clientX, tt[0].clientY - tt[1].clientY);
+  function bas(e) {
+    const tt = e.touches;
+    if (tt.length === 2) { r.current.mod = "zoom"; r.current.d0 = mes(tt) || 1; r.current.s0 = tr.s; }
+    else if (tt.length === 1) { r.current.mod = "kaydir"; r.current.sx = tt[0].clientX; r.current.sy = tt[0].clientY; r.current.x0 = tr.x; r.current.y0 = tr.y; }
+  }
+  function har(e) {
+    const tt = e.touches, c = r.current;
+    if (c.mod === "zoom" && tt.length === 2) { e.preventDefault(); const s = Math.max(1, Math.min(5, c.s0 * (mes(tt) / c.d0))); setTr((p) => ({ ...p, s })); }
+    else if (c.mod === "kaydir" && tt.length === 1 && tr.s > 1) { e.preventDefault(); setTr((p) => ({ ...p, x: c.x0 + (tt[0].clientX - c.sx), y: c.y0 + (tt[0].clientY - c.sy) })); }
+  }
+  function bit(e) {
+    r.current.mod = null;
+    const now = Date.now();
+    if (now - r.current.sonDokun < 300 && (!e.touches || e.touches.length === 0)) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }));
+    r.current.sonDokun = now;
+  }
+  const ciftTik = () => setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }));
+  return (
+    <div className="ak-foto-buyut" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
+      <button className="ak-foto-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+      <img src={url} alt="" referrerPolicy="no-referrer" draggable={false}
+        style={{ transform: `translate(${tr.x}px,${tr.y}px) scale(${tr.s})` }}
+        onTouchStart={bas} onTouchMove={har} onTouchEnd={bit} onDoubleClick={ciftTik} />
+    </div>
+  );
+}
+
 export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, sehir, onKatman, onSesIlerleme }) {
   const { t } = useTranslation();
+  const [buyukFoto, setBuyukFoto] = useState(""); // tam ekran/zoom açılan fotoğraf (kapak veya çeşit)
   const [gorunum, setGorunum] = useState("liste"); // liste | kurs | sertifikalarim
   const [ara, setAra] = useState("");
   const [meslek, setMeslek] = useState(null);
@@ -317,13 +351,15 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     return { url: "", hata: "" };
   }
 
+  // Mesleğin İNGİLİZCE adı — görsel yapay zekâsı Türkçe adı yanlış anlamasın (örn. "Berber" → Berberi halkı/halı; İngilizce "Barber" → kuaför/berber. Böylece doğru fotoğraf gelir).
+  function meslekIng() { try { return mc(meslek.ad, "en") || meslek.ad; } catch (e) { return meslek.ad; } }
   // Bir çeşidin basit fotoğraf istemi (yedek).
   function fotoIstem(ad) {
-    return `a realistic, detailed photograph of "${ad}" (${meslek.ad}), no text, no watermark, no logo`;
+    return `a realistic, detailed photograph of "${ad}" (${meslekIng()}), no text, no watermark, no logo`;
   }
   // TEK fotoğraf için Gloxoo'dan KONUYA UYGUN İngilizce istem al (yemekse insansız ürün fotosu → dağ/kadın gelmesin).
   async function gorselIstemGetir(ad) {
-    const p = `Give ONE short English image prompt (max 25 words) for a realistic photo of "${ad}" in "${meslek.ad}". If it is food/an object, describe that food/object clearly and END with "close-up, food photography, no people, no person, no text". If it is a hairstyle/beauty look, show a person with that look. Output ONLY the prompt.`;
+    const p = `Give ONE short English image prompt (max 25 words) for a realistic photo of "${ad}" in the profession "${meslekIng()}". If it is food/an object, describe that food/object clearly and END with "close-up, food photography, no people, no person, no text". If it is a hairstyle/beauty look, show a person with that look. Output ONLY the prompt.`;
     const c = await gloxSor(p, "Sadece İngilizce istem cümlesini ver, başka hiçbir şey yazma, tırnak koyma.");
     return String(c || "").replace(/\n/g, " ").replace(/^["']|["']$/g, "").trim().slice(0, 300);
   }
@@ -332,8 +368,8 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   useEffect(() => {
     if (!FOTO_ACIK || gorunum !== "kurs" || !meslek) return; // foto kapalıyken kapak da üretilmez
     let iptal = false; setKapakGorsel("");
-    const istem = `Professional realistic cover photo representing the profession "${meslek.ad}": a person skillfully working at their craft in a beautiful, tidy workspace. Warm inviting lighting, photorealistic, high quality, no text, no watermark, no logo.`;
-    gorselUret("kapak|" + meslek.ad, istem).then((res) => { if (!iptal) setKapakGorsel(res.url || ""); }).catch(() => {});
+    const istem = `Professional realistic cover photo of a professional ${meslekIng()} at work (the profession "${meslekIng()}"): a person skillfully doing this exact job in a beautiful, tidy workspace. Warm inviting lighting, photorealistic, high quality, no text, no watermark, no logo.`;
+    gorselUret("kapak2|" + meslek.ad, istem).then((res) => { if (!iptal) setKapakGorsel(res.url || ""); }).catch(() => {});
     return () => { iptal = true; };
   }, [gorunum, meslek]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -427,7 +463,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
       (async () => {
         let istem = ""; try { istem = await gorselIstemGetir(ad); } catch (e) {}
         if (!istem) istem = fotoIstem(ad);
-        const res = await gorselUret("v4|" + meslek.ad + "|" + ad, istem);
+        const res = await gorselUret("v5|" + meslek.ad + "|" + ad, istem);
         if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
       })();
     }
@@ -568,11 +604,12 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
   if (gorunum === "kurs" && meslek) {
     return (
       <div className="ana-pencere ak-pencere" key="ak-kurs">
+        {buyukFoto && <FotoBuyut url={buyukFoto} onKapat={() => setBuyukFoto("")} />}
         <div className="ak-ust"><button className="ak-geri" onClick={() => setGorunum("liste")}>‹ {t("geri", "Geri")}</button><div className="ak-ust-bas" style={{ background: meslek.bg }}>{meslek.ik} {mc(meslek.ad, dil)}</div></div>
 
-        {/* MESLEK KAPAK FOTOĞRAFI (yapay zekâ, bir kez üretilir) */}
+        {/* MESLEK KAPAK FOTOĞRAFI (yapay zekâ, bir kez üretilir) — dokununca tam ekran + zoom */}
         <div className="ak-kapak" style={{ background: meslek.bg }}>
-          {kapakGorsel ? <img src={kapakGorsel} alt="" referrerPolicy="no-referrer" /> : <span className="ak-kapak-ik">{meslek.ik}</span>}
+          {kapakGorsel ? <img src={kapakGorsel} alt="" referrerPolicy="no-referrer" onClick={() => setBuyukFoto(kapakGorsel)} style={{ cursor: "zoom-in" }} /> : <span className="ak-kapak-ik">{meslek.ik}</span>}
         </div>
 
         {/* 1) TEMEL EĞİTİM */}
@@ -602,7 +639,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
                 <div className="ak-konu-bas">📌 {aktifKonu}</div>
                 {/* TEK FOTOĞRAF — bu çeşide özel, tek tek yüklenir */}
                 {konuGorsel ? (
-                  <img className="ak-konu-gorsel" src={konuGorsel} alt={aktifKonu} referrerPolicy="no-referrer" />
+                  <img className="ak-konu-gorsel" src={konuGorsel} alt={aktifKonu} referrerPolicy="no-referrer" onClick={() => setBuyukFoto(konuGorsel)} style={{ cursor: "zoom-in" }} title={t("akBuyut", "Büyütmek için dokun")} />
                 ) : konuGorselYuk ? (
                   <div className="ak-gorsel-yuk">🖼️ {t("akGorselHazir2", "Fotoğraf hazırlanıyor…")}</div>
                 ) : null}
