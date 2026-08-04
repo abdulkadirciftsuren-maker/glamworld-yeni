@@ -21,6 +21,7 @@ import { MESLEK_EK2 } from "./meslekCevirEk2";
 import { MESLEK_EK3 } from "./meslekCevirEk3";
 import { MESLEK_EK4 } from "./meslekCevirEk4";
 import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
+import { CEVIRI_AKADEMI } from "./ceviriAkademi";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
 export const DILLER = [
@@ -2433,6 +2434,12 @@ const resources = {
 Object.keys(CEVIRI_ELITEPAZAR).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   Object.assign(resources[lng].translation, CEVIRI_ELITEPAZAR[lng].translation);
+});
+
+// AKADEMİ çevirileri (13 dil) — düz yapı { lng: {...} }. Böylece Akademi sayfasındaki t() anahtarları her dile çevrilir.
+Object.keys(CEVIRI_AKADEMI).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  Object.assign(resources[lng].translation, CEVIRI_AKADEMI[lng]);
 });
 
 i18n

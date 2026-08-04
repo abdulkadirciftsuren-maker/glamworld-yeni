@@ -83,6 +83,7 @@ function sesTemizle(m) {
 // SESLİ ANLATIM — ANA UYGULAMADAKİ ÇALIŞAN yöntemin aynısı: sesler yüklenene kadar BEKLE, en iyi sesi seç,
 // CÜMLELERE böl ve hepsini KUYRUĞA koy, resume() ile uyandır. (Motor "uyandırma" Anasayfa'da global zaten var.)
 function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
+  const { t } = useTranslation();
   const [okunuyor, setOkunuyor] = useState(false);
   const [aktif, setAktif] = useState(-1); // okunan cümle/satır (vurgu)
   const varMi = typeof window !== "undefined" && "speechSynthesis" in window;
@@ -134,7 +135,7 @@ function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
   }
   return (
     <>
-      {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ Durdur" : "🔊 Sesli anlat"}</button> : null}
+      {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ " + t("akDurdur", "Durdur") : "🔊 " + t("akSesliAnlat", "Sesli anlat")}</button> : null}
       <div className={className}>
         {cumleler.map((c, k) => {
           const bas = satirBaslikMi(c);
@@ -152,6 +153,7 @@ function satirBaslikMi(t) {
 }
 // KOPYALA / İNDİR / PAYLAŞ araçları (anlatım/sözlük metnini kopyala, .txt indir, paylaş)
 function MetinAraclar({ metin, baslik }) {
+  const { t } = useTranslation();
   const [kop, setKop] = useState(false);
   const tam = (baslik ? baslik + "\n\n" : "") + String(metin || "") + "\n\n— GLOXORG Akademi";
   function kopyala() { try { navigator.clipboard.writeText(tam); setKop(true); setTimeout(() => setKop(false), 1600); } catch (e) {} }
@@ -169,9 +171,9 @@ function MetinAraclar({ metin, baslik }) {
   if (!metin) return null;
   return (
     <div className="ak-arac-satir">
-      <button className="ak-arac" onClick={kopyala}>{kop ? "✓ Kopyalandı" : "📋 Kopyala"}</button>
-      <button className="ak-arac" onClick={indir}>⬇️ İndir</button>
-      <button className="ak-arac" onClick={paylas}>📤 Paylaş</button>
+      <button className="ak-arac" onClick={kopyala}>{kop ? "✓ " + t("akKopyalandi", "Kopyalandı") : "📋 " + t("akKopyala", "Kopyala")}</button>
+      <button className="ak-arac" onClick={indir}>⬇️ {t("akIndir", "İndir")}</button>
+      <button className="ak-arac" onClick={paylas}>📤 {t("akPaylas", "Paylaş")}</button>
     </div>
   );
 }
