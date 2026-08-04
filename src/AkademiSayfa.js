@@ -334,7 +334,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers(""); setDersAsama(0);
     // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
-    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. DETAYLI, DOLU ve ÖĞRETİCİ yaz; yüzeysel geçme, örnek ve somut bilgi ver. ~320 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
     const on = `"${meslek.ad}" mesleğine yeni başlayan birine, SADECE şu konunun İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)`;
     const bolumler = [
       { bas: "nedir", p: `${on} — ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.` },
@@ -380,18 +380,22 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
     const ad = (k && typeof k === "object") ? k.ad : String(k);
     if (aktifKonu === ad) { setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); return; } // aynısına dokununca kapat
     const no = ++istekNoRef.current;
-    setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(true);
-    // TEK FOTOĞRAF (bu çeşide özel) — ızgarada resim yok; sadece BURADA, bastığında tek tek üretilir (Gloxoo tek tek düzgün veriyor).
-    (async () => {
-      let istem = ""; try { istem = await gorselIstemGetir(ad); } catch (e) {}
-      if (!istem) istem = fotoIstem(ad);
-      const res = await gorselUret("v4|" + meslek.ad + "|" + ad, istem);
-      if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
-    })();
+    setAktifKonu(ad); setKonuDers(""); setKonuGorsel(""); setKonuGorselHata(""); setKonuYuk(true); setKonuGorselYuk(false);
+    // FOTOĞRAF KAPALI (FOTO_ACIK=false): ücretsiz görsel servisi alakasız/saçma resimler veriyordu (kullanıcı: "çok alakasız, düzensiz").
+    // Düzgün ve alakalı foto için ücretli anahtar gerekiyor; o gelene kadar foto ÜRETİLMEZ, temiz kalır. Açılırsa bu blok çalışır.
+    if (FOTO_ACIK) {
+      setKonuGorselYuk(true);
+      (async () => {
+        let istem = ""; try { istem = await gorselIstemGetir(ad); } catch (e) {}
+        if (!istem) istem = fotoIstem(ad);
+        const res = await gorselUret("v4|" + meslek.ad + "|" + ad, istem);
+        if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
+      })();
+    }
     // METİN — KESİLMEMESİ için KÜÇÜK BAŞLIKLARA bölünür: her başlık KISA (~180 kelime) ve kendi içinde TAM biter,
     // hepsi birleşince UZUN ve EKSİKSİZ olur. Böylece uzunluk sınırına takılıp yarıda kesilmez.
     // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe/yarı-çeviri kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
-    const sistem = `Sen Gloxoo'sun — usta eğitmen (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const sistem = `Sen Gloxoo'sun — usta eğitmen (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. DETAYLI, DOLU ve ÖĞRETİCİ yaz; ölçü/rakam/sıcaklık/süre gibi somut bilgileri EKSİKSİZ ver, yüzeysel geçme. ~320 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
     const on = `"${meslek.ad}" mesleğinde "${ad}" için, SADECE şu konunun İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)`;
     const bolumler = [
       { bas: "tanim", p: `${on} — nedir, neyin nesidir, hangi ülke/kültüre ait, özellikleri, nerede kullanılır.` },
@@ -543,8 +547,8 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           {ders && !dersYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
         </div>
 
-        {/* 2) ÇEŞİTLER — her tür tek tek ölçü + yapılışıyla */}
-        {ders && (
+        {/* 2) ÇEŞİTLER — artık temel eğitime BAĞLI DEĞİL; sayfa açılınca hemen görünür (kullanıcı: her seferinde ilk sayfayı yüklemek zorunda kalmayayım, çeşitlere ayrı gireyim) */}
+        {(
           <div className="ak-adim">
             <div className="ak-adim-bas"><span className="ak-adim-no">2</span> 🧩 {t("akCesitler", "Çeşitler — hepsi tek tek")}</div>
             <div className="ak-adim-alt">{t("akCesitAlt2", "Bir çeşide dokun; Gloxoo onu ölçüsü ve adım adım yapılışıyla anlatır. Listede yoksa aşağıya kendin yaz, Gloxoo onu da anlatır + fotoğrafını verir.")}</div>
@@ -590,8 +594,8 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           </div>
         )}
 
-        {/* 3) CİDDİ SINAV */}
-        {ders && (
+        {/* 3) CİDDİ SINAV — bu da temel eğitime BAĞLI DEĞİL; istediğinde doğrudan sınava girebilir */}
+        {(
           <div className="ak-adim">
             <div className="ak-adim-bas"><span className="ak-adim-no">3</span> 📝 {t("akSinav", "Sınav (ciddi)")}</div>
             <div className="ak-adim-alt">{t("akSinavAlt", "Gerçek mesleki sorular. Sertifika için en az %70 gerekir.")}</div>
