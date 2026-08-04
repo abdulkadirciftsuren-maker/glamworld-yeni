@@ -178,7 +178,9 @@ function MetinAraclar({ metin, baslik }) {
   function kopyala() { try { navigator.clipboard.writeText(tam); setKop(true); setTimeout(() => setKop(false), 1600); } catch (e) {} }
   function indir() {
     try {
-      const b = new Blob([tam], { type: "text/plain;charset=utf-8" });
+      // BOM (﻿) ekle: bazı telefon/masaüstü metin okuyucular kodlamayı yanlış seçip Türkçe/Rusça harfleri
+      // bozuk gösteriyordu (ü→Ã¼, ş→ÅŸ, •→â€¢). BOM ile dosya KESİN UTF-8 açılır → harfler düzgün görünür.
+      const b = new Blob(["﻿" + tam], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(b);
       const a = document.createElement("a");
       a.href = url; a.download = ((baslik || "gloxorg-akademi").replace(/[^\wÇĞİÖŞÜçğıöşü -]/g, "").trim().slice(0, 40) || "gloxorg-akademi") + ".txt";
