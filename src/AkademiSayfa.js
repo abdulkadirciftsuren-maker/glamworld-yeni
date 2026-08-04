@@ -66,7 +66,10 @@ function cesitIkon(ad) {
     [/\bbaget|\bbaton|baguette/, "🥖"], [/yaş pasta|\bpasta\b|gato|tort|cheesecake/, "🎂"], [/\bkek\b|muffin|cupcake|brownie|kağıt helva/, "🧁"], [/kurabiye|biscu|cookie/, "🍪"],
     [/\btart|turta|\bpie\b/, "🥧"], [/çikolata|choco|trüf/, "🍫"], [/dondurma|ice ?cream/, "🍨"], [/baklava|şerbet|tatlı|helva|lokum|revani|kadayıf|sütlaç|tulumba/, "🍮"],
     [/ekler|profiterol|krema|sufle|magnol|\bpuf\b/, "🍥"], [/ekmek|\bbread|khlib|somun|lavaş|paska|kalach|baton/, "🍞"], [/poğaça|açma|börek|pyrizhky|çörek|simit|gözleme|bazlama/, "🥐"],
-    [/pizza|\bpide\b|lahmacun/, "🍕"], [/\bsaç|kesim|\bfön|perma|röfle|topuz|ombre/, "💇"], [/tırnak|\bnail\b|\boje\b|manikür/, "💅"],
+    [/pizza|\bpide\b|lahmacun/, "🍕"],
+    // SAÇ MODELLERİ — Türkçe + yaygın İngilizce/uluslararası kesim adları (hepsi 💇 olsun; eskiden bilinmeyenler berber direğine düşüyordu → karışık)
+    [/\bsaç|kesim|\bfön|perma|röfle|topuz|ombre|undercut|pompadour|quiff|mohawk|mohican|\bbun\b|\bbuzz\b|\bcrew\b|\btaper\b|\bslick\b|\bfade\b|\bcrop\b|\bbob\b|mullet|fringe|comb ?over|side ?part|pixie|\bcut\b|kuaför|berber/, "💇"],
+    [/sakal|beard|\btıraş|shave|razor|bıyık|mustache/, "🧔"], [/tırnak|\bnail\b|\boje\b|manikür|pedikür/, "💅"],
     [/\bkaş\b|kirpik|makyaj/, "💄"], [/masaj|\bspa\b|cilt bakım/, "💆"], [/dövme|tattoo|piercing/, "🎨"], [/kahve|coffee|espresso|latte/, "☕"],
     [/\bçay\b|\btea\b/, "🍵"], [/kebap|köfte|döner|izgara|steak|biftek|kavurma|sucuk/, "🍖"], [/tavuk|piliç/, "🍗"], [/balık|\bfish\b/, "🐟"], [/salata|sebze|vegan/, "🥗"], [/meyve|\bfruit|çilek/, "🍓"],
     [/süt|peynir|yoğurt|kaymak/, "🧀"], [/reçel|marmelat|\bbal\b/, "🍯"], [/çorba|\bsoup\b/, "🍲"], [/makarna|noodle|erişte|spagetti/, "🍝"], [/hamburger|sandviç|\btost\b/, "🍔"],
