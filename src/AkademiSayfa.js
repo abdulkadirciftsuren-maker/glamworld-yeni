@@ -17,6 +17,7 @@ import { MESLEK_LISTESI } from "./meslekler";
 import { mc } from "./i18n"; // meslek adını kullanıcının diline çevir (Berber→Барбер…)
 import qrOlustur from "qrcode-generator";
 import { akademiKayitEkle, akademiKayitlarimOku, gorselYukle, videoYukle, akademiGorselOku, akademiGorselYaz } from "./veri";
+import { gloxooResimUret } from "./firebase"; // ana uygulamayla AYNI çalışan Google/Gemini görsel üretimi (worker OpenAI değil)
 
 // Dosyayı base64'e oku (foto yüklemek için)
 function dosyaOku(file) { return new Promise((res) => { try { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(""); r.readAsDataURL(file); } catch (e) { res(""); } }); }
@@ -260,7 +261,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const GECME = 0.7; // sertifika için geçme oranı (%70) — ciddi sınav
   // FOTOĞRAF: ücretsiz servis yanlış/bozuk resim veriyordu (Lavaş'a dağ, bagete kadın) → KAPALI, temiz ikon gösterilir.
   // OpenAI anahtarı eklenince açılıp gerçek/kaliteli resim gelir → o zaman true yapılır.
-  const FOTO_ACIK = false;
+  const FOTO_ACIK = true; // AÇIK: Akademi fotoğrafları Google/Gemini ile üretilir (ana uygulamayla aynı; kullanıcının Google kredisi). Olmazsa temiz simge kalır.
 
   useEffect(() => { if (uid) akademiKayitlarimOku(uid).then((l) => setKayitlarim(l || [])).catch(() => {}); }, [uid]);
 
@@ -295,24 +296,22 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // Böylece her model/çeşit fotoğrafı DÜNYADA BİR KEZ üretilir; sonra herkes hazırdan görür (ücret 1 kez).
   // Dönüş: { url, hata } — hata varsa ekrana yazıp sebebi göstereceğiz.
   async function gorselUret(anahtar, istem) {
-    // 1) Önbellek — daha önce üretilmiş URL varsa onu ver (tekrar üretme).
+    // 1) Önbellek — daha önce üretilmiş URL varsa onu ver (DÜNYADA bir kez üretilir, herkes hazırdan görür, ücret 1 kez).
     try { const eski = await akademiGorselOku(anahtar); if (eski) return { url: eski, hata: "" }; } catch (e) {}
-    // 2) Worker + OpenAI (anahtar TANIMLIYSA kaliteli üretir; yoksa boş döner → 3. adıma geçilir).
+    // 2) GOOGLE/GEMINI (ana uygulamanın ÇALIŞAN görsel yolu) — düzgün, alakalı fotoğraf üretir; kullanıcının Google kredisini kullanır.
+    //    Bozuk ücretsiz servisi (Pollinations: dağ/kadın gibi alakasız resimler) KALDIRILDI. Google olmazsa foto YOK (temiz simge kalır).
     try {
-      const r = await fetch(aiKopru, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ gorsel: istem }) });
-      const j = await r.json().catch(() => ({}));
-      if (j && j.gorsel) {
-        const url = await gorselYukle("data:image/png;base64," + j.gorsel, uid || "akademi");
-        if (url) { akademiGorselYaz(anahtar, url).catch(() => {}); return { url, hata: "" }; }
+      const res = await gloxooResimUret(istem);
+      const dataUrl = res && res.dataUrl;
+      if (dataUrl) {
+        let url = "";
+        try { url = await gorselYukle(dataUrl, uid || "akademi"); } catch (e) {}
+        const kayit = url || dataUrl; // Storage'a yüklenemezse bile fotoğrafı göster
+        akademiGorselYaz(anahtar, kayit).catch(() => {});
+        return { url: kayit, hata: "" };
       }
-    } catch (e) {}
-    // 3) ÜCRETSİZ yedek — Pollinations (anahtar/ücret YOK, herkeste çalışır). Resmi ÖNCEDEN yükle (boş kutu görünmesin), sonra URL'yi önbelleğe yaz.
-    try {
-      const url = ucretsizGorselUrl(istem, anahtar);
-      await new Promise((res) => { try { const im = new Image(); im.onload = res; im.onerror = res; im.src = url; setTimeout(res, 22000); } catch (e) { res(); } });
-      akademiGorselYaz(anahtar, url).catch(() => {});
-      return { url, hata: "" };
-    } catch (e) { return { url: "", hata: String(e) }; }
+    } catch (e) { return { url: "", hata: String(e && e.message || e) }; }
+    return { url: "", hata: "" };
   }
 
   // Bir çeşidin basit fotoğraf istemi (yedek).
