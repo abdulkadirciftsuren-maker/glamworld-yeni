@@ -63,29 +63,33 @@ function duzelt(m) {
 function cesitIkon(ad, meslekAd) {
   const s = (ad || "").toLocaleLowerCase("tr");
   const m = (meslekAd || "").toLocaleLowerCase("tr");
-  // GÜZELLİK/BAKIM/SAĞLIK mesleği mi? Böyle mesleklerde YİYECEK ikonu UYGULANMAZ
-  // (yanlış eşleşme olmasın: "Gözenek Açma" → "açma" kruvasan sanılmasın; "krem" → pasta olmasın).
-  const guzellik = /cilt|kuaför|kuafor|berber|\bsaç|tırnak|nail|kaş|kirpik|makyaj|masaj|\bspa\b|güzellik|estetik|dövme|tattoo|epilasyon|manikür|pedikür|kozmetik|dermato|sağlık|hem[şs]ire|doktor/.test(m);
-  // GÜZELLİK/BAKIM ikonları — her meslekte geçerli (özel, alakalı)
+  // NOT: JavaScript regex'inde Türkçe harfler (ş,ı,ç,ğ,ö,ü) "kelime" sayılmaz → \b bunların yanında YANLIŞ sınır
+  // üretir (örn. \bkaş\b, "Kaşarlı" içindeki "kaş"ı yakalıyordu → ruj). O yüzden Türkçe kelimelerde \b yerine
+  // olumsuz ileri-bakış (?![a-zçğıöşü]) kullanıyoruz (kelime devam ediyorsa eşleşme).
+  const b = (k) => new RegExp(k + "(?![a-zçğıöşü])"); // "k" ile başlayıp Türkçe harf DEVAM ETMİYORSA
+  // MESLEK KATEGORİSİ — yiyecek mesleğinde ÖNCE yiyecek ikonları (güzellik terimi karışmasın), güzellikte ÖNCE güzellik.
+  const yemekMeslek = /fırın|firin|ekmek|unlu|mamul|mamül|pastane|pasta|börek|boregi|poğaça|simit|aşçı|asci|mutfak|restoran|lokanta|tatlı|tatli|dondurma|kasap|gıda|gida|büfe|bufe|pizza|döner|doner|kebap|manav|kahve|cafe|kafe|şeker|seker|helva|meze|catering|yemek|börekçi/.test(m);
+  const guzelMeslek = /cilt|kuaför|kuafor|berber|\bsaç|saç|tırnak|tirnak|nail|kirpik|makyaj|masaj|\bspa\b|güzellik|guzellik|estetik|dövme|dovme|tattoo|epilasyon|manikür|pedikür|kozmetik|dermato/.test(m);
   const guzel = [
-    [/\bsaç|kesim|\bfön|perma|röfle|topuz|ombre|undercut|pompadour|quiff|mohawk|mohican|\bbun\b|\bbuzz\b|\bcrew\b|\btaper\b|\bslick\b|\bfade\b|\bcrop\b|\bbob\b|mullet|fringe|comb ?over|side ?part|pixie|\bcut\b|kuaför|berber/, "💇"],
-    [/sakal|beard|\btıraş|shave|razor|bıyık|mustache/, "🧔"], [/tırnak|\bnail\b|\boje\b|manikür|pedikür/, "💅"],
-    [/\bkaş\b|kirpik|makyaj|\blip|dudak|far\b/, "💄"],
+    [/saç|kesim|\bfön|perma|röfle|topuz|ombre|undercut|pompadour|quiff|mohawk|mohican|\bbun\b|\bbuzz\b|\bcrew\b|\btaper\b|\bslick\b|\bfade\b|\bcrop\b|\bbob\b|mullet|fringe|comb ?over|side ?part|pixie|\bcut\b|kuaför|berber/, "💇"],
+    [/sakal|beard|tıraş|shave|razor|bıyık|mustache/, "🧔"], [/tırnak|\bnail\b|\boje\b|manikür|pedikür/, "💅"],
+    [b("kaş"), "💄"], [/kirpik|makyaj|\bruj\b|\blip|dudak|göz far/, "💄"],
     [/masaj|\bspa\b|cilt|peeling|maske|nemlendir|gözenek|dermabraz|kolajen|aging|bakım|leke|akne|yüz/, "💆"],
     [/dövme|tattoo|piercing/, "🎨"],
   ];
-  for (const [re, em] of guzel) if (re.test(s)) return em;
-  if (guzellik) return null; // güzellik mesleğinde başka (yiyecek) ikona BAKMA → meslek ikonuna düşer
-  // YİYECEK/İÇECEK ikonları — sadece güzellik OLMAYAN mesleklerde
-  const yiyecek = [
-    [/\bbaget|\bbaton|baguette/, "🥖"], [/yaş pasta|\bpasta\b|gato|tort|cheesecake/, "🎂"], [/\bkek\b|muffin|cupcake|brownie|kağıt helva/, "🧁"], [/kurabiye|biscu|cookie/, "🍪"],
-    [/\btart|turta|\bpie\b/, "🥧"], [/çikolata|choco|trüf/, "🍫"], [/dondurma|ice ?cream/, "🍨"], [/baklava|şerbet|tatlı|helva|lokum|revani|kadayıf|sütlaç|tulumba/, "🍮"],
-    [/ekler|profiterol|krema|sufle|magnol|\bpuf\b/, "🍥"], [/ekmek|\bbread|khlib|somun|lavaş|paska|kalach|baton/, "🍞"], [/poğaça|açma|börek|pyrizhky|çörek|simit|gözleme|bazlama/, "🥐"],
+  const yemek = [
+    [/ekme[kğ]|\bbread|khlib|somun|lavaş|paska|kalach/, "🍞"], [/poğaça|açma|böre[kğ]|pyrizhky|çöre[kğ]|simit|gözleme|bazlama/, "🥐"],
+    [/bage[t]|\bbaton|baguette/, "🥖"], [/yaş pasta|\bpasta\b|gato|tort|cheesecake/, "🎂"], [/\bkek\b|muffin|cupcake|brownie|kağıt helva/, "🧁"], [/kurabiye|biscu|cookie/, "🍪"],
+    [/tart|turta|\bpie\b/, "🥧"], [/çikolata|choco|trüf/, "🍫"], [/dondurma|ice ?cream/, "🍨"], [/baklava|şerbet|tatlı|helva|lokum|revani|kadayıf|sütlaç|tulumba/, "🍮"],
+    [/ekler|profiterol|krema|sufle|magnol|\bpuf\b/, "🍥"],
     [/pizza|\bpide\b|lahmacun/, "🍕"], [/kahve|coffee|espresso|latte/, "☕"],
     [/\bçay\b|\btea\b/, "🍵"], [/kebap|köfte|döner|izgara|steak|biftek|kavurma|sucuk/, "🍖"], [/tavuk|piliç/, "🍗"], [/balık|\bfish\b/, "🐟"], [/salata|sebze|vegan/, "🥗"], [/meyve|\bfruit|çilek/, "🍓"],
     [/süt|peynir|yoğurt|kaymak/, "🧀"], [/reçel|marmelat|\bbal\b/, "🍯"], [/çorba|\bsoup\b/, "🍲"], [/makarna|noodle|erişte|spagetti/, "🍝"], [/hamburger|sandviç|\btost\b/, "🍔"],
   ];
-  for (const [re, em] of yiyecek) if (re.test(s)) return em;
+  if (yemekMeslek) { for (const [re, em] of yemek) if (re.test(s)) return em; return null; }
+  if (guzelMeslek) { for (const [re, em] of guzel) if (re.test(s)) return em; return null; }
+  for (const [re, em] of guzel) if (re.test(s)) return em;
+  for (const [re, em] of yemek) if (re.test(s)) return em;
   return null;
 }
 // Renkli kart zeminleri (çeşitler sırayla bu renkleri alır → renkli görünür)
@@ -239,27 +243,42 @@ function KonuFoto({ src, ad, ik }) {
   );
 }
 
-// TAM EKRAN FOTOĞRAF — dokununca büyür; iki parmakla ZOOM, tek parmakla kaydır (pan), çift dokunuş zoom aç/kapat.
+// TAM EKRAN FOTOĞRAF — dokununca büyür; iki parmakla ZOOM, tek parmakla HER YÖNE kaydır (pan), çift dokunuş zoom aç/kapat.
+// Zoom'dan sonra (iki parmağı bırakıp tek parmak) pan DEVAM EDER; tek parmakla sağ-sol-yukarı-aşağı serbest gezilir.
 function FotoBuyut({ url, onKapat }) {
   const { t } = useTranslation();
   const [tr, setTr] = useState({ s: 1, x: 0, y: 0 });
-  const r = useRef({ mod: null, sx: 0, sy: 0, x0: 0, y0: 0, d0: 0, s0: 1, sonDokun: 0 });
+  const trRef = useRef(tr); trRef.current = tr; // güncel değer (kapanış eskimesin)
+  const c = useRef({ d0: 0, s0: 1, ox0: 0, oy0: 0, x0: 0, y0: 0, panSx: 0, panSy: 0, panX0: 0, panY0: 0, panAktif: false, sonDokun: 0 });
   const mes = (tt) => Math.hypot(tt[0].clientX - tt[1].clientX, tt[0].clientY - tt[1].clientY);
+  const orta = (tt) => ({ x: (tt[0].clientX + tt[1].clientX) / 2, y: (tt[0].clientY + tt[1].clientY) / 2 });
+  function panBasla(px, py) { const cur = trRef.current; c.current.panSx = px; c.current.panSy = py; c.current.panX0 = cur.x; c.current.panY0 = cur.y; c.current.panAktif = true; }
   function bas(e) {
-    const tt = e.touches;
-    if (tt.length === 2) { r.current.mod = "zoom"; r.current.d0 = mes(tt) || 1; r.current.s0 = tr.s; }
-    else if (tt.length === 1) { r.current.mod = "kaydir"; r.current.sx = tt[0].clientX; r.current.sy = tt[0].clientY; r.current.x0 = tr.x; r.current.y0 = tr.y; }
+    const tt = e.touches, cur = trRef.current;
+    if (tt.length === 2) { const o = orta(tt); c.current.d0 = mes(tt) || 1; c.current.s0 = cur.s; c.current.ox0 = o.x; c.current.oy0 = o.y; c.current.x0 = cur.x; c.current.y0 = cur.y; c.current.panAktif = false; }
+    else if (tt.length === 1) panBasla(tt[0].clientX, tt[0].clientY);
   }
   function har(e) {
-    const tt = e.touches, c = r.current;
-    if (c.mod === "zoom" && tt.length === 2) { e.preventDefault(); const s = Math.max(1, Math.min(5, c.s0 * (mes(tt) / c.d0))); setTr((p) => ({ ...p, s })); }
-    else if (c.mod === "kaydir" && tt.length === 1 && tr.s > 1) { e.preventDefault(); setTr((p) => ({ ...p, x: c.x0 + (tt[0].clientX - c.sx), y: c.y0 + (tt[0].clientY - c.sy) })); }
+    const tt = e.touches, cur = trRef.current;
+    if (tt.length === 2) {
+      e.preventDefault();
+      const s = Math.max(1, Math.min(5, c.current.s0 * (mes(tt) / (c.current.d0 || 1))));
+      const o = orta(tt); // iki parmağın ortası kayarsa fotoğraf da kayar (pan)
+      setTr({ s, x: c.current.x0 + (o.x - c.current.ox0), y: c.current.y0 + (o.y - c.current.oy0) });
+    } else if (tt.length === 1 && cur.s > 1) {
+      e.preventDefault();
+      if (!c.current.panAktif) panBasla(tt[0].clientX, tt[0].clientY); // zoom'dan tek parmağa geçince pan'ı başlat
+      setTr({ s: cur.s, x: c.current.panX0 + (tt[0].clientX - c.current.panSx), y: c.current.panY0 + (tt[0].clientY - c.current.panSy) });
+    }
   }
   function bit(e) {
-    r.current.mod = null;
     const now = Date.now();
-    if (now - r.current.sonDokun < 300 && (!e.touches || e.touches.length === 0)) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }));
-    r.current.sonDokun = now;
+    if (e.touches && e.touches.length === 1) { panBasla(e.touches[0].clientX, e.touches[0].clientY); } // 2→1 parmak: kalan parmakla pan devam etsin
+    else if (!e.touches || e.touches.length === 0) {
+      c.current.panAktif = false;
+      if (now - c.current.sonDokun < 300) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); // çift dokunuş
+      c.current.sonDokun = now;
+    }
   }
   const ciftTik = () => setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }));
   return (
