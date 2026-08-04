@@ -7447,10 +7447,15 @@ export default function Anasayfa({ pro = false }) {
     // NOT: Profil sayfası artık swipe'a AÇIK (kullanıcı: "profilde parmakla kaymıyor, Akademi'ye geçmiyordu").
     // Profil düzenleme paneli açıkken (duzenAcik) yine kapalı; profil filtre şeridi aşağıda closest() ile muaf.
     if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || pazarPencereAcik) { dokunRef.current = null; return; }
+    // ⛔ AKADEMİ'DE BİR ŞEY AÇIKKEN (kurs/çeşit/foto — derinlik>0) sayfa kaydırma YOK: parmak sağa-sola kayınca
+    //    başka sayfaya geçip Akademi'de yüklenen ders/foto KAYBOLUYORDU (kullanıcı: "yüklediklerim aniden kayboluyor").
+    //    Artık Akademi içindeyken kaymaz; çıkmak için "‹ Geri" ya da alt menü kullanılır.
+    if (aktifKod === "akademi" && akademiDerinlikRef.current > 0) { dokunRef.current = null; return; }
     try {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
+      // .ak-foto-buyut: tam ekran Akademi fotoğrafı — üstünde parmak gezince ZOOM/pan yapılır, sayfa DEĞİŞMEZ.
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .apf-bolumler, .ak-foto-buyut, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }

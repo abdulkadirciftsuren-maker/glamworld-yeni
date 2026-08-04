@@ -502,6 +502,19 @@ export async function akademiGorselYaz(anahtar, url) {
   if (!url) return false;
   try { await setDoc(doc(db, "akademiGorsel", _gorselAnahtar(anahtar)), { url, zamanMs: Date.now(), olusturma: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
 }
+// AKADEMİ DERS/METİN ÖNBELLEĞİ — üretilen ders/tarif/fizibilite yazısı DÜNYADA bir kez üretilir, herkes hazırdan görür
+// (2. açılış ANINDA + yapay zekâ ücreti tekrar gitmez). Aynı "akademiGorsel" koleksiyonu kullanılır (yeni Firestore kuralı GEREKMEZ);
+// metin ayrı "metin" alanında, anahtar öneki (ders|/konu|/fiz|) fotoğraf anahtarlarıyla çakışmaz.
+export async function akademiMetinOku(anahtar) {
+  try {
+    const s = await getDoc(doc(db, "akademiGorsel", _gorselAnahtar(anahtar)));
+    return (s.exists() && s.data() && s.data().metin) || "";
+  } catch (e) { return ""; }
+}
+export async function akademiMetinYaz(anahtar, metin) {
+  if (!metin) return false;
+  try { await setDoc(doc(db, "akademiGorsel", _gorselAnahtar(anahtar)), { metin, zamanMs: Date.now(), olusturma: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+}
 
 export async function mekanGuncelle(id, veri) {
   if (!id) return false;

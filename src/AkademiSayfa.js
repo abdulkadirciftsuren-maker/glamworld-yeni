@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { MESLEK_LISTESI } from "./meslekler";
 import { mc } from "./i18n"; // meslek adını kullanıcının diline çevir (Berber→Барбер…)
 import qrOlustur from "qrcode-generator";
-import { akademiKayitEkle, akademiKayitlarimOku, gorselYukle, videoYukle, akademiGorselOku, akademiGorselYaz } from "./veri";
+import { akademiKayitEkle, akademiKayitlarimOku, gorselYukle, videoYukle, akademiGorselOku, akademiGorselYaz, akademiMetinOku, akademiMetinYaz } from "./veri";
 import { gloxooResimUret } from "./firebase"; // ana uygulamayla AYNI çalışan Google/Gemini görsel üretimi (worker OpenAI değil)
 
 // Dosyayı base64'e oku (foto yüklemek için)
@@ -60,21 +60,32 @@ function duzelt(m) {
 
 // Çeşit adına göre uygun bir EMOJİ seç (renkli kartlarda ikon olarak) → yoksa meslek ikonuna düşülür.
 // NOT: kısa kelimeler (et, bal…) BAŞKA kelimelerin içinde eşleşmesin diye \b (kelime sınırı) kullanılır (örn. "palet"teki "et" ARTIK eşleşmez).
-function cesitIkon(ad) {
+function cesitIkon(ad, meslekAd) {
   const s = (ad || "").toLocaleLowerCase("tr");
-  const kv = [
+  const m = (meslekAd || "").toLocaleLowerCase("tr");
+  // GÜZELLİK/BAKIM/SAĞLIK mesleği mi? Böyle mesleklerde YİYECEK ikonu UYGULANMAZ
+  // (yanlış eşleşme olmasın: "Gözenek Açma" → "açma" kruvasan sanılmasın; "krem" → pasta olmasın).
+  const guzellik = /cilt|kuaför|kuafor|berber|\bsaç|tırnak|nail|kaş|kirpik|makyaj|masaj|\bspa\b|güzellik|estetik|dövme|tattoo|epilasyon|manikür|pedikür|kozmetik|dermato|sağlık|hem[şs]ire|doktor/.test(m);
+  // GÜZELLİK/BAKIM ikonları — her meslekte geçerli (özel, alakalı)
+  const guzel = [
+    [/\bsaç|kesim|\bfön|perma|röfle|topuz|ombre|undercut|pompadour|quiff|mohawk|mohican|\bbun\b|\bbuzz\b|\bcrew\b|\btaper\b|\bslick\b|\bfade\b|\bcrop\b|\bbob\b|mullet|fringe|comb ?over|side ?part|pixie|\bcut\b|kuaför|berber/, "💇"],
+    [/sakal|beard|\btıraş|shave|razor|bıyık|mustache/, "🧔"], [/tırnak|\bnail\b|\boje\b|manikür|pedikür/, "💅"],
+    [/\bkaş\b|kirpik|makyaj|\blip|dudak|far\b/, "💄"],
+    [/masaj|\bspa\b|cilt|peeling|maske|nemlendir|gözenek|dermabraz|kolajen|aging|bakım|leke|akne|yüz/, "💆"],
+    [/dövme|tattoo|piercing/, "🎨"],
+  ];
+  for (const [re, em] of guzel) if (re.test(s)) return em;
+  if (guzellik) return null; // güzellik mesleğinde başka (yiyecek) ikona BAKMA → meslek ikonuna düşer
+  // YİYECEK/İÇECEK ikonları — sadece güzellik OLMAYAN mesleklerde
+  const yiyecek = [
     [/\bbaget|\bbaton|baguette/, "🥖"], [/yaş pasta|\bpasta\b|gato|tort|cheesecake/, "🎂"], [/\bkek\b|muffin|cupcake|brownie|kağıt helva/, "🧁"], [/kurabiye|biscu|cookie/, "🍪"],
     [/\btart|turta|\bpie\b/, "🥧"], [/çikolata|choco|trüf/, "🍫"], [/dondurma|ice ?cream/, "🍨"], [/baklava|şerbet|tatlı|helva|lokum|revani|kadayıf|sütlaç|tulumba/, "🍮"],
     [/ekler|profiterol|krema|sufle|magnol|\bpuf\b/, "🍥"], [/ekmek|\bbread|khlib|somun|lavaş|paska|kalach|baton/, "🍞"], [/poğaça|açma|börek|pyrizhky|çörek|simit|gözleme|bazlama/, "🥐"],
-    [/pizza|\bpide\b|lahmacun/, "🍕"],
-    // SAÇ MODELLERİ — Türkçe + yaygın İngilizce/uluslararası kesim adları (hepsi 💇 olsun; eskiden bilinmeyenler berber direğine düşüyordu → karışık)
-    [/\bsaç|kesim|\bfön|perma|röfle|topuz|ombre|undercut|pompadour|quiff|mohawk|mohican|\bbun\b|\bbuzz\b|\bcrew\b|\btaper\b|\bslick\b|\bfade\b|\bcrop\b|\bbob\b|mullet|fringe|comb ?over|side ?part|pixie|\bcut\b|kuaför|berber/, "💇"],
-    [/sakal|beard|\btıraş|shave|razor|bıyık|mustache/, "🧔"], [/tırnak|\bnail\b|\boje\b|manikür|pedikür/, "💅"],
-    [/\bkaş\b|kirpik|makyaj/, "💄"], [/masaj|\bspa\b|cilt bakım/, "💆"], [/dövme|tattoo|piercing/, "🎨"], [/kahve|coffee|espresso|latte/, "☕"],
+    [/pizza|\bpide\b|lahmacun/, "🍕"], [/kahve|coffee|espresso|latte/, "☕"],
     [/\bçay\b|\btea\b/, "🍵"], [/kebap|köfte|döner|izgara|steak|biftek|kavurma|sucuk/, "🍖"], [/tavuk|piliç/, "🍗"], [/balık|\bfish\b/, "🐟"], [/salata|sebze|vegan/, "🥗"], [/meyve|\bfruit|çilek/, "🍓"],
     [/süt|peynir|yoğurt|kaymak/, "🧀"], [/reçel|marmelat|\bbal\b/, "🍯"], [/çorba|\bsoup\b/, "🍲"], [/makarna|noodle|erişte|spagetti/, "🍝"], [/hamburger|sandviç|\btost\b/, "🍔"],
   ];
-  for (const [re, em] of kv) if (re.test(s)) return em;
+  for (const [re, em] of yiyecek) if (re.test(s)) return em;
   return null;
 }
 // Renkli kart zeminleri (çeşitler sırayla bu renkleri alır → renkli görünür)
@@ -383,6 +394,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // (2) TEMEL EĞİTİM — kesilmesin diye KÜÇÜK başlıklara bölünür (her başlık kısa+tam), birleşince eksiksiz olur.
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers(""); setDersAsama(0);
+    // ÖNBELLEK: bu ders daha önce (bu dilde) üretildiyse ANINDA getir (yapay zekâ ücreti tekrar gitmez, hızlı gelir).
+    const mAnahtar = "ders|" + meslek.ad + "|" + dil;
+    try { const hazir = await akademiMetinOku(mAnahtar); if (hazir) { setDers(hazir); setDersYuk(false); return; } } catch (e) {}
     // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
     const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. DETAYLI, DOLU ve ÖĞRETİCİ yaz; yüzeysel geçme, örnek ve somut bilgi ver. ~320 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
     const on = `"${meslek.ad}" mesleğine yeni başlayan birine, SADECE şu konunun İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)`;
@@ -399,7 +413,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
       if (c) parcalar.push(baslik + "\n" + duzelt(c));
       il++; setDersAsama(il);
     }
-    setDers(parcalar.join("\n\n") || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
+    const tamMetin = parcalar.join("\n\n");
+    if (tamMetin) akademiMetinYaz(mAnahtar, tamMetin).catch(() => {}); // ÖNBELLEĞE yaz → sonrakiler hazırdan (ücretsiz+hızlı)
+    setDers(tamMetin || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
   // (2b) KURULUŞ & FİZİBİLİTE — bu mesleğin fabrika/imalathanesi nasıl kurulur: fizibilite, makine-teçhizat,
@@ -407,6 +423,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   async function fizibiliteAl() {
     if (fizibiliteYuk || !meslek) return; setFizibiliteYuk(true); setFizibilite(""); setFizibiliteAsama(0);
     const bolge = [sehir, ulke].filter(Boolean).join(", ");
+    // ÖNBELLEK: fizibilite daha önce (bu bölge+dilde) üretildiyse ANINDA getir (ücret tekrar gitmez).
+    const fAnahtar = "fiz|" + meslek.ad + "|" + (bolge || "-") + "|" + dil;
+    try { const hazir = await akademiMetinOku(fAnahtar); if (hazir) { setFizibilite(hazir); setFizibiliteYuk(false); return; } } catch (e) {}
     const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin sanayi/işletme kuruluş danışmanı. CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. GERÇEKÇİ, DETAYLI ve UYGULANABİLİR ol; SOMUT rakam ver (adet, kapasite, kW, m², para birimi, süre). Yüzeysel geçme. ~340 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
     const on = `"${meslek.ad}" işini/ürününü ÜRETECEK bir imalathane/fabrika KURMAK isteyen birine, SADECE şu bölümün İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)${bolge ? `. Bölge: ${bolge} (yerel koşulları dikkate al)` : ""}`;
     const bolumler = [
@@ -424,7 +443,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
       if (c) parcalar.push(baslik + "\n" + duzelt(c));
       il++; setFizibiliteAsama(il);
     }
-    setFizibilite(parcalar.join("\n\n") || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setFizibiliteYuk(false);
+    const tamFiz = parcalar.join("\n\n");
+    if (tamFiz) akademiMetinYaz(fAnahtar, tamFiz).catch(() => {});
+    setFizibilite(tamFiz || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setFizibiliteYuk(false);
   }
 
   // (3a) ÇEŞİTLERİ getir — bu meslekteki tüm tür/ürün/konu listesi (JSON)
@@ -432,6 +453,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     if (konularYuk || !meslek) return; setKonularYuk(true); setKonular(null); setAktifKonu(""); setKonuDers("");
     const sistem = "Sen Gloxoo'sun. SADECE geçerli JSON döndür, başka hiçbir şey yazma.";
     const bolge = [sehir, ulke].filter(Boolean).join(", ") || "bilinmiyor";
+    // ÖNBELLEK: çeşit listesi daha önce (bu bölge+dilde) üretildiyse ANINDA getir.
+    const lAnahtar = "liste|" + meslek.ad + "|" + bolge + "|" + dil;
+    try { const hazir = await akademiMetinOku(lAnahtar); if (hazir) { const a = JSON.parse(hazir); if (Array.isArray(a) && a.length) { setKonular(a); setKonularYuk(false); return; } } } catch (e) {}
     const p = `"${meslek.ad}" mesleğinde öğrenilmesi gereken çeşitleri/ürünleri/modelleri listele.
 ÇOK ÖNEMLİ KURALLAR:
 1) SADECE "${meslek.ad}" mesleğinin GERÇEK ürünlerini/çeşitlerini ver — BAŞKA mesleğin ürününü ASLA KATMA. Meslek NE İSE ONUN ürünleri: meslek PASTANE/tatlı ise pastalar, yaş pasta, kek, tart, turta, ekler, profiterol, kurabiye, baklava, sütlü tatlılar gibi TATLILAR (EKMEK YAZMA); meslek FIRIN/EKMEK ise ekmek çeşitleri, poğaça, simit, açma, börek gibi HAMUR İŞLERİ; meslek KUAFÖR ise saç kesim/modelleri; meslek TIRNAK ise tırnak modelleri; vb.
@@ -446,6 +470,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
       const o = JSON.parse(temiz.slice(temiz.indexOf("{"), temiz.lastIndexOf("}") + 1));
       if (o && Array.isArray(o.konular)) arr = o.konular.map((x) => (typeof x === "string" ? x : (x && x.ad) || "")).map((x) => String(x).trim()).filter(Boolean).slice(0, 30);
     } catch (e) {}
+    if (arr && arr.length) akademiMetinYaz(lAnahtar, JSON.stringify(arr)).catch(() => {}); // ÖNBELLEĞE yaz
     setKonular(arr && arr.length ? arr : []); setKonularYuk(false);
   }
 
@@ -467,6 +492,9 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
         if (istekNoRef.current === no) { setKonuGorsel(res.url || ""); setKonuGorselHata(res.url ? "" : (res.hata || "")); setKonuGorselYuk(false); }
       })();
     }
+    // ÖNBELLEK: bu çeşit tarifi daha önce (bu dilde) üretildiyse ANINDA getir (ücret tekrar gitmez, hızlı gelir).
+    const kAnahtar = "konu|" + meslek.ad + "|" + ad + "|" + dil;
+    try { const hazir = await akademiMetinOku(kAnahtar); if (hazir) { if (istekNoRef.current === no) { setKonuDers(hazir); setKonuYuk(false); } return; } } catch (e) {}
     // METİN — KESİLMEMESİ için KÜÇÜK BAŞLIKLARA bölünür: her başlık KISA (~180 kelime) ve kendi içinde TAM biter,
     // hepsi birleşince UZUN ve EKSİKSİZ olur. Böylece uzunluk sınırına takılıp yarıda kesilmez.
     // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe/yarı-çeviri kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
@@ -489,8 +517,10 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
       if (c) parcalar.push(baslik + "\n" + duzelt(c));
       ilerle++; if (istekNoRef.current === no) setKonuAsama(ilerle);
     }
+    const tamKonu = parcalar.join("\n\n");
+    if (tamKonu) akademiMetinYaz(kAnahtar, tamKonu).catch(() => {}); // ÖNBELLEĞE yaz → sonrakiler hazırdan
     if (istekNoRef.current === no) {
-      setKonuDers(parcalar.join("\n\n") || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
+      setKonuDers(tamKonu || t("akKonuOlmadi", "Şu an alınamadı, tekrar dene.")); setKonuYuk(false);
     }
   }
 
@@ -657,7 +687,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
               <div className="ak-konu-izgara">
                 {konular.map((k, i) => {
                   const ad = (k && typeof k === "object") ? k.ad : String(k);
-                  const ik = cesitIkon(ad) || meslek.ik;
+                  const ik = cesitIkon(ad, meslek.ad) || meslek.ik;
                   return (
                     <button key={ad + i} className={"ak-konu-kart" + (aktifKonu === ad ? " aktif" : "")} style={{ background: CESIT_RENK[i % CESIT_RENK.length] }} onClick={() => konuAc(k)}>
                       <span className="ak-konu-kart-ik2" aria-hidden="true">{ik}</span>
