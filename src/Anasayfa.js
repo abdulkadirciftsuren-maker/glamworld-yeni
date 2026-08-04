@@ -7441,11 +7441,13 @@ export default function Anasayfa({ pro = false }) {
     // ⛔ PENCERE/PANEL AÇIKKEN sayfa kaydırma YOK: ayar/paylaş/arama/profil/üye penceresi açıkken
     // parmağı sağa-sola gezdirmek ALT sayfayı kaydırıp başka sekmeye atıyordu (ayar yapmayı engelliyordu).
     // Parmak ne yapıyorsa ORADA kalsın, alt sayfa görülmesin.
-    if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || pazarPencereAcik || aktifKod === "profil") { dokunRef.current = null; return; }
+    // NOT: Profil sayfası artık swipe'a AÇIK (kullanıcı: "profilde parmakla kaymıyor, Akademi'ye geçmiyordu").
+    // Profil düzenleme paneli açıkken (duzenAcik) yine kapalı; profil filtre şeridi aşağıda closest() ile muaf.
+    if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || pazarPencereAcik) { dokunRef.current = null; return; }
     try {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -7458,7 +7460,9 @@ export default function Anasayfa({ pro = false }) {
       const dx = d.clientX - b.x, dy = d.clientY - b.y;
       if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return; // yatay net olmalı
       const i = navlar.findIndex((n) => n.k === aktifKod);
-      const yeni = dx < 0 ? Math.min(i + 1, navlar.length - 1) : Math.max(i - 1, 0);
+      let yeni = dx < 0 ? Math.min(i + 1, navlar.length - 1) : Math.max(i - 1, 0);
+      // SON sayfada (Profil) sola kaydırınca ileri gidecek sayfa yok → kullanıcı yine de bir öncekine (Akademi) geçsin
+      if (yeni === i && dx < 0 && i === navlar.length - 1) yeni = i - 1;
       if (yeni !== i) setAktifKod(navlar[yeni].k);
     } catch (err) {}
   };
