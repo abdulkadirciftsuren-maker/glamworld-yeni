@@ -22,7 +22,7 @@ import { MESLEK_EK3 } from "./meslekCevirEk3";
 import { MESLEK_EK4 } from "./meslekCevirEk4";
 import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
 import { CEVIRI_AKADEMI, CEVIRI_AKADEMI_KURULUS } from "./ceviriAkademi";
-import { CEVIRI_HARITA_CANLI, NAV_MAKARA } from "./ceviriHaritaCanli";
+import { CEVIRI_HARITA_CANLI, NAV_MAKARA, SBP_SOR } from "./ceviriHaritaCanli";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
 export const DILLER = [
@@ -2457,6 +2457,11 @@ Object.keys(CEVIRI_HARITA_CANLI).forEach((lng) => {
 Object.keys(NAV_MAKARA).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   resources[lng].translation.navMakara = NAV_MAKARA[lng];
+});
+// "Gloxoo'ya sor" → sbpGloxooSor anahtarı olarak her dile ekle.
+Object.keys(SBP_SOR).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  resources[lng].translation.sbpGloxooSor = SBP_SOR[lng];
 });
 
 i18n

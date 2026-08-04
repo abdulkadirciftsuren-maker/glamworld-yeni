@@ -7575,7 +7575,15 @@ export default function Anasayfa({ pro = false }) {
                 <button className="sbp-kapat" onClick={() => setSayfaBilgiAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
               </div>
               <div className="sbp-metin">{bilgi}</div>
-              <button className="sbp-tamam" onClick={() => setSayfaBilgiAcik(false)}>{t("anladim", "Anladım")}</button>
+              <div className="sbp-dugmeler">
+                <button className="sbp-sor" onClick={() => {
+                  setSayfaBilgiAcik(false);
+                  setYardimciBaglam(`Kullanıcı şu an GLOXORG "${aktifEt}" sayfasında ve bu sayfa hakkında soru sormak istiyor. Bu sayfanın uzmanı gibi, kullanıcının dilinde yardım et. Sayfanın ne işe yaradığı: ${bilgi}`);
+                  setYardimciMod("site");
+                  setYardimciAcik(true);
+                }}>💬 {t("sbpGloxooSor", "Gloxoo'ya sor")}</button>
+                <button className="sbp-tamam" onClick={() => setSayfaBilgiAcik(false)}>{t("anladim", "Anladım")}</button>
+              </div>
             </div>
           </>
         );

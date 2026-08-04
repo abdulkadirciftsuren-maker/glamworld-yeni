@@ -255,3 +255,10 @@ export const NAV_MAKARA = {
   tr: "Makara", en: "Reels", de: "Reels", ru: "Ролики", uk: "Ролики", es: "Reels", fr: "Reels",
   it: "Reels", pt: "Reels", ar: "مقاطع", zh: "短视频", hi: "रील्स", ja: "リール",
 };
+
+// Sayfa bilgi penceresindeki "Gloxoo'ya sor" düğmesi (Gloxoo marka adı değişmez).
+export const SBP_SOR = {
+  tr: "Gloxoo'ya sor", en: "Ask Gloxoo", de: "Gloxoo fragen", ru: "Спросить Gloxoo", uk: "Запитати Gloxoo",
+  es: "Preguntar a Gloxoo", fr: "Demander à Gloxoo", it: "Chiedi a Gloxoo", pt: "Perguntar ao Gloxoo",
+  ar: "اسأل غلوكسو", zh: "问 Gloxoo", hi: "Gloxoo से पूछें", ja: "Gloxoo に聞く",
+};

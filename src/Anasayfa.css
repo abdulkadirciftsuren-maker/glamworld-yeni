@@ -4885,3 +4885,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sbp-tamam{ margin-top:16px; width:100%; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:12px; padding:12px; font-weight:900; font-size:16px; cursor:pointer; font-family:inherit; }
 .sbp-tamam:active{ transform:scale(.97); }
 @media (min-width:560px){ .sbp-baslik{ font-size:21px; } .sbp-metin{ font-size:17px; } .sbp-ikon{ width:46px; height:46px; } .sbp-ikon svg{ width:30px; height:30px; } }
+
+/* Sayfa bilgi penceresi düğmeleri: "Gloxoo'ya sor" (öne çıkan) + "Anladım" (yan) */
+.sbp-dugmeler{ display:flex; gap:10px; margin-top:16px; }
+.sbp-sor{ flex:1.4; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:12px; padding:12px 10px; font-weight:900; font-size:16px; cursor:pointer; font-family:inherit; }
+.sbp-sor:active{ transform:scale(.97); }
+.sbp-dugmeler .sbp-tamam{ flex:1; margin-top:0; background:#fff7db; color:#7a5a00; border:1.5px solid rgba(255,215,0,.7); }
