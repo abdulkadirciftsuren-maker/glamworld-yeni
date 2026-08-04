@@ -38,6 +38,13 @@ const AK_BASLIK = {
   hazirlikMaya: { tr:"HAZIRLIK VE MAYALANMA", en:"PREPARATION & FERMENTATION", de:"VORBEREITUNG & GÄRUNG", ru:"ПОДГОТОВКА И БРОЖЕНИЕ", uk:"ПІДГОТОВКА ТА БРОДІННЯ", es:"PREPARACIÓN Y FERMENTACIÓN", fr:"PRÉPARATION ET FERMENTATION", it:"PREPARAZIONE E LIEVITAZIONE", pt:"PREPARO E FERMENTAÇÃO", ar:"التحضير والتخمير", zh:"准备与发酵", hi:"तैयारी और खमीरीकरण", ja:"準備と発酵" },
   sekilPisirme: { tr:"ŞEKİL VERME VE PİŞİRME", en:"SHAPING & BAKING", de:"FORMEN & BACKEN", ru:"ФОРМОВКА И ВЫПЕЧКА", uk:"ФОРМУВАННЯ ТА ВИПІКАННЯ", es:"FORMADO Y HORNEADO", fr:"FAÇONNAGE ET CUISSON", it:"FORMATURA E COTTURA", pt:"MODELAGEM E ASSAMENTO", ar:"التشكيل والخبز", zh:"整形与烘烤", hi:"आकार देना और बेकिंग", ja:"成形と焼成" },
   pufHata: { tr:"PÜF NOKTALARI VE SIK HATALAR", en:"PRO TIPS & COMMON MISTAKES", de:"PROFI-TIPPS & HÄUFIGE FEHLER", ru:"СЕКРЕТЫ И ЧАСТЫЕ ОШИБКИ", uk:"СЕКРЕТИ ТА ЧАСТІ ПОМИЛКИ", es:"TRUCOS Y ERRORES COMUNES", fr:"ASTUCES ET ERREURS FRÉQUENTES", it:"SEGRETI ED ERRORI COMUNI", pt:"SEGREDOS E ERROS COMUNS", ar:"أسرار وأخطاء شائعة", zh:"诀窍与常见错误", hi:"राज़ और आम गलतियाँ", ja:"コツとよくある失敗" },
+  // KURULUŞ & FİZİBİLİTE bölümleri (fabrika/imalathane kurulumu)
+  fizGenel: { tr:"FİZİBİLİTE VE GENEL BAKIŞ", en:"FEASIBILITY & OVERVIEW", de:"MACHBARKEIT & ÜBERBLICK", ru:"ОСУЩЕСТВИМОСТЬ И ОБЗОР", uk:"ЗДІЙСНЕННІСТЬ ТА ОГЛЯД", es:"VIABILIDAD Y VISIÓN GENERAL", fr:"FAISABILITÉ ET APERÇU", it:"FATTIBILITÀ E PANORAMICA", pt:"VIABILIDADE E VISÃO GERAL", ar:"دراسة الجدوى ونظرة عامة", zh:"可行性与概述", hi:"व्यवहार्यता और अवलोकन", ja:"実現可能性と概要" },
+  fizKurulus: { tr:"KURULUŞ ADIMLARI VE İZİNLER", en:"SETUP STEPS & PERMITS", de:"GRÜNDUNGSSCHRITTE & GENEHMIGUNGEN", ru:"ЭТАПЫ ОТКРЫТИЯ И РАЗРЕШЕНИЯ", uk:"ЕТАПИ ВІДКРИТТЯ ТА ДОЗВОЛИ", es:"PASOS DE MONTAJE Y PERMISOS", fr:"ÉTAPES D'INSTALLATION ET PERMIS", it:"FASI DI AVVIO E PERMESSI", pt:"ETAPAS DE MONTAGEM E LICENÇAS", ar:"خطوات التأسيس والتراخيص", zh:"建厂步骤与许可", hi:"स्थापना चरण और अनुमतियाँ", ja:"設立手順と許認可" },
+  fizMakine: { tr:"MAKİNE VE TEÇHİZAT", en:"MACHINERY & EQUIPMENT", de:"MASCHINEN & AUSRÜSTUNG", ru:"МАШИНЫ И ОБОРУДОВАНИЕ", uk:"МАШИНИ ТА ОБЛАДНАННЯ", es:"MAQUINARIA Y EQUIPO", fr:"MACHINES ET ÉQUIPEMENT", it:"MACCHINARI E ATTREZZATURE", pt:"MÁQUINAS E EQUIPAMENTOS", ar:"الآلات والمعدات", zh:"机器与设备", hi:"मशीनरी और उपकरण", ja:"機械と設備" },
+  fizHammadde: { tr:"HAM MADDE VE TEMİNİ", en:"RAW MATERIALS & SOURCING", de:"ROHSTOFFE & BESCHAFFUNG", ru:"СЫРЬЁ И ЗАКУПКА", uk:"СИРОВИНА ТА ЗАКУПІВЛЯ", es:"MATERIAS PRIMAS Y ABASTECIMIENTO", fr:"MATIÈRES PREMIÈRES ET APPROVISIONNEMENT", it:"MATERIE PRIME E APPROVVIGIONAMENTO", pt:"MATÉRIAS-PRIMAS E FORNECIMENTO", ar:"المواد الخام والتوريد", zh:"原材料与采购", hi:"कच्चा माल और आपूर्ति", ja:"原材料と調達" },
+  fizUretim: { tr:"ÜRETİM AKIŞI VE KAPASİTE", en:"PRODUCTION FLOW & CAPACITY", de:"PRODUKTIONSABLAUF & KAPAZITÄT", ru:"ПРОИЗВОДСТВЕННЫЙ ПРОЦЕСС И МОЩНОСТЬ", uk:"ВИРОБНИЧИЙ ПРОЦЕС ТА ПОТУЖНІСТЬ", es:"FLUJO DE PRODUCCIÓN Y CAPACIDAD", fr:"FLUX DE PRODUCTION ET CAPACITÉ", it:"FLUSSO PRODUTTIVO E CAPACITÀ", pt:"FLUXO DE PRODUÇÃO E CAPACIDADE", ar:"سير الإنتاج والطاقة الإنتاجية", zh:"生产流程与产能", hi:"उत्पादन प्रवाह और क्षमता", ja:"生産の流れと生産能力" },
+  fizMaliyet: { tr:"MALİYET, BÜTÇE VE KÂR", en:"COSTS, BUDGET & PROFIT", de:"KOSTEN, BUDGET & GEWINN", ru:"ЗАТРАТЫ, БЮДЖЕТ И ПРИБЫЛЬ", uk:"ВИТРАТИ, БЮДЖЕТ ТА ПРИБУТОК", es:"COSTOS, PRESUPUESTO Y GANANCIA", fr:"COÛTS, BUDGET ET PROFIT", it:"COSTI, BUDGET E PROFITTO", pt:"CUSTOS, ORÇAMENTO E LUCRO", ar:"التكاليف والميزانية والربح", zh:"成本、预算与利润", hi:"लागत, बजट और लाभ", ja:"コスト・予算・利益" },
 };
 
 // Yapay zekâ metnindeki markdown işaretlerini temizle (**kalın**, #başlık, *madde → • ) → düzgün görünsün.
@@ -233,6 +240,8 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // GÖRSEL (yapay zekâ ile üretilen örnek/model fotoğrafı — bir kez üretilir, saklanır)
   const [kapakGorsel, setKapakGorsel] = useState(""); // mesleğe göre kapak
   const [konuGorsel, setKonuGorsel] = useState(""); const [konuGorselYuk, setKonuGorselYuk] = useState(false); const [konuGorselHata, setKonuGorselHata] = useState("");
+  // KURULUŞ & FİZİBİLİTE (fabrika/imalathane nasıl kurulur — makine, ham madde temini, maliyet)
+  const [fizibilite, setFizibilite] = useState(""); const [fizibiliteYuk, setFizibiliteYuk] = useState(false); const [fizibiliteAsama, setFizibiliteAsama] = useState(0);
   const istekNoRef = useRef(0); // çeşitler arası yarış (race) koruması
   const konuDetayRef = useRef(null); // bir çeşide basınca tarife otomatik kaydır (aşağıda kaybolmasın)
   const sorulanRef = useRef([]); // daha önce sorulan sınav soruları (her denemede farklı sorulsun diye)
@@ -330,6 +339,7 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     setMeslek(m); setGorunum("kurs");
     setDers(""); setKonular(null); setAktifKonu(""); setKonuDers(""); setKonuGorsel(""); setKapakGorsel("");
     setSorular(null); setCevaplar({}); setSonuc(null); setIsFoto(""); setIsVideo(""); setAktifSertifika(null); sorulanRef.current = [];
+    setFizibilite(""); setFizibiliteYuk(false); setFizibiliteAsama(0);
   }
 
   // (2) TEMEL EĞİTİM — kesilmesin diye KÜÇÜK başlıklara bölünür (her başlık kısa+tam), birleşince eksiksiz olur.
@@ -352,6 +362,31 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
       il++; setDersAsama(il);
     }
     setDers(parcalar.join("\n\n") || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
+  }
+
+  // (2b) KURULUŞ & FİZİBİLİTE — bu mesleğin fabrika/imalathanesi nasıl kurulur: fizibilite, makine-teçhizat,
+  // HAM MADDE ve nasıl temin edilir, üretim akışı, maliyet/kâr. Eksiksiz olsun diye 6 bölüme bölünür (her biri tam biter).
+  async function fizibiliteAl() {
+    if (fizibiliteYuk || !meslek) return; setFizibiliteYuk(true); setFizibilite(""); setFizibiliteAsama(0);
+    const bolge = [sehir, ulke].filter(Boolean).join(", ");
+    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin sanayi/işletme kuruluş danışmanı. CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. GERÇEKÇİ, DETAYLI ve UYGULANABİLİR ol; SOMUT rakam ver (adet, kapasite, kW, m², para birimi, süre). Yüzeysel geçme. ~340 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const on = `"${meslek.ad}" işini/ürününü ÜRETECEK bir imalathane/fabrika KURMAK isteyen birine, SADECE şu bölümün İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)${bolge ? `. Bölge: ${bolge} (yerel koşulları dikkate al)` : ""}`;
+    const bolumler = [
+      { bas: "fizGenel", p: `${on} — FİZİBİLİTE: bu üretim kârlı mı, pazar/talep durumu, hedef müşteri, küçük atölyeden büyük fabrikaya ölçek seçenekleri, yaklaşık başlangıç sermayesi aralığı ve geri dönüş mantığı.` },
+      { bas: "fizKurulus", p: `${on} — KURULUŞ ADIMLARI: yer/mekân seçimi ve gereken m², elektrik/su/altyapı, ruhsat/izin/belgeler (işyeri, gıda/sağlık, çevre vb.), sırayla ne yapılır.` },
+      { bas: "fizMakine", p: `${on} — MAKİNE VE TEÇHİZAT: gereken TÜM makineler ve ekipmanlar tek tek, her birinin ne işe yaradığı, yaklaşık kapasitesi/gücü (kW), küçük ve büyük ölçek için seçenekler.` },
+      { bas: "fizHammadde", p: `${on} — HAM MADDE VE TEMİNİ: üretim için gereken TÜM ham maddeler tek tek, kalite kriterleri, nereden/nasıl temin edilir (toptancı, üretici, ithalat), yaklaşık miktar/oran ve nasıl DEPOLANIR/saklanır.` },
+      { bas: "fizUretim", p: `${on} — ÜRETİM AKIŞI: ham maddeden bitmiş ürüne kadar adım adım üretim süreci, günlük/aylık kapasite örneği, kaç kişi/personel gerekir, kalite kontrol.` },
+      { bas: "fizMaliyet", p: `${on} — MALİYET, BÜTÇE VE KÂR: başlangıç yatırımı kalem kalem, aylık işletme gideri (kira, işçi, enerji, ham madde), satış fiyatı mantığı, başabaş noktası, tahmini kâr ve başlıca riskler.` },
+    ];
+    const parcalar = []; let il = 0;
+    for (const b of bolumler) {
+      const c = await gloxSor(b.p, sistem);
+      const baslik = AK_ISARET + ((AK_BASLIK[b.bas] && (AK_BASLIK[b.bas][dil] || AK_BASLIK[b.bas].tr)) || "");
+      if (c) parcalar.push(baslik + "\n" + duzelt(c));
+      il++; setFizibiliteAsama(il);
+    }
+    setFizibilite(parcalar.join("\n\n") || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setFizibiliteYuk(false);
   }
 
   // (3a) ÇEŞİTLERİ getir — bu meslekteki tüm tür/ürün/konu listesi (JSON)
@@ -596,10 +631,23 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           </div>
         )}
 
-        {/* 3) CİDDİ SINAV — bu da temel eğitime BAĞLI DEĞİL; istediğinde doğrudan sınava girebilir */}
+        {/* 3) KURULUŞ & FİZİBİLİTE — fabrika/imalathane nasıl kurulur: makine, HAM MADDE temini, maliyet/kâr */}
         {(
           <div className="ak-adim">
-            <div className="ak-adim-bas"><span className="ak-adim-no">3</span> 📝 {t("akSinav", "Sınav (ciddi)")}</div>
+            <div className="ak-adim-bas"><span className="ak-adim-no">3</span> 🏭 {t("akKurulus", "Kuruluş & Fizibilite")}</div>
+            <div className="ak-adim-alt">{t("akKurulusAlt", "Bu işin imalathanesi/fabrikası nasıl kurulur: makine-teçhizat, ham madde nedir ve nasıl temin edilir, üretim akışı, maliyet ve kâr — eksiksiz fizibilite.")}</div>
+            {!fizibilite && !fizibiliteYuk && <button className="ak-btn" onClick={fizibiliteAl}>{t("akKurulusAl", "Fizibiliteyi hazırla")}</button>}
+            {fizibiliteYuk && <div className="ak-yuk">⏳ {t("akKurulusHazir", "Gloxoo fizibiliteyi hazırlıyor")}{fizibiliteAsama ? " %" + Math.round((fizibiliteAsama / 6) * 100) : "…"}</div>}
+            {fizibilite && <SesliMetin metin={fizibilite} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
+            {fizibilite && !fizibiliteYuk && <MetinAraclar metin={fizibilite} baslik={mc(meslek.ad, dil) + " — " + t("akKurulus", "Kuruluş & Fizibilite")} />}
+            {fizibilite && !fizibiliteYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
+          </div>
+        )}
+
+        {/* 4) CİDDİ SINAV — temel eğitime BAĞLI DEĞİL; istediğinde doğrudan sınava girebilir */}
+        {(
+          <div className="ak-adim">
+            <div className="ak-adim-bas"><span className="ak-adim-no">4</span> 📝 {t("akSinav", "Sınav (ciddi)")}</div>
             <div className="ak-adim-alt">{t("akSinavAlt", "Gerçek mesleki sorular. Sertifika için en az %70 gerekir.")}</div>
             {!sorular && !sinavYuk && <button className="ak-btn" onClick={sinavaGir}>{t("akSinavaGir", "Sınava gir")}</button>}
             {sinavYuk && <div className="ak-yuk">⏳ {t("akSorular", "Sorular hazırlanıyor…")}</div>}
@@ -629,10 +677,10 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           </div>
         )}
 
-        {/* 4) İŞİNİ GÖSTER */}
+        {/* 5) İŞİNİ GÖSTER */}
         {sonuc && sonuc.gecti && (
           <div className="ak-adim">
-            <div className="ak-adim-bas"><span className="ak-adim-no">4</span> 🎥 {t("akIsGoster", "Yaptığın işi göster")}</div>
+            <div className="ak-adim-bas"><span className="ak-adim-no">5</span> 🎥 {t("akIsGoster", "Yaptığın işi göster")}</div>
             <div className="ak-adim-alt">{t("akIsAlt", "Kendi yaptığın işi foto ve/veya video ile yükle — sertifikanda kanıt olarak kalır.")}</div>
             <div className="ak-yukle-satir">
               <button className="ak-yukle-btn" onClick={() => fotoInpRef.current && fotoInpRef.current.click()} disabled={yukDurum === "foto"}>{yukDurum === "foto" ? "…" : (isFoto ? "✓ 📷 " + t("akFoto", "Foto") : "📷 " + t("akFotoEkle", "Foto ekle"))}</button>

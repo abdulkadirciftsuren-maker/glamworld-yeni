@@ -21,7 +21,7 @@ import { MESLEK_EK2 } from "./meslekCevirEk2";
 import { MESLEK_EK3 } from "./meslekCevirEk3";
 import { MESLEK_EK4 } from "./meslekCevirEk4";
 import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
-import { CEVIRI_AKADEMI } from "./ceviriAkademi";
+import { CEVIRI_AKADEMI, CEVIRI_AKADEMI_KURULUS } from "./ceviriAkademi";
 import { CEVIRI_HARITA_CANLI, NAV_MAKARA } from "./ceviriHaritaCanli";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
@@ -2441,6 +2441,11 @@ Object.keys(CEVIRI_ELITEPAZAR).forEach((lng) => {
 Object.keys(CEVIRI_AKADEMI).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   Object.assign(resources[lng].translation, CEVIRI_AKADEMI[lng]);
+});
+// AKADEMİ — Kuruluş & Fizibilite adımı çevirileri (13 dil)
+Object.keys(CEVIRI_AKADEMI_KURULUS).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  Object.assign(resources[lng].translation, CEVIRI_AKADEMI_KURULUS[lng]);
 });
 
 // KONUM HARİTASI (knh*), ADRES HARİTASI (adh*) ve CANLI AKIŞ (cy*) çevirileri (13 dil) — eskiden çevirisizdi.
