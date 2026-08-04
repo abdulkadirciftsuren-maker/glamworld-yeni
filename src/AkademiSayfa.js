@@ -14,6 +14,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { MESLEK_LISTESI } from "./meslekler";
+import { mc } from "./i18n"; // meslek adını kullanıcının diline çevir (Berber→Барбер…)
 import qrOlustur from "qrcode-generator";
 import { akademiKayitEkle, akademiKayitlarimOku, gorselYukle, videoYukle, akademiGorselOku, akademiGorselYaz } from "./veri";
 
@@ -459,7 +460,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           <div className="ak-srt-baslik">{t("akSertifika", "SERTİFİKA")}</div>
           <div className="ak-srt-foto">{(s.foto || s.isFoto) ? <img src={s.foto || s.isFoto} alt="" referrerPolicy="no-referrer" /> : <span>{(s.ad || "?").trim()[0]}</span>}</div>
           <div className="ak-srt-ad">{s.ad || "—"}</div>
-          <div className="ak-srt-metin">{s.meslekIk} <b>{s.meslek}</b> {t("akTamamladi", "eğitimini başarıyla tamamladı")}</div>
+          <div className="ak-srt-metin">{s.meslekIk} <b>{mc(s.meslek, dil)}</b> {t("akTamamladi", "eğitimini başarıyla tamamladı")}</div>
           <div className="ak-srt-puan">✓ {t("akPuan", "Sınav")}: {s.puan}/{s.puanToplam} · {s.tarihMetin}</div>
           <div className="ak-srt-alt">
             <div className="ak-srt-kod"><span>{t("akKod", "Doğrulama kodu")}</span><b>{s.sertifikaKod}</b></div>
@@ -484,7 +485,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
             {kayitlarim.map((s) => (
               <button className="ak-sert-kart" key={s.id} onClick={() => setAktifSertifika(s)}>
                 <span className="ak-sert-ik">{s.meslekIk || "🎓"}</span>
-                <span className="ak-sert-bilgi"><b>{s.meslek}</b><span>{s.tarihMetin} · {s.puan}/{s.puanToplam} ✓</span><span className="ak-sert-kod2">{s.sertifikaKod}</span></span>
+                <span className="ak-sert-bilgi"><b>{mc(s.meslek, dil)}</b><span>{s.tarihMetin} · {s.puan}/{s.puanToplam} ✓</span><span className="ak-sert-kod2">{s.sertifikaKod}</span></span>
                 <span className="ak-sert-ok">›</span>
               </button>
             ))}
@@ -498,7 +499,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
   if (gorunum === "kurs" && meslek) {
     return (
       <div className="ana-pencere ak-pencere" key="ak-kurs">
-        <div className="ak-ust"><button className="ak-geri" onClick={() => setGorunum("liste")}>‹ {t("geri", "Geri")}</button><div className="ak-ust-bas" style={{ background: meslek.bg }}>{meslek.ik} {meslek.ad}</div></div>
+        <div className="ak-ust"><button className="ak-geri" onClick={() => setGorunum("liste")}>‹ {t("geri", "Geri")}</button><div className="ak-ust-bas" style={{ background: meslek.bg }}>{meslek.ik} {mc(meslek.ad, dil)}</div></div>
 
         {/* MESLEK KAPAK FOTOĞRAFI (yapay zekâ, bir kez üretilir) */}
         <div className="ak-kapak" style={{ background: meslek.bg }}>
@@ -512,7 +513,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           {!ders && !dersYuk && <button className="ak-btn" onClick={egitimAl}>{t("akEgitimAl", "Eğitimi başlat")}</button>}
           {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor2", "Gloxoo eğitimi hazırlıyor")}{dersAsama ? " %" + Math.round((dersAsama / 4) * 100) : "…"}</div>}
           {ders && <SesliMetin metin={ders} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
-          {ders && !dersYuk && <MetinAraclar metin={ders} baslik={meslek.ad + " — Temel Eğitim"} />}
+          {ders && !dersYuk && <MetinAraclar metin={ders} baslik={mc(meslek.ad, dil) + " — " + t("akTemelEgitim", "Temel Eğitim")} />}
           {ders && !dersYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
         </div>
 
@@ -618,7 +619,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
 
   // ── MESLEK LİSTESİ (ana) ──
   const q = ara.trim().toLocaleLowerCase("tr");
-  const liste = q ? MESLEK_LISTESI.filter((m) => (m.ad || "").toLocaleLowerCase("tr").indexOf(q) !== -1) : MESLEK_LISTESI;
+  const liste = q ? MESLEK_LISTESI.filter((m) => ((m.ad || "") + " " + mc(m.ad, dil)).toLocaleLowerCase("tr").indexOf(q) !== -1) : MESLEK_LISTESI;
   return (
     <div className="ana-pencere ak-pencere" key="ak-liste">
       <div className="ak-hero">
@@ -637,7 +638,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           return (
             <button className="ak-kurs-kart" key={m.ad + i} style={{ background: m.bg }} onClick={() => kursAc(m)}>
               <span className="ak-kurs-ik">{m.ik}</span>
-              <span className="ak-kurs-ad">{m.ad}</span>
+              <span className="ak-kurs-ad">{mc(m.ad, dil)}</span>
               {alindi && <span className="ak-kurs-rozet">🏅</span>}
             </button>
           );

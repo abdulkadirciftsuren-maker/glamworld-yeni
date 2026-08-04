@@ -22,6 +22,7 @@ import { MESLEK_EK3 } from "./meslekCevirEk3";
 import { MESLEK_EK4 } from "./meslekCevirEk4";
 import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
 import { CEVIRI_AKADEMI } from "./ceviriAkademi";
+import { CEVIRI_HARITA_CANLI, NAV_MAKARA } from "./ceviriHaritaCanli";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
 export const DILLER = [
@@ -2440,6 +2441,17 @@ Object.keys(CEVIRI_ELITEPAZAR).forEach((lng) => {
 Object.keys(CEVIRI_AKADEMI).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   Object.assign(resources[lng].translation, CEVIRI_AKADEMI[lng]);
+});
+
+// KONUM HARİTASI (knh*), ADRES HARİTASI (adh*) ve CANLI AKIŞ (cy*) çevirileri (13 dil) — eskiden çevirisizdi.
+Object.keys(CEVIRI_HARITA_CANLI).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  Object.assign(resources[lng].translation, CEVIRI_HARITA_CANLI[lng]);
+});
+// Alt menü "Makara" etiketi → navMakara anahtarı olarak her dile ekle.
+Object.keys(NAV_MAKARA).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  resources[lng].translation.navMakara = NAV_MAKARA[lng];
 });
 
 i18n

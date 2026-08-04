@@ -4100,7 +4100,7 @@ export default function Anasayfa({ pro = false }) {
     return (
       <div className="reels-serit" key={anahtar} onClick={(e) => e.stopPropagation()}>
         <div className="reels-serit-bas">
-          <span className="reels-serit-ad notranslate" translate="no">🎬 {REELS_AD}</span>
+          <span className="reels-serit-ad">🎬 {t("navMakara", REELS_AD)}</span>
           <button className="reels-serit-tum" onClick={() => { setReelAktif(0); setReelsAcik(true); }}>{t("tumunuGor", "Tümü")} ›</button>
         </div>
         <div className="reels-serit-kaydir">
@@ -4113,7 +4113,7 @@ export default function Anasayfa({ pro = false }) {
                 <span className="reels-serit-arti2" aria-hidden="true">+</span>
                 <span className="reels-parilti" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.4l2.4 7.3 7.4 2.3-7.4 2.3L12 20.6l-2.4-7.3L2.2 11l7.4-2.3z"/></svg></span>
               </span>
-              <span className="reels-serit-olustur-ad notranslate" translate="no">🎬 {REELS_AD}</span>
+              <span className="reels-serit-olustur-ad">🎬 {t("navMakara", REELS_AD)}</span>
             </span>
           </button>
           {reelListesi.slice(0, 8).map((p, i) => (
@@ -10455,7 +10455,7 @@ export default function Anasayfa({ pro = false }) {
         <button className="ana-tab-oge" onClick={() => setAraAcik(true)}>{Ikon.ara}<span>{t("tabAra")}</span></button>
         <button className={"ana-tab-oge ana-tab-reels" + (reelsAcik ? " aktif" : "")} onClick={() => { setReelAktif(0); setReelsAcik(true); }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 4l2.5 5M14 4l2.5 5"/><path d="M10.5 12.5l4 2.2-4 2.3z" fill="currentColor"/></svg>
-          <span className="notranslate" translate="no">{REELS_AD}</span></button>
+          <span>{t("navMakara", REELS_AD)}</span></button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("konum")}>{Ikon.konum}<span>{t("navKonum")}</span></button>
         <button className="ana-tab-oge ana-tab-glome" onClick={() => setMesajAcik(true)}>{Ikon.gloxi}<span>Glome</span>{okunmamisMesaj > 0 && <span className="ana-tab-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}</button>
         <button className="ana-tab-oge" onClick={() => setAktifKod("profil")}>{Ikon.profil}<span>{t("navProfil")}</span></button>
@@ -11146,7 +11146,7 @@ export default function Anasayfa({ pro = false }) {
       {reelsAcik && createPortal((
         <div className="reels-kok">
           <div className="reels-ust">
-            <span className="reels-baslik notranslate" translate="no">🎬 {REELS_AD}</span>
+            <span className="reels-baslik">🎬 {t("navMakara", REELS_AD)}</span>
             <button className="reels-kapat" onClick={() => setReelsAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
           </div>
           {reelListesi.length === 0 ? (
