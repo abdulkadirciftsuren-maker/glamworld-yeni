@@ -35,16 +35,17 @@ function duzelt(m) {
 }
 
 // Çeşit adına göre uygun bir EMOJİ seç (renkli kartlarda ikon olarak) → yoksa meslek ikonuna düşülür.
+// NOT: kısa kelimeler (et, bal…) BAŞKA kelimelerin içinde eşleşmesin diye \b (kelime sınırı) kullanılır (örn. "palet"teki "et" ARTIK eşleşmez).
 function cesitIkon(ad) {
   const s = (ad || "").toLocaleLowerCase("tr");
   const kv = [
-    [/pasta|yaş pasta|gato|tort|cheesecake/, "🎂"], [/kek|muffin|cupcake|brownie/, "🧁"], [/kurabiye|biscu|cookie/, "🍪"],
-    [/tart|turta|pie/, "🥧"], [/çikolata|choco|trüf/, "🍫"], [/dondurma|ice ?cream/, "🍨"], [/baklava|şerbet|tatlı|şeker|helva|lokum|revani|kadayıf/, "🍮"],
-    [/ekler|profiterol|krema|sufle|magnol|puf/, "🍥"], [/ekmek|bread|khlib|baget|somun|lavaş|paska|kalach/, "🍞"], [/poğaça|açma|börek|pyrizhky|çörek|simit|gözleme/, "🥐"],
-    [/pizza|pide|lahmacun/, "🍕"], [/saç|kesim|fön|perma|röfle|model|topuz/, "💇"], [/tırnak|nail|oje|manikür|jel/, "💅"],
-    [/kaş|kirpik|makyaj/, "💄"], [/masaj|spa|cilt|bakım/, "💆"], [/dövme|tattoo|piercing/, "🎨"], [/kahve|coffee|espresso|latte/, "☕"],
-    [/çay|tea/, "🍵"], [/et|kebap|köfte|döner|izgara|steak/, "🍖"], [/tavuk|piliç/, "🍗"], [/balık|fish|deniz/, "🐟"], [/salata|sebze|vegan/, "🥗"], [/meyve|fruit|çilek/, "🍓"],
-    [/süt|peynir|yoğurt|kaymak/, "🧀"], [/bal|reçel|marmelat/, "🍯"], [/çorba|soup/, "🍲"], [/makarna|pasta|noodle|erişte/, "🍝"], [/hamburger|sandviç|tost/, "🍔"],
+    [/\bbaget|\bbaton|baguette/, "🥖"], [/yaş pasta|\bpasta\b|gato|tort|cheesecake/, "🎂"], [/\bkek\b|muffin|cupcake|brownie|kağıt helva/, "🧁"], [/kurabiye|biscu|cookie/, "🍪"],
+    [/\btart|turta|\bpie\b/, "🥧"], [/çikolata|choco|trüf/, "🍫"], [/dondurma|ice ?cream/, "🍨"], [/baklava|şerbet|tatlı|helva|lokum|revani|kadayıf|sütlaç|tulumba/, "🍮"],
+    [/ekler|profiterol|krema|sufle|magnol|\bpuf\b/, "🍥"], [/ekmek|\bbread|khlib|somun|lavaş|paska|kalach|baton/, "🍞"], [/poğaça|açma|börek|pyrizhky|çörek|simit|gözleme|bazlama/, "🥐"],
+    [/pizza|\bpide\b|lahmacun/, "🍕"], [/\bsaç|kesim|\bfön|perma|röfle|topuz|ombre/, "💇"], [/tırnak|\bnail\b|\boje\b|manikür/, "💅"],
+    [/\bkaş\b|kirpik|makyaj/, "💄"], [/masaj|\bspa\b|cilt bakım/, "💆"], [/dövme|tattoo|piercing/, "🎨"], [/kahve|coffee|espresso|latte/, "☕"],
+    [/\bçay\b|\btea\b/, "🍵"], [/kebap|köfte|döner|izgara|steak|biftek|kavurma|sucuk/, "🍖"], [/tavuk|piliç/, "🍗"], [/balık|\bfish\b/, "🐟"], [/salata|sebze|vegan/, "🥗"], [/meyve|\bfruit|çilek/, "🍓"],
+    [/süt|peynir|yoğurt|kaymak/, "🧀"], [/reçel|marmelat|\bbal\b/, "🍯"], [/çorba|\bsoup\b/, "🍲"], [/makarna|noodle|erişte|spagetti/, "🍝"], [/hamburger|sandviç|\btost\b/, "🍔"],
   ];
   for (const [re, em] of kv) if (re.test(s)) return em;
   return null;
@@ -134,10 +135,44 @@ function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
   return (
     <>
       {varMi && metin ? <button className="ak-sesli-btn" onClick={okunuyor ? dur : oku}>{okunuyor ? "⏸ Durdur" : "🔊 Sesli anlat"}</button> : null}
-      {okunuyor
-        ? <div className={className}>{cumleler.map((c, k) => <div key={k} className={"ak-cumle" + (k === aktif ? " ak-okunan" : "")}>{c}</div>)}</div>
-        : <div className={className}>{metin}</div>}
+      <div className={className}>
+        {cumleler.map((c, k) => {
+          const bas = satirBaslikMi(c);
+          return <div key={k} className={(bas ? "ak-kat-baslik" : "ak-satir") + (okunuyor && k === aktif ? " ak-okunan" : "")}>{c}</div>;
+        })}
+      </div>
     </>
+  );
+}
+// Bir satır KATEGORİ BAŞLIĞI mı? (büyük harfli, kısa, küçük harf içermez → renkli başlık yapılır)
+function satirBaslikMi(t) {
+  const x = String(t || "").trim().replace(/^[•\-]\s*/, "");
+  if (!x || x.length > 70) return false;
+  return !/[a-zçğıiöşü]/.test(x) && /[A-ZÇĞİÖŞÜ]/.test(x);
+}
+// KOPYALA / İNDİR / PAYLAŞ araçları (anlatım/sözlük metnini kopyala, .txt indir, paylaş)
+function MetinAraclar({ metin, baslik }) {
+  const [kop, setKop] = useState(false);
+  const tam = (baslik ? baslik + "\n\n" : "") + String(metin || "") + "\n\n— GLOXORG Akademi";
+  function kopyala() { try { navigator.clipboard.writeText(tam); setKop(true); setTimeout(() => setKop(false), 1600); } catch (e) {} }
+  function indir() {
+    try {
+      const b = new Blob([tam], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(b);
+      const a = document.createElement("a");
+      a.href = url; a.download = ((baslik || "gloxorg-akademi").replace(/[^\wÇĞİÖŞÜçğıöşü -]/g, "").trim().slice(0, 40) || "gloxorg-akademi") + ".txt";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    } catch (e) {}
+  }
+  async function paylas() { try { if (navigator.share) await navigator.share({ title: baslik || "GLOXORG Akademi", text: tam }); else kopyala(); } catch (e) {} }
+  if (!metin) return null;
+  return (
+    <div className="ak-arac-satir">
+      <button className="ak-arac" onClick={kopyala}>{kop ? "✓ Kopyalandı" : "📋 Kopyala"}</button>
+      <button className="ak-arac" onClick={indir}>⬇️ İndir</button>
+      <button className="ak-arac" onClick={paylas}>📤 Paylaş</button>
+    </div>
   );
 }
 
@@ -475,6 +510,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
           {!ders && !dersYuk && <button className="ak-btn" onClick={egitimAl}>{t("akEgitimAl", "Eğitimi başlat")}</button>}
           {dersYuk && <div className="ak-yuk">⏳ {t("akHazirliyor2", "Gloxoo eğitimi hazırlıyor")}{dersAsama ? " %" + Math.round((dersAsama / 4) * 100) : "…"}</div>}
           {ders && <SesliMetin metin={ders} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
+          {ders && !dersYuk && <MetinAraclar metin={ders} baslik={meslek.ad + " — Temel Eğitim"} />}
           {ders && !dersYuk && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
         </div>
 
@@ -501,6 +537,7 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
                 {konuYuk
                   ? <div className="ak-yuk">⏳ {t("akKonuYuk3", "Gloxoo tarifi hazırlıyor")}{konuAsama ? " %" + Math.round((konuAsama / 6) * 100) : "…"}</div>
                   : <SesliMetin metin={konuDers} className="ak-ders" sesDili={dil} onSesIlerleme={onSesIlerleme} />}
+                {!konuYuk && konuDers && <MetinAraclar metin={konuDers} baslik={aktifKonu} />}
                 {!konuYuk && konuDers && <div className="ak-bitti">✓ {t("akBitti", "Anlatım tamamlandı")}</div>}
               </div>
             )}

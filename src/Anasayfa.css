@@ -1756,9 +1756,16 @@
 /* Sesli anlat (Gloxoo okur) + okunan kelime vurgusu + tamamlandı işareti */
 .ak-sesli-btn{ display:inline-flex; align-items:center; gap:6px; margin:10px 0 8px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#ffe9a8,#e6bd52); color:#4a3d08; font-weight:900; font-size:14px; padding:10px 16px; border-radius:12px; box-shadow:0 3px 10px rgba(40,50,10,.3); }
 .ak-sesli-btn:active{ transform:scale(.96); }
-.ak-cumle{ padding:2px 4px; border-radius:6px; transition:background .15s; }
-.ak-okunan{ background:#ffe14d; color:#3d2c00; box-shadow:0 0 0 2px #ffe14d; }
+.ak-satir{ padding:2px 4px; border-radius:6px; transition:background .15s; }
+.ak-okunan{ background:#ffe14d !important; color:#3d2c00 !important; box-shadow:0 0 0 2px #ffe14d; }
+/* KATEGORİ BAŞLIĞI (NEDİR, MALZEME, SÖZLÜK…) — renkli, belirgin */
+.ak-kat-baslik{ display:block; margin:12px 0 6px; padding:8px 12px; background:linear-gradient(160deg,#7a8c22,#556614); color:#fff; font-weight:900; font-size:14.5px; letter-spacing:.3px; border-radius:10px; border-left:5px solid #ffd54d; box-shadow:0 2px 7px rgba(40,50,10,.3); }
+.ak-kat-baslik:first-child{ margin-top:2px; }
 .ak-bitti{ display:inline-block; margin-top:10px; background:linear-gradient(160deg,#d6ecb0,#a9d16f); color:#2f4708; font-weight:900; font-size:13px; padding:6px 13px; border-radius:11px; border:1.5px solid #6fa02e; }
+/* Kopyala / İndir / Paylaş */
+.ak-arac-satir{ display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
+.ak-arac{ flex:1; min-width:96px; border:none; cursor:pointer; font-family:inherit; background:linear-gradient(160deg,#fff6d8,#e8c964); color:#4a3d08; font-weight:900; font-size:13.5px; padding:10px 12px; border-radius:12px; box-shadow:0 3px 9px rgba(40,50,10,.28); }
+.ak-arac:active{ transform:scale(.96); }
 /* Çeşitler (konular) — çip düğmeler + açılan detay */
 .ak-konu-cipler{ display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
 .ak-konu-cip{ border:2px solid rgba(120,140,30,.4); cursor:pointer; font-family:inherit; background:#fffdf3; color:#3d3406; font-weight:800; font-size:13.5px; padding:9px 14px; border-radius:12px; box-shadow:0 2px 7px rgba(40,50,10,.18); }

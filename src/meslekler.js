@@ -390,4 +390,5 @@ export const MESLEK_LISTESI = [
   { bg:'linear-gradient(135deg,#00acc1,#00acc1cc)', ik:'🚿', ad:'Su Tesisatçısı' },
   { bg:'linear-gradient(135deg,#fb8c00,#fb8c00cc)', ik:'🐕', ad:'Veteriner / Pet Bakım' },
   { bg:'linear-gradient(135deg,#43a047,#43a047cc)', ik:'♻️', ad:'Geri Dönüşüm / Hurdacı' },
+  { bg:'linear-gradient(135deg,#6d4c41,#6d4c41cc)', ik:'🔥', ad:'Pelet / Biyoyakıt' },
 ];
