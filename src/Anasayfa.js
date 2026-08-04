@@ -491,13 +491,15 @@ const Ikon = {
 };
 
 // HER SAYFAYA AİT üst-sağ ikon (Google profil sadece ana sayfada; diğer pencerelerde bunlar)
+// SAĞ ÜST SAYFA İKONLARI — İÇİ DOLU ve RENKLİ (kullanıcı: "o ikonlar boş kalmasın, içini doldur").
+// Her sayfanın kendi ikonu; artık boş çizgi değil, o sayfanın rengiyle DOLU.
 const SayfaIkon = {
-  elite: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>,
-  topluluk: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="8" r="3.2" /><path d="M4 20a6 6 0 0 1 12 0" /><path d="M18.5 8v6M15.5 11h6" /></svg>,
-  video: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle className="ik-canli" cx="12" cy="12" r="2" fill="#FF4444" stroke="none" /><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8" /></svg>,
-  konum: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" /><path d="M9 4v14M15 6v14" /></svg>,
-  akademi: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M2 5a1 1 0 0 1 1-1h6a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H2V5z" /><path d="M22 5a1 1 0 0 0-1-1h-6a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H22V5z" /></svg>,
-  profil: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z" /></svg>,
+  elite: <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#FFC83D" d="M6 2h12l4 6-10 13L2 8z" /><path fill="#FFE7A6" d="M2 8h20L12 21z" opacity=".5" /><path fill="#8a5a00" opacity=".25" d="M6 2h12l-2 6H8z" /></svg>,
+  topluluk: <svg width="24" height="24" viewBox="0 0 24 24" fill="#2fb96a"><circle cx="9" cy="8" r="3.6" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0v.8h-13z" /><circle cx="17.8" cy="9" r="2.7" /><path d="M15.4 14.6c3 0 5.6 2 5.6 4.6v.6h-4.2z" /></svg>,
+  video: <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#8b5cf6" /><path fill="#fff" d="M10 8.2l6.2 3.8L10 15.8z" /><circle className="ik-canli" cx="19" cy="5" r="2.6" fill="#FF4444" /></svg>,
+  konum: <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#16b5c2" d="M12 2a7.2 7.2 0 0 0-7.2 7.2C4.8 14.6 12 22 12 22s7.2-7.4 7.2-12.8A7.2 7.2 0 0 0 12 2z" /><circle cx="12" cy="9.2" r="2.7" fill="#fff" /></svg>,
+  akademi: <svg width="24" height="24" viewBox="0 0 24 24" fill="#caa62c"><path d="M12 3 1 8l11 5 8-3.64V15h2V8z" /><path d="M5 12.2V16c0 1.7 3.1 3.1 7 3.1s7-1.4 7-3.1v-3.8l-7 3.2z" /></svg>,
+  profil: <svg width="24" height="24" viewBox="0 0 24 24" fill="#e6c25a"><circle cx="12" cy="7.6" r="4.1" /><path d="M4 20.5a8 8 0 0 1 16 0v.7H4z" /></svg>,
 };
 
 // Şeritteki ülkeler (40+): altın yuvarlak KOD + DALGALI bayrak + ŞEHİR(ülke renginde) + saat + kur. Ülke adı YAZILMAZ.
@@ -7540,14 +7542,14 @@ export default function Anasayfa({ pro = false }) {
         </div>
         {/* SAĞ KOLON: profil (üstte) + ayı/Ekspert (altta) — DİKEYde üst üste (kullanıcı); YATAY/geniş ekranda yan yana (row-reverse → ayı|profil, eskisi gibi) */}
         <div className="ana-ikon-kol ana-kol-sag">
-          {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon */}
+          {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon (içi DOLU-renkli) */}
           {aktifKod === "home" ? (
             <div className="ana-profil ana-profil-yuvarlak" onClick={() => setProfilAcik((a) => !a)}
               style={{ backgroundImage: `url(${uyeProfilCerceve})`, backgroundSize: "cover", backgroundPosition: "center" }}>
               {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
             </div>
           ) : (
-            <button className="ana-ara-btn" aria-label={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
+            <button className="ana-ara-btn ana-sayfa-ikon" aria-label={aktifEt} title={aktifEt}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
           )}
           {/* GLOME — bize has mesaj + arama düğmesi (ayının yerine); okunmamış rozetli */}
           <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label="Glome" title="Glome — Mesaj & Arama">
