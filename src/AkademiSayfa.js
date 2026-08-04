@@ -25,6 +25,21 @@ function kodUret() { return "GLX-" + Date.now().toString(36).toUpperCase() + "-"
 // Dil koduna göre AI'ya "hangi dilde yaz" talimatı
 const DIL_AD = { tr: "Türkçe", en: "English", de: "Almanca (Deutsch)", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", uk: "Ukraynaca", ar: "Arapça", zh: "Çince", ja: "Japonca", hi: "Hintçe" };
 
+// AI ders başlıkları (SÖZLÜK, MALZEME VE ÖLÇÜLER…) eskiden Türkçe komuta gömülü olduğu için Türkçe/yarı-çeviri kalıyordu.
+// Artık başlığı AI'ye BIRAKMIYORUZ — 13 dile hazır çevirisini KENDİMİZ ekliyoruz; AI sadece gövdeyi kendi dilinde yazıyor.
+const AK_ISARET = "◆ "; // başlık satırı işareti (satirBaslikMi bunu tanır, ekranda gizlenir; her dilde başlık kutusu çalışsın diye)
+const AK_BASLIK = {
+  nedir: { tr:"BU MESLEK NEDİR", en:"WHAT THIS PROFESSION IS", de:"WAS DIESER BERUF IST", ru:"ЧТО ЭТО ЗА ПРОФЕССИЯ", uk:"ЩО ЦЕ ЗА ПРОФЕСІЯ", es:"QUÉ ES ESTA PROFESIÓN", fr:"CE QU'EST CE MÉTIER", it:"COS'È QUESTA PROFESSIONE", pt:"O QUE É ESTA PROFISSÃO", ar:"ما هذه المهنة", zh:"这个职业是什么", hi:"यह पेशा क्या है", ja:"この職業とは" },
+  malzemeHijyen: { tr:"MALZEME, ARAÇLAR VE HİJYEN", en:"MATERIALS, TOOLS & HYGIENE", de:"MATERIAL, WERKZEUGE & HYGIENE", ru:"МАТЕРИАЛЫ, ИНСТРУМЕНТЫ И ГИГИЕНА", uk:"МАТЕРІАЛИ, ІНСТРУМЕНТИ ТА ГІГІЄНА", es:"MATERIALES, HERRAMIENTAS E HIGIENE", fr:"MATÉRIEL, OUTILS ET HYGIÈNE", it:"MATERIALI, ATTREZZI E IGIENE", pt:"MATERIAIS, FERRAMENTAS E HIGIENE", ar:"المواد والأدوات والنظافة", zh:"材料、工具与卫生", hi:"सामग्री, उपकरण और स्वच्छता", ja:"材料・道具・衛生" },
+  akisIpucu: { tr:"ÇALIŞMA AKIŞI VE İPUÇLARI", en:"WORKFLOW & PRO TIPS", de:"ABLAUF & PROFI-TIPPS", ru:"ПОРЯДОК РАБОТЫ И СОВЕТЫ", uk:"ПОРЯДОК РОБОТИ ТА ПОРАДИ", es:"FLUJO DE TRABAJO Y CONSEJOS", fr:"DÉROULEMENT ET ASTUCES", it:"FLUSSO DI LAVORO E CONSIGLI", pt:"FLUXO DE TRABALHO E DICAS", ar:"سير العمل ونصائح المحترفين", zh:"工作流程与专业技巧", hi:"कार्यप्रवाह और सुझाव", ja:"作業の流れとコツ" },
+  sozluk: { tr:"SÖZLÜK", en:"GLOSSARY", de:"GLOSSAR", ru:"СЛОВАРЬ", uk:"СЛОВНИК", es:"GLOSARIO", fr:"GLOSSAIRE", it:"GLOSSARIO", pt:"GLOSSÁRIO", ar:"قاموس المصطلحات", zh:"术语表", hi:"शब्दावली", ja:"用語集" },
+  tanim: { tr:"NEDİR / TANIM", en:"WHAT IT IS / DEFINITION", de:"WAS ES IST / DEFINITION", ru:"ЧТО ЭТО / ОПРЕДЕЛЕНИЕ", uk:"ЩО ЦЕ / ВИЗНАЧЕННЯ", es:"QUÉ ES / DEFINICIÓN", fr:"QU'EST-CE QUE C'EST / DÉFINITION", it:"COS'È / DEFINIZIONE", pt:"O QUE É / DEFINIÇÃO", ar:"ما هو / التعريف", zh:"是什么 / 定义", hi:"यह क्या है / परिभाषा", ja:"とは / 定義" },
+  malzemeOlcu: { tr:"MALZEME VE ÖLÇÜLER", en:"INGREDIENTS & MEASUREMENTS", de:"ZUTATEN & MENGEN", ru:"ИНГРЕДИЕНТЫ И МЕРЫ", uk:"ІНГРЕДІЄНТИ ТА МІРИ", es:"INGREDIENTES Y MEDIDAS", fr:"INGRÉDIENTS ET MESURES", it:"INGREDIENTI E DOSI", pt:"INGREDIENTES E MEDIDAS", ar:"المكونات والمقادير", zh:"配料与用量", hi:"सामग्री और माप", ja:"材料と分量" },
+  hazirlikMaya: { tr:"HAZIRLIK VE MAYALANMA", en:"PREPARATION & FERMENTATION", de:"VORBEREITUNG & GÄRUNG", ru:"ПОДГОТОВКА И БРОЖЕНИЕ", uk:"ПІДГОТОВКА ТА БРОДІННЯ", es:"PREPARACIÓN Y FERMENTACIÓN", fr:"PRÉPARATION ET FERMENTATION", it:"PREPARAZIONE E LIEVITAZIONE", pt:"PREPARO E FERMENTAÇÃO", ar:"التحضير والتخمير", zh:"准备与发酵", hi:"तैयारी और खमीरीकरण", ja:"準備と発酵" },
+  sekilPisirme: { tr:"ŞEKİL VERME VE PİŞİRME", en:"SHAPING & BAKING", de:"FORMEN & BACKEN", ru:"ФОРМОВКА И ВЫПЕЧКА", uk:"ФОРМУВАННЯ ТА ВИПІКАННЯ", es:"FORMADO Y HORNEADO", fr:"FAÇONNAGE ET CUISSON", it:"FORMATURA E COTTURA", pt:"MODELAGEM E ASSAMENTO", ar:"التشكيل والخبز", zh:"整形与烘烤", hi:"आकार देना और बेकिंग", ja:"成形と焼成" },
+  pufHata: { tr:"PÜF NOKTALARI VE SIK HATALAR", en:"PRO TIPS & COMMON MISTAKES", de:"PROFI-TIPPS & HÄUFIGE FEHLER", ru:"СЕКРЕТЫ И ЧАСТЫЕ ОШИБКИ", uk:"СЕКРЕТИ ТА ЧАСТІ ПОМИЛКИ", es:"TRUCOS Y ERRORES COMUNES", fr:"ASTUCES ET ERREURS FRÉQUENTES", it:"SEGRETI ED ERRORI COMUNI", pt:"SEGREDOS E ERROS COMUNS", ar:"أسرار وأخطاء شائعة", zh:"诀窍与常见错误", hi:"राज़ और आम गलतियाँ", ja:"コツとよくある失敗" },
+};
+
 // Yapay zekâ metnindeki markdown işaretlerini temizle (**kalın**, #başlık, *madde → • ) → düzgün görünsün.
 function duzelt(m) {
   return String(m || "")
@@ -140,15 +155,18 @@ function SesliMetin({ metin, className, sesDili, onSesIlerleme }) {
       <div className={className}>
         {cumleler.map((c, k) => {
           const bas = satirBaslikMi(c);
-          return <div key={k} className={(bas ? "ak-kat-baslik" : "ak-satir") + (okunuyor && k === aktif ? " ak-okunan" : "")}>{c}</div>;
+          const gc = c.replace(/^◆\s*/, ""); // ekrandan ◆ işaretini gizle
+          return <div key={k} className={(bas ? "ak-kat-baslik" : "ak-satir") + (okunuyor && k === aktif ? " ak-okunan" : "")}>{gc}</div>;
         })}
       </div>
     </>
   );
 }
-// Bir satır KATEGORİ BAŞLIĞI mı? (büyük harfli, kısa, küçük harf içermez → renkli başlık yapılır)
+// Bir satır KATEGORİ BAŞLIĞI mı? (◆ işaretiyle başlıyorsa KESİN başlık — her dilde çalışır; ayrıca büyük harfli kısa satırlar)
 function satirBaslikMi(t) {
-  const x = String(t || "").trim().replace(/^[•\-]\s*/, "");
+  const ham = String(t || "").trim();
+  if (ham.indexOf(AK_ISARET.trim()) === 0) return true; // kendi eklediğimiz çevrili başlık (◆) — Rusça/Arapça/Çince dahil
+  const x = ham.replace(/^[•\-]\s*/, "");
   if (!x || x.length > 70) return false;
   return !/[a-zçğıiöşü]/.test(x) && /[A-ZÇĞİÖŞÜ]/.test(x);
 }
@@ -156,7 +174,7 @@ function satirBaslikMi(t) {
 function MetinAraclar({ metin, baslik }) {
   const { t } = useTranslation();
   const [kop, setKop] = useState(false);
-  const tam = (baslik ? baslik + "\n\n" : "") + String(metin || "") + "\n\n— GLOXORG Akademi";
+  const tam = (baslik ? baslik + "\n\n" : "") + String(metin || "").replace(/^◆\s*/gm, "") + "\n\n— GLOXORG Akademi";
   function kopyala() { try { navigator.clipboard.writeText(tam); setKop(true); setTimeout(() => setKop(false), 1600); } catch (e) {} }
   function indir() {
     try {
@@ -315,16 +333,22 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   // (2) TEMEL EĞİTİM — kesilmesin diye KÜÇÜK başlıklara bölünür (her başlık kısa+tam), birleşince eksiksiz olur.
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers(""); setDersAsama(0);
-    const sistem = "Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). SADECE istenen tek başlığı yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; başlığı BÜYÜK harf yaz, maddeleri • ile.";
-    const on = `${dilAd} dilinde, "${meslek.ad}" mesleğine yeni başlayan birine SADECE şu başlığı yaz`;
+    // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
+    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const on = `"${meslek.ad}" mesleğine yeni başlayan birine, SADECE şu konunun İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)`;
     const bolumler = [
-      `${on} — BU MESLEK NEDİR: ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.`,
-      `${on} — GEREKLİ MALZEME VE ARAÇLAR: isim isim, ne işe yarar; ve TEMEL HİJYEN / GÜVENLİK kuralları.`,
-      `${on} — GENEL ÇALIŞMA AKIŞI VE USTA İPUÇLARI: işin baştan sona genel sırası + yeni başlayana altın öğütler.`,
-      `${on} — SÖZLÜK: bu meslekte geçen YABANCI/TEKNİK/zor kelimeleri seç ve her birini "Kelime: basit Türkçe anlamı" biçiminde • ile açıkla. Yeni öğrenen anlasın diye sade anlat.`,
+      { bas: "nedir", p: `${on} — ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.` },
+      { bas: "malzemeHijyen", p: `${on} — gerekli malzeme ve araçlar: isim isim, ne işe yarar; ve temel hijyen / güvenlik kuralları.` },
+      { bas: "akisIpucu", p: `${on} — genel çalışma akışı: işin baştan sona sırası + yeni başlayana usta öğütleri.` },
+      { bas: "sozluk", p: `${on} — bu meslekte geçen YABANCI/TEKNİK/zor kelimeleri seç ve her birini "Kelime: kelimenin ${dilAd} dilinde basit anlamı" biçiminde • ile açıkla. HEM kelime HEM anlamı ${dilAd} dilinde olsun. Yeni öğrenen anlasın diye sade anlat.` },
     ];
     const parcalar = []; let il = 0;
-    for (const b of bolumler) { const c = await gloxSor(b, sistem); if (c) parcalar.push(duzelt(c)); il++; setDersAsama(il); }
+    for (const b of bolumler) {
+      const c = await gloxSor(b.p, sistem);
+      const baslik = AK_ISARET + ((AK_BASLIK[b.bas] && (AK_BASLIK[b.bas][dil] || AK_BASLIK[b.bas].tr)) || "");
+      if (c) parcalar.push(baslik + "\n" + duzelt(c));
+      il++; setDersAsama(il);
+    }
     setDers(parcalar.join("\n\n") || t("akDersOlmadi", "Eğitim şu an alınamadı, tekrar dene.")); setDersYuk(false);
   }
 
@@ -366,22 +390,24 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
     })();
     // METİN — KESİLMEMESİ için KÜÇÜK BAŞLIKLARA bölünür: her başlık KISA (~180 kelime) ve kendi içinde TAM biter,
     // hepsi birleşince UZUN ve EKSİKSİZ olur. Böylece uzunluk sınırına takılıp yarıda kesilmez.
-    const sistem = "Sen Gloxoo'sun — usta eğitmen (HER meslek için). SADECE istenen tek başlığı yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; başlığı BÜYÜK harf yaz, maddeleri • ile.";
-    const on = `${dilAd} dilinde, "${meslek.ad}" mesleğinde "${ad}" için SADECE şu başlığı yaz`;
+    // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe/yarı-çeviri kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
+    const sistem = `Sen Gloxoo'sun — usta eğitmen (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. EN FAZLA ~180 KELİME yaz ve SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const on = `"${meslek.ad}" mesleğinde "${ad}" için, SADECE şu konunun İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)`;
     const bolumler = [
-      `${on} — NEDİR / TANIM: nedir, neyin nesidir, hangi ülke/kültüre ait, özellikleri, nerede kullanılır.`,
-      `${on} — MALZEME VE ÖLÇÜLER: gereken her şey ve KESİN rakamlar. Bir hamur/yemekse: 1 kg una kaç gr tuz, kaç gr maya, kaç gr şeker, kaç gr/ml yağ, kaç ml su; toplam ölçüler. "Biraz/az" DEME, RAKAM ver. Yemek değilse gerekli alet/malzemeler.`,
-      `${on} — HAZIRLIK VE MAYALANMA: bir hamur/ekmekse yoğurma, 1. MAYALANMA (kaç saat, kaç derece, hacim kaç katı), gerekiyorsa SOĞUK FERMANTASYON/buzdolabında dinlendirme (kaç saat, neden). Yemek değilse hazırlık ve ilk uygulama adımları.`,
-      `${on} — ŞEKİL VERME VE PİŞİRME: şekil verme, 2. mayalanma, PİŞİRME (kaç derece, kaç dakika, buhar/su). Yemek değilse son uygulama ve bitirme adımları.`,
-      `${on} — PÜF NOKTALARI VE SIK HATALAR: kaliteyi artıran ustalık sırları + sık yapılan hatalar ve nasıl önlenir.`,
-      `${on} — SÖZLÜK: bu konuda geçen YABANCI/TEKNİK/zor kelimeleri seç ve her birini "Kelime: basit Türkçe anlamı" biçiminde • ile açıkla (örn. "Fermantasyon: hamurun mayayla kabarıp olgunlaşması"). Yeni öğrenen anlasın diye sade anlat.`,
+      { bas: "tanim", p: `${on} — nedir, neyin nesidir, hangi ülke/kültüre ait, özellikleri, nerede kullanılır.` },
+      { bas: "malzemeOlcu", p: `${on} — gereken her şey ve KESİN rakamlar. Bir hamur/yemekse: 1 kg una kaç gr tuz, kaç gr maya, kaç gr şeker, kaç gr/ml yağ, kaç ml su; toplam ölçüler. "Biraz/az" DEME, RAKAM ver. Yemek değilse gerekli alet/malzemeler.` },
+      { bas: "hazirlikMaya", p: `${on} — bir hamur/ekmekse yoğurma, 1. mayalanma (kaç saat, kaç derece, hacim kaç katı), gerekiyorsa soğuk fermantasyon/buzdolabında dinlendirme (kaç saat, neden). Yemek değilse hazırlık ve ilk uygulama adımları.` },
+      { bas: "sekilPisirme", p: `${on} — şekil verme, 2. mayalanma, pişirme (kaç derece, kaç dakika, buhar/su). Yemek değilse son uygulama ve bitirme adımları.` },
+      { bas: "pufHata", p: `${on} — kaliteyi artıran ustalık sırları + sık yapılan hatalar ve nasıl önlenir.` },
+      { bas: "sozluk", p: `${on} — bu konuda geçen YABANCI/TEKNİK/zor kelimeleri seç ve her birini "Kelime: kelimenin ${dilAd} dilinde basit anlamı" biçiminde • ile açıkla. HEM kelime HEM anlamı ${dilAd} dilinde olsun. Yeni öğrenen anlasın diye sade anlat.` },
     ];
     // Hepsi hazır OLUNCA tek seferde göster (parça parça belirme yok; ilerleme "2/5" görünür).
     const parcalar = []; let ilerle = 0; setKonuAsama(0);
     for (const b of bolumler) {
       if (istekNoRef.current !== no) return; // kullanıcı başka çeşide geçtiyse bırak
-      const c = await gloxSor(b, sistem);
-      if (c) parcalar.push(duzelt(c));
+      const c = await gloxSor(b.p, sistem);
+      const baslik = AK_ISARET + ((AK_BASLIK[b.bas] && (AK_BASLIK[b.bas][dil] || AK_BASLIK[b.bas].tr)) || "");
+      if (c) parcalar.push(baslik + "\n" + duzelt(c));
       ilerle++; if (istekNoRef.current === no) setKonuAsama(ilerle);
     }
     if (istekNoRef.current === no) {
