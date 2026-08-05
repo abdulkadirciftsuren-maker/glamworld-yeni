@@ -146,11 +146,15 @@ export default function SanalAyna({ onKapat, baslangic }) {
         ref2 = { base64: refFoto.split(",")[1] || "", mediaType: refMime };
         const urunTip = { elbise: "the outfit/garment", ayakkabi: "the pair of shoes", canta: "the bag", aksesuar: "the accessory", makyaj: "the makeup look", sac: "the hairstyle", tirnak: "the nails" }[kategori] || "the product";
         const tarifKismi = (baslangic && baslangic.tarif) ? ` Product details — ${baslangic.tarif}.` : "";
-        istem = `You are a professional virtual try-on engine. IMAGE 1 is the CUSTOMER (a ${kisiIng}). IMAGE 2 shows the EXACT PRODUCT to put on them: ${urunTip} "${model.trim()}".${tarifKismi}
-Task: show the SAME person from IMAGE 1 wearing/using the product from IMAGE 2.
-MOST IMPORTANT: reproduce the product from IMAGE 2 EXACTLY — the SAME print/pattern, the SAME colors, the SAME sleeve length, the SAME neckline/collar, the SAME hemline and overall length, the SAME fabric and every visible detail. It must look VISUALLY IDENTICAL to IMAGE 2. Do NOT redesign, recolor, restyle, shorten, lengthen or invent a different product.
-Keep the person's face, hair and identity from IMAGE 1 unchanged. If IMAGE 1 shows only the face or upper body, extend it naturally into a FULL-BODY photo of the SAME person wearing the full product.${renkKismi}
-Photorealistic, natural lighting, full body, high quality, no text, no watermark, no logo.`;
+        istem = `You are a professional virtual try-on engine. Two images are given.
+IMAGE 1 = the CUSTOMER (a ${kisiIng}). Use HER face, hair and identity. The final photo MUST clearly show THIS person's real face.
+IMAGE 2 = a PRODUCT reference only: ${urunTip} "${model.trim()}".${tarifKismi} From IMAGE 2 copy ONLY the product itself — IGNORE the model, pose, cropping and background of IMAGE 2.
+Create ONE new photorealistic photo of the CUSTOMER from IMAGE 1 wearing/using this product.
+STRICT RULES:
+1) The customer's FACE from IMAGE 1 must be fully visible at the TOP of the photo — a head-to-body / full-body shot. NEVER crop out or hide the head. The result must look like HER, not like the person in IMAGE 2.
+2) Reproduce the product EXACTLY as in IMAGE 2: same colors, same print/pattern, same sleeve length, same neckline/collar, same length, same fabric and every detail. Do NOT redesign, recolor, shorten or invent a different product.
+3) Natural standing pose, full body visible, simple clean background.${renkKismi}
+Photorealistic, natural lighting, high quality, no text, no watermark, no logo.`;
       } else {
         istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} If it is clothing/shoes and the photo shows only the face/upper body, generate a FULL-BODY photo of the same person wearing it. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
       }
