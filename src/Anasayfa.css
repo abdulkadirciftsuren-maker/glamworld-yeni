@@ -4957,3 +4957,6 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 
 /* Sanal Ayna — renk çipleri (isteğe bağlı) */
 .sa-renk-cip.sec{ background:linear-gradient(120deg,#7a5a00,#a07800); color:#fff; border-color:#7a5a00; }
+
+/* Sanal Ayna — indirildi geri bildirimi */
+.sa-indir.indi{ background:#1fa463 !important; color:#fff !important; }

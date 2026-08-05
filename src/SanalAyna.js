@@ -1,6 +1,6 @@
 // GLOXORG — SANAL AYNA: müşteri KENDİ fotoğrafında saç / tırnak / makyaj modeli dener.
 // Google/Gemini görsel yolu (gloxooResimUret) fotoğraf GİRDİSİ alır → kişinin yüzünü koruyup istenen modeli uygular.
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { gloxooResimUret } from "./firebase";
 
@@ -72,7 +72,11 @@ export default function SanalAyna({ onKapat }) {
   const [sonuc, setSonuc] = useState("");          // üretilen sonuç (dataURL)
   const [yuk, setYuk] = useState(false);
   const [hata, setHata] = useState("");
+  const [indirildi, setIndirildi] = useState(false); // "İndirildi" geri bildirimi
   const inpRef = useRef(null);
+  const sonucRef = useRef(null); // sonuç gelince oraya kaydır
+  // Sonuç hazır olunca OTOMATİK sonuca kaydır (aşağıda kalıp görünmesin)
+  useEffect(() => { if (sonuc && sonucRef.current) { try { sonucRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} } }, [sonuc]);
 
   function fotoSec(e) {
     const f = e.target.files && e.target.files[0]; if (!f) return;
@@ -106,6 +110,7 @@ export default function SanalAyna({ onKapat }) {
       const etiket = (model || kategori || "model").toString().toLocaleLowerCase("tr").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24);
       a.href = sonuc; a.download = "gloxorg-" + (etiket || "sanal-ayna") + "-" + Date.now().toString(36) + ".png";
       document.body.appendChild(a); a.click(); a.remove();
+      setIndirildi(true); setTimeout(() => setIndirildi(false), 2500); // düğmede "İndirildi" göster
     } catch (e) {}
   }
   async function paylas() {
@@ -179,13 +184,13 @@ export default function SanalAyna({ onKapat }) {
           <button className="sa-dene" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>
           {hata && <div className="sa-hata">⚠️ {hata}</div>}
 
-          {/* 5) SONUÇ */}
+          {/* 5) SONUÇ — hazır olunca buraya OTOMATİK kaydırılır */}
           {sonuc && (
-            <div className="sa-sonuc">
+            <div className="sa-sonuc" ref={sonucRef}>
               <div className="sa-sonuc-bas">✅ {t("saSonuc", "Sonuç")}</div>
               <img src={sonuc} alt="" />
               <div className="sa-sonuc-dugmeler">
-                <button className="sa-indir" onClick={indir}>⬇️ {t("saIndir", "İndir")}</button>
+                <button className={"sa-indir" + (indirildi ? " indi" : "")} onClick={indir}>{indirildi ? "✓ " + t("saIndirildi", "İndirildi") : "⬇️ " + t("saIndir", "İndir")}</button>
                 <button className="sa-paylas" onClick={paylas}>📤 {t("saPaylas", "Paylaş")}</button>
                 <button className="sa-tekrar" onClick={() => { setSonuc(""); }}>🔁 {t("saTekrar", "Başka model dene")}</button>
               </div>
