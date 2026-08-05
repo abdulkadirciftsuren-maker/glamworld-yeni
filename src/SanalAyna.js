@@ -61,14 +61,17 @@ const KATEGORILER = [
   { k: "aksesuar", ik: "⌚", ck: "saAksesuar", ad: "Aksesuar" },
 ];
 
-export default function SanalAyna({ onKapat }) {
+export default function SanalAyna({ onKapat, baslangic }) {
   const { t } = useTranslation();
   const [foto, setFoto] = useState("");            // kullanıcı fotoğrafı (dataURL)
   const [fotoMime, setFotoMime] = useState("image/jpeg");
-  const [kisi, setKisi] = useState("bayan");       // bayan | erkek | kiz | erkekcocuk | bebek
-  const [kategori, setKategori] = useState("sac"); // sac | makyaj | tirnak | elbise | ayakkabi | canta | aksesuar
-  const [model, setModel] = useState("");          // denenecek model adı
+  const [kisi, setKisi] = useState((baslangic && baslangic.kisi) || "bayan");       // bayan | erkek | kiz | erkekcocuk | bebek
+  const [kategori, setKategori] = useState((baslangic && baslangic.kategori) || "sac"); // sac | makyaj | tirnak | elbise | ayakkabi | canta | aksesuar
+  const [model, setModel] = useState((baslangic && baslangic.model) || "");          // denenecek model adı
   const [renk, setRenk] = useState("");            // isteğe bağlı renk
+  // REKLAMDAN gelen ÜRÜN referans fotoğrafı (o EXACT elbiseyi/ürünü üstünde göster) — varsa 2. görsel olarak verilir
+  const [refFoto, setRefFoto] = useState("");
+  const [refMime, setRefMime] = useState("image/jpeg");
   const [sonuc, setSonuc] = useState("");          // üretilen sonuç (dataURL)
   const [yuk, setYuk] = useState(false);
   const [hata, setHata] = useState("");
@@ -77,6 +80,17 @@ export default function SanalAyna({ onKapat }) {
   const sonucRef = useRef(null); // sonuç gelince oraya kaydır
   // Sonuç hazır olunca OTOMATİK sonuca kaydır (aşağıda kalıp görünmesin)
   useEffect(() => { if (sonuc && sonucRef.current) { try { sonucRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} } }, [sonuc]);
+  // Reklamdan açıldıysa ürün fotoğrafını (referans) base64'e yükle → "o elbiseyi üstünde" gösterebilelim
+  useEffect(() => {
+    const u = baslangic && baslangic.refFotoUrl; if (!u) return;
+    (async () => {
+      try {
+        const blob = await (await fetch(u, { mode: "cors" })).blob();
+        const dataUrl = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(blob); });
+        if (dataUrl) { setRefFoto(dataUrl); setRefMime(blob.type || "image/jpeg"); }
+      } catch (e) {} // olmazsa (CORS) sadece metinle dener — yine çalışır
+    })();
+  }, [baslangic]);
 
   function fotoSec(e) {
     const f = e.target.files && e.target.files[0]; if (!f) return;
@@ -95,8 +109,15 @@ export default function SanalAyna({ onKapat }) {
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
       const kisiIng = (KISILER.find((x) => x.k === kisi) || {}).ing || "person";
       const renkKismi = renk ? ` Color: ${renk}.` : "";
-      const istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Photorealistic, natural, high quality, no text, no watermark, no logo.`;
-      const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime });
+      let istem, ref2 = null;
+      if (refFoto) {
+        // İKİ görsel: 1. kişi, 2. ürün → o ÜRÜNÜ kişinin üstünde göster (reklamdan "üstümde dene")
+        ref2 = { base64: refFoto.split(",")[1] || "", mediaType: refMime };
+        istem = `The FIRST image is a ${kisiIng}. The SECOND image is a product ("${model.trim()}"). Realistically show the person from the FIRST image wearing/using the EXACT product from the SECOND image.${renkKismi} Keep the SAME person, same face and identity and body. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
+      } else {
+        istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Photorealistic, natural, high quality, no text, no watermark, no logo.`;
+      }
+      const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime }, ref2);
       if (res && res.dataUrl) setSonuc(res.dataUrl);
       else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene."));
     } catch (e) { setHata((e && e.message) ? String(e.message) : t("saOlmadi", "Şu an yapılamadı, tekrar dene.")); }
@@ -136,6 +157,14 @@ export default function SanalAyna({ onKapat }) {
         </div>
         <div className="sa-kaydir">
           <div className="sa-alt">{t("saAlt", "Kendi fotoğrafında saç, tırnak veya makyaj modeli dene. Fotoğrafını yükle, modeli yaz ya da seç; Gloxoo senin üstünde göstersin.")}</div>
+
+          {/* Reklamdan gelindiyse: DENENEN ÜRÜN önizlemesi */}
+          {baslangic && baslangic.refFotoUrl && (
+            <div className="sa-urun-serit">
+              <img src={baslangic.refFotoUrl} alt="" referrerPolicy="no-referrer" />
+              <div className="sa-urun-bil"><b>{baslangic.ad || t("saDenenenUrun", "Denenen ürün")}</b><span>{t("saUrunDene", "Bu ürünü fotoğrafına giydirmek için fotoğrafını ekle ve 'Fotoğrafımda dene'ye bas.")}</span></div>
+            </div>
+          )}
 
           {/* 1) FOTOĞRAF */}
           <div className="sa-foto-kutu" onClick={() => inpRef.current && inpRef.current.click()}>

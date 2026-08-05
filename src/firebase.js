@@ -121,14 +121,18 @@ function _filigranEkle(dataUrl) {
 }
 // girdiResim: kullanıcının verdiği fotoğraf {base64, mediaType} — VARSA modele girdi olur (o resmi işler/düzenler,
 // örn. kişinin YÜZÜNÜ koruyarak istenen sahneyi kurar). YOKSA yalnız metinden yeni resim üretir.
-async function _resimDene(backend, istem, girdiResim) {
+// girdiResim2: İKİNCİ referans görsel (örn. reklamdaki ELBİSE) — varsa modele 2. resim olarak verilir
+// → "1. fotoğraftaki kişiye 2. fotoğraftaki ürünü giydir" gibi. (Sanal Ayna'da reklamdaki ürünü üstünde deneme.)
+async function _resimDene(backend, istem, girdiResim, girdiResim2) {
   const ai = getAI(app, { backend });
   const model = getGenerativeModel(ai, { model: "gemini-2.5-flash-image", generationConfig: { responseModalities: [ResponseModality.TEXT, ResponseModality.IMAGE] } });
   const metin = (istem || "").toString().slice(0, 1200);
   let girisi;
   if (girdiResim && girdiResim.base64) {
-    // Çok parçalı istek: ÖNCE kullanıcının fotoğrafı, SONRA ne yapılacağı → model o resmi düzenler/kullanır
-    girisi = [{ inlineData: { mimeType: girdiResim.mediaType || "image/jpeg", data: girdiResim.base64 } }, { text: metin }];
+    // Çok parçalı istek: ÖNCE kullanıcının fotoğrafı (varsa 2. ürün fotoğrafı), SONRA ne yapılacağı → model bunları kullanır
+    girisi = [{ inlineData: { mimeType: girdiResim.mediaType || "image/jpeg", data: girdiResim.base64 } }];
+    if (girdiResim2 && girdiResim2.base64) girisi.push({ inlineData: { mimeType: girdiResim2.mediaType || "image/jpeg", data: girdiResim2.base64 } });
+    girisi.push({ text: metin });
   } else {
     girisi = metin;
   }
@@ -141,14 +145,14 @@ async function _resimDene(backend, istem, girdiResim) {
   }
   throw new Error("Resim gelmedi (modelin cevabinda gorsel yok)");
 }
-export async function gloxooResimUret(istem, girdiResim) {
+export async function gloxooResimUret(istem, girdiResim, girdiResim2) {
   // ÖNCE Gemini Developer API (kullanıcının kurduğu + kredi ekleyeceği yer), OLMAZSA Vertex AI.
   const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
   const hatalar = [];
   for (const y of yollar) {
     try {
       let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
-      const url = await _resimDene(bk, istem, girdiResim);
+      const url = await _resimDene(bk, istem, girdiResim, girdiResim2);
       if (url) { let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
     } catch (e) { hatalar.push(y.ad + ": " + _hataMetni(e)); }
   }
