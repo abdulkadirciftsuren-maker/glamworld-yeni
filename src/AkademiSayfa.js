@@ -260,39 +260,42 @@ function FotoBuyut({ url, onKapat }) {
   const orta = (tt) => ({ x: (tt[0].clientX + tt[1].clientX) / 2, y: (tt[0].clientY + tt[1].clientY) / 2 });
   function panBasla(px, py) { const cur = trRef.current; c.current.panSx = px; c.current.panSy = py; c.current.panX0 = cur.x; c.current.panY0 = cur.y; c.current.panAktif = true; }
   function bas(e) {
+    e.stopPropagation();
     const tt = e.touches, cur = trRef.current;
     if (tt.length === 2) { const o = orta(tt); c.current.d0 = mes(tt) || 1; c.current.s0 = cur.s; c.current.ox0 = o.x; c.current.oy0 = o.y; c.current.x0 = cur.x; c.current.y0 = cur.y; c.current.panAktif = false; }
     else if (tt.length === 1) panBasla(tt[0].clientX, tt[0].clientY);
   }
   function har(e) {
+    e.stopPropagation(); e.preventDefault(); // her hareket bende kalsın → arka sayfa ASLA kaymaz
     const tt = e.touches, cur = trRef.current;
     if (tt.length === 2) {
-      e.preventDefault();
       const s = Math.max(1, Math.min(5, c.current.s0 * (mes(tt) / (c.current.d0 || 1))));
       const o = orta(tt); // iki parmağın ortası kayarsa fotoğraf da kayar (pan)
       setTr({ s, x: c.current.x0 + (o.x - c.current.ox0), y: c.current.y0 + (o.y - c.current.oy0) });
-    } else if (tt.length === 1 && cur.s > 1) {
-      e.preventDefault();
-      if (!c.current.panAktif) panBasla(tt[0].clientX, tt[0].clientY); // zoom'dan tek parmağa geçince pan'ı başlat
+    } else if (tt.length === 1) {
+      if (!c.current.panAktif) panBasla(tt[0].clientX, tt[0].clientY); // TEK parmakla da kaydır (zoom şart değil)
       setTr({ s: cur.s, x: c.current.panX0 + (tt[0].clientX - c.current.panSx), y: c.current.panY0 + (tt[0].clientY - c.current.panSy) });
     }
   }
   function bit(e) {
+    e.stopPropagation();
     const now = Date.now();
     if (e.touches && e.touches.length === 1) { panBasla(e.touches[0].clientX, e.touches[0].clientY); } // 2→1 parmak: kalan parmakla pan devam etsin
     else if (!e.touches || e.touches.length === 0) {
       c.current.panAktif = false;
       if (now - c.current.sonDokun < 300) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); // çift dokunuş
+      else setTr((p) => (p.s <= 1 ? { s: 1, x: 0, y: 0 } : p)); // yakın değilken bırakınca ortala
       c.current.sonDokun = now;
     }
   }
   const ciftTik = () => setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }));
   return (
-    <div className="ak-foto-buyut" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
-      <button className="ak-foto-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+    <div className="ak-foto-buyut" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}
+      onTouchStart={bas} onTouchMove={har} onTouchEnd={bit}>
+      <button className="ak-foto-kapat" onClick={(e) => { e.stopPropagation(); onKapat(); }} aria-label={t("kapat", "Kapat")}>✕</button>
       <img src={url} alt="" referrerPolicy="no-referrer" draggable={false}
         style={{ transform: `translate(${tr.x}px,${tr.y}px) scale(${tr.s})` }}
-        onTouchStart={bas} onTouchMove={har} onTouchEnd={bit} onDoubleClick={ciftTik} />
+        onDoubleClick={ciftTik} />
     </div>
   );
 }

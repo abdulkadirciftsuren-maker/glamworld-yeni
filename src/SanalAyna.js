@@ -70,18 +70,20 @@ function Buyut({ url, onKapat }) {
   const mes = (tt) => Math.hypot(tt[0].clientX - tt[1].clientX, tt[0].clientY - tt[1].clientY);
   const orta = (tt) => ({ x: (tt[0].clientX + tt[1].clientX) / 2, y: (tt[0].clientY + tt[1].clientY) / 2 });
   function panBasla(px, py) { const cur = trRef.current; c.current.panSx = px; c.current.panSy = py; c.current.panX0 = cur.x; c.current.panY0 = cur.y; c.current.panAktif = true; }
-  function bas(e) { const tt = e.touches, cur = trRef.current; if (tt.length === 2) { const o = orta(tt); c.current.d0 = mes(tt) || 1; c.current.s0 = cur.s; c.current.ox0 = o.x; c.current.oy0 = o.y; c.current.x0 = cur.x; c.current.y0 = cur.y; c.current.panAktif = false; } else if (tt.length === 1) panBasla(tt[0].clientX, tt[0].clientY); }
+  function bas(e) { e.stopPropagation(); const tt = e.touches, cur = trRef.current; if (tt.length === 2) { const o = orta(tt); c.current.d0 = mes(tt) || 1; c.current.s0 = cur.s; c.current.ox0 = o.x; c.current.oy0 = o.y; c.current.x0 = cur.x; c.current.y0 = cur.y; c.current.panAktif = false; } else if (tt.length === 1) panBasla(tt[0].clientX, tt[0].clientY); }
   function har(e) {
+    e.stopPropagation(); e.preventDefault(); // her hareket bende kalsın → arka sayfa ASLA kaymaz
     const tt = e.touches, cur = trRef.current;
-    if (tt.length === 2) { e.preventDefault(); const s = Math.max(1, Math.min(5, c.current.s0 * (mes(tt) / (c.current.d0 || 1)))); const o = orta(tt); setTr({ s, x: c.current.x0 + (o.x - c.current.ox0), y: c.current.y0 + (o.y - c.current.oy0) }); }
-    else if (tt.length === 1 && cur.s > 1) { e.preventDefault(); if (!c.current.panAktif) panBasla(tt[0].clientX, tt[0].clientY); setTr({ s: cur.s, x: c.current.panX0 + (tt[0].clientX - c.current.panSx), y: c.current.panY0 + (tt[0].clientY - c.current.panSy) }); }
+    if (tt.length === 2) { const s = Math.max(1, Math.min(5, c.current.s0 * (mes(tt) / (c.current.d0 || 1)))); const o = orta(tt); setTr({ s, x: c.current.x0 + (o.x - c.current.ox0), y: c.current.y0 + (o.y - c.current.oy0) }); }
+    else if (tt.length === 1) { if (!c.current.panAktif) panBasla(tt[0].clientX, tt[0].clientY); setTr({ s: cur.s, x: c.current.panX0 + (tt[0].clientX - c.current.panSx), y: c.current.panY0 + (tt[0].clientY - c.current.panSy) }); } // TEK parmakla da kaydır (zoom şart değil)
   }
-  function bit(e) { const now = Date.now(); if (e.touches && e.touches.length === 1) panBasla(e.touches[0].clientX, e.touches[0].clientY); else if (!e.touches || e.touches.length === 0) { c.current.panAktif = false; if (now - c.current.sonDokun < 300) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); c.current.sonDokun = now; } }
+  function bit(e) { e.stopPropagation(); const now = Date.now(); if (e.touches && e.touches.length === 1) panBasla(e.touches[0].clientX, e.touches[0].clientY); else if (!e.touches || e.touches.length === 0) { c.current.panAktif = false; if (now - c.current.sonDokun < 300) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); else setTr((p) => (p.s <= 1 ? { s: 1, x: 0, y: 0 } : p)); c.current.sonDokun = now; } } // yakın değilken bırakınca ortala
   return (
-    <div className="sa-buyut" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
-      <button className="sa-buyut-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+    <div className="sa-buyut" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}
+      onTouchStart={bas} onTouchMove={har} onTouchEnd={bit}>
+      <button className="sa-buyut-kapat" onClick={(e) => { e.stopPropagation(); onKapat(); }} aria-label={t("kapat", "Kapat")}>✕</button>
       <img src={url} alt="" referrerPolicy="no-referrer" draggable={false} style={{ transform: `translate(${tr.x}px,${tr.y}px) scale(${tr.s})` }}
-        onTouchStart={bas} onTouchMove={har} onTouchEnd={bit} onDoubleClick={() => setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }))} />
+        onDoubleClick={() => setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }))} />
     </div>
   );
 }
@@ -142,7 +144,13 @@ export default function SanalAyna({ onKapat, baslangic }) {
       if (refFoto) {
         // İKİ görsel: 1. kişi (müşteri), 2. ürün → o EXACT ÜRÜNÜ kişinin üstünde, BOYDAN göster (reklamdan "üstümde dene")
         ref2 = { base64: refFoto.split(",")[1] || "", mediaType: refMime };
-        istem = `The FIRST image is the customer (a ${kisiIng}). The SECOND image shows a product to try on: "${model.trim()}". Dress/show the SAME person from the FIRST image wearing/using the EXACT SAME product from the SECOND image — copy its exact pattern, color, fabric, length and style faithfully; DO NOT invent a different product. If the first photo shows only the face or upper body, generate a FULL-BODY photorealistic photo of the SAME person (same face and identity) wearing the product at its correct full length.${renkKismi} Photorealistic, natural, full body for clothing/shoes, high quality, no text, no watermark, no logo.`;
+        const urunTip = { elbise: "the outfit/garment", ayakkabi: "the pair of shoes", canta: "the bag", aksesuar: "the accessory", makyaj: "the makeup look", sac: "the hairstyle", tirnak: "the nails" }[kategori] || "the product";
+        const tarifKismi = (baslangic && baslangic.tarif) ? ` Product details — ${baslangic.tarif}.` : "";
+        istem = `You are a professional virtual try-on engine. IMAGE 1 is the CUSTOMER (a ${kisiIng}). IMAGE 2 shows the EXACT PRODUCT to put on them: ${urunTip} "${model.trim()}".${tarifKismi}
+Task: show the SAME person from IMAGE 1 wearing/using the product from IMAGE 2.
+MOST IMPORTANT: reproduce the product from IMAGE 2 EXACTLY — the SAME print/pattern, the SAME colors, the SAME sleeve length, the SAME neckline/collar, the SAME hemline and overall length, the SAME fabric and every visible detail. It must look VISUALLY IDENTICAL to IMAGE 2. Do NOT redesign, recolor, restyle, shorten, lengthen or invent a different product.
+Keep the person's face, hair and identity from IMAGE 1 unchanged. If IMAGE 1 shows only the face or upper body, extend it naturally into a FULL-BODY photo of the SAME person wearing the full product.${renkKismi}
+Photorealistic, natural lighting, full body, high quality, no text, no watermark, no logo.`;
       } else {
         istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} If it is clothing/shoes and the photo shows only the face/upper body, generate a FULL-BODY photo of the same person wearing it. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
       }

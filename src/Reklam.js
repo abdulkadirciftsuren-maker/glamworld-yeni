@@ -62,6 +62,34 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
   useEffect(() => { yukle(); }, []);
 
+  // ŞERİT OTOMATİK AKIŞ — üstteki değerler şeridi gibi: yavaşça sola akar, parmak basınca DURUR,
+  // parmakla sağa-sola serbest çekilir, bırakınca 1-2 sn sonra otomatik devam eder. Liste 2 kez basılır → sonsuz döngü.
+  const akisRef = useRef(null);
+  const oto = useRef({ dokunuyor: false, sonEtkilesim: 0, raf: 0 });
+  useEffect(() => {
+    if (!reklamlar.length) return;
+    const el = akisRef.current; if (!el) return;
+    let iptal = false;
+    const adim = () => {
+      if (iptal) return;
+      const yari = el.scrollWidth / 2; // tek set genişliği (liste iki kez basıldı)
+      if (yari > 0) {
+        const bosVakit = Date.now() - oto.current.sonEtkilesim > 1600; // bırakınca ~1.6 sn sonra devam
+        if (!oto.current.dokunuyor && bosVakit) el.scrollLeft += 0.65; // yavaşça sola akış
+        if (!oto.current.dokunuyor) { // sonsuz döngü: sınırı geçince bir set kadar sar (görsel fark yok)
+          if (el.scrollLeft >= yari) el.scrollLeft -= yari;
+          else if (el.scrollLeft < 0) el.scrollLeft += yari;
+        }
+      }
+      oto.current.raf = requestAnimationFrame(adim);
+    };
+    oto.current.raf = requestAnimationFrame(adim);
+    return () => { iptal = true; cancelAnimationFrame(oto.current.raf); };
+  }, [reklamlar.length]);
+  const etkilesimBas = () => { oto.current.dokunuyor = true; oto.current.sonEtkilesim = Date.now(); };
+  const etkilesimHar = () => { oto.current.sonEtkilesim = Date.now(); };
+  const etkilesimBit = () => { oto.current.dokunuyor = false; oto.current.sonEtkilesim = Date.now(); };
+
   function formSifirla() { setFoto(""); setAd(""); setKategori("elbise"); setKisi("bayan"); setBeden(""); setRenk(""); setKumas(""); setAciklama(""); setFiyat(""); setParaSimge(paraSym || "₺"); setHata(""); }
   async function fotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFoto(d); setHata(""); } }
   async function yayinla() {
@@ -96,9 +124,12 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
         {reklamlar.length === 0 ? (
           <button className="reklam-bos" onClick={() => { formSifirla(); setVerAcik(true); }}>＋ {t("rkIlk", "İlk reklamı sen ver — ürününü buradan tanıt")}</button>
         ) : (
-          <div className="reklam-akis">
+          <div className="reklam-akis" ref={akisRef}
+            onTouchStart={etkilesimBas} onTouchMove={etkilesimHar} onTouchEnd={etkilesimBit}
+            onPointerDown={etkilesimBas} onPointerMove={(e) => { if (e.buttons) etkilesimHar(); }} onPointerUp={etkilesimBit} onPointerLeave={etkilesimBit}>
             <div className="reklam-track">
-              {reklamlar.map((r, i) => (
+              {/* liste İKİ kez basılır → kesintisiz sonsuz akış */}
+              {reklamlar.concat(reklamlar).map((r, i) => (
                 <button className="reklam-kart" key={r.id + "-" + i} onClick={() => setDetay(r)}>
                   <span className="reklam-kart-foto" style={r.kapak ? { backgroundImage: `url(${r.kapak})` } : {}}>{!r.kapak && "🛍️"}</span>
                   <span className="reklam-kart-ad">{r.baslik || ""}</span>
@@ -133,7 +164,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               {detay.aciklama && <div className="reklam-detay-aciklama">{detay.aciklama}</div>}
               <div className="reklam-detay-dugmeler">
                 <button className="reklam-dene-btn" onClick={() => {
-                  const urun = { kategori: detay.kategori || "elbise", kisi: detay.kimIcin || "bayan", model: [detay.baslik, detay.renk, detay.kumas].filter(Boolean).join(", "), ad: detay.baslik || "", refFotoUrl: detay.kapak || "", refB64: detay.refB64 || "" };
+                  // Ürünün TAM tarifi (renk/kumaş/beden/açıklama) → yapay zekâ referans fotoğrafı DAHA sadık kopyalasın
+                  const tarif = [detay.renk && ("renk: " + detay.renk), detay.kumas && ("kumaş: " + detay.kumas), detay.beden && ("beden: " + detay.beden), detay.aciklama].filter(Boolean).join("; ");
+                  const urun = { kategori: detay.kategori || "elbise", kisi: detay.kimIcin || "bayan", model: [detay.baslik, detay.renk, detay.kumas].filter(Boolean).join(", "), ad: detay.baslik || "", tarif, refFotoUrl: detay.kapak || "", refB64: detay.refB64 || "" };
                   setDetay(null); onDene && onDene(urun);
                 }}>🪞 {t("rkDene", "Üstümde dene")}</button>
                 <button className="reklam-yaz-btn" onClick={() => {

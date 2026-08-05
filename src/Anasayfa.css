@@ -4901,7 +4901,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ak-foto-buyut{ position:fixed; inset:0; z-index:100070; display:flex; align-items:center; justify-content:center;
   background:radial-gradient(circle at 50% 40%, #f7e79a, #e8c85a 70%, #d4af37); touch-action:none; overflow:hidden; }
 .ak-foto-buyut img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; box-shadow:0 10px 40px rgba(80,60,0,.5);
-  transform-origin:center center; transition:transform .04s linear; will-change:transform; user-select:none; -webkit-user-drag:none; }
+  transform-origin:center center; transition:transform .04s linear; will-change:transform; user-select:none; -webkit-user-drag:none; touch-action:none; }
 .ak-foto-kapat{ position:absolute; top:14px; right:14px; z-index:2; width:44px; height:44px; border-radius:12px; border:2px solid #7a5a00;
   background:rgba(255,253,240,.92); color:#7a5a00; font-size:22px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .ak-foto-kapat:active{ transform:scale(.93); }
@@ -4971,7 +4971,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-buyut{ position:fixed; inset:0; z-index:100090; display:flex; align-items:center; justify-content:center;
   background:radial-gradient(circle at 50% 40%, #f7e79a, #e8c85a 70%, #d4af37); touch-action:none; overflow:hidden; }
 .sa-buyut img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; box-shadow:0 10px 40px rgba(80,60,0,.5);
-  transform-origin:center center; transition:transform .04s linear; will-change:transform; user-select:none; -webkit-user-drag:none; }
+  transform-origin:center center; transition:transform .04s linear; will-change:transform; user-select:none; -webkit-user-drag:none; touch-action:none; }
 .sa-buyut-kapat{ position:absolute; top:14px; right:14px; z-index:2; width:44px; height:44px; border-radius:12px; border:2px solid #7a5a00;
   background:rgba(255,253,240,.92); color:#7a5a00; font-size:22px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .sa-buyut-kapat:active{ transform:scale(.93); }
@@ -4986,7 +4986,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .reklam-ver-mini{ background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:10px; padding:7px 12px; font-weight:900; font-size:13px; cursor:pointer; font-family:inherit; }
 .reklam-bos{ display:block; width:calc(100% - 24px); margin:0 12px 6px; padding:20px 12px; border:2px dashed #a07800; border-radius:12px; background:#fffbe9; color:#7a5a00; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit; }
 /* SERBEST KAYAN ŞERİT — parmakla sağa-sola çekilir (overflow-x). Sayfa değiştirmesin diye swipe-muaf listede. */
-.reklam-akis{ overflow-x:auto; overflow-y:hidden; width:100%; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.reklam-akis{ overflow-x:auto; overflow-y:hidden; width:100%; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-behavior:auto; overscroll-behavior-x:contain; cursor:grab; }
+.reklam-akis:active{ cursor:grabbing; }
 .reklam-akis::-webkit-scrollbar{ display:none; }
 .reklam-track{ display:flex; gap:10px; padding:0 12px 8px; width:max-content; }
 .reklam-kart{ flex:0 0 auto; width:132px; background:#fffdf5; border:1.5px solid rgba(160,120,0,.5); border-radius:13px; padding:8px; cursor:pointer; font-family:inherit; text-align:left; display:flex; flex-direction:column; gap:5px; }
