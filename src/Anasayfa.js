@@ -50,6 +50,8 @@ const KonumHarita = lazy(() => import("./KonumHarita"));
 const AdresHarita = lazy(() => import("./AdresHarita"));
 // AKADEMİ sayfası (eğitim + Gloxoo sınavı + işini göster + GLOXORG sertifikası) — AYRI PARÇA (code-split)
 const AkademiSayfa = lazy(() => import("./AkademiSayfa"));
+// SANAL AYNA (kendi fotoğrafında saç/tırnak/makyaj dene) — AYRI PARÇA (code-split)
+const SanalAyna = lazy(() => import("./SanalAyna"));
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
@@ -1324,6 +1326,7 @@ export default function Anasayfa({ pro = false }) {
   const [telKodu, setTelKodu] = useState("+90");
   const [aciklama, setAciklama] = useState(""); // açıklama (?) ikonu → ne yapılacağını anlatan baloncuk (ANAYASA: her yerde bilgilendirme)
   const [sayfaBilgiAcik, setSayfaBilgiAcik] = useState(false); // sağ üst SAYFA İKONU'na basınca → o sayfa NE İŞE YARAR + ipucu (her dilde)
+  const [sanalAynaAcik, setSanalAynaAcik] = useState(false); // SANAL AYNA (kendi fotoğrafında saç/tırnak/makyaj dene)
   const [telHaritaAcik, setTelHaritaAcik] = useState(false); // TAM EKRAN telefon kodu HARİTASI (ülkeye dokun → kod)
   const [telHaritaSec, setTelHaritaSec] = useState(null);    // haritada seçili { iso, kod, ad }
   const telHaritaRef = useRef(null);
@@ -7601,6 +7604,13 @@ export default function Anasayfa({ pro = false }) {
         );
       })()}
 
+      {/* SANAL AYNA — kendi fotoğrafında saç/tırnak/makyaj dene (tam ekran, ayrı parça) */}
+      {sanalAynaAcik && (
+        <Suspense fallback={<div style={{ position: "fixed", inset: 0, zIndex: 100080, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(circle,#f7e79a,#e8c85a)", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>🪞 …</div>}>
+          <SanalAyna onKapat={() => setSanalAynaAcik(false)} />
+        </Suspense>
+      )}
+
       {/* Profil penceresi (menüden AYRI) — foto + ad + e-posta + Çıkış */}
       {profilAcik && (
         <>
@@ -7796,6 +7806,15 @@ export default function Anasayfa({ pro = false }) {
 
           {/* AKIŞ (feed) — aşağı indikçe dünyadan yeni paylaşımlar */}
           <div className="ana-akis">
+            {/* SANAL AYNA — kendi fotoğrafında saç/tırnak/makyaj dene (müşteriye özel, belirgin altın kart) */}
+            <button className="sanal-ayna-kart" onClick={() => setSanalAynaAcik(true)}>
+              <span className="say-ik" aria-hidden="true">🪞</span>
+              <span className="say-yazi">
+                <b>{t("saBaslik", "Sanal Ayna")}</b>
+                <i>💇 {t("saSac", "Saç")} · 💄 {t("saMakyaj", "Makyaj")} · 👗 {t("saElbise", "Kıyafet")} · 👟 {t("saAyakkabi", "Ayakkabı")} · 👜 {t("saCanta", "Çanta")}</i>
+              </span>
+              <span className="say-ok" aria-hidden="true">›</span>
+            </button>
             {/* HİKÂYELER — akış üstünde yatay KART şeridi (Facebook gibi). 24 saatte kaybolur. Medya/akış düzenine dokunmaz, ayrı modül. */}
             <div className="hik-serit">
               <input ref={hikFotoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={hikayeSecildi} />

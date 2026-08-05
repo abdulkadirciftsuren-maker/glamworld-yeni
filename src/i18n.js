@@ -23,6 +23,7 @@ import { MESLEK_EK4 } from "./meslekCevirEk4";
 import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
 import { CEVIRI_AKADEMI, CEVIRI_AKADEMI_KURULUS } from "./ceviriAkademi";
 import { CEVIRI_HARITA_CANLI, NAV_MAKARA, SBP_SOR, AK_BUYUT } from "./ceviriHaritaCanli";
+import { CEVIRI_SANAL_AYNA } from "./ceviriSanalAyna";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
 export const DILLER = [
@@ -2467,6 +2468,11 @@ Object.keys(SBP_SOR).forEach((lng) => {
 Object.keys(AK_BUYUT).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   resources[lng].translation.akBuyut = AK_BUYUT[lng];
+});
+// SANAL AYNA çevirileri (13 dil)
+Object.keys(CEVIRI_SANAL_AYNA).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  Object.assign(resources[lng].translation, CEVIRI_SANAL_AYNA[lng]);
 });
 
 i18n
