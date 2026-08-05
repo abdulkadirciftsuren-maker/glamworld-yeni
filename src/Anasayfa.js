@@ -2345,7 +2345,7 @@ export default function Anasayfa({ pro = false }) {
   // sayfa PARLIYOR, konuşma kesiliyor, hiçbir şey yapılamıyordu. Bu, o döngüyü kırar.
   const yenileBekleRef = useRef(false); // güncelleme geldi ama kullanıcı meşguldü → boşalınca yenile
   const mesgulRef = useRef(false);      // foto/paylaşım/pencere açık ya da Gloxoo konuşuyor mu (yenilemeyi ertele → foto/konuşma kaybı OLMASIN)
-  const guvenliYenile = () => {
+  const guvenliYenile = (hedefHash) => {
     try {
       if (window.__groxYenilendi) return;
       // ⛔ MEŞGULKEN YENİLEME YOK: kullanıcı fotoğraf ekliyor/paylaşım yazıyor ya da Gloxoo konuşuyorsa
@@ -2353,7 +2353,15 @@ export default function Anasayfa({ pro = false }) {
       if (mesgulRef.current) { yenileBekleRef.current = true; return; }
       const simdi = Date.now();
       let son = 0; try { son = parseInt(sessionStorage.getItem("groxSonYenileMs") || "0", 10); } catch (e) {}
-      if (son && simdi - son < 30000) return; // 30 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
+      if (son && simdi - son < 90000) return; // 90 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
+      // ⛔ PARLAMA DÖNGÜSÜ KİLİDİ: CDN kısa süre "yeni→eski→yeni" gösterebilir. DAHA ÖNCE geçtiğimiz bir sürüme
+      // ASLA tekrar yenileme — yoksa sayfa saniyede bir yenilenip PARLAR. Sadece hiç görmediğimiz YENİ sürüme geç.
+      if (hedefHash) {
+        let liste = []; try { liste = JSON.parse(sessionStorage.getItem("groxYenilenenHashler") || "[]"); } catch (e) {}
+        if (liste.indexOf(hedefHash) !== -1) return; // bu sürüme zaten geçmiştik → döngüyü kır (yenileme YOK)
+        liste.push(hedefHash); if (liste.length > 8) liste = liste.slice(-8);
+        try { sessionStorage.setItem("groxYenilenenHashler", JSON.stringify(liste)); } catch (e) {}
+      }
       window.__groxYenilendi = true;
       try { sessionStorage.setItem("groxSonYenileMs", String(simdi)); } catch (e) {}
       window.location.reload();
@@ -2411,7 +2419,7 @@ export default function Anasayfa({ pro = false }) {
           // CDN TUTARSIZLIĞINA KARŞI: aynı yeni sürümü ÜST ÜSTE 2 kez görmeden yenileme (yoksa "yeni→eski→yeni" parlama döngüsü olur)
           if (window.__groxYeniHash === yeni) {
             try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
-            guvenliYenile();
+            guvenliYenile(yeni); // hangi sürüme geçtiğimizi bildir → aynı sürüme tekrar geçip PARLAMA döngüsü olmasın
           } else {
             window.__groxYeniHash = yeni; // İLK görüş → doğrulamak için sonraki kontrolü bekle
           }
