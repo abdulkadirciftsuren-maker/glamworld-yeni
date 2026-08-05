@@ -1842,6 +1842,11 @@
 .ak-srt-qr{ flex:none; width:74px; height:74px; border-radius:10px; border:2px solid #d4af37; background:#fff; }
 .ak-srt-not{ color:#8a7a2a; font-weight:600; font-size:11.5px; line-height:1.4; margin-top:13px; }
 .ak-is-video{ display:block; width:100%; max-width:440px; margin:14px auto 0; border-radius:14px; border:2px solid rgba(120,140,30,.4); background:#f5efd8; }
+/* Sertifikayı indir / paylaş düğmeleri (resim olarak) */
+.ak-srt-dugmeler{ display:flex; gap:10px; max-width:440px; margin:14px auto 0; }
+.ak-srt-indir{ flex:1.4; margin-top:0 !important; background:linear-gradient(160deg,#ffd54d,#e0a91f) !important; color:#4a3608 !important; }
+.ak-srt-indir.indi{ background:linear-gradient(160deg,#7fd08a,#3aa04f) !important; color:#fff !important; }
+.ak-srt-paylas{ flex:1; margin-top:0 !important; background:linear-gradient(160deg,#1fa463,#12894f) !important; color:#fff !important; }
 /* Masaüstü: yazılar telefondan KÜÇÜK olmasın (kural) — büyüt */
 @media (min-width:560px){
   .ak-kurs-izgara{ grid-template-columns:repeat(3,1fr); }

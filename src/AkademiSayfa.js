@@ -21,6 +21,12 @@ import { gloxooResimUret } from "./firebase"; // ana uygulamayla AYNI çalışan
 
 // Dosyayı base64'e oku (foto yüklemek için)
 function dosyaOku(file) { return new Promise((res) => { try { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(""); r.readAsDataURL(file); } catch (e) { res(""); } }); }
+// Bir resmi (foto/QR) yükle → canvas'a çizmek için. Firebase Storage http URL'i CORS'lu olsun diye crossOrigin.
+function resimYukle(src) { return new Promise((res) => { if (!src) { res(null); return; } const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; }); }
+// Canvas'ta uzun metni satırlara böl (meslek adı vb. taşmasın)
+function canvasSatirlar(ctx, metin, maxGen) { const kel = String(metin || "").split(" "); const sat = []; let s = ""; for (const k of kel) { const d = s ? s + " " + k : k; if (ctx.measureText(d).width > maxGen && s) { sat.push(s); s = k; } else s = d; } if (s) sat.push(s); return sat; }
+// Hafif yuvarlatılmış KARE yol (kullanıcı: tam daire ASLA, kare/az yuvarlak olur)
+function kareYol(ctx, x, y, g, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + g, y, x + g, y + g, r); ctx.arcTo(x + g, y + g, x, y + g, r); ctx.arcTo(x, y + g, x, y, r); ctx.arcTo(x, y, x + g, y, r); ctx.closePath(); }
 // Benzersiz sertifika kodu (GLX-...)
 function kodUret() { return "GLX-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase(); }
 // Dil koduna göre AI'ya "hangi dilde yaz" talimatı
@@ -323,6 +329,8 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   const [kaydediyor, setKaydediyor] = useState(false);
   const [kayitlarim, setKayitlarim] = useState([]);
   const [aktifSertifika, setAktifSertifika] = useState(null);
+  const [srtYuk, setSrtYuk] = useState(false);   // sertifika resmi hazırlanıyor
+  const [srtIndi, setSrtIndi] = useState(false); // "İndirildi" geri bildirimi
   const fotoInpRef = useRef(null); const videoInpRef = useRef(null);
   const dilAd = DIL_AD[dil] || "English";
   const GECME = 0.7; // sertifika için geçme oranı (%70) — ciddi sınav
@@ -603,6 +611,95 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
     try { const qr = qrOlustur(0, "M"); qr.addData("GLOXORG Akademi Sertifikasi | Kod: " + kod + " | gloxorg.com"); qr.make(); return qr.createDataURL(5, 12); } catch (e) { return ""; }
   }
 
+  // ── SERTİFİKAYI RESİM (PNG) OLARAK ÇİZ — indir/paylaş için. Altın zemin, KARE foto (siyah/daire YOK). ──
+  async function sertifikaResimYap(s) {
+    const W = 1080, H = 1440;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    // Altın zemin (dörtgen degrade) + hafif ışıltı
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#fff7d6"); g.addColorStop(0.5, "#ffe9a8"); g.addColorStop(1, "#f2c94c");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const isik = ctx.createRadialGradient(W / 2, H * 0.33, 60, W / 2, H * 0.33, W * 0.8);
+    isik.addColorStop(0, "rgba(255,255,255,.55)"); isik.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = isik; ctx.fillRect(0, 0, W, H);
+    // Çerçeveler
+    ctx.strokeStyle = "#a07800"; ctx.lineWidth = 12; ctx.strokeRect(34, 34, W - 68, H - 68);
+    ctx.strokeStyle = "#7a5a00"; ctx.lineWidth = 3; ctx.strokeRect(56, 56, W - 112, H - 112);
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    // Üst marka
+    ctx.fillStyle = "#7a5a00"; ctx.font = "700 34px Georgia, serif";
+    ctx.fillText("🎓 " + t("akAkademi", "AKADEMİ"), W / 2, 150);
+    ctx.fillStyle = "#5a3f00"; ctx.font = "900 78px Georgia, serif";
+    ctx.fillText("GLOXORG", W / 2, 240);
+    // "SERTİFİKA" başlığı
+    ctx.fillStyle = "#8a6a00"; ctx.font = "800 46px Georgia, serif";
+    ctx.fillText(t("akSertifika", "SERTİFİKA"), W / 2, 320);
+    // ince ayraç
+    ctx.strokeStyle = "#c9a227"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2 - 160, 348); ctx.lineTo(W / 2 + 160, 348); ctx.stroke();
+    // KARE foto (daire ASLA)
+    const foto = await resimYukle(s.foto || s.isFoto || "");
+    const fx = W / 2 - 110, fy = 380, fg = 220;
+    ctx.save(); kareYol(ctx, fx, fy, fg, 26); ctx.clip();
+    if (foto) { ctx.drawImage(foto, fx, fy, fg, fg); }
+    else { ctx.fillStyle = "#ffd86b"; ctx.fillRect(fx, fy, fg, fg); ctx.fillStyle = "#7a5a00"; ctx.font = "900 120px Georgia, serif"; ctx.textBaseline = "middle"; ctx.fillText((s.ad || "?").trim()[0] || "?", W / 2, fy + fg / 2 + 6); ctx.textBaseline = "alphabetic"; }
+    ctx.restore();
+    ctx.strokeStyle = "#a07800"; ctx.lineWidth = 5; kareYol(ctx, fx, fy, fg, 26); ctx.stroke();
+    // Ad
+    ctx.fillStyle = "#3a2a00"; ctx.font = "900 60px Georgia, serif";
+    ctx.fillText(s.ad || "—", W / 2, 700);
+    // "… eğitimini başarıyla tamamladı"
+    ctx.fillStyle = "#5a3f00"; ctx.font = "500 34px Georgia, serif";
+    ctx.fillText(t("akTamamladi", "eğitimini başarıyla tamamladı"), W / 2, 750);
+    // Meslek adı (büyük, taşarsa 2 satır)
+    ctx.fillStyle = "#7a2a6a"; ctx.font = "800 56px Georgia, serif";
+    const meslekAd = (s.meslekIk ? s.meslekIk + " " : "") + mc(s.meslek, dil);
+    const satlar = canvasSatirlar(ctx, meslekAd, W - 260);
+    let my = 820; for (const sat of satlar) { ctx.fillText(sat, W / 2, my); my += 66; }
+    // Sınav + tarih
+    ctx.fillStyle = "#3a7a2a"; ctx.font = "700 36px Georgia, serif";
+    ctx.fillText("✓ " + t("akPuan", "Sınav") + ": " + s.puan + "/" + s.puanToplam + "  ·  " + (s.tarihMetin || ""), W / 2, my + 40);
+    // QR (sağ alt) + doğrulama kodu (sol alt)
+    const qr = await resimYukle(qrKaynak(s.sertifikaKod));
+    if (qr) ctx.drawImage(qr, W - 300, H - 380, 180, 180);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#6a4e10"; ctx.font = "600 26px Georgia, serif";
+    ctx.fillText(t("akKod", "Doğrulama kodu"), 120, H - 300);
+    ctx.fillStyle = "#3a2a00"; ctx.font = "900 34px Georgia, serif";
+    ctx.fillText(s.sertifikaKod || "", 120, H - 258);
+    // Alt not (ortalı)
+    ctx.textAlign = "center"; ctx.fillStyle = "#7a5a12"; ctx.font = "500 24px Georgia, serif";
+    ctx.fillText(t("akSrtNot", "Bu bir GLOXORG Akademi belgesidir. Kod ile doğrulanabilir."), W / 2, H - 130);
+    ctx.fillStyle = "#a07800"; ctx.font = "600 24px Georgia, serif";
+    ctx.fillText("gloxorg.com", W / 2, H - 96);
+    try { return cv.toDataURL("image/png"); } catch (e) { return ""; }
+  }
+  async function sertifikaIndir(s) {
+    if (srtYuk) return; setSrtYuk(true);
+    try {
+      const url = await sertifikaResimYap(s);
+      if (url) {
+        const a = document.createElement("a");
+        a.href = url; a.download = "GLOXORG-Sertifika-" + (s.sertifikaKod || "belge") + ".png";
+        document.body.appendChild(a); a.click(); a.remove();
+        setSrtIndi(true); setTimeout(() => setSrtIndi(false), 2600);
+      } else alert(t("akSrtOlmadi", "Sertifika resmi hazırlanamadı, tekrar dene."));
+    } catch (e) { alert(t("akSrtOlmadi", "Sertifika resmi hazırlanamadı, tekrar dene.")); }
+    setSrtYuk(false);
+  }
+  async function sertifikaPaylas(s) {
+    if (srtYuk) return; setSrtYuk(true);
+    try {
+      const url = await sertifikaResimYap(s);
+      if (url && navigator.share && navigator.canShare) {
+        const bl = await (await fetch(url)).blob();
+        const dosya = new File([bl], "GLOXORG-Sertifika.png", { type: "image/png" });
+        if (navigator.canShare({ files: [dosya] })) { await navigator.share({ files: [dosya], title: "GLOXORG Akademi", text: mc(s.meslek, dil) }); setSrtYuk(false); return; }
+      }
+      setSrtYuk(false); sertifikaIndir(s);
+    } catch (e) { setSrtYuk(false); }
+  }
+
   // ── SERTİFİKA GÖRÜNÜMÜ ──
   if (aktifSertifika) {
     const s = aktifSertifika;
@@ -621,6 +718,13 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
             {qrKaynak(s.sertifikaKod) && <img className="ak-srt-qr" src={qrKaynak(s.sertifikaKod)} alt="QR" />}
           </div>
           <div className="ak-srt-not">{t("akSrtNot", "Bu bir GLOXORG Akademi belgesidir. Kod ile doğrulanabilir.")}</div>
+        </div>
+        {/* SERTİFİKAYI İNDİR / PAYLAŞ — güzel bir resim (PNG) olarak */}
+        <div className="ak-srt-dugmeler">
+          <button className={"ak-btn ak-srt-indir" + (srtIndi ? " indi" : "")} disabled={srtYuk} onClick={() => sertifikaIndir(s)}>
+            {srtYuk ? "⏳ " + t("akHazirlaniyor", "Hazırlanıyor…") : srtIndi ? "✓ " + t("akIndirildi", "İndirildi") : "⬇️ " + t("akSertifikayiIndir", "Sertifikayı indir")}
+          </button>
+          <button className="ak-btn ak-srt-paylas" disabled={srtYuk} onClick={() => sertifikaPaylas(s)}>📤 {t("akPaylas", "Paylaş")}</button>
         </div>
         {s.isVideo && <video className="ak-is-video" src={s.isVideo} controls playsInline />}
       </div>
