@@ -36,7 +36,7 @@ function kucultB64(dataUrl, max = 720) {
   });
 }
 
-export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz }) {
+export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif }) {
   const { t } = useTranslation();
   const [reklamlar, setReklamlar] = useState([]);
   const [detay, setDetay] = useState(null);       // açık reklam (detay penceresi)
@@ -66,25 +66,36 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   // parmakla sağa-sola serbest çekilir, bırakınca 1-2 sn sonra otomatik devam eder. Liste 2 kez basılır → sonsuz döngü.
   const akisRef = useRef(null);
   const oto = useRef({ dokunuyor: false, sonEtkilesim: 0, raf: 0 });
+  const gorunur = useRef(true); // şerit ekranda mı (kaydırınca/görünmeyince boşuna boyama YOK → titreme/parlama olmaz)
+  const durRef = useRef({ detay: false, verAcik: false, pasif: false });
+  durRef.current = { detay: !!detay, verAcik: !!verAcik, pasif: !!pasif };
   useEffect(() => {
     if (!reklamlar.length) return;
     const el = akisRef.current; if (!el) return;
     let iptal = false;
+    // Şerit görünürlüğü: ekranda değilse (kaydırıldı) veya sekme arka planda ise AKIŞI DURDUR → gereksiz ekran boyama olmaz.
+    let gozlemci = null;
+    try { gozlemci = new IntersectionObserver((g) => { gorunur.current = !!(g[0] && g[0].isIntersecting); }, { threshold: 0.01 }); gozlemci.observe(el); } catch (e) {}
     const adim = () => {
       if (iptal) return;
-      const yari = el.scrollWidth / 2; // tek set genişliği (liste iki kez basıldı)
-      if (yari > 0) {
-        const bosVakit = Date.now() - oto.current.sonEtkilesim > 1600; // bırakınca ~1.6 sn sonra devam
-        if (!oto.current.dokunuyor && bosVakit) el.scrollLeft += 0.65; // yavaşça sola akış
-        if (!oto.current.dokunuyor) { // sonsuz döngü: sınırı geçince bir set kadar sar (görsel fark yok)
-          if (el.scrollLeft >= yari) el.scrollLeft -= yari;
-          else if (el.scrollLeft < 0) el.scrollLeft += yari;
+      const d = durRef.current;
+      // Üstte bir pencere açıkken (Sanal Ayna/detay/form), sekme gizliyken ya da şerit görünmezken YAZMA → sayfa parlamaz/titremez.
+      const engel = d.pasif || d.detay || d.verAcik || !gorunur.current || (typeof document !== "undefined" && document.hidden);
+      if (!engel) {
+        const yari = el.scrollWidth / 2; // tek set genişliği (liste iki kez basıldı)
+        if (yari > 0) {
+          const bosVakit = Date.now() - oto.current.sonEtkilesim > 1600; // bırakınca ~1.6 sn sonra devam
+          if (!oto.current.dokunuyor && bosVakit) el.scrollLeft += 0.65; // yavaşça sola akış
+          if (!oto.current.dokunuyor) { // sonsuz döngü: sınırı geçince bir set kadar sar (görsel fark yok)
+            if (el.scrollLeft >= yari) el.scrollLeft -= yari;
+            else if (el.scrollLeft < 0) el.scrollLeft += yari;
+          }
         }
       }
       oto.current.raf = requestAnimationFrame(adim);
     };
     oto.current.raf = requestAnimationFrame(adim);
-    return () => { iptal = true; cancelAnimationFrame(oto.current.raf); };
+    return () => { iptal = true; cancelAnimationFrame(oto.current.raf); try { gozlemci && gozlemci.disconnect(); } catch (e) {} };
   }, [reklamlar.length]);
   const etkilesimBas = () => { oto.current.dokunuyor = true; oto.current.sonEtkilesim = Date.now(); };
   const etkilesimHar = () => { oto.current.sonEtkilesim = Date.now(); };
