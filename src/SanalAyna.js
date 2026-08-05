@@ -12,14 +12,18 @@ const KISILER = [
   { k: "erkekcocuk", ik: "👦", ck: "saKisiErkekCocuk", ad: "Erkek Çocuk", ing: "young boy" },
   { k: "bebek", ik: "👶", ck: "saKisiBebek", ad: "Bebek", ing: "baby" },
 ];
-// Kişiye göre SAÇ ve KIYAFET önerileri
+// Kişiye göre SAÇ ve KIYAFET önerileri (çok model)
 const SAC_KISI = {
-  bayan: ["Ombre", "Balyaj", "Uzun Dalgalı", "Kare Kesim", "Topuz", "Röfle"],
-  erkek: ["Fade", "Undercut", "Pompadour", "Sakal Şekli", "Klasik Kesim", "Asker Tıraşı"],
-  kiz: ["Örgü", "At Kuyruğu", "Kısa Kesim", "Topuz", "Renkli Toka"],
-  erkekcocuk: ["Fade", "Kısa Kesim", "Kirpi Model", "Yandan Ayrık"],
-  bebek: ["Yumuşak Kesim", "Kısa Bebek Kesimi"],
+  bayan: ["Ombre", "Balyaj", "Uzun Dalgalı", "Düz Uzun", "Kare Kesim (Bob)", "Katlı Kesim", "Topuz", "At Kuyruğu", "Röfle", "Perma", "Fönlü", "Küt Kesim", "Örgü"],
+  erkek: ["Fade", "Undercut", "Pompadour", "Uzun Saç", "Perma", "Ondüle", "Topuz (Man Bun)", "Klasik Kesim", "Yandan Ayrık", "Asker Tıraşı", "Sakal Şekli", "Uzun Sakal", "Kirli Sakal", "Keçi Sakal"],
+  kiz: ["Örgü", "At Kuyruğu", "Kısa Kesim", "Topuz", "Dalgalı", "Renkli Toka", "İki Örgü"],
+  erkekcocuk: ["Fade", "Kısa Kesim", "Kirpi Model", "Yandan Ayrık", "Uzun Saç"],
+  bebek: ["Yumuşak Kesim", "Kısa Bebek Kesimi", "İlk Tıraş"],
 };
+// RENK seçenekleri (isteğe bağlı) — saç için saç renkleri, kıyafet/tırnak vb. için genel renkler
+const SAC_RENK = ["Siyah", "Koyu Kahve", "Kahve", "Kumral", "Sarı", "Bal Köpüğü", "Kızıl", "Bakır", "Platin Sarı", "Gri / Gümüş", "Mavi", "Pembe"];
+const GENEL_RENK = ["Siyah", "Beyaz", "Kırmızı", "Mavi", "Lacivert", "Yeşil", "Pembe", "Mor", "Sarı", "Turuncu", "Kahve", "Bej", "Gri", "Altın", "Gümüş"];
+function renkGetir(kategori) { if (kategori === "sac") return SAC_RENK; if (kategori === "makyaj") return []; return GENEL_RENK; }
 const ELBISE_KISI = {
   bayan: ["Abiye Elbise", "Yazlık Elbise", "Takım", "Kot & Bluz", "Kışlık Mont"],
   erkek: ["Takım Elbise", "Gömlek", "Ceket", "Kot Pantolon", "Spor Giyim"],
@@ -52,9 +56,9 @@ const KATEGORI_ISTEM = {
 };
 const KATEGORILER = [
   { k: "sac", ik: "💇", ck: "saSac", ad: "Saç" }, { k: "makyaj", ik: "💄", ck: "saMakyaj", ad: "Makyaj" },
-  { k: "tirnak", ik: "💅", ck: "saTirnak", ad: "Tırnak" }, { k: "elbise", ik: "👗", ck: "saElbise", ad: "Kıyafet" },
+  { k: "tirnak", ik: "💅", ck: "saTirnak", ad: "Tırnak" }, { k: "elbise", ik: "👕", ck: "saElbise", ad: "Kıyafet" },
   { k: "ayakkabi", ik: "👟", ck: "saAyakkabi", ad: "Ayakkabı" }, { k: "canta", ik: "👜", ck: "saCanta", ad: "Çanta" },
-  { k: "aksesuar", ik: "🕶️", ck: "saAksesuar", ad: "Aksesuar" },
+  { k: "aksesuar", ik: "⌚", ck: "saAksesuar", ad: "Aksesuar" },
 ];
 
 export default function SanalAyna({ onKapat }) {
@@ -64,6 +68,7 @@ export default function SanalAyna({ onKapat }) {
   const [kisi, setKisi] = useState("bayan");       // bayan | erkek | kiz | erkekcocuk | bebek
   const [kategori, setKategori] = useState("sac"); // sac | makyaj | tirnak | elbise | ayakkabi | canta | aksesuar
   const [model, setModel] = useState("");          // denenecek model adı
+  const [renk, setRenk] = useState("");            // isteğe bağlı renk
   const [sonuc, setSonuc] = useState("");          // üretilen sonuç (dataURL)
   const [yuk, setYuk] = useState(false);
   const [hata, setHata] = useState("");
@@ -85,7 +90,8 @@ export default function SanalAyna({ onKapat }) {
       const base64 = foto.split(",")[1] || "";
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
       const kisiIng = (KISILER.find((x) => x.k === kisi) || {}).ing || "person";
-      const istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}". ${cfg.koru} Photorealistic, natural, high quality, no text, no watermark, no logo.`;
+      const renkKismi = renk ? ` Color: ${renk}.` : "";
+      const istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Photorealistic, natural, high quality, no text, no watermark, no logo.`;
       const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime });
       if (res && res.dataUrl) setSonuc(res.dataUrl);
       else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene."));
@@ -96,7 +102,9 @@ export default function SanalAyna({ onKapat }) {
     if (!sonuc) return;
     try {
       const a = document.createElement("a");
-      a.href = sonuc; a.download = "gloxorg-sanal-ayna.png";
+      // Her indirmeye BENZERSİZ isim → tarayıcı "aynı dosyayı tekrar mı indireyim?" diye sormaz.
+      const etiket = (model || kategori || "model").toString().toLocaleLowerCase("tr").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24);
+      a.href = sonuc; a.download = "gloxorg-" + (etiket || "sanal-ayna") + "-" + Date.now().toString(36) + ".png";
       document.body.appendChild(a); a.click(); a.remove();
     } catch (e) {}
   }
@@ -113,6 +121,7 @@ export default function SanalAyna({ onKapat }) {
   }
 
   const oneri = oneriGetir(kategori, kisi);
+  const renkler = renkGetir(kategori);
   return (
     <div className="sa-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
       <div className="sa-pencere">
@@ -141,7 +150,7 @@ export default function SanalAyna({ onKapat }) {
           {/* 2) KATEGORİ — saç/makyaj/tırnak + kıyafet/ayakkabı/çanta/aksesuar (erkek+bayan) */}
           <div className="sa-kat-satir">
             {KATEGORILER.map((kt) => (
-              <button key={kt.k} className={"sa-kat" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); }}>{kt.ik} {t(kt.ck, kt.ad)}</button>
+              <button key={kt.k} className={"sa-kat" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>{kt.ik} {t(kt.ck, kt.ad)}</button>
             ))}
           </div>
 
@@ -153,6 +162,18 @@ export default function SanalAyna({ onKapat }) {
           </div>
           <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
             placeholder={t("saModelYaz", "Model yaz (örn. Ombre saç) ya da yukarıdan seç")} />
+
+          {/* 3b) RENK (isteğe bağlı) — saç renkleri ya da genel renkler; tekrar dokununca kaldırılır */}
+          {renkler.length > 0 && (
+            <>
+              <div className="sa-kim-bas" style={{ marginTop: 12 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")}</div>
+              <div className="sa-oneri">
+                {renkler.map((r) => (
+                  <button key={r} className={"sa-cip sa-renk-cip" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)}>{r}</button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* 4) DENE */}
           <button className="sa-dene" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>

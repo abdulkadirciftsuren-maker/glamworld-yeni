@@ -4954,3 +4954,6 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-kisi-satir{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:6px; }
 .sa-kisi{ flex:1 1 30%; min-width:88px; padding:10px 6px; border-radius:12px; border:2px solid rgba(160,120,0,.5); background:#fffbe9; color:#7a5a00; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; }
 .sa-kisi.sec{ background:linear-gradient(120deg,#ffd0e6,#ff9ec8); border-color:#c23b7a; color:#5a1030; box-shadow:0 3px 9px rgba(150,40,90,.3); }
+
+/* Sanal Ayna — renk çipleri (isteğe bağlı) */
+.sa-renk-cip.sec{ background:linear-gradient(120deg,#7a5a00,#a07800); color:#fff; border-color:#7a5a00; }
