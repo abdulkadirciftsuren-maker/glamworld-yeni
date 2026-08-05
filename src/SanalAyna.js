@@ -114,13 +114,33 @@ export default function SanalAyna({ onKapat, baslangic }) {
     if (!baslangic) return;
     if (baslangic.refB64) { setRefFoto(baslangic.refB64); setRefMime("image/jpeg"); return; }
     const u = baslangic.refFotoUrl; if (!u) return;
-    (async () => {
+    let iptal = false;
+    // fetch yedeği (blob → base64)
+    const fetchile = async () => {
       try {
         const blob = await (await fetch(u, { mode: "cors" })).blob();
         const dataUrl = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(blob); });
-        if (dataUrl) { setRefFoto(dataUrl); setRefMime(blob.type || "image/jpeg"); }
-      } catch (e) {} // olmazsa sadece metinle dener — yine çalışır
-    })();
+        if (!iptal && dataUrl) { setRefFoto(dataUrl); setRefMime(blob.type || "image/jpeg"); }
+      } catch (e) {} // hiç olmazsa sadece metinle dener
+    };
+    // 1) crossOrigin resim → canvas → base64 (eski reklamlarda refB64 yoksa da ürün fotoğrafını yapay zekâya verebilelim)
+    try {
+      const im = new Image(); im.crossOrigin = "anonymous";
+      im.onload = () => {
+        try {
+          let w = im.naturalWidth || im.width, h = im.naturalHeight || im.height; const max = 768;
+          if (w >= h && w > max) { h = Math.round(h * max / w); w = max; } else if (h > max) { w = Math.round(w * max / h); h = max; }
+          const cv = document.createElement("canvas"); cv.width = w || 512; cv.height = h || 512;
+          cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+          const d = cv.toDataURL("image/jpeg", 0.85);
+          if (!iptal && d && d.length > 200) { setRefFoto(d); setRefMime("image/jpeg"); return; }
+          fetchile();
+        } catch (e) { fetchile(); } // canvas kirlenirse (CORS yoksa) fetch dene
+      };
+      im.onerror = () => fetchile();
+      im.src = u;
+    } catch (e) { fetchile(); }
+    return () => { iptal = true; };
   }, [baslangic]);
 
   function fotoSec(e) {
