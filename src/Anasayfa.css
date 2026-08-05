@@ -4958,6 +4958,19 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Sanal Ayna — renk çipleri (isteğe bağlı) */
 .sa-renk-cip.sec{ background:linear-gradient(120deg,#7a5a00,#a07800); color:#fff; border-color:#7a5a00; }
 
+/* Sanal Ayna — reklamdan gelince BÜYÜK dene düğmesi (fotoğrafın hemen altında, çok aşağıda kalmasın) */
+.sa-dene-buyuk{ margin-top:16px; font-size:20px; padding:17px; }
+
+/* Sanal Ayna — sonuç fotoğrafını TAM EKRAN aç + zoom (altın zemin, siyah YOK) */
+.sa-buyut-ipucu{ margin-top:8px; color:#7a5a12; font-size:13px; font-weight:700; text-align:center; }
+.sa-buyut{ position:fixed; inset:0; z-index:100090; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 50% 40%, #f7e79a, #e8c85a 70%, #d4af37); touch-action:none; overflow:hidden; }
+.sa-buyut img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; box-shadow:0 10px 40px rgba(80,60,0,.5);
+  transform-origin:center center; transition:transform .04s linear; will-change:transform; user-select:none; -webkit-user-drag:none; }
+.sa-buyut-kapat{ position:absolute; top:14px; right:14px; z-index:2; width:44px; height:44px; border-radius:12px; border:2px solid #7a5a00;
+  background:rgba(255,253,240,.92); color:#7a5a00; font-size:22px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.sa-buyut-kapat:active{ transform:scale(.93); }
+
 /* Sanal Ayna — indirildi geri bildirimi */
 .sa-indir.indi{ background:#1fa463 !important; color:#fff !important; }
 
@@ -4967,10 +4980,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .reklam-serit-ad{ flex:1; font-weight:900; color:#7a5a00; font-size:16px; }
 .reklam-ver-mini{ background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:10px; padding:7px 12px; font-weight:900; font-size:13px; cursor:pointer; font-family:inherit; }
 .reklam-bos{ display:block; width:calc(100% - 24px); margin:0 12px 6px; padding:20px 12px; border:2px dashed #a07800; border-radius:12px; background:#fffbe9; color:#7a5a00; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit; }
-.reklam-akis{ overflow:hidden; width:100%; }
-.reklam-track{ display:flex; gap:10px; padding:0 12px; width:max-content; animation:reklamKay 34s linear infinite; }
-.reklam-akis:hover .reklam-track, .reklam-akis:active .reklam-track{ animation-play-state:paused; }
-@keyframes reklamKay{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+/* SERBEST KAYAN ŞERİT — parmakla sağa-sola çekilir (overflow-x). Sayfa değiştirmesin diye swipe-muaf listede. */
+.reklam-akis{ overflow-x:auto; overflow-y:hidden; width:100%; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.reklam-akis::-webkit-scrollbar{ display:none; }
+.reklam-track{ display:flex; gap:10px; padding:0 12px 8px; width:max-content; }
 .reklam-kart{ flex:0 0 auto; width:132px; background:#fffdf5; border:1.5px solid rgba(160,120,0,.5); border-radius:13px; padding:8px; cursor:pointer; font-family:inherit; text-align:left; display:flex; flex-direction:column; gap:5px; }
 .reklam-kart:active{ transform:scale(.97); }
 .reklam-kart-foto{ display:block; width:100%; height:120px; border-radius:9px; background:#f2e6bd center/cover no-repeat; display:flex; align-items:center; justify-content:center; font-size:34px; }

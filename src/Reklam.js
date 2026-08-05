@@ -18,8 +18,25 @@ const KISILER = [
   { k: "bebek", ik: "👶", ck: "saKisiBebek", ad: "Bebek" },
 ];
 function dosyaOku(file) { return new Promise((res) => { try { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(file); } catch (e) { res(""); } }); }
+// Fotoğrafı küçült (küçük base64) → "üstümde dene"de GERÇEK ürünü giydirmek için doğrudan görsel yollanır (CORS derdi olmaz)
+function kucultB64(dataUrl, max = 720) {
+  return new Promise((res) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let w = img.width, h = img.height;
+          if (w >= h && w > max) { h = Math.round(h * max / w); w = max; } else if (h > max) { w = Math.round(w * max / h); h = max; }
+          const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(img, 0, 0, w, h);
+          res(c.toDataURL("image/jpeg", 0.82));
+        } catch (e) { res(dataUrl); }
+      };
+      img.onerror = () => res(dataUrl); img.src = dataUrl;
+    } catch (e) { res(dataUrl); }
+  });
+}
 
-export default function Reklam({ uid, benAd, benFoto, dil, onDene, saticiyaYaz }) {
+export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz }) {
   const { t } = useTranslation();
   const [reklamlar, setReklamlar] = useState([]);
   const [detay, setDetay] = useState(null);       // açık reklam (detay penceresi)
@@ -35,7 +52,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, onDene, saticiyaYaz }
   const [kumas, setKumas] = useState("");
   const [aciklama, setAciklama] = useState("");
   const [fiyat, setFiyat] = useState("");
-  const [paraSimge, setParaSimge] = useState("₺");
+  const [paraSimge, setParaSimge] = useState(paraSym || "₺"); // ülkeye göre otomatik para birimi
   const [kaydet, setKaydet] = useState(false);
   const [hata, setHata] = useState("");
   const inpRef = useRef(null);
@@ -45,7 +62,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, onDene, saticiyaYaz }
   }
   useEffect(() => { yukle(); }, []);
 
-  function formSifirla() { setFoto(""); setAd(""); setKategori("elbise"); setKisi("bayan"); setBeden(""); setRenk(""); setKumas(""); setAciklama(""); setFiyat(""); setParaSimge("₺"); setHata(""); }
+  function formSifirla() { setFoto(""); setAd(""); setKategori("elbise"); setKisi("bayan"); setBeden(""); setRenk(""); setKumas(""); setAciklama(""); setFiyat(""); setParaSimge(paraSym || "₺"); setHata(""); }
   async function fotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFoto(d); setHata(""); } }
   async function yayinla() {
     if (kaydet) return;
@@ -55,8 +72,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, onDene, saticiyaYaz }
     try {
       let kapak = ""; try { kapak = await gorselYukle(foto, uid || "reklam"); } catch (e) {}
       if (!kapak) kapak = foto; // yüklenemezse data URL
+      let refB64 = ""; try { refB64 = await kucultB64(foto, 720); } catch (e) {} // "üstümde dene" için küçük referans (gerçek ürün)
       await pazarUrunEkle({
-        reklam: true, tur: "reklam", kapak, baslik: ad.trim(), kategori, kimIcin: kisi,
+        reklam: true, tur: "reklam", kapak, refB64, baslik: ad.trim(), kategori, kimIcin: kisi,
         beden: beden.trim(), renk: renk.trim(), kumas: kumas.trim(), aciklama: aciklama.trim(),
         fiyat: (fiyat || "").toString().trim(), paraSimge, uid: uid || "", satici: benAd || "", saticiFoto: benFoto || "",
       });
@@ -80,7 +98,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, onDene, saticiyaYaz }
         ) : (
           <div className="reklam-akis">
             <div className="reklam-track">
-              {[...reklamlar, ...reklamlar].map((r, i) => (
+              {reklamlar.map((r, i) => (
                 <button className="reklam-kart" key={r.id + "-" + i} onClick={() => setDetay(r)}>
                   <span className="reklam-kart-foto" style={r.kapak ? { backgroundImage: `url(${r.kapak})` } : {}}>{!r.kapak && "🛍️"}</span>
                   <span className="reklam-kart-ad">{r.baslik || ""}</span>
@@ -115,7 +133,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, onDene, saticiyaYaz }
               {detay.aciklama && <div className="reklam-detay-aciklama">{detay.aciklama}</div>}
               <div className="reklam-detay-dugmeler">
                 <button className="reklam-dene-btn" onClick={() => {
-                  const urun = { kategori: detay.kategori || "elbise", kisi: detay.kimIcin || "bayan", model: [detay.baslik, detay.renk, detay.kumas].filter(Boolean).join(", "), ad: detay.baslik || "", refFotoUrl: detay.kapak || "" };
+                  const urun = { kategori: detay.kategori || "elbise", kisi: detay.kimIcin || "bayan", model: [detay.baslik, detay.renk, detay.kumas].filter(Boolean).join(", "), ad: detay.baslik || "", refFotoUrl: detay.kapak || "", refB64: detay.refB64 || "" };
                   setDetay(null); onDene && onDene(urun);
                 }}>🪞 {t("rkDene", "Üstümde dene")}</button>
                 <button className="reklam-yaz-btn" onClick={() => {

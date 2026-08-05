@@ -61,8 +61,34 @@ const KATEGORILER = [
   { k: "aksesuar", ik: "⌚", ck: "saAksesuar", ad: "Aksesuar" },
 ];
 
+// TAM EKRAN + ZOOM göstericisi (sonuç fotoğrafına dokununca) — iki parmak zoom, tek parmak her yöne kaydır, çift dokunuş.
+function Buyut({ url, onKapat }) {
+  const { t } = useTranslation();
+  const [tr, setTr] = useState({ s: 1, x: 0, y: 0 });
+  const trRef = useRef(tr); trRef.current = tr;
+  const c = useRef({ d0: 0, s0: 1, ox0: 0, oy0: 0, x0: 0, y0: 0, panSx: 0, panSy: 0, panX0: 0, panY0: 0, panAktif: false, sonDokun: 0 });
+  const mes = (tt) => Math.hypot(tt[0].clientX - tt[1].clientX, tt[0].clientY - tt[1].clientY);
+  const orta = (tt) => ({ x: (tt[0].clientX + tt[1].clientX) / 2, y: (tt[0].clientY + tt[1].clientY) / 2 });
+  function panBasla(px, py) { const cur = trRef.current; c.current.panSx = px; c.current.panSy = py; c.current.panX0 = cur.x; c.current.panY0 = cur.y; c.current.panAktif = true; }
+  function bas(e) { const tt = e.touches, cur = trRef.current; if (tt.length === 2) { const o = orta(tt); c.current.d0 = mes(tt) || 1; c.current.s0 = cur.s; c.current.ox0 = o.x; c.current.oy0 = o.y; c.current.x0 = cur.x; c.current.y0 = cur.y; c.current.panAktif = false; } else if (tt.length === 1) panBasla(tt[0].clientX, tt[0].clientY); }
+  function har(e) {
+    const tt = e.touches, cur = trRef.current;
+    if (tt.length === 2) { e.preventDefault(); const s = Math.max(1, Math.min(5, c.current.s0 * (mes(tt) / (c.current.d0 || 1)))); const o = orta(tt); setTr({ s, x: c.current.x0 + (o.x - c.current.ox0), y: c.current.y0 + (o.y - c.current.oy0) }); }
+    else if (tt.length === 1 && cur.s > 1) { e.preventDefault(); if (!c.current.panAktif) panBasla(tt[0].clientX, tt[0].clientY); setTr({ s: cur.s, x: c.current.panX0 + (tt[0].clientX - c.current.panSx), y: c.current.panY0 + (tt[0].clientY - c.current.panSy) }); }
+  }
+  function bit(e) { const now = Date.now(); if (e.touches && e.touches.length === 1) panBasla(e.touches[0].clientX, e.touches[0].clientY); else if (!e.touches || e.touches.length === 0) { c.current.panAktif = false; if (now - c.current.sonDokun < 300) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); c.current.sonDokun = now; } }
+  return (
+    <div className="sa-buyut" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
+      <button className="sa-buyut-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+      <img src={url} alt="" referrerPolicy="no-referrer" draggable={false} style={{ transform: `translate(${tr.x}px,${tr.y}px) scale(${tr.s})` }}
+        onTouchStart={bas} onTouchMove={har} onTouchEnd={bit} onDoubleClick={() => setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }))} />
+    </div>
+  );
+}
+
 export default function SanalAyna({ onKapat, baslangic }) {
   const { t } = useTranslation();
+  const [buyuk, setBuyuk] = useState(""); // tam ekran açılan sonuç fotoğrafı
   const [foto, setFoto] = useState("");            // kullanıcı fotoğrafı (dataURL)
   const [fotoMime, setFotoMime] = useState("image/jpeg");
   const [kisi, setKisi] = useState((baslangic && baslangic.kisi) || "bayan");       // bayan | erkek | kiz | erkekcocuk | bebek
@@ -80,15 +106,18 @@ export default function SanalAyna({ onKapat, baslangic }) {
   const sonucRef = useRef(null); // sonuç gelince oraya kaydır
   // Sonuç hazır olunca OTOMATİK sonuca kaydır (aşağıda kalıp görünmesin)
   useEffect(() => { if (sonuc && sonucRef.current) { try { sonucRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} } }, [sonuc]);
-  // Reklamdan açıldıysa ürün fotoğrafını (referans) base64'e yükle → "o elbiseyi üstünde" gösterebilelim
+  // Reklamdan açıldıysa ürün fotoğrafını (referans) al → "o EXACT elbiseyi üstünde" gösterebilelim.
+  // Önce reklamla saklanan küçük refB64 (CORS derdi YOK); yoksa kapak URL'sini indirmeyi dener.
   useEffect(() => {
-    const u = baslangic && baslangic.refFotoUrl; if (!u) return;
+    if (!baslangic) return;
+    if (baslangic.refB64) { setRefFoto(baslangic.refB64); setRefMime("image/jpeg"); return; }
+    const u = baslangic.refFotoUrl; if (!u) return;
     (async () => {
       try {
         const blob = await (await fetch(u, { mode: "cors" })).blob();
         const dataUrl = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(blob); });
         if (dataUrl) { setRefFoto(dataUrl); setRefMime(blob.type || "image/jpeg"); }
-      } catch (e) {} // olmazsa (CORS) sadece metinle dener — yine çalışır
+      } catch (e) {} // olmazsa sadece metinle dener — yine çalışır
     })();
   }, [baslangic]);
 
@@ -111,11 +140,11 @@ export default function SanalAyna({ onKapat, baslangic }) {
       const renkKismi = renk ? ` Color: ${renk}.` : "";
       let istem, ref2 = null;
       if (refFoto) {
-        // İKİ görsel: 1. kişi, 2. ürün → o ÜRÜNÜ kişinin üstünde göster (reklamdan "üstümde dene")
+        // İKİ görsel: 1. kişi (müşteri), 2. ürün → o EXACT ÜRÜNÜ kişinin üstünde, BOYDAN göster (reklamdan "üstümde dene")
         ref2 = { base64: refFoto.split(",")[1] || "", mediaType: refMime };
-        istem = `The FIRST image is a ${kisiIng}. The SECOND image is a product ("${model.trim()}"). Realistically show the person from the FIRST image wearing/using the EXACT product from the SECOND image.${renkKismi} Keep the SAME person, same face and identity and body. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
+        istem = `The FIRST image is the customer (a ${kisiIng}). The SECOND image shows a product to try on: "${model.trim()}". Dress/show the SAME person from the FIRST image wearing/using the EXACT SAME product from the SECOND image — copy its exact pattern, color, fabric, length and style faithfully; DO NOT invent a different product. If the first photo shows only the face or upper body, generate a FULL-BODY photorealistic photo of the SAME person (same face and identity) wearing the product at its correct full length.${renkKismi} Photorealistic, natural, full body for clothing/shoes, high quality, no text, no watermark, no logo.`;
       } else {
-        istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Photorealistic, natural, high quality, no text, no watermark, no logo.`;
+        istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} If it is clothing/shoes and the photo shows only the face/upper body, generate a FULL-BODY photo of the same person wearing it. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
       }
       const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime }, ref2);
       if (res && res.dataUrl) setSonuc(res.dataUrl);
@@ -148,6 +177,7 @@ export default function SanalAyna({ onKapat, baslangic }) {
 
   const oneri = oneriGetir(kategori, kisi);
   const renkler = renkGetir(kategori);
+  const reklamdan = !!(baslangic && baslangic.refFotoUrl); // reklamdan gelindi → ürün SABİT, seçicileri gizle
   return (
     <div className="sa-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
       <div className="sa-pencere">
@@ -173,51 +203,59 @@ export default function SanalAyna({ onKapat, baslangic }) {
           </div>
           <input ref={inpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={fotoSec} />
 
-          {/* 1b) KİM İÇİN — bayan/erkek/kız/erkek çocuk/bebek (saç+kıyafet önerileri buna göre) */}
-          <div className="sa-kim-bas">{t("saKimIcin", "Kim için?")}</div>
-          <div className="sa-kisi-satir">
-            {KISILER.map((ks) => (
-              <button key={ks.k} className={"sa-kisi" + (kisi === ks.k ? " sec" : "")} onClick={() => { setKisi(ks.k); setModel(""); }}>{ks.ik} {t(ks.ck, ks.ad)}</button>
-            ))}
-          </div>
-
-          {/* 2) KATEGORİ — saç/makyaj/tırnak + kıyafet/ayakkabı/çanta/aksesuar (erkek+bayan) */}
-          <div className="sa-kat-satir">
-            {KATEGORILER.map((kt) => (
-              <button key={kt.k} className={"sa-kat" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>{kt.ik} {t(kt.ck, kt.ad)}</button>
-            ))}
-          </div>
-
-          {/* 3) MODEL — öneri çipleri + yaz */}
-          <div className="sa-oneri">
-            {oneri.map((o) => (
-              <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{o}</button>
-            ))}
-          </div>
-          <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
-            placeholder={t("saModelYaz", "Model yaz (örn. Ombre saç) ya da yukarıdan seç")} />
-
-          {/* 3b) RENK (isteğe bağlı) — saç renkleri ya da genel renkler; tekrar dokununca kaldırılır */}
-          {renkler.length > 0 && (
+          {/* Reklamdan gelindiyse ürün SABİT → seçicileri gizle, DENE düğmesini hemen fotoğrafın altına koy (kullanıcı: düğme çok aşağıda) */}
+          {reklamdan ? (
+            <button className="sa-dene sa-dene-buyuk" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>
+          ) : (
             <>
-              <div className="sa-kim-bas" style={{ marginTop: 12 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")}</div>
-              <div className="sa-oneri">
-                {renkler.map((r) => (
-                  <button key={r} className={"sa-cip sa-renk-cip" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)}>{r}</button>
+              {/* 1b) KİM İÇİN — bayan/erkek/kız/erkek çocuk/bebek (saç+kıyafet önerileri buna göre) */}
+              <div className="sa-kim-bas">{t("saKimIcin", "Kim için?")}</div>
+              <div className="sa-kisi-satir">
+                {KISILER.map((ks) => (
+                  <button key={ks.k} className={"sa-kisi" + (kisi === ks.k ? " sec" : "")} onClick={() => { setKisi(ks.k); setModel(""); }}>{ks.ik} {t(ks.ck, ks.ad)}</button>
                 ))}
               </div>
+
+              {/* 2) KATEGORİ — saç/makyaj/tırnak + kıyafet/ayakkabı/çanta/aksesuar (erkek+bayan) */}
+              <div className="sa-kat-satir">
+                {KATEGORILER.map((kt) => (
+                  <button key={kt.k} className={"sa-kat" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>{kt.ik} {t(kt.ck, kt.ad)}</button>
+                ))}
+              </div>
+
+              {/* 3) MODEL — öneri çipleri + yaz */}
+              <div className="sa-oneri">
+                {oneri.map((o) => (
+                  <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{o}</button>
+                ))}
+              </div>
+              <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
+                placeholder={t("saModelYaz", "Model yaz (örn. Ombre saç) ya da yukarıdan seç")} />
+
+              {/* 3b) RENK (isteğe bağlı) — saç renkleri ya da genel renkler; tekrar dokununca kaldırılır */}
+              {renkler.length > 0 && (
+                <>
+                  <div className="sa-kim-bas" style={{ marginTop: 12 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")}</div>
+                  <div className="sa-oneri">
+                    {renkler.map((r) => (
+                      <button key={r} className={"sa-cip sa-renk-cip" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)}>{r}</button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* 4) DENE */}
+              <button className="sa-dene" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>
             </>
           )}
-
-          {/* 4) DENE */}
-          <button className="sa-dene" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>
           {hata && <div className="sa-hata">⚠️ {hata}</div>}
 
-          {/* 5) SONUÇ — hazır olunca buraya OTOMATİK kaydırılır */}
+          {/* 5) SONUÇ — hazır olunca buraya OTOMATİK kaydırılır. Fotoğrafa dokununca TAM EKRAN + zoom açılır */}
           {sonuc && (
             <div className="sa-sonuc" ref={sonucRef}>
               <div className="sa-sonuc-bas">✅ {t("saSonuc", "Sonuç")}</div>
-              <img src={sonuc} alt="" />
+              <img src={sonuc} alt="" onClick={() => setBuyuk(sonuc)} style={{ cursor: "zoom-in" }} />
+              <div className="sa-buyut-ipucu">🔍 {t("saBuyutIpucu", "Fotoğrafa dokun: tam ekran aç, iki parmakla yakınlaştır.")}</div>
               <div className="sa-sonuc-dugmeler">
                 <button className={"sa-indir" + (indirildi ? " indi" : "")} onClick={indir}>{indirildi ? "✓ " + t("saIndirildi", "İndirildi") : "⬇️ " + t("saIndir", "İndir")}</button>
                 <button className="sa-paylas" onClick={paylas}>📤 {t("saPaylas", "Paylaş")}</button>
@@ -227,6 +265,7 @@ export default function SanalAyna({ onKapat, baslangic }) {
           )}
         </div>
       </div>
+      {buyuk && <Buyut url={buyuk} onKapat={() => setBuyuk("")} />}
     </div>
   );
 }
