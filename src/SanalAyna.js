@@ -146,15 +146,12 @@ export default function SanalAyna({ onKapat, baslangic }) {
         ref2 = { base64: refFoto.split(",")[1] || "", mediaType: refMime };
         const urunTip = { elbise: "the outfit/garment", ayakkabi: "the pair of shoes", canta: "the bag", aksesuar: "the accessory", makyaj: "the makeup look", sac: "the hairstyle", tirnak: "the nails" }[kategori] || "the product";
         const tarifKismi = (baslangic && baslangic.tarif) ? ` Product details — ${baslangic.tarif}.` : "";
-        istem = `You are a professional virtual try-on engine. Two images are given.
-IMAGE 1 = the CUSTOMER (a ${kisiIng}). Use HER face, hair and identity. The final photo MUST clearly show THIS person's real face.
-IMAGE 2 = a PRODUCT reference only: ${urunTip} "${model.trim()}".${tarifKismi} From IMAGE 2 copy ONLY the product itself — IGNORE the model, pose, cropping and background of IMAGE 2.
-Create ONE new photorealistic photo of the CUSTOMER from IMAGE 1 wearing/using this product.
-STRICT RULES:
-1) The customer's FACE from IMAGE 1 must be fully visible at the TOP of the photo — a head-to-body / full-body shot. NEVER crop out or hide the head. The result must look like HER, not like the person in IMAGE 2.
-2) Reproduce the product EXACTLY as in IMAGE 2: same colors, same print/pattern, same sleeve length, same neckline/collar, same length, same fabric and every detail. Do NOT redesign, recolor, shorten or invent a different product.
-3) Natural standing pose, full body visible, simple clean background.${renkKismi}
-Photorealistic, natural lighting, high quality, no text, no watermark, no logo.`;
+        istem = `You are a virtual try-on PHOTO EDITOR. EDIT the customer's OWN photo (IMAGE 1) — do NOT create a new person or a new scene.
+IMAGE 1 = the customer (a ${kisiIng}). KEEP her EXACT same face (same eyes, nose, mouth, face shape and expression), her hair, her skin tone AND her original background/scene UNCHANGED. The result MUST clearly be the SAME woman — NEVER replace her with a different person or a different face.
+IMAGE 2 = a PRODUCT reference ONLY: ${urunTip} "${model.trim()}".${tarifKismi} Take ONLY the product from IMAGE 2 and IGNORE the model, pose, cropping and background in IMAGE 2.
+Task: dress the SAME person from IMAGE 1 in this product, replacing her current clothes. Copy the product EXACTLY — same colors, same print/pattern, same sleeve length, same neckline/collar, same length, same fabric and every visible detail. Do NOT redesign, recolor, shorten or invent a different product.
+If IMAGE 1 only shows the head/upper body, naturally extend the photo downward to show more of the outfit, but KEEP her real face fully visible and IDENTICAL, and keep her original background.${renkKismi}
+Photorealistic, keep her exact identity and scene, high quality, no text, no watermark, no logo.`;
       } else {
         istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} If it is clothing/shoes and the photo shows only the face/upper body, generate a FULL-BODY photo of the same person wearing it. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
       }
