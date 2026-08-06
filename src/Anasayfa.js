@@ -5430,6 +5430,17 @@ export default function Anasayfa({ pro = false }) {
           const zamanAsimi = new Promise((cz) => setTimeout(() => cz({ hata: t("resimZamanAsimi", "Resim zamanında gelmedi, tekrar dener misin?") }), 75000));
           let sonuc; try { sonuc = await Promise.race([gloxooResimUret(resimIstem, girdiFoto), zamanAsimi]); } catch (e) { sonuc = { hata: (e && (e.message || e.name)) || "hata" }; }
           setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimYuk: false, resimData: (sonuc && sonuc.dataUrl) || "", resimHata: (sonuc && sonuc.hata) || "" } : m)));
+          // KALICI YAP: base64 resim ÇOK BÜYÜK → telefonun küçük hafızasına (localStorage) sığmayıp YENİLENİNCE KAYBOLUYORDU
+          // ("Bu resim gelmedi — gene ister misin?"). Resmi Firebase'e yükleyip KÜÇÜK URL olarak sakla → yenilense de DURUR,
+          // aynı resim kalır (avatarlarda olduğu gibi). Önce base64 hemen görünür; arkada URL'e çevrilir.
+          if (sonuc && sonuc.dataUrl) {
+            (async () => {
+              try {
+                const url = await gorselYukle(sonuc.dataUrl, aiUidRef.current || "gloxoo");
+                if (url) setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimData: url } : m)));
+              } catch (e) {} // yüklenemezse base64 kalır (yine görünür)
+            })();
+          }
         })();
       }
       // HAZIRLANAN İÇERİK (paylaşım metni vb.): kullanıcı SÖZLÜ istediyse ve panel KAPALIYSA, yazı panelini
@@ -6179,9 +6190,16 @@ export default function Anasayfa({ pro = false }) {
       return new Blob([uz], { type: tur });
     } catch (e) { return null; }
   };
+  // HERHANGİ resim (data: base64 VEYA http/Firebase URL) → Blob. Resim artık kalıcı olması için URL'e çevriliyor;
+  // kopyala/paylaş bu yüzden ikisini de desteklemeli (yoksa "Paylaşılamadı/Kopyalanamadı" derdi).
+  const _resimBlob = async (src) => {
+    const s = (src || "").toString(); if (!s) return null;
+    if (s.slice(0, 5) === "data:") return _dataUrlBlob(s);
+    try { return await (await fetch(s, { mode: "cors" })).blob(); } catch (e) { return null; }
+  };
   // RESMİ PAYLAŞ — telefonun paylaşım penceresini FOTOĞRAFLA açar (WhatsApp, Instagram, kime istersen)
   const resimPaylas = async (dataUrl) => {
-    const blob = _dataUrlBlob(dataUrl); if (!blob) { setKucukMesaj(t("paylasilamadi", "Paylaşılamadı")); return; }
+    const blob = await _resimBlob(dataUrl); if (!blob) { setKucukMesaj(t("paylasilamadi", "Paylaşılamadı")); return; }
     try {
       const dosya = new File([blob], "GLOXORG-resim.png", { type: blob.type || "image/png" });
       if (navigator.canShare && navigator.canShare({ files: [dosya] }) && navigator.share) {
@@ -6193,7 +6211,7 @@ export default function Anasayfa({ pro = false }) {
   };
   // RESMİ KOPYALA — panoya PNG olarak koyar (destekleyen tarayıcıda), olmazsa indirir
   const resimKopyala = async (dataUrl) => {
-    const blob = _dataUrlBlob(dataUrl); if (!blob) { setKucukMesaj(t("kopyalanamadi", "Kopyalanamadı")); return; }
+    const blob = await _resimBlob(dataUrl); if (!blob) { setKucukMesaj(t("kopyalanamadi", "Kopyalanamadı")); return; }
     try {
       if (navigator.clipboard && window.ClipboardItem) {
         await navigator.clipboard.write([new window.ClipboardItem({ [blob.type || "image/png"]: blob })]);
@@ -6204,8 +6222,12 @@ export default function Anasayfa({ pro = false }) {
   };
   // ÜRETİLEN RESMİ GLOXORG'DA PAYLAŞ — resmi paylaşım penceresine (kendi feed'ine) taşır, yazı boş açılır.
   // ÖNEMLİ: resimde ZATEN GLOXORG filigranı var → paylaşımda TEKRAR filigran ekleme (çift olmasın) → filigranEkle=false.
-  const resimGloxordaPaylas = (dataUrl) => {
-    const s = (dataUrl || "").toString(); if (!s) return;
+  const resimGloxordaPaylas = async (dataUrl) => {
+    let s = (dataUrl || "").toString(); if (!s) return;
+    // Resim artık URL olabilir; feed paylaşımı base64 beklediği için URL'i data'ya çevir (paylaşım bozulmasın).
+    if (s.slice(0, 5) !== "data:") {
+      try { const bl = await _resimBlob(s); if (bl) s = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(bl); }); } catch (e) {}
+    }
     try { setDuzenlenen(null); } catch (e) {}
     setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur("");
     setPaylasGorsel(s); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDurum("");
