@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "./static/css/main.a95e5dea.css",
-    "main.js": "./static/js/main.f08084b5.js",
+    "main.js": "./static/js/main.5c7bc218.js",
     "static/css/922.4d28c01c.chunk.css": "./static/css/922.4d28c01c.chunk.css",
     "static/js/922.6cc3c843.chunk.js": "./static/js/922.6cc3c843.chunk.js",
     "static/js/95.a6dbc6cd.chunk.js": "./static/js/95.a6dbc6cd.chunk.js",
     "static/js/240.ae9b3766.chunk.js": "./static/js/240.ae9b3766.chunk.js",
     "static/js/342.37002653.chunk.js": "./static/js/342.37002653.chunk.js",
-    "static/js/396.ae2f08ce.chunk.js": "./static/js/396.ae2f08ce.chunk.js",
+    "static/js/396.20f8ea86.chunk.js": "./static/js/396.20f8ea86.chunk.js",
     "static/js/514.cf538203.chunk.js": "./static/js/514.cf538203.chunk.js",
     "static/js/453.d745a41a.chunk.js": "./static/js/453.d745a41a.chunk.js",
     "static/media/profilCerceveMavi.png": "./static/media/profilCerceveMavi.0b25c849ca29eb692e24.png",
@@ -30,18 +30,18 @@
     "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
     "index.html": "./index.html",
     "main.a95e5dea.css.map": "./static/css/main.a95e5dea.css.map",
-    "main.f08084b5.js.map": "./static/js/main.f08084b5.js.map",
+    "main.5c7bc218.js.map": "./static/js/main.5c7bc218.js.map",
     "922.4d28c01c.chunk.css.map": "./static/css/922.4d28c01c.chunk.css.map",
     "922.6cc3c843.chunk.js.map": "./static/js/922.6cc3c843.chunk.js.map",
     "95.a6dbc6cd.chunk.js.map": "./static/js/95.a6dbc6cd.chunk.js.map",
     "240.ae9b3766.chunk.js.map": "./static/js/240.ae9b3766.chunk.js.map",
     "342.37002653.chunk.js.map": "./static/js/342.37002653.chunk.js.map",
-    "396.ae2f08ce.chunk.js.map": "./static/js/396.ae2f08ce.chunk.js.map",
+    "396.20f8ea86.chunk.js.map": "./static/js/396.20f8ea86.chunk.js.map",
     "514.cf538203.chunk.js.map": "./static/js/514.cf538203.chunk.js.map",
     "453.d745a41a.chunk.js.map": "./static/js/453.d745a41a.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.a95e5dea.css",
-    "static/js/main.f08084b5.js"
+    "static/js/main.5c7bc218.js"
   ]
 }
