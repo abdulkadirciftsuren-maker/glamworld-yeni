@@ -4546,6 +4546,17 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .tan-ai-serit::-webkit-scrollbar{ display:none; }
 .tan-ai-kart{ flex:0 0 auto; width:185px; scroll-snap-align:start; border-radius:16px; overflow:hidden; background:#1a2f57; border:1px solid rgba(120,190,255,.5); box-shadow:0 5px 14px rgba(0,10,30,.4); cursor:pointer; display:flex; flex-direction:column; }
 .tan-ai-kart:active{ transform:scale(.98); }
+/* KENDİ YAPAY ZEKÂN — "+ oluştur" kartı, özel kartlar, sil düğmesi, form foto kutusu */
+.tan-ozel-ekle{ flex:0 0 auto; width:150px; scroll-snap-align:start; border-radius:16px; border:2px dashed #FFD700; background:linear-gradient(160deg,#fff6d8,#ffe9a8); color:#7a5a00; font-family:inherit; font-weight:900; font-size:15px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:14px; text-align:center; line-height:1.25; }
+.tan-ozel-ekle:active{ transform:scale(.97); }
+.tan-ozel-arti{ font-size:34px; line-height:1; }
+.tan-ozel-kart{ border-color:#FFD700 !important; box-shadow:0 5px 14px rgba(120,90,0,.35) !important; }
+.tan-ozel-kart .tan-ai-rozet-mini{ background:rgba(120,90,0,.75) !important; }
+.tan-ozel-sil{ position:absolute; top:6px; left:6px; width:26px; height:26px; border-radius:8px; border:none; background:rgba(0,0,0,.5); color:#fff; font-size:14px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:2; }
+.tan-ozel-sil:active{ transform:scale(.9); }
+.tan-ozel-foto-kutu{ width:120px; height:120px; margin:6px auto 12px; border-radius:16px; border:2.5px dashed #a07800; background:#fffbe9; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; }
+.tan-ozel-foto-kutu img{ width:100%; height:100%; object-fit:cover; }
+.tan-ozel-foto-bos{ color:#a07800; font-weight:800; font-size:14px; text-align:center; line-height:1.5; }
 .tan-ai-kart-foto{ position:relative; width:100%; aspect-ratio:3/4; background:radial-gradient(circle at 50% 34%, #3d63a0, #1a3560); }
 .tan-ai-kart-foto>img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .tan-ai-kart-foto .tan-foto-bekle-harf{ width:60px; height:60px; font-size:26px; border-radius:15px; }
