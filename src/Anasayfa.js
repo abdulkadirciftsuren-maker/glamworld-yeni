@@ -1285,6 +1285,33 @@ function DunyaKure() {
   );
 }
 
+// GLOXOO RESMİNİ TAM EKRAN + ZOOM göster (iki parmak yakınlaştır, tek parmak her yöne kaydır, çift dokunuş). Altın zemin.
+function ResimBuyut({ src, onKapat, dugme, kapatEtiket }) {
+  const [tr, setTr] = useState({ s: 1, x: 0, y: 0 });
+  const trRef = useRef(tr); trRef.current = tr;
+  const c = useRef({ d0: 0, s0: 1, ox0: 0, oy0: 0, x0: 0, y0: 0, panSx: 0, panSy: 0, panX0: 0, panY0: 0, panAktif: false, sonDokun: 0 });
+  const mes = (tt) => Math.hypot(tt[0].clientX - tt[1].clientX, tt[0].clientY - tt[1].clientY);
+  const orta = (tt) => ({ x: (tt[0].clientX + tt[1].clientX) / 2, y: (tt[0].clientY + tt[1].clientY) / 2 });
+  function panBasla(px, py) { const cur = trRef.current; c.current.panSx = px; c.current.panSy = py; c.current.panX0 = cur.x; c.current.panY0 = cur.y; c.current.panAktif = true; }
+  function bas(e) { e.stopPropagation(); const tt = e.touches, cur = trRef.current; if (tt.length === 2) { const o = orta(tt); c.current.d0 = mes(tt) || 1; c.current.s0 = cur.s; c.current.ox0 = o.x; c.current.oy0 = o.y; c.current.x0 = cur.x; c.current.y0 = cur.y; c.current.panAktif = false; } else if (tt.length === 1) panBasla(tt[0].clientX, tt[0].clientY); }
+  function har(e) {
+    e.stopPropagation(); e.preventDefault();
+    const tt = e.touches, cur = trRef.current;
+    if (tt.length === 2) { const s = Math.max(1, Math.min(5, c.current.s0 * (mes(tt) / (c.current.d0 || 1)))); const o = orta(tt); setTr({ s, x: c.current.x0 + (o.x - c.current.ox0), y: c.current.y0 + (o.y - c.current.oy0) }); }
+    else if (tt.length === 1) { if (!c.current.panAktif) panBasla(tt[0].clientX, tt[0].clientY); setTr({ s: cur.s, x: c.current.panX0 + (tt[0].clientX - c.current.panSx), y: c.current.panY0 + (tt[0].clientY - c.current.panSy) }); }
+  }
+  function bit(e) { e.stopPropagation(); const now = Date.now(); if (e.touches && e.touches.length === 1) panBasla(e.touches[0].clientX, e.touches[0].clientY); else if (!e.touches || e.touches.length === 0) { c.current.panAktif = false; if (now - c.current.sonDokun < 300) setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); else setTr((p) => (p.s <= 1 ? { s: 1, x: 0, y: 0 } : p)); c.current.sonDokun = now; } }
+  return (
+    <div className="cizim-fon cizim-fon-tam" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }} onTouchStart={bas} onTouchMove={har} onTouchEnd={bit}>
+      <button className="cizim-kapat cizim-kapat-tam" onClick={(e) => { e.stopPropagation(); onKapat(); }} aria-label={kapatEtiket}>&#10005;</button>
+      <img className="cizim-buyuk-tam" src={src} alt="" draggable={false} referrerPolicy="no-referrer"
+        style={{ transform: `translate(${tr.x}px,${tr.y}px) scale(${tr.s})` }}
+        onDoubleClick={() => setTr((p) => (p.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 }))} />
+      {dugme}
+    </div>
+  );
+}
+
 export default function Anasayfa({ pro = false }) {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -9775,19 +9802,20 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       )}
-      {/* GLOXOO ÇİZİMİ — TAM EKRAN BÜYÜT (altın zemin, güvenli resim, indir) */}
+      {/* GLOXOO RESMİ/ÇİZİMİ — TAM EKRAN + ZOOM (altın zemin, iki parmak yakınlaştır, tek parmak kaydır, indir) */}
       {cizimBuyut && (
-        <div className="cizim-fon" onClick={() => setCizimBuyut(null)}>
-          <div className="cizim-pencere" onClick={(e) => e.stopPropagation()}>
-            <button className="cizim-kapat" onClick={() => setCizimBuyut(null)} aria-label={t("kapat", "Kapat")}>&#10005;</button>
-            <img className="cizim-buyuk" src={(cizimBuyut || "").slice(0, 5) === "data:" ? cizimBuyut : ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut))} alt={t("cizim", "çizim")} />
+        <ResimBuyut
+          src={(cizimBuyut || "").slice(0, 5) === "data:" ? cizimBuyut : ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut))}
+          onKapat={() => setCizimBuyut(null)}
+          kapatEtiket={t("kapat", "Kapat")}
+          dugme={
             <button className={"cizim-indir-btn" + (resimIndi ? " indi" : "")} onClick={() => ((cizimBuyut || "").slice(0, 5) === "data:" ? resimIndir(cizimBuyut) : cizimIndir(cizimBuyut))}>
               {resimIndi
                 ? <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-11"/></svg>{pl(aiDil, "indirildi")}</>
                 : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>{pl(aiDil, "indir")}</>}
             </button>
-          </div>
-        </div>
+          }
+        />
       )}
       {sehirAcik && (
         <div className="sehir-fon" onClick={() => setSehirAcik(false)}>
