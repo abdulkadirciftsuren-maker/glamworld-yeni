@@ -75,6 +75,8 @@ function _hataMetni(e) {
 }
 // FİLİGRAN — üretilen HER resmin SAĞ ALT köşesine "GLOXORG" markası basılır (her zaman görünür, marka korunur).
 // Tarayıcıda canvas ile eklenir (model yazıyı yanlış yazamaz → marka HER SEFERİNDE net ve doğru çıkar).
+// Dışarıdan filigran ekleme (Sanal Ayna 2. aşama başarısız olursa 1. aşamaya GLOXORG filigranı ekleyebilmek için)
+export async function filigranEkle(dataUrl) { try { return await _filigranEkle(dataUrl); } catch (e) { return dataUrl; } }
 function _filigranEkle(dataUrl) {
   return new Promise((cz) => {
     try {
@@ -145,15 +147,17 @@ async function _resimDene(backend, istem, girdiResim, girdiResim2) {
   }
   throw new Error("Resim gelmedi (modelin cevabinda gorsel yok)");
 }
-export async function gloxooResimUret(istem, girdiResim, girdiResim2) {
+export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransiz) {
   // ÖNCE Gemini Developer API (kullanıcının kurduğu + kredi ekleyeceği yer), OLMAZSA Vertex AI.
+  // filigransiz=true → ARA adım (örn. Sanal Ayna 2 aşamalı giydirme: 1. gövde+elbise) → filigran EKLENMEZ;
+  // son adımda (yüz yerleştirme) filigran eklenir → çift filigran olmaz.
   const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
   const hatalar = [];
   for (const y of yollar) {
     try {
       let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
       const url = await _resimDene(bk, istem, girdiResim, girdiResim2);
-      if (url) { let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
+      if (url) { if (filigransiz) return { dataUrl: url }; let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
     } catch (e) { hatalar.push(y.ad + ": " + _hataMetni(e)); }
   }
   return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };

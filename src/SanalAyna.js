@@ -2,7 +2,7 @@
 // Google/Gemini görsel yolu (gloxooResimUret) fotoğraf GİRDİSİ alır → kişinin yüzünü koruyup istenen modeli uygular.
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { gloxooResimUret } from "./firebase";
+import { gloxooResimUret, filigranEkle } from "./firebase";
 
 // KİM İÇİN — bayan/erkek/kız/erkek çocuk/bebek (saç kesimi + kıyafet önerileri buna göre değişir)
 const KISILER = [
@@ -168,16 +168,29 @@ export default function SanalAyna({ onKapat, baslangic }) {
         const tarifKismi = (baslangic && baslangic.tarif) ? ` Product details — ${baslangic.tarif}.` : "";
         istem = `Take the ${kisiIng} from the FIRST image and show her actually WEARING the ${urunTip} from the SECOND image.
 MUST DO — dress her in that exact product: copy its exact print, pattern, colors, neckline, sleeves, fabric and full length from image 2.${tarifKismi} COMPLETELY remove and replace her current clothes (jacket, vest, top, everything) — no old clothing left on any part of her; BOTH arms and both shoulders wear the new product.
-KEEP her real face, hair and identity from image 1 so it is clearly the SAME woman, on a similar natural background.
+KEEP HER REAL FACE (most important): her face, head and hair must stay EXACTLY as the woman in image 1 — identical eyes, nose, mouth, eyebrows, face shape, age, skin tone and hair. Do NOT beautify her, do NOT make her younger, slimmer or prettier, do NOT turn her into a fashion model or a different woman. It must be recognizably the SAME real person from image 1. Only her CLOTHES change; her face does NOT. Keep a similar natural background.
 SHOW her FULL BODY from head to feet, standing naturally, wearing elegant WOMEN'S shoes that suit the dress (heels/flats/sandals — NEVER men's shoes, boots or sneakers). If it is a long/maxi dress, show it FULL-LENGTH to the floor with ALL its tiers. Put her face near the TOP and extend the picture DOWNWARD to her feet — do NOT stop at the waist, do NOT add empty sky above her head, nothing cut off at the bottom.${renkKismi}
 EXACTLY ONE person — no duplicate, ghost or extra face. Photorealistic, high quality, no text, no watermark, no logo.
 IMPORTANT: the result MUST look different from image 1 — she is now wearing the new product, NOT her original clothes. If she still wears her old jacket/vest, it is WRONG.`;
       } else {
         istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} If it is clothing/shoes and the photo shows only the face/upper body, generate a FULL-BODY photo of the same person wearing it. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
       }
-      const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime }, ref2);
-      if (res && res.dataUrl) setSonuc(res.dataUrl);
-      else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene."));
+      // 1. AŞAMA: gövde + elbise (reklam ürünüyle) — filigransız (ara adım)
+      const ilk = await gloxooResimUret(istem, { base64, mediaType: fotoMime }, ref2, refFoto ? true : false);
+      if (!ilk || !ilk.dataUrl) { setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene.")); setYuk(false); return; }
+      let sonUrl = ilk.dataUrl;
+      // 2. AŞAMA (yalnız reklamdan/elbise giydirmede): 1. aşamanın YÜZÜNÜ, kullanıcının GERÇEK yüzüyle değiştir.
+      // Böylece elbise/boy/ayakkabı mükemmel kalır AMA yüz gerçekten KULLANICININ yüzü olur (kullanıcı: "yüz benzemiyor").
+      if (refFoto) {
+        try {
+          const yuzIstem = `The FIRST image is a full-body photo of a woman wearing a dress. The SECOND image shows the REAL face of the person it must be. Keep the FIRST image EXACTLY the same — same dress, same pose, same body, same hands, same shoes, same background, same lighting — but REPLACE her face and head so it becomes exactly the real woman from the SECOND image: copy her exact facial features, eyes, nose, mouth, eyebrows, face shape, age, skin tone and hair color/style. The result must be clearly and recognizably the SAME real person as in the SECOND image, not a fashion model. Blend the head naturally with the body and lighting. Photorealistic, seamless, ONE person only, no text, no watermark, no logo.`;
+          const p1 = sonUrl.split(",")[1] || "";
+          const yuz = await gloxooResimUret(yuzIstem, { base64: p1, mediaType: "image/png" }, { base64, mediaType: fotoMime }, false);
+          if (yuz && yuz.dataUrl) sonUrl = yuz.dataUrl;
+          else { let f; try { f = await filigranEkle(sonUrl); } catch (e) {} if (f) sonUrl = f; } // 2. aşama olmadıysa 1. aşamaya filigran ekle
+        } catch (e) { try { const f = await filigranEkle(sonUrl); if (f) sonUrl = f; } catch (e2) {} }
+      }
+      setSonuc(sonUrl);
     } catch (e) { setHata((e && e.message) ? String(e.message) : t("saOlmadi", "Şu an yapılamadı, tekrar dene.")); }
     setYuk(false);
   }
