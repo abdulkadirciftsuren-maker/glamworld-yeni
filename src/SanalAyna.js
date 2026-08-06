@@ -88,7 +88,7 @@ function Buyut({ url, onKapat }) {
   );
 }
 
-export default function SanalAyna({ onKapat, baslangic }) {
+export default function SanalAyna({ onKapat, baslangic, onKatman }) {
   const { t } = useTranslation();
   const [buyuk, setBuyuk] = useState(""); // tam ekran açılan sonuç fotoğrafı
   const [foto, setFoto] = useState("");            // kullanıcı fotoğrafı (dataURL)
@@ -108,6 +108,15 @@ export default function SanalAyna({ onKapat, baslangic }) {
   const sonucRef = useRef(null); // sonuç gelince oraya kaydır
   // Sonuç hazır olunca OTOMATİK sonuca kaydır (aşağıda kalıp görünmesin)
   useEffect(() => { if (sonuc && sonucRef.current) { try { sonucRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} } }, [sonuc]);
+  // ANDROID GERİ TUŞU / GEÇMİŞ: derinliği ana ekrana bildir → geri tuşuna basınca ÖNCE tam ekran fotoğrafı,
+  // sonra Sanal Ayna'yı kapatır; YÜKLENEN FOTO/SONUÇ KAYBOLMAZ (eskiden geri tuşu ana sayfaya sıfırlayıp her şeyi siliyordu).
+  useEffect(() => {
+    if (!onKatman) return;
+    const derinlik = buyuk ? 2 : 1; // 2: tam ekran foto açık, 1: Sanal Ayna açık
+    const geri = () => { if (buyuk) setBuyuk(""); else if (onKapat) onKapat(); };
+    onKatman(derinlik, geri);
+  }, [buyuk]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { if (onKatman) onKatman(0, null); }, []); // kapanınca derinlik 0 // eslint-disable-line react-hooks/exhaustive-deps
   // Reklamdan açıldıysa ürün fotoğrafını (referans) al → "o EXACT elbiseyi üstünde" gösterebilelim.
   // Önce reklamla saklanan küçük refB64 (CORS derdi YOK); yoksa kapak URL'sini indirmeyi dener.
   useEffect(() => {

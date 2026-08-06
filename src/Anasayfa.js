@@ -3714,6 +3714,12 @@ export default function Anasayfa({ pro = false }) {
   const akademiDerinlikRef = useRef(0);
   const akademiGeriRef = useRef(null);
   const akademiKatmanDegis = (d, geriFn) => { akademiDerinlikRef.current = d || 0; setAkademiDerinlik(d || 0); akademiGeriRef.current = geriFn || null; };
+  // SANAL AYNA DERİNLİK — aynı geri-tuşu sistemine bağlı: fotoğraf/sonuç açıkken Android geri → önce tam ekran fotoğrafı,
+  // sonra Sanal Ayna'yı kapatır; yüklenen foto/sonuç KAYBOLMAZ (eskiden geri tuşu ana sayfaya sıfırlıyordu). 0 kapalı, 1 açık, 2 tam ekran foto.
+  const [sanalAynaDerinlik, setSanalAynaDerinlik] = useState(0);
+  const sanalAynaDerinlikRef = useRef(0);
+  const sanalAynaGeriRef = useRef(null);
+  const sanalAynaKatmanDegis = (d, geriFn) => { sanalAynaDerinlikRef.current = d || 0; setSanalAynaDerinlik(d || 0); sanalAynaGeriRef.current = geriFn || null; };
   // KONUM AÇILINCA: (1) paylaşım AÇIKSA kendi ŞU ANKİ konumumu yaz (elle seçmek YOK, otomatik),
   // (2) arkadaşların TAZE konumu için listeyi yenile.
   useEffect(() => {
@@ -7253,7 +7259,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0) + (akademiDerinlik || 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0) + (akademiDerinlik || 0) + (sanalAynaDerinlik || 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -7261,7 +7267,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik, sanalAynaDerinlik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -7271,6 +7277,8 @@ export default function Anasayfa({ pro = false }) {
       // Zaten küçükse → aramaya DOKUNMA, geri tuşu alttaki diğer katmanları normal kapatsın (konuşma yine sürer).
       if (aramaDurumRef.current && !aramaKucukRef.current) { aramaKucukRef.current = true; setAramaKucuk(true); return; }
       if (gelenAramaRef.current) { aramaReddet(); }
+      // SANAL AYNA en üstteki katman: önce tam ekran fotoğrafı, sonra Sanal Ayna'yı kapatır; foto/sonuç KAYBOLMAZ
+      else if (sanalAynaDerinlikRef.current > 0) { if (sanalAynaGeriRef.current) { try { sanalAynaGeriRef.current(); } catch (e) {} } }
       else if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
       else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
       else if (haritaTamRef.current) { haritaTamRef.current = false; setHaritaTam(false); if (haritaKapatRef.current) { try { haritaKapatRef.current(); } catch (e) {} haritaKapatRef.current = null; } } // Konum haritası tam ekran → sadece kapat, Konum'da KAL
@@ -7618,7 +7626,7 @@ export default function Anasayfa({ pro = false }) {
       {/* SANAL AYNA — kendi fotoğrafında saç/tırnak/makyaj dene (tam ekran, ayrı parça) */}
       {sanalAynaAcik && (
         <Suspense fallback={<div style={{ position: "fixed", inset: 0, zIndex: 100080, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(circle,#f7e79a,#e8c85a)", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>🪞 …</div>}>
-          <SanalAyna baslangic={sanalAynaBaslangic} onKapat={() => { setSanalAynaAcik(false); setSanalAynaBaslangic(null); }} />
+          <SanalAyna baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setSanalAynaAcik(false); setSanalAynaBaslangic(null); }} />
         </Suspense>
       )}
 
