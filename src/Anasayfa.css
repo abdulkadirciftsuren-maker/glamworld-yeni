@@ -4966,6 +4966,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Sanal Ayna — reklamdan gelince BÜYÜK dene düğmesi (fotoğrafın hemen altında, çok aşağıda kalmasın) */
 .sa-dene-buyuk{ margin-top:16px; font-size:20px; padding:17px; }
 
+/* Sanal Ayna — "boyun görünen fotoğraf yükle" ipucu */
+.sa-boy-ipucu{ margin:10px 0 2px; background:#fff7db; border:1.5px solid #e6bd52; border-radius:12px; padding:10px 12px; color:#7a5a12; font-size:13.5px; font-weight:700; line-height:1.45; }
+
 /* Sanal Ayna — sonuç fotoğrafını TAM EKRAN aç + zoom (altın zemin, siyah YOK) */
 .sa-buyut-ipucu{ margin-top:8px; color:#7a5a12; font-size:13px; font-weight:700; text-align:center; }
 .sa-buyut{ position:fixed; inset:0; z-index:100090; display:flex; align-items:center; justify-content:center;

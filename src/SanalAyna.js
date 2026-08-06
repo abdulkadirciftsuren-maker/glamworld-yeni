@@ -166,14 +166,12 @@ export default function SanalAyna({ onKapat, baslangic }) {
         ref2 = { base64: refFoto.split(",")[1] || "", mediaType: refMime };
         const urunTip = { elbise: "the outfit/garment", ayakkabi: "the pair of shoes", canta: "the bag", aksesuar: "the accessory", makyaj: "the makeup look", sac: "the hairstyle", tirnak: "the nails" }[kategori] || "the product";
         const tarifKismi = (baslangic && baslangic.tarif) ? ` Product details — ${baslangic.tarif}.` : "";
-        istem = `You are a virtual try-on photo editor. Start from the customer's OWN photo (IMAGE 1) and edit it so she is wearing the product from IMAGE 2.
-IDENTITY: Keep her EXACT same face (same eyes, nose, mouth, face shape, expression), the same hair and the same background/scene as IMAGE 1. It must clearly be the SAME woman — NEVER swap in a different face or a different person.
-CLOTHING (must change): COMPLETELY REPLACE whatever she is currently wearing with the product shown in IMAGE 2 (${urunTip} "${model.trim()}"). She must clearly be wearing THIS product now. Fully REMOVE every trace of her old outfit — no leftover jacket, sleeves, denim, jeans, collars or fabric from the previous clothes anywhere in the image. BOTH arms and BOTH shoulders must wear the new product — do NOT leave one arm/side in the old jacket while the other wears the dress; the whole outfit must be the new product, consistent on left and right. Copy the product EXACTLY: same colors, same print/pattern, same neckline, same sleeves, same fabric.${tarifKismi}
-ONE PERSON ONLY: the final image must contain EXACTLY ONE person — the customer herself. NEVER add a second person, a duplicate or ghost face, an extra head, or any faint figure in the background. Clean single subject.
-KEEP THE PRODUCT'S FULL LENGTH: if it is a long / maxi dress or skirt, show it FULL-LENGTH down to the ankles/floor with ALL its tiers, layers and ruffles (same number). NEVER shorten it or reduce the tiers.
-SHOES: put elegant WOMEN'S shoes that suit this dress (for a ${kisiIng}) — e.g. heels, flats or sandals matching the outfit. NEVER put men's shoes, boots or sneakers on her.
-FRAMING (very important): produce a VERTICAL FULL-BODY portrait showing her WHOLE body from head to feet. Place her face and head near the TOP of the image. Do NOT add sky, ceiling, trees or empty space ABOVE her head. Extend the picture DOWNWARD ONLY — add her torso, legs and feet below her — so the ENTIRE outfit from shoulders down to the hem AND her shoes is fully visible, with NOTHING cut off at the bottom. Do NOT stop at the waist; the legs and feet MUST be shown.${renkKismi}
-Photorealistic, natural lighting, keep her exact identity and scene, high quality, no text, no watermark, no logo.`;
+        istem = `Take the ${kisiIng} from the FIRST image and show her actually WEARING the ${urunTip} from the SECOND image.
+MUST DO — dress her in that exact product: copy its exact print, pattern, colors, neckline, sleeves, fabric and full length from image 2.${tarifKismi} COMPLETELY remove and replace her current clothes (jacket, vest, top, everything) — no old clothing left on any part of her; BOTH arms and both shoulders wear the new product.
+KEEP her real face, hair and identity from image 1 so it is clearly the SAME woman, on a similar natural background.
+SHOW her FULL BODY from head to feet, standing naturally, wearing elegant WOMEN'S shoes that suit the dress (heels/flats/sandals — NEVER men's shoes, boots or sneakers). If it is a long/maxi dress, show it FULL-LENGTH to the floor with ALL its tiers. Put her face near the TOP and extend the picture DOWNWARD to her feet — do NOT stop at the waist, do NOT add empty sky above her head, nothing cut off at the bottom.${renkKismi}
+EXACTLY ONE person — no duplicate, ghost or extra face. Photorealistic, high quality, no text, no watermark, no logo.
+IMPORTANT: the result MUST look different from image 1 — she is now wearing the new product, NOT her original clothes. If she still wears her old jacket/vest, it is WRONG.`;
       } else {
         istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} If it is clothing/shoes and the photo shows only the face/upper body, generate a FULL-BODY photo of the same person wearing it. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
       }
@@ -233,6 +231,10 @@ Photorealistic, natural lighting, keep her exact identity and scene, high qualit
             {foto && <span className="sa-foto-degis">🔄 {t("saFotoDegis", "Değiştir")}</span>}
           </div>
           <input ref={inpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={fotoSec} />
+          {/* İPUCU: kıyafet denemede en iyi sonuç için BOYU görünen fotoğraf (kullanıcı hep bel-üstü selfie yüklüyordu) */}
+          {(kategori === "elbise" || kategori === "ayakkabi" || reklamdan) && (
+            <div className="sa-boy-ipucu">{t("saBoyIpucu", "💡 En iyi sonuç için BOYUN görünen (dizden yukarı ya da tam boy) bir fotoğraf yükle. Sadece yüz/omuz olursa elbise tam oturmayabilir.")}</div>
+          )}
 
           {/* Reklamdan gelindiyse ürün SABİT → seçicileri gizle, DENE düğmesini hemen fotoğrafın altına koy (kullanıcı: düğme çok aşağıda) */}
           {reklamdan ? (
