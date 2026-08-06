@@ -6148,13 +6148,20 @@ export default function Anasayfa({ pro = false }) {
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
     } catch (e) {}
   };
-  // GERÇEK RESMİ (Gemini — zaten data:image PNG/JPEG) doğrudan indir
-  const resimIndir = (dataUrl) => {
+  // GERÇEK RESMİ indir. ÖNEMLİ: Firebase (http) adresli resimlerde tarayıcı, download="benzersiz ad"ı cross-origin
+  // güvenlik yüzünden YOK SAYIP Firebase'deki aynı ismi kullanıyordu → "aynı dosyayı tekrar mı?" soruyordu.
+  // ÇÖZÜM: http resmi ÖNCE blob olarak indir → aynı-köken object URL yap → benzersiz ad ARTIK ÇALIŞIR → soru çıkmaz.
+  const resimIndir = async (dataUrl) => {
     const s = (dataUrl || "").toString(); if (!s) return;
     try {
-      // Her indirmeye BENZERSİZ ad → tarayıcı "aynı dosyayı tekrar mı indireyim?" DEMEZ (Sanal Ayna'daki gibi)
-      const a = document.createElement("a"); a.href = s; a.download = "GLOXORG-resim-" + Date.now().toString(36) + ".png";
+      const ad = "GLOXORG-resim-" + Date.now().toString(36) + ".png";
+      let href = s;
+      if (s.slice(0, 5) !== "data:") {
+        try { const bl = await (await fetch(s, { mode: "cors" })).blob(); href = URL.createObjectURL(bl); } catch (e) { href = s; }
+      }
+      const a = document.createElement("a"); a.href = href; a.download = ad;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      if (href !== s) setTimeout(() => { try { URL.revokeObjectURL(href); } catch (e) {} }, 2000);
       setResimIndi(true); setTimeout(() => setResimIndi(false), 2500); // düğmede "İndirildi" göster
       setKucukMesaj(t("indirildi", "İndirildi 📄"));
     } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
@@ -9800,11 +9807,11 @@ export default function Anasayfa({ pro = false }) {
       {/* GLOXOO RESMİ/ÇİZİMİ — TAM EKRAN + ZOOM (altın zemin, iki parmak yakınlaştır, tek parmak kaydır, indir) */}
       {cizimBuyut && (
         <ResimBuyut
-          src={(cizimBuyut || "").slice(0, 5) === "data:" ? cizimBuyut : ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut))}
+          src={/^\s*<(\?xml|svg)/i.test(cizimBuyut || "") ? ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut)) : cizimBuyut}
           onKapat={() => setCizimBuyut(null)}
           kapatEtiket={t("kapat", "Kapat")}
           dugme={
-            <button className={"cizim-indir-btn" + (resimIndi ? " indi" : "")} onClick={() => ((cizimBuyut || "").slice(0, 5) === "data:" ? resimIndir(cizimBuyut) : cizimIndir(cizimBuyut))}>
+            <button className={"cizim-indir-btn" + (resimIndi ? " indi" : "")} onClick={() => (/^\s*<(\?xml|svg)/i.test(cizimBuyut || "") ? cizimIndir(cizimBuyut) : resimIndir(cizimBuyut))}>
               {resimIndi
                 ? <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-11"/></svg>{pl(aiDil, "indirildi")}</>
                 : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>{pl(aiDil, "indir")}</>}
