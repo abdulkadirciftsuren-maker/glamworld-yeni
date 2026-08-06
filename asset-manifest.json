@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.b771e0ae.css",
-    "main.js": "./static/js/main.c9cb2422.js",
+    "main.css": "./static/css/main.a9e170c1.css",
+    "main.js": "./static/js/main.bb12dfef.js",
     "static/css/922.4d28c01c.chunk.css": "./static/css/922.4d28c01c.chunk.css",
     "static/js/922.6cc3c843.chunk.js": "./static/js/922.6cc3c843.chunk.js",
     "static/js/95.a6dbc6cd.chunk.js": "./static/js/95.a6dbc6cd.chunk.js",
@@ -29,8 +29,8 @@
     "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
     "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
     "index.html": "./index.html",
-    "main.b771e0ae.css.map": "./static/css/main.b771e0ae.css.map",
-    "main.c9cb2422.js.map": "./static/js/main.c9cb2422.js.map",
+    "main.a9e170c1.css.map": "./static/css/main.a9e170c1.css.map",
+    "main.bb12dfef.js.map": "./static/js/main.bb12dfef.js.map",
     "922.4d28c01c.chunk.css.map": "./static/css/922.4d28c01c.chunk.css.map",
     "922.6cc3c843.chunk.js.map": "./static/js/922.6cc3c843.chunk.js.map",
     "95.a6dbc6cd.chunk.js.map": "./static/js/95.a6dbc6cd.chunk.js.map",
@@ -41,7 +41,7 @@
     "453.d745a41a.chunk.js.map": "./static/js/453.d745a41a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.b771e0ae.css",
-    "static/js/main.c9cb2422.js"
+    "static/css/main.a9e170c1.css",
+    "static/js/main.bb12dfef.js"
   ]
 }
