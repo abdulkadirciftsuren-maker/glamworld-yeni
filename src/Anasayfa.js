@@ -2444,16 +2444,11 @@ export default function Anasayfa({ pro = false }) {
         if (!r.ok) return;
         const html = await r.text();
         const yeni = (html.match(/main\.[a-z0-9]+\.js/) || [""])[0];
-        if (yeni && yeni !== suanki) { // sunucuda FARKLI sürüm var
-          // CDN TUTARSIZLIĞINA KARŞI: aynı yeni sürümü ÜST ÜSTE 2 kez görmeden yenileme (yoksa "yeni→eski→yeni" parlama döngüsü olur)
-          if (window.__groxYeniHash === yeni) {
-            try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
-            guvenliYenile(yeni); // hangi sürüme geçtiğimizi bildir → aynı sürüme tekrar geçip PARLAMA döngüsü olmasın
-          } else {
-            window.__groxYeniHash = yeni; // İLK görüş → doğrulamak için sonraki kontrolü bekle
-          }
-        } else if (window.__groxYeniHash) {
-          window.__groxYeniHash = null;
+        if (yeni && yeni !== suanki) { // sunucuda FARKLI sürüm var → HEMEN yenile (kapat-aç ile takılmasın)
+          // Not: eskiden "aynı sürümü 2 kez gör" şartı vardı; kullanıcı hızlı kapat-aç yapınca 2. görüşe hiç ulaşamayıp
+          // ESKİ sürümde TAKILIYORDU. Artık ilk görüşte yenilenir; ping-pong'u guvenliYenile'nin hash-kilidi zaten önler.
+          try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
+          guvenliYenile(yeni);
         }
       } catch (e) {}
     };
