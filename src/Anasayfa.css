@@ -3527,6 +3527,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .cizim-kapat{ position:absolute; top:-6px; right:-4px; width:40px; height:40px; border:none; border-radius:12px; background:#12203f; color:#ffd700; font-size:20px; font-weight:800; cursor:pointer; }
 .cizim-indir-btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border:none; border-radius:14px; background:#12203f; color:#ffd700; font-family:inherit; font-size:15px; font-weight:800; cursor:pointer; }
 .cizim-indir-btn svg{ width:20px; height:20px; }
+.cizim-indir-btn.indi{ background:linear-gradient(160deg,#2f9e57,#1f7d42); color:#fff; } /* indirilince yeşil "İndirildi" */
 @media (min-width:560px){ .ai-cizim-gorsel{ max-width:300px; } }
 .ai-paylasim-btn{ flex:1 1 auto; min-width:92px; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 10px; border-radius:12px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; border:none; }
 .ai-paylasim-btn svg{ width:16px; height:16px; }

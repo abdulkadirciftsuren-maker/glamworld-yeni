@@ -223,6 +223,7 @@ const AIPANEL = {
   durdur: { tr: "Durdur", en: "Stop", de: "Stopp", fr: "Arrêter", es: "Detener", it: "Ferma", pt: "Parar", ru: "Стоп", uk: "Стоп", ar: "إيقاف", zh: "停止", ja: "停止", hi: "रोकें" },
   kopyala: { tr: "Kopyala", en: "Copy", de: "Kopieren", fr: "Copier", es: "Copiar", it: "Copia", pt: "Copiar", ru: "Копировать", uk: "Копіювати", ar: "نسخ", zh: "复制", ja: "コピー", hi: "कॉपी" },
   indir: { tr: "İndir", en: "Download", de: "Herunterladen", fr: "Télécharger", es: "Descargar", it: "Scarica", pt: "Baixar", ru: "Скачать", uk: "Завантажити", ar: "تنزيل", zh: "下载", ja: "ダウンロード", hi: "डाउनलोड" },
+  indirildi: { tr: "İndirildi", en: "Downloaded", de: "Heruntergeladen", fr: "Téléchargé", es: "Descargado", it: "Scaricato", pt: "Baixado", ru: "Скачано", uk: "Завантажено", ar: "تم التنزيل", zh: "已下载", ja: "ダウンロード済み", hi: "डाउनलोड हो गया" },
   paylas: { tr: "Paylaş", en: "Share", de: "Teilen", fr: "Partager", es: "Compartir", it: "Condividi", pt: "Partilhar", ru: "Поделиться", uk: "Поділитися", ar: "مشاركة", zh: "分享", ja: "共有", hi: "साझा करें" },
   yaz: { tr: "Buraya yaz…", en: "Type here…", de: "Hier schreiben…", fr: "Écris ici…", es: "Escribe aquí…", it: "Scrivi qui…", pt: "Escreve aqui…", ru: "Напишите здесь…", uk: "Пишіть тут…", ar: "اكتب هنا…", zh: "在这里输入…", ja: "ここに入力…", hi: "यहाँ लिखें…" },
   durakla: { tr: "Duraklat", en: "Pause", de: "Pause", fr: "Pause", es: "Pausa", it: "Pausa", pt: "Pausa", ru: "Пауза", uk: "Пауза", ar: "إيقاف مؤقت", zh: "暂停", ja: "一時停止", hi: "रोकें" },
@@ -1574,6 +1575,7 @@ export default function Anasayfa({ pro = false }) {
   const begeniBasRef = useRef(null);     // kalbe UZUN basma zamanlayıcısı
   const uzunBasildiRef = useRef(false);  // uzun basıldıysa tık'ı (beğeni toggle) bastır
   const [kucukMesaj, setKucukMesaj] = useState("");    // kısa bilgi balonu (kaydet vb.) — alta beliren toast
+  const [resimIndi, setResimIndi] = useState(false);   // Gloxoo resim indirme düğmesinde "İndirildi" geri bildirimi
   // Toast OTOMATİK kapansın (ekranda takılı kalmasın) — 2.2 sn sonra temizle
   useEffect(() => { if (!kucukMesaj) return; const z = setTimeout(() => setKucukMesaj(""), 2200); return () => clearTimeout(z); }, [kucukMesaj]);
   const [dahaMenu, setDahaMenu] = useState(null);      // üç nokta menüsü açık gönderi
@@ -6112,9 +6114,10 @@ export default function Anasayfa({ pro = false }) {
           c.toBlob((blob) => {
             if (!blob) return;
             const url = URL.createObjectURL(blob);
-            const a = document.createElement("a"); a.href = url; a.download = "GLOXORG-cizim.png";
+            const a = document.createElement("a"); a.href = url; a.download = "GLOXORG-cizim-" + Date.now().toString(36) + ".png";
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
+            setResimIndi(true); setTimeout(() => setResimIndi(false), 2500);
             setKucukMesaj(t("indirildi", "İndirildi 📄"));
           }, "image/png");
         } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
@@ -6127,8 +6130,10 @@ export default function Anasayfa({ pro = false }) {
   const resimIndir = (dataUrl) => {
     const s = (dataUrl || "").toString(); if (!s) return;
     try {
-      const a = document.createElement("a"); a.href = s; a.download = "GLOXORG-resim.png";
+      // Her indirmeye BENZERSİZ ad → tarayıcı "aynı dosyayı tekrar mı indireyim?" DEMEZ (Sanal Ayna'daki gibi)
+      const a = document.createElement("a"); a.href = s; a.download = "GLOXORG-resim-" + Date.now().toString(36) + ".png";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setResimIndi(true); setTimeout(() => setResimIndi(false), 2500); // düğmede "İndirildi" göster
       setKucukMesaj(t("indirildi", "İndirildi 📄"));
     } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
   };
@@ -9776,9 +9781,10 @@ export default function Anasayfa({ pro = false }) {
           <div className="cizim-pencere" onClick={(e) => e.stopPropagation()}>
             <button className="cizim-kapat" onClick={() => setCizimBuyut(null)} aria-label={t("kapat", "Kapat")}>&#10005;</button>
             <img className="cizim-buyuk" src={(cizimBuyut || "").slice(0, 5) === "data:" ? cizimBuyut : ("data:image/svg+xml;charset=utf-8," + encodeURIComponent(cizimBuyut))} alt={t("cizim", "çizim")} />
-            <button className="cizim-indir-btn" onClick={() => ((cizimBuyut || "").slice(0, 5) === "data:" ? resimIndir(cizimBuyut) : cizimIndir(cizimBuyut))}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-              {pl(aiDil, "indir")}
+            <button className={"cizim-indir-btn" + (resimIndi ? " indi" : "")} onClick={() => ((cizimBuyut || "").slice(0, 5) === "data:" ? resimIndir(cizimBuyut) : cizimIndir(cizimBuyut))}>
+              {resimIndi
+                ? <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-11"/></svg>{pl(aiDil, "indirildi")}</>
+                : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>{pl(aiDil, "indir")}</>}
             </button>
           </div>
         </div>
