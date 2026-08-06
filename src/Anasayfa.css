@@ -4878,6 +4878,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* PENCERE AÇILIŞ FADE'İ KALDIR — opacity 0→1 fade, ağır arka plan üstünde "parça parça belirme/parlama" yapıyordu.
    Pencereler artık ANINDA opak açılır (fade yok) → belirme sırasında arkadaki içerik sızmaz, parlamaz. */
 .tamfoto-fon, .oniz-fon, .msj-fon, .ara-detay-fon, .apf-fon, .sohbet-fon, .arama-fon, .gb-fon, .bgm-fon, .msj-merkez { animation: none !important; }
+/* PARLAMA — kalan TÜM pencere/menü açılışları da ANINDA (fade/kayma YOK): menü, Gloxoo, profil/bildirim menüsü,
+   hikâye, şehir, üye, "daha", ayar panelleri, ana-pencere, Sanal Ayna... Kullanıcı: "her açılan sayfa parlıyor" — hepsi kapatıldı. */
+.ana-menu, .ana-profil-menu, .ana-bildirim-menu, .ana-pencere, .arsiv-pencere,
+.apf-panel-fon, .apf-ayar-panel, .ara-detay, .msj-pencere,
+.daha-fon, .hik-fon, .hik-duzen-fon, .hik-secim-fon, .sehir-fon, .uye-fon,
+.ai-sohbet-fon, .tan-form-fon, .hakkinda-fon, .davet-fon, .sa-fon { animation: none !important; }
 
 /* SAYFA BİLGİ PENCERESİ — sağ üst sayfa ikonuna basınca açılır (o sayfa ne işe yarar). Altın tema, siyah zemin YOK. */
 .sayfa-bilgi-pop{ position:fixed; z-index:100060; top:50%; left:50%; transform:translate(-50%,-50%); width:min(90vw,420px); background:linear-gradient(160deg,#fffdf5,#fff2cc); border:2px solid #FFD700; border-radius:20px; box-shadow:0 14px 44px rgba(80,60,0,.38); padding:18px 18px 20px; }
