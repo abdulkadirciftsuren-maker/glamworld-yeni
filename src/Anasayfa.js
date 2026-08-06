@@ -2405,7 +2405,9 @@ export default function Anasayfa({ pro = false }) {
         if (ev && ev.data && ev.data.tip === "sw-guncellendi") { guvenliYenile(); }
       });
     } catch (e) {}
-    navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js").then((reg) => {
+    // updateViaCache:"none" → tarayıcı sw.js'i HER kontrolde TAZE indirir (HTTP önbelleğinden değil) → yeni sürüm ANINDA görülür,
+    // eski sürümde takılma OLMAZ. (Kullanıcı B28'de takılıp kaldı çünkü tarayıcı sw.js'i önbellekten okuyordu.)
+    navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js", { updateViaCache: "none" }).then((reg) => {
       try { reg.update(); } catch (e) {}
       // Yeni surum hazir olunca (yeni servis calisan devralinca) sayfayi BIR KEZ yenile → kullanici hep guncel gorur
       reg.addEventListener && reg.addEventListener("updatefound", () => {
