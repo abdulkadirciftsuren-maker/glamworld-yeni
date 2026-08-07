@@ -172,6 +172,10 @@ function _kmUzaklik(lat1, lon1, lat2, lon2) {
 function _aiKm(id) { let h = 0; for (let i = 0; i < (id || "").length; i++) h = (h * 31 + id.charCodeAt(i)) % 100000; return 2 + (h % 94); }
 // Uygulama sürümü (Gloxoo SADECE yeni sürümde/güncelleme sonrası ilk açılışta selamlar)
 const AKTIF_SURUM = (buildGecmisi && buildGecmisi[0]) ? (buildGecmisi[0].surum + ".B" + buildGecmisi[0].build) : "";
+// SAYFA AÇILIŞ ZAMANI (modül yüklenince = sayfa açılınca sabitlenir). Otomatik güncelleme YENİLEMESİ, sayfa
+// yeni açılıp profil/ayar/foto verisi HÂLÂ yüklenirken araya girip sayfayı YARIM bırakıyordu ("güncellemede
+// sayfa eksik geliyor, çıkış-giriş yapınca düzeliyor"). Bu yüzden açılışın ilk saniyeleri KORUNUR (bkz. guvenliYenile).
+const ACILIS_MS = Date.now();
 // Hikâye YAZI STİLLERİ (Facebook gibi) — seçili yazıya uygulanır
 const HIK_FONTLAR = [
   { k: "sade", ad: "Sade", css: "-apple-system,'Segoe UI',Roboto,sans-serif" },
@@ -2384,6 +2388,10 @@ export default function Anasayfa({ pro = false }) {
   const guvenliYenile = (hedefHash) => {
     try {
       if (window.__groxYenilendi) return;
+      // ⛔ AÇILIŞ KORUMASI: sayfa yeni açıldıysa (ilk 35 sn) profil/ayar/foto verisi HÂLÂ yükleniyor olabilir.
+      // Şimdi yenilersek yükleme YARIDA kalır → sayfa EKSİK gelir (profil resmi/ayarlar gelmez). O yüzden ilk 35 sn
+      // yenileme YOK; veri tam otursun. Güncelleme kaçmaz — 60 sn'lik kontrol birazdan yine deneyip (süre dolunca) yeniler.
+      if (Date.now() - ACILIS_MS < 35000) return;
       // ⛔ MEŞGULKEN YENİLEME YOK: kullanıcı fotoğraf ekliyor/paylaşım yazıyor ya da Gloxoo konuşuyorsa
       // sayfayı yenilemek FOTOĞRAFLARI SİLER / konuşmayı KESER. Ertele; işi bitince (boşalınca) yenile.
       if (mesgulRef.current) { yenileBekleRef.current = true; return; }
