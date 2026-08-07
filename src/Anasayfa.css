@@ -1633,6 +1633,10 @@
 .ana-header-ince .ana-logo-metin{
   background:none !important; -webkit-text-fill-color:currentColor; color:#d21f2f;
   font-size:24px; line-height:1; font-weight:900; letter-spacing:.01em;
+  /* HER SAYFA ZEMİNİNDE OKUNSUN (kullanıcı: "bu yeşil zeminde yeşil GLOXORG gözükmüyor"): yazının rengi üye tipine göre
+     kalır AMA çevresine beyaz hâle + hafif koyu kontur → yeşil/mavi/mor gibi koyu zeminlerde de net görünür. */
+  text-shadow:0 0 2px rgba(255,255,255,.98), 0 0 4px rgba(255,255,255,.9), 0 1px 1px rgba(0,0,0,.35);
+  paint-order:stroke fill; -webkit-text-stroke:.6px rgba(255,255,255,.55);
 }
 .ana-header-ince .ana-alt-sar{ display:flex; align-items:center; gap:3px; max-width:100%; min-width:0; }
 /* Alt yazı: koyu banner için açık kremdi; ince şerit sayfanın AÇIK altın zemininde olduğundan KOYU altın + gölgesiz (okunur).

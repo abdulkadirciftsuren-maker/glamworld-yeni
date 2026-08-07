@@ -106,6 +106,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman }) {
   const [indirildi, setIndirildi] = useState(false); // "İndirildi" geri bildirimi
   const inpRef = useRef(null);
   const sonucRef = useRef(null); // sonuç gelince oraya kaydır
+  const dokunRef = useRef(null); // parmakla SOLA kaydırınca aynayı kapat (ana sayfaya dön) — kullanıcı isteği
   // Sonuç hazır olunca OTOMATİK sonuca kaydır (aşağıda kalıp görünmesin)
   useEffect(() => { if (sonuc && sonucRef.current) { try { sonucRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {} } }, [sonuc]);
   // ANDROID GERİ TUŞU / GEÇMİŞ: derinliği ana ekrana bildir → geri tuşuna basınca ÖNCE tam ekran fotoğrafı,
@@ -218,7 +219,9 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
   const renkler = renkGetir(kategori);
   const reklamdan = !!(baslangic && baslangic.refFotoUrl); // reklamdan gelindi → ürün SABİT, seçicileri gizle
   return (
-    <div className="sa-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}>
+    <div className="sa-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}
+      onTouchStart={(e) => { try { if (e.target.closest && e.target.closest("input, textarea, select, .sa-urun-serit, .sa-renk-serit, .sa-serit, .sa-kats, .sa-foto-buyut, .say-serit")) { dokunRef.current = null; return; } const d = e.touches[0]; dokunRef.current = { x: d.clientX, y: d.clientY }; } catch (x) { dokunRef.current = null; } }}
+      onTouchEnd={(e) => { const b = dokunRef.current; dokunRef.current = null; if (!b || buyuk) return; try { const d = e.changedTouches[0]; const dx = d.clientX - b.x, dy = d.clientY - b.y; if (dx < -70 && Math.abs(dx) > Math.abs(dy) * 2 && onKapat) onKapat(); } catch (x) {} }}>
       <div className="sa-pencere">
         <div className="sa-ust">
           <span className="sa-baslik">🪞 {t("saBaslik", "Sanal Ayna")}</span>

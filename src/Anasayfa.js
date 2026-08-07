@@ -7682,8 +7682,9 @@ export default function Anasayfa({ pro = false }) {
       const d = e.changedTouches[0];
       const dx = d.clientX - b.x, dy = d.clientY - b.y;
       if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return; // yatay net olmalı
-      // ANA SAYFADA SOLA ÇEKİNCE SANAL AYNA AÇILIR (kullanıcı isteği — şerit yazısı yok, ayna açılınca içinde açıklama var).
-      if (aktifKod === "home" && dx < 0) { setSanalAynaAcik(true); return; }
+      // ANA SAYFADA SAĞA ÇEKİNCE SANAL AYNA AÇILIR (kullanıcı: "sağa çekince ayna açılsın; sola çekince Elite açılsın").
+      // Sağa çekmek (dx>0) ana sayfada zaten boştaydı (önceki sayfa yok) → onu aynaya verdik. Sola çekmek normal akışta Elite'e gider.
+      if (aktifKod === "home" && dx > 0) { setSanalAynaAcik(true); return; }
       const i = navlar.findIndex((n) => n.k === aktifKod);
       let yeni = dx < 0 ? Math.min(i + 1, navlar.length - 1) : Math.max(i - 1, 0);
       // SON sayfada (Profil) sola kaydırınca ileri gidecek sayfa yok → kullanıcı yine de bir öncekine (Akademi) geçsin
