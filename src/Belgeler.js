@@ -141,25 +141,50 @@ function _hesapIfade(grid, expr, yol) {
 }
 function _goster(grid, r, c) { const v = _hesapHucre(grid, r, c, new Set()); return (typeof v === "number") ? v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : v; }
 
-// ===================== EXCEL TABLOSU EDİTÖRÜ (formüllü) =====================
+// ===================== EXCEL TABLOSU EDİTÖRÜ (Yazı / Hesap düğmeli + genişlik) =====================
 function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   const bosGrid = () => Array.from({ length: 8 }, () => Array.from({ length: 4 }, () => ""));
   const [ad, setAd] = useState((belge && belge.ad) || "");
   const [grid, setGrid] = useState((belge && Array.isArray(belge.grid) && belge.grid.length) ? belge.grid.map((r) => [...r]) : bosGrid());
-  const [odak, setOdak] = useState(null); // düzenlenen hücre {r,c} → HAM göster (formülü)
-  const [sira, setSira] = useState(null); // {c,yon}
+  const _sut = (belge && belge.grid && belge.grid[0]) ? belge.grid[0].length : 4;
+  const [gen, setGen] = useState((belge && Array.isArray(belge.gen) && belge.gen.length === _sut) ? [...belge.gen] : Array.from({ length: _sut }, () => 96));
+  const [odak, setOdak] = useState(null);
+  const [sira, setSira] = useState(null);
+  const [mod, setMod] = useState("yazi"); // yazi (yazı/rakam gir) | hesap (düğmeyle hesapla)
+  const [islem, setIslem] = useState(null); // "+" "-" "*" "/"
+  const [secili, setSecili] = useState([]); // ["r,c"]
+  const [sonucBekle, setSonucBekle] = useState(false);
+  const [genMod, setGenMod] = useState(false); // sütun genişlik ayarı açık mı
   const yazdirRef = useRef(null);
+  const sutunSay = grid[0] ? grid[0].length : 0;
   const hucre = (r, c, v) => setGrid((g) => g.map((row, i) => i === r ? row.map((x, j) => j === c ? v : x) : row));
   const satirEkle = () => setGrid((g) => [...g, Array.from({ length: g[0] ? g[0].length : 4 }, () => "")]);
-  const sutunEkle = () => setGrid((g) => g.map((r) => [...r, ""]));
+  const sutunEkle = () => { setGrid((g) => g.map((r) => [...r, ""])); setGen((w) => [...w, 96]); };
   const satirSil = () => setGrid((g) => g.length > 1 ? g.slice(0, -1) : g);
-  const sutunSil = () => setGrid((g) => (g[0] && g[0].length > 1) ? g.map((r) => r.slice(0, -1)) : g);
-  const sutunSay = grid[0] ? grid[0].length : 0;
-  // ∑ Toplam: her sütuna CANLI toplam formülü (=TOPLA(A1:A{n})) ekle → sayı değişince kendi güncellenir
+  const sutunSil = () => { setGrid((g) => (g[0] && g[0].length > 1) ? g.map((r) => r.slice(0, -1)) : g); setGen((w) => w.length > 1 ? w.slice(0, -1) : w); };
   const toplamSatir = () => setGrid((g) => { const n = g.length; const cols = g[0] ? g[0].length : 0; return [...g, Array.from({ length: cols }, (_, c) => "=TOPLA(" + _colHarf(c) + "1:" + _colHarf(c) + n + ")")]; });
-  // Harf başlığına dokununca o sütuna göre sırala (artan/azalan)
   const sirala = (c) => { const yon = (sira && sira.c === c && sira.yon === "art") ? "azal" : "art"; setSira({ c, yon }); setGrid((g) => { const k = g.map((row) => [...row]); k.sort((a, b) => { const va = _hesapHucre([a], 0, c, new Set()), vb = _hesapHucre([b], 0, c, new Set()); const r = (typeof va === "number" && typeof vb === "number") ? (va - vb) : String(va).localeCompare(String(vb), "tr"); return yon === "art" ? r : -r; }); return k; }); };
-  const kaydet = () => onKaydet({ belgeTuru: "tablo", ad: ad.trim() || t("belAdsiz", "Adsız tablo"), grid, zamanMs: Date.now() });
+  const genDegis = (c, d) => setGen((w) => w.map((x, i) => i === c ? Math.max(56, Math.min(240, (x || 96) + d)) : x));
+  const kaydet = () => onKaydet({ belgeTuru: "tablo", ad: ad.trim() || t("belAdsiz", "Adsız tablo"), grid, gen, zamanMs: Date.now() });
+
+  // HESAP modu: işlem seç → hücrelere dokun (seçilir) → "＝ Sonuç" → boş hücreye dokun (formül yazılır, düğmeyle hesap)
+  const hucreTikla = (r, c) => {
+    const key = r + "," + c;
+    if (sonucBekle) {
+      const refs = secili.map((k) => { const [rr, cc] = k.split(",").map(Number); return _colHarf(cc) + (rr + 1); });
+      if (refs.length < 2) { bilgi(t("belEnAz2", "En az 2 hücre seç")); return; }
+      hucre(r, c, "=" + refs.join(islem)); setSecili([]); setSonucBekle(false); setIslem(null);
+      bilgi(t("belHesaplandi", "Hesaplandı ✓ sonuç hücreye yazıldı"));
+      return;
+    }
+    if (!islem) { bilgi(t("belOnceIslem", "Önce işlem seç: ＋ － × ÷")); return; }
+    setSecili((s) => s.includes(key) ? s.filter((x) => x !== key) : [...s, key]);
+  };
+  const secRefler = secili.map((k) => { const [rr, cc] = k.split(",").map(Number); return _colHarf(cc) + (rr + 1); });
+  const secOnizle = secRefler.join(" " + (islem === "*" ? "×" : islem === "/" ? "÷" : islem || "") + " ");
+  const canli = (islem && secRefler.length >= 2) ? _hesapIfade(grid, secRefler.join(islem), new Set()) : null;
+  const canliYazi = (typeof canli === "number") ? canli.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : (canli || "");
+  const oplar = [["+", "➕ " + t("belTopla2", "Topla")], ["-", "➖ " + t("belCikar", "Çıkar")], ["*", "✖️ " + t("belCarp", "Çarp")], ["/", "➗ " + t("belBol", "Böl")]];
 
   return (
     <div className="bel-editor">
@@ -167,21 +192,44 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button>
         <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belTabloAd", "Tablo adı")} />
       </div>
+      {/* YAZI / HESAP bölümü AYRI (kullanıcı isteği) */}
+      <div className="bel-mod-sec">
+        <button className={"bel-mod-btn" + (mod === "yazi" ? " aktif" : "")} onClick={() => { setMod("yazi"); setIslem(null); setSecili([]); setSonucBekle(false); }}>✍️ {t("belYaziMod", "Yazı / Rakam gir")}</button>
+        <button className={"bel-mod-btn" + (mod === "hesap" ? " aktif" : "")} onClick={() => { setMod("hesap"); setGenMod(false); setOdak(null); }}>🔢 {t("belHesapMod", "Düğmeyle hesapla")}</button>
+      </div>
       <div className="bel-arac">
         <button onClick={satirEkle}>＋ {t("belSatir", "Satır")}</button>
         <button onClick={sutunEkle}>＋ {t("belSutun", "Sütun")}</button>
         <button onClick={satirSil}>－ {t("belSatir", "Satır")}</button>
         <button onClick={sutunSil}>－ {t("belSutun", "Sütun")}</button>
         <button onClick={toplamSatir}>∑ {t("belToplam", "Toplam")}</button>
+        <button className={genMod ? "bel-arac-aktif" : ""} onClick={() => setGenMod((a) => !a)}>↔ {t("belGenislik", "Genişlik")}</button>
       </div>
-      <div className="bel-formul-ipucu">{t("belFormulIpucu", "🧮 Otomatik hesap: hücreye = ile başla → =A1+B1 (topla), =B1-C1 (kalan), =A2*B2 (çarp), =TOPLA(A1:A5). Üstteki harfe dokun → sırala.")}</div>
+      {mod === "hesap" ? (
+        <div className="bel-hesap-bar">
+          <div className="bel-op-satir">{oplar.map(([o, et]) => (
+            <button key={o} className={"bel-op-btn" + (islem === o ? " sec" : "")} onClick={() => { setIslem(o); setSonucBekle(false); }}>{et}</button>
+          ))}</div>
+          <div className="bel-hesap-ipucu">{sonucBekle ? ("👉 " + t("belSonucDokun", "Sonucun çıkacağı BOŞ hücreye dokun")) : islem ? ("👉 " + t("belHucreleriSec", "Hesaplanacak sayı hücrelerine dokun (seçilir)")) : ("👉 " + t("belIslemSec", "Önce işlem seç: Topla / Çıkar / Çarp / Böl"))}</div>
+          {secili.length > 0 && <div className="bel-onizle">{secOnizle}{canli != null ? " = " + canliYazi : ""}</div>}
+          <div className="bel-hesap-dug">
+            <button className="bel-sonuc-btn" disabled={!islem || secili.length < 2} onClick={() => { setSonucBekle(true); bilgi(t("belSonucDokun2", "Şimdi sonucun çıkacağı boş hücreye dokun")); }}>＝ {t("belSonucYaz", "Sonucu yaz")}</button>
+            <button className="bel-vazgec-btn" onClick={() => { setSecili([]); setIslem(null); setSonucBekle(false); }}>✕ {t("belTemizle", "Temizle")}</button>
+          </div>
+        </div>
+      ) : (
+        <div className="bel-formul-ipucu">{t("belYaziIpucu", "✍️ Hücrelere yazı ya da rakam yaz. Hesap yapmak için üstten 🔢 Düğmeyle hesapla'ya geç. (İstersen elle formül de yazabilirsin: =A1+B1) Üstteki harfe dokun → sırala.")}</div>
+      )}
       <div className="bel-tablo-sar">
         <table className="bel-tablo">
           <tbody>
             <tr>
               <td className="bel-th bel-kose"></td>
               {Array.from({ length: sutunSay }, (_, c) => (
-                <td key={c} className="bel-th bel-colbas" onClick={() => sirala(c)}>{_colHarf(c)}{sira && sira.c === c ? (sira.yon === "art" ? " ▲" : " ▼") : ""}</td>
+                <td key={c} className="bel-th bel-colbas" style={{ width: gen[c], minWidth: gen[c] }}>
+                  {genMod ? (<span className="bel-gen-ayar"><button onClick={() => genDegis(c, -18)}>－</button><b>{_colHarf(c)}</b><button onClick={() => genDegis(c, 18)}>＋</button></span>)
+                    : (<span onClick={() => mod !== "hesap" && sirala(c)}>{_colHarf(c)}{sira && sira.c === c ? (sira.yon === "art" ? " ▲" : " ▼") : ""}</span>)}
+                </td>
               ))}
             </tr>
             {grid.map((row, r) => (
@@ -190,10 +238,14 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
                 {row.map((v, c) => {
                   const odakli = odak && odak.r === r && odak.c === c;
                   const formul = String(v || "").trim().startsWith("=");
+                  const sec = mod === "hesap" && secili.includes(r + "," + c);
                   return (
-                    <td key={c} className={formul ? "bel-hucre-formul" : ""}>
-                      <input className="bel-hucre" value={odakli ? v : _goster(grid, r, c)}
-                        onFocus={() => setOdak({ r, c })} onBlur={() => setOdak(null)} onChange={(e) => hucre(r, c, e.target.value)} />
+                    <td key={c} style={{ width: gen[c], minWidth: gen[c] }}
+                      className={(formul ? "bel-hucre-formul" : "") + (sec ? " bel-hucre-secili" : "")}
+                      onClick={mod === "hesap" ? () => hucreTikla(r, c) : undefined}>
+                      <input className="bel-hucre" readOnly={mod === "hesap"}
+                        value={(odakli && mod !== "hesap") ? v : _goster(grid, r, c)}
+                        onFocus={() => mod !== "hesap" && setOdak({ r, c })} onBlur={() => setOdak(null)} onChange={(e) => hucre(r, c, e.target.value)} />
                     </td>
                   );
                 })}
@@ -202,7 +254,6 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
           </tbody>
         </table>
       </div>
-      {/* DIŞA AKTARMA için HESAPLANMIŞ değerli tablo (ekran dışında) — PDF/Excel formül sonucunu alır */}
       <table className="bel-tablo bel-yazdir-tablo" ref={yazdirRef} aria-hidden="true">
         <tbody>{grid.map((row, r) => (<tr key={r}>{row.map((v, c) => <td key={c}>{_goster(grid, r, c)}</td>)}</tr>))}</tbody>
       </table>
