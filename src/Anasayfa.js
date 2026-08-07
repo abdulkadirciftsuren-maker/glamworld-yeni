@@ -3303,7 +3303,17 @@ export default function Anasayfa({ pro = false }) {
     setSohbetGonderiliyor(false);
   };
   // ---- İNTERNET ARAMASI (WebRTC — sesli/görüntülü) ----
-  const ICE_SUNUCULAR = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }, { urls: "stun:stun2.l.google.com:19302" }] };
+  // ICE sunucuları: STUN + TURN. SADECE STUN varken iPhone (özellikle hücresel veri/operatör ağı) arkasında iki taraf
+  // birbirine DOĞRUDAN bağlanamıyor → arama "bağlandı" görünüp SES/GÖRÜNTÜ HİÇ GELMİYORDU. TURN (röle) sunucusu bu durumda
+  // medyayı aktarır. Aşağıdaki açık/ücretsiz TURN (Open Relay) eklendi; önce STUN denenir, gerekince TURN devreye girer.
+  const ICE_SUNUCULAR = { iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+  ], iceCandidatePoolSize: 4 };
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
@@ -3315,6 +3325,19 @@ export default function Anasayfa({ pro = false }) {
     try { if (uzakVideoRef.current) uzakVideoRef.current.srcObject = null; } catch (e) {}
     try { if (uzakSesRef.current) uzakSesRef.current.srcObject = null; } catch (e) {}
     try { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = null; } catch (e) {}
+  };
+  // "Seni arıyor" bildirimini KAPAT — arama açılınca/bitince/reddedilince. Kullanıcı: "aramayı açıp konuştuğum halde
+  // 'seni aradılar, cevap ver' bildirimi ekranda kalıyor". Aramayı ele aldığımız cihazda o bildirimi (tag grox-arama) kapatırız.
+  const aramaBildirimKapat = () => {
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          (regs || []).forEach((reg) => {
+            try { reg.getNotifications && reg.getNotifications({ tag: "grox-arama" }).then((ns) => (ns || []).forEach((n) => { try { n.close(); } catch (e) {} })).catch(() => {}); } catch (e) {}
+          });
+        }).catch(() => {});
+      }
+    } catch (e) {}
   };
   // Arama konuşmaya geçince (elementler mount olunca) uzak ses/görüntüyü bağla — timing garantisi
   useEffect(() => {
@@ -3342,6 +3365,7 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) {}
     benAradimRef.current = false; aramaKarsiRef.current = null; aramaKonusBasRef.current = 0;
     aramaTemizle();
+    aramaBildirimKapat(); // arama bitti → kalan "seni aradılar" bildirimini kapat
     setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null); setAramaZoom(1);
   };
   const medyaAl = async (tip) => {
@@ -3408,6 +3432,7 @@ export default function Anasayfa({ pro = false }) {
     const g = gelenArama; if (!g) return;
     if (!g.offer || !g.offer.sdp) { bilgiBalonu(t("aramaHazirlaniyor", "Arama hazırlanıyor, bir saniye…")); return; } // teklif yoksa kabul etme (yoksa hata → kapanır)
     setGelenArama(null);
+    aramaBildirimKapat(); // açtık → "seni aradılar" bildirimi ekranda kalmasın
     // ARAMA GÜNLÜĞÜ: BEN aramadım (gelen aramayı kabul ettim) → günlüğü ARAYAN yazar, ben yazmam (mükerrer olmasın)
     benAradimRef.current = false; aramaKarsiRef.current = { uid: g.arayanUid, ad: g.arayanAd || "", foto: g.arayanFoto || "" }; aramaKonusBasRef.current = 0;
     try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
@@ -3424,7 +3449,7 @@ export default function Anasayfa({ pro = false }) {
     const ab2 = iceAdaylariDinle(g.id, "arayan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
     aramaAbonelikRef.current.push(ab1, ab2);
   };
-  const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); };
+  const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
   // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
   const zilRef = useRef(null);
   const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
