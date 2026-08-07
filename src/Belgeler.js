@@ -79,18 +79,57 @@ export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcN
   </>);
 }
 
-// ===================== EXCEL TABLOSU EDİTÖRÜ =====================
+// ---- HESAP TABLOSU FORMÜL MOTORU: =A1+B1 (topla), =B1-C1 (kalan), =A2*B2 (çarp), =TOPLA(A1:A5) ----
+function _colHarf(c) { let s = ""; c++; while (c > 0) { const m = (c - 1) % 26; s = String.fromCharCode(65 + m) + s; c = Math.floor((c - 1) / 26); } return s; }
+function _harfIdx(h) { let n = 0; for (const ch of String(h).toUpperCase()) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; }
+function _trSayi(s) { const x = String(s == null ? "" : s).trim().replace(/\s/g, ""); if (x === "") return NaN; if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(x)) return parseFloat(x.replace(/\./g, "").replace(",", ".")); return parseFloat(x.replace(",", ".")); }
+function _hesapHucre(grid, r, c, yol) {
+  if (r < 0 || c < 0 || r >= grid.length || !grid[r] || c >= grid[r].length) return 0;
+  const key = r + "," + c; if (yol.has(key)) return "#DÖNGÜ";
+  const ham = String(grid[r][c] == null ? "" : grid[r][c]).trim();
+  if (!ham.startsWith("=")) { const n = _trSayi(ham); return isNaN(n) ? ham : n; }
+  yol.add(key); const v = _hesapIfade(grid, ham.slice(1), yol); yol.delete(key); return v;
+}
+function _refSayi(grid, ref, yol) { const m = String(ref).match(/^([A-Za-z]+)(\d+)$/); if (!m) return 0; const v = _hesapHucre(grid, parseInt(m[2], 10) - 1, _harfIdx(m[1]), yol); return typeof v === "number" ? v : (_trSayi(v) || 0); }
+function _aralik(grid, arg, yol) {
+  const m = String(arg).match(/^\s*([A-Za-z]+)(\d+)\s*:\s*([A-Za-z]+)(\d+)\s*$/);
+  if (!m) return String(arg).split(",").reduce((s, x) => s + _refSayi(grid, x.trim(), yol), 0);
+  const c1 = _harfIdx(m[1]), r1 = +m[2] - 1, c2 = _harfIdx(m[3]), r2 = +m[4] - 1; let s = 0;
+  for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++) for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) s += _refSayi(grid, _colHarf(c) + (r + 1), yol);
+  return s;
+}
+function _hesapIfade(grid, expr, yol) {
+  try {
+    let e = String(expr);
+    e = e.replace(/(TOPLA|SUM)\s*\(([^()]*)\)/gi, (mm, fn, args) => _aralik(grid, args, yol));
+    e = e.replace(/[A-Za-z]+\d+/g, (ref) => _refSayi(grid, ref, yol));
+    if (!/^[-+*/().\s0-9]*$/.test(e)) return "#HATA";
+    if (e.trim() === "") return 0;
+    // eslint-disable-next-line no-new-func
+    const r = Function('"use strict";return(' + e + ")")();
+    return (typeof r === "number" && isFinite(r)) ? r : "#HATA";
+  } catch (x) { return "#HATA"; }
+}
+function _goster(grid, r, c) { const v = _hesapHucre(grid, r, c, new Set()); return (typeof v === "number") ? v.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : v; }
+
+// ===================== EXCEL TABLOSU EDİTÖRÜ (formüllü) =====================
 function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   const bosGrid = () => Array.from({ length: 8 }, () => Array.from({ length: 4 }, () => ""));
   const [ad, setAd] = useState((belge && belge.ad) || "");
   const [grid, setGrid] = useState((belge && Array.isArray(belge.grid) && belge.grid.length) ? belge.grid.map((r) => [...r]) : bosGrid());
+  const [odak, setOdak] = useState(null); // düzenlenen hücre {r,c} → HAM göster (formülü)
+  const [sira, setSira] = useState(null); // {c,yon}
   const yazdirRef = useRef(null);
   const hucre = (r, c, v) => setGrid((g) => g.map((row, i) => i === r ? row.map((x, j) => j === c ? v : x) : row));
   const satirEkle = () => setGrid((g) => [...g, Array.from({ length: g[0] ? g[0].length : 4 }, () => "")]);
   const sutunEkle = () => setGrid((g) => g.map((r) => [...r, ""]));
   const satirSil = () => setGrid((g) => g.length > 1 ? g.slice(0, -1) : g);
   const sutunSil = () => setGrid((g) => (g[0] && g[0].length > 1) ? g.map((r) => r.slice(0, -1)) : g);
-  const toplamSatir = () => setGrid((g) => { const cols = g[0] ? g[0].length : 0; const tp = Array.from({ length: cols }, (_, c) => { const s = g.reduce((a, r) => a + sayi(r[c]), 0); return s ? String(para2(s)) : (c === 0 ? "TOPLAM" : ""); }); return [...g, tp]; });
+  const sutunSay = grid[0] ? grid[0].length : 0;
+  // ∑ Toplam: her sütuna CANLI toplam formülü (=TOPLA(A1:A{n})) ekle → sayı değişince kendi güncellenir
+  const toplamSatir = () => setGrid((g) => { const n = g.length; const cols = g[0] ? g[0].length : 0; return [...g, Array.from({ length: cols }, (_, c) => "=TOPLA(" + _colHarf(c) + "1:" + _colHarf(c) + n + ")")]; });
+  // Harf başlığına dokununca o sütuna göre sırala (artan/azalan)
+  const sirala = (c) => { const yon = (sira && sira.c === c && sira.yon === "art") ? "azal" : "art"; setSira({ c, yon }); setGrid((g) => { const k = g.map((row) => [...row]); k.sort((a, b) => { const va = _hesapHucre([a], 0, c, new Set()), vb = _hesapHucre([b], 0, c, new Set()); const r = (typeof va === "number" && typeof vb === "number") ? (va - vb) : String(va).localeCompare(String(vb), "tr"); return yon === "art" ? r : -r; }); return k; }); };
   const kaydet = () => onKaydet({ belgeTuru: "tablo", ad: ad.trim() || t("belAdsiz", "Adsız tablo"), grid, zamanMs: Date.now() });
 
   return (
@@ -106,23 +145,41 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button onClick={sutunSil}>－ {t("belSutun", "Sütun")}</button>
         <button onClick={toplamSatir}>∑ {t("belToplam", "Toplam")}</button>
       </div>
+      <div className="bel-formul-ipucu">{t("belFormulIpucu", "🧮 Otomatik hesap: hücreye = ile başla → =A1+B1 (topla), =B1-C1 (kalan), =A2*B2 (çarp), =TOPLA(A1:A5). Üstteki harfe dokun → sırala.")}</div>
       <div className="bel-tablo-sar">
-        <table className="bel-tablo" ref={yazdirRef}>
+        <table className="bel-tablo">
           <tbody>
+            <tr>
+              <td className="bel-th bel-kose"></td>
+              {Array.from({ length: sutunSay }, (_, c) => (
+                <td key={c} className="bel-th bel-colbas" onClick={() => sirala(c)}>{_colHarf(c)}{sira && sira.c === c ? (sira.yon === "art" ? " ▲" : " ▼") : ""}</td>
+              ))}
+            </tr>
             {grid.map((row, r) => (
               <tr key={r}>
                 <td className="bel-th">{r + 1}</td>
-                {row.map((v, c) => (
-                  <td key={c}><input className="bel-hucre" value={v} onChange={(e) => hucre(r, c, e.target.value)} /></td>
-                ))}
+                {row.map((v, c) => {
+                  const odakli = odak && odak.r === r && odak.c === c;
+                  const formul = String(v || "").trim().startsWith("=");
+                  return (
+                    <td key={c} className={formul ? "bel-hucre-formul" : ""}>
+                      <input className="bel-hucre" value={odakli ? v : _goster(grid, r, c)}
+                        onFocus={() => setOdak({ r, c })} onBlur={() => setOdak(null)} onChange={(e) => hucre(r, c, e.target.value)} />
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {/* DIŞA AKTARMA için HESAPLANMIŞ değerli tablo (ekran dışında) — PDF/Excel formül sonucunu alır */}
+      <table className="bel-tablo bel-yazdir-tablo" ref={yazdirRef} aria-hidden="true">
+        <tbody>{grid.map((row, r) => (<tr key={r}>{row.map((v, c) => <td key={c}>{_goster(grid, r, c)}</td>)}</tr>))}</tbody>
+      </table>
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
-        <button className="muh-btn muh-excel" onClick={() => excelIndirAoa(ad || "tablo", grid).then(() => bilgi(t("belExcelIndi", "Excel indirildi 📊"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📊 Excel</button>
+        <button className="muh-btn muh-excel" onClick={() => excelIndirAoa(ad || "tablo", grid.map((row, r) => row.map((v, c) => { const d = _hesapHucre(grid, r, c, new Set()); return typeof d === "number" ? d : String(d); }))).then(() => bilgi(t("belExcelIndi", "Excel indirildi 📊"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📊 Excel</button>
         <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || "tablo").then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
       </div>
     </div>
