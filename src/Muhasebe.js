@@ -129,7 +129,10 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
   return (
     <div className="muh-sayfa" onClick={() => menuId && setMenuId(null)}>
       <div className="muh-ic">
-        <div className="muh-bas">📊 <b>{t("muhBaslik", "Muhasebe")}</b></div>
+        <div className="muh-bas">
+          <span>📊 <b>{t("muhBaslik", "Muhasebe")}</b></span>
+          <button className="muh-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+        </div>
 
         {/* SEKME ŞERİDİ */}
         <div className="muh-sekmeler">

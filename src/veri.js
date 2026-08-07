@@ -198,37 +198,34 @@ export async function profilKaydet(uid, veri) {
 // YUMUŞAK SİLME (çöp kutusu): silme HARD-DELETE değil → silindi:true + silinmeMs. ~30 gün sonra kalıcı silinir (purge).
 // Çöp kutusundan geri yüklenebilir. Canlı dinleme (onSnapshot) → hep güncel; SADECE kullanıcı silince silinir.
 export const MUH_COP_GUN = 30; // çöp kutusunda saklama süresi (gün)
+// NOT: Şu an CİHAZDA saklanıyor (localStorage) → hemen çalışır, "Yükleniyor"da takılmaz, izin/kural gerektirmez.
+// (Firestore alt-koleksiyon kuralı yayınlanınca buluta/çok-cihaza da bağlanabilir. Foto→PDF gibi büyük görseller BURADA
+//  tutulmaz — sadece küçük metin verisi: müşteri/stok/kayıt/belge; kotayı zorlamaz.)
+function muhAnahtar(uid) { return "gw_muhasebe_" + (uid || "yerel"); }
+function muhOku(uid) { try { return JSON.parse(localStorage.getItem(muhAnahtar(uid)) || "[]"); } catch (e) { return []; } }
+function muhYaz(uid, liste) {
+  try { localStorage.setItem(muhAnahtar(uid), JSON.stringify(liste)); } catch (e) {}
+  try { window.dispatchEvent(new CustomEvent("gw-muhasebe-degisti", { detail: uid || "yerel" })); } catch (e) {}
+}
 export function muhasebeDinle(uid, cb) {
-  if (!uid) { try { cb([]); } catch (e) {} return () => {}; }
-  try {
-    return onSnapshot(collection(db, KULLANICILAR, uid, "muhasebe"),
-      (snap) => { try { const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })); cb(liste); } catch (e) {} },
-      () => {});
-  } catch (e) { try { cb([]); } catch (x) {} return () => {}; }
+  const gonder = () => { try { cb(muhOku(uid)); } catch (e) {} };
+  gonder(); // ANINDA (takılma yok)
+  const f = (e) => { if (!e || !e.detail || e.detail === (uid || "yerel")) gonder(); };
+  const g = (e) => { if (e && e.key === muhAnahtar(uid)) gonder(); }; // başka sekmede değişirse de güncelle
+  try { window.addEventListener("gw-muhasebe-degisti", f); window.addEventListener("storage", g); } catch (e) {}
+  return () => { try { window.removeEventListener("gw-muhasebe-degisti", f); window.removeEventListener("storage", g); } catch (e) {} };
 }
-// Yeni kayıt ekle (tip: cari/stok/islem/kasa) → id döner
 export async function muhasebeEkle(uid, veri) {
-  if (!uid) return null;
-  try {
-    const id = "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    await setDoc(doc(db, KULLANICILAR, uid, "muhasebe", id), { ...veri, silindi: false, silinmeMs: 0, zamanMs: Date.now(), guncelleme: serverTimestamp() });
-    return id;
-  } catch (e) { return null; }
+  const id = "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const liste = muhOku(uid); liste.push({ id, ...veri, silindi: false, silinmeMs: 0, zamanMs: Date.now() }); muhYaz(uid, liste); return id;
 }
-// Güncelle (merge)
 export async function muhasebeGuncelle(uid, id, veri) {
-  if (!uid || !id) return false;
-  try { await setDoc(doc(db, KULLANICILAR, uid, "muhasebe", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+  const liste = muhOku(uid); const i = liste.findIndex((x) => x.id === id); if (i < 0) return false;
+  liste[i] = { ...liste[i], ...veri }; muhYaz(uid, liste); return true;
 }
-// ÇÖPE AT (yumuşak sil) — geri yüklenebilir, ~30 gün sonra kalıcı silinir
 export async function muhasebeCopeAt(uid, id) { return muhasebeGuncelle(uid, id, { silindi: true, silinmeMs: Date.now() }); }
-// ÇÖPTEN GERİ YÜKLE
 export async function muhasebeGeriYukle(uid, id) { return muhasebeGuncelle(uid, id, { silindi: false, silinmeMs: 0 }); }
-// KALICI SİL (çöp kutusundan tamamen kaldır)
-export async function muhasebeKaliciSil(uid, id) {
-  if (!uid || !id) return false;
-  try { await deleteDoc(doc(db, KULLANICILAR, uid, "muhasebe", id)); return true; } catch (e) { return false; }
-}
+export async function muhasebeKaliciSil(uid, id) { const liste = muhOku(uid).filter((x) => x.id !== id); muhYaz(uid, liste); return true; }
 
 // CANLI KONUM — kullanıcının ŞU ANKİ yerini yaz (arkadaşları haritada "yanında" görsün).
 // zaman: tazelik (eski konumları elemek için). merge → profilin gerisini bozmaz.

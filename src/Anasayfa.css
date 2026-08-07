@@ -1730,6 +1730,11 @@
 .ana-kok.sayfa-video{ background:radial-gradient(ellipse at 50% 20%, #a55cf0 0%, #7d3fd0 42%, #5a2aa0 72%, #3f1c78 100%) !important; }   /* mor ikon */
 .ana-kok.sayfa-ayna{ background:radial-gradient(ellipse at 50% 16%, #f7e79a 0%, #eccf6a 44%, #e0be55 76%, #d4af37 100%) !important; }   /* Sanal Ayna — altın */
 .ana-kok.sayfa-ayna .ana-arka-foto{ display:none !important; }
+/* MUHASEBE — ODAK SAYFASI: altın zemin; kategori ikon şeridi GİZLİ (kullanıcı: "o sayfa ikonlarını kaldır, sağa-sola gitmesin").
+   Üstte ince şerit (menü, GLOXORG, bildirim, Gloxoo/arama) durur; çıkış X düğmesiyle. */
+.ana-kok.sayfa-muhasebe{ background:radial-gradient(ellipse at 50% 16%, #f7e79a 0%, #eccf6a 44%, #e0be55 76%, #d4af37 100%) !important; }
+.ana-kok.sayfa-muhasebe .ana-nav{ display:none !important; }
+.ana-kok.sayfa-muhasebe .ana-arka-foto{ display:none !important; }
 /* ═══ CANLI AKIŞ (video sayfası) — canlı yayın bölümü + kısa video ızgarası ═══ */
 .cy-pencere{ padding:12px 12px 90px; }
 .cy-hero{ display:flex; align-items:center; gap:12px; background:linear-gradient(135deg,#2a0f4d,#4a1d86); border:2px solid rgba(255,215,0,.35); border-radius:18px; padding:14px 15px; box-shadow:0 6px 20px rgba(30,10,70,.5); }
@@ -5048,7 +5053,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* ===================== MUHASEBE (muhasebeci sayfası) ===================== */
 .muh-sayfa{ width:100%; display:flex; justify-content:center; background:radial-gradient(circle at 50% 12%, #f7e79a, #e6c85a 80%, #d4af37); }
 .muh-ic{ width:100%; max-width:640px; padding:10px 14px 30px; position:relative; }
-.muh-bas{ font-size:22px; font-weight:900; color:#5a3f00; margin:4px 0 8px; }
+.muh-bas{ font-size:22px; font-weight:900; color:#5a3f00; margin:4px 0 8px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.muh-kapat{ flex:none; width:40px; height:40px; border-radius:11px; border:2px solid #b8860b; background:#fff7db; color:#7a5a00; font-size:20px; font-weight:900; cursor:pointer; line-height:1; }
+.muh-kapat:active{ transform:scale(.94); }
 .muh-alt{ color:#6a4e10; font-size:14px; font-weight:600; line-height:1.5; margin-bottom:12px; }
 .muh-btn{ border:none; border-radius:12px; font-family:inherit; font-weight:900; font-size:15px; cursor:pointer; padding:12px 12px; }
 .muh-btn:active{ transform:scale(.97); }

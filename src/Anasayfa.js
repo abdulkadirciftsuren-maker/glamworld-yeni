@@ -7674,6 +7674,9 @@ export default function Anasayfa({ pro = false }) {
     //    başka sayfaya geçip Akademi'de yüklenen ders/foto KAYBOLUYORDU (kullanıcı: "yüklediklerim aniden kayboluyor").
     //    Artık Akademi içindeyken kaymaz; çıkmak için "‹ Geri" ya da alt menü kullanılır.
     if (aktifKod === "akademi" && akademiDerinlikRef.current > 0) { dokunRef.current = null; return; }
+    // ⛔ MUHASEBE'DE PARMAKLA SAYFA DEĞİŞTİRME YOK (kullanıcı: "sağa-sola gidince yaptığım işlemler bozuluyor").
+    //    Muhasebe odak sayfası; çıkmak için X düğmesi / menü kullanılır. Yanlışlıkla çıkıp iş kaybolmaz.
+    if (aktifKod === "muhasebe") { dokunRef.current = null; return; }
     try {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.

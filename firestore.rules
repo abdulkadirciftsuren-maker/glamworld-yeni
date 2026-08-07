@@ -15,6 +15,12 @@ service cloud.firestore {
       allow create, update: if sahip(uid);
       // Yönetici (sahip e-posta) hayalet/eski kayıtları silebilir; başka kimse silemez
       allow delete: if request.auth != null && request.auth.token.email == "abdulkadirciftsuren@gmail.com";
+
+      // MUHASEBE — ÖZEL (sadece sahibi okur/yazar; kimse başkasının muhasebesini/faturasını göremez).
+      // Şu an istemci CİHAZDA (localStorage) saklıyor; bu kural yayınlanınca buluta/çok-cihaza geçilebilir.
+      match /muhasebe/{belgeId} {
+        allow read, write: if sahip(uid);
+      }
     }
 
     // Gönderiler (akış) — herkes okur; giriş yapan oluşturur; SAHİBİ her şeyi düzenler/siler.
