@@ -5131,6 +5131,50 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .muh-cop-geri{ background:#e9f7ef; color:#1f8b4c; border:1.3px solid #9fd8b6; border-radius:9px; padding:7px 9px; font-family:inherit; font-weight:800; font-size:13px; cursor:pointer; white-space:nowrap; }
 .muh-cop-sil{ background:#fff2f0; color:#c0392b; border:1.3px solid #e0a79f; border-radius:9px; width:30px; height:30px; font-weight:900; cursor:pointer; }
 select.muh-inp{ appearance:none; -webkit-appearance:none; background-image:linear-gradient(45deg,transparent 50%,#a07800 50%),linear-gradient(135deg,#a07800 50%,transparent 50%); background-position:calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:34px; }
+
+/* ===== BELGELER (Excel tablosu / Word belgesi / Fatura) ===== */
+.bel-yeni{ display:flex; gap:8px; margin-bottom:12px; }
+.bel-yeni-btn{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; padding:14px 6px; border-radius:14px; border:2px solid transparent; font-family:inherit; font-weight:900; font-size:12.5px; cursor:pointer; color:#fff; }
+.bel-yeni-btn span{ line-height:1.1; text-align:center; }
+.bel-yeni-btn.tablo{ background:linear-gradient(150deg,#34c878,#0f8d4c); }
+.bel-yeni-btn.yazi{ background:linear-gradient(150deg,#4a7fe0,#274ea0); }
+.bel-yeni-btn.fatura{ background:linear-gradient(150deg,#e0a020,#b8750b); }
+.bel-yeni-btn:active{ transform:scale(.97); }
+.bel-editor{ display:flex; flex-direction:column; gap:10px; }
+.bel-ust{ display:flex; align-items:center; gap:8px; }
+.bel-ad-inp{ flex:1; padding:10px 12px; border-radius:11px; border:1.6px solid rgba(160,120,0,.5); background:#fff; color:#4a3500; font-size:15.5px; font-weight:800; font-family:inherit; }
+.bel-arac{ display:flex; gap:6px; flex-wrap:wrap; }
+.bel-arac button{ background:#fff7db; border:1.4px solid rgba(184,134,11,.5); border-radius:9px; padding:8px 11px; font-family:inherit; font-weight:800; font-size:13.5px; color:#7a5a00; cursor:pointer; }
+.bel-arac button:active{ transform:scale(.95); }
+/* Excel tablo grid */
+.bel-tablo-sar{ overflow:auto; border:1.6px solid rgba(160,120,0,.5); border-radius:12px; background:#fff; max-height:56vh; }
+.bel-tablo{ border-collapse:collapse; width:100%; }
+.bel-tablo td{ border:1px solid #e0cf9a; padding:0; }
+.bel-th{ background:#f2e4b8; color:#7a5a00; font-weight:800; font-size:12px; text-align:center; min-width:26px; padding:0 4px !important; }
+.bel-hucre{ border:none; outline:none; padding:9px 8px; font-size:14px; color:#333; width:100%; min-width:90px; background:transparent; font-family:inherit; }
+.bel-hucre:focus{ background:#fff7db; }
+.bel-alt-dugmeler{ display:flex; gap:7px; flex-wrap:wrap; }
+.bel-alt-dugmeler .muh-btn{ flex:1; min-width:88px; }
+/* Word yazı alanı */
+.bel-yazi-alan{ min-height:44vh; background:#fff; border:1.6px solid rgba(160,120,0,.5); border-radius:12px; padding:16px; font-size:15.5px; color:#222; line-height:1.6; overflow-y:auto; }
+.bel-yazi-alan:focus{ outline:2px solid #FFD700; }
+/* Fatura */
+.bel-ikili{ display:flex; gap:8px; } .bel-ikili .muh-inp{ flex:1; }
+.bel-fat-satirlar{ background:#fffbe9; border:1.5px solid rgba(160,120,0,.5); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+.bel-fat-satir{ display:flex; gap:6px; align-items:center; }
+.bel-fat-satir .muh-inp{ margin:0; }
+.bel-kucuk{ max-width:82px; }
+.bel-fat-sil{ background:#fff2f0; color:#c0392b; border:1.3px solid #e0a79f; border-radius:9px; width:34px; height:40px; font-weight:900; cursor:pointer; flex:none; }
+.bel-fat-alt{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:2px; }
+.bel-fat-ekle{ background:#e9f7ef; color:#1f8b4c; border:1.4px solid #9fd8b6; border-radius:10px; padding:9px 12px; font-family:inherit; font-weight:800; font-size:14px; cursor:pointer; }
+.bel-kdv{ display:flex; align-items:center; gap:6px; font-weight:800; color:#7a5a00; font-size:14px; } .bel-kdv .muh-inp{ width:70px; margin:0; }
+.bel-fat-ozet{ background:#fffdf3; border:1.6px solid rgba(184,134,11,.45); border-radius:12px; padding:10px 12px; }
+.bel-fat-ozet > div{ display:flex; justify-content:space-between; padding:4px 0; font-size:14.5px; color:#5a4300; }
+.bel-fat-ozet > div b{ font-weight:800; }
+.bel-fat-ozet .genel{ border-top:2px solid rgba(184,134,11,.4); margin-top:4px; padding-top:8px; font-size:17px; }
+.bel-fat-ozet .genel b{ color:#1f8b4c; font-weight:900; }
+/* Fatura yazdırma alanı — ekran DIŞINDA (PDF/Word bundan alınır), beyaz kâğıt */
+.bel-fat-yazdir{ position:absolute; left:-99999px; top:0; width:740px; background:#fff; color:#111; padding:34px; font-family:Arial,sans-serif; }
 /* GİZLİ YAZDIRILACAK ALAN (PDF görüntüsü buradan alınır) — ekran DIŞINDA, beyaz zemin/siyah yazı (kâğıt gibi) */
 .muh-yazdir{ position:absolute; left:-99999px; top:0; width:760px; background:#fff; color:#111; padding:34px; font-family:Arial, sans-serif; }
 .muy-bas{ font-size:24px; font-weight:900; color:#7a5a00; margin-bottom:6px; }

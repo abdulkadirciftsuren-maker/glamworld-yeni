@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { muhasebeDinle, muhasebeEkle, muhasebeGuncelle, muhasebeCopeAt, muhasebeGeriYukle, muhasebeKaliciSil, MUH_COP_GUN } from "./veri";
+import Belgeler from "./Belgeler";
 
 const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g && a && y ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
@@ -15,7 +16,7 @@ const mik = (n, birim) => (Number(n) || 0).toLocaleString("tr-TR", { maximumFrac
 export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", onKatman }) {
   const { t } = useTranslation();
   const [kayitlar, setKayitlar] = useState(null); // TÜM muhasebe dokümanları (null=yükleniyor)
-  const [sekme, setSekme] = useState("cari"); // cari | stok | islem | kasa | cop
+  const [sekme, setSekme] = useState("belge"); // belge | cari | stok | islem | kasa | cop
   const [seciliId, setSeciliId] = useState(null); // açık cari/stok detay id
   const [menuId, setMenuId] = useState(null); // ⋮ menüsü açık olan kart id
   const [form, setForm] = useState(null); // açık form: {tur:...}
@@ -120,7 +121,8 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
   const copOzet = (k) => k.tip === "cari" ? k.ad : k.tip === "stok" ? k.ad : k.tip === "islem" ? ((k.islemTuru || "") + " · " + para(k.tutar, paraSym)) : ((k.kasaTuru || "") + " · " + para(k.tutar, paraSym));
 
   // ================= GÖRÜNÜM =================
-  const sekmeler = [["cari", "👥", t("muhMusteriler", "Müşteriler")], ["stok", "📦", t("muhStok", "Stok")], ["islem", "🔄", t("muhAlisSatis", "Alış-Satış")], ["kasa", "💰", t("muhKasa", "Kasa")], ["cop", "🗑️", t("muhCop", "Çöp")]];
+  const belgeler = aktif("belge");
+  const sekmeler = [["belge", "📄", t("muhBelgeler", "Belgeler")], ["cari", "👥", t("muhMusteriler", "Müşteriler")], ["stok", "📦", t("muhStok", "Stok")], ["islem", "🔄", t("muhAlisSatis", "Alış-Satış")], ["kasa", "💰", t("muhKasa", "Kasa")], ["cop", "🗑️", t("muhCop", "Çöp")]];
   const seciliCari = cariler.find((c) => c.id === seciliId) || null;
   const seciliStok = stoklar.find((s) => s.id === seciliId) || null;
 
@@ -141,6 +143,11 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
 
         {kayitlar === null ? <div className="muh-bos">⏳ {t("muhYukleniyor", "Yükleniyor…")}</div> : (
           <>
+            {/* ============ BELGELER (Excel/Word/Fatura oluştur) ============ */}
+            {sekme === "belge" && (
+              <Belgeler t={t} uid={uid} belgeler={belgeler} paraSym={paraSym} benAd={benAd} bilgi={bilgi}
+                ekle={ekle} guncelle={(id, v) => muhasebeGuncelle(uid, id, v)} copeAt={copeAt} UcNokta={UcNokta} />
+            )}
             {/* ============ MÜŞTERİLER (CARİ) ============ */}
             {sekme === "cari" && !seciliCari && (<>
               <button className="muh-btn muh-ekle" onClick={() => setForm(form === "cari" ? null : "cari")}>＋ {t("muhYeniMusteri", "Yeni müşteri / tedarikçi")}</button>
