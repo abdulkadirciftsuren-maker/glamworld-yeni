@@ -7923,7 +7923,8 @@ export default function Anasayfa({ pro = false }) {
         </Suspense>
       ) : aktifKod === "muhasebe" ? (
         <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>📊 …</div>}>
-          <Muhasebe uid={benUid} paraSym={myParaSym} benAd={benimAdGetir()} onKatman={muhasebeKatmanDegis} onKapat={() => setAktifKod("home")} />
+          <Muhasebe uid={benUid} paraSym={myParaSym} benAd={benimAdGetir()} onKatman={muhasebeKatmanDegis} onKapat={() => setAktifKod("home")}
+            onGloxordaPaylas={(dataUrl, metin) => { try { setPaylasYazi(metin || ""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(dataUrl); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDurum(""); setAiOneriler([]); setAktifKod("home"); setPaylasAcik(true); } catch (e) {} }} />
         </Suspense>
       ) : aktifKod === "home" ? (
         <div className="ana-pencere" key="home">

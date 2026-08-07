@@ -42,11 +42,23 @@ async function excelIndirAoa(ad, aoa) {
   XLSX.writeFile(wb, dosyaAd(ad, "xlsx"));
 }
 
-// ===================== BELGELER LİSTESİ + YÖNLENDİRME =====================
-export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcNokta, bilgi, paraSym = "₺", benAd = "" }) {
-  const [acik, setAcik] = useState(null); // {mod:"tablo"|"yazi"|"fatura", belge?}
-  const ikon = (bt) => bt === "tablo" ? "📊" : bt === "fatura" ? "🧾" : "📝";
-  const turAd = (bt) => bt === "tablo" ? t("belTablo", "Excel tablosu") : bt === "fatura" ? t("belFatura", "Fatura") : t("belYazi", "Word belgesi");
+// Belge tarih arşiv grubu (Bugün / Bu Ay / Bu Yıl / Daha Eski)
+function _arsivGrup(ms) {
+  try { const d = new Date(ms || 0); const n = new Date();
+    if (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate()) return "bugun";
+    if (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth()) return "buay";
+    if (d.getFullYear() === n.getFullYear()) return "buyil";
+  } catch (e) {}
+  return "eski";
+}
+
+// ===================== BELGELER LİSTESİ + ARŞİV + YÖNLENDİRME =====================
+export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcNokta, bilgi, paraSym = "₺", benAd = "", onGloxordaPaylas }) {
+  const [acik, setAcik] = useState(null); // {mod, belge?, on?}
+  const [sablonAcik, setSablonAcik] = useState(false);
+  const [ara, setAra] = useState("");
+  const ikon = (bt) => bt === "tablo" ? "📊" : bt === "fatura" ? "🧾" : bt === "meslek" ? "🌐" : "📝";
+  const turAd = (bt) => bt === "tablo" ? t("belTablo", "Excel tablosu") : bt === "fatura" ? t("belFatura", "Fatura") : bt === "meslek" ? t("belMeslek", "Meslek sayfası") : t("belYazi", "Word belgesi");
 
   if (acik) {
     const ortak = { t, paraSym, benAd, bilgi,
@@ -55,27 +67,44 @@ export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcN
     if (acik.mod === "tablo") return <TabloEditor {...ortak} belge={acik.belge} />;
     if (acik.mod === "fatura") return <FaturaEditor {...ortak} belge={acik.belge} />;
     if (acik.mod === "fotopdf") return <FotoPdfEditor {...ortak} />;
+    if (acik.mod === "meslek") return <MeslekSayfa {...ortak} belge={acik.belge} onGloxordaPaylas={onGloxordaPaylas} />;
     return <YaziEditor {...ortak} belge={acik.belge} />;
   }
+  if (sablonAcik) return <SablonSecici t={t} onKapat={() => setSablonAcik(false)} onSec={(s) => { setSablonAcik(false); setAcik({ mod: s.tur, belge: { belgeTuru: s.tur, ad: s.ad, grid: s.grid, html: s.html } }); }} />;
+
+  // arama + arşiv gruplama
+  const q = ara.trim().toLowerCase();
+  const suzulmus = [...belgeler].filter((b) => !q || (b.ad || "").toLowerCase().includes(q)).sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+  const gruplar = [["bugun", "📅 " + t("belBugun", "Bugün")], ["buay", "🗓️ " + t("belBuAy", "Bu Ay")], ["buyil", "📆 " + t("belBuYil", "Bu Yıl")], ["eski", "🗄️ " + t("belEski", "Daha Eski")]];
 
   return (<>
-    <div className="muh-alt">{t("belAlt", "Kendi Excel tablonu oluştur, Word belgesi yaz ya da fatura kes. Excel/Word/PDF indir, paylaş. Her şey saklanır, sen silmeden gitmez.")}</div>
+    <div className="muh-alt">{t("belAlt2", "Kendi Excel/Word/Fatura belgeni oluştur, foto→PDF yap, mesleğine göre hazır sayfa seç ya da kendi meslek sayfanı yapıp paylaş. Her şey arşivlenir, sen silmeden gitmez.")}</div>
     <div className="bel-yeni">
       <button className="bel-yeni-btn tablo" onClick={() => setAcik({ mod: "tablo" })}>📊<span>{t("belTablo", "Excel tablosu")}</span></button>
       <button className="bel-yeni-btn yazi" onClick={() => setAcik({ mod: "yazi" })}>📝<span>{t("belYazi", "Word belgesi")}</span></button>
       <button className="bel-yeni-btn fatura" onClick={() => setAcik({ mod: "fatura" })}>🧾<span>{t("belFatura", "Fatura")}</span></button>
       <button className="bel-yeni-btn fotopdf" onClick={() => setAcik({ mod: "fotopdf" })}>📷<span>{t("belFotoPdf", "Foto → PDF")}</span></button>
+      <button className="bel-yeni-btn sablon" onClick={() => setSablonAcik(true)}>🧑‍🔧<span>{t("belSablon", "Hazır şablon")}</span></button>
+      <button className="bel-yeni-btn meslek" onClick={() => setAcik({ mod: "meslek" })}>🌐<span>{t("belMeslekSayfam", "Meslek sayfam")}</span></button>
     </div>
-    <div className="muh-kayit-liste">
-      {belgeler.length === 0 ? <div className="muh-bos">💛 {t("belYok", "Henüz belge yok. Yukarıdan oluştur.")}</div>
-        : [...belgeler].sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)).map((b) => (
-          <div key={b.id} className="muh-kayit" onClick={() => setAcik({ mod: b.belgeTuru || "yazi", belge: b })} style={{ cursor: "pointer" }}>
-            <span className="muh-k-tarih">{ikon(b.belgeTuru)} {turAd(b.belgeTuru)}</span>
-            <span className="muh-k-acik notranslate">{b.ad || t("belAdsiz", "Adsız belge")}</span>
-            <UcNokta id={b.id} />
+    {belgeler.length > 4 && <input className="muh-inp bel-ara" value={ara} onChange={(e) => setAra(e.target.value)} placeholder={"🔍 " + t("belAraPh", "Belgelerinde ara")} />}
+    {suzulmus.length === 0 ? <div className="muh-bos">💛 {q ? t("belAraBos", "Aramana uygun belge yok.") : t("belYok", "Henüz belge yok. Yukarıdan oluştur.")}</div>
+      : gruplar.map(([gk, gad]) => {
+        const grubun = suzulmus.filter((b) => _arsivGrup(b.zamanMs) === gk);
+        if (!grubun.length) return null;
+        return (<div key={gk} className="bel-arsiv-grup">
+          <div className="bel-arsiv-bas">{gad} <span className="bel-arsiv-say">{grubun.length}</span></div>
+          <div className="muh-kayit-liste">
+            {grubun.map((b) => (
+              <div key={b.id} className="muh-kayit" onClick={() => setAcik({ mod: b.belgeTuru || "yazi", belge: b })} style={{ cursor: "pointer" }}>
+                <span className="muh-k-tarih">{ikon(b.belgeTuru)} {turAd(b.belgeTuru)}</span>
+                <span className="muh-k-acik notranslate">{b.ad || t("belAdsiz", "Adsız belge")}</span>
+                <UcNokta id={b.id} />
+              </div>
+            ))}
           </div>
-        ))}
-    </div>
+        </div>);
+      })}
   </>);
 }
 
@@ -366,6 +395,138 @@ function FaturaEditor({ t, belge, onKapat, onKaydet, bilgi, paraSym, benAd }) {
           </tfoot>
         </table>
         <div style={{ marginTop: 14, fontSize: 11, color: "#666" }}>GLOXORG · {benAd || ""}</div>
+      </div>
+    </div>
+  );
+}
+
+// ---- bir HTML öğesini FOTOĞRAF (PNG) yapıp paylaş/indir (meslek sayfası paylaşımı) ----
+async function elemFotoPaylas(el, ad) {
+  const html2canvas = (await import("html2canvas")).default;
+  const canvas = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true });
+  const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+  const dosya = new File([blob], dosyaAd(ad, "png"), { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG" }); return; } catch (e) {} }
+  const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = dosyaAd(ad, "png");
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+// ===================== HAZIR ŞABLONLAR (mesleğe göre) =====================
+const SABLONLAR = [
+  { meslek: "Restoran / Kafe", ikon: "🍽️", liste: [
+    { ad: "Günlük Kasa", tur: "tablo", grid: [["Tarih", "Gelir", "Gider", "Kalan"], ["", "", "", "=B2-C2"], ["", "", "", "=B3-C3"], ["Toplam", "=TOPLA(B2:B3)", "=TOPLA(C2:C3)", "=B4-C4"]] },
+    { ad: "Stok / Depo", tur: "tablo", grid: [["Ürün", "Giriş", "Çıkış", "Kalan"], ["", "", "", "=B2-C2"], ["", "", "", "=B3-C3"]] },
+    { ad: "Adisyon / Fatura", tur: "fatura" },
+  ] },
+  { meslek: "Kuaför / Güzellik", ikon: "💇", liste: [
+    { ad: "Randevu Defteri", tur: "tablo", grid: [["Tarih", "Saat", "Müşteri", "Hizmet", "Ücret"], ["", "", "", "", ""], ["", "", "", "", ""]] },
+    { ad: "Gelir-Gider", tur: "tablo", grid: [["Tarih", "Gelir", "Gider", "Kalan"], ["", "", "", "=B2-C2"]] },
+  ] },
+  { meslek: "Terzi / Tekstil", ikon: "🧵", liste: [
+    { ad: "Sipariş Takip", tur: "tablo", grid: [["Müşteri", "Ürün", "Adet", "Fiyat", "Tutar", "Teslim"], ["", "", "", "", "=C2*D2", ""], ["", "", "", "", "=C3*D3", ""]] },
+    { ad: "Fatura", tur: "fatura" },
+  ] },
+  { meslek: "Market / Bakkal", ikon: "🛒", liste: [
+    { ad: "Stok Sayımı", tur: "tablo", grid: [["Ürün", "Miktar", "Alış", "Satış", "Kâr"], ["", "", "", "", "=D2-C2"], ["", "", "", "", "=D3-C3"]] },
+    { ad: "Veresiye Defteri", tur: "tablo", grid: [["Müşteri", "Borç", "Ödeme", "Kalan"], ["", "", "", "=B2-C2"], ["", "", "", "=B3-C3"]] },
+  ] },
+  { meslek: "Nakliye / Lojistik", ikon: "🚚", liste: [
+    { ad: "Sefer Defteri", tur: "tablo", grid: [["Tarih", "Nereden", "Nereye", "Ücret", "Yakıt", "Net"], ["", "", "", "", "", "=D2-E2"], ["", "", "", "", "", "=D3-E3"]] },
+  ] },
+  { meslek: "İnşaat / Usta", ikon: "🔨", liste: [
+    { ad: "Malzeme Listesi", tur: "tablo", grid: [["Malzeme", "Adet", "Birim Fiyat", "Tutar"], ["", "", "", "=B2*C2"], ["", "", "", "=B3*C3"], ["Toplam", "", "", "=TOPLA(D2:D3)"]] },
+    { ad: "İşçilik / Hakediş", tur: "tablo", grid: [["Tarih", "İşçi", "Gün", "Yevmiye", "Tutar"], ["", "", "", "", "=C2*D2"]] },
+  ] },
+  { meslek: "Genel / Serbest", ikon: "📋", liste: [
+    { ad: "Gelir-Gider Defteri", tur: "tablo", grid: [["Tarih", "Açıklama", "Gelir", "Gider", "Kalan"], ["", "", "", "", "=C2-D2"], ["", "", "", "", "=C3-D3"], ["Toplam", "", "=TOPLA(C2:C3)", "=TOPLA(D2:D3)", "=C4-D4"]] },
+    { ad: "Müşteri Borç Takip", tur: "tablo", grid: [["Müşteri", "Borç", "Tahsilat", "Kalan"], ["", "", "", "=B2-C2"]] },
+    { ad: "Sözleşme (Word)", tur: "yazi", html: "<h2>SÖZLEŞME</h2><p><b>Taraflar:</b> ......</p><p><b>Konu:</b> ......</p><p><b>Bedel:</b> ......</p><p><b>Tarih:</b> ......</p><p>İmza</p>" },
+    { ad: "Teklif Mektubu (Word)", tur: "yazi", html: "<h2>FİYAT TEKLİFİ</h2><p>Sayın .......,</p><p>Talebiniz üzerine hazırladığımız teklifimiz aşağıdadır:</p><ul><li>Hizmet: ......</li><li>Bedel: ......</li><li>Süre: ......</li></ul><p>Saygılarımızla.</p>" },
+  ] },
+];
+function SablonSecici({ t, onKapat, onSec }) {
+  return (
+    <div className="bel-editor">
+      <div className="bel-ust"><button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button><span className="bel-baslik">🧑‍🔧 {t("belSablonSec", "Mesleğine göre hazır şablon seç")}</span></div>
+      <div className="muh-alt">{t("belSablonAlt", "Mesleğini seç, hazır sayfa açılsın; içini kendine göre doldur, sonra Excel/Word/PDF indir.")}</div>
+      {SABLONLAR.map((m) => (
+        <div key={m.meslek} className="bel-sablon-grup">
+          <div className="bel-sablon-meslek">{m.ikon} {m.meslek}</div>
+          <div className="bel-sablon-liste">
+            {m.liste.map((s, i) => (
+              <button key={i} className="bel-sablon-kart" onClick={() => onSec(s)}>
+                <span className="bss-ik">{s.tur === "tablo" ? "📊" : s.tur === "fatura" ? "🧾" : "📝"}</span>
+                <span className="bss-ad">{s.ad}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ===================== MESLEK SAYFASI (kendi tanıtım sayfanı yap + paylaş) =====================
+function MeslekSayfa({ t, belge, onKapat, onKaydet, bilgi, onGloxordaPaylas }) {
+  const m0 = (belge && belge.meslekSayfa) || {};
+  const [ad, setAd] = useState((belge && belge.ad) || "");
+  const [firma, setFirma] = useState(m0.firma || "");
+  const [meslek, setMeslek] = useState(m0.meslek || "");
+  const [slogan, setSlogan] = useState(m0.slogan || "");
+  const [aciklama, setAciklama] = useState(m0.aciklama || "");
+  const [hizmetler, setHizmetler] = useState(m0.hizmetler || "");
+  const [tel, setTel] = useState(m0.tel || "");
+  const [adres, setAdres] = useState(m0.adres || "");
+  const [foto, setFoto] = useState(m0.foto || "");
+  const [renk, setRenk] = useState(m0.renk || "altin");
+  const [yuk, setYuk] = useState(false);
+  const inpRef = useRef(null); const kartRef = useRef(null);
+  const fotoSec = (e) => { const f = (e.target.files || [])[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { let w = im.naturalWidth, h = im.naturalHeight; const max = 900; if (w > max || h > max) { if (w >= h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } } const cv = document.createElement("canvas"); cv.width = w; cv.height = h; cv.getContext("2d").drawImage(im, 0, 0, w, h); try { setFoto(cv.toDataURL("image/jpeg", 0.85)); } catch (x) { setFoto(String(r.result)); } }; im.src = String(r.result); }; r.readAsDataURL(f); e.target.value = ""; };
+  const hizmetDizi = hizmetler.split("\n").map((s) => s.trim()).filter(Boolean);
+  const veri = () => ({ belgeTuru: "meslek", ad: ad.trim() || firma || t("belMeslek", "Meslek sayfası"), meslekSayfa: { firma, meslek, slogan, aciklama, hizmetler, tel, adres, foto, renk }, zamanMs: Date.now() });
+  const pdf = async () => { setYuk(true); try { await elemPdf(kartRef.current, ad || firma || "meslek-sayfam"); bilgi(t("belPdfHazir", "PDF hazır 📄")); } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } setYuk(false); };
+  const paylas = async () => { setYuk(true); try { await elemFotoPaylas(kartRef.current, ad || firma || "meslek-sayfam"); bilgi(t("belPaylasildi", "Paylaşıldı ✓")); } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } setYuk(false); };
+  const gloxorda = async () => {
+    if (!onGloxordaPaylas) return; setYuk(true);
+    try { const html2canvas = (await import("html2canvas")).default; const canvas = await html2canvas(kartRef.current, { scale: 2, backgroundColor: null, useCORS: true }); onGloxordaPaylas(canvas.toDataURL("image/png"), (firma ? firma + " — " : "") + (slogan || meslek || "")); }
+    catch (e) { bilgi(t("belOlmadi", "Olmadı")); }
+    setYuk(false);
+  };
+  return (
+    <div className="bel-editor">
+      <div className="bel-ust"><button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button><input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belMeslekAd", "Sayfa adı")} /></div>
+      <div className="muh-alt">{t("belMeslekAlt", "Mesleğine göre kendi tanıtım sayfanı yap: firma adı, ne iş yaptığın, hizmetler, telefon, adres, fotoğraf. Sonra PDF/foto indir, paylaş ya da GLOXORG'da yayınla.")}</div>
+      <div className="muh-form">
+        <input className="muh-inp" value={firma} onChange={(e) => setFirma(e.target.value)} placeholder={t("belFirma", "Firma / İşletme adı")} />
+        <input className="muh-inp" value={meslek} onChange={(e) => setMeslek(e.target.value)} placeholder={t("belMeslekTur", "Meslek (ör. Kuaför, Terzi, Restoran)")} />
+        <input className="muh-inp" value={slogan} onChange={(e) => setSlogan(e.target.value)} placeholder={t("belSlogan", "Slogan (kısa tanıtım)")} />
+        <textarea className="muh-inp" rows={2} value={aciklama} onChange={(e) => setAciklama(e.target.value)} placeholder={t("belMeslekAciklama", "Kendini / işini anlat")} />
+        <textarea className="muh-inp" rows={3} value={hizmetler} onChange={(e) => setHizmetler(e.target.value)} placeholder={t("belHizmetler", "Hizmetler (her satıra bir tane)")} />
+        <input className="muh-inp" value={tel} onChange={(e) => setTel(e.target.value)} placeholder={t("belTelefon", "Telefon")} />
+        <input className="muh-inp" value={adres} onChange={(e) => setAdres(e.target.value)} placeholder={t("belAdres", "Adres / Konum")} />
+        <button className="muh-btn muh-ekle" onClick={() => inpRef.current && inpRef.current.click()}>🖼️ {foto ? t("belFotoDegis", "Fotoğrafı değiştir") : t("belFotoEkleBtn", "Fotoğraf / logo ekle")}</button>
+        <input ref={inpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={fotoSec} />
+        <div className="bel-renk-sec">
+          {[["altin", "#f2c94c"], ["mavi", "#4a7fe0"], ["yesil", "#34c878"], ["mor", "#a86fe0"], ["kirmizi", "#e0574a"]].map(([k, c]) => (
+            <button key={k} className={"bel-renk" + (renk === k ? " sec" : "")} style={{ background: c }} onClick={() => setRenk(k)} aria-label={k} />
+          ))}
+        </div>
+      </div>
+      <div className={"bel-meslek-kart tema-" + renk} ref={kartRef}>
+        {foto ? <img className="bmk-foto" src={foto} alt="" /> : null}
+        <div className="bmk-firma notranslate">{firma || t("belFirmaOrnek", "Firma Adı")}</div>
+        {meslek ? <div className="bmk-meslek">{meslek}</div> : null}
+        {slogan ? <div className="bmk-slogan">{slogan}</div> : null}
+        {aciklama ? <div className="bmk-aciklama">{aciklama}</div> : null}
+        {hizmetDizi.length ? <div className="bmk-hizmetler">{hizmetDizi.map((h, i) => <span key={i}>✓ {h}</span>)}</div> : null}
+        <div className="bmk-iletisim">{tel ? <div>📞 {tel}</div> : null}{adres ? <div>📍 {adres}</div> : null}</div>
+        <div className="bmk-dip notranslate">GLOXORG</div>
+      </div>
+      <div className="bel-alt-dugmeler">
+        <button className="muh-btn muh-kaydet" onClick={() => onKaydet(veri())}>💾 {t("belKaydet", "Kaydet")}</button>
+        <button className="muh-btn muh-pdf" disabled={yuk} onClick={pdf}>📄 PDF</button>
+        <button className="muh-btn muh-paylas" disabled={yuk} onClick={paylas}>↗ {t("belPaylas", "Paylaş")}</button>
+        {onGloxordaPaylas ? <button className="muh-btn bel-gloxorda" disabled={yuk} onClick={gloxorda}>🌐 {t("belGloxorda", "GLOXORG'da paylaş")}</button> : null}
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ const sayi = (n) => Number(String(n).replace(",", ".")) || 0;
 const para = (n, sym) => (Number(n) || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + (sym || "₺");
 const mik = (n, birim) => (Number(n) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 3 }) + (birim ? " " + birim : "");
 
-export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", onKatman }) {
+export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", onKatman, onGloxordaPaylas }) {
   const { t } = useTranslation();
   const [kayitlar, setKayitlar] = useState(null); // TÜM muhasebe dokümanları (null=yükleniyor)
   const [sekme, setSekme] = useState("belge"); // belge | cari | stok | islem | kasa | cop
@@ -149,7 +149,7 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
             {/* ============ BELGELER (Excel/Word/Fatura oluştur) ============ */}
             {sekme === "belge" && (
               <Belgeler t={t} uid={uid} belgeler={belgeler} paraSym={paraSym} benAd={benAd} bilgi={bilgi}
-                ekle={ekle} guncelle={(id, v) => muhasebeGuncelle(uid, id, v)} copeAt={copeAt} UcNokta={UcNokta} />
+                ekle={ekle} guncelle={(id, v) => muhasebeGuncelle(uid, id, v)} copeAt={copeAt} UcNokta={UcNokta} onGloxordaPaylas={onGloxordaPaylas} />
             )}
             {/* ============ MÜŞTERİLER (CARİ) ============ */}
             {sekme === "cari" && !seciliCari && (<>
