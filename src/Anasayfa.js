@@ -5488,18 +5488,8 @@ export default function Anasayfa({ pro = false }) {
           // ZAMAN AŞIMI: resim 75 sn içinde gelmezse çemberi durdur, hata göster (ASLA sonsuz dönmesin).
           const zamanAsimi = new Promise((cz) => setTimeout(() => cz({ hata: t("resimZamanAsimi", "Resim zamanında gelmedi, tekrar dener misin?") }), 75000));
           let sonuc; try { sonuc = await Promise.race([gloxooResimUret(resimIstem, girdiFoto), zamanAsimi]); } catch (e) { sonuc = { hata: (e && (e.message || e.name)) || "hata" }; }
+          // ESKİ ÇALIŞAN HAL: resim doğrudan base64 (data:) olarak durur → indire basınca NORMAL iner (galeriye).
           setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimYuk: false, resimData: (sonuc && sonuc.dataUrl) || "", resimHata: (sonuc && sonuc.hata) || "" } : m)));
-          // KALICI YAP: base64 resim ÇOK BÜYÜK → telefonun küçük hafızasına (localStorage) sığmayıp YENİLENİNCE KAYBOLUYORDU
-          // ("Bu resim gelmedi — gene ister misin?"). Resmi Firebase'e yükleyip KÜÇÜK URL olarak sakla → yenilense de DURUR,
-          // aynı resim kalır (avatarlarda olduğu gibi). Önce base64 hemen görünür; arkada URL'e çevrilir.
-          if (sonuc && sonuc.dataUrl) {
-            (async () => {
-              try {
-                const url = await gorselYukle(sonuc.dataUrl, aiUidRef.current || "gloxoo");
-                if (url) setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimData: url } : m)));
-              } catch (e) {} // yüklenemezse base64 kalır (yine görünür)
-            })();
-          }
         })();
       }
       // HAZIRLANAN İÇERİK (paylaşım metni vb.): kullanıcı SÖZLÜ istediyse ve panel KAPALIYSA, yazı panelini
@@ -6223,18 +6213,13 @@ export default function Anasayfa({ pro = false }) {
   // GERÇEK RESMİ indir. ÖNEMLİ: Firebase (http) adresli resimlerde tarayıcı, download="benzersiz ad"ı cross-origin
   // güvenlik yüzünden YOK SAYIP Firebase'deki aynı ismi kullanıyordu → "aynı dosyayı tekrar mı?" soruyordu.
   // ÇÖZÜM: http resmi ÖNCE blob olarak indir → aynı-köken object URL yap → benzersiz ad ARTIK ÇALIŞIR → soru çıkmaz.
-  const resimIndir = async (dataUrl) => {
+  const resimIndir = (dataUrl) => {
     const s = (dataUrl || "").toString(); if (!s) return;
     try {
-      const ad = "GLOXORG-resim-" + Date.now().toString(36) + ".png";
-      let href = s;
-      if (s.slice(0, 5) !== "data:") {
-        try { const bl = await (await fetch(s, { mode: "cors" })).blob(); href = URL.createObjectURL(bl); } catch (e) { href = s; }
-      }
-      const a = document.createElement("a"); a.href = href; a.download = ad;
+      // ESKİ ÇALIŞAN HAL: resim base64 (data:) → doğrudan iner. Benzersiz ad → "tekrar mı?" sormaz.
+      const a = document.createElement("a"); a.href = s; a.download = "GLOXORG-resim-" + Date.now().toString(36) + ".png";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      if (href !== s) setTimeout(() => { try { URL.revokeObjectURL(href); } catch (e) {} }, 2000);
-      setResimIndi(true); setTimeout(() => setResimIndi(false), 2500); // düğmede "İndirildi" göster
+      setResimIndi(true); setTimeout(() => setResimIndi(false), 2500);
       setKucukMesaj(t("indirildi", "İndirildi 📄"));
     } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
   };
