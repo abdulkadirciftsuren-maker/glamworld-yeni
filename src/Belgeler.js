@@ -1,7 +1,7 @@
 // GLOXORG MUHASEBE — BELGELER modülü: KENDİ Excel tablonu oluştur-doldur, Word belgesi yaz, KDV'li Fatura kes.
 // Hepsi .xlsx / .docx(.doc) / PDF indirilir & paylaşılır, Firebase'de saklanır (⋮ menü + çöp kutusu ile silinir).
 // Ağır kütüphaneler (xlsx/jspdf/html2canvas) SADECE indirirken dinamik yüklenir.
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
@@ -270,6 +270,9 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
 function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   const [ad, setAd] = useState((belge && belge.ad) || "");
   const icRef = useRef(null);
+  const ilkHtml = useRef((belge && belge.html) || "");
+  // İçeriği SADECE BİR KEZ (mount) yükle → her render'da yeniden basılıp YAZDIĞIN SİLİNMEZ (eski hata: dangerouslySetInnerHTML her render'da sıfırlıyordu).
+  useEffect(() => { if (icRef.current) icRef.current.innerHTML = ilkHtml.current; }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const komut = (c, v) => { try { document.execCommand(c, false, v); icRef.current && icRef.current.focus(); } catch (e) {} };
   const htmlAl = () => (icRef.current ? icRef.current.innerHTML : "");
   const kaydet = () => onKaydet({ belgeTuru: "yazi", ad: ad.trim() || t("belAdsiz", "Adsız belge"), html: htmlAl(), zamanMs: Date.now() });
@@ -288,8 +291,7 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button onClick={() => komut("justifyLeft")}>◧</button>
         <button onClick={() => komut("justifyCenter")}>▣</button>
       </div>
-      <div className="bel-yazi-alan" ref={icRef} contentEditable suppressContentEditableWarning
-        dangerouslySetInnerHTML={{ __html: (belge && belge.html) || "" }} />
+      <div className="bel-yazi-alan" ref={icRef} contentEditable suppressContentEditableWarning />
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || "belge", htmlAl()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>

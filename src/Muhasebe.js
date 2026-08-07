@@ -16,7 +16,8 @@ const mik = (n, birim) => (Number(n) || 0).toLocaleString("tr-TR", { maximumFrac
 export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", onKatman, onGloxordaPaylas }) {
   const { t } = useTranslation();
   const [kayitlar, setKayitlar] = useState(null); // TÜM muhasebe dokümanları (null=yükleniyor)
-  const [sekme, setSekme] = useState("belge"); // belge | cari | stok | islem | kasa | cop
+  const [sekme, setSekme] = useState(() => { try { return localStorage.getItem("gw_muh_sekme") || "belge"; } catch (e) { return "belge"; } }); // belge | cari | stok | islem | kasa | cop — HATIRLANIR (bıraktığın sekmeden devam)
+  useEffect(() => { try { localStorage.setItem("gw_muh_sekme", sekme); } catch (e) {} }, [sekme]);
   const [seciliId, setSeciliId] = useState(null); // açık cari/stok detay id
   const [menuId, setMenuId] = useState(null); // ⋮ menüsü açık olan kart id
   const [form, setForm] = useState(null); // açık form: {tur:...}

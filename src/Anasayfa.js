@@ -2403,6 +2403,9 @@ export default function Anasayfa({ pro = false }) {
       // Şimdi yenilersek yükleme YARIDA kalır → sayfa EKSİK gelir (profil resmi/ayarlar gelmez). O yüzden ilk 35 sn
       // yenileme YOK; veri tam otursun. Güncelleme kaçmaz — 60 sn'lik kontrol birazdan yine deneyip (süre dolunca) yeniler.
       if (Date.now() - ACILIS_MS < 35000) return;
+      // ⛔ MUHASEBEDE YENİLEME YOK: kullanıcı belge/tablo/yazı hazırlarken sayfa kendini yenilerse YAPTIĞI İŞ UÇAR
+      // (kullanıcı: "Word'de yazdığım siliniyor, işimi bitirmeden çıkıyorum"). Muhasebeden çıkınca (60 sn kontrol) yenilenir.
+      if (aktifKodRef.current === "muhasebe") { yenileBekleRef.current = true; return; }
       // ⛔ MEŞGULKEN YENİLEME YOK: kullanıcı fotoğraf ekliyor/paylaşım yazıyor ya da Gloxoo konuşuyorsa
       // sayfayı yenilemek FOTOĞRAFLARI SİLER / konuşmayı KESER. Ertele; işi bitince (boşalınca) yenile.
       if (mesgulRef.current) { yenileBekleRef.current = true; return; }
