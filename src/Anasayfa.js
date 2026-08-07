@@ -1360,7 +1360,7 @@ export default function Anasayfa({ pro = false }) {
   const [telKodu, setTelKodu] = useState("+90");
   const [aciklama, setAciklama] = useState(""); // açıklama (?) ikonu → ne yapılacağını anlatan baloncuk (ANAYASA: her yerde bilgilendirme)
   const [sayfaBilgiAcik, setSayfaBilgiAcik] = useState(false); // sağ üst SAYFA İKONU'na basınca → o sayfa NE İŞE YARAR + ipucu (her dilde)
-  const [sanalAynaAcik, setSanalAynaAcik] = useState(false); // SANAL AYNA (kendi fotoğrafında saç/tırnak/makyaj dene)
+  // SANAL AYNA artık PENCERE değil, SAYFA (aktifKod === "ayna"). Eski sanalAynaAcik durumu kaldırıldı.
   const [sanalAynaBaslangic, setSanalAynaBaslangic] = useState(null); // reklamdan gelen ürünle açılırsa ön dolgu
   const [telHaritaAcik, setTelHaritaAcik] = useState(false); // TAM EKRAN telefon kodu HARİTASI (ülkeye dokun → kod)
   const [telHaritaSec, setTelHaritaSec] = useState(null);    // haritada seçili { iso, kod, ad }
@@ -7670,7 +7670,7 @@ export default function Anasayfa({ pro = false }) {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
       // .ak-foto-buyut: tam ekran Akademi fotoğrafı — üstünde parmak gezince ZOOM/pan yapılır, sayfa DEĞİŞMEZ.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .sa-fon, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .sa-fon, .sa-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -7684,7 +7684,7 @@ export default function Anasayfa({ pro = false }) {
       if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return; // yatay net olmalı
       // ANA SAYFADA SAĞA ÇEKİNCE SANAL AYNA AÇILIR (kullanıcı: "sağa çekince ayna açılsın; sola çekince Elite açılsın").
       // Sağa çekmek (dx>0) ana sayfada zaten boştaydı (önceki sayfa yok) → onu aynaya verdik. Sola çekmek normal akışta Elite'e gider.
-      if (aktifKod === "home" && dx > 0) { setSanalAynaAcik(true); return; }
+      if (aktifKod === "home" && dx > 0) { setAktifKod("ayna"); return; }
       const i = navlar.findIndex((n) => n.k === aktifKod);
       let yeni = dx < 0 ? Math.min(i + 1, navlar.length - 1) : Math.max(i - 1, 0);
       // SON sayfada (Profil) sola kaydırınca ileri gidecek sayfa yok → kullanıcı yine de bir öncekine (Akademi) geçsin
@@ -7748,7 +7748,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="ana-logo-sar ana-logo-ince">
           <span className="ana-logo-metin notranslate" translate="no">GLOXORG</span>
           <span className="ana-alt-sar">
-            <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)}</span>
+            <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "ayna" ? t("sanalAyna", "Sanal Ayna") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt))}</span>
             {aktifKod === "home" && <DunyaKure />}
           </span>
         </div>
@@ -7806,12 +7806,8 @@ export default function Anasayfa({ pro = false }) {
         );
       })()}
 
-      {/* SANAL AYNA — kendi fotoğrafında saç/tırnak/makyaj dene (tam ekran, ayrı parça) */}
-      {sanalAynaAcik && (
-        <Suspense fallback={<div style={{ position: "fixed", inset: 0, zIndex: 100080, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(circle,#f7e79a,#e8c85a)", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>🪞 …</div>}>
-          <SanalAyna baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setSanalAynaAcik(false); setSanalAynaBaslangic(null); }} />
-        </Suspense>
-      )}
+      {/* SANAL AYNA artık PENCERE değil, SAYFA (aktifKod === "ayna") — üst şerit + ikonlar açık kalır, diğer sayfalar gibi.
+          İçerik aşağıda, sayfa akış koşulunun başında render edilir. (Eski tam ekran X'li pencere kaldırıldı.) */}
 
       {/* Profil penceresi (menüden AYRI) — foto + ad + e-posta + Çıkış */}
       {profilAcik && (
@@ -7884,7 +7880,7 @@ export default function Anasayfa({ pro = false }) {
       <nav className="ana-nav">
         {/* SANAL AYNA — EN ÖNDE (ana sayfa ikonundan önce). Akıştaki şerit kaldırıldı, artık ikon.
             Dokununca Sanal Ayna açılır; ayrıca ana sayfada parmakla SOLA çekince de açılır. */}
-        <button key="ayna" className="ana-nav-oge ana-nav-ayna" onClick={() => setSanalAynaAcik(true)} aria-label={t("sanalAyna", "Sanal Ayna")}>
+        <button key="ayna" className={"ana-nav-oge ana-nav-ayna" + (aktifKod === "ayna" ? " aktif" : "")} onClick={() => setAktifKod("ayna")} aria-label={t("sanalAyna", "Sanal Ayna")}>
           <span className="ana-nav-kutu ana-nav-kutu-ayna">🪞
             <span className="ana-nav-rozet"><MiniTas renk="mavi" /></span>
           </span>
@@ -7910,7 +7906,11 @@ export default function Anasayfa({ pro = false }) {
           çıkıyordu, sil at). Profil ayarları büyük platformlardaki gibi MENÜ > AYARLAR'dan açılır. */}
 
       {/* PENCERELER — parmakla sola/sağa kaydırınca veya düğmeye basınca DEĞİŞİR */}
-      {aktifKod === "home" ? (
+      {aktifKod === "ayna" ? (
+        <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>🪞 …</div>}>
+          <SanalAyna sayfaModu baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setAktifKod("home"); setSanalAynaBaslangic(null); }} />
+        </Suspense>
+      ) : aktifKod === "home" ? (
         <div className="ana-pencere" key="home">
           {/* TEK HİZA: 2 çip + ORTADA ufak ARAMA düğmesi + 2 çip (çipler ÇERÇEVESİZ, ufak).
               Arama düğmesine basınca şerit AÇILIR (yazılır/aranır), ✕ ile kapanır. */}
@@ -8026,8 +8026,8 @@ export default function Anasayfa({ pro = false }) {
                 benFoto={(profilBilgi && (profilBilgi.fotoUrl || profilBilgi.avatarFoto)) || ""}
                 dil={dil}
                 paraSym={myParaSym}
-                pasif={sanalAynaAcik}
-                onDene={(urun) => { setSanalAynaBaslangic(urun || null); setSanalAynaAcik(true); }}
+                pasif={aktifKod === "ayna"}
+                onDene={(urun) => { setSanalAynaBaslangic(urun || null); setAktifKod("ayna"); }}
                 saticiyaYaz={(satici, mesaj) => { if (satici && satici.uid) { sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto }); if (mesaj) { try { setSohbetYazi(mesaj); } catch (e) {} } } }}
               />
             </Suspense>

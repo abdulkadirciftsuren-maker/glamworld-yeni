@@ -88,7 +88,7 @@ function Buyut({ url, onKapat }) {
   );
 }
 
-export default function SanalAyna({ onKapat, baslangic, onKatman }) {
+export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
   const { t } = useTranslation();
   const [buyuk, setBuyuk] = useState(""); // tam ekran açılan sonuç fotoğrafı
   const [foto, setFoto] = useState("");            // kullanıcı fotoğrafı (dataURL)
@@ -219,14 +219,18 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
   const renkler = renkGetir(kategori);
   const reklamdan = !!(baslangic && baslangic.refFotoUrl); // reklamdan gelindi → ürün SABİT, seçicileri gizle
   return (
-    <div className="sa-fon" onClick={(e) => { if (e.target === e.currentTarget) onKapat(); }}
+    <div className={sayfaModu ? "sa-sayfa" : "sa-fon"} onClick={(e) => { if (!sayfaModu && e.target === e.currentTarget) onKapat(); }}
       onTouchStart={(e) => { try { if (e.target.closest && e.target.closest("input, textarea, select, .sa-urun-serit, .sa-renk-serit, .sa-serit, .sa-kats, .sa-foto-buyut, .say-serit")) { dokunRef.current = null; return; } const d = e.touches[0]; dokunRef.current = { x: d.clientX, y: d.clientY }; } catch (x) { dokunRef.current = null; } }}
       onTouchEnd={(e) => { const b = dokunRef.current; dokunRef.current = null; if (!b || buyuk) return; try { const d = e.changedTouches[0]; const dx = d.clientX - b.x, dy = d.clientY - b.y; if (dx < -70 && Math.abs(dx) > Math.abs(dy) * 2 && onKapat) onKapat(); } catch (x) {} }}>
       <div className="sa-pencere">
-        <div className="sa-ust">
-          <span className="sa-baslik">🪞 {t("saBaslik", "Sanal Ayna")}</span>
-          <button className="sa-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
-        </div>
+        {/* SAYFA MODUNDA: üst şerit + ikonlar zaten yukarıda (diğer sayfalar gibi) → buradaki başlık/X gösterme (X ana sayfaya atıyordu).
+            PENCERE modunda (eski): kendi başlığı + X. */}
+        {!sayfaModu && (
+          <div className="sa-ust">
+            <span className="sa-baslik">🪞 {t("saBaslik", "Sanal Ayna")}</span>
+            <button className="sa-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+          </div>
+        )}
         <div className="sa-kaydir">
           <div className="sa-alt">{t("saAlt", "Kendi fotoğrafında saç, tırnak veya makyaj modeli dene. Fotoğrafını yükle, modeli yaz ya da seç; Gloxoo senin üstünde göstersin.")}</div>
 

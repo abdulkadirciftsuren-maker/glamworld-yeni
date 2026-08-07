@@ -1728,6 +1728,8 @@
 .ana-kok.sayfa-topluluk .ana-arka-foto{ display:none !important; }
 /* HER SAYFA KENDİ NAV İKONUNUN CANLI RENGİNDE (kullanıcı: "bütün sayfalar ikon renginde olsun"). Siyaha yakın koyu tonlar KALDIRILDI. */
 .ana-kok.sayfa-video{ background:radial-gradient(ellipse at 50% 20%, #a55cf0 0%, #7d3fd0 42%, #5a2aa0 72%, #3f1c78 100%) !important; }   /* mor ikon */
+.ana-kok.sayfa-ayna{ background:radial-gradient(ellipse at 50% 16%, #f7e79a 0%, #eccf6a 44%, #e0be55 76%, #d4af37 100%) !important; }   /* Sanal Ayna — altın */
+.ana-kok.sayfa-ayna .ana-arka-foto{ display:none !important; }
 /* ═══ CANLI AKIŞ (video sayfası) — canlı yayın bölümü + kısa video ızgarası ═══ */
 .cy-pencere{ padding:12px 12px 90px; }
 .cy-hero{ display:flex; align-items:center; gap:12px; background:linear-gradient(135deg,#2a0f4d,#4a1d86); border:2px solid rgba(255,215,0,.35); border-radius:18px; padding:14px 15px; box-shadow:0 6px 20px rgba(30,10,70,.5); }
@@ -5004,6 +5006,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Tam ekran panel */
 .sa-fon{ position:fixed; inset:0; z-index:100080; display:flex; align-items:stretch; justify-content:center;
   background:radial-gradient(circle at 50% 30%, #f7e79a, #e6c85a 75%, #d4af37); }
+/* SAYFA MODU — Sanal Ayna artık diğer sayfalar gibi (üstte ince şerit + ikonlar açık kalır). Sabit değil, sayfa akışında;
+   içerik doğal akar, sayfa kendisi kayar (kendi kaydırma çubuğu gerekmez). Altın zemin (⛔ siyah yok). */
+.sa-sayfa{ width:100%; display:flex; justify-content:center;
+  background:radial-gradient(circle at 50% 12%, #f7e79a, #e6c85a 80%, #d4af37); }
+.sa-sayfa .sa-pencere{ margin:0 auto; }
+.sa-sayfa .sa-kaydir{ overflow:visible; padding:10px 14px 26px; }
 .sa-pencere{ width:100%; max-width:620px; display:flex; flex-direction:column; }
 .sa-ust{ display:flex; align-items:center; gap:10px; padding:14px 16px 10px; }
 .sa-baslik{ flex:1; font-weight:900; font-size:22px; color:#5a3f00; }
