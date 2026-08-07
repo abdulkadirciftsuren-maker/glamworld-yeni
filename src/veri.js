@@ -192,35 +192,40 @@ export async function profilKaydet(uid, veri) {
   } catch (e) { return false; }
 }
 
-// ===================== MUHASEBE (muhasebeci sayfası) =====================
-// Her kullanıcının kendi müşterileri: kullanicilar/{uid}/muhasebe/{musteriId}. Kayıtlar (gelir/gider) müşteri dokümanında
-// "kayitlar" dizisinde tutulur. SADECE kullanıcı silince silinir (auto-silme YOK). Canlı dinleme (onSnapshot) → hep güncel.
-function muhasebeKol(uid) { return collection(db, KULLANICILAR, uid, "muhasebe"); }
-// Müşterileri CANLI dinle (en yeni üstte)
-export function muhasebeMusterileriDinle(uid, cb) {
+// ===================== MUHASEBE (muhasebeci sayfası — çok bölümlü) =====================
+// TEK koleksiyon: kullanicilar/{uid}/muhasebe/{id}. Her doküman "tip" ile ayrılır:
+//   cari  (müşteri/tedarikçi cari hesap) · stok (depo ürünü) · islem (alış-satış) · kasa (gelir-gider)
+// YUMUŞAK SİLME (çöp kutusu): silme HARD-DELETE değil → silindi:true + silinmeMs. ~30 gün sonra kalıcı silinir (purge).
+// Çöp kutusundan geri yüklenebilir. Canlı dinleme (onSnapshot) → hep güncel; SADECE kullanıcı silince silinir.
+export const MUH_COP_GUN = 30; // çöp kutusunda saklama süresi (gün)
+export function muhasebeDinle(uid, cb) {
   if (!uid) { try { cb([]); } catch (e) {} return () => {}; }
   try {
-    return onSnapshot(muhasebeKol(uid),
-      (snap) => { try { const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })); liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); cb(liste); } catch (e) {} },
+    return onSnapshot(collection(db, KULLANICILAR, uid, "muhasebe"),
+      (snap) => { try { const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })); cb(liste); } catch (e) {} },
       () => {});
   } catch (e) { try { cb([]); } catch (x) {} return () => {}; }
 }
-// Yeni müşteri ekle → id döner
-export async function muhasebeMusteriEkle(uid, musteri) {
+// Yeni kayıt ekle (tip: cari/stok/islem/kasa) → id döner
+export async function muhasebeEkle(uid, veri) {
   if (!uid) return null;
   try {
-    const id = "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    await setDoc(doc(db, KULLANICILAR, uid, "muhasebe", id), { ...musteri, kayitlar: [], zamanMs: Date.now(), guncelleme: serverTimestamp() });
+    const id = "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    await setDoc(doc(db, KULLANICILAR, uid, "muhasebe", id), { ...veri, silindi: false, silinmeMs: 0, zamanMs: Date.now(), guncelleme: serverTimestamp() });
     return id;
   } catch (e) { return null; }
 }
-// Müşteriyi güncelle (ad/telefon/not VEYA kayitlar dizisi) — merge, var olanı bozmaz
-export async function muhasebeMusteriGuncelle(uid, id, veri) {
+// Güncelle (merge)
+export async function muhasebeGuncelle(uid, id, veri) {
   if (!uid || !id) return false;
   try { await setDoc(doc(db, KULLANICILAR, uid, "muhasebe", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
 }
-// Müşteriyi SİL (sadece kullanıcı isteyince)
-export async function muhasebeMusteriSil(uid, id) {
+// ÇÖPE AT (yumuşak sil) — geri yüklenebilir, ~30 gün sonra kalıcı silinir
+export async function muhasebeCopeAt(uid, id) { return muhasebeGuncelle(uid, id, { silindi: true, silinmeMs: Date.now() }); }
+// ÇÖPTEN GERİ YÜKLE
+export async function muhasebeGeriYukle(uid, id) { return muhasebeGuncelle(uid, id, { silindi: false, silinmeMs: 0 }); }
+// KALICI SİL (çöp kutusundan tamamen kaldır)
+export async function muhasebeKaliciSil(uid, id) {
   if (!uid || !id) return false;
   try { await deleteDoc(doc(db, KULLANICILAR, uid, "muhasebe", id)); return true; } catch (e) { return false; }
 }

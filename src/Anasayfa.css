@@ -5104,6 +5104,33 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .muh-musteri-sil{ width:100%; margin-top:14px; background:#fff2f0; color:#c0392b; border:1.5px solid #e0a79f; }
 .muh-toast{ position:fixed; left:50%; bottom:88px; transform:translateX(-50%); background:#3a2a05; color:#ffe9a8; font-weight:800; font-size:14px; padding:10px 16px; border-radius:14px; z-index:100090; box-shadow:0 8px 24px rgba(0,0,0,.35); }
 @media (min-width:560px){ .muh-bas{ font-size:26px; } .muh-alt{ font-size:15.5px; } .muh-btn, .muh-inp{ font-size:16.5px; } .muh-m-ad{ font-size:17px; } }
+/* SEKME ŞERİDİ (Müşteriler/Stok/Alış-Satış/Kasa/Çöp) */
+.muh-sekmeler{ display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; scrollbar-width:none; }
+.muh-sekmeler::-webkit-scrollbar{ display:none; }
+.muh-sekme{ flex:1 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 10px; border-radius:12px; border:1.6px solid rgba(184,134,11,.45); background:#fffdf3; color:#7a5a10; font-family:inherit; font-weight:800; cursor:pointer; position:relative; min-width:64px; }
+.muh-sekme-ik{ font-size:19px; line-height:1; }
+.muh-sekme-ad{ font-size:11.5px; white-space:nowrap; }
+.muh-sekme.aktif{ background:linear-gradient(150deg,#FFD700,#f2a900); color:#4a3500; border-color:#c9962a; box-shadow:0 3px 9px rgba(255,180,0,.35); }
+.muh-sekme-rozet{ position:absolute; top:-5px; right:-4px; background:#c0392b; color:#fff; font-size:10px; font-weight:900; min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 3px; }
+/* Liste satırı (müşteri/ürün) + ⋮ menü */
+.muh-satir{ display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:#fffdf3; border:1.6px solid rgba(184,134,11,.45); border-radius:13px; padding:13px 10px 13px 13px; cursor:pointer; position:relative; }
+.muh-satir:active{ transform:scale(.99); }
+.muh-s-ad{ flex:1; font-weight:900; font-size:15.5px; color:#5a4300; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.muh-s-tutar{ font-weight:900; font-size:14.5px; white-space:nowrap; }
+.muh-s-tutar.kirmizi{ color:#c0392b; } .muh-s-tutar.yesil{ color:#1f8b4c; } .muh-s-tutar.gri{ color:#7a5a10; }
+.muh-s-ok{ color:#a07800; font-size:19px; font-weight:900; }
+.muh-uc-sar{ position:relative; display:inline-flex; }
+.muh-uc{ background:#fff7db; border:1.4px solid rgba(184,134,11,.5); border-radius:9px; width:30px; height:30px; font-size:18px; font-weight:900; color:#7a5a00; cursor:pointer; line-height:1; }
+.muh-uc-menu{ position:absolute; top:34px; right:0; z-index:30; background:#fff; border:1.6px solid rgba(184,134,11,.6); border-radius:11px; box-shadow:0 8px 24px rgba(80,60,0,.3); padding:5px; min-width:120px; }
+.muh-uc-sil{ width:100%; text-align:left; background:#fff2f0; color:#c0392b; border:none; border-radius:8px; padding:10px 12px; font-family:inherit; font-weight:800; font-size:14.5px; cursor:pointer; }
+/* Çöp kutusu satırı */
+.muh-cop-satir{ display:flex; align-items:center; gap:8px; background:#fffdf3; border:1.5px solid rgba(184,134,11,.4); border-radius:11px; padding:10px 11px; }
+.muh-cop-tip{ font-size:11px; font-weight:800; color:#7a5a10; background:#fff3c4; border-radius:7px; padding:3px 7px; white-space:nowrap; }
+.muh-cop-ozet{ flex:1; font-size:13.5px; color:#5a4300; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.muh-cop-gun{ font-size:11px; color:#a06a00; font-weight:800; white-space:nowrap; }
+.muh-cop-geri{ background:#e9f7ef; color:#1f8b4c; border:1.3px solid #9fd8b6; border-radius:9px; padding:7px 9px; font-family:inherit; font-weight:800; font-size:13px; cursor:pointer; white-space:nowrap; }
+.muh-cop-sil{ background:#fff2f0; color:#c0392b; border:1.3px solid #e0a79f; border-radius:9px; width:30px; height:30px; font-weight:900; cursor:pointer; }
+select.muh-inp{ appearance:none; -webkit-appearance:none; background-image:linear-gradient(45deg,transparent 50%,#a07800 50%),linear-gradient(135deg,#a07800 50%,transparent 50%); background-position:calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:34px; }
 /* GİZLİ YAZDIRILACAK ALAN (PDF görüntüsü buradan alınır) — ekran DIŞINDA, beyaz zemin/siyah yazı (kâğıt gibi) */
 .muh-yazdir{ position:absolute; left:-99999px; top:0; width:760px; background:#fff; color:#111; padding:34px; font-family:Arial, sans-serif; }
 .muy-bas{ font-size:24px; font-weight:900; color:#7a5a00; margin-bottom:6px; }
