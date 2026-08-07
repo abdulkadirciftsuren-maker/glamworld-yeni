@@ -5425,6 +5425,46 @@ export default function Anasayfa({ pro = false }) {
           resimIstem = (kisaTakip && oncekiResim && oncekiResim.resimIstem) ? oncekiResim.resimIstem : sonKul.slice(0, 300);
         }
       }
+      // CUMA / DUA PAYLAŞIMI — kullanıcı "cuma paylaşımı / cuma resmi / dua / hayırlı cumalar" isteyince:
+      // yapay zekâ hep AYNI küçük "rafta duran poster" resmini + aynı 2-3 kelimeyi veriyordu (kullanıcı: "dandik,
+      // ufak, hep aynı, dua yok"). Bu yüzden içeriği BİZ üretiyoruz → HER SEFERİNDE FARKLI: (1) resim betimi TAM KARE
+      // dolduran (rafta poster/çerçeve/boşluk YOK), büyük ve şık; sahne rastgele değişir; (2) gerçek bir DUA paylaşım
+      // kartına konur (havuzdan rastgele, hep farklı). Böylece küçük/dandik/tekrar sorunu biter.
+      {
+        const sonKulC = (yeniListe[sonIdx] && yeniListe[sonIdx].rol === "user") ? (yeniListe[sonIdx].metin || "") : "";
+        const kulDusC = sonKulC.toLowerCase();
+        // "cuma" var (ama "cumartesi" DEĞİL) + bir üretme/paylaşma/görsel isteği → Cuma paylaşımı
+        const cumaIstek = /cuma(?!rtesi)/.test(kulDusC)
+          && /(payla|mesaj|resim|resm|görsel|gorsel|foto|kart|dua|gönderi|gonderi|hazırla|hazirla|yaz|ver|iste|göster|goster|namaz|mübarek|mubarek)/.test(kulDusC);
+        if (cumaIstek) {
+          const sec = (a) => a[Math.floor(Math.random() * a.length)];
+          // Resmin ÜSTÜNDEKİ kısa başlık (her seferinde farklı)
+          const basliklar = ["Hayırlı Cumalar", "Cumanız Mübarek Olsun", "Hayırlı ve Bereketli Cumalar", "Mübarek Cumalar", "Cuma Bereketi Üzerinize Olsun", "Hayırlı Cumalar Diliyorum"];
+          const baslik = sec(basliklar);
+          // Resmin SAHNESİ (her seferinde farklı — hep aynı yeşil poster olmasın)
+          const sahneler = [
+            "a majestic grand mosque silhouette at golden sunrise, warm glowing sky, soft light rays, elegant Islamic geometric ornaments framing the scene",
+            "an ornate glowing golden Islamic lantern (fanous), intricate arabesque patterns, soft warm bokeh light, luxurious gold and amber tones",
+            "graceful mosque minarets against a warm golden dawn sky with a delicate crescent moon and gentle stars, glowing soft clouds",
+            "an open Holy Quran with soft golden light rays, pink and cream roses beside it, warm serene glowing atmosphere",
+            "elegant prayer beads (tesbih) resting on delicate roses, warm golden light, soft luxurious background, ornate golden arabesque border",
+            "a beautiful mosque dome with a golden crescent glowing at magic hour, warm amber sky, ornate golden Islamic pattern border",
+          ];
+          const sahne = sec(sahneler);
+          resimIstem = `A stunning full-bleed vertical greeting poster that FILLS THE ENTIRE FRAME edge to edge. Do NOT show a photo of a poster on a shelf or wall, no frame, no mockup, no white borders, no empty margins — the artwork itself covers the whole image. Scene: ${sahne}. Large elegant ornate golden calligraphy-style text, centered, reading "${baslik}" in Turkish, with a smaller graceful line "Dualarınız kabul olsun" beneath it. Rich warm gold and colorful festive tones, luxurious, highly detailed, serene, photorealistic, high quality, 4k, vertical composition.`;
+          // Gerçek DUA (paylaşım kartı) — havuzdan rastgele, her seferinde FARKLI
+          const dualar = [
+            "🌸 Hayırlı Cumalar 🌸\nAllah'ım, bu mübarek Cuma hürmetine kalbimizi huzurla, evimizi bereketle, yolumuzu nurla doldur. Dualarımızı kabul, günahlarımızı af eyle. Sevdiklerimizi sağlık ve mutlulukla yaşat. Âmin. 🤲✨",
+            "🕌 Cumanız Mübarek Olsun 🕌\nRabbim, gönüllerimizi iman ile, sofralarımızı bereket ile, ömrümüzü sağlık ile şenlendir. Bu Cuma'nın hürmetine dertlerimize derman, dualarımıza kabul nasip eyle. Âmin. 🌙💛",
+            "✨ Hayırlı ve Bereketli Cumalar ✨\nYa Rabbi, bugün dua eden herkesi rahmetinle kuşat. Kalplerimize huzur, evlerimize saadet, ömrümüze bereket ihsan eyle; hastalara şifa, dertlilere ferahlık ver. Âmin. 🤲🌷",
+            "🌙 Mübarek Cumalar 🌙\nAllah'ım, bizi doğru yoldan ayırma; sabrımızı, şükrümüzü, imanımızı artır. Bu güzel günün hürmetine tüm sevdiklerimize hayır, sağlık ve mutluluk nasip eyle. Âmin. 💫🕌",
+            "🤲 Hayırlı Cumalar 🤲\nRabbim, bu Cuma bize ve tüm sevdiklerimize hayır kapıları açsın; kalbimizi ferah, rızkımızı bol, ömrümüzü hayırlı eylesin. Gönlünden geçen tüm güzel dualar kabul olsun. Âmin. 🌸💛",
+            "🌷 Cumanız Mübarek Olsun 🌷\nYa Rabbi, evlerimizden huzuru, sofralarımızdan bereketi, kalplerimizden sevgiyi eksik etme. Bu mübarek günün yüzü suyu hürmetine dualarımızı kabul, işlerimizi rast eyle. Âmin. ✨🕌",
+          ];
+          paylasim = sec(dualar);
+          metin = t("cumaHazir", "İşte sana özel bir Cuma paylaşımı hazırladım 🤲🌸");
+        }
+      }
       if (!metin && resimIstem) metin = t("resimUretiliyor", "Resmi hazırlıyorum 🎨");
       const resimId = resimIstem ? ("r" + Date.now() + "-" + Math.round(Math.random() * 1e6)) : "";
       // HARİTA — AI bir yere yol tarifi/konum verirse: [HARITA: Yer adı | enlem,boylam] → tıklanınca Google Haritalar'da yol tarifi açan düğme
@@ -10443,7 +10483,7 @@ export default function Anasayfa({ pro = false }) {
                           <div className="ai-resim-yuk"><span className="ai-resim-don" />{t("resimHazirlaniyor", "Resim hazırlanıyor…")}</div>
                         ) : m.resimData ? (
                           <>
-                            <img className="ai-cizim-gorsel" src={m.resimData} alt={t("resim", "resim")} onClick={() => setCizimBuyut(m.resimData)} />
+                            <img className="ai-resim-gorsel" src={m.resimData} alt={t("resim", "resim")} onClick={() => setCizimBuyut(m.resimData)} />
                             <div className="ai-cizim-arac">
                               <button className="ai-paylasim-btn indir" onClick={() => resimIndir(m.resimData)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>

@@ -3514,6 +3514,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* GLOXOO ÇİZİMİ (SVG vektör) — sohbette resim kartı + tam ekran büyütme. Zemin ALTIN/açık (⛔ siyah yok), köşeler yumuşak kare. */
 .ai-cizim-kart{ align-self:flex-start; max-width:94%; margin:-1px 0 6px; padding:10px; border-radius:16px; background:linear-gradient(150deg,#fff3c4,#ffe58a 55%,#ffd94f); border:1.6px solid rgba(255,205,130,.85); box-shadow:0 6px 22px rgba(0,0,0,.28); }
 .ai-cizim-gorsel{ display:block; width:100%; max-width:260px; height:auto; aspect-ratio:1/1; object-fit:contain; border-radius:12px; background:#fffbe9; cursor:zoom-in; margin:0 auto 9px; }
+/* GERÇEK ÜRETİLEN RESİM (Gloxoo fotoğrafı) — SVG çiziminden AYRI: BÜYÜK göster, kareye SIKIŞTIRMA (dikey Cuma posteri
+   küçük görünmesin), doğal oranını koru, zemin ALTIN (⛔ siyah yok). Kullanıcı: "resim çok ufak geliyor". */
+.ai-resim-gorsel{ display:block; width:100%; max-width:100%; height:auto; max-height:70vh; object-fit:contain; border-radius:12px; background:linear-gradient(150deg,#fff3c4,#ffe58a); cursor:zoom-in; margin:0 auto 9px; }
 .ai-cizim-arac{ display:flex; gap:8px; flex-wrap:wrap; }
 /* GERÇEK RESİM üretilirken yükleniyor + hata */
 .ai-resim-yuk{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:11px; min-height:150px; color:#5c4600; font-weight:800; font-size:14px; }
