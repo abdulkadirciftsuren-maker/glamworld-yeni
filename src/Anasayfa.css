@@ -1529,12 +1529,13 @@
 /* ---- İkon sırası — HEPSİ SAYFAYA SIĞAR (yana kaydırma YOK: sağa çekiş sayfaya kalır),
    düğmeler birbirine yakın, her düğme KENDİ renk tonunda + köşesinde mavi elmas ---- */
 .ana-nav{
-  display:flex; gap:7px; justify-content:space-between; align-items:center;
-  padding:6px 9px 0; overflow:visible;
+  display:flex; gap:4px; justify-content:space-between; align-items:flex-start;
+  padding:5px 6px 0; overflow:visible;
 }
 .ana-nav-oge{ display:flex; flex-direction:column; align-items:center; flex:1; min-width:0; background:none; border:none; cursor:pointer; padding:0; }
+/* 8 ikon (Sanal Ayna dahil) tek şeride sığsın diye telefonda daha küçük (eskiden 42px) */
 .ana-nav-kutu{
-  position:relative; width:42px; height:42px; border-radius:12px;
+  position:relative; width:37px; height:37px; border-radius:10px;
   display:flex; align-items:center; justify-content:center;
   -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
   border:1.5px solid rgba(184,134,11,.5); transition:all .2s;
@@ -1552,12 +1553,15 @@
 .ana-nav-oge:nth-child(4) .ana-nav-kutu{ animation-delay:1.35s; }
 .ana-nav-oge:nth-child(5) .ana-nav-kutu{ animation-delay:1.8s; }
 .ana-nav-oge:nth-child(6) .ana-nav-kutu{ animation-delay:2.25s; }
-.ana-nav-kutu > svg{ position:relative; width:22px; height:22px; overflow:visible; } /* kalp ikonun ALTINA taşabilir; z: cam katmanın Üstünde */
+.ana-nav-kutu > svg{ position:relative; width:19px; height:19px; overflow:visible; } /* kalp ikonun ALTINA taşabilir; z: cam katmanın Üstünde */
+/* SANAL AYNA ikonu (emoji) — nav kutusunda uygun boyut */
+.ana-nav-kutu-ayna{ font-size:20px; line-height:1; }
+.ana-nav-ad{ overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 /* Profil = YUVARLAK; fotoğraf varsa içini doldurur */
 .ana-nav-kutu.yuv{ border-radius:50%; }
 .ana-nav-kutu.yuv img{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
 /* PROFİL nav düğmesi: işlemeli altın çerçeve (header ile aynı, kare); foto içi doldurur (kullanıcı: kare çerçeveyi alttaki profile koy) */
-.ana-nav-kutu.nav-cerceveli{ box-sizing:border-box; width:46px; height:46px; background:radial-gradient(circle at 50% 35%,#2a2010,#0c0905) padding-box !important; box-shadow:0 4px 12px rgba(120,95,30,.28); }
+.ana-nav-kutu.nav-cerceveli{ box-sizing:border-box; width:40px; height:40px; background:radial-gradient(circle at 50% 35%,#2a2010,#0c0905) padding-box !important; box-shadow:0 4px 12px rgba(120,95,30,.28); }
 .ana-nav-kutu.nav-cerceveli img{ width:100%; height:100%; border-radius:3px; object-fit:cover; }
 
 /* ===== PROFİL FOTOĞRAFLARI HER YERDE KARE (yuvarlak köşeli, keskin değil) — kullanıcı isteği =====
@@ -1593,16 +1597,61 @@
 .ana-nav-kutu.nav-cerceveli img{ border-radius:3px !important; width:100%; height:100%; object-fit:cover; }
 /* her düğme kendi renginde (fotoğraftaki gibi içleri renkli) */
 /* AYDINLIK temada CANLI dolu renkli nav ikonları + beyaz ikon (soluk cam yerine doygun renk) */
-.ana-nav-oge:nth-child(1) .ana-nav-kutu{ background:linear-gradient(150deg,#3f8aff,#1e4a9e); color:#fff; border-color:rgba(30,74,158,.6); }
-.ana-nav-oge:nth-child(2) .ana-nav-kutu{ background:linear-gradient(150deg,#f7c23a,#b8860b); color:#fff; border-color:rgba(184,134,11,.6); }
-.ana-nav-oge:nth-child(3) .ana-nav-kutu{ background:linear-gradient(150deg,#34c878,#0f7a40); color:#fff; border-color:rgba(15,122,64,.6); }
-.ana-nav-oge:nth-child(4) .ana-nav-kutu{ background:linear-gradient(150deg,#ad5fe0,#6a2a9e); color:#fff; border-color:rgba(106,42,158,.6); }
-.ana-nav-oge:nth-child(5) .ana-nav-kutu{ background:linear-gradient(150deg,#22c8d8,#0a6a7a); color:#fff; border-color:rgba(10,106,122,.6); }
-.ana-nav-oge:nth-child(6) .ana-nav-kutu{ background:linear-gradient(150deg,#c2cf3a,#6e7013); color:#fff; border-color:rgba(110,112,19,.6); }
+/* SIRA (Sanal Ayna EN ÖNDE eklendi → renkler +1 kaydı): 1=Ayna,2=Ana,3=Elite,4=Tanış,5=Makara,6=Konum,7=Akademi,8=Profil */
+.ana-nav-oge:nth-child(1) .ana-nav-kutu{ background:linear-gradient(150deg,#ffd36b,#f2a900); color:#fff; border-color:#ffe9a8; } /* AYNA — altın */
+.ana-nav-oge:nth-child(2) .ana-nav-kutu{ background:linear-gradient(150deg,#3f8aff,#1e4a9e); color:#fff; border-color:rgba(30,74,158,.6); }
+.ana-nav-oge:nth-child(3) .ana-nav-kutu{ background:linear-gradient(150deg,#f7c23a,#b8860b); color:#fff; border-color:rgba(184,134,11,.6); }
+.ana-nav-oge:nth-child(4) .ana-nav-kutu{ background:linear-gradient(150deg,#34c878,#0f7a40); color:#fff; border-color:rgba(15,122,64,.6); }
+.ana-nav-oge:nth-child(5) .ana-nav-kutu{ background:linear-gradient(150deg,#ad5fe0,#6a2a9e); color:#fff; border-color:rgba(106,42,158,.6); }
+.ana-nav-oge:nth-child(6) .ana-nav-kutu{ background:linear-gradient(150deg,#22c8d8,#0a6a7a); color:#fff; border-color:rgba(10,106,122,.6); }
+.ana-nav-oge:nth-child(7) .ana-nav-kutu{ background:linear-gradient(150deg,#c2cf3a,#6e7013); color:#fff; border-color:rgba(110,112,19,.6); }
 /* PROFİL rengi KARTA göre: müşteri = BEYAZ pırlanta, profesyonel = KIRMIZI pırlanta */
-.ana-nav-oge:nth-child(7) .ana-nav-kutu{ background:linear-gradient(150deg,#aac2e8,#5a6e8a); color:#fff; border-color:rgba(90,110,138,.6); }
-.ana-kok-pro .ana-nav-oge:nth-child(7) .ana-nav-kutu{ background:linear-gradient(150deg,#e0353f,#96141e); color:#fff; border-color:rgba(150,20,30,.6); }
+.ana-nav-oge:nth-child(8) .ana-nav-kutu{ background:linear-gradient(150deg,#aac2e8,#5a6e8a); color:#fff; border-color:rgba(90,110,138,.6); }
+.ana-kok-pro .ana-nav-oge:nth-child(8) .ana-nav-kutu{ background:linear-gradient(150deg,#e0353f,#96141e); color:#fff; border-color:rgba(150,20,30,.6); }
 .ana-nav-oge:active .ana-nav-kutu{ transform:scale(.93); }
+
+/* ============================================================
+   YENİ İNCE ÜST ŞERİT (Facebook gibi) — büyük çerçeveli/taş-zeminli banner KALDIRILDI.
+   Tek satır: menü | GLOXORG | boşluk | bildirim | Gloxoo | profil. Çerçeve/banner zemini YOK
+   (sayfanın kendi altın zemini görünür, yer açılır). GLOXORG yazı rengi ÜYE TİPİNE göre.
+   ============================================================ */
+.ana-header.ana-header-ince{
+  display:flex; align-items:center; gap:8px;
+  padding:7px 11px; min-height:0; height:auto;
+  background:transparent !important; border:none !important; box-shadow:none !important;
+  border-image:none !important; border-radius:0 !important;
+}
+.ana-header-ince .ana-ince-btn{
+  width:38px; height:38px; min-width:38px; flex:none; border-radius:11px;
+  display:flex; align-items:center; justify-content:center; padding:0; margin:0;
+}
+.ana-header-ince .ana-ince-btn > svg{ width:20px; height:20px; }
+.ana-header-ince .ana-logo-sar.ana-logo-ince{
+  position:static; display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+  margin:0 2px; min-width:0; transform:none; flex:0 1 auto; text-align:left; gap:1px;
+}
+.ana-header-ince .ana-logo-metin{
+  background:none !important; -webkit-text-fill-color:currentColor; color:#d21f2f;
+  font-size:24px; line-height:1; font-weight:900; letter-spacing:.01em;
+}
+.ana-header-ince .ana-alt-sar{ display:flex; align-items:center; gap:4px; }
+/* Alt yazı: koyu banner için açık kremdi; ince şerit sayfanın AÇIK altın zemininde olduğundan KOYU altın + gölgesiz (okunur) */
+.ana-header-ince .ana-alt{ font-size:10.5px; line-height:1.1; color:#7a5a10 !important; text-shadow:none !important; }
+.ana-header-ince .ana-ince-bosluk{ flex:1 1 auto; }
+.ana-header-ince .ana-profil.ana-ince-profil{
+  width:38px; height:38px; min-width:38px; flex:none; border-radius:11px !important; margin:0;
+}
+.ana-header-ince .ana-profil.ana-ince-profil .ana-profil-foto{ border-radius:9px; }
+/* GLOXORG yazı rengi ÜYE TİPİNE göre: müşteri=KIRMIZI, pro=MAVİ, altın(max)=YEŞİL */
+.ana-header-ince.ana-header-musteri .ana-logo-metin{ color:#d21f2f; }
+.ana-header-ince.ana-header-pro .ana-logo-metin{ color:#1863c9; }
+.ana-header-ince.ana-header-altin .ana-logo-metin{ color:#1a9e57; }
+@media (min-width:560px){
+  .ana-header-ince .ana-logo-metin{ font-size:28px; }
+  .ana-header-ince .ana-alt{ font-size:12px; }
+  .ana-header-ince .ana-ince-btn, .ana-header-ince .ana-profil.ana-ince-profil{ width:42px; height:42px; min-width:42px; }
+  .ana-header-ince .ana-ince-btn > svg{ width:22px; height:22px; }
+}
 .ana-nav-oge.aktif .ana-nav-kutu{
   border-color:currentColor;
   box-shadow:0 0 14px, 0 6px 16px rgba(0,10,20,.45); /* renksiz gölge = düğmenin kendi ışığı */

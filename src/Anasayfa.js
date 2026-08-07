@@ -7698,6 +7698,8 @@ export default function Anasayfa({ pro = false }) {
       const d = e.changedTouches[0];
       const dx = d.clientX - b.x, dy = d.clientY - b.y;
       if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return; // yatay net olmalı
+      // ANA SAYFADA SOLA ÇEKİNCE SANAL AYNA AÇILIR (kullanıcı isteği — şerit yazısı yok, ayna açılınca içinde açıklama var).
+      if (aktifKod === "home" && dx < 0) { setSanalAynaAcik(true); return; }
       const i = navlar.findIndex((n) => n.k === aktifKod);
       let yeni = dx < 0 ? Math.min(i + 1, navlar.length - 1) : Math.max(i - 1, 0);
       // SON sayfada (Profil) sola kaydırınca ileri gidecek sayfa yok → kullanıcı yine de bir öncekine (Akademi) geçsin
@@ -7750,57 +7752,44 @@ export default function Anasayfa({ pro = false }) {
       </div>
       </div>
 
-      {/* Üst başlık — üyelik pırlantası alt zemin: Altın üye=YEŞİL, Profesyonel=YAKUT, Müşteri=MAVİ pırlanta (rengi sabit).
-          Çerçeve/taşlar/GLOXORG(nakışlı görsel)/düğmeler/ayı/profil AYNEN. Sadece zemin+yazı görseli tema ile değişir. */}
-      <header className={"ana-header ana-header-elmas ana-header-" + uyeTema}
-        style={{
-          backgroundImage: `url(${uyeZemin})`, backgroundSize: "cover", backgroundPosition: "center",
-          borderStyle: "solid", borderColor: "transparent",
-          ...uyeCerceveStyle,
-        }}>
-        {/* ÇERÇEVE artık border-image (işlemeli altın çerçeve); eski tek-taş şeridi kaldırıldı.
-            SOL KOLON: bildirim (üstte) + menü (altta) — DİKEYde üst üste (kullanıcı: yer açılsın, orta yazı büyüsün); YATAY/geniş ekranda yan yana (row-reverse → menü|zil, eskisi gibi) */}
-        <div className="ana-ikon-kol ana-kol-sol">
-          <button className="ana-menu-btn ana-zil" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}
-            style={{ backgroundImage: `url(${bildirimListe.some((b) => !b.okundu) ? zilCerceveKirmiziResim : zilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
-            {Ikon.bildirim}
-            {bildirimListe.some((b) => !b.okundu) && <span className="ana-zil-rozet">{Math.min(99, bildirimListe.filter((b) => !b.okundu).length)}</span>}
-          </button>
-          <button className="ana-menu-btn" onClick={() => setMenuAcik(true)} aria-label="Menü"
-            style={{ backgroundImage: `url(${ikonCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>{Ikon.menu}</button>
-        </div>
-        {/* DİL — SADECE geniş ekranda (bilgisayar/iPad/notebook) header'da görünür; telefonda menüdedir (yer dar). CSS: .header-dil telefonda display:none, >=760px görünür */}
-        <span className="header-dil"><DilSecici /></span>
-        {/* MARKA her pencerede O SAYFANIN renginde: pırlanta + GLOXORG + sayfanın adı (ANAYASA 6.15) */}
-        <div className="ana-logo-sar">
-          {/* Tüm üyeler: bannerdaki nakışlı-pırlantalı GLOXORG görseli (harfler orijinalden, kesilmedi).
-              Pro=yakut zeminli, Müşteri/Altın=şeffaf (mavi/yeşil zemine oturur). Eski düz yazı + mavi elmas kaldırıldı. */}
-          {/* İSİM artık RESİM değil, YAZI — kullanıcı seçti (altın, 4 no tasarım). Böylece rengi kişiye özel de olabilir. */}
+      {/* ÜST İNCE ŞERİT (Facebook gibi): menü | GLOXORG (üye tipine göre renk) | boşluk | bildirim | Gloxoo | profil.
+          Eski büyük çerçeveli/taş-zeminli banner KALDIRILDI — sayfanın kendi zemini kullanılır, yer açıldı (kullanıcı isteği).
+          GLOXORG yazı rengi: müşteri=KIRMIZI, pro=MAVİ, altın(max)=YEŞİL (CSS .ana-header-<tema> .ana-logo-metin). */}
+      <header className={"ana-header ana-header-ince ana-header-" + uyeTema}>
+        {/* MENÜ (solda) */}
+        <button className="ana-menu-btn ana-ince-btn" onClick={() => setMenuAcik(true)} aria-label="Menü"
+          style={{ backgroundImage: `url(${ikonCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>{Ikon.menu}</button>
+        {/* MARKA — GLOXORG + sayfa adı */}
+        <div className="ana-logo-sar ana-logo-ince">
           <span className="ana-logo-metin notranslate" translate="no">GLOXORG</span>
           <span className="ana-alt-sar">
             <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)}</span>
             {aktifKod === "home" && <DunyaKure />}
           </span>
-          {/* KİŞİYE ÖZEL ŞERİT — ismin altında, her müşteride farklı renk (kendi rengi) */}
-          <span className="ana-kisi-serit" style={{ background: kisiVurgu }} aria-hidden="true" />
         </div>
-        {/* SAĞ KOLON: profil (üstte) + ayı/Ekspert (altta) — DİKEYde üst üste (kullanıcı); YATAY/geniş ekranda yan yana (row-reverse → ayı|profil, eskisi gibi) */}
-        <div className="ana-ikon-kol ana-kol-sag">
-          {/* Google profil ikonu SADECE ANA SAYFADA; diğer pencerelerde O SAYFAYA AİT ikon (içi DOLU-renkli) */}
-          {aktifKod === "home" ? (
-            <div className="ana-profil ana-profil-yuvarlak" onClick={() => setProfilAcik((a) => !a)}
-              style={{ backgroundImage: `url(${uyeProfilCerceve})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-              {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
-            </div>
-          ) : (
-            <button className="ana-ara-btn ana-sayfa-ikon" aria-label={aktifEt} title={aktifEt} onClick={() => setSayfaBilgiAcik(true)}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
-          )}
-          {/* GLOME — bize has mesaj + arama düğmesi (ayının yerine); okunmamış rozetli */}
-          <button className="ana-ara-btn ana-mesaj-btn" onClick={() => setMesajAcik(true)} aria-label="Glome" title="Glome — Mesaj & Arama">
-            {Ikon.gloxi}
-            {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
-          </button>
-        </div>
+        {/* DİL — SADECE geniş ekranda header'da görünür (telefonda menüdedir) */}
+        <span className="header-dil"><DilSecici /></span>
+        <span className="ana-ince-bosluk" aria-hidden="true" />
+        {/* SAĞ: bildirim + Gloxoo + profil (hepsi küçük, tek şeride sığar) */}
+        <button className="ana-menu-btn ana-zil ana-ince-btn" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}
+          style={{ backgroundImage: `url(${bildirimListe.some((b) => !b.okundu) ? zilCerceveKirmiziResim : zilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+          {Ikon.bildirim}
+          {bildirimListe.some((b) => !b.okundu) && <span className="ana-zil-rozet">{Math.min(99, bildirimListe.filter((b) => !b.okundu).length)}</span>}
+        </button>
+        {/* GLOME — mesaj + arama düğmesi; okunmamış rozetli */}
+        <button className="ana-ara-btn ana-mesaj-btn ana-ince-btn" onClick={() => setMesajAcik(true)} aria-label="Glome" title="Glome — Mesaj & Arama">
+          {Ikon.gloxi}
+          {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
+        </button>
+        {/* PROFİL (ana sayfada) / diğer sayfalarda o sayfanın ikonu */}
+        {aktifKod === "home" ? (
+          <div className="ana-profil ana-profil-yuvarlak ana-ince-profil" onClick={() => setProfilAcik((a) => !a)}
+            style={{ backgroundImage: `url(${uyeProfilCerceve})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+            {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
+          </div>
+        ) : (
+          <button className="ana-ara-btn ana-sayfa-ikon ana-ince-btn" aria-label={aktifEt} title={aktifEt} onClick={() => setSayfaBilgiAcik(true)}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
+        )}
       </header>
 
       {/* SAYFA BİLGİ PENCERESİ — sağ üst sayfa ikonuna basınca: o sayfa NE İŞE YARAR + ne yapabilirsin (her dilde).
@@ -7908,6 +7897,14 @@ export default function Anasayfa({ pro = false }) {
           yazı SADECE aktif düğmede, sabit satırda (akışı oynatmaz);
           Profil = YUVARLAK, varsa fotoğraf görünür */}
       <nav className="ana-nav">
+        {/* SANAL AYNA — EN ÖNDE (ana sayfa ikonundan önce). Akıştaki şerit kaldırıldı, artık ikon.
+            Dokununca Sanal Ayna açılır; ayrıca ana sayfada parmakla SOLA çekince de açılır. */}
+        <button key="ayna" className="ana-nav-oge ana-nav-ayna" onClick={() => setSanalAynaAcik(true)} aria-label={t("sanalAyna", "Sanal Ayna")}>
+          <span className="ana-nav-kutu ana-nav-kutu-ayna">🪞
+            <span className="ana-nav-rozet"><MiniTas renk="mavi" /></span>
+          </span>
+          <span className="ana-nav-ad">{t("sanalAynaKisa", "Ayna")}</span>
+        </button>
         {navlar.map((n) => (
           /* PROFİL = kendi PENCERESİ (diğer bölümler gibi: üstte ikonlar + sağ üstte kalem,
              içerik yakında dolacak) — kullanıcının istediği asıl profil sayfası budur */
@@ -8034,15 +8031,8 @@ export default function Anasayfa({ pro = false }) {
 
           {/* AKIŞ (feed) — aşağı indikçe dünyadan yeni paylaşımlar */}
           <div className="ana-akis">
-            {/* SANAL AYNA — kendi fotoğrafında saç/tırnak/makyaj dene (müşteriye özel, belirgin altın kart) */}
-            <button className="sanal-ayna-kart" onClick={() => setSanalAynaAcik(true)}>
-              <span className="say-ik" aria-hidden="true">🪞</span>
-              <span className="say-yazi">
-                <b>{t("saBaslik", "Sanal Ayna")}</b>
-                <i>💇 {t("saSac", "Saç")} · 💄 {t("saMakyaj", "Makyaj")} · 👗 {t("saElbise", "Kıyafet")} · 👟 {t("saAyakkabi", "Ayakkabı")} · 👜 {t("saCanta", "Çanta")}</i>
-              </span>
-              <span className="say-ok" aria-hidden="true">›</span>
-            </button>
+            {/* SANAL AYNA ŞERİDİ KALDIRILDI — artık üstteki ikon şeridinde 🪞 ikon (en önde) + parmakla sola çekince açılır.
+                Böylece akışta yer kaplamıyor (kullanıcı isteği). */}
             {/* VİTRİN / REKLAM ŞERİDİ — soldan-sağa akar; reklama basınca ürünü üstünde dene + satıcıya yaz */}
             <Suspense fallback={null}>
               <Reklam
