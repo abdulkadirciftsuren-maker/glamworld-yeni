@@ -1708,6 +1708,16 @@ export default function Anasayfa({ pro = false }) {
     }, 200);
     return () => clearInterval(id);
   }, []);
+  // SAYFA KAPANINCA/GİZLENİNCE GLOXOO SUSSUN (kullanıcı: "sayfayı kapatıyorum, çıkıyorum, Gloxoo hâlâ konuşuyor").
+  // Uygulamadan çıkınca/arka plana atınca tüm Gloxoo sesini (tarayıcı okuması + mp3 zinciri) kes.
+  useEffect(() => {
+    const durdur = () => { try { gloxSustur(); } catch (e) {} };
+    const gizlenince = () => { if (document.hidden) durdur(); };
+    window.addEventListener("pagehide", durdur);
+    window.addEventListener("beforeunload", durdur);
+    document.addEventListener("visibilitychange", gizlenince);
+    return () => { window.removeEventListener("pagehide", durdur); window.removeEventListener("beforeunload", durdur); document.removeEventListener("visibilitychange", gizlenince); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // TTS KİLİT AÇMA (Chrome/Android): Tarayıcı, sesli okumayı yalnızca kullanıcı sayfaya DOKUNDUKTAN sonra serbest
   // bırakır; cevap kendiliğinden gelince (dokunmadan) okuma SESSİZ kalıp "speaking=true" TAKILIYOR (parlama sebebi).
   // İlk dokunuşta sessiz bir konuşmayla motoru "aç" → sonraki okumalar SESLİ olur ve düzgün biter (takılmaz).
@@ -6809,9 +6819,32 @@ export default function Anasayfa({ pro = false }) {
     const s = Math.floor(dk / 60); if (s < 24) return s + " " + t("zamanSa", "sa");
     return Math.floor(s / 24) + " " + t("zamanGun", "gün");
   };
+  // PROFİL/PRO/AYAR verisini yükle. ÖNEMLİ DÜZELTME (kullanıcı: "güncellemede sayfa eksik geliyor — profil resmim yok,
+  // ayarlarım gelmemiş, PRO olmama rağmen şerit mavi değil kırmızı kalıyor, yukarıdan-aşağı çekince de düzelmiyor;
+  // ancak çıkış-giriş yapınca tam geliyor"). ESKİDEN: profilOku TEK SEFER çağrılıyordu; ağ/Firebase o an hazır değilse
+  // veri BOŞ dönüyor ya da hata veriyordu ve BİR DAHA denenmiyordu → profil sonsuza kadar boş (sayfa "eksik") kalıyordu;
+  // sadece çıkış-giriş (u değişince) yeniden okuyordu. ARTIK: gelene kadar TEKRAR DENER (artan bekleme) + uygulamaya
+  // geri dönünce (odak/görünürlük) hâlâ boşsa yeniden dener → takılı kalmaz, çıkış-giriş gerekmez.
   useEffect(() => {
     if (!u) { setProfilBilgi(null); return; }
-    profilOku(u.uid).then((p) => { if (p) setProfilBilgi(p); });
+    let iptal = false, yuklendi = false, deneme = 0;
+    const yukle = () => {
+      if (iptal || yuklendi) return;
+      profilOku(u.uid).then((p) => {
+        if (iptal || yuklendi) return;
+        if (p) { yuklendi = true; setProfilBilgi(p); return; }   // geldi → bitti
+        deneme++; if (deneme < 10) setTimeout(yukle, Math.min(700 * deneme, 5000)); // boş döndü → tekrar dene
+      }).catch(() => {
+        if (iptal || yuklendi) return;
+        deneme++; if (deneme < 12) setTimeout(yukle, Math.min(700 * deneme, 5000)); // hata → tekrar dene
+      });
+    };
+    yukle();
+    // EK GÜVENLİK: profil hâlâ gelmediyse, uygulamaya dönünce yeniden dene (yukarıdan-aşağı çekmeye gerek kalmadan düzelsin)
+    const tekrar = () => { if (!iptal && !yuklendi && !document.hidden) { deneme = 0; yukle(); } };
+    document.addEventListener("visibilitychange", tekrar);
+    window.addEventListener("focus", tekrar);
+    return () => { iptal = true; document.removeEventListener("visibilitychange", tekrar); window.removeEventListener("focus", tekrar); };
   }, [u]);
 
   const saglayiciAd = (() => {
