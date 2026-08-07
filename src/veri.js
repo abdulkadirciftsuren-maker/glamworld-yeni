@@ -171,6 +171,18 @@ export async function profilOku(uid) {
   } catch (e) { return null; }
 }
 
+// Profili CANLI dinle — tek seferlik okuma (getDoc) ağ/önbellek yüzünden BOŞ/ESKİ gelebiliyordu ("sayfa eksik geliyor:
+// profil resmi/PRO/ayar yüklenmiyor, kırmızı kalıyor; çıkış-giriş yapınca düzeliyor"). onSnapshot sunucu verisi hazır
+// olunca HEMEN verir, doküman değişince güncel tutar ve ağ dönünce kendi tekrar bağlanır → yarım-yükleme biter.
+export function profilDinle(uid, cb) {
+  if (!uid) { try { cb(null); } catch (e) {} return () => {}; }
+  try {
+    return onSnapshot(doc(db, KULLANICILAR, uid),
+      (s) => { try { cb(s.exists() ? { uid, ...s.data() } : null); } catch (e) {} },
+      () => {}); // hata → sessiz (dinleyici ağ dönünce kendi devam eder)
+  } catch (e) { try { cb(null); } catch (x) {} return () => {}; }
+}
+
 // Profili kaydet/güncelle (merge — var olanı bozmaz)
 export async function profilKaydet(uid, veri) {
   if (!uid) return false;

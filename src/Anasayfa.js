@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -6819,32 +6819,16 @@ export default function Anasayfa({ pro = false }) {
     const s = Math.floor(dk / 60); if (s < 24) return s + " " + t("zamanSa", "sa");
     return Math.floor(s / 24) + " " + t("zamanGun", "gün");
   };
-  // PROFİL/PRO/AYAR verisini yükle. ÖNEMLİ DÜZELTME (kullanıcı: "güncellemede sayfa eksik geliyor — profil resmim yok,
-  // ayarlarım gelmemiş, PRO olmama rağmen şerit mavi değil kırmızı kalıyor, yukarıdan-aşağı çekince de düzelmiyor;
-  // ancak çıkış-giriş yapınca tam geliyor"). ESKİDEN: profilOku TEK SEFER çağrılıyordu; ağ/Firebase o an hazır değilse
-  // veri BOŞ dönüyor ya da hata veriyordu ve BİR DAHA denenmiyordu → profil sonsuza kadar boş (sayfa "eksik") kalıyordu;
-  // sadece çıkış-giriş (u değişince) yeniden okuyordu. ARTIK: gelene kadar TEKRAR DENER (artan bekleme) + uygulamaya
-  // geri dönünce (odak/görünürlük) hâlâ boşsa yeniden dener → takılı kalmaz, çıkış-giriş gerekmez.
+  // PROFİL/PRO/AYAR verisini CANLI dinle. KÖK DÜZELTME (kullanıcı: "güncellemede sayfa eksik geliyor — profil resmim yok,
+  // ayarlarım gelmemiş, MAX/PRO olmama rağmen yazı kırmızı kalıyor; bazen oluyor bazen olmuyor; çıkış-giriş yapınca düzeliyor").
+  // ESKİDEN: profilOku TEK SEFER (getDoc) okuyordu; ağ/önbellek o an boş/eski verirse profil boş kalıyordu (tekrar-deneme de
+  // her durumu kurtarmadı — getDoc önbellekten "var ama eski" dönebiliyor). ARTIK onSnapshot ile CANLI dinliyoruz: sunucu
+  // verisi hazır olunca HEMEN gelir, doküman değişince güncel tutar, ağ dönünce kendi yeniden bağlanır → yarım-yükleme biter,
+  // MAX ise yazı YEŞİL gelir, profil resmi/ayarlar dolu olur. p boşsa (ilk önbellek anı) mevcut veriyi SİLMEyiz.
   useEffect(() => {
     if (!u) { setProfilBilgi(null); return; }
-    let iptal = false, yuklendi = false, deneme = 0;
-    const yukle = () => {
-      if (iptal || yuklendi) return;
-      profilOku(u.uid).then((p) => {
-        if (iptal || yuklendi) return;
-        if (p) { yuklendi = true; setProfilBilgi(p); return; }   // geldi → bitti
-        deneme++; if (deneme < 10) setTimeout(yukle, Math.min(700 * deneme, 5000)); // boş döndü → tekrar dene
-      }).catch(() => {
-        if (iptal || yuklendi) return;
-        deneme++; if (deneme < 12) setTimeout(yukle, Math.min(700 * deneme, 5000)); // hata → tekrar dene
-      });
-    };
-    yukle();
-    // EK GÜVENLİK: profil hâlâ gelmediyse, uygulamaya dönünce yeniden dene (yukarıdan-aşağı çekmeye gerek kalmadan düzelsin)
-    const tekrar = () => { if (!iptal && !yuklendi && !document.hidden) { deneme = 0; yukle(); } };
-    document.addEventListener("visibilitychange", tekrar);
-    window.addEventListener("focus", tekrar);
-    return () => { iptal = true; document.removeEventListener("visibilitychange", tekrar); window.removeEventListener("focus", tekrar); };
+    const unsub = profilDinle(u.uid, (p) => { if (p) setProfilBilgi(p); });
+    return unsub;
   }, [u]);
 
   const saglayiciAd = (() => {
