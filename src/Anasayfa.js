@@ -52,6 +52,7 @@ const AdresHarita = lazy(() => import("./AdresHarita"));
 const AkademiSayfa = lazy(() => import("./AkademiSayfa"));
 // SANAL AYNA (kendi fotoğrafında saç/tırnak/makyaj dene) — AYRI PARÇA (code-split)
 const SanalAyna = lazy(() => import("./SanalAyna"));
+const Muhasebe = lazy(() => import("./Muhasebe"));
 // VİTRİN / REKLAM (ana sayfada akan reklam şeridi + üstünde dene + satıcıya yaz) — AYRI PARÇA
 const Reklam = lazy(() => import("./Reklam"));
 
@@ -3796,6 +3797,11 @@ export default function Anasayfa({ pro = false }) {
   const sanalAynaDerinlikRef = useRef(0);
   const sanalAynaGeriRef = useRef(null);
   const sanalAynaKatmanDegis = (d, geriFn) => { sanalAynaDerinlikRef.current = d || 0; setSanalAynaDerinlik(d || 0); sanalAynaGeriRef.current = geriFn || null; };
+  // MUHASEBE de katman/geri-tuşu sistemine bağlı (müşteri açıkken geri → listeye dön; listede geri → ana sayfa). 0/1/2.
+  const [muhasebeDerinlik, setMuhasebeDerinlik] = useState(0);
+  const muhasebeDerinlikRef = useRef(0);
+  const muhasebeGeriRef = useRef(null);
+  const muhasebeKatmanDegis = (d, geriFn) => { muhasebeDerinlikRef.current = d || 0; setMuhasebeDerinlik(d || 0); muhasebeGeriRef.current = geriFn || null; };
   // KONUM AÇILINCA: (1) paylaşım AÇIKSA kendi ŞU ANKİ konumumu yaz (elle seçmek YOK, otomatik),
   // (2) arkadaşların TAZE konumu için listeyi yenile.
   useEffect(() => {
@@ -7460,7 +7466,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik, sanalAynaDerinlik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik, sanalAynaDerinlik, muhasebeDerinlik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -7472,6 +7478,8 @@ export default function Anasayfa({ pro = false }) {
       if (gelenAramaRef.current) { aramaReddet(); }
       // SANAL AYNA en üstteki katman: önce tam ekran fotoğrafı, sonra Sanal Ayna'yı kapatır; foto/sonuç KAYBOLMAZ
       else if (sanalAynaDerinlikRef.current > 0) { if (sanalAynaGeriRef.current) { try { sanalAynaGeriRef.current(); } catch (e) {} } }
+      // MUHASEBE: müşteri açıkken geri → listeye dön (sayfada kal); listede geri → ana sayfaya (kayıtlar KAYBOLMAZ)
+      else if (muhasebeDerinlikRef.current > 0) { if (muhasebeGeriRef.current) { try { muhasebeGeriRef.current(); } catch (e) {} } }
       else if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
       else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
       else if (haritaTamRef.current) { haritaTamRef.current = false; setHaritaTam(false); if (haritaKapatRef.current) { try { haritaKapatRef.current(); } catch (e) {} haritaKapatRef.current = null; } } // Konum haritası tam ekran → sadece kapat, Konum'da KAL
@@ -7670,7 +7678,7 @@ export default function Anasayfa({ pro = false }) {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
       // .ak-foto-buyut: tam ekran Akademi fotoğrafı — üstünde parmak gezince ZOOM/pan yapılır, sayfa DEĞİŞMEZ.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .sa-fon, .sa-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
@@ -7748,7 +7756,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="ana-logo-sar ana-logo-ince">
           <span className="ana-logo-metin notranslate" translate="no">GLOXORG</span>
           <span className="ana-alt-sar">
-            <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "ayna" ? t("sanalAyna", "Sanal Ayna") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt))}</span>
+            <span className="ana-alt">{aktifKod === "home" ? t("anaSubtitle") : (aktifKod === "ayna" ? t("sanalAyna", "Sanal Ayna") : (aktifKod === "muhasebe" ? t("muhBaslik", "Muhasebe") : (aktifKod === "elite" ? t("navElitePazar", "Elite Pazar") : aktifEt)))}</span>
             {aktifKod === "home" && <DunyaKure />}
           </span>
         </div>
@@ -7909,6 +7917,10 @@ export default function Anasayfa({ pro = false }) {
       {aktifKod === "ayna" ? (
         <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>🪞 …</div>}>
           <SanalAyna sayfaModu baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setAktifKod("home"); setSanalAynaBaslangic(null); }} />
+        </Suspense>
+      ) : aktifKod === "muhasebe" ? (
+        <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>📊 …</div>}>
+          <Muhasebe uid={benUid} paraSym={myParaSym} benAd={benimAdGetir()} onKatman={muhasebeKatmanDegis} onKapat={() => setAktifKod("home")} />
         </Suspense>
       ) : aktifKod === "home" ? (
         <div className="ana-pencere" key="home">
@@ -10800,6 +10812,7 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-oge c-mavi" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🏠</span>{t("navAnaSayfa")}</button>
             <button className="ana-menu-oge c-yesil" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🌍</span>{t("navTopluluk")} · {t("anaYakinda")}</button>
             <button className="ana-menu-oge c-mor" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🎓</span>{t("navAkademi")} · {t("anaYakinda")}</button>
+            <button className="ana-menu-oge c-yesil" onClick={() => { setMenuAcik(false); setAktifKod("muhasebe"); }}><span className="ana-menu-ik">📊</span>{t("muhBaslik", "Muhasebe")}</button>
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); setUyelikKartAcik(true); }}><span className="ana-menu-ik">💎</span>{t("proOlBaslik", "Profesyonel Ol")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
             {yoneticiMi() && <button className="ana-menu-oge c-mor" onClick={geriBildirimAc}><span className="ana-menu-ik">📊</span>{t("geriBildirimBaslik", "Geri Bildirimler")}</button>}

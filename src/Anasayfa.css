@@ -5045,6 +5045,78 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-tekrar{ background:#fff7db; color:#7a5a00; border:1.5px solid #a07800 !important; }
 @media (min-width:560px){ .sa-baslik{ font-size:26px; } .sa-foto-kutu{ max-height:420px; } }
 
+/* ===================== MUHASEBE (muhasebeci sayfası) ===================== */
+.muh-sayfa{ width:100%; display:flex; justify-content:center; background:radial-gradient(circle at 50% 12%, #f7e79a, #e6c85a 80%, #d4af37); }
+.muh-ic{ width:100%; max-width:640px; padding:10px 14px 30px; position:relative; }
+.muh-bas{ font-size:22px; font-weight:900; color:#5a3f00; margin:4px 0 8px; }
+.muh-alt{ color:#6a4e10; font-size:14px; font-weight:600; line-height:1.5; margin-bottom:12px; }
+.muh-btn{ border:none; border-radius:12px; font-family:inherit; font-weight:900; font-size:15px; cursor:pointer; padding:12px 12px; }
+.muh-btn:active{ transform:scale(.97); }
+.muh-btn:disabled{ opacity:.55; }
+.muh-ekle{ width:100%; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; margin-bottom:10px; }
+.muh-form{ background:#fffbe9; border:1.6px solid rgba(160,120,0,.5); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:9px; margin-bottom:12px; }
+.muh-inp{ width:100%; padding:12px; border-radius:11px; border:1.6px solid rgba(160,120,0,.5); background:#fff; color:#4a3500; font-size:15px; font-family:inherit; }
+.muh-inp::placeholder{ color:#9a7a30; }
+.muh-form-dugmeler{ display:flex; gap:8px; }
+.muh-kaydet{ flex:1; background:linear-gradient(90deg,#34c878,#0f9d54); color:#fff; }
+.muh-vazgec{ flex:1; background:#fff7db; color:#7a5a00; border:1.5px solid #a07800; }
+/* Müşteri listesi */
+.muh-liste{ display:flex; flex-direction:column; gap:8px; }
+.muh-bos{ text-align:center; color:#7a5a10; font-weight:700; font-size:14.5px; padding:18px 8px; }
+.muh-musteri{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fffdf3; border:1.6px solid rgba(184,134,11,.45); border-radius:13px; padding:14px 12px; cursor:pointer; font-family:inherit; }
+.muh-musteri:active{ transform:scale(.99); }
+.muh-m-ad{ flex:1; font-weight:900; font-size:16px; color:#5a4300; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.muh-m-bakiye{ font-weight:900; font-size:15px; white-space:nowrap; }
+.muh-m-bakiye.borclu{ color:#c0392b; } .muh-m-bakiye.fazla{ color:#1f8b4c; } .muh-m-bakiye.sifir{ color:#7a5a10; }
+.muh-m-ok{ color:#a07800; font-size:20px; font-weight:900; }
+/* Müşteri detay */
+.muh-geri{ background:none; border:none; color:#7a5a00; font-weight:900; font-size:16px; cursor:pointer; padding:4px 0 10px; font-family:inherit; }
+.muh-m-bas{ margin-bottom:10px; }
+.muh-m-baslik{ font-size:22px; font-weight:900; color:#5a4300; }
+.muh-m-tel{ display:inline-block; margin-top:3px; color:#1863c9; font-weight:800; font-size:14px; text-decoration:none; }
+.muh-m-not{ margin-top:4px; color:#6a4e10; font-size:14px; }
+.muh-ozet{ display:flex; gap:8px; margin:10px 0 14px; }
+.muh-ozet-kutu{ flex:1; background:#fffdf3; border:1.6px solid rgba(184,134,11,.45); border-radius:12px; padding:10px 8px; text-align:center; }
+.muh-ozet-kutu span{ display:block; font-size:11.5px; font-weight:700; color:#7a5a10; margin-bottom:3px; }
+.muh-ozet-kutu b{ font-size:15px; font-weight:900; color:#5a4300; }
+.muh-ozet-kutu.borc b{ color:#c0392b; } .muh-ozet-kutu.tahsilat b{ color:#1f8b4c; }
+.muh-ozet-kutu.kalan{ border-width:2.4px; } .muh-ozet-kutu.kalan.borclu{ border-color:#c0392b; } .muh-ozet-kutu.kalan.fazla{ border-color:#1f8b4c; }
+.muh-ozet-kutu.kalan.borclu b{ color:#c0392b; } .muh-ozet-kutu.kalan.fazla b{ color:#1f8b4c; }
+/* Kayıt ekleme */
+.muh-tur-sec{ display:flex; gap:8px; }
+.muh-tur-btn{ flex:1; padding:11px; border-radius:11px; border:2px solid transparent; font-family:inherit; font-weight:900; font-size:14.5px; cursor:pointer; background:#fff7db; color:#7a5a00; }
+.muh-tur-btn.borc.aktif{ background:#fdecea; border-color:#c0392b; color:#c0392b; }
+.muh-tur-btn.tahsilat.aktif{ background:#e9f7ef; border-color:#1f8b4c; color:#1f8b4c; }
+/* Kayıt listesi */
+.muh-kayit-liste{ display:flex; flex-direction:column; gap:7px; margin:12px 0; }
+.muh-kayit{ display:flex; align-items:center; gap:9px; background:#fffdf3; border:1.5px solid rgba(184,134,11,.4); border-left-width:5px; border-radius:11px; padding:10px 11px; }
+.muh-kayit.borc{ border-left-color:#c0392b; } .muh-kayit.tahsilat{ border-left-color:#1f8b4c; }
+.muh-k-tarih{ font-size:12px; color:#7a5a10; font-weight:700; white-space:nowrap; }
+.muh-k-acik{ flex:1; font-size:14px; color:#5a4300; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.muh-k-tutar{ font-weight:900; font-size:14.5px; white-space:nowrap; }
+.muh-k-tutar.borc{ color:#c0392b; } .muh-k-tutar.tahsilat{ color:#1f8b4c; }
+.muh-k-sil{ background:none; border:none; cursor:pointer; font-size:16px; padding:2px; }
+/* İndir/paylaş */
+.muh-indir-satir{ display:flex; gap:8px; margin-top:6px; }
+.muh-excel{ flex:1; background:linear-gradient(90deg,#34c878,#0f9d54); color:#fff; }
+.muh-pdf{ flex:1; background:linear-gradient(90deg,#e0574a,#c0392b); color:#fff; }
+.muh-paylas{ flex:1; background:linear-gradient(90deg,#3f8aff,#1e5fd0); color:#fff; }
+.muh-musteri-sil{ width:100%; margin-top:14px; background:#fff2f0; color:#c0392b; border:1.5px solid #e0a79f; }
+.muh-toast{ position:fixed; left:50%; bottom:88px; transform:translateX(-50%); background:#3a2a05; color:#ffe9a8; font-weight:800; font-size:14px; padding:10px 16px; border-radius:14px; z-index:100090; box-shadow:0 8px 24px rgba(0,0,0,.35); }
+@media (min-width:560px){ .muh-bas{ font-size:26px; } .muh-alt{ font-size:15.5px; } .muh-btn, .muh-inp{ font-size:16.5px; } .muh-m-ad{ font-size:17px; } }
+/* GİZLİ YAZDIRILACAK ALAN (PDF görüntüsü buradan alınır) — ekran DIŞINDA, beyaz zemin/siyah yazı (kâğıt gibi) */
+.muh-yazdir{ position:absolute; left:-99999px; top:0; width:760px; background:#fff; color:#111; padding:34px; font-family:Arial, sans-serif; }
+.muy-bas{ font-size:24px; font-weight:900; color:#7a5a00; margin-bottom:6px; }
+.muy-musteri{ font-size:18px; color:#111; margin-bottom:2px; }
+.muy-not{ font-size:14px; color:#444; margin-bottom:8px; }
+.muy-tablo{ width:100%; border-collapse:collapse; margin-top:12px; font-size:14px; }
+.muy-tablo th, .muy-tablo td{ border:1px solid #bbb; padding:8px 10px; text-align:left; }
+.muy-tablo th{ background:#f2e4b8; color:#5a4300; }
+.muy-tablo td.say{ text-align:right; white-space:nowrap; }
+.muy-tablo tfoot td{ font-weight:900; background:#faf4e2; }
+.muy-tablo tr.muy-kalan td{ background:#fff2cc; font-size:16px; }
+.muy-dip{ margin-top:16px; font-size:12px; color:#666; }
+
 /* Sanal Ayna — KİM İÇİN (bayan/erkek/kız/erkek çocuk/bebek) */
 .sa-kim-bas{ font-weight:800; color:#5a3f00; font-size:15px; margin:4px 0 8px; }
 .sa-kisi-satir{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:6px; }

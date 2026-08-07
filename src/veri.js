@@ -192,6 +192,39 @@ export async function profilKaydet(uid, veri) {
   } catch (e) { return false; }
 }
 
+// ===================== MUHASEBE (muhasebeci sayfası) =====================
+// Her kullanıcının kendi müşterileri: kullanicilar/{uid}/muhasebe/{musteriId}. Kayıtlar (gelir/gider) müşteri dokümanında
+// "kayitlar" dizisinde tutulur. SADECE kullanıcı silince silinir (auto-silme YOK). Canlı dinleme (onSnapshot) → hep güncel.
+function muhasebeKol(uid) { return collection(db, KULLANICILAR, uid, "muhasebe"); }
+// Müşterileri CANLI dinle (en yeni üstte)
+export function muhasebeMusterileriDinle(uid, cb) {
+  if (!uid) { try { cb([]); } catch (e) {} return () => {}; }
+  try {
+    return onSnapshot(muhasebeKol(uid),
+      (snap) => { try { const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })); liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); cb(liste); } catch (e) {} },
+      () => {});
+  } catch (e) { try { cb([]); } catch (x) {} return () => {}; }
+}
+// Yeni müşteri ekle → id döner
+export async function muhasebeMusteriEkle(uid, musteri) {
+  if (!uid) return null;
+  try {
+    const id = "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    await setDoc(doc(db, KULLANICILAR, uid, "muhasebe", id), { ...musteri, kayitlar: [], zamanMs: Date.now(), guncelleme: serverTimestamp() });
+    return id;
+  } catch (e) { return null; }
+}
+// Müşteriyi güncelle (ad/telefon/not VEYA kayitlar dizisi) — merge, var olanı bozmaz
+export async function muhasebeMusteriGuncelle(uid, id, veri) {
+  if (!uid || !id) return false;
+  try { await setDoc(doc(db, KULLANICILAR, uid, "muhasebe", id), { ...veri, guncelleme: serverTimestamp() }, { merge: true }); return true; } catch (e) { return false; }
+}
+// Müşteriyi SİL (sadece kullanıcı isteyince)
+export async function muhasebeMusteriSil(uid, id) {
+  if (!uid || !id) return false;
+  try { await deleteDoc(doc(db, KULLANICILAR, uid, "muhasebe", id)); return true; } catch (e) { return false; }
+}
+
 // CANLI KONUM — kullanıcının ŞU ANKİ yerini yaz (arkadaşları haritada "yanında" görsün).
 // zaman: tazelik (eski konumları elemek için). merge → profilin gerisini bozmaz.
 export async function canliKonumYaz(uid, lat, lon) {
