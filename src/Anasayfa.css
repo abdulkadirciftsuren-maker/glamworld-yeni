@@ -5133,13 +5133,23 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 select.muh-inp{ appearance:none; -webkit-appearance:none; background-image:linear-gradient(45deg,transparent 50%,#a07800 50%),linear-gradient(135deg,#a07800 50%,transparent 50%); background-position:calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:34px; }
 
 /* ===== BELGELER (Excel tablosu / Word belgesi / Fatura) ===== */
-.bel-yeni{ display:flex; gap:8px; margin-bottom:12px; }
-.bel-yeni-btn{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; padding:14px 6px; border-radius:14px; border:2px solid transparent; font-family:inherit; font-weight:900; font-size:12.5px; cursor:pointer; color:#fff; }
+.bel-yeni{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.bel-yeni-btn{ flex:1 1 40%; min-width:130px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:14px 6px; border-radius:14px; border:2px solid transparent; font-family:inherit; font-weight:900; font-size:12.5px; cursor:pointer; color:#fff; }
 .bel-yeni-btn span{ line-height:1.1; text-align:center; }
 .bel-yeni-btn.tablo{ background:linear-gradient(150deg,#34c878,#0f8d4c); }
 .bel-yeni-btn.yazi{ background:linear-gradient(150deg,#4a7fe0,#274ea0); }
 .bel-yeni-btn.fatura{ background:linear-gradient(150deg,#e0a020,#b8750b); }
+.bel-yeni-btn.fotopdf{ background:linear-gradient(150deg,#c0392b,#8e2a20); }
 .bel-yeni-btn:active{ transform:scale(.97); }
+/* Foto → PDF */
+.bel-foto-liste{ display:flex; flex-wrap:wrap; gap:9px; margin:10px 0; }
+.bel-foto-oge{ position:relative; width:calc(33.33% - 6px); border-radius:11px; overflow:hidden; border:1.6px solid rgba(160,120,0,.5); background:#fff; }
+.bel-foto-oge img{ width:100%; height:110px; object-fit:cover; display:block; }
+.bel-foto-dug{ display:flex; justify-content:center; gap:4px; padding:4px; background:#fffbe9; }
+.bel-foto-dug button{ background:#fff7db; border:1.2px solid rgba(184,134,11,.5); border-radius:7px; width:28px; height:26px; font-size:13px; font-weight:900; color:#7a5a00; cursor:pointer; }
+.bel-fotopdf-yazdir{ position:absolute; left:-99999px; top:0; width:740px; background:#fff; color:#111; padding:28px; font-family:Arial,sans-serif; }
+.fp-baslik{ font-size:22px; font-weight:900; color:#7a5a00; text-align:center; margin-bottom:16px; }
+.fp-img{ width:100%; display:block; margin:0 auto 16px; }
 .bel-editor{ display:flex; flex-direction:column; gap:10px; }
 .bel-ust{ display:flex; align-items:center; gap:8px; }
 .bel-ad-inp{ flex:1; padding:10px 12px; border-radius:11px; border:1.6px solid rgba(160,120,0,.5); background:#fff; color:#4a3500; font-size:15.5px; font-weight:800; font-family:inherit; }

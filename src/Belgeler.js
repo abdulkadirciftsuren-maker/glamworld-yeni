@@ -54,6 +54,7 @@ export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcN
       onKaydet: async (veri) => { if (acik.belge) { await guncelle(acik.belge.id, veri); bilgi(t("belKaydedildi", "Kaydedildi ✓")); } else { const id = await ekle({ tip: "belge", ...veri }); if (id) { setAcik({ mod: acik.mod, belge: { id, ...veri } }); bilgi(t("belKaydedildi", "Kaydedildi ✓")); } } } };
     if (acik.mod === "tablo") return <TabloEditor {...ortak} belge={acik.belge} />;
     if (acik.mod === "fatura") return <FaturaEditor {...ortak} belge={acik.belge} />;
+    if (acik.mod === "fotopdf") return <FotoPdfEditor {...ortak} />;
     return <YaziEditor {...ortak} belge={acik.belge} />;
   }
 
@@ -63,6 +64,7 @@ export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcN
       <button className="bel-yeni-btn tablo" onClick={() => setAcik({ mod: "tablo" })}>📊<span>{t("belTablo", "Excel tablosu")}</span></button>
       <button className="bel-yeni-btn yazi" onClick={() => setAcik({ mod: "yazi" })}>📝<span>{t("belYazi", "Word belgesi")}</span></button>
       <button className="bel-yeni-btn fatura" onClick={() => setAcik({ mod: "fatura" })}>🧾<span>{t("belFatura", "Fatura")}</span></button>
+      <button className="bel-yeni-btn fotopdf" onClick={() => setAcik({ mod: "fotopdf" })}>📷<span>{t("belFotoPdf", "Foto → PDF")}</span></button>
     </div>
     <div className="muh-kayit-liste">
       {belgeler.length === 0 ? <div className="muh-bos">💛 {t("belYok", "Henüz belge yok. Yukarıdan oluştur.")}</div>
@@ -155,6 +157,68 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || "belge", htmlAl()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>
         <button className="muh-btn muh-pdf" onClick={() => elemPdf(icRef.current, ad || "belge").then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
+      </div>
+    </div>
+  );
+}
+
+// ===================== FOTO → PDF ÇEVİRİCİ =====================
+function FotoPdfEditor({ t, onKapat, bilgi }) {
+  const [fotolar, setFotolar] = useState([]); // {d:dataURL}
+  const [baslik, setBaslik] = useState("");
+  const [yuk, setYuk] = useState(false);
+  const inpRef = useRef(null); const yazdirRef = useRef(null);
+  const dosyaSec = (e) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((f) => {
+      const r = new FileReader();
+      r.onload = () => { const im = new Image(); im.onload = () => {
+        let w = im.naturalWidth || 800, h = im.naturalHeight || 800; const max = 1500;
+        if (w > max || h > max) { if (w >= h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h; cv.getContext("2d").drawImage(im, 0, 0, w, h);
+        try { setFotolar((a) => [...a, { d: cv.toDataURL("image/jpeg", 0.85) }]); } catch (x) { setFotolar((a) => [...a, { d: String(r.result) }]); }
+      }; im.src = String(r.result); };
+      r.readAsDataURL(f);
+    });
+    e.target.value = "";
+  };
+  const sil = (i) => setFotolar((a) => a.filter((_, j) => j !== i));
+  const tasi = (i, y) => setFotolar((a) => { const j = i + y; if (j < 0 || j >= a.length) return a; const b = [...a]; const tmp = b[i]; b[i] = b[j]; b[j] = tmp; return b; });
+  const pdfYap = async () => {
+    if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; }
+    setYuk(true);
+    try { await elemPdf(yazdirRef.current, baslik || "foto"); bilgi(t("belPdfHazir", "PDF hazır 📄")); }
+    catch (e) { bilgi(t("belOlmadi", "Olmadı")); }
+    setYuk(false);
+  };
+  return (
+    <div className="bel-editor">
+      <div className="bel-ust">
+        <button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button>
+        <input className="bel-ad-inp" value={baslik} onChange={(e) => setBaslik(e.target.value)} placeholder={t("belFotoBaslik", "Başlık (isteğe bağlı)")} />
+      </div>
+      <button className="muh-btn muh-ekle" onClick={() => inpRef.current && inpRef.current.click()}>📷 {t("belFotoEkle", "Fotoğraf ekle")}</button>
+      <input ref={inpRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={dosyaSec} />
+      <div className="bel-foto-liste">
+        {fotolar.length === 0 ? <div className="muh-bos">💛 {t("belFotoAlt", "Fotoğraf ekle (birden çok olabilir). Sıralayıp tek PDF yap, indir/paylaş.")}</div>
+          : fotolar.map((f, i) => (
+            <div className="bel-foto-oge" key={i}>
+              <img src={f.d} alt="" />
+              <div className="bel-foto-dug">
+                <button onClick={() => tasi(i, -1)} aria-label="Yukarı">↑</button>
+                <button onClick={() => tasi(i, 1)} aria-label="Aşağı">↓</button>
+                <button onClick={() => sil(i)} aria-label="Sil">🗑️</button>
+              </div>
+            </div>
+          ))}
+      </div>
+      <div className="bel-alt-dugmeler">
+        <button className="muh-btn muh-pdf" disabled={yuk} onClick={pdfYap}>📄 {t("belPdfYapPaylas", "PDF yap — indir / paylaş")}</button>
+      </div>
+      {/* YAZDIRILACAK (ekran dışında) — Türkçe başlık + fotoğraflar tek PDF */}
+      <div ref={yazdirRef} className="bel-fotopdf-yazdir" aria-hidden="true">
+        {baslik.trim() ? <div className="fp-baslik">{baslik}</div> : null}
+        {fotolar.map((f, i) => <img key={i} src={f.d} className="fp-img" alt="" />)}
       </div>
     </div>
   );
