@@ -185,6 +185,9 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   const [grid, setGrid] = useState((belge && Array.isArray(belge.grid) && belge.grid.length) ? belge.grid.map((r) => [...r]) : bosGrid());
   const _sut = (belge && belge.grid && belge.grid[0]) ? belge.grid[0].length : 4;
   const [gen, setGen] = useState((belge && Array.isArray(belge.gen) && belge.gen.length === _sut) ? [...belge.gen] : Array.from({ length: _sut }, () => 96));
+  const _satSay = (belge && belge.grid && belge.grid.length) ? belge.grid.length : 8;
+  const [satirYuk, setSatirYuk] = useState((belge && Array.isArray(belge.satirYuk) && belge.satirYuk.length === _satSay) ? [...belge.satirYuk] : Array.from({ length: _satSay }, () => 40)); // satır yükseklikleri (yatay şerit)
+  const [dikey, setDikey] = useState((belge && Array.isArray(belge.dikey) && belge.dikey.length === _sut) ? [...belge.dikey] : Array.from({ length: _sut }, () => false)); // sütun DİKEY yazı (aşağıdan yukarı) mı
   const [odak, setOdak] = useState(null);
   const [sira, setSira] = useState(null);
   const [mod, setMod] = useState("yazi"); // yazi (yazı/rakam gir) | hesap (düğmeyle hesapla)
@@ -195,14 +198,16 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   const yazdirRef = useRef(null);
   const sutunSay = grid[0] ? grid[0].length : 0;
   const hucre = (r, c, v) => setGrid((g) => g.map((row, i) => i === r ? row.map((x, j) => j === c ? v : x) : row));
-  const satirEkle = () => setGrid((g) => [...g, Array.from({ length: g[0] ? g[0].length : 4 }, () => "")]);
-  const sutunEkle = () => { setGrid((g) => g.map((r) => [...r, ""])); setGen((w) => [...w, 96]); };
-  const satirSil = () => setGrid((g) => g.length > 1 ? g.slice(0, -1) : g);
-  const sutunSil = () => { setGrid((g) => (g[0] && g[0].length > 1) ? g.map((r) => r.slice(0, -1)) : g); setGen((w) => w.length > 1 ? w.slice(0, -1) : w); };
-  const toplamSatir = () => setGrid((g) => { const n = g.length; const cols = g[0] ? g[0].length : 0; return [...g, Array.from({ length: cols }, (_, c) => "=TOPLA(" + _colHarf(c) + "1:" + _colHarf(c) + n + ")")]; });
+  const satirEkle = () => { setGrid((g) => [...g, Array.from({ length: g[0] ? g[0].length : 4 }, () => "")]); setSatirYuk((h) => [...h, 40]); };
+  const sutunEkle = () => { setGrid((g) => g.map((r) => [...r, ""])); setGen((w) => [...w, 96]); setDikey((d) => [...d, false]); };
+  const satirSil = () => { setGrid((g) => g.length > 1 ? g.slice(0, -1) : g); setSatirYuk((h) => h.length > 1 ? h.slice(0, -1) : h); };
+  const sutunSil = () => { setGrid((g) => (g[0] && g[0].length > 1) ? g.map((r) => r.slice(0, -1)) : g); setGen((w) => w.length > 1 ? w.slice(0, -1) : w); setDikey((d) => d.length > 1 ? d.slice(0, -1) : d); };
+  const toplamSatir = () => { setGrid((g) => { const n = g.length; const cols = g[0] ? g[0].length : 0; return [...g, Array.from({ length: cols }, (_, c) => "=TOPLA(" + _colHarf(c) + "1:" + _colHarf(c) + n + ")")]; }); setSatirYuk((h) => [...h, 40]); };
   const sirala = (c) => { const yon = (sira && sira.c === c && sira.yon === "art") ? "azal" : "art"; setSira({ c, yon }); setGrid((g) => { const k = g.map((row) => [...row]); k.sort((a, b) => { const va = _hesapHucre([a], 0, c, new Set()), vb = _hesapHucre([b], 0, c, new Set()); const r = (typeof va === "number" && typeof vb === "number") ? (va - vb) : String(va).localeCompare(String(vb), "tr"); return yon === "art" ? r : -r; }); return k; }); };
-  const genDegis = (c, d) => setGen((w) => w.map((x, i) => i === c ? Math.max(56, Math.min(240, (x || 96) + d)) : x));
-  const kaydet = () => onKaydet({ belgeTuru: "tablo", ad: ad.trim() || t("belAdsiz", "Adsız tablo"), grid, gen, zamanMs: Date.now() });
+  const genDegis = (c, d) => setGen((w) => w.map((x, i) => i === c ? Math.max(34, Math.min(300, (x || 96) + d)) : x)); // sütun genişliği: 34px'e kadar İNCE (A4'e sığsın)
+  const satirDegis = (r, d) => setSatirYuk((h) => h.map((x, i) => i === r ? Math.max(26, Math.min(200, (x || 40) + d)) : x)); // satır yüksekliği ayarı (yatay şerit)
+  const dikeyDegis = (c) => setDikey((w) => w.map((x, i) => i === c ? !x : x)); // sütunu dikey yazıya çevir/geri al
+  const kaydet = () => onKaydet({ belgeTuru: "tablo", ad: ad.trim() || t("belAdsiz", "Adsız tablo"), grid, gen, satirYuk, dikey, zamanMs: Date.now() });
 
   // HESAP modu: işlem seç → hücrelere dokun (seçilir) → "＝ Sonuç" → boş hücreye dokun (formül yazılır, düğmeyle hesap)
   const hucreTikla = (r, c) => {
@@ -240,8 +245,9 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button onClick={satirSil}>－ {t("belSatir", "Satır")}</button>
         <button onClick={sutunSil}>－ {t("belSutun", "Sütun")}</button>
         <button onClick={toplamSatir}>∑ {t("belToplam", "Toplam")}</button>
-        <button className={genMod ? "bel-arac-aktif" : ""} onClick={() => setGenMod((a) => !a)}>↔ {t("belGenislik", "Genişlik")}</button>
+        <button className={genMod ? "bel-arac-aktif" : ""} onClick={() => setGenMod((a) => !a)}>⇔ {t("belBoyut", "Boyut / Dikey")}</button>
       </div>
+      {genMod && <div className="bel-formul-ipucu">{t("belBoyutIpucu", "Sütun başlığındaki － ＋ ile GENİŞLİK, sol rakamdaki － ＋ ile YÜKSEKLİK ayarlanır. ⇅ düğmesi o sütunu DİKEY yazıya çevirir (aşağıdan yukarı) — dar sütuna başlık sığsın diye. A4'e sığması için sütunları inceltebilirsin.")}</div>}
       {mod === "hesap" ? (
         <div className="bel-hesap-bar">
           <div className="bel-op-satir">{oplar.map(([o, et]) => (
@@ -264,23 +270,27 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
               <td className="bel-th bel-kose"></td>
               {Array.from({ length: sutunSay }, (_, c) => (
                 <td key={c} className="bel-th bel-colbas" style={{ width: gen[c], minWidth: gen[c] }}>
-                  {genMod ? (<span className="bel-gen-ayar"><button onClick={() => genDegis(c, -18)}>－</button><b>{_colHarf(c)}</b><button onClick={() => genDegis(c, 18)}>＋</button></span>)
+                  {genMod ? (<span className="bel-gen-ayar"><button onClick={() => genDegis(c, -14)}>－</button><b>{_colHarf(c)}</b><button onClick={() => genDegis(c, 14)}>＋</button><button className={"bel-dikey-btn" + (dikey[c] ? " sec" : "")} onClick={() => dikeyDegis(c)} title={t("belDikeyYazi", "Dikey yazı")}>⇅</button></span>)
                     : (<span onClick={() => mod !== "hesap" && sirala(c)}>{_colHarf(c)}{sira && sira.c === c ? (sira.yon === "art" ? " ▲" : " ▼") : ""}</span>)}
                 </td>
               ))}
             </tr>
             {grid.map((row, r) => (
-              <tr key={r}>
-                <td className="bel-th">{r + 1}</td>
+              <tr key={r} style={{ height: satirYuk[r] }}>
+                <td className="bel-th bel-rowbas" style={{ height: satirYuk[r] }}>
+                  {genMod ? (<span className="bel-gen-ayar bel-satyuk"><button onClick={() => satirDegis(r, -8)}>－</button><b>{r + 1}</b><button onClick={() => satirDegis(r, 8)}>＋</button></span>) : (r + 1)}
+                </td>
                 {row.map((v, c) => {
                   const odakli = odak && odak.r === r && odak.c === c;
                   const formul = String(v || "").trim().startsWith("=");
                   const sec = mod === "hesap" && secili.includes(r + "," + c);
+                  const dik = dikey[c] && !odakli; // düzenlerken yatay göster (yazması kolay), düzenlemiyorken dikey göster
                   return (
-                    <td key={c} style={{ width: gen[c], minWidth: gen[c] }}
+                    <td key={c} style={{ width: gen[c], minWidth: gen[c], height: satirYuk[r] }}
                       className={(formul ? "bel-hucre-formul" : "") + (sec ? " bel-hucre-secili" : "")}
                       onClick={mod === "hesap" ? () => hucreTikla(r, c) : undefined}>
-                      <input className="bel-hucre" readOnly={mod === "hesap"}
+                      <input className={"bel-hucre" + (dik ? " bel-hucre-dikey" : "")} readOnly={mod === "hesap"}
+                        style={dik ? { writingMode: "vertical-rl", transform: "rotate(180deg)" } : undefined}
                         value={(odakli && mod !== "hesap") ? v : _goster(grid, r, c)}
                         onFocus={() => mod !== "hesap" && setOdak({ r, c })} onBlur={() => setOdak(null)} onChange={(e) => hucre(r, c, e.target.value)} />
                     </td>
@@ -292,7 +302,7 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         </table>
       </div>
       <table className="bel-tablo bel-yazdir-tablo" ref={yazdirRef} aria-hidden="true">
-        <tbody>{grid.map((row, r) => (<tr key={r}>{row.map((v, c) => <td key={c}>{_goster(grid, r, c)}</td>)}</tr>))}</tbody>
+        <tbody>{grid.map((row, r) => (<tr key={r} style={{ height: satirYuk[r] }}>{row.map((v, c) => <td key={c} style={{ width: gen[c], ...(dikey[c] ? { writingMode: "vertical-rl", transform: "rotate(180deg)", whiteSpace: "nowrap" } : {}) }}>{_goster(grid, r, c)}</td>)}</tr>))}</tbody>
       </table>
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
@@ -311,9 +321,17 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   const ilkHtml = useRef((belge && belge.html) || "");
   // İçeriği SADECE BİR KEZ (mount) yükle → her render'da yeniden basılıp YAZDIĞIN SİLİNMEZ (eski hata: dangerouslySetInnerHTML her render'da sıfırlıyordu).
   useEffect(() => { if (icRef.current) icRef.current.innerHTML = ilkHtml.current; }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const komut = (c, v) => { try { document.execCommand(c, false, v); icRef.current && icRef.current.focus(); } catch (e) {} };
+  // ⛔ ESKİ HATA: düğmeye basınca yazı alanının SEÇİMİ (odak) kaybolduğu için komutlar İŞLEMİYORDU.
+  // ÇÖZÜM: seçimi sürekli kaydet (secimKaydet), komuttan önce GERİ YÜKLE (secimGeri) → düğmeler + yazı tipi/boyut/renk ÇALIŞIR.
+  const secimRef = useRef(null);
+  const secimKaydet = () => { try { const s = window.getSelection(); if (s && s.rangeCount) { const r = s.getRangeAt(0); if (icRef.current && icRef.current.contains(r.commonAncestorContainer)) secimRef.current = r.cloneRange(); } } catch (e) {} };
+  const secimGeri = () => { try { if (icRef.current) icRef.current.focus(); const r = secimRef.current; if (r) { const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } } catch (e) {} };
+  const komut = (c, v) => { secimGeri(); try { document.execCommand("styleWithCSS", false, true); } catch (e) {} try { document.execCommand(c, false, v); } catch (e) {} secimKaydet(); };
+  const durdur = (e) => { try { e.preventDefault(); } catch (x) {} }; // düğmeye basınca yazı alanı odağını KAYBETME
   const htmlAl = () => (icRef.current ? icRef.current.innerHTML : "");
   const kaydet = () => onKaydet({ belgeTuru: "yazi", ad: ad.trim() || t("belAdsiz", "Adsız belge"), html: htmlAl(), zamanMs: Date.now() });
+  const fontlar = ["Arial", "Georgia", "Times New Roman", "Verdana", "Trebuchet MS", "Courier New", "Comic Sans MS"];
+  const boylar = [["3", t("belNormal", "Normal")], ["1", "XS"], ["2", "S"], ["4", "L"], ["5", "XL"], ["6", "XXL"], ["7", "XXXL"]];
   return (
     <div className="bel-editor">
       <div className="bel-ust">
@@ -321,15 +339,25 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belYaziAd", "Belge adı")} />
       </div>
       <div className="bel-arac">
-        <button onClick={() => komut("bold")}><b>B</b></button>
-        <button onClick={() => komut("italic")}><i>I</i></button>
-        <button onClick={() => komut("underline")}><u>U</u></button>
-        <button onClick={() => komut("formatBlock", "H2")}>{t("belBaslik", "Başlık")}</button>
-        <button onClick={() => komut("insertUnorderedList")}>• {t("belListe", "Liste")}</button>
-        <button onClick={() => komut("justifyLeft")}>◧</button>
-        <button onClick={() => komut("justifyCenter")}>▣</button>
+        <button onMouseDown={durdur} onClick={() => komut("bold")}><b>B</b></button>
+        <button onMouseDown={durdur} onClick={() => komut("italic")}><i>I</i></button>
+        <button onMouseDown={durdur} onClick={() => komut("underline")}><u>U</u></button>
+        <button onMouseDown={durdur} onClick={() => komut("formatBlock", "<h2>")}>{t("belBaslik", "Başlık")}</button>
+        <button onMouseDown={durdur} onClick={() => komut("insertUnorderedList")}>• {t("belListe", "Liste")}</button>
+        <button onMouseDown={durdur} onClick={() => komut("justifyLeft")}>◧</button>
+        <button onMouseDown={durdur} onClick={() => komut("justifyCenter")}>▣</button>
+        <button onMouseDown={durdur} onClick={() => komut("justifyRight")}>◨</button>
+        <select className="bel-arac-sec" value="" onMouseDown={secimKaydet} onChange={(e) => { if (e.target.value) komut("fontName", e.target.value); }}>
+          <option value="">🖋 {t("belYaziTipi", "Yazı tipi")}</option>
+          {fontlar.map((f) => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
+        </select>
+        <select className="bel-arac-sec" value="" onMouseDown={secimKaydet} onChange={(e) => { if (e.target.value) komut("fontSize", e.target.value); }}>
+          <option value="">🔠 {t("belYaziBoyut", "Boyut")}</option>
+          {boylar.map(([v, et]) => <option key={v} value={v}>{et}</option>)}
+        </select>
+        <label className="bel-renk-btn" onMouseDown={secimKaydet} title={t("belRenk", "Renk")}>🎨<input type="color" onChange={(e) => komut("foreColor", e.target.value)} /></label>
       </div>
-      <div className="bel-yazi-alan" ref={icRef} contentEditable suppressContentEditableWarning />
+      <div className="bel-yazi-alan" ref={icRef} contentEditable suppressContentEditableWarning onMouseUp={secimKaydet} onKeyUp={secimKaydet} onBlur={secimKaydet} />
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || "belge", htmlAl()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>

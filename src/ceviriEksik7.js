@@ -1,5 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7 (B53): Tanis sayfasi, Kendi Yapay Zeka arkadasi, resim/cizim, Gloxoo sesi,
-// giris/hesap uyarilari ve Meslek Pasaportu/Profil metinleri sadece Turkce idi; 13 dile cevrildi. (B54: belYazdir eklendi)
+// GLOXORG — EKSIK CEVIRILER GRUP 7 (B53+): Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler arac/yazi anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -119,7 +118,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Fiyat min",
   "profilFiyatMax": "Fiyat max",
   "profilKaydediliyor": "Kaydediliyor...",
-  "belYazdir": "Yazdır"
+  "belYazdir": "Yazdır",
+  "belBoyut": "Boyut / Dikey",
+  "belDikeyYazi": "Dikey yazı",
+  "belYaziTipi": "Yazı tipi",
+  "belYaziBoyut": "Boyut",
+  "belRenk": "Renk",
+  "belNormal": "Normal",
+  "belBoyutIpucu": "Sütun başlığındaki － ＋ ile GENİŞLİK, sol rakamdaki － ＋ ile YÜKSEKLİK ayarlanır. ⇅ düğmesi o sütunu DİKEY yazıya çevirir (aşağıdan yukarı). A4'e sığsın diye sütunları inceltebilirsin."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -239,7 +245,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Min price",
   "profilFiyatMax": "Max price",
   "profilKaydediliyor": "Saving...",
-  "belYazdir": "Print"
+  "belYazdir": "Print",
+  "belBoyut": "Size / Vertical",
+  "belDikeyYazi": "Vertical text",
+  "belYaziTipi": "Font",
+  "belYaziBoyut": "Size",
+  "belRenk": "Color",
+  "belNormal": "Normal",
+  "belBoyutIpucu": "Use － ＋ on the column header for WIDTH, and － ＋ on the left number for HEIGHT. The ⇅ button makes that column VERTICAL (bottom-to-top). Make columns thinner to fit A4."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -359,7 +372,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Preis min.",
   "profilFiyatMax": "Preis max.",
   "profilKaydediliyor": "Wird gespeichert...",
-  "belYazdir": "Drucken"
+  "belYazdir": "Drucken",
+  "belBoyut": "Größe / Vertikal",
+  "belDikeyYazi": "Vertikaler Text",
+  "belYaziTipi": "Schriftart",
+  "belYaziBoyut": "Größe",
+  "belRenk": "Farbe",
+  "belNormal": "Normal",
+  "belBoyutIpucu": "Mit － ＋ in der Spaltenüberschrift die BREITE, mit － ＋ an der linken Zahl die HÖHE einstellen. ⇅ macht die Spalte VERTIKAL (unten nach oben). Spalten schmaler machen, damit sie auf A4 passen."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -479,7 +499,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Цена от",
   "profilFiyatMax": "Цена до",
   "profilKaydediliyor": "Сохранение...",
-  "belYazdir": "Печать"
+  "belYazdir": "Печать",
+  "belBoyut": "Размер / Вертикально",
+  "belDikeyYazi": "Вертикальный текст",
+  "belYaziTipi": "Шрифт",
+  "belYaziBoyut": "Размер",
+  "belRenk": "Цвет",
+  "belNormal": "Обычный",
+  "belBoyutIpucu": "－ ＋ в заголовке столбца — ШИРИНА, － ＋ у номера слева — ВЫСОТА. Кнопка ⇅ делает столбец ВЕРТИКАЛЬНЫМ (снизу вверх). Сужай столбцы, чтобы поместилось на A4."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -599,7 +626,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Ціна від",
   "profilFiyatMax": "Ціна до",
   "profilKaydediliyor": "Збереження...",
-  "belYazdir": "Друк"
+  "belYazdir": "Друк",
+  "belBoyut": "Розмір / Вертикально",
+  "belDikeyYazi": "Вертикальний текст",
+  "belYaziTipi": "Шрифт",
+  "belYaziBoyut": "Розмір",
+  "belRenk": "Колір",
+  "belNormal": "Звичайний",
+  "belBoyutIpucu": "－ ＋ у заголовку стовпця — ШИРИНА, － ＋ біля номера зліва — ВИСОТА. Кнопка ⇅ робить стовпець ВЕРТИКАЛЬНИМ (знизу вгору). Звужуй стовпці, щоб вмістити на A4."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -719,7 +753,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Precio mín",
   "profilFiyatMax": "Precio máx",
   "profilKaydediliyor": "Guardando...",
-  "belYazdir": "Imprimir"
+  "belYazdir": "Imprimir",
+  "belBoyut": "Tamaño / Vertical",
+  "belDikeyYazi": "Texto vertical",
+  "belYaziTipi": "Fuente",
+  "belYaziBoyut": "Tamaño",
+  "belRenk": "Color",
+  "belNormal": "Normal",
+  "belBoyutIpucu": "Con － ＋ en el encabezado de columna ajustas el ANCHO, y con － ＋ en el número de la izquierda la ALTURA. El botón ⇅ pone esa columna VERTICAL (de abajo arriba). Estrecha las columnas para que quepan en A4."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -839,7 +880,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Prix min",
   "profilFiyatMax": "Prix max",
   "profilKaydediliyor": "Enregistrement...",
-  "belYazdir": "Imprimer"
+  "belYazdir": "Imprimer",
+  "belBoyut": "Taille / Vertical",
+  "belDikeyYazi": "Texte vertical",
+  "belYaziTipi": "Police",
+  "belYaziBoyut": "Taille",
+  "belRenk": "Couleur",
+  "belNormal": "Normal",
+  "belBoyutIpucu": "Avec － ＋ sur l'en-tête de colonne, règle la LARGEUR ; avec － ＋ sur le numéro à gauche, la HAUTEUR. Le bouton ⇅ met la colonne à la VERTICALE (de bas en haut). Affine les colonnes pour tenir en A4."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -959,7 +1007,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Prezzo min",
   "profilFiyatMax": "Prezzo max",
   "profilKaydediliyor": "Salvataggio...",
-  "belYazdir": "Stampa"
+  "belYazdir": "Stampa",
+  "belBoyut": "Dimensione / Verticale",
+  "belDikeyYazi": "Testo verticale",
+  "belYaziTipi": "Carattere",
+  "belYaziBoyut": "Dimensione",
+  "belRenk": "Colore",
+  "belNormal": "Normale",
+  "belBoyutIpucu": "Con － ＋ nell'intestazione di colonna regoli la LARGHEZZA, con － ＋ sul numero a sinistra l'ALTEZZA. Il pulsante ⇅ rende la colonna VERTICALE (dal basso verso l'alto). Restringi le colonne per stare in A4."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1079,7 +1134,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "Preço mín",
   "profilFiyatMax": "Preço máx",
   "profilKaydediliyor": "Salvando...",
-  "belYazdir": "Imprimir"
+  "belYazdir": "Imprimir",
+  "belBoyut": "Tamanho / Vertical",
+  "belDikeyYazi": "Texto vertical",
+  "belYaziTipi": "Fonte",
+  "belYaziBoyut": "Tamanho",
+  "belRenk": "Cor",
+  "belNormal": "Normal",
+  "belBoyutIpucu": "Use － ＋ no cabeçalho da coluna para a LARGURA e － ＋ no número à esquerda para a ALTURA. O botão ⇅ deixa a coluna VERTICAL (de baixo para cima). Estreite as colunas para caber em A4."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1199,7 +1261,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "أقل سعر",
   "profilFiyatMax": "أعلى سعر",
   "profilKaydediliyor": "جارٍ الحفظ...",
-  "belYazdir": "طباعة"
+  "belYazdir": "طباعة",
+  "belBoyut": "الحجم / عمودي",
+  "belDikeyYazi": "نص عمودي",
+  "belYaziTipi": "الخط",
+  "belYaziBoyut": "الحجم",
+  "belRenk": "اللون",
+  "belNormal": "عادي",
+  "belBoyutIpucu": "بـ － ＋ في رأس العمود تضبط العرض، وبـ － ＋ عند الرقم على اليسار الارتفاع. زر ⇅ يجعل العمود عموديًا (من الأسفل للأعلى). صغّر العرض ليتسع في A4."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1319,7 +1388,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "न्यूनतम मूल्य",
   "profilFiyatMax": "अधिकतम मूल्य",
   "profilKaydediliyor": "सहेजा जा रहा है...",
-  "belYazdir": "प्रिंट"
+  "belYazdir": "प्रिंट",
+  "belBoyut": "आकार / लंबवत",
+  "belDikeyYazi": "लंबवत पाठ",
+  "belYaziTipi": "फ़ॉन्ट",
+  "belYaziBoyut": "आकार",
+  "belRenk": "रंग",
+  "belNormal": "सामान्य",
+  "belBoyutIpucu": "कॉलम हेडर के － ＋ से चौड़ाई और बाएँ नंबर के － ＋ से ऊँचाई सेट करें। ⇅ बटन उस कॉलम को लंबवत (नीचे से ऊपर) कर देता है। A4 में फ़िट करने के लिए कॉलम पतले करें।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1439,7 +1515,14 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "最低价",
   "profilFiyatMax": "最高价",
   "profilKaydediliyor": "保存中...",
-  "belYazdir": "打印"
+  "belYazdir": "打印",
+  "belBoyut": "大小/竖排",
+  "belDikeyYazi": "竖排文字",
+  "belYaziTipi": "字体",
+  "belYaziBoyut": "大小",
+  "belRenk": "颜色",
+  "belNormal": "普通",
+  "belBoyutIpucu": "用列标题上的 － ＋ 调整宽度，用左侧数字上的 － ＋ 调整高度。⇅ 按钮让该列变为竖排（自下而上）。把列变窄以适应 A4。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -1559,6 +1642,13 @@ export const CEVIRI_EKSIK7 = {
   "profilFiyatMin": "料金 最低",
   "profilFiyatMax": "料金 最高",
   "profilKaydediliyor": "保存中...",
-  "belYazdir": "印刷"
+  "belYazdir": "印刷",
+  "belBoyut": "サイズ／縦書き",
+  "belDikeyYazi": "縦書き",
+  "belYaziTipi": "フォント",
+  "belYaziBoyut": "サイズ",
+  "belRenk": "色",
+  "belNormal": "標準",
+  "belBoyutIpucu": "列見出しの － ＋ で幅、左の数字の － ＋ で高さを調整。⇅ ボタンでその列を縦書き（下から上）に。A4に収まるよう列を細くできます。"
  }
 };

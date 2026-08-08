@@ -5203,14 +5203,21 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .bel-arac{ display:flex; gap:6px; flex-wrap:wrap; }
 .bel-arac button{ background:#fff7db; border:1.4px solid rgba(184,134,11,.5); border-radius:9px; padding:8px 11px; font-family:inherit; font-weight:800; font-size:13.5px; color:#7a5a00; cursor:pointer; }
 .bel-arac button:active{ transform:scale(.95); }
+.bel-arac-sec{ background:#fff7db; border:1.4px solid rgba(184,134,11,.5); border-radius:9px; padding:8px 8px; font-family:inherit; font-weight:800; font-size:13px; color:#7a5a00; cursor:pointer; max-width:130px; }
+.bel-renk-btn{ display:inline-flex; align-items:center; gap:2px; background:#fff7db; border:1.4px solid rgba(184,134,11,.5); border-radius:9px; padding:6px 9px; font-size:15px; cursor:pointer; }
+.bel-renk-btn input[type=color]{ width:22px; height:22px; border:none; background:none; padding:0; cursor:pointer; }
 /* Excel tablo grid */
 .bel-tablo-sar{ overflow:auto; border:1.6px solid rgba(160,120,0,.5); border-radius:12px; background:#fff; max-height:56vh; }
 .bel-tablo{ border-collapse:collapse; width:100%; }
 .bel-tablo td{ border:1px solid #e0cf9a; padding:0; }
 .bel-th{ background:#f2e4b8; color:#7a5a00; font-weight:800; font-size:12px; text-align:center; min-width:26px; padding:0 4px !important; }
-.bel-hucre{ border:none; outline:none; padding:9px 8px; font-size:14px; color:#333; width:100%; min-width:90px; background:transparent; font-family:inherit; }
+.bel-hucre{ border:none; outline:none; padding:9px 6px; font-size:14px; color:#333; width:100%; min-width:0; background:transparent; font-family:inherit; box-sizing:border-box; }
 .bel-hucre:focus{ background:#fff7db; }
-.bel-colbas{ cursor:pointer; text-align:center; min-width:78px; user-select:none; }
+.bel-hucre-dikey{ text-align:left; padding:6px 2px; }
+.bel-dikey-btn{ width:24px; height:24px; border-radius:7px; border:1.4px solid #a07800; background:#fff; color:#7a5a00; font-weight:900; font-size:13px; line-height:1; cursor:pointer; margin-left:2px; }
+.bel-dikey-btn.sec{ background:linear-gradient(150deg,#FFD700,#f2a900); border-color:#c9962a; }
+.bel-satyuk{ flex-direction:row; }
+.bel-colbas{ cursor:pointer; text-align:center; min-width:0; user-select:none; }
 .bel-colbas:active{ background:#e8d69a; }
 .bel-kose{ min-width:26px; }
 .bel-hucre-formul .bel-hucre{ color:#0f7a40; font-weight:800; background:#f2fbf5; }
