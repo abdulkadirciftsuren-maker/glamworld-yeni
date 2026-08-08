@@ -25,21 +25,28 @@ async function elemPdf(el, ad) {
   if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG" }); return; } catch (e) {} }
   pdf.save(dosyaAd(ad, "pdf"));
 }
-// ---- YAZDIR (printer): bir HTML öğesini gizli iframe içinde tarayıcının yazdır ekranına verir.
-// Böylece kullanıcı gerçek yazıcıya bastırabilir ya da "PDF olarak kaydet" seçebilir. Türkçe harfler doğru çıkar.
-function yazdirElem(el, baslik) {
+// ---- YAZDIR (printer): belgeyi PDF ile AYNI yöntemle (html2canvas resmi) gerçek bir pencerede gösterip yazdırır.
+// ⛔ ESKİ HATA: gizli iframe ile innerHTML yazdırma Android'de güvenilir değildi — içerik (özellikle FOTOĞRAFLAR)
+//   yüklenmeden yazdır tetikleniyor, "Bu yazı şu anda kullanılamıyor" / boş sayfa geliyordu. Artık sayfanın
+//   NET RESMİ alınır (PDF gibi), tek resim olarak pencerede açılır ve resim yüklenince yazdırılır → dolu ve doğru çıkar.
+async function yazdirElem(el, baslik) {
   if (!el) return;
+  // Pencereyi TIKLAMA anında (await'ten ÖNCE) aç ki tarayıcı engellemesin; sonra içini doldururuz.
+  let win = null; try { win = window.open("", "_blank"); } catch (e) {}
+  try { if (win && win.document) win.document.write("<!doctype html><meta charset='utf-8'><body style='margin:0;background:#fff;color:#666;font-family:Arial,sans-serif'><div style='padding:26px;font-size:16px'>Hazırlanıyor…</div></body>"); } catch (e) {}
   try {
+    const html2canvas = (await import("html2canvas")).default;
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    const img = canvas.toDataURL("image/png");
+    const sayfa = "<!doctype html><html><head><meta charset='utf-8'><title>" + (baslik || "GLOXORG") + "</title><style>@page{margin:10mm}html,body{margin:0;padding:0;background:#fff}img{width:100%;height:auto;display:block}</style></head><body><img src='" + img + "' onload=\"setTimeout(function(){try{window.focus();window.print();}catch(e){}},350)\" /></body></html>";
+    if (win && win.document) { try { win.document.open(); win.document.write(sayfa); win.document.close(); return; } catch (e) {} }
+    // Pencere engellendiyse (bazı tarayıcılar) → gizli iframe yedeği (masaüstünde çalışır)
     const ifr = document.createElement("iframe");
     ifr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;";
     document.body.appendChild(ifr);
-    const d = ifr.contentWindow.document;
-    d.open();
-    d.write("<!doctype html><html><head><meta charset='utf-8'><title>" + (baslik || "GLOXORG") + "</title><style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;margin:0;padding:16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:6px 9px;font-size:13px}img{max-width:100%;height:auto;display:block;margin:6px 0}h2{color:#7a5a00;margin:0 0 6px}@page{margin:12mm}</style></head><body>" + el.innerHTML + "</body></html>");
-    d.close();
-    const go = () => { try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch (e) {} setTimeout(() => { try { document.body.removeChild(ifr); } catch (e) {} }, 60000); };
-    if (d.readyState === "complete") setTimeout(go, 400); else ifr.onload = () => setTimeout(go, 400);
-  } catch (e) {}
+    const d = ifr.contentWindow.document; d.open(); d.write(sayfa); d.close();
+    setTimeout(() => { try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch (e) {} setTimeout(() => { try { document.body.removeChild(ifr); } catch (e) {} }, 60000); }, 800);
+  } catch (e) { if (win) { try { win.close(); } catch (e2) {} } }
 }
 // ---- Word (.doc) indir: HTML'i Word'ün açtığı .doc olarak kaydet (Türkçe UTF-8 + BOM → harfler doğru)
 function wordIndir(ad, htmlIc) {

@@ -11,20 +11,24 @@ const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padSta
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g && a && y ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
 const sayi = (n) => Number(String(n).replace(",", ".")) || 0;
 const para = (n, sym) => (Number(n) || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + (sym || "₺");
-// YAZDIR (printer): gizli iframe içinde tarayıcının yazdır ekranını açar → gerçek yazıcı ya da "PDF kaydet". Türkçe doğru çıkar.
-function yazdirElem(el, baslik) {
+// YAZDIR (printer): raporu PDF ile AYNI yöntemle (html2canvas resmi) gerçek pencerede gösterip yazdırır.
+// (Gizli iframe + innerHTML yazdırma Android'de "Bu yazı kullanılamıyor"/boş sayfa veriyordu; artık dolu ve doğru çıkar.)
+async function yazdirElem(el, baslik, oncedenWin) {
   if (!el) return;
+  let win = oncedenWin || null; if (!win) { try { win = window.open("", "_blank"); } catch (e) {} }
+  try { if (win && win.document && !oncedenWin) win.document.write("<!doctype html><meta charset='utf-8'><body style='margin:0;background:#fff;color:#666;font-family:Arial,sans-serif'><div style='padding:26px;font-size:16px'>Hazırlanıyor…</div></body>"); } catch (e) {}
   try {
+    const html2canvas = (await import("html2canvas")).default;
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    const img = canvas.toDataURL("image/png");
+    const sayfa = "<!doctype html><html><head><meta charset='utf-8'><title>" + (baslik || "GLOXORG") + "</title><style>@page{margin:10mm}html,body{margin:0;padding:0;background:#fff}img{width:100%;height:auto;display:block}</style></head><body><img src='" + img + "' onload=\"setTimeout(function(){try{window.focus();window.print();}catch(e){}},350)\" /></body></html>";
+    if (win && win.document) { try { win.document.open(); win.document.write(sayfa); win.document.close(); return; } catch (e) {} }
     const ifr = document.createElement("iframe");
     ifr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;";
     document.body.appendChild(ifr);
-    const d = ifr.contentWindow.document;
-    d.open();
-    d.write("<!doctype html><html><head><meta charset='utf-8'><title>" + (baslik || "GLOXORG") + "</title><style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;margin:0;padding:16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:6px 9px;font-size:13px}h2,h3{color:#7a5a00;margin:0 0 6px}.say{text-align:right}@page{margin:12mm}</style></head><body>" + el.innerHTML + "</body></html>");
-    d.close();
-    const go = () => { try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch (e) {} setTimeout(() => { try { document.body.removeChild(ifr); } catch (e) {} }, 60000); };
-    if (d.readyState === "complete") setTimeout(go, 400); else ifr.onload = () => setTimeout(go, 400);
-  } catch (e) {}
+    const d = ifr.contentWindow.document; d.open(); d.write(sayfa); d.close();
+    setTimeout(() => { try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch (e) {} setTimeout(() => { try { document.body.removeChild(ifr); } catch (e) {} }, 60000); }, 800);
+  } catch (e) { if (win) { try { win.close(); } catch (e2) {} } }
 }
 const mik = (n, birim) => (Number(n) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 3 }) + (birim ? " " + birim : "");
 
@@ -129,9 +133,12 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
   }
   // YAZDIR: cari hesap raporunu tarayıcının yazdır ekranına ver (gerçek yazıcı ya da PDF kaydet)
   async function yazdirMuh(data) {
+    // Pencereyi TIKLAMA anında aç (await'ten önce) → tarayıcı engellemez. İçini birazdan doldururuz.
+    let win = null; try { win = window.open("", "_blank"); } catch (e) {}
+    try { if (win && win.document) win.document.write("<!doctype html><meta charset='utf-8'><body style='margin:0;background:#fff;color:#666;font-family:Arial,sans-serif'><div style='padding:26px;font-size:16px'>Hazırlanıyor…</div></body>"); } catch (e) {}
     setYazdirData(data); setIslemYok(true);
     await new Promise((r) => setTimeout(r, 90)); // yazdır alanı render olsun
-    try { if (yazdirRef.current) yazdirElem(yazdirRef.current, data.baslik || "muhasebe"); } catch (e) {}
+    try { if (yazdirRef.current) await yazdirElem(yazdirRef.current, data.baslik || "muhasebe", win); } catch (e) { if (win) { try { win.close(); } catch (e2) {} } }
     setTimeout(() => { setYazdirData(null); setIslemYok(false); }, 600);
   }
 
