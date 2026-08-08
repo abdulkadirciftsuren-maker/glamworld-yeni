@@ -24,6 +24,7 @@ import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
 import { CEVIRI_AKADEMI, CEVIRI_AKADEMI_KURULUS } from "./ceviriAkademi";
 import { CEVIRI_HARITA_CANLI, NAV_MAKARA, SBP_SOR, AK_BUYUT } from "./ceviriHaritaCanli";
 import { CEVIRI_SANAL_AYNA } from "./ceviriSanalAyna";
+import { CEVIRI_MUHASEBE } from "./ceviriMuhasebe";
 import { CEVIRI_REKLAM } from "./ceviriReklam";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
@@ -2479,6 +2480,11 @@ Object.keys(CEVIRI_SANAL_AYNA).forEach((lng) => {
 Object.keys(CEVIRI_REKLAM).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   Object.assign(resources[lng].translation, CEVIRI_REKLAM[lng]);
+});
+// MUHASEBE + BELGELER çevirileri (13 dil)
+Object.keys(CEVIRI_MUHASEBE).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  Object.assign(resources[lng].translation, CEVIRI_MUHASEBE[lng]);
 });
 
 i18n
