@@ -107,7 +107,7 @@ export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcN
     if (acik.mod === "meslek") return <MeslekSayfa {...ortak} belge={acik.belge} onGloxordaPaylas={onGloxordaPaylas} />;
     return <YaziEditor {...ortak} belge={acik.belge} />;
   }
-  if (sablonAcik) return <SablonSecici t={t} onKapat={() => setSablonAcik(false)} onSec={(s) => { setSablonAcik(false); setAcik({ mod: s.tur, belge: { belgeTuru: s.tur, ad: s.ad, grid: s.grid, html: s.html } }); }} />;
+  if (sablonAcik) return <SablonSecici t={t} onKapat={() => setSablonAcik(false)} onSec={(s) => { setSablonAcik(false); setAcik({ mod: s.tur, belge: { belgeTuru: s.tur, ad: s.ad, grid: s.grid, html: s.html, meslekSayfa: s.meslekSayfa, fatura: s.fatura } }); }} />;
 
   // arama + arşiv gruplama
   const q = ara.trim().toLowerCase();
@@ -565,36 +565,94 @@ async function elemFotoPaylas(el, ad) {
 }
 
 // ===================== HAZIR ŞABLONLAR (mesleğe göre) =====================
+// HAZIR ŞABLONLAR — mesleğe göre: her grupta bir "🌐 Tanıtım sayfam" (fotoğrafını ekleyip paylaşırsın) + işine yarayan
+// hazır tablolar/Word belgeleri. tur:"meslek" → MeslekSayfa (foto ekle), tur:"tablo" → Excel tablosu, tur:"yazi" → Word, tur:"fatura" → Fatura.
 const SABLONLAR = [
+  { meslek: "Kuaför / Berber", ikon: "💇", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Kuaför / Berber", slogan: "Şık saçlar, güler yüz", aciklama: "Bayan-erkek saç kesimi, boya, bakım ve şekillendirme. Randevu ile hızlı hizmet.", hizmetler: "Saç kesimi\nSakal tıraşı\nBoya / Röfle\nFön ve şekillendirme\nBakım / keratin", renk: "mor" } },
+    { ad: "Randevu Defteri", tur: "tablo", grid: [["Tarih", "Saat", "Müşteri", "Telefon", "Hizmet", "Ücret"], ["", "", "", "", "", ""], ["", "", "", "", "", ""], ["", "", "", "", "", ""]] },
+    { ad: "Fiyat Listesi", tur: "tablo", grid: [["Hizmet", "Fiyat"], ["Saç kesimi", ""], ["Sakal", ""], ["Boya", ""], ["Fön", ""]] },
+    { ad: "Gelir-Gider", tur: "tablo", grid: [["Tarih", "Gelir", "Gider", "Kalan"], ["", "", "", "=B2-C2"], ["", "", "", "=B3-C3"], ["Toplam", "=TOPLA(B2:B3)", "=TOPLA(C2:C3)", "=B4-C4"]] },
+  ] },
+  { meslek: "Güzellik / Cilt / Tırnak", ikon: "💅", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Güzellik Uzmanı", slogan: "Bakımlı ve ışıltılı", aciklama: "Cilt bakımı, makyaj, tırnak ve kaş-kirpik hizmetleri. Randevu ile.", hizmetler: "Cilt bakımı\nMakyaj\nManikür / Pedikür\nKaş / Kirpik\nAğda / Epilasyon", renk: "kirmizi" } },
+    { ad: "Randevu Defteri", tur: "tablo", grid: [["Tarih", "Saat", "Müşteri", "İşlem", "Ücret"], ["", "", "", "", ""], ["", "", "", "", ""]] },
+    { ad: "Fiyat Listesi", tur: "tablo", grid: [["Hizmet", "Fiyat"], ["Cilt bakımı", ""], ["Makyaj", ""], ["Manikür", ""]] },
+  ] },
   { meslek: "Restoran / Kafe", ikon: "🍽️", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Restoran / Kafe", slogan: "Lezzetin adresi", aciklama: "Taze malzeme, sıcak servis. Paket servis ve masa rezervasyonu mevcut.", hizmetler: "Yemek\nKahvaltı\nTatlı & İçecek\nPaket servis\nRezervasyon", renk: "kirmizi" } },
     { ad: "Günlük Kasa", tur: "tablo", grid: [["Tarih", "Gelir", "Gider", "Kalan"], ["", "", "", "=B2-C2"], ["", "", "", "=B3-C3"], ["Toplam", "=TOPLA(B2:B3)", "=TOPLA(C2:C3)", "=B4-C4"]] },
     { ad: "Stok / Depo", tur: "tablo", grid: [["Ürün", "Giriş", "Çıkış", "Kalan"], ["", "", "", "=B2-C2"], ["", "", "", "=B3-C3"]] },
+    { ad: "Menü (Word)", tur: "yazi", html: "<h2>MENÜ</h2><p><b>Başlangıçlar</b></p><ul><li>...... — ₺</li><li>...... — ₺</li></ul><p><b>Ana Yemekler</b></p><ul><li>...... — ₺</li><li>...... — ₺</li></ul><p><b>Tatlılar</b></p><ul><li>...... — ₺</li></ul>" },
     { ad: "Adisyon / Fatura", tur: "fatura" },
   ] },
-  { meslek: "Kuaför / Güzellik", ikon: "💇", liste: [
-    { ad: "Randevu Defteri", tur: "tablo", grid: [["Tarih", "Saat", "Müşteri", "Hizmet", "Ücret"], ["", "", "", "", ""], ["", "", "", "", ""]] },
-    { ad: "Gelir-Gider", tur: "tablo", grid: [["Tarih", "Gelir", "Gider", "Kalan"], ["", "", "", "=B2-C2"]] },
-  ] },
-  { meslek: "Terzi / Tekstil", ikon: "🧵", liste: [
-    { ad: "Sipariş Takip", tur: "tablo", grid: [["Müşteri", "Ürün", "Adet", "Fiyat", "Tutar", "Teslim"], ["", "", "", "", "=C2*D2", ""], ["", "", "", "", "=C3*D3", ""]] },
-    { ad: "Fatura", tur: "fatura" },
+  { meslek: "Pastane / Fırın", ikon: "🎂", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Pastane / Fırın", slogan: "Taze ve el yapımı", aciklama: "Yaş pasta, kurabiye, ekmek ve özel gün siparişleri.", hizmetler: "Yaş pasta\nDoğum günü pastası\nKurabiye / Börek\nEkmek\nSipariş", renk: "altin" } },
+    { ad: "Sipariş Takip", tur: "tablo", grid: [["Tarih", "Müşteri", "Ürün", "Adet", "Fiyat", "Tutar"], ["", "", "", "", "", "=D2*E2"], ["", "", "", "", "", "=D3*E3"]] },
+    { ad: "Fiyat Listesi", tur: "tablo", grid: [["Ürün", "Fiyat"], ["Yaş pasta (kg)", ""], ["Kurabiye (kg)", ""], ["Ekmek", ""]] },
   ] },
   { meslek: "Market / Bakkal", ikon: "🛒", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Market / Bakkal", slogan: "Her şey ayağınıza kadar", aciklama: "Günlük ihtiyaçlar, taze ürünler ve hızlı teslimat.", hizmetler: "Gıda / İçecek\nTemizlik\nManav\nEve teslimat", renk: "yesil" } },
     { ad: "Stok Sayımı", tur: "tablo", grid: [["Ürün", "Miktar", "Alış", "Satış", "Kâr"], ["", "", "", "", "=D2-C2"], ["", "", "", "", "=D3-C3"]] },
     { ad: "Veresiye Defteri", tur: "tablo", grid: [["Müşteri", "Borç", "Ödeme", "Kalan"], ["", "", "", "=B2-C2"], ["", "", "", "=B3-C3"]] },
   ] },
+  { meslek: "Terzi / Tekstil", ikon: "🧵", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Terzi", slogan: "Size özel dikim", aciklama: "Dikim, tadilat ve özel tasarım. Ölçüye göre hızlı teslim.", hizmetler: "Dikim\nTadilat / Daraltma\nÖzel tasarım\nÜtü / Pres", renk: "mor" } },
+    { ad: "Sipariş Takip", tur: "tablo", grid: [["Müşteri", "Ürün", "Adet", "Fiyat", "Tutar", "Teslim"], ["", "", "", "", "=C2*D2", ""], ["", "", "", "", "=C3*D3", ""]] },
+    { ad: "Fatura", tur: "fatura" },
+  ] },
+  { meslek: "Oto Tamir / Servis", ikon: "🔧", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Oto Tamir", slogan: "Güvenli yola hazır", aciklama: "Motor, fren, bakım, elektrik ve lastik hizmetleri. Garantili işçilik.", hizmetler: "Periyodik bakım\nMotor / Fren\nOto elektrik\nLastik / Rot balans\nYağ değişimi", renk: "mavi" } },
+    { ad: "İş Emri / Servis Kaydı", tur: "tablo", grid: [["Tarih", "Plaka", "Müşteri", "Yapılan İş", "İşçilik", "Parça", "Tutar"], ["", "", "", "", "", "", "=E2+F2"], ["", "", "", "", "", "", "=E3+F3"]] },
+    { ad: "Yedek Parça Stok", tur: "tablo", grid: [["Parça", "Adet", "Alış", "Satış", "Kâr"], ["", "", "", "", "=D2-C2"]] },
+    { ad: "Fatura", tur: "fatura" },
+  ] },
   { meslek: "Nakliye / Lojistik", ikon: "🚚", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Nakliye", slogan: "Zamanında, güvenle taşırız", aciklama: "Şehir içi ve şehirler arası eşya taşıma, evden eve nakliyat.", hizmetler: "Evden eve nakliyat\nParça yük\nDepolama\nAsansörlü taşıma", renk: "mavi" } },
     { ad: "Sefer Defteri", tur: "tablo", grid: [["Tarih", "Nereden", "Nereye", "Ücret", "Yakıt", "Net"], ["", "", "", "", "", "=D2-E2"], ["", "", "", "", "", "=D3-E3"]] },
+    { ad: "Fatura", tur: "fatura" },
   ] },
   { meslek: "İnşaat / Usta", ikon: "🔨", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "İnşaat / Usta", slogan: "Sağlam iş, temiz teslim", aciklama: "Tadilat, boya, fayans, alçı ve komple yapım işleri.", hizmetler: "Tadilat / Yıkım\nBoya / Badana\nFayans / Seramik\nAlçı / Sıva\nSu / Elektrik tesisat", renk: "altin" } },
     { ad: "Malzeme Listesi", tur: "tablo", grid: [["Malzeme", "Adet", "Birim Fiyat", "Tutar"], ["", "", "", "=B2*C2"], ["", "", "", "=B3*C3"], ["Toplam", "", "", "=TOPLA(D2:D3)"]] },
     { ad: "İşçilik / Hakediş", tur: "tablo", grid: [["Tarih", "İşçi", "Gün", "Yevmiye", "Tutar"], ["", "", "", "", "=C2*D2"]] },
+    { ad: "Fiyat Teklifi (Word)", tur: "yazi", html: "<h2>FİYAT TEKLİFİ</h2><p>Sayın .......,</p><p>Talebiniz üzerine hazırladığımız teklif aşağıdadır:</p><ul><li>İş: ......</li><li>Malzeme: ......</li><li>İşçilik: ......</li><li>Toplam Bedel: ......</li><li>Süre: ......</li></ul><p>Saygılarımızla.</p>" },
+  ] },
+  { meslek: "Elektrik / Tesisat", ikon: "⚡", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Elektrikçi / Tesisatçı", slogan: "7/24 arıza ve montaj", aciklama: "Elektrik arıza, aydınlatma, su tesisatı ve kombi montajı.", hizmetler: "Elektrik arıza\nAydınlatma / Priz\nSu tesisatı\nKombi / Petek\nDoğalgaz tesisat", renk: "altin" } },
+    { ad: "Servis Kaydı", tur: "tablo", grid: [["Tarih", "Müşteri", "Adres", "Yapılan İş", "Ücret"], ["", "", "", "", ""], ["", "", "", "", ""]] },
+    { ad: "Fiyat Listesi", tur: "tablo", grid: [["Hizmet", "Fiyat"], ["Arıza tespit", ""], ["Montaj", ""], ["Bakım", ""]] },
+  ] },
+  { meslek: "Sağlık / Doktor / Diş", ikon: "🩺", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Sağlık", slogan: "Sağlığınız önceliğimiz", aciklama: "Muayene, kontrol ve tedavi. Randevu ile hizmet.", hizmetler: "Muayene\nKontrol\nTedavi\nRandevu", renk: "mavi" } },
+    { ad: "Hasta / Randevu Defteri", tur: "tablo", grid: [["Tarih", "Saat", "Hasta", "Telefon", "İşlem"], ["", "", "", "", ""], ["", "", "", "", ""]] },
+  ] },
+  { meslek: "Avukat / Danışman", ikon: "⚖️", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Avukat / Danışman", slogan: "Hakkınızı savunuruz", aciklama: "Hukuki danışmanlık, dava takibi ve sözleşme hazırlığı.", hizmetler: "Danışmanlık\nDava takibi\nSözleşme\nİcra / Alacak", renk: "mor" } },
+    { ad: "Dava / Dosya Takip", tur: "tablo", grid: [["Dosya No", "Müvekkil", "Konu", "Duruşma", "Durum"], ["", "", "", "", ""], ["", "", "", "", ""]] },
+    { ad: "Sözleşme (Word)", tur: "yazi", html: "<h2>SÖZLEŞME</h2><p><b>Taraflar:</b> ......</p><p><b>Konu:</b> ......</p><p><b>Bedel:</b> ......</p><p><b>Süre:</b> ......</p><p><b>Tarih:</b> ......</p><p>İmza</p>" },
+  ] },
+  { meslek: "Muhasebe / Mali Müşavir", ikon: "🧮", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Mali Müşavir", slogan: "Rakamlarınız emin ellerde", aciklama: "Defter tutma, beyanname, bordro ve mali danışmanlık.", hizmetler: "Defter / Muhasebe\nBeyanname\nBordro / SGK\nDanışmanlık", renk: "yesil" } },
+    { ad: "Müşteri Takip", tur: "tablo", grid: [["Müşteri", "Hizmet", "Ücret", "Tahsilat", "Kalan"], ["", "", "", "", "=C2-D2"], ["", "", "", "", "=C3-D3"]] },
+    { ad: "Gelir-Gider", tur: "tablo", grid: [["Tarih", "Açıklama", "Gelir", "Gider", "Kalan"], ["", "", "", "", "=C2-D2"], ["Toplam", "", "=TOPLA(C2:C2)", "=TOPLA(D2:D2)", "=C3-D3"]] },
+  ] },
+  { meslek: "Emlak", ikon: "🏠", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Emlak Danışmanı", slogan: "Doğru ev, doğru fiyat", aciklama: "Satılık ve kiralık konut/işyeri. Ücretsiz değerleme.", hizmetler: "Satılık\nKiralık\nDeğerleme\nDanışmanlık", renk: "mavi" } },
+    { ad: "Portföy Listesi", tur: "tablo", grid: [["İlan", "Tür", "Oda", "m²", "Fiyat", "Durum"], ["", "", "", "", "", ""], ["", "", "", "", "", ""]] },
+    { ad: "İlan Metni (Word)", tur: "yazi", html: "<h2>SATILIK / KİRALIK</h2><p><b>Konum:</b> ......</p><p><b>Oda / m²:</b> ......</p><p><b>Fiyat:</b> ......</p><p><b>Özellikler:</b></p><ul><li>......</li><li>......</li></ul><p><b>İletişim:</b> ......</p>" },
+  ] },
+  { meslek: "Fotoğrafçı", ikon: "📷", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "Fotoğrafçı", slogan: "Anılarınız ölümsüz", aciklama: "Düğün, nişan, doğum günü ve stüdyo çekimleri.", hizmetler: "Düğün / Nişan\nStüdyo çekim\nDoğum günü\nÜrün fotoğrafı\nAlbüm / Baskı", renk: "mor" } },
+    { ad: "Çekim / Randevu", tur: "tablo", grid: [["Tarih", "Müşteri", "Çekim Türü", "Yer", "Ücret"], ["", "", "", "", ""], ["", "", "", "", ""]] },
+    { ad: "Paket Fiyatları", tur: "tablo", grid: [["Paket", "İçerik", "Fiyat"], ["Temel", "", ""], ["Standart", "", ""], ["Özel", "", ""]] },
   ] },
   { meslek: "Genel / Serbest", ikon: "📋", liste: [
+    { ad: "Tanıtım Sayfam (foto ekle)", tur: "meslek", meslekSayfa: { meslek: "", slogan: "", aciklama: "", hizmetler: "Hizmet 1\nHizmet 2\nHizmet 3", renk: "altin" } },
     { ad: "Gelir-Gider Defteri", tur: "tablo", grid: [["Tarih", "Açıklama", "Gelir", "Gider", "Kalan"], ["", "", "", "", "=C2-D2"], ["", "", "", "", "=C3-D3"], ["Toplam", "", "=TOPLA(C2:C3)", "=TOPLA(D2:D3)", "=C4-D4"]] },
     { ad: "Müşteri Borç Takip", tur: "tablo", grid: [["Müşteri", "Borç", "Tahsilat", "Kalan"], ["", "", "", "=B2-C2"]] },
     { ad: "Sözleşme (Word)", tur: "yazi", html: "<h2>SÖZLEŞME</h2><p><b>Taraflar:</b> ......</p><p><b>Konu:</b> ......</p><p><b>Bedel:</b> ......</p><p><b>Tarih:</b> ......</p><p>İmza</p>" },
-    { ad: "Teklif Mektubu (Word)", tur: "yazi", html: "<h2>FİYAT TEKLİFİ</h2><p>Sayın .......,</p><p>Talebiniz üzerine hazırladığımız teklifimiz aşağıdadır:</p><ul><li>Hizmet: ......</li><li>Bedel: ......</li><li>Süre: ......</li></ul><p>Saygılarımızla.</p>" },
+    { ad: "Fiyat Teklifi (Word)", tur: "yazi", html: "<h2>FİYAT TEKLİFİ</h2><p>Sayın .......,</p><p>Talebiniz üzerine hazırladığımız teklifimiz aşağıdadır:</p><ul><li>Hizmet: ......</li><li>Bedel: ......</li><li>Süre: ......</li></ul><p>Saygılarımızla.</p>" },
   ] },
 ];
 function SablonSecici({ t, onKapat, onSec }) {
@@ -608,7 +666,7 @@ function SablonSecici({ t, onKapat, onSec }) {
           <div className="bel-sablon-liste">
             {m.liste.map((s, i) => (
               <button key={i} className="bel-sablon-kart" onClick={() => onSec(s)}>
-                <span className="bss-ik">{s.tur === "tablo" ? "📊" : s.tur === "fatura" ? "🧾" : "📝"}</span>
+                <span className="bss-ik">{s.tur === "tablo" ? "📊" : s.tur === "fatura" ? "🧾" : s.tur === "meslek" ? "🌐" : "📝"}</span>
                 <span className="bss-ad">{s.ad}</span>
               </button>
             ))}
