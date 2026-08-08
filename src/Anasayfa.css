@@ -5208,12 +5208,14 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .bel-renk-btn input[type=color]{ width:22px; height:22px; border:none; background:none; padding:0; cursor:pointer; }
 /* Excel tablo grid */
 .bel-tablo-sar{ overflow:auto; border:1.6px solid rgba(160,120,0,.5); border-radius:12px; background:#fff; max-height:56vh; }
-.bel-tablo{ border-collapse:collapse; width:100%; }
-.bel-tablo-sabit{ table-layout:fixed; } /* sütun genişlikleri BİREBİR uygulanır (auto layout ezmez) → sütunlar gerçekten incelir, A4'e sığar */
+.bel-tablo{ border-collapse:collapse; }
+/* ⛔ ESKİDEN .bel-tablo width:100% idi → table-layout:fixed ile birleşince sütunları EŞİT dağıtıp inceltmeyi engelliyordu. KALDIRILDI. */
+.bel-tablo-sabit{ table-layout:fixed; } /* sütun genişlikleri (colgroup) BİREBİR uygulanır → sütunlar tek tek gerçekten incelir, A4'e sığar */
 .bel-tablo td{ border:1px solid #e0cf9a; padding:0; }
 .bel-veri-hucre{ overflow:hidden; } /* sütun inceyken içerik taşmasın (kırpılır) → dar sütun mümkün olsun */
 /* BOYUT PANELİ: sütun/satır +/- ve dikey düğmeleri TABLONUN DIŞINDA (tablo sütununu genişletmesin) */
-.bel-boyut-panel{ background:#fffbe9; border:1.4px solid rgba(160,120,0,.45); border-radius:12px; padding:8px; margin-bottom:8px; display:flex; flex-direction:column; gap:7px; }
+.bel-boyut-panel{ background:#fffbe9; border:1.4px solid rgba(160,120,0,.45); border-radius:12px; padding:8px; margin-bottom:6px; display:flex; flex-direction:column; gap:6px; }
+.bel-boyut-kisaipucu{ font-size:11.5px; color:#7a5a00; font-weight:700; }
 .bel-boyut-satir{ display:flex; align-items:center; gap:8px; }
 .bel-boyut-et{ font-weight:900; color:#7a5a00; font-size:13px; min-width:56px; }
 .bel-boyut-kaydir{ display:flex; gap:8px; overflow-x:auto; padding-bottom:3px; scrollbar-width:none; }

@@ -63,18 +63,19 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
     kayitlar.forEach((k) => { if (k.silindi && k.silinmeMs && k.silinmeMs < sinir) { muhasebeKaliciSil(uid, k.id); } });
   }, [kayitlar, uid]);
 
-  // Geri tuşu (Android): AÇIK PENCEREYİ kapat, MUHASEBEDE KAL. Sıra: ⋮ menü → form → belge editörü → cari/stok detay → sayfayı kapat.
-  // Belgeler içindeki editör/şablon pencereleri de dahil (o pencereler açıkken geri → editörü kapat, Muhasebe'de kal — ana sayfaya ATMAZ).
+  // GERİ / ✕ ORTAK: AÇIK PENCEREYİ kapat, MUHASEBEDE KAL. Sıra: ⋮ menü → form → belge editörü → cari/stok detay → en son sayfayı kapat.
+  // Hem Android geri tuşu hem üstteki ✕ bunu kullanır → ✕ artık koca Muhasebeyi kapatıp ana sayfaya ATMAZ; önce açık pencereyi kapatır.
+  const acikPencereVar = !!(menuId || form || seciliId || belgeDerin);
+  const geriGit = () => {
+    if (menuId) setMenuId(null);
+    else if (form) setForm(null);
+    else if (belgeDerin && belgeGeriRef.current) { try { belgeGeriRef.current(); } catch (e) {} }
+    else if (seciliId) setSeciliId(null);
+    else if (onKapat) onKapat();
+  };
   useEffect(() => {
     if (!onKatman) return;
-    const geri = () => {
-      if (menuId) setMenuId(null);
-      else if (form) setForm(null);
-      else if (belgeDerin && belgeGeriRef.current) { try { belgeGeriRef.current(); } catch (e) {} }
-      else if (seciliId) setSeciliId(null);
-      else if (onKapat) onKapat();
-    };
-    onKatman((menuId || form || seciliId || belgeDerin) ? 2 : 1, geri);
+    onKatman(acikPencereVar ? 2 : 1, geriGit);
   }, [seciliId, form, menuId, belgeDerin]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (onKatman) onKatman(0, null); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -172,7 +173,7 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
       <div className="muh-ic">
         <div className="muh-bas">
           <span>📊 <b>{t("muhBaslik", "Muhasebe")}</b></span>
-          <button className="muh-kapat" onClick={onKapat} aria-label={t("kapat", "Kapat")}>✕</button>
+          <button className="muh-kapat" onClick={geriGit} aria-label={t("kapat", "Kapat")} title={acikPencereVar ? t("muhPencereKapat", "Pencereyi kapat") : t("kapat", "Kapat")}>✕</button>
         </div>
 
         {/* SEKME ŞERİDİ */}

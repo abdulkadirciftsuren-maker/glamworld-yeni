@@ -247,8 +247,25 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button onClick={toplamSatir}>∑ {t("belToplam", "Toplam")}</button>
         <button className={genMod ? "bel-arac-aktif" : ""} onClick={() => setGenMod((a) => !a)}>⇔ {t("belBoyut", "Boyut / Dikey")}</button>
       </div>
+      {/* Ölçü modunda UZUN ipuçları GİZLENİR; sadece kısa ayar şeridi tablonun HEMEN üstünde durur → ne yaptığını görürsün */}
+      {!genMod && (mod === "hesap" ? (
+        <div className="bel-hesap-bar">
+          <div className="bel-op-satir">{oplar.map(([o, et]) => (
+            <button key={o} className={"bel-op-btn" + (islem === o ? " sec" : "")} onClick={() => { setIslem(o); setSonucBekle(false); }}>{et}</button>
+          ))}</div>
+          <div className="bel-hesap-ipucu">{sonucBekle ? ("👉 " + t("belSonucDokun", "Sonucun çıkacağı BOŞ hücreye dokun")) : islem ? ("👉 " + t("belHucreleriSec", "Hesaplanacak sayı hücrelerine dokun (seçilir)")) : ("👉 " + t("belIslemSec", "Önce işlem seç: Topla / Çıkar / Çarp / Böl"))}</div>
+          {secili.length > 0 && <div className="bel-onizle">{secOnizle}{canli != null ? " = " + canliYazi : ""}</div>}
+          <div className="bel-hesap-dug">
+            <button className="bel-sonuc-btn" disabled={!islem || secili.length < 2} onClick={() => { setSonucBekle(true); bilgi(t("belSonucDokun2", "Şimdi sonucun çıkacağı boş hücreye dokun")); }}>＝ {t("belSonucYaz", "Sonucu yaz")}</button>
+            <button className="bel-vazgec-btn" onClick={() => { setSecili([]); setIslem(null); setSonucBekle(false); }}>✕ {t("belTemizle", "Temizle")}</button>
+          </div>
+        </div>
+      ) : (
+        <div className="bel-formul-ipucu">{t("belYaziIpucu", "✍️ Hücrelere yazı ya da rakam yaz. Hesap yapmak için üstten 🔢 Düğmeyle hesapla'ya geç. (İstersen elle formül de yazabilirsin: =A1+B1) Üstteki harfe dokun → sırala.")}</div>
+      ))}
       {genMod && (
         <div className="bel-boyut-panel">
+          <div className="bel-boyut-kisaipucu">{t("belBoyutKisa", "－ ＋ ile daralt/genişlet · ⇅ dikey yazı · sütunları inceltip A4'e sığdır")}</div>
           <div className="bel-boyut-satir">
             <span className="bel-boyut-et">↔ {t("belSutun", "Sütun")}</span>
             <div className="bel-boyut-kaydir">
@@ -274,23 +291,7 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
               ))}
             </div>
           </div>
-          <div className="bel-formul-ipucu">{t("belBoyutIpucu", "Sütun başlığındaki － ＋ ile GENİŞLİK, sol rakamdaki － ＋ ile YÜKSEKLİK ayarlanır. ⇅ düğmesi o sütunu DİKEY yazıya çevirir (aşağıdan yukarı). A4'e sığsın diye sütunları inceltebilirsin.")}</div>
         </div>
-      )}
-      {mod === "hesap" ? (
-        <div className="bel-hesap-bar">
-          <div className="bel-op-satir">{oplar.map(([o, et]) => (
-            <button key={o} className={"bel-op-btn" + (islem === o ? " sec" : "")} onClick={() => { setIslem(o); setSonucBekle(false); }}>{et}</button>
-          ))}</div>
-          <div className="bel-hesap-ipucu">{sonucBekle ? ("👉 " + t("belSonucDokun", "Sonucun çıkacağı BOŞ hücreye dokun")) : islem ? ("👉 " + t("belHucreleriSec", "Hesaplanacak sayı hücrelerine dokun (seçilir)")) : ("👉 " + t("belIslemSec", "Önce işlem seç: Topla / Çıkar / Çarp / Böl"))}</div>
-          {secili.length > 0 && <div className="bel-onizle">{secOnizle}{canli != null ? " = " + canliYazi : ""}</div>}
-          <div className="bel-hesap-dug">
-            <button className="bel-sonuc-btn" disabled={!islem || secili.length < 2} onClick={() => { setSonucBekle(true); bilgi(t("belSonucDokun2", "Şimdi sonucun çıkacağı boş hücreye dokun")); }}>＝ {t("belSonucYaz", "Sonucu yaz")}</button>
-            <button className="bel-vazgec-btn" onClick={() => { setSecili([]); setIslem(null); setSonucBekle(false); }}>✕ {t("belTemizle", "Temizle")}</button>
-          </div>
-        </div>
-      ) : (
-        <div className="bel-formul-ipucu">{t("belYaziIpucu", "✍️ Hücrelere yazı ya da rakam yaz. Hesap yapmak için üstten 🔢 Düğmeyle hesapla'ya geç. (İstersen elle formül de yazabilirsin: =A1+B1) Üstteki harfe dokun → sırala.")}</div>
       )}
       <div className="bel-tablo-sar">
         <table className="bel-tablo bel-tablo-sabit" style={{ width: 40 + gen.reduce((s, x) => s + (x || 96), 0) }}>
