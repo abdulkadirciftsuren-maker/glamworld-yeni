@@ -1,5 +1,5 @@
 // GLOXORG — EKSIK CEVIRILER GRUP 7 (B53): Tanis sayfasi, Kendi Yapay Zeka arkadasi, resim/cizim, Gloxoo sesi,
-// giris/hesap uyarilari ve Meslek Pasaportu/Profil metinleri sadece Turkce idi; 13 dile cevrildi.
+// giris/hesap uyarilari ve Meslek Pasaportu/Profil metinleri sadece Turkce idi; 13 dile cevrildi. (B54: belYazdir eklendi)
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -118,7 +118,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Hizmetler (virgülle ayır)",
   "profilFiyatMin": "Fiyat min",
   "profilFiyatMax": "Fiyat max",
-  "profilKaydediliyor": "Kaydediliyor..."
+  "profilKaydediliyor": "Kaydediliyor...",
+  "belYazdir": "Yazdır"
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -237,7 +238,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Services (separate with commas)",
   "profilFiyatMin": "Min price",
   "profilFiyatMax": "Max price",
-  "profilKaydediliyor": "Saving..."
+  "profilKaydediliyor": "Saving...",
+  "belYazdir": "Print"
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -356,7 +358,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Leistungen (mit Komma trennen)",
   "profilFiyatMin": "Preis min.",
   "profilFiyatMax": "Preis max.",
-  "profilKaydediliyor": "Wird gespeichert..."
+  "profilKaydediliyor": "Wird gespeichert...",
+  "belYazdir": "Drucken"
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -475,7 +478,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Услуги (через запятую)",
   "profilFiyatMin": "Цена от",
   "profilFiyatMax": "Цена до",
-  "profilKaydediliyor": "Сохранение..."
+  "profilKaydediliyor": "Сохранение...",
+  "belYazdir": "Печать"
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -594,7 +598,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Послуги (через кому)",
   "profilFiyatMin": "Ціна від",
   "profilFiyatMax": "Ціна до",
-  "profilKaydediliyor": "Збереження..."
+  "profilKaydediliyor": "Збереження...",
+  "belYazdir": "Друк"
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -713,7 +718,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Servicios (separa con comas)",
   "profilFiyatMin": "Precio mín",
   "profilFiyatMax": "Precio máx",
-  "profilKaydediliyor": "Guardando..."
+  "profilKaydediliyor": "Guardando...",
+  "belYazdir": "Imprimir"
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -832,7 +838,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Services (sépare par des virgules)",
   "profilFiyatMin": "Prix min",
   "profilFiyatMax": "Prix max",
-  "profilKaydediliyor": "Enregistrement..."
+  "profilKaydediliyor": "Enregistrement...",
+  "belYazdir": "Imprimer"
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -951,7 +958,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Servizi (separati da virgola)",
   "profilFiyatMin": "Prezzo min",
   "profilFiyatMax": "Prezzo max",
-  "profilKaydediliyor": "Salvataggio..."
+  "profilKaydediliyor": "Salvataggio...",
+  "belYazdir": "Stampa"
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1070,7 +1078,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "Serviços (separados por vírgula)",
   "profilFiyatMin": "Preço mín",
   "profilFiyatMax": "Preço máx",
-  "profilKaydediliyor": "Salvando..."
+  "profilKaydediliyor": "Salvando...",
+  "belYazdir": "Imprimir"
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1189,7 +1198,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "الخدمات (افصل بفاصلة)",
   "profilFiyatMin": "أقل سعر",
   "profilFiyatMax": "أعلى سعر",
-  "profilKaydediliyor": "جارٍ الحفظ..."
+  "profilKaydediliyor": "جارٍ الحفظ...",
+  "belYazdir": "طباعة"
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1308,7 +1318,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "सेवाएं (अल्पविराम से अलग करें)",
   "profilFiyatMin": "न्यूनतम मूल्य",
   "profilFiyatMax": "अधिकतम मूल्य",
-  "profilKaydediliyor": "सहेजा जा रहा है..."
+  "profilKaydediliyor": "सहेजा जा रहा है...",
+  "belYazdir": "प्रिंट"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1427,7 +1438,8 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "服务（用逗号分隔）",
   "profilFiyatMin": "最低价",
   "profilFiyatMax": "最高价",
-  "profilKaydediliyor": "保存中..."
+  "profilKaydediliyor": "保存中...",
+  "belYazdir": "打印"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -1546,6 +1558,7 @@ export const CEVIRI_EKSIK7 = {
   "profilHizmetlerVir": "サービス（カンマ区切り）",
   "profilFiyatMin": "料金 最低",
   "profilFiyatMax": "料金 最高",
-  "profilKaydediliyor": "保存中..."
+  "profilKaydediliyor": "保存中...",
+  "belYazdir": "印刷"
  }
 };

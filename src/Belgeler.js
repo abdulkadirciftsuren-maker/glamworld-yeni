@@ -25,6 +25,22 @@ async function elemPdf(el, ad) {
   if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG" }); return; } catch (e) {} }
   pdf.save(dosyaAd(ad, "pdf"));
 }
+// ---- YAZDIR (printer): bir HTML öğesini gizli iframe içinde tarayıcının yazdır ekranına verir.
+// Böylece kullanıcı gerçek yazıcıya bastırabilir ya da "PDF olarak kaydet" seçebilir. Türkçe harfler doğru çıkar.
+function yazdirElem(el, baslik) {
+  if (!el) return;
+  try {
+    const ifr = document.createElement("iframe");
+    ifr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;";
+    document.body.appendChild(ifr);
+    const d = ifr.contentWindow.document;
+    d.open();
+    d.write("<!doctype html><html><head><meta charset='utf-8'><title>" + (baslik || "GLOXORG") + "</title><style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;margin:0;padding:16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:6px 9px;font-size:13px}img{max-width:100%;height:auto;display:block;margin:6px 0}h2{color:#7a5a00;margin:0 0 6px}@page{margin:12mm}</style></head><body>" + el.innerHTML + "</body></html>");
+    d.close();
+    const go = () => { try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch (e) {} setTimeout(() => { try { document.body.removeChild(ifr); } catch (e) {} }, 60000); };
+    if (d.readyState === "complete") setTimeout(go, 400); else ifr.onload = () => setTimeout(go, 400);
+  } catch (e) {}
+}
 // ---- Word (.doc) indir: HTML'i Word'ün açtığı .doc olarak kaydet (Türkçe UTF-8 + BOM → harfler doğru)
 function wordIndir(ad, htmlIc) {
   const html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>" + htmlIc + "</body></html>";
@@ -53,10 +69,19 @@ function _arsivGrup(ms) {
 }
 
 // ===================== BELGELER LİSTESİ + ARŞİV + YÖNLENDİRME =====================
-export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcNokta, bilgi, paraSym = "₺", benAd = "", onGloxordaPaylas }) {
+export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcNokta, bilgi, paraSym = "₺", benAd = "", onGloxordaPaylas, onBelgeKatman }) {
   const [acik, setAcik] = useState(null); // {mod, belge?, on?}
   const [sablonAcik, setSablonAcik] = useState(false);
   const [ara, setAra] = useState("");
+  // GERİ TUŞU: bir editör/şablon penceresi açıkken Android geri → o pencereyi kapat, MUHASEBEDE KAL (ana sayfaya atma).
+  // Muhasebe'ye "içeride pencere açık" haberini ver; kapatma işlevini de ver. Kapanınca haber sıfırlanır.
+  useEffect(() => {
+    if (!onBelgeKatman) return;
+    const acikMi = !!(acik || sablonAcik);
+    const kapat = () => { if (acik) setAcik(null); else if (sablonAcik) setSablonAcik(false); };
+    onBelgeKatman(acikMi, acikMi ? kapat : null);
+  }, [acik, sablonAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { if (onBelgeKatman) onBelgeKatman(false, null); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const ikon = (bt) => bt === "tablo" ? "📊" : bt === "fatura" ? "🧾" : bt === "meslek" ? "🌐" : "📝";
   const turAd = (bt) => bt === "tablo" ? t("belTablo", "Excel tablosu") : bt === "fatura" ? t("belFatura", "Fatura") : bt === "meslek" ? t("belMeslek", "Meslek sayfası") : t("belYazi", "Word belgesi");
 
@@ -261,6 +286,7 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-excel" onClick={() => excelIndirAoa(ad || "tablo", grid.map((row, r) => row.map((v, c) => { const d = _hesapHucre(grid, r, c, new Set()); return typeof d === "number" ? d : String(d); }))).then(() => bilgi(t("belExcelIndi", "Excel indirildi 📊"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📊 Excel</button>
         <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || "tablo").then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
+        <button className="muh-btn muh-yazdir-btn" onClick={() => yazdirElem(yazdirRef.current, ad || "tablo")}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
     </div>
   );
@@ -296,6 +322,7 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || "belge", htmlAl()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>
         <button className="muh-btn muh-pdf" onClick={() => elemPdf(icRef.current, ad || "belge").then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
+        <button className="muh-btn muh-yazdir-btn" onClick={() => yazdirElem(icRef.current, ad || "belge")}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
     </div>
   );
@@ -353,6 +380,7 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
       </div>
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-pdf" disabled={yuk} onClick={pdfYap}>📄 {t("belPdfYapPaylas", "PDF yap — indir / paylaş")}</button>
+        <button className="muh-btn muh-yazdir-btn" disabled={yuk} onClick={() => { if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; } yazdirElem(yazdirRef.current, baslik || "foto"); }}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
       {/* YAZDIRILACAK (ekran dışında) — Türkçe başlık + fotoğraflar tek PDF */}
       <div ref={yazdirRef} className="bel-fotopdf-yazdir" aria-hidden="true">
@@ -427,6 +455,7 @@ function FaturaEditor({ t, belge, onKapat, onKaydet, bilgi, paraSym, benAd }) {
         <button className="muh-btn muh-excel" onClick={() => excelIndirAoa(ad || no, aoa()).then(() => bilgi(t("belExcelIndi", "Excel indirildi 📊"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📊 Excel</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || no, faturaHtml()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>
         <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || no).then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
+        <button className="muh-btn muh-yazdir-btn" onClick={() => yazdirElem(yazdirRef.current, ad || no)}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
 
       {/* YAZDIRILACAK FATURA (PDF/Word bundan alınır) */}
@@ -578,6 +607,7 @@ function MeslekSayfa({ t, belge, onKapat, onKaydet, bilgi, onGloxordaPaylas }) {
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={() => onKaydet(veri())}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-pdf" disabled={yuk} onClick={pdf}>📄 PDF</button>
+        <button className="muh-btn muh-yazdir-btn" disabled={yuk} onClick={() => yazdirElem(kartRef.current, ad || firma || "meslek-sayfam")}>🖨️ {t("belYazdir", "Yazdır")}</button>
         <button className="muh-btn muh-paylas" disabled={yuk} onClick={paylas}>↗ {t("belPaylas", "Paylaş")}</button>
         {onGloxordaPaylas ? <button className="muh-btn bel-gloxorda" disabled={yuk} onClick={gloxorda}>🌐 {t("belGloxorda", "GLOXORG'da paylaş")}</button> : null}
       </div>

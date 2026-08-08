@@ -11,6 +11,21 @@ const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padSta
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g && a && y ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
 const sayi = (n) => Number(String(n).replace(",", ".")) || 0;
 const para = (n, sym) => (Number(n) || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + (sym || "₺");
+// YAZDIR (printer): gizli iframe içinde tarayıcının yazdır ekranını açar → gerçek yazıcı ya da "PDF kaydet". Türkçe doğru çıkar.
+function yazdirElem(el, baslik) {
+  if (!el) return;
+  try {
+    const ifr = document.createElement("iframe");
+    ifr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;";
+    document.body.appendChild(ifr);
+    const d = ifr.contentWindow.document;
+    d.open();
+    d.write("<!doctype html><html><head><meta charset='utf-8'><title>" + (baslik || "GLOXORG") + "</title><style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;margin:0;padding:16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:6px 9px;font-size:13px}h2,h3{color:#7a5a00;margin:0 0 6px}.say{text-align:right}@page{margin:12mm}</style></head><body>" + el.innerHTML + "</body></html>");
+    d.close();
+    const go = () => { try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch (e) {} setTimeout(() => { try { document.body.removeChild(ifr); } catch (e) {} }, 60000); };
+    if (d.readyState === "complete") setTimeout(go, 400); else ifr.onload = () => setTimeout(go, 400);
+  } catch (e) {}
+}
 const mik = (n, birim) => (Number(n) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 3 }) + (birim ? " " + birim : "");
 
 export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", onKatman, onGloxordaPaylas }) {
@@ -23,6 +38,7 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
   const [form, setForm] = useState(null); // açık form: {tur:...}
   const [mesaj, setMesaj] = useState(""); const [islemYok, setIslemYok] = useState(false);
   const yazdirRef = useRef(null); const [yazdirData, setYazdirData] = useState(null);
+  const [belgeDerin, setBelgeDerin] = useState(false); const belgeGeriRef = useRef(null); // Belgeler içinde editör/şablon açık mı (geri tuşu için)
 
   useEffect(() => {
     if (!uid) { setKayitlar([]); return; }
@@ -37,12 +53,19 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
     kayitlar.forEach((k) => { if (k.silindi && k.silinmeMs && k.silinmeMs < sinir) { muhasebeKaliciSil(uid, k.id); } });
   }, [kayitlar, uid]);
 
-  // Geri tuşu: detay açıksa → listeye dön; değilse → sayfayı kapat (ana sayfa)
+  // Geri tuşu (Android): AÇIK PENCEREYİ kapat, MUHASEBEDE KAL. Sıra: ⋮ menü → form → belge editörü → cari/stok detay → sayfayı kapat.
+  // Belgeler içindeki editör/şablon pencereleri de dahil (o pencereler açıkken geri → editörü kapat, Muhasebe'de kal — ana sayfaya ATMAZ).
   useEffect(() => {
     if (!onKatman) return;
-    const geri = () => { if (menuId) setMenuId(null); else if (form) setForm(null); else if (seciliId) setSeciliId(null); else if (onKapat) onKapat(); };
-    onKatman((menuId || form || seciliId) ? 2 : 1, geri);
-  }, [seciliId, form, menuId]); // eslint-disable-line react-hooks/exhaustive-deps
+    const geri = () => {
+      if (menuId) setMenuId(null);
+      else if (form) setForm(null);
+      else if (belgeDerin && belgeGeriRef.current) { try { belgeGeriRef.current(); } catch (e) {} }
+      else if (seciliId) setSeciliId(null);
+      else if (onKapat) onKapat();
+    };
+    onKatman((menuId || form || seciliId || belgeDerin) ? 2 : 1, geri);
+  }, [seciliId, form, menuId, belgeDerin]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (onKatman) onKatman(0, null); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bilgi = (m) => { setMesaj(m); setTimeout(() => setMesaj(""), 2600); };
@@ -104,6 +127,13 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
     } catch (e) { bilgi(t("muhOlmadi", "Olmadı, tekrar dener misin?")); }
     setYazdirData(null); setIslemYok(false);
   }
+  // YAZDIR: cari hesap raporunu tarayıcının yazdır ekranına ver (gerçek yazıcı ya da PDF kaydet)
+  async function yazdirMuh(data) {
+    setYazdirData(data); setIslemYok(true);
+    await new Promise((r) => setTimeout(r, 90)); // yazdır alanı render olsun
+    try { if (yazdirRef.current) yazdirElem(yazdirRef.current, data.baslik || "muhasebe"); } catch (e) {}
+    setTimeout(() => { setYazdirData(null); setIslemYok(false); }, 600);
+  }
 
   // ⋮ MENÜ bileşeni (Sil)
   const UcNokta = ({ id }) => (
@@ -150,7 +180,8 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
             {/* ============ BELGELER (Excel/Word/Fatura oluştur) ============ */}
             {sekme === "belge" && (
               <Belgeler t={t} uid={uid} belgeler={belgeler} paraSym={paraSym} benAd={benAd} bilgi={bilgi}
-                ekle={ekle} guncelle={(id, v) => muhasebeGuncelle(uid, id, v)} copeAt={copeAt} UcNokta={UcNokta} onGloxordaPaylas={onGloxordaPaylas} />
+                ekle={ekle} guncelle={(id, v) => muhasebeGuncelle(uid, id, v)} copeAt={copeAt} UcNokta={UcNokta} onGloxordaPaylas={onGloxordaPaylas}
+                onBelgeKatman={(acikMi, kapatFn) => { belgeGeriRef.current = kapatFn || null; setBelgeDerin(!!acikMi); }} />
             )}
             {/* ============ MÜŞTERİLER (CARİ) ============ */}
             {sekme === "cari" && !seciliCari && (<>
@@ -201,6 +232,7 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
                     kayit.map((i) => [trTarih(i.tarih), i.aciklama || "", (i.islemTuru === "tahsilat" ? "" : sayi(i.tutar)), (i.islemTuru === "tahsilat" ? sayi(i.tutar) : "")]),
                     [["", t("muhKalan", "Kalan"), "", bak]])}>📊 {t("muhExcel", "Excel")}</button>
                   <button className="muh-btn muh-pdf" disabled={islemYok} onClick={() => pdfYaz({ baslik: seciliCari.ad + " hesap", cari: seciliCari, satirlar: kayit, tBorc, tTah, bak })}>📄 {t("muhPdfPaylas", "PDF / Paylaş")}</button>
+                  <button className="muh-btn muh-yazdir-btn" disabled={islemYok} onClick={() => yazdirMuh({ baslik: seciliCari.ad + " hesap", cari: seciliCari, satirlar: kayit, tBorc, tTah, bak })}>🖨️ {t("belYazdir", "Yazdır")}</button>
                 </div>
               </>);
             })()}

@@ -5104,10 +5104,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .muh-k-tutar.borc{ color:#c0392b; } .muh-k-tutar.tahsilat{ color:#1f8b4c; }
 .muh-k-sil{ background:none; border:none; cursor:pointer; font-size:16px; padding:2px; }
 /* İndir/paylaş */
-.muh-indir-satir{ display:flex; gap:8px; margin-top:6px; }
+.muh-indir-satir{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+.muh-indir-satir .muh-btn{ flex:1 1 30%; min-width:96px; }
 .muh-excel{ flex:1; background:linear-gradient(90deg,#34c878,#0f9d54); color:#fff; }
 .muh-pdf{ flex:1; background:linear-gradient(90deg,#e0574a,#c0392b); color:#fff; }
 .muh-paylas{ flex:1; background:linear-gradient(90deg,#3f8aff,#1e5fd0); color:#fff; }
+.muh-yazdir-btn{ flex:1; background:linear-gradient(90deg,#7a6a52,#5a4a34); color:#fff; }
 .muh-musteri-sil{ width:100%; margin-top:14px; background:#fff2f0; color:#c0392b; border:1.5px solid #e0a79f; }
 .muh-toast{ position:fixed; left:50%; bottom:88px; transform:translateX(-50%); background:#3a2a05; color:#ffe9a8; font-weight:800; font-size:14px; padding:10px 16px; border-radius:14px; z-index:100090; box-shadow:0 8px 24px rgba(0,0,0,.35); }
 @media (min-width:560px){ .muh-bas{ font-size:26px; } .muh-alt{ font-size:15.5px; } .muh-btn, .muh-inp{ font-size:16.5px; } .muh-m-ad{ font-size:17px; } }
