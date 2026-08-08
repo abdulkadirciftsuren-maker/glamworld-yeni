@@ -16,10 +16,12 @@ import { CEVIRI_EKSIK3 } from "./ceviriEksik3";
 import { CEVIRI_EKSIK4 } from "./ceviriEksik4";
 import { CEVIRI_EKSIK5 } from "./ceviriEksik5";
 import { CEVIRI_EKSIK6 } from "./ceviriEksik6";
+import { CEVIRI_EKSIK7 } from "./ceviriEksik7";
 import { MESLEK_EK } from "./meslekCevirEk";
 import { MESLEK_EK2 } from "./meslekCevirEk2";
 import { MESLEK_EK3 } from "./meslekCevirEk3";
 import { MESLEK_EK4 } from "./meslekCevirEk4";
+import { MESLEK_EK5 } from "./meslekCevirEk5";
 import { CEVIRI_ELITEPAZAR } from "./ceviriElitePazar";
 import { CEVIRI_AKADEMI, CEVIRI_AKADEMI_KURULUS } from "./ceviriAkademi";
 import { CEVIRI_HARITA_CANLI, NAV_MAKARA, SBP_SOR, AK_BUYUT } from "./ceviriHaritaCanli";
@@ -2427,7 +2429,7 @@ const resources = {
 };
 
 // Ayarlar + Konum/Harita anahtarlarını 13 dile ekle (Anasayfa.js'teki t() satır-içi Türkçe yedekleri yerine gerçek çeviri)
-[AYAR_CEVIRI, AYAR_CEVIRI2, AYAR_CEVIRI3, AYAR_CEVIRI4, AYAR_CEVIRI5, AYAR_CEVIRI6, AYAR_CEVIRI7, CEVIRI_EKSIK, CEVIRI_EKSIK2, CEVIRI_EKSIK3, CEVIRI_EKSIK4, CEVIRI_EKSIK5, CEVIRI_EKSIK6].forEach((paket) => {
+[AYAR_CEVIRI, AYAR_CEVIRI2, AYAR_CEVIRI3, AYAR_CEVIRI4, AYAR_CEVIRI5, AYAR_CEVIRI6, AYAR_CEVIRI7, CEVIRI_EKSIK, CEVIRI_EKSIK2, CEVIRI_EKSIK3, CEVIRI_EKSIK4, CEVIRI_EKSIK5, CEVIRI_EKSIK6, CEVIRI_EKSIK7].forEach((paket) => {
   Object.keys(paket).forEach((lng) => {
     if (!resources[lng]) resources[lng] = { translation: {} };
     Object.assign(resources[lng].translation, paket[lng]);
@@ -2800,7 +2802,7 @@ const meslekJa = {
 // Japonca adları meslekCevir'e işle (varsa ja alanını ekler)
 for (const _k in meslekJa) { if (meslekCevir[_k]) meslekCevir[_k].ja = meslekJa[_k]; }
 // Eksik meslek adlarının 12 dile çevirisi (meslekCevirEk.js) — meslekCevir'e ekle (B119)
-Object.assign(meslekCevir, MESLEK_EK, MESLEK_EK2, MESLEK_EK3, MESLEK_EK4);
+Object.assign(meslekCevir, MESLEK_EK, MESLEK_EK2, MESLEK_EK3, MESLEK_EK4, MESLEK_EK5);
 
 // Meslek adı çevirisi: o dilde varsa onu, yoksa Türkçe adı döndürür.
 export function mc(ad, lng) {

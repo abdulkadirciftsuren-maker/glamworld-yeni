@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { gloxooResimUret } from "./firebase";
+import { AYNA_CEV } from "./ceviriAyna"; // saç modeli/renk/kıyafet çiplerini kullanıcının diline çevir (değer Türkçe kalır, sadece görünüm çevrilir)
 
 // KİM İÇİN — bayan/erkek/kız/erkek çocuk/bebek (saç kesimi + kıyafet önerileri buna göre değişir)
 const KISILER = [
@@ -89,7 +90,9 @@ function Buyut({ url, onKapat }) {
 }
 
 export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Çip yazısını kullanıcının diline çevir; değer (state) Türkçe kalır ki yapay zekâ istemi bozulmasın.
+  const ac = (etiket) => { const d = (i18n && i18n.language ? String(i18n.language).slice(0, 2) : "tr"); return (AYNA_CEV[etiket] && AYNA_CEV[etiket][d]) || etiket; };
   const [buyuk, setBuyuk] = useState(""); // tam ekran açılan sonuç fotoğrafı
   const [foto, setFoto] = useState("");            // kullanıcı fotoğrafı (dataURL)
   const [fotoMime, setFotoMime] = useState("image/jpeg");
@@ -276,7 +279,7 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
               {/* 3) MODEL — öneri çipleri + yaz */}
               <div className="sa-oneri">
                 {oneri.map((o) => (
-                  <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{o}</button>
+                  <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{ac(o)}</button>
                 ))}
               </div>
               <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
@@ -288,7 +291,7 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
                   <div className="sa-kim-bas" style={{ marginTop: 12 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")}</div>
                   <div className="sa-oneri">
                     {renkler.map((r) => (
-                      <button key={r} className={"sa-cip sa-renk-cip" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)}>{r}</button>
+                      <button key={r} className={"sa-cip sa-renk-cip" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)}>{ac(r)}</button>
                     ))}
                   </div>
                 </>
