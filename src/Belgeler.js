@@ -247,7 +247,36 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <button onClick={toplamSatir}>∑ {t("belToplam", "Toplam")}</button>
         <button className={genMod ? "bel-arac-aktif" : ""} onClick={() => setGenMod((a) => !a)}>⇔ {t("belBoyut", "Boyut / Dikey")}</button>
       </div>
-      {genMod && <div className="bel-formul-ipucu">{t("belBoyutIpucu", "Sütun başlığındaki － ＋ ile GENİŞLİK, sol rakamdaki － ＋ ile YÜKSEKLİK ayarlanır. ⇅ düğmesi o sütunu DİKEY yazıya çevirir (aşağıdan yukarı) — dar sütuna başlık sığsın diye. A4'e sığması için sütunları inceltebilirsin.")}</div>}
+      {genMod && (
+        <div className="bel-boyut-panel">
+          <div className="bel-boyut-satir">
+            <span className="bel-boyut-et">↔ {t("belSutun", "Sütun")}</span>
+            <div className="bel-boyut-kaydir">
+              {Array.from({ length: sutunSay }, (_, c) => (
+                <span key={c} className="bel-boyut-oge">
+                  <b>{_colHarf(c)}</b>
+                  <button onClick={() => genDegis(c, -14)}>－</button>
+                  <button onClick={() => genDegis(c, 14)}>＋</button>
+                  <button className={"bel-dikey-btn" + (dikey[c] ? " sec" : "")} onClick={() => dikeyDegis(c)} title={t("belDikeyYazi", "Dikey yazı")}>⇅</button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="bel-boyut-satir">
+            <span className="bel-boyut-et">↕ {t("belSatir", "Satır")}</span>
+            <div className="bel-boyut-kaydir">
+              {grid.map((_, r) => (
+                <span key={r} className="bel-boyut-oge">
+                  <b>{r + 1}</b>
+                  <button onClick={() => satirDegis(r, -8)}>－</button>
+                  <button onClick={() => satirDegis(r, 8)}>＋</button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="bel-formul-ipucu">{t("belBoyutIpucu", "Sütun başlığındaki － ＋ ile GENİŞLİK, sol rakamdaki － ＋ ile YÜKSEKLİK ayarlanır. ⇅ düğmesi o sütunu DİKEY yazıya çevirir (aşağıdan yukarı). A4'e sığsın diye sütunları inceltebilirsin.")}</div>
+        </div>
+      )}
       {mod === "hesap" ? (
         <div className="bel-hesap-bar">
           <div className="bel-op-satir">{oplar.map(([o, et]) => (
@@ -264,30 +293,31 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
         <div className="bel-formul-ipucu">{t("belYaziIpucu", "✍️ Hücrelere yazı ya da rakam yaz. Hesap yapmak için üstten 🔢 Düğmeyle hesapla'ya geç. (İstersen elle formül de yazabilirsin: =A1+B1) Üstteki harfe dokun → sırala.")}</div>
       )}
       <div className="bel-tablo-sar">
-        <table className="bel-tablo">
+        <table className="bel-tablo bel-tablo-sabit" style={{ width: 40 + gen.reduce((s, x) => s + (x || 96), 0) }}>
+          <colgroup>
+            <col style={{ width: 40 }} />
+            {gen.map((w, c) => <col key={c} style={{ width: w }} />)}
+          </colgroup>
           <tbody>
             <tr>
               <td className="bel-th bel-kose"></td>
               {Array.from({ length: sutunSay }, (_, c) => (
-                <td key={c} className="bel-th bel-colbas" style={{ width: gen[c], minWidth: gen[c] }}>
-                  {genMod ? (<span className="bel-gen-ayar"><button onClick={() => genDegis(c, -14)}>－</button><b>{_colHarf(c)}</b><button onClick={() => genDegis(c, 14)}>＋</button><button className={"bel-dikey-btn" + (dikey[c] ? " sec" : "")} onClick={() => dikeyDegis(c)} title={t("belDikeyYazi", "Dikey yazı")}>⇅</button></span>)
-                    : (<span onClick={() => mod !== "hesap" && sirala(c)}>{_colHarf(c)}{sira && sira.c === c ? (sira.yon === "art" ? " ▲" : " ▼") : ""}</span>)}
+                <td key={c} className="bel-th bel-colbas">
+                  <span onClick={() => mod !== "hesap" && !genMod && sirala(c)}>{_colHarf(c)}{sira && sira.c === c ? (sira.yon === "art" ? " ▲" : " ▼") : ""}</span>
                 </td>
               ))}
             </tr>
             {grid.map((row, r) => (
               <tr key={r} style={{ height: satirYuk[r] }}>
-                <td className="bel-th bel-rowbas" style={{ height: satirYuk[r] }}>
-                  {genMod ? (<span className="bel-gen-ayar bel-satyuk"><button onClick={() => satirDegis(r, -8)}>－</button><b>{r + 1}</b><button onClick={() => satirDegis(r, 8)}>＋</button></span>) : (r + 1)}
-                </td>
+                <td className="bel-th bel-rowbas" style={{ height: satirYuk[r] }}>{r + 1}</td>
                 {row.map((v, c) => {
                   const odakli = odak && odak.r === r && odak.c === c;
                   const formul = String(v || "").trim().startsWith("=");
                   const sec = mod === "hesap" && secili.includes(r + "," + c);
                   const dik = dikey[c] && !odakli; // düzenlerken yatay göster (yazması kolay), düzenlemiyorken dikey göster
                   return (
-                    <td key={c} style={{ width: gen[c], minWidth: gen[c], height: satirYuk[r] }}
-                      className={(formul ? "bel-hucre-formul" : "") + (sec ? " bel-hucre-secili" : "")}
+                    <td key={c} style={{ height: satirYuk[r] }}
+                      className={"bel-veri-hucre" + (formul ? " bel-hucre-formul" : "") + (sec ? " bel-hucre-secili" : "")}
                       onClick={mod === "hesap" ? () => hucreTikla(r, c) : undefined}>
                       <input className={"bel-hucre" + (dik ? " bel-hucre-dikey" : "")} readOnly={mod === "hesap"}
                         style={dik ? { writingMode: "vertical-rl", transform: "rotate(180deg)" } : undefined}
@@ -301,8 +331,9 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
           </tbody>
         </table>
       </div>
-      <table className="bel-tablo bel-yazdir-tablo" ref={yazdirRef} aria-hidden="true">
-        <tbody>{grid.map((row, r) => (<tr key={r} style={{ height: satirYuk[r] }}>{row.map((v, c) => <td key={c} style={{ width: gen[c], ...(dikey[c] ? { writingMode: "vertical-rl", transform: "rotate(180deg)", whiteSpace: "nowrap" } : {}) }}>{_goster(grid, r, c)}</td>)}</tr>))}</tbody>
+      <table className="bel-tablo bel-yazdir-tablo bel-tablo-sabit" ref={yazdirRef} aria-hidden="true" style={{ width: gen.reduce((s, x) => s + (x || 96), 0) }}>
+        <colgroup>{gen.map((w, c) => <col key={c} style={{ width: w }} />)}</colgroup>
+        <tbody>{grid.map((row, r) => (<tr key={r} style={{ height: satirYuk[r] }}>{row.map((v, c) => <td key={c} style={{ height: satirYuk[r], ...(dikey[c] ? { writingMode: "vertical-rl", transform: "rotate(180deg)", whiteSpace: "nowrap" } : {}) }}>{_goster(grid, r, c)}</td>)}</tr>))}</tbody>
       </table>
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>

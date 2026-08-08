@@ -5209,7 +5209,18 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 /* Excel tablo grid */
 .bel-tablo-sar{ overflow:auto; border:1.6px solid rgba(160,120,0,.5); border-radius:12px; background:#fff; max-height:56vh; }
 .bel-tablo{ border-collapse:collapse; width:100%; }
+.bel-tablo-sabit{ table-layout:fixed; } /* sütun genişlikleri BİREBİR uygulanır (auto layout ezmez) → sütunlar gerçekten incelir, A4'e sığar */
 .bel-tablo td{ border:1px solid #e0cf9a; padding:0; }
+.bel-veri-hucre{ overflow:hidden; } /* sütun inceyken içerik taşmasın (kırpılır) → dar sütun mümkün olsun */
+/* BOYUT PANELİ: sütun/satır +/- ve dikey düğmeleri TABLONUN DIŞINDA (tablo sütununu genişletmesin) */
+.bel-boyut-panel{ background:#fffbe9; border:1.4px solid rgba(160,120,0,.45); border-radius:12px; padding:8px; margin-bottom:8px; display:flex; flex-direction:column; gap:7px; }
+.bel-boyut-satir{ display:flex; align-items:center; gap:8px; }
+.bel-boyut-et{ font-weight:900; color:#7a5a00; font-size:13px; min-width:56px; }
+.bel-boyut-kaydir{ display:flex; gap:8px; overflow-x:auto; padding-bottom:3px; scrollbar-width:none; }
+.bel-boyut-kaydir::-webkit-scrollbar{ display:none; }
+.bel-boyut-oge{ display:inline-flex; align-items:center; gap:3px; background:#fff; border:1.3px solid rgba(184,134,11,.5); border-radius:9px; padding:3px 5px; flex:0 0 auto; }
+.bel-boyut-oge b{ color:#7a5a00; font-size:13px; min-width:16px; text-align:center; }
+.bel-boyut-oge button{ width:26px; height:26px; border-radius:7px; border:1.4px solid #a07800; background:#fff7db; color:#7a5a00; font-weight:900; font-size:15px; line-height:1; cursor:pointer; }
 .bel-th{ background:#f2e4b8; color:#7a5a00; font-weight:800; font-size:12px; text-align:center; min-width:26px; padding:0 4px !important; }
 .bel-hucre{ border:none; outline:none; padding:9px 6px; font-size:14px; color:#333; width:100%; min-width:0; background:transparent; font-family:inherit; box-sizing:border-box; }
 .bel-hucre:focus{ background:#fff7db; }
@@ -5223,7 +5234,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .bel-hucre-formul .bel-hucre{ color:#0f7a40; font-weight:800; background:#f2fbf5; }
 .bel-formul-ipucu{ font-size:12px; color:#6a4e10; font-weight:600; background:#fff7db; border:1px dashed rgba(184,134,11,.55); border-radius:10px; padding:8px 10px; line-height:1.45; }
 .bel-yazdir-tablo{ position:absolute; left:-99999px; top:0; width:720px; background:#fff; }
-.bel-yazdir-tablo td{ border:1px solid #999; padding:8px 10px; font-size:13px; color:#111; min-width:80px; }
+.bel-yazdir-tablo td{ border:1px solid #999; padding:6px 8px; font-size:13px; color:#111; min-width:0; overflow:hidden; word-break:break-word; }
 /* Yazı / Hesap mod seçici */
 .bel-mod-sec{ display:flex; gap:8px; }
 .bel-mod-btn{ flex:1; padding:11px; border-radius:12px; border:2px solid rgba(184,134,11,.5); background:#fff7db; color:#7a5a00; font-family:inherit; font-weight:900; font-size:14px; cursor:pointer; }
