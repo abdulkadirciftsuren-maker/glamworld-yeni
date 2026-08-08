@@ -5199,6 +5199,9 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .bel-gloxorda{ background:linear-gradient(90deg,#f2a900,#c98a1a); color:#4a3500; }
 .bel-editor{ display:flex; flex-direction:column; gap:10px; }
 .bel-ust{ display:flex; align-items:center; gap:8px; }
+/* Açılan pencerenin KENDİ kapatma ✕'i (pencereye yakın, belirgin) — bu SADECE pencereyi kapatır, Muhasebe açık kalır */
+.bel-kapat-x{ flex:0 0 auto; width:40px; height:40px; border-radius:11px; border:2px solid #e0a79f; background:#fff2f0; color:#c0392b; font-weight:900; font-size:18px; line-height:1; cursor:pointer; }
+.bel-kapat-x:active{ transform:scale(.95); }
 .bel-ad-inp{ flex:1; padding:10px 12px; border-radius:11px; border:1.6px solid rgba(160,120,0,.5); background:#fff; color:#4a3500; font-size:15.5px; font-weight:800; font-family:inherit; }
 .bel-arac{ display:flex; gap:6px; flex-wrap:wrap; }
 .bel-arac button{ background:#fff7db; border:1.4px solid rgba(184,134,11,.5); border-radius:9px; padding:8px 11px; font-family:inherit; font-weight:800; font-size:13.5px; color:#7a5a00; cursor:pointer; }
@@ -5212,7 +5215,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 /* ⛔ ESKİDEN .bel-tablo width:100% idi → table-layout:fixed ile birleşince sütunları EŞİT dağıtıp inceltmeyi engelliyordu. KALDIRILDI. */
 .bel-tablo-sabit{ table-layout:fixed; } /* sütun genişlikleri (colgroup) BİREBİR uygulanır → sütunlar tek tek gerçekten incelir, A4'e sığar */
 .bel-tablo td{ border:1px solid #e0cf9a; padding:0; }
-.bel-veri-hucre{ overflow:hidden; } /* sütun inceyken içerik taşmasın (kırpılır) → dar sütun mümkün olsun */
+.bel-veri-hucre{ overflow:hidden; vertical-align:top; } /* sütun inceyken içerik taşmasın (kırpılır); satır yüksekliği ezililmesin */
 /* BOYUT PANELİ: sütun/satır +/- ve dikey düğmeleri TABLONUN DIŞINDA (tablo sütununu genişletmesin) */
 .bel-boyut-panel{ background:#fffbe9; border:1.4px solid rgba(160,120,0,.45); border-radius:12px; padding:8px; margin-bottom:6px; display:flex; flex-direction:column; gap:6px; }
 .bel-boyut-kisaipucu{ font-size:11.5px; color:#7a5a00; font-weight:700; }
@@ -5224,9 +5227,9 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .bel-boyut-oge b{ color:#7a5a00; font-size:13px; min-width:16px; text-align:center; }
 .bel-boyut-oge button{ width:26px; height:26px; border-radius:7px; border:1.4px solid #a07800; background:#fff7db; color:#7a5a00; font-weight:900; font-size:15px; line-height:1; cursor:pointer; }
 .bel-th{ background:#f2e4b8; color:#7a5a00; font-weight:800; font-size:12px; text-align:center; min-width:26px; padding:0 4px !important; }
-.bel-hucre{ border:none; outline:none; padding:9px 6px; font-size:14px; color:#333; width:100%; min-width:0; background:transparent; font-family:inherit; box-sizing:border-box; }
+.bel-hucre{ border:none; outline:none; padding:6px 6px; font-size:14px; color:#333; width:100%; min-width:0; height:100%; background:transparent; font-family:inherit; box-sizing:border-box; }
 .bel-hucre:focus{ background:#fff7db; }
-.bel-hucre-dikey{ text-align:left; padding:6px 2px; }
+.bel-hucre-dikey{ text-align:left; padding:6px 2px; display:block; height:100%; overflow:hidden; white-space:nowrap; box-sizing:border-box; color:#333; font-size:14px; }
 .bel-dikey-btn{ width:24px; height:24px; border-radius:7px; border:1.4px solid #a07800; background:#fff; color:#7a5a00; font-weight:900; font-size:13px; line-height:1; cursor:pointer; margin-left:2px; }
 .bel-dikey-btn.sec{ background:linear-gradient(150deg,#FFD700,#f2a900); border-color:#c9962a; }
 .bel-satyuk{ flex-direction:row; }

@@ -232,7 +232,7 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
     <div className="bel-editor">
       <div className="bel-ust">
         <button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button>
-        <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belTabloAd", "Tablo adı")} />
+        <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belTabloAd", "Tablo adı")} /><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button>
       </div>
       {/* YAZI / HESAP bölümü AYRI (kullanıcı isteği) */}
       <div className="bel-mod-sec">
@@ -320,10 +320,15 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
                     <td key={c} style={{ height: satirYuk[r] }}
                       className={"bel-veri-hucre" + (formul ? " bel-hucre-formul" : "") + (sec ? " bel-hucre-secili" : "")}
                       onClick={mod === "hesap" ? () => hucreTikla(r, c) : undefined}>
-                      <input className={"bel-hucre" + (dik ? " bel-hucre-dikey" : "")} readOnly={mod === "hesap"}
-                        style={dik ? { writingMode: "vertical-rl", transform: "rotate(180deg)" } : undefined}
-                        value={(odakli && mod !== "hesap") ? v : _goster(grid, r, c)}
-                        onFocus={() => mod !== "hesap" && setOdak({ r, c })} onBlur={() => setOdak(null)} onChange={(e) => hucre(r, c, e.target.value)} />
+                      {dik ? (
+                        // DİKEY hücre: <input> DEĞİL <div> (input'un doğal boyutu satırı devasa yapıp yükseklik ayarını bozuyordu).
+                        // Dokununca düzenlemeye geçer (yatay input). Metin satır yüksekliğinden uzunsa kırpılır → satır küçültülebilir.
+                        <div className="bel-hucre bel-hucre-dikey" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }} onClick={() => mod !== "hesap" && setOdak({ r, c })}>{_goster(grid, r, c)}</div>
+                      ) : (
+                        <input className="bel-hucre" readOnly={mod === "hesap"}
+                          value={(odakli && mod !== "hesap") ? v : _goster(grid, r, c)}
+                          onFocus={() => mod !== "hesap" && setOdak({ r, c })} onBlur={() => setOdak(null)} onChange={(e) => hucre(r, c, e.target.value)} />
+                      )}
                     </td>
                   );
                 })}
@@ -368,7 +373,7 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
     <div className="bel-editor">
       <div className="bel-ust">
         <button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button>
-        <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belYaziAd", "Belge adı")} />
+        <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belYaziAd", "Belge adı")} /><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button>
       </div>
       <div className="bel-arac">
         <button onMouseDown={durdur} onClick={() => komut("bold")}><b>B</b></button>
@@ -433,7 +438,7 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
     <div className="bel-editor">
       <div className="bel-ust">
         <button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button>
-        <input className="bel-ad-inp" value={baslik} onChange={(e) => setBaslik(e.target.value)} placeholder={t("belFotoBaslik", "Başlık (isteğe bağlı)")} />
+        <input className="bel-ad-inp" value={baslik} onChange={(e) => setBaslik(e.target.value)} placeholder={t("belFotoBaslik", "Başlık (isteğe bağlı)")} /><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button>
       </div>
       <button className="muh-btn muh-ekle" onClick={() => inpRef.current && inpRef.current.click()}>📷 {t("belFotoEkle", "Fotoğraf ekle")}</button>
       <input ref={inpRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={dosyaSec} />
@@ -493,7 +498,7 @@ function FaturaEditor({ t, belge, onKapat, onKaydet, bilgi, paraSym, benAd }) {
     <div className="bel-editor">
       <div className="bel-ust">
         <button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button>
-        <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belFaturaAd", "Fatura adı")} />
+        <input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belFaturaAd", "Fatura adı")} /><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button>
       </div>
       <div className="muh-form">
         <input className="muh-inp" value={firma} onChange={(e) => setFirma(e.target.value)} placeholder={t("belSatici", "Satıcı (senin firman)")} />
@@ -659,7 +664,7 @@ const SABLONLAR = [
 function SablonSecici({ t, onKapat, onSec }) {
   return (
     <div className="bel-editor">
-      <div className="bel-ust"><button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button><span className="bel-baslik">🧑‍🔧 {t("belSablonSec", "Mesleğine göre hazır şablon seç")}</span></div>
+      <div className="bel-ust"><button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button><span className="bel-baslik">🧑‍🔧 {t("belSablonSec", "Mesleğine göre hazır şablon seç")}</span><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button></div>
       <div className="muh-alt">{t("belSablonAlt", "Mesleğini seç, hazır sayfa açılsın; içini kendine göre doldur, sonra Excel/Word/PDF indir.")}</div>
       {SABLONLAR.map((m) => (
         <div key={m.meslek} className="bel-sablon-grup">
@@ -706,7 +711,7 @@ function MeslekSayfa({ t, belge, onKapat, onKaydet, bilgi, onGloxordaPaylas }) {
   };
   return (
     <div className="bel-editor">
-      <div className="bel-ust"><button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button><input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belMeslekAd", "Sayfa adı")} /></div>
+      <div className="bel-ust"><button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button><input className="bel-ad-inp" value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("belMeslekAd", "Sayfa adı")} /><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button></div>
       <div className="muh-alt">{t("belMeslekAlt", "Mesleğine göre kendi tanıtım sayfanı yap: firma adı, ne iş yaptığın, hizmetler, telefon, adres, fotoğraf. Sonra PDF/foto indir, paylaş ya da GLOXORG'da yayınla.")}</div>
       <div className="muh-form">
         <input className="muh-inp" value={firma} onChange={(e) => setFirma(e.target.value)} placeholder={t("belFirma", "Firma / İşletme adı")} />
