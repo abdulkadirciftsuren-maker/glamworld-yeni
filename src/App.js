@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -75,11 +75,13 @@ function App() {
   });
   // Hesap TİPİ — profesyonel girince ana sayfa PROFESYONEL modda (kırmızı) açılır. Optimistik önbellek.
   const [tip, setTip] = useState(() => { try { return localStorage.getItem("gw_tip") || ""; } catch (e) { return ""; } });
+  const cikisTimerRef = useRef(null); // yenileme anındaki geçici "oturum yok" için bekleme zamanlayıcısı
   useEffect(() => onAuthStateChanged(auth, (u) => {
-    setKullanici(u);
     if (u) {
-      // Oturum doğrulandı → KENDİ bayrağımızı yaz (bir sonraki açılışta giriş kartı flaş etmesin).
-      try { localStorage.setItem("gw_oturum", "1"); } catch (e) {}
+      if (cikisTimerRef.current) { clearTimeout(cikisTimerRef.current); cikisTimerRef.current = null; }
+      setKullanici(u);
+      // Oturum doğrulandı → KENDİ bayrağımızı yaz (bir sonraki açılışta giriş kartı flaş etmesin). Çıkış bayrağını temizle.
+      try { localStorage.setItem("gw_oturum", "1"); localStorage.removeItem("gw_cikis"); } catch (e) {}
       // Sosyal giriş yükleme ekranını (#gw-yuk) gizle ve bayrağı temizle.
       try { sessionStorage.removeItem("gwYukMetin"); } catch (e) {}
       const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
@@ -98,9 +100,27 @@ function App() {
         })
         .catch(() => { setProfil("var"); }); // okuma hatasında kullanıcıyı KİLİTLEME
     } else {
-      setProfil("yok"); setTip("");
-      // Oturum YOK → kendi bayrağımızı da temizle (bir daha açılışta yükleniyor takılmasın, giriş kartı gelsin)
-      try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_uyelik"); localStorage.removeItem("gw_oturum"); } catch (e) {}
+      // Oturum "yok" geldi. Bu GERÇEK bir çıkış mı, yoksa YENİLEME anındaki geçici boşluk mu?
+      // Gerçek çıkış HER ZAMAN cikisYap/cikisYapVeGiris içinden geçer ve önce gw_cikis="1" yazar.
+      // gw_cikis yoksa AMA daha önce oturum vardıysa (gw_oturum ya da firebase authUser) → bu GEÇİCİ boşluktur:
+      // giriş kartını GÖSTERME, oturumun (birazdan) gelmesini bekle. Böylece her güncellemede kendiliğinden çıkış OLMAZ.
+      let cikisYapildi = false, oturumVardi = false;
+      try {
+        cikisYapildi = localStorage.getItem("gw_cikis") === "1";
+        oturumVardi = localStorage.getItem("gw_oturum") === "1";
+        if (!oturumVardi) { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf("firebase:authUser:") === 0) { oturumVardi = true; break; } } }
+      } catch (e) {}
+      const gercekCikis = () => {
+        setKullanici(null); setProfil("yok"); setTip("");
+        try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_uyelik"); localStorage.removeItem("gw_oturum"); localStorage.removeItem("gw_cikis"); } catch (e) {}
+      };
+      if (cikisYapildi || !oturumVardi) { gercekCikis(); } // kesin çıkış → giriş kartı
+      else {
+        // GEÇİCİ boşluk → giriş kartını gösterme, "yükleniyor" kal; oturum gelirse (üstteki u dalı) düzelir.
+        setKullanici("yukleniyor");
+        if (cikisTimerRef.current) clearTimeout(cikisTimerRef.current);
+        cikisTimerRef.current = setTimeout(() => { if (!auth.currentUser) gercekCikis(); }, 6000); // 6 sn hâlâ gelmezse gerçekten çıkış say
+      }
     }
   }), []);
 

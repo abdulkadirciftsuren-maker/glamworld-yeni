@@ -93,6 +93,8 @@ function MiniMaskot({ acik, hata }) {
 export default function Giris({ zorunluUye }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  // Giriş ekranı açılınca kalan Gloxoo sesini KES (SPA geçişinde Anasayfa'dan sarkan konuşma sussun).
+  useEffect(() => { try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {} }, []);
   const kokRef = useRef(null);
   const logoRef = useRef(null);
   // zorunluUye: Google ile gelip henüz kaydı OLMAYAN kullanıcı → doğrudan üye modunda açılır (tür seçer).
@@ -262,7 +264,7 @@ export default function Giris({ zorunluUye }) {
   // Kullanıcı: Hotmail ile girince boş hesap açılıyor, eski (Google) paylaşımlarıma dönemiyorum, kapana kısılıyorum.
   async function cikisYapVeGiris() {
     setYuk(true);
-    try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_profilVarZaman"); } catch (e) {}
+    try { localStorage.setItem("gw_cikis", "1"); localStorage.removeItem("gw_oturum"); localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_profilVarZaman"); } catch (e) {}
     try { await signOut(auth); } catch (e) {}
     setYuk(false); setMod("giris"); setAciklama(null); setBilgi("");
     // signOut → App onAuthStateChanged → kullanici null → "/" giriş kartını gösterir

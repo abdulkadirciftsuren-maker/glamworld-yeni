@@ -2,7 +2,7 @@
 // Bu dosya sitenin "beyni"dir: Üye Ol → veriler buraya kaydedilir,
 // Giriş Yap → buradan doğrulanır. Anahtar genel web kimliğidir (gizli şifre değil).
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
@@ -20,10 +20,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+// Oturum KALICI: tarayıcı kapanıp açılsa / sayfa yenilense / arka plandan dönülse bile site seni hatırlar.
+// getAuth ZATEN kalıcı (IndexedDB) oturumla başlar. ⛔ Eskiden buraya EK bir setPersistence(browserLocalPersistence)
+// konmuştu; bu async çağrı, sayfa YENİLENİRKEN (her güncelleme sonrası) oturumu bir an "yok" gösterip kullanıcıyı
+// giriş ekranına atıyordu (kendiliğinden çıkış). O çağrı KALDIRILDI → yenilemede oturum korunur, tekrar giriş istemez.
 export const auth = getAuth(app);
-// Oturum KALICI: tarayıcı kapanıp açılsa / sayfa yenilense / arka plandan dönülse bile
-// site seni hatırlar (yeniden giriş istemez, kartlara atmaz).
-setPersistence(auth, browserLocalPersistence).catch(() => {});
 export const db = getFirestore(app);
 // VİDEO/büyük dosya deposu (Firestore 1MB sınırına takılmadan video yüklenir)
 export const storage = getStorage(app);

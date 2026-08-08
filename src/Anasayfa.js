@@ -1717,7 +1717,9 @@ export default function Anasayfa({ pro = false }) {
     window.addEventListener("pagehide", durdur);
     window.addEventListener("beforeunload", durdur);
     document.addEventListener("visibilitychange", gizlenince);
-    return () => { window.removeEventListener("pagehide", durdur); window.removeEventListener("beforeunload", durdur); document.removeEventListener("visibilitychange", gizlenince); };
+    // ⛔ SPA GEÇİŞİ: giriş ekranına/başka rotaya geçince (tam yeniden yükleme DEĞİL) pagehide/beforeunload TETİKLENMEZ.
+    // Bu yüzden Anasayfa kaldırılırken (unmount) Gloxoo sesini BURADA da kes → "sayfa kapandı ama Gloxoo hâlâ konuşuyor" bitsin.
+    return () => { try { durdur(); } catch (e) {} window.removeEventListener("pagehide", durdur); window.removeEventListener("beforeunload", durdur); document.removeEventListener("visibilitychange", gizlenince); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // TTS KİLİT AÇMA (Chrome/Android): Tarayıcı, sesli okumayı yalnızca kullanıcı sayfaya DOKUNDUKTAN sonra serbest
   // bırakır; cevap kendiliğinden gelince (dokunmadan) okuma SESSİZ kalıp "speaking=true" TAKILIYOR (parlama sebebi).
@@ -6914,7 +6916,12 @@ export default function Anasayfa({ pro = false }) {
     try { r.readAsDataURL(f); } catch (er) { alert("Fotoğraf yüklenemedi, tekrar dene."); }
   }
 
-  async function cikisYap() { try { await signOut(auth); } catch (e) {} navigate("/", { replace: true }); }
+  async function cikisYap() {
+    // GERÇEK çıkış işareti: App bunu görür ve giriş kartını gösterir (yenileme anındaki geçici boşluktan ayırt eder).
+    try { localStorage.setItem("gw_cikis", "1"); localStorage.removeItem("gw_oturum"); } catch (e) {}
+    try { gloxSustur(); } catch (e) {} // çıkarken Gloxoo sesi sussun (giriş ekranında konuşmaya devam etmesin)
+    try { await signOut(auth); } catch (e) {} navigate("/", { replace: true });
+  }
 
   // --- Canlı dünya şeridi: saat artık <SeritSaat> içinde kendi tikiyle döner (ana sayfayı re-render ETMEZ → parlama yok), kur internetten ---
   const [kur, setKur] = useState(null);
