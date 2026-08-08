@@ -17,6 +17,7 @@ import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
+import { medyaYaz, medyaOku } from "./medyaDepo"; // Gloxoo sohbetindeki ağır görselleri (üretilen resim + foto) IndexedDB'de KALICI sakla (localStorage'a sığmıyordu → kaybolmasın)
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
@@ -2351,12 +2352,35 @@ export default function Anasayfa({ pro = false }) {
       }
       localStorage.removeItem("groxSohbet"); localStorage.removeItem("groxSiteSohbet"); localStorage.removeItem("gw_aiSahip"); localStorage.removeItem("groxArsivTum");
       // BU hesabın kendi geçmişini + arşivini yükle (takılı "resim hazırlanıyor" halini kapat → sonsuz dönme olmaz)
-      const arr = JSON.parse(localStorage.getItem("groxSohbet_" + kid) || "[]");
-      const site = JSON.parse(localStorage.getItem("groxSiteSohbet_" + kid) || "[]");
+      const arr0 = JSON.parse(localStorage.getItem("groxSohbet_" + kid) || "[]");
+      const site0 = JSON.parse(localStorage.getItem("groxSiteSohbet_" + kid) || "[]");
       const ars = JSON.parse(localStorage.getItem("groxArsivTum_" + kid) || "[]");
-      setYardimciMesajlar(Array.isArray(arr) ? arr.map((m) => (m && m.resimYuk && !m.resimData) ? { ...m, resimYuk: false, resimHata: m.resimHata || "__eski__" } : m) : []);
-      setSiteMesajlar(Array.isArray(site) ? site : []);
+      // Yarım kalan "resim hazırlanıyor" halini kapat (sonsuz dönme olmaz). resimRef'i olanlar ESKİ değildir → dokunma.
+      const eskiKapat = (m) => (m && m.resimYuk && !m.resimData && !m.resimRef) ? { ...m, resimYuk: false, resimHata: m.resimHata || "__eski__" } : m;
+      const arr = Array.isArray(arr0) ? arr0.map(eskiKapat) : [];
+      const site = Array.isArray(site0) ? site0.map(eskiKapat) : [];
+      setYardimciMesajlar(arr);
+      setSiteMesajlar(site);
       setArsivTum(Array.isArray(ars) ? ars : []);
+      // AĞIR görselleri (üretilen resim + foto) IndexedDB'den GERİ YÜKLE → metin zaten geldi, resimler birazdan dolar; hiçbir şey kaybolmaz.
+      (async () => {
+        try {
+          const refler = new Set();
+          [...arr, ...site].forEach((m) => { if (m && m.resimRef) refler.add(m.resimRef); if (m && m.foto && m.foto.ref) refler.add(m.foto.ref); });
+          if (!refler.size) return;
+          const harita = {};
+          await Promise.all([...refler].map(async (k) => { try { const d = await medyaOku(k); if (d) harita[k] = d; } catch (e) {} }));
+          if (!Object.keys(harita).length || aiUidRef.current !== kid) return;
+          const uygula = (m) => {
+            let mm = m;
+            if (m && m.resimRef && !m.resimData && harita[m.resimRef]) mm = { ...mm, resimData: harita[m.resimRef] };
+            if (m && m.foto && m.foto.ref && !m.foto.dataURL && harita[m.foto.ref]) mm = { ...mm, foto: { ...mm.foto, dataURL: harita[m.foto.ref] } };
+            return mm;
+          };
+          setYardimciMesajlar((prev) => prev.map(uygula));
+          setSiteMesajlar((prev) => prev.map(uygula));
+        } catch (e) {}
+      })();
     } catch (e) { setYardimciMesajlar([]); setSiteMesajlar([]); setArsivTum([]); }
     aiYuklendiRef.current = true;
   }, [u]);
@@ -7435,13 +7459,26 @@ export default function Anasayfa({ pro = false }) {
   // localStorage'a foto base64 YAZMA (quota şişmesin) — foto geçici, metin kalıcı
   // SOHBET KAYDET — kota dolsa bile metni KAYBETME: son 6 fotoğrafı tut (tıklayınca yüklenir), kota olursa fotosuz+daha az dene
   const aiSohbetKaydet = (anahtar, dizi) => {
-    const son = dizi.slice(-150); const n = son.length;
-    const ekHafif = (m) => { if (!m.ek) return m; const e = { tur: m.ek.tur, ad: m.ek.ad }; if (m.ek.url) e.url = m.ek.url; return { ...m, ek: e }; }; // ağır base64/dataURL KAYDETME; video URL'si (küçük) KALIR → yenilenince oynar
-    // Son K mesajın fotoğrafını (dataURL) tut, gerisini at. Kota zorlanırsa K'yı KADEMELİ düşür (6→3→1→0) → hepsini birden kaybetme.
-    const yap = (K) => son.map((m, i) => { let mm = ekHafif(m); if (mm.foto) { const tut = i >= n - K && mm.foto.dataURL; mm = { ...mm, foto: tut ? { dataURL: mm.foto.dataURL } : null }; } return mm; });
-    for (const K of [6, 3, 1, 0]) { try { localStorage.setItem(anahtar, JSON.stringify(yap(K))); return; } catch (e) {} }
-    // en kötü ihtimal: daha az mesaj + fotosuz
-    try { localStorage.setItem(anahtar, JSON.stringify(son.slice(-50).map((m) => { const mm = ekHafif(m); return mm.foto ? { ...mm, foto: null } : mm; }))); } catch (e) {}
+    const son = dizi.slice(-150);
+    const ekHafif = (m) => { if (!m.ek) return m; const e = { tur: m.ek.tur, ad: m.ek.ad }; if (m.ek.url) e.url = m.ek.url; return { ...m, ek: e }; }; // ağır base64/dataURL KAYDETME; video URL'si (küçük) KALIR
+    // ⛔ ESKİ SORUN: üretilen resimler/fotoğraflar base64 olarak ÇOK BÜYÜK → localStorage'a (~5MB) SIĞMIYOR; kayıt
+    //   başarısız olunca yenilemede KONUŞMALAR/FOTOĞRAFLAR KAYBOLUYORDU. ÇÖZÜM: ağır görselleri IndexedDB'ye (medyaDepo)
+    //   yaz, localStorage'da sadece küçük "anahtar" (resimRef/foto.ref) tut → metin/konuşma HER ZAMAN kalır, foto KAYBOLMAZ.
+    const hafif = son.map((m) => {
+      let mm = ekHafif(m);
+      if (mm.resimData && String(mm.resimData).length > 200) {
+        const k = "r_" + (mm.resimId || mm.zamanMs || "");
+        if (k !== "r_") { try { medyaYaz(k, mm.resimData); } catch (e) {} mm = { ...mm, resimData: "", resimRef: k }; }
+      }
+      if (mm.foto && mm.foto.dataURL && String(mm.foto.dataURL).length > 200) {
+        const k = "f_" + (mm.zamanMs || "");
+        if (k !== "f_") { try { medyaYaz(k, mm.foto.dataURL); } catch (e) {} mm = { ...mm, foto: { ref: k, mediaType: mm.foto.mediaType || "", dataURL: "" } }; }
+      }
+      return mm;
+    });
+    try { localStorage.setItem(anahtar, JSON.stringify(hafif)); return; } catch (e) {}
+    // Metin bile sığmazsa (çok nadir): daha az mesaj tut — ama konuşma metni KALSIN
+    try { localStorage.setItem(anahtar, JSON.stringify(hafif.slice(-80))); } catch (e) {}
   };
   // KAYIT hesaba (uid) göre → groxSohbet_<uid>. uid yoksa ya da geçmiş HENÜZ yüklenmediyse KAYDETME (boş [] ile üzerine yazıp silme).
   useEffect(() => { if (!aiUidRef.current || !aiYuklendiRef.current) return; aiSohbetKaydet("groxSohbet_" + aiUidRef.current, yardimciMesajlar); }, [yardimciMesajlar]); // eslint-disable-line react-hooks/exhaustive-deps
