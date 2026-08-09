@@ -3580,8 +3580,17 @@ export default function Anasayfa({ pro = false }) {
     aramaAbonelikRef.current.push(ab1, ab2);
   };
   const aramaKabulEt = async () => {
-    const g = gelenArama; if (!g) return;
-    if (!g.offer || !g.offer.sdp) { bilgiBalonu(t("aramaHazirlaniyor", "Arama hazırlanıyor, bir saniye…")); return; } // teklif yoksa kabul etme (yoksa hata → kapanır)
+    let g = gelenArama; if (!g) return;
+    // TEKLİF (offer) henüz gelmediyse aramayı DÜŞÜRME — arayanın teklifi birkaç saniyede gelir; KISA SÜRE BEKLE, sonra bağla.
+    if (!g.offer || !g.offer.sdp) {
+      bilgiBalonu(t("aramaBaglaniyor", "Arama bağlanıyor, bir saniye…"));
+      g = await new Promise((res) => {
+        let bitti = false; let ab = null;
+        ab = aramaDinle(g.id, (a) => { if (!bitti && a && a.offer && a.offer.sdp) { bitti = true; try { ab && ab(); } catch (e) {} res(a); } });
+        setTimeout(() => { if (!bitti) { bitti = true; try { ab && ab(); } catch (e) {} res(null); } }, 12000);
+      });
+      if (!g || !g.offer || !g.offer.sdp) { bilgiBalonu(t("aramaBaglanamadi", "Arama bağlanamadı, tekrar deneyin.")); return; }
+    }
     setGelenArama(null);
     aramaBildirimKapat(); // açtık → "seni aradılar" bildirimi ekranda kalmasın
     // ARAMA GÜNLÜĞÜ: BEN aramadım (gelen aramayı kabul ettim) → günlüğü ARAYAN yazar, ben yazmam (mükerrer olmasın)
@@ -9629,7 +9638,7 @@ export default function Anasayfa({ pro = false }) {
 
       <AramaHataSiniri anahtar={(aktifArama && aktifArama.id) || (gelenArama && gelenArama.id) || ""} onHata={() => { try { aramaTemizle(); zilDurdur(); } catch (e) {} setAktifArama(null); setAramaDurum(""); setGelenArama(null); }}>
       {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). SADECE teklif (offer) hazırken göster → kabul edince hata olmaz */}
-      {gelenArama && gelenArama.offer && gelenArama.offer.sdp && !aramaDurum && (
+      {gelenArama && !aramaDurum && (
         <div className="arama-fon arama-geliyor">
           <div className="arama-kisi">
             <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>

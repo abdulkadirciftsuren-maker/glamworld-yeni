@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Muzik kutuphanesi kategoriler (muzikKat_*/muzikHepsi/muzikKutup*); 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + arama baglanma (aramaBaglaniyor/aramaBaglanamadi); 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -193,7 +193,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "Bu kategoride henüz şarkı yok. Başka kategoriye bak ya da 'Benim müziğim' ile kendi şarkını yükle.",
   "muzikKutupEkleBtn": "Kütüphaneye şarkı ekle",
   "muzikKutupEklendi": "Şarkı kütüphaneye eklendi 🎵",
-  "muzikKutupIzin": "Eklenemedi. Firestore kuralını (gloxMuzik) yayınladın mı?"
+  "muzikKutupIzin": "Eklenemedi. Firestore kuralını (gloxMuzik) yayınladın mı?",
+  "aramaBaglaniyor": "Arama bağlanıyor, bir saniye…",
+  "aramaBaglanamadi": "Arama bağlanamadı, tekrar deneyin."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -388,7 +390,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "No songs in this category yet. Try another category or upload your own with 'My music'.",
   "muzikKutupEkleBtn": "Add song to library",
   "muzikKutupEklendi": "Song added to library 🎵",
-  "muzikKutupIzin": "Couldn't add. Did you publish the Firestore rule (gloxMuzik)?"
+  "muzikKutupIzin": "Couldn't add. Did you publish the Firestore rule (gloxMuzik)?",
+  "aramaBaglaniyor": "Connecting the call, one second…",
+  "aramaBaglanamadi": "Call couldn't connect, try again."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -583,7 +587,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "Noch keine Lieder in dieser Kategorie. Probiere eine andere Kategorie oder lade mit 'Meine Musik' dein eigenes hoch.",
   "muzikKutupEkleBtn": "Lied zur Bibliothek",
   "muzikKutupEklendi": "Lied zur Bibliothek hinzugefügt 🎵",
-  "muzikKutupIzin": "Konnte nicht hinzugefügt werden. Hast du die Firestore-Regel (gloxMuzik) veröffentlicht?"
+  "muzikKutupIzin": "Konnte nicht hinzugefügt werden. Hast du die Firestore-Regel (gloxMuzik) veröffentlicht?",
+  "aramaBaglaniyor": "Anruf wird verbunden, einen Moment…",
+  "aramaBaglanamadi": "Anruf konnte nicht verbunden werden, versuche es erneut."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -778,7 +784,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "В этой категории пока нет песен. Выберите другую категорию или загрузите свою через «Моя музыка».",
   "muzikKutupEkleBtn": "Добавить в библиотеку",
   "muzikKutupEklendi": "Песня добавлена в библиотеку 🎵",
-  "muzikKutupIzin": "Не удалось добавить. Вы опубликовали правило Firestore (gloxMuzik)?"
+  "muzikKutupIzin": "Не удалось добавить. Вы опубликовали правило Firestore (gloxMuzik)?",
+  "aramaBaglaniyor": "Соединяем звонок, секунду…",
+  "aramaBaglanamadi": "Не удалось соединить звонок, попробуйте снова."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -973,7 +981,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "У цій категорії ще немає пісень. Оберіть іншу категорію або завантажте свою через «Моя музика».",
   "muzikKutupEkleBtn": "Додати в бібліотеку",
   "muzikKutupEklendi": "Пісню додано в бібліотеку 🎵",
-  "muzikKutupIzin": "Не вдалося додати. Ви опублікували правило Firestore (gloxMuzik)?"
+  "muzikKutupIzin": "Не вдалося додати. Ви опублікували правило Firestore (gloxMuzik)?",
+  "aramaBaglaniyor": "З'єднуємо дзвінок, секунду…",
+  "aramaBaglanamadi": "Не вдалося з'єднати дзвінок, спробуйте ще раз."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -1168,7 +1178,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "Aún no hay canciones en esta categoría. Prueba otra categoría o sube la tuya con 'Mi música'.",
   "muzikKutupEkleBtn": "Añadir a la biblioteca",
   "muzikKutupEklendi": "Canción añadida a la biblioteca 🎵",
-  "muzikKutupIzin": "No se pudo añadir. ¿Publicaste la regla de Firestore (gloxMuzik)?"
+  "muzikKutupIzin": "No se pudo añadir. ¿Publicaste la regla de Firestore (gloxMuzik)?",
+  "aramaBaglaniyor": "Conectando la llamada, un segundo…",
+  "aramaBaglanamadi": "No se pudo conectar la llamada, inténtalo de nuevo."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1363,7 +1375,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "Pas encore de chansons dans cette catégorie. Essaie une autre catégorie ou téléverse la tienne avec 'Ma musique'.",
   "muzikKutupEkleBtn": "Ajouter à la bibliothèque",
   "muzikKutupEklendi": "Chanson ajoutée à la bibliothèque 🎵",
-  "muzikKutupIzin": "Ajout impossible. As-tu publié la règle Firestore (gloxMuzik) ?"
+  "muzikKutupIzin": "Ajout impossible. As-tu publié la règle Firestore (gloxMuzik) ?",
+  "aramaBaglaniyor": "Connexion de l'appel, une seconde…",
+  "aramaBaglanamadi": "L'appel n'a pas pu se connecter, réessaie."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1558,7 +1572,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "Ancora nessuna canzone in questa categoria. Prova un'altra categoria o carica la tua con 'La mia musica'.",
   "muzikKutupEkleBtn": "Aggiungi alla libreria",
   "muzikKutupEklendi": "Canzone aggiunta alla libreria 🎵",
-  "muzikKutupIzin": "Impossibile aggiungere. Hai pubblicato la regola Firestore (gloxMuzik)?"
+  "muzikKutupIzin": "Impossibile aggiungere. Hai pubblicato la regola Firestore (gloxMuzik)?",
+  "aramaBaglaniyor": "Collegamento chiamata, un secondo…",
+  "aramaBaglanamadi": "Impossibile collegare la chiamata, riprova."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1753,7 +1769,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "Ainda não há músicas nesta categoria. Tente outra categoria ou envie a sua com 'Minha música'.",
   "muzikKutupEkleBtn": "Adicionar à biblioteca",
   "muzikKutupEklendi": "Música adicionada à biblioteca 🎵",
-  "muzikKutupIzin": "Não foi possível adicionar. Você publicou a regra do Firestore (gloxMuzik)?"
+  "muzikKutupIzin": "Não foi possível adicionar. Você publicou a regra do Firestore (gloxMuzik)?",
+  "aramaBaglaniyor": "Conectando a chamada, um segundo…",
+  "aramaBaglanamadi": "Não foi possível conectar a chamada, tente novamente."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1948,7 +1966,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "لا توجد أغانٍ في هذه الفئة بعد. جرّب فئة أخرى أو ارفع أغنيتك عبر 'موسيقاي'.",
   "muzikKutupEkleBtn": "أضف أغنية للمكتبة",
   "muzikKutupEklendi": "تمت إضافة الأغنية إلى المكتبة 🎵",
-  "muzikKutupIzin": "تعذّرت الإضافة. هل نشرت قاعدة Firestore (gloxMuzik)؟"
+  "muzikKutupIzin": "تعذّرت الإضافة. هل نشرت قاعدة Firestore (gloxMuzik)؟",
+  "aramaBaglaniyor": "جارٍ توصيل المكالمة، لحظة…",
+  "aramaBaglanamadi": "تعذّر توصيل المكالمة، حاول مجددًا."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -2143,7 +2163,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "इस श्रेणी में अभी कोई गाना नहीं है। दूसरी श्रेणी देखें या 'मेरा संगीत' से अपना अपलोड करें।",
   "muzikKutupEkleBtn": "लाइब्रेरी में गाना जोड़ें",
   "muzikKutupEklendi": "गाना लाइब्रेरी में जोड़ा गया 🎵",
-  "muzikKutupIzin": "जोड़ा नहीं जा सका। क्या आपने Firestore नियम (gloxMuzik) प्रकाशित किया?"
+  "muzikKutupIzin": "जोड़ा नहीं जा सका। क्या आपने Firestore नियम (gloxMuzik) प्रकाशित किया?",
+  "aramaBaglaniyor": "कॉल कनेक्ट हो रही है, एक सेकंड…",
+  "aramaBaglanamadi": "कॉल कनेक्ट नहीं हो सकी, फिर कोशिश करें।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -2338,7 +2360,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "此类别暂无歌曲。试试其他类别，或用\"我的音乐\"上传你自己的。",
   "muzikKutupEkleBtn": "添加歌曲到音乐库",
   "muzikKutupEklendi": "歌曲已加入音乐库 🎵",
-  "muzikKutupIzin": "无法添加。你发布了 Firestore 规则（gloxMuzik）吗？"
+  "muzikKutupIzin": "无法添加。你发布了 Firestore 规则（gloxMuzik）吗？",
+  "aramaBaglaniyor": "正在接通通话，请稍候…",
+  "aramaBaglanamadi": "通话无法接通，请重试。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2533,6 +2557,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupBos2": "このカテゴリにはまだ曲がありません。他のカテゴリを見るか、「マイミュージック」で自分の曲をアップロードしてください。",
   "muzikKutupEkleBtn": "ライブラリに曲を追加",
   "muzikKutupEklendi": "曲をライブラリに追加しました 🎵",
-  "muzikKutupIzin": "追加できませんでした。Firestoreルール（gloxMuzik）を公開しましたか？"
+  "muzikKutupIzin": "追加できませんでした。Firestoreルール（gloxMuzik）を公開しましたか？",
+  "aramaBaglaniyor": "通話を接続中です、少々お待ちを…",
+  "aramaBaglanamadi": "通話を接続できませんでした。もう一度お試しください。"
  }
 };
