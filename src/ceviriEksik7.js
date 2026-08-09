@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) + Canli Manken (saManken*) anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) + Canli Manken (saManken*) + Sarki Tanima (sarki*) anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -150,7 +150,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Şu an canlı manken yapılamadı, tekrar dene.",
   "saDurdur": "Durdur",
   "saOynat": "Oynat",
-  "saMankenNot": "Aynı kişi ve kıyafet birçok açıdan gösteriliyor — dönen manken. Video kaydetmek istersen telefonun EKRAN KAYDI ile bu dönüşü çekebilirsin."
+  "saMankenNot": "Aynı kişi ve kıyafet birçok açıdan gösteriliyor — dönen manken. Video kaydetmek istersen telefonun EKRAN KAYDI ile bu dönüşü çekebilirsin.",
+  "sarkiDinleBtn": "Dinle — hangi şarkı çalıyor?",
+  "sarkiDur": "Dinlemeyi bitir",
+  "sarkiSoru": "Bu hangi şarkı / ne çalıyor?",
+  "sarkiDinleniyor": "🎧 Müziği dinliyorum… (bitirmek için tekrar bas)",
+  "sarkiDuyulmadi": "Ses alınamadı, tekrar dene",
+  "sarkiOlmadi": "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -302,7 +308,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Could not make a live model right now, try again.",
   "saDurdur": "Stop",
   "saOynat": "Play",
-  "saMankenNot": "The same person and outfit are shown from several angles — a rotating model. To save a video, use your phone's SCREEN RECORDER to capture this rotation."
+  "saMankenNot": "The same person and outfit are shown from several angles — a rotating model. To save a video, use your phone's SCREEN RECORDER to capture this rotation.",
+  "sarkiDinleBtn": "Listen — what song is playing?",
+  "sarkiDur": "Stop listening",
+  "sarkiSoru": "What song is this / what's playing?",
+  "sarkiDinleniyor": "🎧 Listening to the music… (tap again to finish)",
+  "sarkiDuyulmadi": "Couldn't get the audio, try again",
+  "sarkiOlmadi": "Couldn't recognize it right now. Turn the volume up a bit (hold it near the music) and try again."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -454,7 +466,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Lebendes Model konnte gerade nicht erstellt werden, versuche es erneut.",
   "saDurdur": "Stopp",
   "saOynat": "Abspielen",
-  "saMankenNot": "Dieselbe Person und dasselbe Outfit werden aus mehreren Winkeln gezeigt — ein sich drehendes Model. Nutze die BILDSCHIRMAUFNAHME deines Handys, um diese Drehung als Video zu speichern."
+  "saMankenNot": "Dieselbe Person und dasselbe Outfit werden aus mehreren Winkeln gezeigt — ein sich drehendes Model. Nutze die BILDSCHIRMAUFNAHME deines Handys, um diese Drehung als Video zu speichern.",
+  "sarkiDinleBtn": "Zuhören — welches Lied läuft?",
+  "sarkiDur": "Zuhören beenden",
+  "sarkiSoru": "Welches Lied ist das / was läuft?",
+  "sarkiDinleniyor": "🎧 Ich höre die Musik… (zum Beenden erneut tippen)",
+  "sarkiDuyulmadi": "Ton konnte nicht erfasst werden, versuche es erneut",
+  "sarkiOlmadi": "Konnte es gerade nicht erkennen. Dreh die Lautstärke etwas auf (nah an die Musik halten) und versuch es erneut."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -606,7 +624,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Сейчас не удалось создать живую модель, попробуйте снова.",
   "saDurdur": "Стоп",
   "saOynat": "Играть",
-  "saMankenNot": "Один и тот же человек и наряд показаны с нескольких ракурсов — вращающаяся модель. Чтобы сохранить видео, используйте ЗАПИСЬ ЭКРАНА телефона."
+  "saMankenNot": "Один и тот же человек и наряд показаны с нескольких ракурсов — вращающаяся модель. Чтобы сохранить видео, используйте ЗАПИСЬ ЭКРАНА телефона.",
+  "sarkiDinleBtn": "Слушать — какая песня играет?",
+  "sarkiDur": "Остановить прослушивание",
+  "sarkiSoru": "Что это за песня / что играет?",
+  "sarkiDinleniyor": "🎧 Слушаю музыку… (нажмите снова, чтобы закончить)",
+  "sarkiDuyulmadi": "Не удалось получить звук, попробуйте снова",
+  "sarkiOlmadi": "Сейчас не удалось распознать. Сделай погромче (поднеси к музыке) и попробуй снова."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -758,7 +782,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Зараз не вдалося створити живу модель, спробуйте ще раз.",
   "saDurdur": "Стоп",
   "saOynat": "Відтворити",
-  "saMankenNot": "Одна й та сама людина та вбрання показані з кількох ракурсів — модель, що обертається. Щоб зберегти відео, скористайтеся ЗАПИСОМ ЕКРАНА телефона."
+  "saMankenNot": "Одна й та сама людина та вбрання показані з кількох ракурсів — модель, що обертається. Щоб зберегти відео, скористайтеся ЗАПИСОМ ЕКРАНА телефона.",
+  "sarkiDinleBtn": "Слухати — яка пісня грає?",
+  "sarkiDur": "Зупинити прослуховування",
+  "sarkiSoru": "Що це за пісня / що грає?",
+  "sarkiDinleniyor": "🎧 Слухаю музику… (натисніть ще раз, щоб завершити)",
+  "sarkiDuyulmadi": "Не вдалося отримати звук, спробуйте ще раз",
+  "sarkiOlmadi": "Зараз не вдалося розпізнати. Зроби гучніше (піднеси до музики) і спробуй ще раз."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -910,7 +940,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "No se pudo crear el modelo en vivo ahora, inténtalo de nuevo.",
   "saDurdur": "Detener",
   "saOynat": "Reproducir",
-  "saMankenNot": "La misma persona y el mismo atuendo se muestran desde varios ángulos — un modelo que gira. Para guardar un video, usa la GRABACIÓN DE PANTALLA de tu teléfono."
+  "saMankenNot": "La misma persona y el mismo atuendo se muestran desde varios ángulos — un modelo que gira. Para guardar un video, usa la GRABACIÓN DE PANTALLA de tu teléfono.",
+  "sarkiDinleBtn": "Escuchar — ¿qué canción suena?",
+  "sarkiDur": "Dejar de escuchar",
+  "sarkiSoru": "¿Qué canción es esta / qué suena?",
+  "sarkiDinleniyor": "🎧 Escuchando la música… (toca de nuevo para terminar)",
+  "sarkiDuyulmadi": "No se pudo captar el audio, inténtalo de nuevo",
+  "sarkiOlmadi": "No pude reconocerla ahora. Sube un poco el volumen (acércalo a la música) e inténtalo de nuevo."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1062,7 +1098,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Impossible de créer un mannequin vivant pour le moment, réessayez.",
   "saDurdur": "Arrêter",
   "saOynat": "Lire",
-  "saMankenNot": "La même personne et la même tenue sont montrées sous plusieurs angles — un mannequin qui tourne. Pour enregistrer une vidéo, utilise l'ENREGISTREMENT D'ÉCRAN de ton téléphone."
+  "saMankenNot": "La même personne et la même tenue sont montrées sous plusieurs angles — un mannequin qui tourne. Pour enregistrer une vidéo, utilise l'ENREGISTREMENT D'ÉCRAN de ton téléphone.",
+  "sarkiDinleBtn": "Écouter — quelle chanson passe ?",
+  "sarkiDur": "Arrêter d'écouter",
+  "sarkiSoru": "Quelle est cette chanson / qu'est-ce qui passe ?",
+  "sarkiDinleniyor": "🎧 J'écoute la musique… (appuie à nouveau pour terminer)",
+  "sarkiDuyulmadi": "Impossible de capter le son, réessaie",
+  "sarkiOlmadi": "Je n'ai pas pu la reconnaître. Monte un peu le son (approche-le de la musique) et réessaie."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1214,7 +1256,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Impossibile creare la modella dal vivo ora, riprova.",
   "saDurdur": "Ferma",
   "saOynat": "Riproduci",
-  "saMankenNot": "La stessa persona e lo stesso abito sono mostrati da più angolazioni — una modella che ruota. Per salvare un video, usa la REGISTRAZIONE SCHERMO del telefono."
+  "saMankenNot": "La stessa persona e lo stesso abito sono mostrati da più angolazioni — una modella che ruota. Per salvare un video, usa la REGISTRAZIONE SCHERMO del telefono.",
+  "sarkiDinleBtn": "Ascolta — che canzone è?",
+  "sarkiDur": "Smetti di ascoltare",
+  "sarkiSoru": "Che canzone è / cosa sta suonando?",
+  "sarkiDinleniyor": "🎧 Sto ascoltando la musica… (tocca di nuovo per finire)",
+  "sarkiDuyulmadi": "Impossibile acquisire l'audio, riprova",
+  "sarkiOlmadi": "Non sono riuscito a riconoscerla ora. Alza un po' il volume (avvicinalo alla musica) e riprova."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1366,7 +1414,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "Não foi possível criar o modelo ao vivo agora, tente novamente.",
   "saDurdur": "Parar",
   "saOynat": "Reproduzir",
-  "saMankenNot": "A mesma pessoa e roupa são mostradas de vários ângulos — um modelo girando. Para salvar um vídeo, use a GRAVAÇÃO DE TELA do seu telefone."
+  "saMankenNot": "A mesma pessoa e roupa são mostradas de vários ângulos — um modelo girando. Para salvar um vídeo, use a GRAVAÇÃO DE TELA do seu telefone.",
+  "sarkiDinleBtn": "Ouvir — que música está tocando?",
+  "sarkiDur": "Parar de ouvir",
+  "sarkiSoru": "Que música é essa / o que está tocando?",
+  "sarkiDinleniyor": "🎧 Ouvindo a música… (toque de novo para terminar)",
+  "sarkiDuyulmadi": "Não foi possível captar o áudio, tente novamente",
+  "sarkiOlmadi": "Não consegui reconhecer agora. Aumente um pouco o volume (aproxime da música) e tente de novo."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1518,7 +1572,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "تعذّر إنشاء عارضة حية الآن، حاول مجددًا.",
   "saDurdur": "إيقاف",
   "saOynat": "تشغيل",
-  "saMankenNot": "يظهر الشخص نفسه والملابس نفسها من عدة زوايا — عارضة تدور. لحفظ فيديو، استخدم تسجيل الشاشة في هاتفك."
+  "saMankenNot": "يظهر الشخص نفسه والملابس نفسها من عدة زوايا — عارضة تدور. لحفظ فيديو، استخدم تسجيل الشاشة في هاتفك.",
+  "sarkiDinleBtn": "استمع — ما الأغنية التي تُشغَّل؟",
+  "sarkiDur": "إيقاف الاستماع",
+  "sarkiSoru": "ما هذه الأغنية / ما الذي يُشغَّل؟",
+  "sarkiDinleniyor": "🎧 أستمع إلى الموسيقى… (اضغط مرة أخرى للإنهاء)",
+  "sarkiDuyulmadi": "تعذّر التقاط الصوت، حاول مجددًا",
+  "sarkiOlmadi": "لم أتمكن من التعرف عليها الآن. ارفع الصوت قليلًا (قرّبه من الموسيقى) وحاول مجددًا."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1670,7 +1730,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "अभी लाइव मॉडल नहीं बन सका, फिर से कोशिश करें।",
   "saDurdur": "रोकें",
   "saOynat": "चलाएं",
-  "saMankenNot": "वही व्यक्ति और पोशाक कई कोणों से दिखाई जाती है — घूमता मॉडल। वीडियो सहेजने के लिए अपने फोन के स्क्रीन रिकॉर्डर का उपयोग करें।"
+  "saMankenNot": "वही व्यक्ति और पोशाक कई कोणों से दिखाई जाती है — घूमता मॉडल। वीडियो सहेजने के लिए अपने फोन के स्क्रीन रिकॉर्डर का उपयोग करें।",
+  "sarkiDinleBtn": "सुनें — कौन सा गाना बज रहा है?",
+  "sarkiDur": "सुनना बंद करें",
+  "sarkiSoru": "यह कौन सा गाना है / क्या बज रहा है?",
+  "sarkiDinleniyor": "🎧 संगीत सुन रहा हूँ… (समाप्त करने के लिए फिर से दबाएं)",
+  "sarkiDuyulmadi": "ऑडियो नहीं मिल सका, फिर कोशिश करें",
+  "sarkiOlmadi": "अभी पहचान नहीं सका। आवाज़ थोड़ी बढ़ाएं (संगीत के पास रखें) और फिर कोशिश करें।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1822,7 +1888,13 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "目前无法制作动态模特，请重试。",
   "saDurdur": "停止",
   "saOynat": "播放",
-  "saMankenNot": "同一个人和服装从多个角度展示——旋转的模特。若要保存视频，请使用手机的屏幕录制功能。"
+  "saMankenNot": "同一个人和服装从多个角度展示——旋转的模特。若要保存视频，请使用手机的屏幕录制功能。",
+  "sarkiDinleBtn": "听一听——正在播放什么歌？",
+  "sarkiDur": "停止聆听",
+  "sarkiSoru": "这是什么歌／在播放什么？",
+  "sarkiDinleniyor": "🎧 正在聆听音乐……（再次点击结束）",
+  "sarkiDuyulmadi": "未能获取声音，请重试",
+  "sarkiOlmadi": "现在无法识别。请把音量调大一点（靠近音乐）再试一次。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -1974,6 +2046,12 @@ export const CEVIRI_EKSIK7 = {
   "saMankenOlmadi": "今はライブモデルを作成できませんでした。もう一度お試しください。",
   "saDurdur": "停止",
   "saOynat": "再生",
-  "saMankenNot": "同じ人物と衣装を複数の角度から表示——回転するモデルです。動画として保存するには、スマホの画面録画をご利用ください。"
+  "saMankenNot": "同じ人物と衣装を複数の角度から表示——回転するモデルです。動画として保存するには、スマホの画面録画をご利用ください。",
+  "sarkiDinleBtn": "聴く — 今流れている曲は？",
+  "sarkiDur": "聴くのをやめる",
+  "sarkiSoru": "これは何の曲？何が流れている？",
+  "sarkiDinleniyor": "🎧 音楽を聴いています…（もう一度押すと終了）",
+  "sarkiDuyulmadi": "音声を取得できませんでした。もう一度お試しください",
+  "sarkiOlmadi": "今は認識できませんでした。音量を少し上げて（音楽に近づけて）もう一度お試しください。"
  }
 };

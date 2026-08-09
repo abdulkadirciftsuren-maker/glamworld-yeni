@@ -9,7 +9,7 @@ import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Googl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
-import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
+import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
 import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
@@ -1792,6 +1792,11 @@ export default function Anasayfa({ pro = false }) {
   const [yardimciBaglam, setYardimciBaglam] = useState(""); // site asistanı BAĞLAM: o an hangi pencere/konu açık (asistan nerede olduğunu bilsin)
   const [sesliMod, setSesliMod] = useState(true); // AI cevapları OTOMATİK sesli okunur (kullanıcı: yazdığını da konuşsun, ne dediğini duyayım); hoparlör düğmesinden kapatılır
   const [dinliyor, setDinliyor] = useState(false);  // mikrofon o an dinliyor mu
+  // ŞARKI TANIMA — Gloxoo çalan müziği dinleyip hangi şarkı olduğunu TAHMİN eder (Shazam gibi kesin değil)
+  const [sarkiDinliyor, setSarkiDinliyor] = useState(false); // şarkı için mikrofon kaydı sürüyor mu
+  const sarkiRecRef = useRef(null);   // şarkı kaydı için MediaRecorder
+  const sarkiParcaRef = useRef([]);   // ses parçaları
+  const sarkiZamanRef = useRef(null); // otomatik durdurma zamanlayıcısı
   const [canliSohbet, setCanliSohbet] = useState(false); // DÜĞMESİZ canlı sohbet: konuş-dinle döngüsü
   const canliSohbetRef = useRef(false);
   const bosSesRef = useRef(0); // üst üste kaç kez "konuştu ama yazıya çevrilemedi" (worker/ses modeli sorunu) — üst üste olunca kullanıcıyı uyar
@@ -5997,6 +6002,55 @@ export default function Anasayfa({ pro = false }) {
       mr.start();
       setDinliyor(true);
     } catch (e) { setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); }
+  };
+  // ŞARKI TANIMA — birkaç saniye çalan müziği dinle, Gloxoo'ya "hangi şarkı" diye sor, sonucu sohbete yaz + sesli söyle.
+  // Not: Shazam gibi kesin parmak-izi DEĞİL; Gloxoo (Google yapay zekâsı) tanıdığı şarkıyı bilir, bilmediğinde tahmin eder.
+  const sarkiDinle = async () => {
+    // İKİNCİ BASIŞ → kaydı hemen bitir, analiz başlasın
+    if (sarkiDinliyor && sarkiRecRef.current) { try { sarkiRecRef.current.stop(); } catch (e) {} return; }
+    if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
+    // Gloxoo konuşuyorsa / canlı dinliyorsa / dikte açıksa önce KAPAT (mikrofon çakışmasın)
+    try { gloxSustur(); } catch (e) {}
+    if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} await new Promise((r) => setTimeout(r, 200)); }
+    if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} }
+    try {
+      // Müzik için gürültü bastırma/otomatik kazanç KAPALI → müzik bozulmadan gelsin
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+      const mr = new MediaRecorder(stream);
+      sarkiRecRef.current = mr; sarkiParcaRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data && e.data.size) sarkiParcaRef.current.push(e.data); };
+      mr.onstop = async () => {
+        setSarkiDinliyor(false);
+        if (sarkiZamanRef.current) { try { clearTimeout(sarkiZamanRef.current); } catch (e) {} sarkiZamanRef.current = null; }
+        try { stream.getTracks().forEach((tr) => tr.stop()); } catch (e) {}
+        const blob = new Blob(sarkiParcaRef.current, { type: mr.mimeType || "audio/webm" });
+        sarkiRecRef.current = null;
+        if (!blob.size) { setKucukMesaj(t("sarkiDuyulmadi", "Ses alınamadı, tekrar dene")); return; }
+        const b64 = await new Promise((res) => { const fr = new FileReader(); fr.onloadend = () => res(((fr.result || "") + "").split(",")[1] || ""); fr.readAsDataURL(blob); });
+        if (!b64) { setKucukMesaj(t("sarkiDuyulmadi", "Ses alınamadı, tekrar dene")); return; }
+        const mime = (mr.mimeType || "audio/webm").split(";")[0];
+        // Panel kapalıysa aç (kullanıcı sonucu sohbette görsün); sohbet moduna geç
+        setYardimciMod("sohbet");
+        if (!yardimciAcik) setYardimciAcik(true);
+        setYardimciMesajlar((s) => [...s, { rol: "user", metin: "🎵 " + t("sarkiSoru", "Bu hangi şarkı / ne çalıyor?"), zamanMs: Date.now() }]);
+        setYardimciYukleniyor(true);
+        try {
+          const r = await gloxooSesTani(b64, mime);
+          setYardimciYukleniyor(false);
+          const cevap = (r && r.metin) ? r.metin : t("sarkiOlmadi", "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene.");
+          setYardimciMesajlar((s) => [...s, { rol: "ai", metin: cevap, zamanMs: Date.now() }]);
+          try { sesliOku(cevap); } catch (e) {}
+        } catch (e) {
+          setYardimciYukleniyor(false);
+          setYardimciMesajlar((s) => [...s, { rol: "ai", metin: t("sarkiOlmadi", "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene."), zamanMs: Date.now() }]);
+        }
+      };
+      mr.start();
+      setSarkiDinliyor(true);
+      setKucukMesaj(t("sarkiDinleniyor", "🎧 Müziği dinliyorum… (bitirmek için tekrar bas)"));
+      // ~9 sn sonra OTOMATİK dur (yeterli örnek toplanır)
+      sarkiZamanRef.current = setTimeout(() => { try { if (sarkiRecRef.current) sarkiRecRef.current.stop(); } catch (e) {} }, 9000);
+    } catch (e) { setSarkiDinliyor(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); }
   };
   // DÜĞMESİZ CANLI SOHBET — mikrofonu otomatik aç, KONUŞMA bitince (sessizlik) otomatik gönder, cevap ver, tekrar dinle
   // CANLI döngüde: AI sesli cevabı BİTENE kadar bekle, sonra tekrar dinle (onend'e güvenme — bazen tetiklenmiyordu → döngü ölüyordu)
@@ -10859,6 +10913,10 @@ export default function Anasayfa({ pro = false }) {
                   </button>
                 </div>
               )}
+              {/* 🎵 ŞARKI TANIMA — çalan müziği dinleyip hangi şarkı olduğunu Gloxoo tahmin eder (Shazam gibi) */}
+              <button className={"ai-sarki-btn" + (sarkiDinliyor ? " dinliyor" : "")} onClick={sarkiDinle} disabled={yardimciYukleniyor && !sarkiDinliyor}>
+                {sarkiDinliyor ? "⏹️ " + t("sarkiDur", "Dinlemeyi bitir") : "🎵 " + t("sarkiDinleBtn", "Dinle — hangi şarkı çalıyor?")}
+              </button>
               {/* ALT: yazı dikte MİKROFONU + yazı şeridi + GÖNDER (mikrofon şeridin YANINDA — sesi metne çevirir, sen düzenle/gönder) */}
               <div className="ai-yaz-satir">
                 <button className={"ai-ses ai-mik" + (dinliyor && !canliSohbet ? " dinliyor" : "")} onClick={sesleSor} aria-label={dinliyor && !canliSohbet ? t("durdur", "Durdur") : t("yaziDikte", "Sesle yaz (metne çevir)")}>

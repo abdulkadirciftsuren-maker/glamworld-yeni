@@ -225,6 +225,39 @@ export async function gloxooSesUret(metin, dil, sesAdi) {
   return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };
 }
 
+// ── GLOXOO ŞARKI TANIMA (dinle → hangi şarkı çalıyor) ──
+// Mikrofondan alınan kısa ses kaydını Google/Gemini'ye verir, çalan müziği/şarkıyı TAHMİN ettirir.
+// Not: Shazam gibi kesin PARMAK-İZİ değildir; yapay zekâ tanıdığı şarkıları bilir, bilmediğinde tahmin eder.
+// Resim/ses ile AYNI Google kurulumunu kullanır (ayrı hesap/anahtar gerekmez).
+async function _sesTaniDene(backend, base64Ses, mimeType) {
+  const ai = getAI(app, { backend });
+  const model = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+  const soru = "Bu bir ses kaydidir. Icinde CALAN MUZIGI/SARKIYI tanimaya calis. Cevabini SADECE Turkce ver, kisa ve net. Taniyabiliyorsan tam su bicimde yaz: Sarki: <ad> — Sanatci: <isim>. Altina TEK cumle ekle (turu/ruh hali). Emin degilsen en olasi tahmini soyle ve sonuna (kesin degil) yaz. Icinde muzik yoksa sadece 'Muzik duyamadim, sesi biraz acip tekrar dene.' yaz.";
+  const girisi = [{ inlineData: { data: base64Ses, mimeType: mimeType || "audio/webm" } }, { text: soru }];
+  const sonuc = await model.generateContent(girisi);
+  const resp = sonuc && sonuc.response;
+  let parcalar = [];
+  try { parcalar = (resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content && resp.candidates[0].content.parts) || []; } catch (e) {}
+  let metin = "";
+  for (const p of parcalar) { if (p && typeof p.text === "string") metin += p.text; }
+  if (!metin) { try { metin = resp.text(); } catch (e) {} }
+  if (metin && metin.trim()) return metin.trim();
+  throw new Error("cevap yok");
+}
+export async function gloxooSesTani(base64Ses, mimeType) {
+  if (!base64Ses) return { hata: "ses yok" };
+  const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
+  const hatalar = [];
+  for (const y of yollar) {
+    try {
+      let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
+      const m = await _sesTaniDene(bk, base64Ses, mimeType);
+      if (m) return { metin: m };
+    } catch (e) { hatalar.push(y.ad + ": " + _hataMetni(e)); }
+  }
+  return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };
+}
+
 // Basit sürüm (sessiz; girişte otomatik kayıt için) — sadece token döndürür.
 export async function fcmTokenAl(vapidKey) {
   try { const d = await fcmDurumAl(vapidKey); return d.token || ""; } catch (e) { return ""; }

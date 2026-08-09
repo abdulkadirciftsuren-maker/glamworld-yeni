@@ -3439,6 +3439,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-arac{ display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
 /* yazı şeridi: tek satır DİKEY ORTALI (placeholder ortada), yazdıkça büyür; kaydırma çubuğu DIŞARI taşmaz */
 .ai-yaz-satir{ display:flex; gap:8px; align-items:flex-end; }
+/* 🎵 ŞARKI TANIMA düğmesi — çalan müziği dinleyip Gloxoo hangi şarkı olduğunu söyler */
+.ai-sarki-btn{ width:100%; margin-bottom:8px; padding:12px; border-radius:13px; border:none; cursor:pointer; font-family:inherit; font-weight:900; font-size:15px; color:#4a3500; background:linear-gradient(90deg,#FFD86B,#F2B705); box-shadow:0 4px 13px rgba(150,110,0,.3); }
+.ai-sarki-btn:active{ transform:scale(.98); }
+.ai-sarki-btn:disabled{ opacity:.6; cursor:default; }
+.ai-sarki-btn.dinliyor{ background:linear-gradient(135deg,#ff5d6c,#c0303d); color:#fff; animation:dikteYan .85s ease-in-out infinite; }
+@media (min-width:560px){ .ai-sarki-btn{ font-size:17px; } }
 /* KONUŞMA KONTROL — Gloxoo konuşurken: Duraklat/Devam (mavi) + Sus (kırmızı) */
 .ai-konus-kontrol{ display:flex; gap:8px; justify-content:center; }
 .ai-kk-btn{ flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:7px; border:none; border-radius:14px; padding:10px 12px; font-family:'Cinzel',serif; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,.3); }
