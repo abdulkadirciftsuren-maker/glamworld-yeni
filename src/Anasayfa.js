@@ -10420,15 +10420,15 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {/* ALT KOLON — yazı/Çevir/Sor → oynatma çubuğu → ikonlar TEK DİKEY kolonda STACK (asla üst üste binmez) */}
             <div className="tf-dip">
-              {/* 🎵 GÖNDERİ MÜZİĞİ — foto açılınca çalar. GENİŞ ses şeridi YOK: solda SES İKONU (aç/kapa), yanında İNCE kayan şerit (şarkı adı yavaşça sola yürür, bitince arkadan tekrar gelir; geri-ileri değil, sürekli). */}
+              {/* 🎵 GÖNDERİ MÜZİĞİ — SAĞ ALT KÖŞEDE küçük: üstte ses ikonu (aç/kapa), altında ondan biraz geniş İNCE şerit (şarkı adı ufak ufak sürekli sola geçer). Fotoğrafı KAPLAMAZ. */}
               {p.muzik && p.muzik.url && !p.video && (
-                <div className="tf-muzik2" onClick={(e) => e.stopPropagation()}>
-                  <button className="tf-muzik2-ses" onClick={muzikAcKapa} aria-label={muzOyn ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
+                <div className="tf-muzik3" onClick={(e) => e.stopPropagation()}>
+                  <button className="tf-muzik3-ses" onClick={muzikAcKapa} aria-label={muzOyn ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
                     {muzOyn
                       ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
                       : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
                   </button>
-                  <div className="tf-muzik2-serit"><span className="tf-muzik2-ic notranslate" translate="no">🎵 {p.muzik.ad || "♪"}</span></div>
+                  <div className="tf-muzik3-serit" onClick={muzikAcKapa}><span className="tf-muzik3-ic notranslate" translate="no">🎵 {p.muzik.ad || "♪"}</span></div>
                   <audio ref={tfMuzikRef} src={p.muzik.url} loop autoPlay preload="auto" onPlay={() => setMuzOyn(true)} onPause={() => setMuzOyn(false)} />
                 </div>
               )}
