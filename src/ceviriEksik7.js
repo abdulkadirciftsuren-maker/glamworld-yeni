@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) + Canli Manken (saManken*) anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -144,7 +144,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Muhasebe & belge",
   "aitAynaBtn": "Sanal Ayna",
   "aitGloxBtn": "Gloxoo'ya sor",
-  "aitAlt": "Fotoğrafında saç/kıyafet dene, Gloxoo'ya her şeyi sor — anında, senin dilinde."
+  "aitAlt": "Fotoğrafında saç/kıyafet dene, Gloxoo'ya her şeyi sor — anında, senin dilinde.",
+  "saManken": "Canlı manken yap (döndür)",
+  "saMankenYap": "Canlı manken hazırlanıyor…",
+  "saMankenOlmadi": "Şu an canlı manken yapılamadı, tekrar dene.",
+  "saDurdur": "Durdur",
+  "saOynat": "Oynat",
+  "saMankenNot": "Aynı kişi ve kıyafet birçok açıdan gösteriliyor — dönen manken. Video kaydetmek istersen telefonun EKRAN KAYDI ile bu dönüşü çekebilirsin."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -290,7 +296,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Accounting & docs",
   "aitAynaBtn": "Virtual Mirror",
   "aitGloxBtn": "Ask Gloxoo",
-  "aitAlt": "Try hair/clothes on your photo, ask Gloxoo anything — instantly, in your language."
+  "aitAlt": "Try hair/clothes on your photo, ask Gloxoo anything — instantly, in your language.",
+  "saManken": "Make a live model (rotate)",
+  "saMankenYap": "Preparing live model…",
+  "saMankenOlmadi": "Could not make a live model right now, try again.",
+  "saDurdur": "Stop",
+  "saOynat": "Play",
+  "saMankenNot": "The same person and outfit are shown from several angles — a rotating model. To save a video, use your phone's SCREEN RECORDER to capture this rotation."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -436,7 +448,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Buchhaltung & Dokumente",
   "aitAynaBtn": "Virtueller Spiegel",
   "aitGloxBtn": "Frag Gloxoo",
-  "aitAlt": "Probiere Frisuren/Kleidung an deinem Foto, frag Gloxoo alles — sofort, in deiner Sprache."
+  "aitAlt": "Probiere Frisuren/Kleidung an deinem Foto, frag Gloxoo alles — sofort, in deiner Sprache.",
+  "saManken": "Lebendes Model erstellen (drehen)",
+  "saMankenYap": "Lebendes Model wird vorbereitet…",
+  "saMankenOlmadi": "Lebendes Model konnte gerade nicht erstellt werden, versuche es erneut.",
+  "saDurdur": "Stopp",
+  "saOynat": "Abspielen",
+  "saMankenNot": "Dieselbe Person und dasselbe Outfit werden aus mehreren Winkeln gezeigt — ein sich drehendes Model. Nutze die BILDSCHIRMAUFNAHME deines Handys, um diese Drehung als Video zu speichern."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -582,7 +600,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Учёт и документы",
   "aitAynaBtn": "Виртуальное зеркало",
   "aitGloxBtn": "Спроси Gloxoo",
-  "aitAlt": "Примеряй причёски/одежду на своём фото, спрашивай Gloxoo о чём угодно — мгновенно, на твоём языке."
+  "aitAlt": "Примеряй причёски/одежду на своём фото, спрашивай Gloxoo о чём угодно — мгновенно, на твоём языке.",
+  "saManken": "Живая модель (поворот)",
+  "saMankenYap": "Готовим живую модель…",
+  "saMankenOlmadi": "Сейчас не удалось создать живую модель, попробуйте снова.",
+  "saDurdur": "Стоп",
+  "saOynat": "Играть",
+  "saMankenNot": "Один и тот же человек и наряд показаны с нескольких ракурсов — вращающаяся модель. Чтобы сохранить видео, используйте ЗАПИСЬ ЭКРАНА телефона."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -728,7 +752,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Облік і документи",
   "aitAynaBtn": "Віртуальне дзеркало",
   "aitGloxBtn": "Запитай Gloxoo",
-  "aitAlt": "Приміряй зачіски/одяг на своєму фото, запитуй Gloxoo про будь-що — миттєво, твоєю мовою."
+  "aitAlt": "Приміряй зачіски/одяг на своєму фото, запитуй Gloxoo про будь-що — миттєво, твоєю мовою.",
+  "saManken": "Жива модель (обертання)",
+  "saMankenYap": "Готуємо живу модель…",
+  "saMankenOlmadi": "Зараз не вдалося створити живу модель, спробуйте ще раз.",
+  "saDurdur": "Стоп",
+  "saOynat": "Відтворити",
+  "saMankenNot": "Одна й та сама людина та вбрання показані з кількох ракурсів — модель, що обертається. Щоб зберегти відео, скористайтеся ЗАПИСОМ ЕКРАНА телефона."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -874,7 +904,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Contabilidad y documentos",
   "aitAynaBtn": "Espejo virtual",
   "aitGloxBtn": "Pregunta a Gloxoo",
-  "aitAlt": "Prueba peinados/ropa en tu foto y pregúntale a Gloxoo lo que sea — al instante, en tu idioma."
+  "aitAlt": "Prueba peinados/ropa en tu foto y pregúntale a Gloxoo lo que sea — al instante, en tu idioma.",
+  "saManken": "Crear modelo en vivo (girar)",
+  "saMankenYap": "Preparando modelo en vivo…",
+  "saMankenOlmadi": "No se pudo crear el modelo en vivo ahora, inténtalo de nuevo.",
+  "saDurdur": "Detener",
+  "saOynat": "Reproducir",
+  "saMankenNot": "La misma persona y el mismo atuendo se muestran desde varios ángulos — un modelo que gira. Para guardar un video, usa la GRABACIÓN DE PANTALLA de tu teléfono."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1020,7 +1056,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Comptabilité & documents",
   "aitAynaBtn": "Miroir virtuel",
   "aitGloxBtn": "Demande à Gloxoo",
-  "aitAlt": "Essaie coiffures/vêtements sur ta photo, demande tout à Gloxoo — instantanément, dans ta langue."
+  "aitAlt": "Essaie coiffures/vêtements sur ta photo, demande tout à Gloxoo — instantanément, dans ta langue.",
+  "saManken": "Créer un mannequin vivant (rotation)",
+  "saMankenYap": "Préparation du mannequin vivant…",
+  "saMankenOlmadi": "Impossible de créer un mannequin vivant pour le moment, réessayez.",
+  "saDurdur": "Arrêter",
+  "saOynat": "Lire",
+  "saMankenNot": "La même personne et la même tenue sont montrées sous plusieurs angles — un mannequin qui tourne. Pour enregistrer une vidéo, utilise l'ENREGISTREMENT D'ÉCRAN de ton téléphone."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1166,7 +1208,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Contabilità & documenti",
   "aitAynaBtn": "Specchio virtuale",
   "aitGloxBtn": "Chiedi a Gloxoo",
-  "aitAlt": "Prova acconciature/abiti sulla tua foto, chiedi tutto a Gloxoo — subito, nella tua lingua."
+  "aitAlt": "Prova acconciature/abiti sulla tua foto, chiedi tutto a Gloxoo — subito, nella tua lingua.",
+  "saManken": "Crea modella dal vivo (ruota)",
+  "saMankenYap": "Preparazione modella dal vivo…",
+  "saMankenOlmadi": "Impossibile creare la modella dal vivo ora, riprova.",
+  "saDurdur": "Ferma",
+  "saOynat": "Riproduci",
+  "saMankenNot": "La stessa persona e lo stesso abito sono mostrati da più angolazioni — una modella che ruota. Per salvare un video, usa la REGISTRAZIONE SCHERMO del telefono."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1312,7 +1360,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "Contabilidade & documentos",
   "aitAynaBtn": "Espelho virtual",
   "aitGloxBtn": "Pergunte ao Gloxoo",
-  "aitAlt": "Experimente cabelos/roupas na sua foto, pergunte tudo ao Gloxoo — na hora, no seu idioma."
+  "aitAlt": "Experimente cabelos/roupas na sua foto, pergunte tudo ao Gloxoo — na hora, no seu idioma.",
+  "saManken": "Criar modelo ao vivo (girar)",
+  "saMankenYap": "Preparando modelo ao vivo…",
+  "saMankenOlmadi": "Não foi possível criar o modelo ao vivo agora, tente novamente.",
+  "saDurdur": "Parar",
+  "saOynat": "Reproduzir",
+  "saMankenNot": "A mesma pessoa e roupa são mostradas de vários ângulos — um modelo girando. Para salvar um vídeo, use a GRAVAÇÃO DE TELA do seu telefone."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1458,7 +1512,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "محاسبة ومستندات",
   "aitAynaBtn": "المرآة الافتراضية",
   "aitGloxBtn": "اسأل Gloxoo",
-  "aitAlt": "جرّب تسريحات/ملابس على صورتك واسأل Gloxoo أي شيء — فورًا وبلغتك."
+  "aitAlt": "جرّب تسريحات/ملابس على صورتك واسأل Gloxoo أي شيء — فورًا وبلغتك.",
+  "saManken": "اصنع عارضة حية (تدوير)",
+  "saMankenYap": "يتم تجهيز العارضة الحية…",
+  "saMankenOlmadi": "تعذّر إنشاء عارضة حية الآن، حاول مجددًا.",
+  "saDurdur": "إيقاف",
+  "saOynat": "تشغيل",
+  "saMankenNot": "يظهر الشخص نفسه والملابس نفسها من عدة زوايا — عارضة تدور. لحفظ فيديو، استخدم تسجيل الشاشة في هاتفك."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1604,7 +1664,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "लेखा और दस्तावेज़",
   "aitAynaBtn": "वर्चुअल मिरर",
   "aitGloxBtn": "Gloxoo से पूछें",
-  "aitAlt": "अपनी फ़ोटो पर बाल/कपड़े आज़माएं, Gloxoo से कुछ भी पूछें — तुरंत, आपकी भाषा में।"
+  "aitAlt": "अपनी फ़ोटो पर बाल/कपड़े आज़माएं, Gloxoo से कुछ भी पूछें — तुरंत, आपकी भाषा में।",
+  "saManken": "लाइव मॉडल बनाएं (घुमाएं)",
+  "saMankenYap": "लाइव मॉडल तैयार हो रहा है…",
+  "saMankenOlmadi": "अभी लाइव मॉडल नहीं बन सका, फिर से कोशिश करें।",
+  "saDurdur": "रोकें",
+  "saOynat": "चलाएं",
+  "saMankenNot": "वही व्यक्ति और पोशाक कई कोणों से दिखाई जाती है — घूमता मॉडल। वीडियो सहेजने के लिए अपने फोन के स्क्रीन रिकॉर्डर का उपयोग करें।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1750,7 +1816,13 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "记账和文档",
   "aitAynaBtn": "虚拟镜子",
   "aitGloxBtn": "问 Gloxoo",
-  "aitAlt": "在你的照片上试发型/服装，随时问 Gloxoo — 即时，用你的语言。"
+  "aitAlt": "在你的照片上试发型/服装，随时问 Gloxoo — 即时，用你的语言。",
+  "saManken": "制作动态模特（旋转）",
+  "saMankenYap": "正在准备动态模特…",
+  "saMankenOlmadi": "目前无法制作动态模特，请重试。",
+  "saDurdur": "停止",
+  "saOynat": "播放",
+  "saMankenNot": "同一个人和服装从多个角度展示——旋转的模特。若要保存视频，请使用手机的屏幕录制功能。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -1896,6 +1968,12 @@ export const CEVIRI_EKSIK7 = {
   "aitMuhasebe": "会計＆書類",
   "aitAynaBtn": "バーチャルミラー",
   "aitGloxBtn": "Gloxooに聞く",
-  "aitAlt": "写真で髪や服を試して、Gloxooに何でも質問 — すぐに、あなたの言葉で。"
+  "aitAlt": "写真で髪や服を試して、Gloxooに何でも質問 — すぐに、あなたの言葉で。",
+  "saManken": "ライブモデルを作成（回転）",
+  "saMankenYap": "ライブモデルを準備中…",
+  "saMankenOlmadi": "今はライブモデルを作成できませんでした。もう一度お試しください。",
+  "saDurdur": "停止",
+  "saOynat": "再生",
+  "saMankenNot": "同じ人物と衣装を複数の角度から表示——回転するモデルです。動画として保存するには、スマホの画面録画をご利用ください。"
  }
 };

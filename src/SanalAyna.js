@@ -110,6 +110,12 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
   const [yuk, setYuk] = useState(false);
   const [hata, setHata] = useState("");
   const [indirildi, setIndirildi] = useState(false); // "İndirildi" geri bildirimi
+  // CANLI MANKEN — aynı kişi+aynı kıyafet birçok AÇIDAN üretilip art arda oynatılır → dönen/yürüyen manken (video gibi)
+  const [kareler, setKareler] = useState([]);     // manken kareleri (dataURL dizisi)
+  const [kareYuk, setKareYuk] = useState(false);  // kareler hazırlanıyor mu
+  const [kareIlerleme, setKareIlerleme] = useState(0); // kaç kare hazır (ilerleme göstergesi)
+  const [kareIdx, setKareIdx] = useState(0);      // oynatmada gösterilen kare
+  const [oynat, setOynat] = useState(false);      // oynatılıyor mu
   // MODELLERİM GALERİSİ — ürettiğin her sonucu kalıcı sakla (görsel IndexedDB'de, liste localStorage'da); sonra görüntüle/paylaş/sil.
   const [modeller, setModeller] = useState(() => { try { return JSON.parse(localStorage.getItem("gw_ayna_modeller") || "[]"); } catch (e) { return []; } });
   const [galeriAcik, setGaleriAcik] = useState(false);
@@ -182,7 +188,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
     if (yuk) return;
     if (!foto) { setHata(t("saFotoOnce", "Önce fotoğrafını ekle.")); return; }
     if (!model.trim()) { setHata(t("saModelOnce", "Bir model yaz ya da yukarıdan seç.")); return; }
-    setYuk(true); setHata(""); setSonuc("");
+    setYuk(true); setHata(""); setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0);
     try {
       const base64 = foto.split(",")[1] || "";
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
@@ -241,6 +247,39 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
   }
   function indir() { if (!sonuc) return; indirVer(sonuc, model || kategori); setIndirildi(true); setTimeout(() => setIndirildi(false), 2500); }
   function paylas() { paylasVer(sonuc, model || kategori); }
+  // CANLI MANKEN — kareleri belli aralıkla döndürerek oynat (flipbook → dönen manken hissi)
+  useEffect(() => {
+    if (!oynat || kareler.length < 2) return;
+    const id = setInterval(() => setKareIdx((i) => (i + 1) % kareler.length), 650);
+    return () => clearInterval(id);
+  }, [oynat, kareler.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  // CANLI MANKEN ÜRET — mevcut sonucu (önden görünüş) 1. kare al, aynı kişi+kıyafeti başka açılardan üret, sonra döndür.
+  async function canliMankenYap() {
+    if (!sonuc || kareYuk) return;
+    setKareYuk(true); setHata(""); setKareler([]); setKareIdx(0); setOynat(false);
+    // Açılar: önden (mevcut) → hafif sağ dönük → sağ yandan → arkadan → sola dönüp omuz üstünden bakış → tekrar önden
+    const acilar = [
+      "turned about 30 degrees to her right (three-quarter view), as if starting to walk on a fashion runway",
+      "turned to her RIGHT SIDE profile (about 90 degrees), in a natural mid-stride walking pose",
+      "seen from the BACK (about 180 degrees, turned away), clearly showing the BACK of the same outfit, walking away on the runway",
+      "turned about 45 degrees to her LEFT, elegantly looking back over her shoulder toward the camera",
+    ];
+    const yeni = [sonuc]; // 1. kare = mevcut önden görünüş
+    const base64 = sonuc.split(",")[1] || "";
+    setKareIlerleme(1);
+    for (let i = 0; i < acilar.length; i++) {
+      const istem = `This image shows a person wearing an outfit. Generate the EXACT SAME real person wearing the EXACT SAME outfit as in this image — identical face, hair, body shape, garment, print, colors, fabric, shoes and the same clean background — but now ${acilar[i]}. Show the FULL BODY from head to feet. Elegant natural pose like a professional fashion studio / runway photo. Ultra photorealistic, soft cinematic flattering lighting, sharp focus, ultra-high resolution. It must stay the SAME real person — do NOT change, beautify, slim or age the face. Exactly ONE person, no duplicate. No text, no watermark, no logo.`;
+      try {
+        const r = await gloxooResimUret(istem, { base64, mediaType: "image/png" });
+        if (r && r.dataUrl) yeni.push(r.dataUrl);
+      } catch (e) {}
+      setKareIlerleme(yeni.length);
+    }
+    setKareler(yeni);
+    setKareYuk(false);
+    if (yeni.length >= 2) { setKareIdx(0); setOynat(true); }
+    else setHata(t("saMankenOlmadi", "Şu an canlı manken yapılamadı, tekrar dene."));
+  }
   // MODELLERİME KAYDET — görseli IndexedDB'ye, kaydı listeye + localStorage'a
   async function kaydetModel() {
     if (!sonuc) return;
@@ -383,8 +422,26 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
                 <button className={"sa-kaydet-model" + (kaydedildi ? " indi" : "")} onClick={kaydetModel}>{kaydedildi ? "✓ " + t("saKaydedildi", "Modellerime eklendi") : "💾 " + t("saKaydet", "Modellerime kaydet")}</button>
                 <button className={"sa-indir" + (indirildi ? " indi" : "")} onClick={indir}>{indirildi ? "✓ " + t("saIndirildi", "İndirildi") : "⬇️ " + t("saIndir", "İndir")}</button>
                 <button className="sa-paylas" onClick={paylas}>📤 {t("saPaylas", "Paylaş")}</button>
-                <button className="sa-tekrar" onClick={() => { setSonuc(""); }}>🔁 {t("saTekrar", "Başka model dene")}</button>
+                <button className="sa-tekrar" onClick={() => { setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0); }}>🔁 {t("saTekrar", "Başka model dene")}</button>
               </div>
+
+              {/* 🎬 CANLI MANKEN — aynı kişi+aynı kıyafet birçok açıdan üretilip döndürülür (reklamdaki gibi dönen manken) */}
+              <button className="sa-manken-btn" disabled={kareYuk} onClick={canliMankenYap}>
+                {kareYuk
+                  ? "⏳ " + t("saMankenYap", "Canlı manken hazırlanıyor…") + " (" + kareIlerleme + "/5)"
+                  : "🎬 " + t("saManken", "Canlı manken yap (döndür)")}
+              </button>
+              {kareler.length >= 2 && (
+                <div className="sa-manken">
+                  <img src={kareler[kareIdx]} alt="" onClick={() => setBuyuk(kareler[kareIdx])} style={{ cursor: "zoom-in" }} />
+                  <div className="sa-manken-dug">
+                    <button onClick={() => setOynat((o) => !o)}>{oynat ? "⏸ " + t("saDurdur", "Durdur") : "▶️ " + t("saOynat", "Oynat")}</button>
+                    <button onClick={() => paylasVer(kareler[kareIdx], model || kategori)}>📤 {t("saPaylas", "Paylaş")}</button>
+                    <button onClick={() => indirVer(kareler[kareIdx], model || kategori)}>⬇️ {t("saIndir", "İndir")}</button>
+                  </div>
+                  <div className="sa-manken-not">💡 {t("saMankenNot", "Aynı kişi ve kıyafet birçok açıdan gösteriliyor — dönen manken. Video kaydetmek istersen telefonun EKRAN KAYDI ile bu dönüşü çekebilirsin.")}</div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -5103,7 +5103,17 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-indir{ background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; }
 .sa-paylas{ background:#1fa463; color:#fff; }
 .sa-tekrar{ background:#fff7db; color:#7a5a00; border:1.5px solid #a07800 !important; }
-@media (min-width:560px){ .sa-baslik{ font-size:26px; } .sa-foto-kutu{ max-height:420px; } }
+/* 🎬 CANLI MANKEN — dönen manken (birçok açı art arda oynatılır) */
+.sa-manken-btn{ width:100%; margin-top:12px; padding:14px; border-radius:14px; border:none; background:linear-gradient(90deg,#7a4fd0,#5b3aa0); color:#fff; font-weight:900; font-size:16.5px; cursor:pointer; font-family:inherit; box-shadow:0 5px 16px rgba(90,60,150,.35); }
+.sa-manken-btn:disabled{ opacity:.75; }
+.sa-manken-btn:active{ transform:scale(.98); }
+.sa-manken{ margin-top:12px; background:#fff7db; border:2px solid #FFD700; border-radius:16px; padding:10px; }
+.sa-manken img{ width:100%; border-radius:12px; border:2px solid #a07800; display:block; background:linear-gradient(160deg,#fffdf5,#ffe9a8); }
+.sa-manken-dug{ display:flex; gap:8px; margin-top:9px; }
+.sa-manken-dug button{ flex:1; padding:11px 8px; border-radius:11px; border:none; font-weight:900; font-size:14.5px; cursor:pointer; font-family:inherit; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; }
+.sa-manken-dug button:active{ transform:scale(.97); }
+.sa-manken-not{ margin-top:9px; color:#7a5a12; font-weight:700; font-size:13px; line-height:1.45; }
+@media (min-width:560px){ .sa-baslik{ font-size:26px; } .sa-foto-kutu{ max-height:420px; } .sa-manken-btn{ font-size:19px; } }
 
 /* ===================== MUHASEBE (muhasebeci sayfası) ===================== */
 .muh-sayfa{ width:100%; display:flex; justify-content:center; background:radial-gradient(circle at 50% 12%, #f7e79a, #e6c85a 80%, #d4af37); }
