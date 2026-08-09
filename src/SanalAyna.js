@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { gloxooResimUret } from "./firebase";
+import { medyaYaz, medyaOku } from "./medyaDepo"; // üretilen modelleri KALICI sakla (IndexedDB) → "Modellerim" galerisi
 import { AYNA_CEV } from "./ceviriAyna"; // saç modeli/renk/kıyafet çiplerini kullanıcının diline çevir (değer Türkçe kalır, sadece görünüm çevrilir)
 
 // KİM İÇİN — bayan/erkek/kız/erkek çocuk/bebek (saç kesimi + kıyafet önerileri buna göre değişir)
@@ -109,6 +110,17 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
   const [yuk, setYuk] = useState(false);
   const [hata, setHata] = useState("");
   const [indirildi, setIndirildi] = useState(false); // "İndirildi" geri bildirimi
+  // MODELLERİM GALERİSİ — ürettiğin her sonucu kalıcı sakla (görsel IndexedDB'de, liste localStorage'da); sonra görüntüle/paylaş/sil.
+  const [modeller, setModeller] = useState(() => { try { return JSON.parse(localStorage.getItem("gw_ayna_modeller") || "[]"); } catch (e) { return []; } });
+  const [galeriAcik, setGaleriAcik] = useState(false);
+  const [galeriResim, setGaleriResim] = useState({}); // id -> dataURL (IndexedDB'den yüklenir)
+  const [kaydedildi, setKaydedildi] = useState(false);
+  // Galeri açılınca kayıtlı modellerin görsellerini IndexedDB'den yükle
+  useEffect(() => {
+    if (!galeriAcik) return; let iptal = false;
+    (async () => { for (const o of modeller) { if (galeriResim[o.id]) continue; try { const d = await medyaOku("ayna_" + o.id); if (!iptal && d) setGaleriResim((m) => ({ ...m, [o.id]: d })); } catch (e) {} } })();
+    return () => { iptal = true; };
+  }, [galeriAcik, modeller]); // eslint-disable-line react-hooks/exhaustive-deps
   const inpRef = useRef(null);
   const kamRef = useRef(null); // YÜZ FOTOĞRAFINI ORACIKTA KAMERAYLA ÇEK (kullanıcı: "yüz fotoğraf çekme yeri yok")
   const sonucRef = useRef(null); // sonuç gelince oraya kaydır
@@ -206,27 +218,42 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
     } catch (e) { setHata((e && e.message) ? String(e.message) : t("saOlmadi", "Şu an yapılamadı, tekrar dene.")); }
     setYuk(false);
   }
-  function indir() {
-    if (!sonuc) return;
+  // GENEL indir/paylaş (hem güncel sonuç hem galerideki model için)
+  function indirVer(dataUrl, etiket) {
+    if (!dataUrl) return;
     try {
+      const et = (etiket || "model").toString().toLocaleLowerCase("tr").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24);
       const a = document.createElement("a");
-      // Her indirmeye BENZERSİZ isim → tarayıcı "aynı dosyayı tekrar mı indireyim?" diye sormaz.
-      const etiket = (model || kategori || "model").toString().toLocaleLowerCase("tr").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24);
-      a.href = sonuc; a.download = "gloxorg-" + (etiket || "sanal-ayna") + "-" + Date.now().toString(36) + ".png";
+      a.href = dataUrl; a.download = "gloxorg-" + (et || "sanal-ayna") + "-" + Date.now().toString(36) + ".png";
       document.body.appendChild(a); a.click(); a.remove();
-      setIndirildi(true); setTimeout(() => setIndirildi(false), 2500); // düğmede "İndirildi" göster
     } catch (e) {}
   }
-  async function paylas() {
-    if (!sonuc) return;
+  async function paylasVer(dataUrl, etiket) {
+    if (!dataUrl) return;
     try {
       if (navigator.share && navigator.canShare) {
-        const bl = await (await fetch(sonuc)).blob();
+        const bl = await (await fetch(dataUrl)).blob();
         const dosya = new File([bl], "gloxorg-sanal-ayna.png", { type: "image/png" });
         if (navigator.canShare({ files: [dosya] })) { await navigator.share({ files: [dosya], title: "GLOXORG Sanal Ayna" }); return; }
       }
-      indir();
+      indirVer(dataUrl, etiket);
     } catch (e) {}
+  }
+  function indir() { if (!sonuc) return; indirVer(sonuc, model || kategori); setIndirildi(true); setTimeout(() => setIndirildi(false), 2500); }
+  function paylas() { paylasVer(sonuc, model || kategori); }
+  // MODELLERİME KAYDET — görseli IndexedDB'ye, kaydı listeye + localStorage'a
+  async function kaydetModel() {
+    if (!sonuc) return;
+    const id = "m" + Date.now().toString(36) + Math.floor(Math.random() * 1e5).toString(36);
+    try { await medyaYaz("ayna_" + id, sonuc); } catch (e) {}
+    const oge = { id, ad: (model || kategori || "model"), kategori, ms: Date.now() };
+    setModeller((L) => { const y = [oge, ...L].slice(0, 80); try { localStorage.setItem("gw_ayna_modeller", JSON.stringify(y)); } catch (e) {} return y; });
+    setGaleriResim((m) => ({ ...m, [id]: sonuc }));
+    setKaydedildi(true); setTimeout(() => setKaydedildi(false), 2500);
+  }
+  function modelSil(id) {
+    try { if (!window.confirm(t("saModelSilOnay", "Bu modeli silmek istiyor musun?"))) return; } catch (e) {}
+    setModeller((L) => { const y = L.filter((x) => x.id !== id); try { localStorage.setItem("gw_ayna_modeller", JSON.stringify(y)); } catch (e) {} return y; });
   }
 
   const oneri = oneriGetir(kategori, kisi);
@@ -247,6 +274,29 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
         )}
         <div className="sa-kaydir">
           <div className="sa-alt">{t("saAlt", "Kendi fotoğrafında saç, tırnak veya makyaj modeli dene. Fotoğrafını yükle, modeli yaz ya da seç; Gloxoo senin üstünde göstersin.")}</div>
+
+          {/* MODELLERİM — kaydettiğin modeller burada durur; görüntüle, kuaförüne gönder (paylaş) ya da sil */}
+          <button className={"sa-modellerim-btn" + (galeriAcik ? " acik" : "")} onClick={() => setGaleriAcik((a) => !a)}>🖼️ {t("saModellerim", "Modellerim")}{modeller.length ? " (" + modeller.length + ")" : ""}{galeriAcik ? " ▲" : " ▼"}</button>
+          {galeriAcik && (
+            <div className="sa-galeri">
+              {modeller.length === 0 ? (
+                <div className="sa-galeri-bos">💛 {t("saGaleriBos", "Henüz kayıtlı modelin yok. Bir model üret, aşağıda 'Modellerime kaydet'e bas.")}</div>
+              ) : (
+                <div className="sa-galeri-izgara">
+                  {modeller.map((o) => (
+                    <div key={o.id} className="sa-galeri-oge">
+                      {galeriResim[o.id] ? <img src={galeriResim[o.id]} alt="" onClick={() => setBuyuk(galeriResim[o.id])} /> : <div className="sa-galeri-yuk">⏳</div>}
+                      <div className="sa-galeri-ad notranslate">{ac(o.ad)}</div>
+                      <div className="sa-galeri-dug">
+                        <button onClick={() => galeriResim[o.id] && paylasVer(galeriResim[o.id], o.ad)} title={t("saPaylas", "Paylaş")}>📤</button>
+                        <button onClick={() => modelSil(o.id)} title={t("sil", "Sil")}>🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Reklamdan gelindiyse: DENENEN ÜRÜN önizlemesi */}
           {baslangic && baslangic.refFotoUrl && (
@@ -330,6 +380,7 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
               <img src={sonuc} alt="" onClick={() => setBuyuk(sonuc)} style={{ cursor: "zoom-in" }} />
               <div className="sa-buyut-ipucu">🔍 {t("saBuyutIpucu", "Fotoğrafa dokun: tam ekran aç, iki parmakla yakınlaştır.")}</div>
               <div className="sa-sonuc-dugmeler">
+                <button className={"sa-kaydet-model" + (kaydedildi ? " indi" : "")} onClick={kaydetModel}>{kaydedildi ? "✓ " + t("saKaydedildi", "Modellerime eklendi") : "💾 " + t("saKaydet", "Modellerime kaydet")}</button>
                 <button className={"sa-indir" + (indirildi ? " indi" : "")} onClick={indir}>{indirildi ? "✓ " + t("saIndirildi", "İndirildi") : "⬇️ " + t("saIndir", "İndir")}</button>
                 <button className="sa-paylas" onClick={paylas}>📤 {t("saPaylas", "Paylaş")}</button>
                 <button className="sa-tekrar" onClick={() => { setSonuc(""); }}>🔁 {t("saTekrar", "Başka model dene")}</button>

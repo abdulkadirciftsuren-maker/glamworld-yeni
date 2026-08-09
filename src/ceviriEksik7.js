@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna arac anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna (renk/kamera/Modellerim) anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -129,7 +129,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Pencereyi kapat",
   "belBoyutKisa": "－ ＋ ile daralt/genişlet · ⇅ dikey yazı · sütunları inceltip A4'e sığdır",
   "saCek": "Fotoğraf çek",
-  "saGaleri": "Galeriden seç"
+  "saGaleri": "Galeriden seç",
+  "saModellerim": "Modellerim",
+  "saKaydet": "Modellerime kaydet",
+  "saKaydedildi": "Modellerime eklendi",
+  "saModelSilOnay": "Bu modeli silmek istiyor musun?",
+  "saGaleriBos": "Henüz kayıtlı modelin yok. Bir model üret, aşağıda 'Modellerime kaydet'e bas."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -260,7 +265,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Close window",
   "belBoyutKisa": "－ ＋ to shrink/widen · ⇅ vertical text · thin columns to fit A4",
   "saCek": "Take photo",
-  "saGaleri": "From gallery"
+  "saGaleri": "From gallery",
+  "saModellerim": "My Models",
+  "saKaydet": "Save to My Models",
+  "saKaydedildi": "Saved to My Models",
+  "saModelSilOnay": "Delete this model?",
+  "saGaleriBos": "No saved models yet. Create one, then tap 'Save to My Models' below."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -391,7 +401,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Fenster schließen",
   "belBoyutKisa": "－ ＋ verschmälern/verbreitern · ⇅ vertikaler Text · Spalten für A4 verschmälern",
   "saCek": "Foto aufnehmen",
-  "saGaleri": "Aus Galerie"
+  "saGaleri": "Aus Galerie",
+  "saModellerim": "Meine Modelle",
+  "saKaydet": "Zu meinen Modellen",
+  "saKaydedildi": "Gespeichert",
+  "saModelSilOnay": "Dieses Modell löschen?",
+  "saGaleriBos": "Noch keine gespeicherten Modelle. Erstelle eins und tippe unten auf 'Zu meinen Modellen'."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -522,7 +537,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Закрыть окно",
   "belBoyutKisa": "－ ＋ сузить/расширить · ⇅ вертикальный текст · сузь столбцы под A4",
   "saCek": "Сделать фото",
-  "saGaleri": "Из галереи"
+  "saGaleri": "Из галереи",
+  "saModellerim": "Мои модели",
+  "saKaydet": "В мои модели",
+  "saKaydedildi": "Сохранено",
+  "saModelSilOnay": "Удалить эту модель?",
+  "saGaleriBos": "Пока нет сохранённых моделей. Создай образ и нажми ниже «В мои модели»."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -653,7 +673,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Закрити вікно",
   "belBoyutKisa": "－ ＋ звузити/розширити · ⇅ вертикальний текст · звузь стовпці під A4",
   "saCek": "Зробити фото",
-  "saGaleri": "З галереї"
+  "saGaleri": "З галереї",
+  "saModellerim": "Мої моделі",
+  "saKaydet": "У мої моделі",
+  "saKaydedildi": "Збережено",
+  "saModelSilOnay": "Видалити цю модель?",
+  "saGaleriBos": "Ще немає збережених моделей. Створи образ і натисни нижче «У мої моделі»."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -784,7 +809,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Cerrar ventana",
   "belBoyutKisa": "－ ＋ estrechar/ensanchar · ⇅ texto vertical · estrecha columnas para A4",
   "saCek": "Tomar foto",
-  "saGaleri": "De la galería"
+  "saGaleri": "De la galería",
+  "saModellerim": "Mis modelos",
+  "saKaydet": "Guardar en Mis modelos",
+  "saKaydedildi": "Guardado",
+  "saModelSilOnay": "¿Eliminar este modelo?",
+  "saGaleriBos": "Aún no hay modelos guardados. Crea uno y pulsa abajo 'Guardar en Mis modelos'."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -915,7 +945,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Fermer la fenêtre",
   "belBoyutKisa": "－ ＋ rétrécir/élargir · ⇅ texte vertical · affine les colonnes pour A4",
   "saCek": "Prendre une photo",
-  "saGaleri": "Depuis la galerie"
+  "saGaleri": "Depuis la galerie",
+  "saModellerim": "Mes modèles",
+  "saKaydet": "Enregistrer dans Mes modèles",
+  "saKaydedildi": "Enregistré",
+  "saModelSilOnay": "Supprimer ce modèle ?",
+  "saGaleriBos": "Aucun modèle enregistré. Crées-en un puis appuie sur 'Enregistrer dans Mes modèles'."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1046,7 +1081,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Chiudi finestra",
   "belBoyutKisa": "－ ＋ restringi/allarga · ⇅ testo verticale · restringi le colonne per A4",
   "saCek": "Scatta foto",
-  "saGaleri": "Dalla galleria"
+  "saGaleri": "Dalla galleria",
+  "saModellerim": "I miei modelli",
+  "saKaydet": "Salva nei miei modelli",
+  "saKaydedildi": "Salvato",
+  "saModelSilOnay": "Eliminare questo modello?",
+  "saGaleriBos": "Ancora nessun modello salvato. Creane uno e tocca 'Salva nei miei modelli'."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1177,7 +1217,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "Fechar janela",
   "belBoyutKisa": "－ ＋ estreitar/alargar · ⇅ texto vertical · estreite as colunas para A4",
   "saCek": "Tirar foto",
-  "saGaleri": "Da galeria"
+  "saGaleri": "Da galeria",
+  "saModellerim": "Meus modelos",
+  "saKaydet": "Salvar em Meus modelos",
+  "saKaydedildi": "Salvo",
+  "saModelSilOnay": "Excluir este modelo?",
+  "saGaleriBos": "Ainda sem modelos salvos. Crie um e toque em 'Salvar em Meus modelos'."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1308,7 +1353,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "إغلاق النافذة",
   "belBoyutKisa": "－ ＋ للتضييق/التوسيع · ⇅ نص عمودي · صغّر الأعمدة لتناسب A4",
   "saCek": "التقاط صورة",
-  "saGaleri": "من المعرض"
+  "saGaleri": "من المعرض",
+  "saModellerim": "نماذجي",
+  "saKaydet": "حفظ في نماذجي",
+  "saKaydedildi": "تم الحفظ",
+  "saModelSilOnay": "حذف هذا النموذج؟",
+  "saGaleriBos": "لا نماذج محفوظة بعد. أنشئ نموذجًا ثم اضغط 'حفظ في نماذجي' بالأسفل."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1439,7 +1489,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "विंडो बंद करें",
   "belBoyutKisa": "－ ＋ से छोटा/चौड़ा · ⇅ लंबवत पाठ · कॉलम पतले कर A4 में फ़िट करें",
   "saCek": "फ़ोटो लें",
-  "saGaleri": "गैलरी से"
+  "saGaleri": "गैलरी से",
+  "saModellerim": "मेरे मॉडल",
+  "saKaydet": "मेरे मॉडल में सहेजें",
+  "saKaydedildi": "सहेजा गया",
+  "saModelSilOnay": "इस मॉडल को हटाएं?",
+  "saGaleriBos": "अभी कोई सहेजा मॉडल नहीं। एक बनाएं, फिर नीचे 'मेरे मॉडल में सहेजें' दबाएं।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1570,7 +1625,12 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "关闭窗口",
   "belBoyutKisa": "－ ＋ 变窄/变宽 · ⇅ 竖排 · 收窄列以适应A4",
   "saCek": "拍照",
-  "saGaleri": "从相册选择"
+  "saGaleri": "从相册选择",
+  "saModellerim": "我的造型",
+  "saKaydet": "保存到我的造型",
+  "saKaydedildi": "已保存",
+  "saModelSilOnay": "删除这个造型？",
+  "saGaleriBos": "还没有保存的造型。先生成一个，然后点下方“保存到我的造型”。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -1701,6 +1761,11 @@ export const CEVIRI_EKSIK7 = {
   "muhPencereKapat": "ウィンドウを閉じる",
   "belBoyutKisa": "－ ＋ で幅調整 · ⇅ 縦書き · 列を細くしてA4に",
   "saCek": "写真を撮る",
-  "saGaleri": "ギャラリーから"
+  "saGaleri": "ギャラリーから",
+  "saModellerim": "マイモデル",
+  "saKaydet": "マイモデルに保存",
+  "saKaydedildi": "保存しました",
+  "saModelSilOnay": "このモデルを削除しますか？",
+  "saGaleriBos": "保存済みのモデルはまだありません。作成して下の「マイモデルに保存」を押してください。"
  }
 };
