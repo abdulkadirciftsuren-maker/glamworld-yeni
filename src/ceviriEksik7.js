@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna (renk/kamera/Modellerim) anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -134,7 +134,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "Modellerime kaydet",
   "saKaydedildi": "Modellerime eklendi",
   "saModelSilOnay": "Bu modeli silmek istiyor musun?",
-  "saGaleriBos": "Henüz kayıtlı modelin yok. Bir model üret, aşağıda 'Modellerime kaydet'e bas."
+  "saGaleriBos": "Henüz kayıtlı modelin yok. Bir model üret, aşağıda 'Modellerime kaydet'e bas.",
+  "aitCanli": "Canlı Yapay Zekâ",
+  "aitSac": "Saçını değiştir",
+  "aitKiyafet": "Kıyafet dene",
+  "aitMakyaj": "Makyaj & tırnak",
+  "aitSor": "Gloxoo'ya sor",
+  "aitResim": "Resim & çizim",
+  "aitMuhasebe": "Muhasebe & belge",
+  "aitAynaBtn": "Sanal Ayna",
+  "aitGloxBtn": "Gloxoo'ya sor",
+  "aitAlt": "Fotoğrafında saç/kıyafet dene, Gloxoo'ya her şeyi sor — anında, senin dilinde."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -270,7 +280,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "Save to My Models",
   "saKaydedildi": "Saved to My Models",
   "saModelSilOnay": "Delete this model?",
-  "saGaleriBos": "No saved models yet. Create one, then tap 'Save to My Models' below."
+  "saGaleriBos": "No saved models yet. Create one, then tap 'Save to My Models' below.",
+  "aitCanli": "Live AI",
+  "aitSac": "Change your hair",
+  "aitKiyafet": "Try on clothes",
+  "aitMakyaj": "Makeup & nails",
+  "aitSor": "Ask Gloxoo",
+  "aitResim": "Images & drawing",
+  "aitMuhasebe": "Accounting & docs",
+  "aitAynaBtn": "Virtual Mirror",
+  "aitGloxBtn": "Ask Gloxoo",
+  "aitAlt": "Try hair/clothes on your photo, ask Gloxoo anything — instantly, in your language."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -406,7 +426,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "Zu meinen Modellen",
   "saKaydedildi": "Gespeichert",
   "saModelSilOnay": "Dieses Modell löschen?",
-  "saGaleriBos": "Noch keine gespeicherten Modelle. Erstelle eins und tippe unten auf 'Zu meinen Modellen'."
+  "saGaleriBos": "Noch keine gespeicherten Modelle. Erstelle eins und tippe unten auf 'Zu meinen Modellen'.",
+  "aitCanli": "Live-KI",
+  "aitSac": "Frisur ändern",
+  "aitKiyafet": "Kleidung anprobieren",
+  "aitMakyaj": "Make-up & Nägel",
+  "aitSor": "Frag Gloxoo",
+  "aitResim": "Bilder & Zeichnen",
+  "aitMuhasebe": "Buchhaltung & Dokumente",
+  "aitAynaBtn": "Virtueller Spiegel",
+  "aitGloxBtn": "Frag Gloxoo",
+  "aitAlt": "Probiere Frisuren/Kleidung an deinem Foto, frag Gloxoo alles — sofort, in deiner Sprache."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -542,7 +572,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "В мои модели",
   "saKaydedildi": "Сохранено",
   "saModelSilOnay": "Удалить эту модель?",
-  "saGaleriBos": "Пока нет сохранённых моделей. Создай образ и нажми ниже «В мои модели»."
+  "saGaleriBos": "Пока нет сохранённых моделей. Создай образ и нажми ниже «В мои модели».",
+  "aitCanli": "Живой ИИ",
+  "aitSac": "Смени причёску",
+  "aitKiyafet": "Примерь одежду",
+  "aitMakyaj": "Макияж и ногти",
+  "aitSor": "Спроси Gloxoo",
+  "aitResim": "Картинки и рисунки",
+  "aitMuhasebe": "Учёт и документы",
+  "aitAynaBtn": "Виртуальное зеркало",
+  "aitGloxBtn": "Спроси Gloxoo",
+  "aitAlt": "Примеряй причёски/одежду на своём фото, спрашивай Gloxoo о чём угодно — мгновенно, на твоём языке."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -678,7 +718,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "У мої моделі",
   "saKaydedildi": "Збережено",
   "saModelSilOnay": "Видалити цю модель?",
-  "saGaleriBos": "Ще немає збережених моделей. Створи образ і натисни нижче «У мої моделі»."
+  "saGaleriBos": "Ще немає збережених моделей. Створи образ і натисни нижче «У мої моделі».",
+  "aitCanli": "Живий ШІ",
+  "aitSac": "Зміни зачіску",
+  "aitKiyafet": "Приміряй одяг",
+  "aitMakyaj": "Макіяж і нігті",
+  "aitSor": "Запитай Gloxoo",
+  "aitResim": "Зображення й малюнки",
+  "aitMuhasebe": "Облік і документи",
+  "aitAynaBtn": "Віртуальне дзеркало",
+  "aitGloxBtn": "Запитай Gloxoo",
+  "aitAlt": "Приміряй зачіски/одяг на своєму фото, запитуй Gloxoo про будь-що — миттєво, твоєю мовою."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -814,7 +864,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "Guardar en Mis modelos",
   "saKaydedildi": "Guardado",
   "saModelSilOnay": "¿Eliminar este modelo?",
-  "saGaleriBos": "Aún no hay modelos guardados. Crea uno y pulsa abajo 'Guardar en Mis modelos'."
+  "saGaleriBos": "Aún no hay modelos guardados. Crea uno y pulsa abajo 'Guardar en Mis modelos'.",
+  "aitCanli": "IA en vivo",
+  "aitSac": "Cambia tu cabello",
+  "aitKiyafet": "Prueba ropa",
+  "aitMakyaj": "Maquillaje y uñas",
+  "aitSor": "Pregunta a Gloxoo",
+  "aitResim": "Imágenes y dibujo",
+  "aitMuhasebe": "Contabilidad y documentos",
+  "aitAynaBtn": "Espejo virtual",
+  "aitGloxBtn": "Pregunta a Gloxoo",
+  "aitAlt": "Prueba peinados/ropa en tu foto y pregúntale a Gloxoo lo que sea — al instante, en tu idioma."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -950,7 +1010,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "Enregistrer dans Mes modèles",
   "saKaydedildi": "Enregistré",
   "saModelSilOnay": "Supprimer ce modèle ?",
-  "saGaleriBos": "Aucun modèle enregistré. Crées-en un puis appuie sur 'Enregistrer dans Mes modèles'."
+  "saGaleriBos": "Aucun modèle enregistré. Crées-en un puis appuie sur 'Enregistrer dans Mes modèles'.",
+  "aitCanli": "IA en direct",
+  "aitSac": "Change de coiffure",
+  "aitKiyafet": "Essaie des vêtements",
+  "aitMakyaj": "Maquillage & ongles",
+  "aitSor": "Demande à Gloxoo",
+  "aitResim": "Images & dessin",
+  "aitMuhasebe": "Comptabilité & documents",
+  "aitAynaBtn": "Miroir virtuel",
+  "aitGloxBtn": "Demande à Gloxoo",
+  "aitAlt": "Essaie coiffures/vêtements sur ta photo, demande tout à Gloxoo — instantanément, dans ta langue."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1086,7 +1156,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "Salva nei miei modelli",
   "saKaydedildi": "Salvato",
   "saModelSilOnay": "Eliminare questo modello?",
-  "saGaleriBos": "Ancora nessun modello salvato. Creane uno e tocca 'Salva nei miei modelli'."
+  "saGaleriBos": "Ancora nessun modello salvato. Creane uno e tocca 'Salva nei miei modelli'.",
+  "aitCanli": "IA dal vivo",
+  "aitSac": "Cambia capelli",
+  "aitKiyafet": "Prova vestiti",
+  "aitMakyaj": "Trucco & unghie",
+  "aitSor": "Chiedi a Gloxoo",
+  "aitResim": "Immagini & disegno",
+  "aitMuhasebe": "Contabilità & documenti",
+  "aitAynaBtn": "Specchio virtuale",
+  "aitGloxBtn": "Chiedi a Gloxoo",
+  "aitAlt": "Prova acconciature/abiti sulla tua foto, chiedi tutto a Gloxoo — subito, nella tua lingua."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1222,7 +1302,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "Salvar em Meus modelos",
   "saKaydedildi": "Salvo",
   "saModelSilOnay": "Excluir este modelo?",
-  "saGaleriBos": "Ainda sem modelos salvos. Crie um e toque em 'Salvar em Meus modelos'."
+  "saGaleriBos": "Ainda sem modelos salvos. Crie um e toque em 'Salvar em Meus modelos'.",
+  "aitCanli": "IA ao vivo",
+  "aitSac": "Mude o cabelo",
+  "aitKiyafet": "Experimente roupas",
+  "aitMakyaj": "Maquiagem & unhas",
+  "aitSor": "Pergunte ao Gloxoo",
+  "aitResim": "Imagens & desenho",
+  "aitMuhasebe": "Contabilidade & documentos",
+  "aitAynaBtn": "Espelho virtual",
+  "aitGloxBtn": "Pergunte ao Gloxoo",
+  "aitAlt": "Experimente cabelos/roupas na sua foto, pergunte tudo ao Gloxoo — na hora, no seu idioma."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1358,7 +1448,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "حفظ في نماذجي",
   "saKaydedildi": "تم الحفظ",
   "saModelSilOnay": "حذف هذا النموذج؟",
-  "saGaleriBos": "لا نماذج محفوظة بعد. أنشئ نموذجًا ثم اضغط 'حفظ في نماذجي' بالأسفل."
+  "saGaleriBos": "لا نماذج محفوظة بعد. أنشئ نموذجًا ثم اضغط 'حفظ في نماذجي' بالأسفل.",
+  "aitCanli": "ذكاء اصطناعي مباشر",
+  "aitSac": "غيّر شعرك",
+  "aitKiyafet": "جرّب ملابس",
+  "aitMakyaj": "مكياج وأظافر",
+  "aitSor": "اسأل Gloxoo",
+  "aitResim": "صور ورسم",
+  "aitMuhasebe": "محاسبة ومستندات",
+  "aitAynaBtn": "المرآة الافتراضية",
+  "aitGloxBtn": "اسأل Gloxoo",
+  "aitAlt": "جرّب تسريحات/ملابس على صورتك واسأل Gloxoo أي شيء — فورًا وبلغتك."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1494,7 +1594,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "मेरे मॉडल में सहेजें",
   "saKaydedildi": "सहेजा गया",
   "saModelSilOnay": "इस मॉडल को हटाएं?",
-  "saGaleriBos": "अभी कोई सहेजा मॉडल नहीं। एक बनाएं, फिर नीचे 'मेरे मॉडल में सहेजें' दबाएं।"
+  "saGaleriBos": "अभी कोई सहेजा मॉडल नहीं। एक बनाएं, फिर नीचे 'मेरे मॉडल में सहेजें' दबाएं।",
+  "aitCanli": "लाइव AI",
+  "aitSac": "बाल बदलें",
+  "aitKiyafet": "कपड़े आज़माएं",
+  "aitMakyaj": "मेकअप और नाखून",
+  "aitSor": "Gloxoo से पूछें",
+  "aitResim": "चित्र और ड्रॉइंग",
+  "aitMuhasebe": "लेखा और दस्तावेज़",
+  "aitAynaBtn": "वर्चुअल मिरर",
+  "aitGloxBtn": "Gloxoo से पूछें",
+  "aitAlt": "अपनी फ़ोटो पर बाल/कपड़े आज़माएं, Gloxoo से कुछ भी पूछें — तुरंत, आपकी भाषा में।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1630,7 +1740,17 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "保存到我的造型",
   "saKaydedildi": "已保存",
   "saModelSilOnay": "删除这个造型？",
-  "saGaleriBos": "还没有保存的造型。先生成一个，然后点下方“保存到我的造型”。"
+  "saGaleriBos": "还没有保存的造型。先生成一个，然后点下方“保存到我的造型”。",
+  "aitCanli": "实时 AI",
+  "aitSac": "换发型",
+  "aitKiyafet": "试穿衣服",
+  "aitMakyaj": "妆容和美甲",
+  "aitSor": "问 Gloxoo",
+  "aitResim": "图片和绘画",
+  "aitMuhasebe": "记账和文档",
+  "aitAynaBtn": "虚拟镜子",
+  "aitGloxBtn": "问 Gloxoo",
+  "aitAlt": "在你的照片上试发型/服装，随时问 Gloxoo — 即时，用你的语言。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -1766,6 +1886,16 @@ export const CEVIRI_EKSIK7 = {
   "saKaydet": "マイモデルに保存",
   "saKaydedildi": "保存しました",
   "saModelSilOnay": "このモデルを削除しますか？",
-  "saGaleriBos": "保存済みのモデルはまだありません。作成して下の「マイモデルに保存」を押してください。"
+  "saGaleriBos": "保存済みのモデルはまだありません。作成して下の「マイモデルに保存」を押してください。",
+  "aitCanli": "ライブAI",
+  "aitSac": "髪を変える",
+  "aitKiyafet": "服を試す",
+  "aitMakyaj": "メイク＆ネイル",
+  "aitSor": "Gloxooに聞く",
+  "aitResim": "画像＆お絵かき",
+  "aitMuhasebe": "会計＆書類",
+  "aitAynaBtn": "バーチャルミラー",
+  "aitGloxBtn": "Gloxooに聞く",
+  "aitAlt": "写真で髪や服を試して、Gloxooに何でも質問 — すぐに、あなたの言葉で。"
  }
 };

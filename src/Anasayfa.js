@@ -42,6 +42,37 @@ import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim 
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
 
+// CANLI YAPAY ZEKÂ TANITIM KARTI — ana sayfa akışının ARASINA girer (kullanıcı: "ana sayfada canlı yapay zeka tanıtımı, akışta araya girsin").
+// Dönen örnekler + altın parıltı ile "canlı" durur; düğmeler Sanal Ayna'yı ve Gloxoo sohbetini açar.
+function AiTanitimKart({ t, onAyna, onGloxoo }) {
+  const ornekler = [
+    { ik: "💇", ad: t("aitSac", "Saçını değiştir") },
+    { ik: "👗", ad: t("aitKiyafet", "Kıyafet dene") },
+    { ik: "💅", ad: t("aitMakyaj", "Makyaj & tırnak") },
+    { ik: "💬", ad: t("aitSor", "Gloxoo'ya sor") },
+    { ik: "🎨", ad: t("aitResim", "Resim & çizim") },
+    { ik: "📊", ad: t("aitMuhasebe", "Muhasebe & belge") },
+  ];
+  const [i, setI] = useState(0);
+  useEffect(() => { const id = setInterval(() => setI((x) => (x + 1) % ornekler.length), 2000); return () => clearInterval(id); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const o = ornekler[i];
+  return (
+    <article className="ana-post ai-tanit-kart">
+      <div className="ai-tanit-ust">
+        <span className="ai-tanit-tas" aria-hidden="true">◈</span>
+        <div className="ai-tanit-baslik"><b className="notranslate" translate="no">GLOXORG</b> <span>{t("aitCanli", "Canlı Yapay Zekâ")}</span></div>
+        <span className="ai-tanit-rozet">✦ AI</span>
+      </div>
+      <div className="ai-tanit-donen"><span className="ai-tanit-ik" key={"ik" + i}>{o.ik}</span><span className="ai-tanit-metin" key={"m" + i}>{o.ad}</span></div>
+      <div className="ai-tanit-alt">{t("aitAlt", "Fotoğrafında saç/kıyafet dene, Gloxoo'ya her şeyi sor — anında, senin dilinde.")}</div>
+      <div className="ai-tanit-dugmeler">
+        <button className="ai-tanit-btn ayna" onClick={onAyna}>🪞 {t("aitAynaBtn", "Sanal Ayna")}</button>
+        <button className="ai-tanit-btn glox" onClick={onGloxoo}>💬 {t("aitGloxBtn", "Gloxoo'ya sor")}</button>
+      </div>
+    </article>
+  );
+}
+
 // ElitePazar AYRI PARÇA (code-split): ilk açılışta inmez, sadece Elite'e girince yüklenir.
 // Böylece ana paket küçülür + Elite'i her düzenlediğimizde kullanıcı tüm paketi değil sadece bu küçük parçayı indirir.
 const ElitePazar = lazy(() => import("./ElitePazar"));
@@ -8502,7 +8533,15 @@ export default function Anasayfa({ pro = false }) {
             }).flatMap((node, idx, arr) => {
               /* Makara şeridi akışta SADECE BİR KERE geçer (3. gönderiden sonra; feed kısaysa son gönderiden sonra) — tekrarlanmaz (performans + kullanıcı isteği) */
               const sokIndex = Math.min(2, arr.length - 1);
-              return (idx === sokIndex && reelListesi.length > 0) ? [node, reelsSeridi("reelserit")] : node;
+              const parcalar = [node];
+              if (idx === sokIndex && reelListesi.length > 0) parcalar.push(reelsSeridi("reelserit"));
+              // CANLI YAPAY ZEKÂ TANITIMI — akışın ARASINA gir (4. gönderiden sonra, sonra her 9 gönderide bir tekrar)
+              if (idx === Math.min(3, arr.length - 1) || (idx > 3 && (idx - 3) % 9 === 0)) {
+                parcalar.push(<AiTanitimKart key={"aitanit-" + idx} t={t}
+                  onAyna={() => { try { setSanalAynaBaslangic(null); } catch (e) {} setAktifKod("ayna"); }}
+                  onGloxoo={() => { try { setYardimciMod("sohbet"); setYardimciAcik(true); } catch (e) {} }} />);
+              }
+              return parcalar;
             }).concat(feedTam.length > feedGoster ? <div key="feed-nob" ref={feedSonRef} className="feed-nobetci" aria-hidden="true" /> : []); })()}
             </div>
           </div>
