@@ -8051,7 +8051,7 @@ export default function Anasayfa({ pro = false }) {
       {/* PENCERELER — parmakla sola/sağa kaydırınca veya düğmeye basınca DEĞİŞİR */}
       {aktifKod === "ayna" ? (
         <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>🪞 …</div>}>
-          <SanalAyna sayfaModu baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setAktifKod("home"); setSanalAynaBaslangic(null); }} />
+          <SanalAyna sayfaModu baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setAktifKod("home"); setSanalAynaBaslangic(null); }} onGloxorgPaylas={(d) => { setAktifKod("home"); setSanalAynaBaslangic(null); resimGloxordaPaylas(d); }} />
         </Suspense>
       ) : aktifKod === "muhasebe" ? (
         <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>📊 …</div>}>

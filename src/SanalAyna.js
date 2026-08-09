@@ -120,7 +120,7 @@ function Buyut({ url, onKapat }) {
   );
 }
 
-export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
+export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onGloxorgPaylas }) {
   const { t, i18n } = useTranslation();
   // Çip yazısını kullanıcının diline çevir; değer (state) Türkçe kalır ki yapay zekâ istemi bozulmasın.
   const ac = (etiket) => { const d = (i18n && i18n.language ? String(i18n.language).slice(0, 2) : "tr"); return (AYNA_CEV[etiket] && AYNA_CEV[etiket][d]) || etiket; };
@@ -144,6 +144,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
   const [kareIlerleme, setKareIlerleme] = useState(0); // kaç kare hazır (ilerleme göstergesi)
   const [kareIdx, setKareIdx] = useState(0);      // oynatmada gösterilen kare
   const [oynat, setOynat] = useState(false);      // oynatılıyor mu
+  const [mankenTamEkran, setMankenTamEkran] = useState(false); // manken animasyonu TAM EKRAN oynasın (ekran videosu almak için)
   // MODELLERİM GALERİSİ — ürettiğin her sonucu kalıcı sakla (görsel IndexedDB'de, liste localStorage'da); sonra görüntüle/paylaş/sil.
   const [modeller, setModeller] = useState(() => { try { return JSON.parse(localStorage.getItem("gw_ayna_modeller") || "[]"); } catch (e) { return []; } });
   const [galeriAcik, setGaleriAcik] = useState(false);
@@ -222,6 +223,15 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
       const kisiIng = (KISILER.find((x) => x.k === kisi) || {}).ing || "person";
       const renkKismi = renk ? ` Color: ${renk}.` : "";
+      // CİNSİYETE GÖRE ayakkabı/stil (kullanıcı: bazen erkeğe bayan ayakkabısı giydiriyordu)
+      const erkekMi = (kisi === "erkek" || kisi === "erkekcocuk");
+      const O = erkekMi ? "him" : "her";      // nesne (him/her)
+      const OO = erkekMi ? "he" : "she";      // özne (he/she)
+      const IYE = erkekMi ? "his" : "her";    // iyelik (his/her)
+      const ayakkabiIng = erkekMi
+        ? "appropriate MEN'S shoes (dress shoes, loafers, boots or clean sneakers) — NEVER women's heels, sandals or women's shoes"
+        : "elegant WOMEN'S shoes that suit the outfit (heels, flats or sandals) — NEVER men's shoes or boots";
+      const cinsNot = ` VERY IMPORTANT: this person is a ${kisiIng}; the clothing, SHOES and styling MUST match this gender — never put women's shoes/heels on a man, never put men's shoes on a woman.`;
       // PROFESYONEL STÜDYO KALİTESİ (kullanıcı: sonuç reklamlardaki gibi kaliteli olsun, sönük/dandik değil).
       const KALITE = "Ultra photorealistic, professional studio photography, soft cinematic flattering lighting, sharp focus, ultra-high resolution, fashion-magazine quality, clean elegant background, natural skin texture. It must stay the SAME real person — do NOT beautify, slim, age or change the face. Exactly ONE person, no duplicate or extra face. No text, no watermark, no logo.";
       const boyKategori = (kategori === "elbise" || kategori === "ayakkabi");
@@ -231,16 +241,16 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
         ref2 = { base64: refFoto.split(",")[1] || "", mediaType: refMime };
         const urunTip = { elbise: "the outfit/garment", ayakkabi: "the pair of shoes", canta: "the bag", aksesuar: "the accessory", makyaj: "the makeup look", sac: "the hairstyle", tirnak: "the nails" }[kategori] || "the product";
         const tarifKismi = (baslangic && baslangic.tarif) ? ` Product details — ${baslangic.tarif}.` : "";
-        istem = `Take the ${kisiIng} from the FIRST image and show her actually WEARING the ${urunTip} from the SECOND image.
-MUST DO — dress her in that exact product: copy its exact print, pattern, colors, neckline, sleeves, fabric and full length from image 2.${tarifKismi} COMPLETELY remove and replace her current clothes (jacket, vest, top, everything) — no old clothing left on any part of her; BOTH arms and both shoulders wear the new product.
-KEEP HER REAL FACE (most important): her face, head and hair must stay EXACTLY as the woman in image 1 — identical eyes, nose, mouth, eyebrows, face shape, age, skin tone and hair. Do NOT beautify her, do NOT make her younger, slimmer or prettier, do NOT turn her into a fashion model or a different woman. It must be recognizably the SAME real person from image 1. Only her CLOTHES change; her face does NOT. Keep a similar natural background.
-SHOW her FULL BODY from head to feet, standing naturally, wearing elegant WOMEN'S shoes that suit the dress (heels/flats/sandals — NEVER men's shoes, boots or sneakers). If it is a long/maxi dress, show it FULL-LENGTH to the floor with ALL its tiers. Put her face near the TOP and extend the picture DOWNWARD to her feet — do NOT stop at the waist, do NOT add empty sky above her head, nothing cut off at the bottom.${renkKismi}
-Present it like a high-end fashion studio photo: elegant pose, soft cinematic lighting, clean background.${renkKismi}
+        istem = `Take the ${kisiIng} from the FIRST image and show ${O} actually WEARING the ${urunTip} from the SECOND image.
+MUST DO — dress ${O} in that exact product: copy its exact print, pattern, colors, neckline, sleeves, fabric and full length from image 2.${tarifKismi} COMPLETELY remove and replace ${IYE} current clothes (jacket, vest, top, everything) — no old clothing left on any part of ${O}; both arms and both shoulders wear the new product.
+KEEP ${IYE.toUpperCase()} REAL FACE (most important): ${IYE} face, head and hair must stay EXACTLY as the ${kisiIng} in image 1 — identical eyes, nose, mouth, eyebrows, face shape, age, skin tone and hair. Do NOT beautify ${O}, do NOT make ${O} younger, slimmer or prettier, do NOT turn ${O} into a fashion model or a different person. It must be recognizably the SAME real person from image 1. Only ${IYE} CLOTHES change; ${IYE} face does NOT. Keep a similar natural background.
+SHOW ${IYE} FULL BODY from head to feet, standing naturally, wearing ${ayakkabiIng}. If it is a long/maxi dress, show it FULL-LENGTH to the floor with ALL its tiers. Put the face near the TOP and extend the picture DOWNWARD to the feet — do NOT stop at the waist, do NOT add empty sky above the head, nothing cut off at the bottom.${renkKismi}
+Present it like a high-end fashion studio photo: elegant pose, soft cinematic lighting, clean background.${renkKismi}${cinsNot}
 ${KALITE}
-IMPORTANT: the result MUST look different from image 1 — she is now wearing the new product, NOT her original clothes. If she still wears her old jacket/vest, it is WRONG.`;
+IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing the new product, NOT ${IYE} original clothes.`;
       } else if (boyKategori) {
         // KIYAFET / AYAKKABI → TAM BOY profesyonel moda çekimi (reklamdaki kırmızı elbise gibi)
-        istem = `The person in this photo is a ${kisiIng}. Show the SAME person wearing this ${cfg.ne}: "${model.trim()}".${renkKismi} ${cfg.koru} Show a FULL-BODY shot from head to feet, standing in an elegant natural pose like a professional fashion studio / runway photo, wearing suitable elegant WOMEN'S shoes. Put the face near the TOP and extend downward to the feet — nothing cut off at waist or bottom, no empty space above the head. ${KALITE}`;
+        istem = `The person in this photo is a ${kisiIng}. Show the SAME person wearing this ${cfg.ne}: "${model.trim()}".${renkKismi} ${cfg.koru} Show a FULL-BODY shot from head to feet, standing in an elegant natural pose like a professional fashion studio / runway photo, wearing ${ayakkabiIng}. Put the face near the TOP and extend downward to the feet — nothing cut off at waist or bottom, no empty space above the head.${cinsNot} ${KALITE}`;
       } else {
         // SAÇ / MAKYAJ / TIRNAK / AKSESUAR → net, iyi ışıklı yakın çekim (o özellik iyi görünsün)
         istem = `The person in this photo is a ${kisiIng}. Realistically apply this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Clean, well-lit portrait so the new ${cfg.ne} is clearly and beautifully visible. ${KALITE}`;
@@ -278,7 +288,8 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
   // CANLI MANKEN — kareleri belli aralıkla döndürerek oynat (flipbook → dönen manken hissi)
   useEffect(() => {
     if (!oynat || kareler.length < 2) return;
-    const id = setInterval(() => setKareIdx((i) => (i + 1) % kareler.length), 650);
+    // Daha SAKİN geçiş (kullanıcı: "çabuk/hızlı geçiyor") — her kare ~1.5 sn dursun, yumuşak dönsün
+    const id = setInterval(() => setKareIdx((i) => (i + 1) % kareler.length), 1500);
     return () => clearInterval(id);
   }, [oynat, kareler.length]); // eslint-disable-line react-hooks/exhaustive-deps
   // CANLI MANKEN ÜRET — mevcut sonucu (önden görünüş) 1. kare al, aynı kişi+kıyafeti başka açılardan üret, sonra döndür.
@@ -327,9 +338,9 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
   const renkler = renkGetir(kategori);
   const reklamdan = !!(baslangic && baslangic.refFotoUrl); // reklamdan gelindi → ürün SABİT, seçicileri gizle
   return (
-    <div className={sayfaModu ? "sa-sayfa" : "sa-fon"} onClick={(e) => { if (!sayfaModu && e.target === e.currentTarget) onKapat(); }}
-      onTouchStart={(e) => { try { if (e.target.closest && e.target.closest("input, textarea, select, .sa-urun-serit, .sa-renk-serit, .sa-serit, .sa-kats, .sa-foto-buyut, .say-serit")) { dokunRef.current = null; return; } const d = e.touches[0]; dokunRef.current = { x: d.clientX, y: d.clientY }; } catch (x) { dokunRef.current = null; } }}
-      onTouchEnd={(e) => { const b = dokunRef.current; dokunRef.current = null; if (!b || buyuk) return; try { const d = e.changedTouches[0]; const dx = d.clientX - b.x, dy = d.clientY - b.y; if (dx < -70 && Math.abs(dx) > Math.abs(dy) * 2 && onKapat) onKapat(); } catch (x) {} }}>
+    <div className={sayfaModu ? "sa-sayfa" : "sa-fon"} onClick={(e) => { if (!sayfaModu && e.target === e.currentTarget) onKapat(); }}>
+      {/* ⛔ PARMAKLA SOLA ÇEKİNCE SAYFA KAPANMASI KALDIRILDI (kullanıcı: "yaptıklarım kayboluyor").
+          Sanal Ayna artık SADECE düğmeyle/geri tuşuyla kapanır; içeride parmakla serit kaydırmak sayfayı kapatmaz. */}
       <div className="sa-pencere">
         {/* SAYFA MODUNDA: üst şerit + ikonlar zaten yukarıda (diğer sayfalar gibi) → buradaki başlık/X gösterme (X ana sayfaya atıyordu).
             PENCERE modunda (eski): kendi başlığı + X. */}
@@ -459,8 +470,12 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
               <div className="sa-sonuc-dugmeler">
                 <button className={"sa-kaydet-model" + (kaydedildi ? " indi" : "")} onClick={kaydetModel}>{kaydedildi ? "✓ " + t("saKaydedildi", "Modellerime eklendi") : "💾 " + t("saKaydet", "Modellerime kaydet")}</button>
                 <button className={"sa-indir" + (indirildi ? " indi" : "")} onClick={indir}>{indirildi ? "✓ " + t("saIndirildi", "İndirildi") : "⬇️ " + t("saIndir", "İndir")}</button>
-                <button className="sa-paylas" onClick={paylas}>📤 {t("saPaylas", "Paylaş")}</button>
                 <button className="sa-tekrar" onClick={() => { setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0); }}>🔁 {t("saTekrar", "Başka model dene")}</button>
+              </div>
+              {/* PAYLAŞ — hem GLOXORG'da (kendi feed'in) hem diğer platformlar (WhatsApp/Instagram vb.) */}
+              <div className="sa-paylas-satir">
+                {onGloxorgPaylas && <button className="sa-paylas-glox" onClick={() => onGloxorgPaylas(sonuc)}>💎 {t("saGloxordaPaylas", "GLOXORG'da paylaş")}</button>}
+                <button className="sa-paylas-diger" onClick={paylas}>📤 {t("saDigerPaylas", "Diğer platformlar")}</button>
               </div>
 
               {/* 🎬 CANLI MANKEN — aynı kişi+aynı kıyafet birçok açıdan üretilip döndürülür (reklamdaki gibi dönen manken) */}
@@ -471,13 +486,17 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
               </button>
               {kareler.length >= 2 && (
                 <div className="sa-manken">
-                  <img src={kareler[kareIdx]} alt="" onClick={() => setBuyuk(kareler[kareIdx])} style={{ cursor: "zoom-in" }} />
+                  <img key={kareIdx} src={kareler[kareIdx]} alt="" onClick={() => setBuyuk(kareler[kareIdx])} style={{ cursor: "zoom-in" }} />
                   <div className="sa-manken-dug">
                     <button onClick={() => setOynat((o) => !o)}>{oynat ? "⏸ " + t("saDurdur", "Durdur") : "▶️ " + t("saOynat", "Oynat")}</button>
-                    <button onClick={() => paylasVer(kareler[kareIdx], model || kategori)}>📤 {t("saPaylas", "Paylaş")}</button>
+                    <button onClick={() => { setOynat(true); setMankenTamEkran(true); }}>🔳 {t("saTamEkran", "Tam ekran")}</button>
+                  </div>
+                  <div className="sa-manken-dug">
+                    {onGloxorgPaylas && <button onClick={() => onGloxorgPaylas(kareler[kareIdx])}>💎 {t("saGloxordaPaylas", "GLOXORG'da paylaş")}</button>}
+                    <button onClick={() => paylasVer(kareler[kareIdx], model || kategori)}>📤 {t("saDigerPaylas", "Diğer platformlar")}</button>
                     <button onClick={() => indirVer(kareler[kareIdx], model || kategori)}>⬇️ {t("saIndir", "İndir")}</button>
                   </div>
-                  <div className="sa-manken-not">💡 {t("saMankenNot", "Aynı kişi ve kıyafet birçok açıdan gösteriliyor — dönen manken. Video kaydetmek istersen telefonun EKRAN KAYDI ile bu dönüşü çekebilirsin.")}</div>
+                  <div className="sa-manken-not">💡 {t("saMankenNot2", "Video kaydetmek için: '🔳 Tam ekran'a bas, manken TAM SAYFA döner; telefonunun EKRAN KAYDI ile o dönüşü çek. Böylece sadece manken videosu olur.")}</div>
                 </div>
               )}
             </div>
@@ -485,6 +504,14 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
         </div>
       </div>
       {buyuk && <Buyut url={buyuk} onKapat={() => setBuyuk("")} />}
+      {/* CANLI MANKEN — TAM EKRAN oynatıcı: manken tam sayfa döner → kullanıcı EKRAN KAYDI ile videosunu alır. Zemin ALTIN (siyah yok). */}
+      {mankenTamEkran && kareler.length >= 2 && (
+        <div className="sa-manken-tam" onClick={() => setMankenTamEkran(false)}>
+          <img key={kareIdx} src={kareler[kareIdx]} alt="" />
+          <button className="sa-manken-tam-kapat" onClick={(e) => { e.stopPropagation(); setMankenTamEkran(false); }} aria-label={t("kapat", "Kapat")}>✕</button>
+          <div className="sa-manken-tam-not">🎥 {t("saTamEkranNot", "Telefonun EKRAN KAYDINI başlat — manken dönüyor. Bitince ✕ ile kapat.")}</div>
+        </div>
+      )}
     </div>
   );
 }

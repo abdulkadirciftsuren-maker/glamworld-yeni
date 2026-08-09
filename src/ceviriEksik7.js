@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) + Canli Manken (saManken*) + Sarki Tanima (sarki*) + Ayna duzen (saNeDenensin/saRenkDokun) anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Sanal Ayna + Canli Manken + Sarki Tanima + Ayna duzen + manken tam ekran/paylas (saTamEkran/saMankenNot2/saGloxordaPaylas/saDigerPaylas) anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -158,7 +158,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Ses alınamadı, tekrar dene",
   "sarkiOlmadi": "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene.",
   "saNeDenensin": "Ne denensin?",
-  "saRenkDokun": "dokun ve seç"
+  "saRenkDokun": "dokun ve seç",
+  "saTamEkran": "Tam ekran",
+  "saTamEkranNot": "Telefonun EKRAN KAYDINI başlat — manken dönüyor. Bitince ✕ ile kapat.",
+  "saMankenNot2": "Video kaydetmek için: '🔳 Tam ekran'a bas, manken TAM SAYFA döner; telefonunun EKRAN KAYDI ile o dönüşü çek. Böylece sadece manken videosu olur.",
+  "saGloxordaPaylas": "GLOXORG'da paylaş",
+  "saDigerPaylas": "Diğer platformlar"
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -318,7 +323,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Couldn't get the audio, try again",
   "sarkiOlmadi": "Couldn't recognize it right now. Turn the volume up a bit (hold it near the music) and try again.",
   "saNeDenensin": "What to try?",
-  "saRenkDokun": "tap to pick"
+  "saRenkDokun": "tap to pick",
+  "saTamEkran": "Full screen",
+  "saTamEkranNot": "Start your phone's SCREEN RECORDER — the model is rotating. Tap ✕ when done.",
+  "saMankenNot2": "To save a video: tap '🔳 Full screen', the model rotates FULL PAGE; capture it with your phone's SCREEN RECORDER. That way you get just the model video.",
+  "saGloxordaPaylas": "Share on GLOXORG",
+  "saDigerPaylas": "Other platforms"
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -478,7 +488,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Ton konnte nicht erfasst werden, versuche es erneut",
   "sarkiOlmadi": "Konnte es gerade nicht erkennen. Dreh die Lautstärke etwas auf (nah an die Musik halten) und versuch es erneut.",
   "saNeDenensin": "Was ausprobieren?",
-  "saRenkDokun": "tippen zum Wählen"
+  "saRenkDokun": "tippen zum Wählen",
+  "saTamEkran": "Vollbild",
+  "saTamEkranNot": "Starte die BILDSCHIRMAUFNAHME deines Handys — das Model dreht sich. Zum Beenden ✕ tippen.",
+  "saMankenNot2": "Um ein Video zu speichern: Tippe auf '🔳 Vollbild', das Model dreht sich GANZSEITIG; nimm es mit der BILDSCHIRMAUFNAHME deines Handys auf. So bekommst du nur das Model-Video.",
+  "saGloxordaPaylas": "Auf GLOXORG teilen",
+  "saDigerPaylas": "Andere Plattformen"
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -638,7 +653,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Не удалось получить звук, попробуйте снова",
   "sarkiOlmadi": "Сейчас не удалось распознать. Сделай погромче (поднеси к музыке) и попробуй снова.",
   "saNeDenensin": "Что примерить?",
-  "saRenkDokun": "нажмите, чтобы выбрать"
+  "saRenkDokun": "нажмите, чтобы выбрать",
+  "saTamEkran": "Полный экран",
+  "saTamEkranNot": "Включите ЗАПИСЬ ЭКРАНА телефона — модель вращается. Нажмите ✕, когда закончите.",
+  "saMankenNot2": "Чтобы сохранить видео: нажмите '🔳 Полный экран', модель вращается на ВЕСЬ ЭКРАН; запишите её ЗАПИСЬЮ ЭКРАНА телефона. Так получится только видео модели.",
+  "saGloxordaPaylas": "Поделиться в GLOXORG",
+  "saDigerPaylas": "Другие платформы"
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -798,7 +818,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Не вдалося отримати звук, спробуйте ще раз",
   "sarkiOlmadi": "Зараз не вдалося розпізнати. Зроби гучніше (піднеси до музики) і спробуй ще раз.",
   "saNeDenensin": "Що приміряти?",
-  "saRenkDokun": "натисніть, щоб вибрати"
+  "saRenkDokun": "натисніть, щоб вибрати",
+  "saTamEkran": "Повний екран",
+  "saTamEkranNot": "Увімкніть ЗАПИС ЕКРАНА телефона — модель обертається. Натисніть ✕, коли завершите.",
+  "saMankenNot2": "Щоб зберегти відео: натисніть '🔳 Повний екран', модель обертається на ВЕСЬ ЕКРАН; запишіть це ЗАПИСОМ ЕКРАНА телефона. Так вийде лише відео моделі.",
+  "saGloxordaPaylas": "Поділитися в GLOXORG",
+  "saDigerPaylas": "Інші платформи"
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -958,7 +983,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "No se pudo captar el audio, inténtalo de nuevo",
   "sarkiOlmadi": "No pude reconocerla ahora. Sube un poco el volumen (acércalo a la música) e inténtalo de nuevo.",
   "saNeDenensin": "¿Qué probar?",
-  "saRenkDokun": "toca para elegir"
+  "saRenkDokun": "toca para elegir",
+  "saTamEkran": "Pantalla completa",
+  "saTamEkranNot": "Inicia la GRABACIÓN DE PANTALLA de tu teléfono — la modelo está girando. Toca ✕ al terminar.",
+  "saMankenNot2": "Para guardar un video: toca '🔳 Pantalla completa', la modelo gira a PÁGINA COMPLETA; grábalo con la GRABACIÓN DE PANTALLA de tu teléfono. Así obtienes solo el video de la modelo.",
+  "saGloxordaPaylas": "Compartir en GLOXORG",
+  "saDigerPaylas": "Otras plataformas"
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1118,7 +1148,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Impossible de capter le son, réessaie",
   "sarkiOlmadi": "Je n'ai pas pu la reconnaître. Monte un peu le son (approche-le de la musique) et réessaie.",
   "saNeDenensin": "Essayer quoi ?",
-  "saRenkDokun": "touche pour choisir"
+  "saRenkDokun": "touche pour choisir",
+  "saTamEkran": "Plein écran",
+  "saTamEkranNot": "Lance l'ENREGISTREMENT D'ÉCRAN de ton téléphone — le mannequin tourne. Appuie sur ✕ quand tu as fini.",
+  "saMankenNot2": "Pour enregistrer une vidéo : appuie sur '🔳 Plein écran', le mannequin tourne en PLEINE PAGE ; capture-le avec l'ENREGISTREMENT D'ÉCRAN de ton téléphone. Ainsi tu n'as que la vidéo du mannequin.",
+  "saGloxordaPaylas": "Partager sur GLOXORG",
+  "saDigerPaylas": "Autres plateformes"
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1278,7 +1313,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Impossibile acquisire l'audio, riprova",
   "sarkiOlmadi": "Non sono riuscito a riconoscerla ora. Alza un po' il volume (avvicinalo alla musica) e riprova.",
   "saNeDenensin": "Cosa provare?",
-  "saRenkDokun": "tocca per scegliere"
+  "saRenkDokun": "tocca per scegliere",
+  "saTamEkran": "Schermo intero",
+  "saTamEkranNot": "Avvia la REGISTRAZIONE SCHERMO del telefono — la modella sta ruotando. Tocca ✕ quando hai finito.",
+  "saMankenNot2": "Per salvare un video: tocca '🔳 Schermo intero', la modella ruota a PAGINA INTERA; registrala con la REGISTRAZIONE SCHERMO del telefono. Così ottieni solo il video della modella.",
+  "saGloxordaPaylas": "Condividi su GLOXORG",
+  "saDigerPaylas": "Altre piattaforme"
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1438,7 +1478,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "Não foi possível captar o áudio, tente novamente",
   "sarkiOlmadi": "Não consegui reconhecer agora. Aumente um pouco o volume (aproxime da música) e tente de novo.",
   "saNeDenensin": "O que experimentar?",
-  "saRenkDokun": "toque para escolher"
+  "saRenkDokun": "toque para escolher",
+  "saTamEkran": "Tela cheia",
+  "saTamEkranNot": "Inicie a GRAVAÇÃO DE TELA do seu telefone — o modelo está girando. Toque em ✕ ao terminar.",
+  "saMankenNot2": "Para salvar um vídeo: toque em '🔳 Tela cheia', o modelo gira em PÁGINA INTEIRA; capture com a GRAVAÇÃO DE TELA do telefone. Assim você tem só o vídeo do modelo.",
+  "saGloxordaPaylas": "Compartilhar no GLOXORG",
+  "saDigerPaylas": "Outras plataformas"
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1598,7 +1643,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "تعذّر التقاط الصوت، حاول مجددًا",
   "sarkiOlmadi": "لم أتمكن من التعرف عليها الآن. ارفع الصوت قليلًا (قرّبه من الموسيقى) وحاول مجددًا.",
   "saNeDenensin": "ماذا تجرب؟",
-  "saRenkDokun": "اضغط للاختيار"
+  "saRenkDokun": "اضغط للاختيار",
+  "saTamEkran": "ملء الشاشة",
+  "saTamEkranNot": "ابدأ تسجيل الشاشة في هاتفك — العارضة تدور. اضغط ✕ عند الانتهاء.",
+  "saMankenNot2": "لحفظ فيديو: اضغط '🔳 ملء الشاشة'، تدور العارضة بملء الصفحة؛ سجّلها بتسجيل الشاشة في هاتفك. هكذا تحصل على فيديو العارضة فقط.",
+  "saGloxordaPaylas": "شارك على GLOXORG",
+  "saDigerPaylas": "منصات أخرى"
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1758,7 +1808,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "ऑडियो नहीं मिल सका, फिर कोशिश करें",
   "sarkiOlmadi": "अभी पहचान नहीं सका। आवाज़ थोड़ी बढ़ाएं (संगीत के पास रखें) और फिर कोशिश करें।",
   "saNeDenensin": "क्या आज़माएं?",
-  "saRenkDokun": "चुनने के लिए दबाएं"
+  "saRenkDokun": "चुनने के लिए दबाएं",
+  "saTamEkran": "पूरी स्क्रीन",
+  "saTamEkranNot": "अपने फोन का स्क्रीन रिकॉर्डर शुरू करें — मॉडल घूम रहा है। समाप्त होने पर ✕ दबाएं।",
+  "saMankenNot2": "वीडियो सहेजने के लिए: '🔳 पूरी स्क्रीन' दबाएं, मॉडल पूरे पेज पर घूमता है; अपने फोन के स्क्रीन रिकॉर्डर से इसे कैप्चर करें। इस तरह सिर्फ मॉडल का वीडियो मिलेगा।",
+  "saGloxordaPaylas": "GLOXORG पर साझा करें",
+  "saDigerPaylas": "अन्य प्लेटफ़ॉर्म"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1918,7 +1973,12 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "未能获取声音，请重试",
   "sarkiOlmadi": "现在无法识别。请把音量调大一点（靠近音乐）再试一次。",
   "saNeDenensin": "试什么？",
-  "saRenkDokun": "点击选择"
+  "saRenkDokun": "点击选择",
+  "saTamEkran": "全屏",
+  "saTamEkranNot": "开启手机的屏幕录制——模特正在旋转。完成后点击 ✕。",
+  "saMankenNot2": "要保存视频：点击'🔳 全屏'，模特全页旋转；用手机的屏幕录制功能录下。这样就只有模特的视频。",
+  "saGloxordaPaylas": "在 GLOXORG 分享",
+  "saDigerPaylas": "其他平台"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2078,6 +2138,11 @@ export const CEVIRI_EKSIK7 = {
   "sarkiDuyulmadi": "音声を取得できませんでした。もう一度お試しください",
   "sarkiOlmadi": "今は認識できませんでした。音量を少し上げて（音楽に近づけて）もう一度お試しください。",
   "saNeDenensin": "何を試す？",
-  "saRenkDokun": "タップして選ぶ"
+  "saRenkDokun": "タップして選ぶ",
+  "saTamEkran": "全画面",
+  "saTamEkranNot": "スマホの画面録画を開始してください——モデルが回転しています。終わったら ✕ を押してください。",
+  "saMankenNot2": "動画を保存するには：'🔳 全画面'を押すとモデルが全画面で回転します。スマホの画面録画で撮影してください。そうすればモデルの動画だけになります。",
+  "saGloxordaPaylas": "GLOXORGで共有",
+  "saDigerPaylas": "他のプラットフォーム"
  }
 };
