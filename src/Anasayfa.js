@@ -102,8 +102,14 @@ const Reklam = lazy(() => import("./Reklam"));
 // 🎵 GLOXORG HAZIR MÜZİK KÜTÜPHANESİ — TELİFSİZ/serbest şarkılar (müşteri paylaşımına buradan da seçebilir).
 // Her öğe: { ad, url }. url = Firebase Storage'daki (herkese açık okuma) ses dosyası bağlantısı.
 // ⛔ Telifli/popüler şarkı (Spotify vb.) KONULMAZ — yasal değil. Buraya sadece telifsiz parçalar eklenir.
-// Şimdilik boş; sahibi telifsiz parça ekledikçe büyür (kullanıcı isteği: hazır kütüphane + kendi müziğini yükle).
-const GLOXORG_MUZIK = [];
+// Sabit (uygulamayla gelen) TELİFSİZ enstrümantal parçalar (public/muzik/). Sahibi Firestore'dan ekledikçe kütüphane büyür.
+const _mzk = (f) => (process.env.PUBLIC_URL || "") + "/muzik/" + f;
+const GLOXORG_MUZIK = [
+  { ad: "Sakin Esinti (enstrümantal)", url: _mzk("sakin.wav"), kategori: "sakin" },
+  { ad: "Yumuşak Sevgi (enstrümantal)", url: _mzk("romantik.wav"), kategori: "romantik" },
+  { ad: "Ağır Akış (enstrümantal)", url: _mzk("slow.wav"), kategori: "slow" },
+  { ad: "Neşeli Ritim (enstrümantal)", url: _mzk("enerjik.wav"), kategori: "enerjik" },
+];
 // 🎵 MÜZİK KATEGORİLERİ — kütüphanede şarkılar bu gruplara ayrılır (Pop, Arabesk, Uzun Hava…).
 const MUZIK_KATEGORI = [
   { k: "pop", ad: "Pop", ik: "🎤" }, { k: "arabesk", ad: "Arabesk", ik: "🎻" },
