@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "./static/css/main.ec03cc60.css",
-    "main.js": "./static/js/main.a96bcca6.js",
+    "main.js": "./static/js/main.673fc596.js",
     "static/css/922.4d28c01c.chunk.css": "./static/css/922.4d28c01c.chunk.css",
     "static/js/922.4972b138.chunk.js": "./static/js/922.4972b138.chunk.js",
     "static/js/95.4ece48a0.chunk.js": "./static/js/95.4ece48a0.chunk.js",
     "static/js/240.ee216c3c.chunk.js": "./static/js/240.ee216c3c.chunk.js",
     "static/js/342.8d4bcb89.chunk.js": "./static/js/342.8d4bcb89.chunk.js",
-    "static/js/511.81135cc6.chunk.js": "./static/js/511.81135cc6.chunk.js",
+    "static/js/511.a76ef38d.chunk.js": "./static/js/511.a76ef38d.chunk.js",
     "static/js/196.d022d43d.chunk.js": "./static/js/196.d022d43d.chunk.js",
     "static/js/514.cf538203.chunk.js": "./static/js/514.cf538203.chunk.js",
     "static/js/453.d745a41a.chunk.js": "./static/js/453.d745a41a.chunk.js",
@@ -36,13 +36,13 @@
     "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
     "index.html": "./index.html",
     "main.ec03cc60.css.map": "./static/css/main.ec03cc60.css.map",
-    "main.a96bcca6.js.map": "./static/js/main.a96bcca6.js.map",
+    "main.673fc596.js.map": "./static/js/main.673fc596.js.map",
     "922.4d28c01c.chunk.css.map": "./static/css/922.4d28c01c.chunk.css.map",
     "922.4972b138.chunk.js.map": "./static/js/922.4972b138.chunk.js.map",
     "95.4ece48a0.chunk.js.map": "./static/js/95.4ece48a0.chunk.js.map",
     "240.ee216c3c.chunk.js.map": "./static/js/240.ee216c3c.chunk.js.map",
     "342.8d4bcb89.chunk.js.map": "./static/js/342.8d4bcb89.chunk.js.map",
-    "511.81135cc6.chunk.js.map": "./static/js/511.81135cc6.chunk.js.map",
+    "511.a76ef38d.chunk.js.map": "./static/js/511.a76ef38d.chunk.js.map",
     "196.d022d43d.chunk.js.map": "./static/js/196.d022d43d.chunk.js.map",
     "514.cf538203.chunk.js.map": "./static/js/514.cf538203.chunk.js.map",
     "453.d745a41a.chunk.js.map": "./static/js/453.d745a41a.chunk.js.map",
@@ -54,6 +54,6 @@
   },
   "entrypoints": [
     "static/css/main.ec03cc60.css",
-    "static/js/main.a96bcca6.js"
+    "static/js/main.673fc596.js"
   ]
 }
