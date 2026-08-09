@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe arac anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna arac anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -127,7 +127,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Normal",
   "belBoyutIpucu": "Sütun başlığındaki － ＋ ile GENİŞLİK, sol rakamdaki － ＋ ile YÜKSEKLİK ayarlanır. ⇅ düğmesi o sütunu DİKEY yazıya çevirir (aşağıdan yukarı). A4'e sığsın diye sütunları inceltebilirsin.",
   "muhPencereKapat": "Pencereyi kapat",
-  "belBoyutKisa": "－ ＋ ile daralt/genişlet · ⇅ dikey yazı · sütunları inceltip A4'e sığdır"
+  "belBoyutKisa": "－ ＋ ile daralt/genişlet · ⇅ dikey yazı · sütunları inceltip A4'e sığdır",
+  "saCek": "Fotoğraf çek",
+  "saGaleri": "Galeriden seç"
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -256,7 +258,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Normal",
   "belBoyutIpucu": "Use － ＋ on the column header for WIDTH, and － ＋ on the left number for HEIGHT. The ⇅ button makes that column VERTICAL (bottom-to-top). Make columns thinner to fit A4.",
   "muhPencereKapat": "Close window",
-  "belBoyutKisa": "－ ＋ to shrink/widen · ⇅ vertical text · thin columns to fit A4"
+  "belBoyutKisa": "－ ＋ to shrink/widen · ⇅ vertical text · thin columns to fit A4",
+  "saCek": "Take photo",
+  "saGaleri": "From gallery"
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -385,7 +389,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Normal",
   "belBoyutIpucu": "Mit － ＋ in der Spaltenüberschrift die BREITE, mit － ＋ an der linken Zahl die HÖHE einstellen. ⇅ macht die Spalte VERTIKAL (unten nach oben). Spalten schmaler machen, damit sie auf A4 passen.",
   "muhPencereKapat": "Fenster schließen",
-  "belBoyutKisa": "－ ＋ verschmälern/verbreitern · ⇅ vertikaler Text · Spalten für A4 verschmälern"
+  "belBoyutKisa": "－ ＋ verschmälern/verbreitern · ⇅ vertikaler Text · Spalten für A4 verschmälern",
+  "saCek": "Foto aufnehmen",
+  "saGaleri": "Aus Galerie"
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -514,7 +520,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Обычный",
   "belBoyutIpucu": "－ ＋ в заголовке столбца — ШИРИНА, － ＋ у номера слева — ВЫСОТА. Кнопка ⇅ делает столбец ВЕРТИКАЛЬНЫМ (снизу вверх). Сужай столбцы, чтобы поместилось на A4.",
   "muhPencereKapat": "Закрыть окно",
-  "belBoyutKisa": "－ ＋ сузить/расширить · ⇅ вертикальный текст · сузь столбцы под A4"
+  "belBoyutKisa": "－ ＋ сузить/расширить · ⇅ вертикальный текст · сузь столбцы под A4",
+  "saCek": "Сделать фото",
+  "saGaleri": "Из галереи"
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -643,7 +651,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Звичайний",
   "belBoyutIpucu": "－ ＋ у заголовку стовпця — ШИРИНА, － ＋ біля номера зліва — ВИСОТА. Кнопка ⇅ робить стовпець ВЕРТИКАЛЬНИМ (знизу вгору). Звужуй стовпці, щоб вмістити на A4.",
   "muhPencereKapat": "Закрити вікно",
-  "belBoyutKisa": "－ ＋ звузити/розширити · ⇅ вертикальний текст · звузь стовпці під A4"
+  "belBoyutKisa": "－ ＋ звузити/розширити · ⇅ вертикальний текст · звузь стовпці під A4",
+  "saCek": "Зробити фото",
+  "saGaleri": "З галереї"
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -772,7 +782,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Normal",
   "belBoyutIpucu": "Con － ＋ en el encabezado de columna ajustas el ANCHO, y con － ＋ en el número de la izquierda la ALTURA. El botón ⇅ pone esa columna VERTICAL (de abajo arriba). Estrecha las columnas para que quepan en A4.",
   "muhPencereKapat": "Cerrar ventana",
-  "belBoyutKisa": "－ ＋ estrechar/ensanchar · ⇅ texto vertical · estrecha columnas para A4"
+  "belBoyutKisa": "－ ＋ estrechar/ensanchar · ⇅ texto vertical · estrecha columnas para A4",
+  "saCek": "Tomar foto",
+  "saGaleri": "De la galería"
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -901,7 +913,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Normal",
   "belBoyutIpucu": "Avec － ＋ sur l'en-tête de colonne, règle la LARGEUR ; avec － ＋ sur le numéro à gauche, la HAUTEUR. Le bouton ⇅ met la colonne à la VERTICALE (de bas en haut). Affine les colonnes pour tenir en A4.",
   "muhPencereKapat": "Fermer la fenêtre",
-  "belBoyutKisa": "－ ＋ rétrécir/élargir · ⇅ texte vertical · affine les colonnes pour A4"
+  "belBoyutKisa": "－ ＋ rétrécir/élargir · ⇅ texte vertical · affine les colonnes pour A4",
+  "saCek": "Prendre une photo",
+  "saGaleri": "Depuis la galerie"
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1030,7 +1044,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Normale",
   "belBoyutIpucu": "Con － ＋ nell'intestazione di colonna regoli la LARGHEZZA, con － ＋ sul numero a sinistra l'ALTEZZA. Il pulsante ⇅ rende la colonna VERTICALE (dal basso verso l'alto). Restringi le colonne per stare in A4.",
   "muhPencereKapat": "Chiudi finestra",
-  "belBoyutKisa": "－ ＋ restringi/allarga · ⇅ testo verticale · restringi le colonne per A4"
+  "belBoyutKisa": "－ ＋ restringi/allarga · ⇅ testo verticale · restringi le colonne per A4",
+  "saCek": "Scatta foto",
+  "saGaleri": "Dalla galleria"
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1159,7 +1175,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "Normal",
   "belBoyutIpucu": "Use － ＋ no cabeçalho da coluna para a LARGURA e － ＋ no número à esquerda para a ALTURA. O botão ⇅ deixa a coluna VERTICAL (de baixo para cima). Estreite as colunas para caber em A4.",
   "muhPencereKapat": "Fechar janela",
-  "belBoyutKisa": "－ ＋ estreitar/alargar · ⇅ texto vertical · estreite as colunas para A4"
+  "belBoyutKisa": "－ ＋ estreitar/alargar · ⇅ texto vertical · estreite as colunas para A4",
+  "saCek": "Tirar foto",
+  "saGaleri": "Da galeria"
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1288,7 +1306,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "عادي",
   "belBoyutIpucu": "بـ － ＋ في رأس العمود تضبط العرض، وبـ － ＋ عند الرقم على اليسار الارتفاع. زر ⇅ يجعل العمود عموديًا (من الأسفل للأعلى). صغّر العرض ليتسع في A4.",
   "muhPencereKapat": "إغلاق النافذة",
-  "belBoyutKisa": "－ ＋ للتضييق/التوسيع · ⇅ نص عمودي · صغّر الأعمدة لتناسب A4"
+  "belBoyutKisa": "－ ＋ للتضييق/التوسيع · ⇅ نص عمودي · صغّر الأعمدة لتناسب A4",
+  "saCek": "التقاط صورة",
+  "saGaleri": "من المعرض"
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1417,7 +1437,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "सामान्य",
   "belBoyutIpucu": "कॉलम हेडर के － ＋ से चौड़ाई और बाएँ नंबर के － ＋ से ऊँचाई सेट करें। ⇅ बटन उस कॉलम को लंबवत (नीचे से ऊपर) कर देता है। A4 में फ़िट करने के लिए कॉलम पतले करें।",
   "muhPencereKapat": "विंडो बंद करें",
-  "belBoyutKisa": "－ ＋ से छोटा/चौड़ा · ⇅ लंबवत पाठ · कॉलम पतले कर A4 में फ़िट करें"
+  "belBoyutKisa": "－ ＋ से छोटा/चौड़ा · ⇅ लंबवत पाठ · कॉलम पतले कर A4 में फ़िट करें",
+  "saCek": "फ़ोटो लें",
+  "saGaleri": "गैलरी से"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1546,7 +1568,9 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "普通",
   "belBoyutIpucu": "用列标题上的 － ＋ 调整宽度，用左侧数字上的 － ＋ 调整高度。⇅ 按钮让该列变为竖排（自下而上）。把列变窄以适应 A4。",
   "muhPencereKapat": "关闭窗口",
-  "belBoyutKisa": "－ ＋ 变窄/变宽 · ⇅ 竖排 · 收窄列以适应A4"
+  "belBoyutKisa": "－ ＋ 变窄/变宽 · ⇅ 竖排 · 收窄列以适应A4",
+  "saCek": "拍照",
+  "saGaleri": "从相册选择"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -1675,6 +1699,8 @@ export const CEVIRI_EKSIK7 = {
   "belNormal": "標準",
   "belBoyutIpucu": "列見出しの － ＋ で幅、左の数字の － ＋ で高さを調整。⇅ ボタンでその列を縦書き（下から上）に。A4に収まるよう列を細くできます。",
   "muhPencereKapat": "ウィンドウを閉じる",
-  "belBoyutKisa": "－ ＋ で幅調整 · ⇅ 縦書き · 列を細くしてA4に"
+  "belBoyutKisa": "－ ＋ で幅調整 · ⇅ 縦書き · 列を細くしてA4に",
+  "saCek": "写真を撮る",
+  "saGaleri": "ギャラリーから"
  }
 };

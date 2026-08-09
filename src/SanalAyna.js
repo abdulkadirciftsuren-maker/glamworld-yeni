@@ -24,6 +24,8 @@ const SAC_KISI = {
 // RENK seçenekleri (isteğe bağlı) — saç için saç renkleri, kıyafet/tırnak vb. için genel renkler
 const SAC_RENK = ["Siyah", "Koyu Kahve", "Kahve", "Kumral", "Sarı", "Bal Köpüğü", "Kızıl", "Bakır", "Platin Sarı", "Gri / Gümüş", "Mavi", "Pembe"];
 const GENEL_RENK = ["Siyah", "Beyaz", "Kırmızı", "Mavi", "Lacivert", "Yeşil", "Pembe", "Mor", "Sarı", "Turuncu", "Kahve", "Bej", "Gri", "Altın", "Gümüş"];
+// Renk çipini İSİM yerine GERÇEK RENK göstermek için (kullanıcı: "renk isimlerini kaldır, renk yap"). Kare kutu (yuvarlak YOK).
+const RENK_HEX = { "Siyah": "#141414", "Koyu Kahve": "#3b2416", "Kahve": "#6b4423", "Kumral": "#a86a3d", "Sarı": "#e6c15a", "Bal Köpüğü": "#e2b878", "Kızıl": "#b5462a", "Bakır": "#b87333", "Platin Sarı": "#ece2c0", "Gri / Gümüş": "#bcc0c4", "Mavi": "#3a6fd0", "Pembe": "#e58bb0", "Beyaz": "#fafafa", "Kırmızı": "#d63333", "Lacivert": "#1f2a55", "Yeşil": "#2e9e5b", "Mor": "#7a4fd0", "Turuncu": "#e8792a", "Bej": "#e3d1a8", "Gri": "#9aa0a6", "Altın": "#d4af37", "Gümüş": "#c8ccd0" };
 function renkGetir(kategori) { if (kategori === "sac") return SAC_RENK; if (kategori === "makyaj") return []; return GENEL_RENK; }
 const ELBISE_KISI = {
   bayan: ["Abiye Elbise", "Yazlık Elbise", "Takım", "Kot & Bluz", "Kışlık Mont"],
@@ -108,6 +110,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
   const [hata, setHata] = useState("");
   const [indirildi, setIndirildi] = useState(false); // "İndirildi" geri bildirimi
   const inpRef = useRef(null);
+  const kamRef = useRef(null); // YÜZ FOTOĞRAFINI ORACIKTA KAMERAYLA ÇEK (kullanıcı: "yüz fotoğraf çekme yeri yok")
   const sonucRef = useRef(null); // sonuç gelince oraya kaydır
   const dokunRef = useRef(null); // parmakla SOLA kaydırınca aynayı kapat (ana sayfaya dön) — kullanıcı isteği
   // Sonuç hazır olunca OTOMATİK sonuca kaydır (aşağıda kalıp görünmesin)
@@ -258,7 +261,13 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
             {foto ? <img src={foto} alt="" /> : <span className="sa-foto-bos">📷<br />{t("saFotoEkle", "Fotoğrafını ekle")}</span>}
             {foto && <span className="sa-foto-degis">🔄 {t("saFotoDegis", "Değiştir")}</span>}
           </div>
+          {/* YÜZÜNÜ ORACIKTA ÇEK ya da GALERİDEN seç — iki ayrı düğme (kullanıcı: fotoğraf çekme yeri yoktu) */}
+          <div className="sa-foto-dugmeler">
+            <button className="sa-foto-btn" onClick={() => kamRef.current && kamRef.current.click()}>📷 {t("saCek", "Fotoğraf çek")}</button>
+            <button className="sa-foto-btn" onClick={() => inpRef.current && inpRef.current.click()}>🖼️ {t("saGaleri", "Galeriden seç")}</button>
+          </div>
           <input ref={inpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={fotoSec} />
+          <input ref={kamRef} type="file" accept="image/*" capture="user" style={{ display: "none" }} onChange={fotoSec} />
           {/* İPUCU: kıyafet denemede en iyi sonuç için BOYU görünen fotoğraf (kullanıcı hep bel-üstü selfie yüklüyordu) */}
           {(kategori === "elbise" || kategori === "ayakkabi" || reklamdan) && (
             <div className="sa-boy-ipucu">{t("saBoyIpucu", "💡 En iyi sonuç için BOYUN görünen (dizden yukarı ya da tam boy) bir fotoğraf yükle. Sadece yüz/omuz olursa elbise tam oturmayabilir.")}</div>
@@ -297,9 +306,12 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
               {renkler.length > 0 && (
                 <>
                   <div className="sa-kim-bas" style={{ marginTop: 12 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")}</div>
-                  <div className="sa-oneri">
+                  <div className="sa-renk-izgara">
                     {renkler.map((r) => (
-                      <button key={r} className={"sa-cip sa-renk-cip" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)}>{ac(r)}</button>
+                      <button key={r} className={"sa-renk-kutu" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)} title={ac(r)} aria-label={ac(r)}>
+                        <span className="sa-renk-ornek" style={{ background: RENK_HEX[r] || "#ccc" }} />
+                        <span className="sa-renk-ad">{ac(r)}</span>
+                      </button>
                     ))}
                   </div>
                 </>
