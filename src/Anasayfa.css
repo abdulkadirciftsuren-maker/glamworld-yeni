@@ -5061,10 +5061,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-galeri-dug button{ flex:1; padding:6px; border-radius:8px; border:1.3px solid rgba(160,120,0,.5); background:#fff7db; font-size:15px; cursor:pointer; }
 .sa-kaydet-model{ background:linear-gradient(90deg,#34c878,#0f9d54); color:#fff; border:none; border-radius:11px; padding:12px; font-weight:900; font-size:14.5px; cursor:pointer; font-family:inherit; }
 .sa-kaydet-model.indi{ background:linear-gradient(90deg,#1f8b4c,#0c7a3f); }
-/* CANLI YAPAY ZEKÂ TANITIM KARTI (ana sayfa akışı) */
-.ai-tanit-kart{ background:linear-gradient(135deg,#fff3c4,#ffe08a 55%,#f2c94c) !important; border:2px solid #d4af37 !important; position:relative; overflow:hidden; }
-.ai-tanit-kart::before{ content:""; position:absolute; top:0; left:-60%; width:45%; height:100%; background:linear-gradient(100deg,transparent,rgba(255,255,255,.65),transparent); animation:aiTanitShine 3.4s linear infinite; pointer-events:none; }
-@keyframes aiTanitShine{ to{ left:135%; } }
+/* CANLI YAPAY ZEKÂ TANITIM KARTI (ana sayfa akışı) — SAKİN/PREMIUM: sürekli parlayan kayan ışık YOK (dandik parlama olmasın). */
+.ai-tanit-kart{ background:linear-gradient(135deg,#fff6d8,#ffe9a8 60%,#f6d47a) !important; border:1.5px solid #e0c060 !important; position:relative; overflow:hidden; box-shadow:0 6px 20px rgba(120,90,0,.14); }
 .ai-tanit-ust{ display:flex; align-items:center; gap:8px; position:relative; z-index:1; }
 .ai-tanit-tas{ font-size:20px; color:#7a5a00; }
 .ai-tanit-baslik{ flex:1; color:#5a3f00; font-size:14px; }
