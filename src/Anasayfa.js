@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -104,6 +104,14 @@ const Reklam = lazy(() => import("./Reklam"));
 // ⛔ Telifli/popüler şarkı (Spotify vb.) KONULMAZ — yasal değil. Buraya sadece telifsiz parçalar eklenir.
 // Şimdilik boş; sahibi telifsiz parça ekledikçe büyür (kullanıcı isteği: hazır kütüphane + kendi müziğini yükle).
 const GLOXORG_MUZIK = [];
+// 🎵 MÜZİK KATEGORİLERİ — kütüphanede şarkılar bu gruplara ayrılır (Pop, Arabesk, Uzun Hava…).
+const MUZIK_KATEGORI = [
+  { k: "pop", ad: "Pop", ik: "🎤" }, { k: "arabesk", ad: "Arabesk", ik: "🎻" },
+  { k: "uzunhava", ad: "Uzun Hava", ik: "🪕" }, { k: "halk", ad: "Halk / Türkü", ik: "🪗" },
+  { k: "slow", ad: "Slow", ik: "💛" }, { k: "romantik", ad: "Romantik", ik: "❤️" },
+  { k: "oyun", ad: "Oyun Havası", ik: "🥳" }, { k: "sakin", ad: "Sakin", ik: "🌿" },
+  { k: "enerjik", ad: "Enerjik", ik: "⚡" }, { k: "yabanci", ad: "Yabancı", ik: "🌍" },
+];
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
@@ -1697,6 +1705,12 @@ export default function Anasayfa({ pro = false }) {
   const [muzikMenu, setMuzikMenu] = useState("");               // "" | "benim" | "kutuphane" — müzik ekleme paneli
   const [muzikOnizUrl, setMuzikOnizUrl] = useState("");         // paylaşmadan ÖNCE dinleme (önizleme) linki
   const muzikRef = useRef(null);                                // kendi müzik dosyası seç
+  // GLOXORG hazır müzik kütüphanesi (Firestore'dan) + seçili kategori + sahibin ekleme durumu
+  const [gloxMuzikListe, setGloxMuzikListe] = useState([]);     // kütüphanedeki şarkılar (herkes okur)
+  const [muzikKat, setMuzikKat] = useState("");                 // seçili kategori filtresi ("" = hepsi)
+  const [kutupYukleniyor, setKutupYukleniyor] = useState(false);// sahibin kütüphaneye şarkı yüklemesi sürüyor
+  const [kutupKat, setKutupKat] = useState("pop");              // sahibin eklerken seçtiği kategori
+  const kutupDosyaRef = useRef(null);                           // sahibin kütüphaneye ekleyeceği şarkı dosyası
   // MÜZİK ÖNİZLEME — paylaşmadan ÖNCE seçilen şarkıyı dinlemek için link hazırla (kendi dosyası → yerel link; kütüphane → url)
   useEffect(() => {
     if (paylasMuzik && paylasMuzik.file) {
@@ -1706,6 +1720,32 @@ export default function Anasayfa({ pro = false }) {
     }
     setMuzikOnizUrl(paylasMuzik && paylasMuzik.url ? paylasMuzik.url : "");
   }, [paylasMuzik]);
+  // KÜTÜPHANE — "GLOXORG kütüphanesi" sekmesi açılınca şarkıları Firestore'dan yükle (herkes okur)
+  useEffect(() => {
+    if (muzikMenu !== "kutuphane") return;
+    let iptal = false;
+    (async () => { try { const l = await gloxMuzikOku(); if (!iptal) setGloxMuzikListe(l); } catch (e) {} })();
+    return () => { iptal = true; };
+  }, [muzikMenu]);
+  // SAHİBİN kütüphaneye telifsiz şarkı EKLEMESİ (sadece site sahibi): dosya → Storage → gloxMuzik kaydı → liste yenilenir
+  const kutuphaneyeEkle = async (e) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = "";
+    if (!f) return;
+    const uu = auth.currentUser; if (!uu) return;
+    if ((f.type || "").indexOf("audio/") !== 0) { setKucukMesaj(t("muzikTip", "Lütfen bir ses/şarkı dosyası seç (mp3, m4a, wav…).")); return; }
+    if (f.size > 30 * 1024 * 1024) { setKucukMesaj(t("muzikBuyuk", "Şarkı çok büyük (en fazla 30 MB). Daha kısa/küçük bir dosya seç.")); return; }
+    const ad = (f.name || "Şarkı").replace(/\.[a-z0-9]+$/i, "").slice(0, 60);
+    setKutupYukleniyor(true);
+    try {
+      const up = await dosyaYukle(f, uu.uid, () => {});
+      if (up && up.url) {
+        await gloxMuzikEkle({ ad, url: up.url, kategori: kutupKat });
+        const l = await gloxMuzikOku(); setGloxMuzikListe(l);
+        setKucukMesaj(t("muzikKutupEklendi", "Şarkı kütüphaneye eklendi 🎵"));
+      } else setKucukMesaj(t("muzikHata", "Müzik yüklenemedi, tekrar dene."));
+    } catch (er) { setKucukMesaj(t("muzikKutupIzin", "Eklenemedi. Firestore kuralını (gloxMuzik) yayınladın mı?")); }
+    setKutupYukleniyor(false);
+  };
   const [aiIstek, setAiIstek] = useState("");                   // kullanıcı Gloxoo'ya ne yazmasını istediğini yazar
   const [aiIstekDinliyor, setAiIstekDinliyor] = useState(false); // Gloxoo'ya konuşarak söyleme (mikrofon aktif mi)
   const [aiYorumAcik, setAiYorumAcik] = useState(-1);           // beğenmedim → "neyi beğenmedin" kutusu açık öneri indeksi (-1 kapalı)
@@ -9935,22 +9975,45 @@ export default function Anasayfa({ pro = false }) {
                     <button className="pyl-muzik-yukle" onClick={() => muzikRef.current && muzikRef.current.click()}>📁 {t("muzikDosyaSec", "Telefondan/bilgisayardan şarkı seç")}</button>
                     <div className="pyl-muzik-not">{t("muzikBenimNot", "Kendi şarkını (mp3, m4a, wav) yükle. Paylaşımında akışta çalar. En fazla 30 MB.")}</div>
                   </div>
-                ) : (
-                  <div className="pyl-muzik-kutuphane">
-                    {GLOXORG_MUZIK.length === 0 ? (
-                      <div className="pyl-muzik-not">🎼 {t("muzikKutupBos", "Hazır kütüphaneye telifsiz şarkılar çok yakında eklenecek. Şimdilik 'Benim müziğim' ile kendi şarkını yükleyebilirsin.")}</div>
-                    ) : (
-                      <div className="pyl-muzik-liste">
-                        {GLOXORG_MUZIK.map((mz) => (
-                          <button key={mz.url} className={"pyl-muzik-oge" + (paylasMuzik && paylasMuzik.url === mz.url ? " sec" : "")} onClick={() => { setPaylasMuzik({ ad: mz.ad, url: mz.url }); setMuzikMenu(""); }}>
-                            <span className="pyl-muzik-oge-ik" aria-hidden="true">🎵</span>
-                            <span className="pyl-muzik-oge-ad notranslate">{mz.ad}</span>
-                          </button>
+                ) : (() => {
+                  const benSahip = !!(u && u.email && (u.email.toLowerCase() === "abdulkadirciftsuren@gmail.com" || u.email.toLowerCase().endsWith("@gloxorg.com")));
+                  const tumMuzik = [...gloxMuzikListe, ...GLOXORG_MUZIK];
+                  const gosterilen = muzikKat ? tumMuzik.filter((mz) => (mz.kategori || "") === muzikKat) : tumMuzik;
+                  return (
+                    <div className="pyl-muzik-kutuphane">
+                      {/* KATEGORİ ŞERİDİ — Pop / Arabesk / Uzun Hava … (dokun, o kategoriyi süz) */}
+                      <div className="pyl-muzik-kat">
+                        <button className={"pyl-muzik-katb" + (muzikKat === "" ? " sec" : "")} onClick={() => setMuzikKat("")}>⭐ {t("muzikHepsi", "Hepsi")}</button>
+                        {MUZIK_KATEGORI.map((kt) => (
+                          <button key={kt.k} className={"pyl-muzik-katb" + (muzikKat === kt.k ? " sec" : "")} onClick={() => setMuzikKat(kt.k)}>{kt.ik} {t("muzikKat_" + kt.k, kt.ad)}</button>
                         ))}
                       </div>
-                    )}
-                  </div>
-                )}
+                      {/* SAHİBE ÖZEL — kütüphaneye telifsiz şarkı ekleme (kategori seçip yükle) */}
+                      {benSahip && (
+                        <div className="pyl-muzik-sahip">
+                          <input ref={kutupDosyaRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={kutuphaneyeEkle} />
+                          <select className="pyl-muzik-katsec" value={kutupKat} onChange={(e) => setKutupKat(e.target.value)}>
+                            {MUZIK_KATEGORI.map((kt) => (<option key={kt.k} value={kt.k}>{kt.ad}</option>))}
+                          </select>
+                          <button className="pyl-muzik-ekle" disabled={kutupYukleniyor} onClick={() => kutupDosyaRef.current && kutupDosyaRef.current.click()}>{kutupYukleniyor ? "⏳ " + t("muzikYukleniyor", "Müzik yükleniyor…") : "➕ " + t("muzikKutupEkleBtn", "Kütüphaneye şarkı ekle")}</button>
+                        </div>
+                      )}
+                      {gosterilen.length === 0 ? (
+                        <div className="pyl-muzik-not">🎼 {t("muzikKutupBos2", "Bu kategoride henüz şarkı yok. Başka kategoriye bak ya da 'Benim müziğim' ile kendi şarkını yükle.")}</div>
+                      ) : (
+                        <div className="pyl-muzik-liste">
+                          {gosterilen.map((mz) => (
+                            <button key={mz.id || mz.url} className={"pyl-muzik-oge" + (paylasMuzik && paylasMuzik.url === mz.url ? " sec" : "")} onClick={() => { setPaylasMuzik({ ad: mz.ad, url: mz.url }); setMuzikMenu(""); }}>
+                              <span className="pyl-muzik-oge-ik" aria-hidden="true">🎵</span>
+                              <span className="pyl-muzik-oge-ad notranslate">{mz.ad}</span>
+                              {mz.kategori ? <span className="pyl-muzik-oge-kat">{(MUZIK_KATEGORI.find((x) => x.k === mz.kategori) || {}).ad || ""}</span> : null}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
             {/* ANKET EKLE — açınca 2-4 şık yazılır; gönderi bir anket olur (takipçiler oy verir) */}

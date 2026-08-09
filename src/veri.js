@@ -810,3 +810,22 @@ export async function pazarUrunSil(id) {
 export async function pazarFavGuncelle(id, delta) {
   try { await updateDoc(doc(db, "pazarUrunleri", id), { favSayi: increment(delta) }); return true; } catch (e) { return false; }
 }
+
+// 🎵 GLOXORG HAZIR MÜZİK KÜTÜPHANESİ — herkes OKUR (paylaşımına şarkı seçmek için), SADECE site sahibi ekler/siler (telifsiz parçalar).
+// Firestore koleksiyonu: gloxMuzik. (Kural: read if true; create/update/delete if yonetici.)
+export async function gloxMuzikEkle(veri) {
+  const ref = doc(collection(db, "gloxMuzik"));
+  await setDoc(ref, { zamanMs: Date.now(), ...veri, olusturma: serverTimestamp() });
+  return ref.id;
+}
+export async function gloxMuzikOku(adet = 200) {
+  try {
+    const snap = await getDocs(query(collection(db, "gloxMuzik"), fsLimit(adet)));
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+    return liste;
+  } catch (e) { return []; }
+}
+export async function gloxMuzikSil(id) {
+  try { await deleteDoc(doc(db, "gloxMuzik", id)); return true; } catch (e) { return false; }
+}

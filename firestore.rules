@@ -42,6 +42,12 @@ service cloud.firestore {
       }
     }
 
+    // GLOXORG HAZIR MÜZİK KÜTÜPHANESİ — herkes OKUR (paylaşımına şarkı seçer); SADECE site sahibi (yönetici) telifsiz parça ekler/siler.
+    match /gloxMuzik/{id} {
+      allow read: if true;
+      allow create, update, delete: if yonetici();
+    }
+
     // Elite Pazar (ürün ilanları) — herkes okur; giriş yapan KENDİ ilanını oluşturur; SAHİBİ düzenler/siler.
     // favSayi (favori sayısı) HERKES güncelleyebilir → başkasının ilanını favlayınca da sayılır.
     match /pazarUrunleri/{id} {
