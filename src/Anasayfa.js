@@ -44,6 +44,17 @@ import "./Anasayfa.css";
 
 // CANLI YAPAY ZEKÂ TANITIM KARTI — ana sayfa akışının ARASINA girer (kullanıcı: "ana sayfada canlı yapay zeka tanıtımı, akışta araya girsin").
 // Dönen örnekler + altın parıltı ile "canlı" durur; düğmeler Sanal Ayna'yı ve Gloxoo sohbetini açar.
+// 🎵 GÖNDERİ MÜZİĞİ — paylaşıma eklenen şarkıyı akışta çalar (kullanıcı isteği: her paylaşıma müzik).
+function PostMuzik({ muzik }) {
+  if (!muzik || !muzik.url) return null;
+  return (
+    <div className="ana-post-muzik" onClick={(e) => e.stopPropagation()}>
+      <span className="apm-ik" aria-hidden="true">🎵</span>
+      <span className="apm-ad notranslate" translate="no">{muzik.ad || "♪"}</span>
+      <audio className="apm-ses" src={muzik.url} controls preload="none" />
+    </div>
+  );
+}
 function AiTanitimKart({ t, onAyna, onGloxoo }) {
   const ornekler = [
     { ik: "💇", ad: t("aitSac", "Saçını değiştir") },
@@ -87,6 +98,12 @@ const SanalAyna = lazy(() => import("./SanalAyna"));
 const Muhasebe = lazy(() => import("./Muhasebe"));
 // VİTRİN / REKLAM (ana sayfada akan reklam şeridi + üstünde dene + satıcıya yaz) — AYRI PARÇA
 const Reklam = lazy(() => import("./Reklam"));
+
+// 🎵 GLOXORG HAZIR MÜZİK KÜTÜPHANESİ — TELİFSİZ/serbest şarkılar (müşteri paylaşımına buradan da seçebilir).
+// Her öğe: { ad, url }. url = Firebase Storage'daki (herkese açık okuma) ses dosyası bağlantısı.
+// ⛔ Telifli/popüler şarkı (Spotify vb.) KONULMAZ — yasal değil. Buraya sadece telifsiz parçalar eklenir.
+// Şimdilik boş; sahibi telifsiz parça ekledikçe büyür (kullanıcı isteği: hazır kütüphane + kendi müziğini yükle).
+const GLOXORG_MUZIK = [];
 
 // PUSH BİLDİRİM anahtarı (Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları).
 // BOŞKEN push kaydı yapılmaz (uygulama normal çalışır). Kullanıcı anahtarı verince buraya yazılır → kapalıyken bildirim aktifleşir.
@@ -1675,6 +1692,10 @@ export default function Anasayfa({ pro = false }) {
   const [paylasHataDetay, setPaylasHataDetay] = useState(""); // paylaşım/video hatasının GERÇEK sebebi (kullanıcıya gösterilir)
   const [paylasYukleme, setPaylasYukleme] = useState(0);        // video yükleme ilerlemesi %
   const [paylasDosya, setPaylasDosya] = useState(null);         // eklenen DOSYA (belge) {file, ad, boyut}
+  // MÜZİK — her paylaşıma şarkı ekle: kendi müziğini yükle YA DA GLOXORG kütüphanesinden seç. Akışta çalar.
+  const [paylasMuzik, setPaylasMuzik] = useState(null);         // { ad, url?, file? } — file varsa yayında yüklenir; url varsa (kütüphane/düzenleme) doğrudan kullanılır
+  const [muzikMenu, setMuzikMenu] = useState("");               // "" | "benim" | "kutuphane" — müzik ekleme paneli
+  const muzikRef = useRef(null);                                // kendi müzik dosyası seç
   const [aiIstek, setAiIstek] = useState("");                   // kullanıcı Gloxoo'ya ne yazmasını istediğini yazar
   const [aiIstekDinliyor, setAiIstekDinliyor] = useState(false); // Gloxoo'ya konuşarak söyleme (mikrofon aktif mi)
   const [aiYorumAcik, setAiYorumAcik] = useState(-1);           // beğenmedim → "neyi beğenmedin" kutusu açık öneri indeksi (-1 kapalı)
@@ -4191,6 +4212,7 @@ export default function Anasayfa({ pro = false }) {
       setPaylasVideoPoster(g.videoPoster || "");
     }
     setPaylasVideoFile(null); // yeni dosya yok; mevcut video URL'i korunur
+    setPaylasMuzik(g.muzik && g.muzik.url ? { url: g.muzik.url, ad: g.muzik.ad || "Şarkı" } : null); setMuzikMenu("");
     setYaziMedyaUstunde(!!g.yaziUstunde); setGitLinki(g.gitLinki === true);
     const uy = g.ustYazi || {}; setUstYazi(uy.metin || ""); setUstRenk(uy.renk || "#ffffff"); setUstBoyut(uy.boyut || "orta"); setUstYer(uy.yer || "alt"); setAiOneriler([]); setPaylasDuzen(g.duzen || null); setPaylasZemin(g.zemin || ""); setPaylasYaziRenk(g.yaziRenk || "");
     // ANKET — düzenlemede mevcut anket şıkları geri yüklenir
@@ -5165,7 +5187,7 @@ export default function Anasayfa({ pro = false }) {
     else if (k === "ara" || k === "arama") setAraAcik(true);
     else if (k === "bildirim" || k === "bildirimler") setBildirimAcik(true);
     else if (k === "mesaj" || k === "mesajlar") setMesajAcik(true);
-    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasKonum(null); setKonumDurum(""); setYaziMedyaUstunde(false); setPaylasAcik(true); }
+    else if (k === "paylas" || k === "paylasim") { setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDosya(null); setPaylasMuzik(null); setMuzikMenu(""); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); setPaylasKonum(null); setKonumDurum(""); setYaziMedyaUstunde(false); setPaylasAcik(true); }
     else if (k === "ayar" || k === "ayarlar") setAyarlarAcik(true);
   }
   // Asistana FOTOĞRAF ekle — küçült (max 1024px) + base64'e çevir (Claude vision için)
@@ -6749,6 +6771,18 @@ export default function Anasayfa({ pro = false }) {
         setPaylasDurum("gonderiliyor");
       } catch (e) { setPaylasDurum("dosyahata"); return; }
     }
+    // MÜZİK varsa: kendi yüklediği dosyayı Storage'a yükle → {url, ad}; kütüphane/düzenleme ise mevcut url'i kullan
+    let muzikObj = null;
+    if (paylasMuzik && paylasMuzik.file) {
+      try {
+        setPaylasDurum("muzik"); setPaylasYukleme(0);
+        const up = await dosyaYukle(paylasMuzik.file, uu.uid, (y) => setPaylasYukleme(y));
+        if (up && up.url) muzikObj = { url: up.url, ad: paylasMuzik.ad || up.ad || "Şarkı" };
+        setPaylasDurum("gonderiliyor");
+      } catch (e) { setPaylasHataDetay((e && (e.code || e.message)) || "müzik yüklenemedi"); setPaylasDurum("muzikhata"); return; }
+    } else if (paylasMuzik && paylasMuzik.url) {
+      muzikObj = { url: paylasMuzik.url, ad: paylasMuzik.ad || "Şarkı" };
+    }
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     // GLOXORG FİLİGRANI: foto'ya KALICI göm (istemci tarafı, ücretsiz). VİDEO filigranı KALDIRILDI:
     // Cloudinary video overlay'i videoyu YENİDEN İŞLİYOR (türev dosya) → kredi/depolama yakıyordu (kota aşımı).
@@ -6791,7 +6825,7 @@ export default function Anasayfa({ pro = false }) {
       ulke: (paylasKonum && paylasKonum.ulke) || (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       konum: paylasKonum ? { yer: paylasKonum.yer || "", sehir: paylasKonum.sehir || "", ulke: paylasKonum.ulke || "", tam: paylasKonum.tam || "", enlem: paylasKonum.enlem, boylam: paylasKonum.boylam } : null,
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
-      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSonUrl, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
+      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSonUrl, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, muzik: muzikObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
       duzen: paylasDuzen || null, yaziUstunde: !!yaziMedyaUstunde, gitLinki: !!gitLinki,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
@@ -6808,14 +6842,14 @@ export default function Anasayfa({ pro = false }) {
           // EN ÜSTE taşı: eski konumundan çıkar, güncel haliyle başa ekle (hem akış hem profil).
           const bumpla = (a) => { const eski = a.find((g) => g.id === duzenlenen.id) || {}; const kalan = a.filter((g) => g.id !== duzenlenen.id); return [{ ...eski, ...degisiklik }, ...kalan]; };
           setGercekAkis(bumpla); setGonderilerim(bumpla);
-          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasDurum("ok");
+          setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasMuzik(null); setMuzikMenu(""); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setDuzenlenen(null); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasDurum("ok");
           setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800);
         } else setPaylasDurum("hata");
       }).catch(() => setPaylasDurum("hata"));
       return;
     }
     gonderiEkle(yeni).then((id) => {
-      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
+      if (id) { const yk = { id, begeni: 0, ...yeni }; setGercekAkis((a) => [yk, ...a]); setGonderilerim((a) => [yk, ...a]); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setVideoBasta(false); setPaylasDosya(null); setPaylasMuzik(null); setMuzikMenu(""); setPaylasYukleme(0); setPaylasKonum(null); setKonumDurum(""); setAnketAcik(false); setAnketSecenekler(["", ""]); setPaylasDurum("ok"); setTimeout(() => { setPaylasAcik(false); setPaylasDurum(""); }, 800); }
       else { setPaylasHataDetay("bilinmiyor"); setPaylasDurum("hata"); }
     }).catch((e) => { setPaylasHataDetay((e && (e.code || e.message)) || "bilinmiyor"); setPaylasDurum("hata"); });
   }
@@ -6890,6 +6924,16 @@ export default function Anasayfa({ pro = false }) {
     setPaylasDosya({ file: f, ad: f.name || "dosya", boyut: f.size || 0 });
     setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasVideoFile(null); setPaylasVideoPoster(""); setPaylasDurum("");
     e.target.value = "";
+  }
+  // MÜZİK — kendi şarkını yükle (paylaşımda akışta çalar). Yayın anında Storage'a yüklenir (video gibi).
+  function paylasMuzikSec(e) {
+    const f = e.target.files && e.target.files[0]; if (!f) { return; }
+    const t2 = (f.type || "");
+    if (t2 && t2.indexOf("audio/") !== 0) { setKucukMesaj(t("muzikTip", "Lütfen bir ses/şarkı dosyası seç (mp3, m4a, wav…).")); e.target.value = ""; return; }
+    if (f.size > 30 * 1024 * 1024) { setKucukMesaj(t("muzikBuyuk", "Şarkı çok büyük (en fazla 30 MB). Daha kısa/küçük bir dosya seç.")); e.target.value = ""; return; }
+    let ad = (f.name || "Şarkı").replace(/\.[a-z0-9]+$/i, "");
+    setPaylasMuzik({ file: f, ad: ad.slice(0, 60) });
+    setMuzikMenu(""); e.target.value = "";
   }
   // VİDEO'dan tek KARE yakala (AI'nin videoyu "görmesi" için) → dataURL (jpeg) veya null
   function videoKareYakala(url) {
@@ -8490,6 +8534,7 @@ export default function Anasayfa({ pro = false }) {
                         <span className="ana-post-dosya-in">{t("dosyaIndir", "İndir")}</span>
                       </a>
                     )}
+                    <PostMuzik muzik={p.muzik} />
                     {/* İKON ŞERİDİ — fotoğrafın/videonun ALTINDA, AYRI şerit (medyanın üzerinde DEĞİL) */}
                     <div className={"apr-rail" + (p.video ? " video" : "")} onClick={(e) => e.stopPropagation()}>
                       <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{((gercekBegeni[p.id] != null ? gercekBegeni[p.id] : (p.begeni || 0))).toLocaleString()}</span></button>
@@ -8572,6 +8617,7 @@ export default function Anasayfa({ pro = false }) {
                       <span className="ana-post-dosya-in">{t("dosyaIndir", "İndir")}</span>
                     </a>
                   )}
+                  <PostMuzik muzik={p.muzik} />
                   <div className="ana-post-eylem">
                     <button className={"ana-post-btn ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span>{(p.begeni || 0).toLocaleString()}</span></button>
                     <button className="ana-post-btn ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
@@ -9647,7 +9693,7 @@ export default function Anasayfa({ pro = false }) {
           <div className="msj-pencere paylas" onPointerDown={klavyeKapatDokun}>
             <div className="msj-bas">
               <span className="msj-baslik">{duzenlenen ? t("paylasDuzenle", "Paylaşımı Düzenle") : t("paylasBaslik", "Paylaş")}</span>
-              <button className="msj-kapat" onClick={() => { setPaylasAcik(false); setDuzenlenen(null); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDosya(null); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); }} aria-label="Kapat">✕</button>
+              <button className="msj-kapat" onClick={() => { setPaylasAcik(false); setDuzenlenen(null); setPaylasBaslik(""); setAiIstek(""); setAiOneriler([]); setPaylasGorsel(""); setPaylasEkFotolar([]); setPaylasVideo(""); setPaylasDosya(null); setPaylasMuzik(null); setMuzikMenu(""); setMedyaMenu(""); setTurSecAcik(false); setPaylasDurum(""); }} aria-label="Kapat">✕</button>
             </div>
             <div className="pyl-ust">
               {/* 1) ÜST BAŞLIK ŞERİDİ — medyanın HEMEN ÜSTÜNDE, renkli/belirgin (kullanıcı: sırayla, yakın, müşteri anlasın) */}
@@ -9823,6 +9869,8 @@ export default function Anasayfa({ pro = false }) {
             <input ref={paylasDosyaRef} type="file" style={{ display: "none" }} onChange={paylasDosyaSec} />
             {paylasDurum === "buyuk" && <div className="adm-durum hata">{t("paylasVideoBuyuk4", "Bu video çok büyük (en fazla 200 MB). Daha kısa bir video seç.")}</div>}
             {paylasDurum === "video" && <div className="adm-durum">{t("paylasVideoYuk", "Video yükleniyor…")} %{paylasYukleme}</div>}
+            {paylasDurum === "muzik" && <div className="adm-durum">{t("muzikYukleniyor", "Müzik yükleniyor…")} %{paylasYukleme}</div>}
+            {paylasDurum === "muzikhata" && <div className="adm-durum hata">{t("muzikHata", "Müzik yüklenemedi, tekrar dene.")}{paylasHataDetay ? " — " + paylasHataDetay : ""}</div>}
             {paylasDurum === "videohata" && <div className="adm-durum hata">{t("paylasVideoHata2", "Video yüklenemedi, tekrar dene (internet/dosya boyutu).")}{paylasHataDetay ? " — " + paylasHataDetay : ""}</div>}
             {/* MEDYA EKLE — Fotoğraf / Video (basınca Çek/Galeri seçtirir) / Dosya */}
             <div className="pyl-medya2">
@@ -9850,6 +9898,42 @@ export default function Anasayfa({ pro = false }) {
               </span>
               {paylasKonum && <span className="pyl-konum-sil" aria-hidden="true">✕</span>}
             </button>
+            {/* 🎵 MÜZİK EKLE — kendi şarkını yükle YA DA GLOXORG kütüphanesinden seç (paylaşımda akışta çalar) */}
+            <input ref={muzikRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={paylasMuzikSec} />
+            <button className={"pyl-konum-btn pyl-muzik-btn" + (paylasMuzik ? " acik" : "")} onClick={() => setMuzikMenu((v) => (v ? "" : "benim"))}>
+              <span className="pyl-konum-ik" aria-hidden="true">🎵</span>
+              <span className="pyl-konum-metin">{paylasMuzik ? ("🎵 " + (paylasMuzik.ad || t("muzikEklendi", "Müzik eklendi"))) : t("muzikEkle", "🎵 Müzik ekle (şarkı ekle)")}</span>
+              {paylasMuzik && <span className="pyl-konum-sil" aria-hidden="true" onClick={(e) => { e.stopPropagation(); setPaylasMuzik(null); setMuzikMenu(""); }}>✕</span>}
+            </button>
+            {muzikMenu && (
+              <div className="pyl-muzik-panel">
+                <div className="pyl-muzik-sekme">
+                  <button className={muzikMenu === "benim" ? "sec" : ""} onClick={() => setMuzikMenu("benim")}>📤 {t("muzikBenim", "Benim müziğim")}</button>
+                  <button className={muzikMenu === "kutuphane" ? "sec" : ""} onClick={() => setMuzikMenu("kutuphane")}>🎼 {t("muzikKutuphane", "GLOXORG kütüphanesi")}</button>
+                </div>
+                {muzikMenu === "benim" ? (
+                  <div className="pyl-muzik-benim">
+                    <button className="pyl-muzik-yukle" onClick={() => muzikRef.current && muzikRef.current.click()}>📁 {t("muzikDosyaSec", "Telefondan/bilgisayardan şarkı seç")}</button>
+                    <div className="pyl-muzik-not">{t("muzikBenimNot", "Kendi şarkını (mp3, m4a, wav) yükle. Paylaşımında akışta çalar. En fazla 30 MB.")}</div>
+                  </div>
+                ) : (
+                  <div className="pyl-muzik-kutuphane">
+                    {GLOXORG_MUZIK.length === 0 ? (
+                      <div className="pyl-muzik-not">🎼 {t("muzikKutupBos", "Hazır kütüphaneye telifsiz şarkılar çok yakında eklenecek. Şimdilik 'Benim müziğim' ile kendi şarkını yükleyebilirsin.")}</div>
+                    ) : (
+                      <div className="pyl-muzik-liste">
+                        {GLOXORG_MUZIK.map((mz) => (
+                          <button key={mz.url} className={"pyl-muzik-oge" + (paylasMuzik && paylasMuzik.url === mz.url ? " sec" : "")} onClick={() => { setPaylasMuzik({ ad: mz.ad, url: mz.url }); setMuzikMenu(""); }}>
+                            <span className="pyl-muzik-oge-ik" aria-hidden="true">🎵</span>
+                            <span className="pyl-muzik-oge-ad notranslate">{mz.ad}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             {/* ANKET EKLE — açınca 2-4 şık yazılır; gönderi bir anket olur (takipçiler oy verir) */}
             <button className={"pyl-konum-btn pyl-anket-btn" + (anketAcik ? " acik" : "")} onClick={() => setAnketAcik((v) => !v)}>
               <span className="pyl-konum-ik" aria-hidden="true">📊</span>
@@ -9903,8 +9987,8 @@ export default function Anasayfa({ pro = false }) {
               </div>
             )}
             </div>{/* /pyl-kaydir */}
-            <button className="paylas-gonder" onClick={() => { if (duzenlenen && duzenlenen.id) { paylasGonder(); } else { setMedyaMenu(""); setTurSecAcik(true); } }} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya && !(anketAcik && anketSecenekler.filter((s) => s.trim()).length >= 2))}>
-              {paylasDurum === "video" ? (t("paylasVideoYuk", "Video yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "dosya" ? (t("dosyaYukleniyor", "Dosya yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (paylasDurum === "ok" ? t("paylasOk", "Paylaşıldı ✓") : t("paylasEt", "Paylaş"))}
+            <button className="paylas-gonder" onClick={() => { if (duzenlenen && duzenlenen.id) { paylasGonder(); } else { setMedyaMenu(""); setTurSecAcik(true); } }} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "muzik" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya && !paylasMuzik && !(anketAcik && anketSecenekler.filter((s) => s.trim()).length >= 2))}>
+              {paylasDurum === "video" ? (t("paylasVideoYuk", "Video yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "muzik" ? (t("muzikYukleniyor", "Müzik yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "dosya" ? (t("dosyaYukleniyor", "Dosya yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (paylasDurum === "ok" ? t("paylasOk", "Paylaşıldı ✓") : t("paylasEt", "Paylaş"))}
             </button>
             {paylasDurum === "dosyahata" && <div className="adm-durum hata">{t("dosyaHata", "Dosya yüklenemedi, tekrar dene.")}</div>}
             {paylasDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}{paylasHataDetay ? " — " + paylasHataDetay : ""}</div>}

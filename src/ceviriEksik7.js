@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Sanal Ayna + Canli Manken + Sarki Tanima + Ayna duzen + manken tam ekran/paylas (saTamEkran/saMankenNot2/saGloxordaPaylas/saDigerPaylas) anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Sanal Ayna + Canli Manken + Sarki Tanima + Ayna duzen + manken tam ekran/paylas + Paylasima MUZIK (muzik*) anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -163,7 +163,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Telefonun EKRAN KAYDINI başlat — manken dönüyor. Bitince ✕ ile kapat.",
   "saMankenNot2": "Video kaydetmek için: '🔳 Tam ekran'a bas, manken TAM SAYFA döner; telefonunun EKRAN KAYDI ile o dönüşü çek. Böylece sadece manken videosu olur.",
   "saGloxordaPaylas": "GLOXORG'da paylaş",
-  "saDigerPaylas": "Diğer platformlar"
+  "saDigerPaylas": "Diğer platformlar",
+  "muzikEkle": "🎵 Müzik ekle (şarkı ekle)",
+  "muzikEklendi": "Müzik eklendi",
+  "muzikBenim": "Benim müziğim",
+  "muzikKutuphane": "GLOXORG kütüphanesi",
+  "muzikDosyaSec": "Telefondan/bilgisayardan şarkı seç",
+  "muzikBenimNot": "Kendi şarkını (mp3, m4a, wav) yükle. Paylaşımında akışta çalar. En fazla 30 MB.",
+  "muzikKutupBos": "Hazır kütüphaneye telifsiz şarkılar çok yakında eklenecek. Şimdilik 'Benim müziğim' ile kendi şarkını yükleyebilirsin.",
+  "muzikTip": "Lütfen bir ses/şarkı dosyası seç (mp3, m4a, wav…).",
+  "muzikBuyuk": "Şarkı çok büyük (en fazla 30 MB). Daha kısa/küçük bir dosya seç.",
+  "muzikYukleniyor": "Müzik yükleniyor…",
+  "muzikHata": "Müzik yüklenemedi, tekrar dene."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -328,7 +339,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Start your phone's SCREEN RECORDER — the model is rotating. Tap ✕ when done.",
   "saMankenNot2": "To save a video: tap '🔳 Full screen', the model rotates FULL PAGE; capture it with your phone's SCREEN RECORDER. That way you get just the model video.",
   "saGloxordaPaylas": "Share on GLOXORG",
-  "saDigerPaylas": "Other platforms"
+  "saDigerPaylas": "Other platforms",
+  "muzikEkle": "🎵 Add music (add a song)",
+  "muzikEklendi": "Music added",
+  "muzikBenim": "My music",
+  "muzikKutuphane": "GLOXORG library",
+  "muzikDosyaSec": "Pick a song from phone/computer",
+  "muzikBenimNot": "Upload your own song (mp3, m4a, wav). It plays in the feed on your post. Max 30 MB.",
+  "muzikKutupBos": "Royalty-free songs will be added to the ready library very soon. For now, use 'My music' to upload your own song.",
+  "muzikTip": "Please pick an audio/song file (mp3, m4a, wav…).",
+  "muzikBuyuk": "The song is too big (max 30 MB). Pick a shorter/smaller file.",
+  "muzikYukleniyor": "Uploading music…",
+  "muzikHata": "Music couldn't be uploaded, try again."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -493,7 +515,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Starte die BILDSCHIRMAUFNAHME deines Handys — das Model dreht sich. Zum Beenden ✕ tippen.",
   "saMankenNot2": "Um ein Video zu speichern: Tippe auf '🔳 Vollbild', das Model dreht sich GANZSEITIG; nimm es mit der BILDSCHIRMAUFNAHME deines Handys auf. So bekommst du nur das Model-Video.",
   "saGloxordaPaylas": "Auf GLOXORG teilen",
-  "saDigerPaylas": "Andere Plattformen"
+  "saDigerPaylas": "Andere Plattformen",
+  "muzikEkle": "🎵 Musik hinzufügen (Lied)",
+  "muzikEklendi": "Musik hinzugefügt",
+  "muzikBenim": "Meine Musik",
+  "muzikKutuphane": "GLOXORG-Bibliothek",
+  "muzikDosyaSec": "Lied vom Handy/Computer wählen",
+  "muzikBenimNot": "Lade dein eigenes Lied hoch (mp3, m4a, wav). Es wird im Feed unter deinem Beitrag abgespielt. Max. 30 MB.",
+  "muzikKutupBos": "Lizenzfreie Lieder werden sehr bald zur fertigen Bibliothek hinzugefügt. Nutze vorerst 'Meine Musik', um dein eigenes Lied hochzuladen.",
+  "muzikTip": "Bitte wähle eine Audio-/Lieddatei (mp3, m4a, wav…).",
+  "muzikBuyuk": "Das Lied ist zu groß (max. 30 MB). Wähle eine kürzere/kleinere Datei.",
+  "muzikYukleniyor": "Musik wird hochgeladen…",
+  "muzikHata": "Musik konnte nicht hochgeladen werden, versuche es erneut."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -658,7 +691,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Включите ЗАПИСЬ ЭКРАНА телефона — модель вращается. Нажмите ✕, когда закончите.",
   "saMankenNot2": "Чтобы сохранить видео: нажмите '🔳 Полный экран', модель вращается на ВЕСЬ ЭКРАН; запишите её ЗАПИСЬЮ ЭКРАНА телефона. Так получится только видео модели.",
   "saGloxordaPaylas": "Поделиться в GLOXORG",
-  "saDigerPaylas": "Другие платформы"
+  "saDigerPaylas": "Другие платформы",
+  "muzikEkle": "🎵 Добавить музыку (песню)",
+  "muzikEklendi": "Музыка добавлена",
+  "muzikBenim": "Моя музыка",
+  "muzikKutuphane": "Библиотека GLOXORG",
+  "muzikDosyaSec": "Выбрать песню с телефона/компьютера",
+  "muzikBenimNot": "Загрузите свою песню (mp3, m4a, wav). Она играет в ленте в вашем посте. Макс. 30 МБ.",
+  "muzikKutupBos": "Бесплатные песни скоро появятся в готовой библиотеке. Пока используйте «Моя музыка», чтобы загрузить свою песню.",
+  "muzikTip": "Пожалуйста, выберите аудио/песню (mp3, m4a, wav…).",
+  "muzikBuyuk": "Песня слишком большая (макс. 30 МБ). Выберите короче/меньше.",
+  "muzikYukleniyor": "Загрузка музыки…",
+  "muzikHata": "Не удалось загрузить музыку, попробуйте снова."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -823,7 +867,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Увімкніть ЗАПИС ЕКРАНА телефона — модель обертається. Натисніть ✕, коли завершите.",
   "saMankenNot2": "Щоб зберегти відео: натисніть '🔳 Повний екран', модель обертається на ВЕСЬ ЕКРАН; запишіть це ЗАПИСОМ ЕКРАНА телефона. Так вийде лише відео моделі.",
   "saGloxordaPaylas": "Поділитися в GLOXORG",
-  "saDigerPaylas": "Інші платформи"
+  "saDigerPaylas": "Інші платформи",
+  "muzikEkle": "🎵 Додати музику (пісню)",
+  "muzikEklendi": "Музику додано",
+  "muzikBenim": "Моя музика",
+  "muzikKutuphane": "Бібліотека GLOXORG",
+  "muzikDosyaSec": "Обрати пісню з телефона/комп'ютера",
+  "muzikBenimNot": "Завантажте свою пісню (mp3, m4a, wav). Вона грає у стрічці у вашому дописі. Макс. 30 МБ.",
+  "muzikKutupBos": "Безкоштовні пісні незабаром з'являться в готовій бібліотеці. Поки що скористайтеся «Моя музика», щоб завантажити свою пісню.",
+  "muzikTip": "Будь ласка, оберіть аудіо/пісню (mp3, m4a, wav…).",
+  "muzikBuyuk": "Пісня надто велика (макс. 30 МБ). Оберіть коротший/менший файл.",
+  "muzikYukleniyor": "Завантаження музики…",
+  "muzikHata": "Не вдалося завантажити музику, спробуйте ще раз."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -988,7 +1043,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Inicia la GRABACIÓN DE PANTALLA de tu teléfono — la modelo está girando. Toca ✕ al terminar.",
   "saMankenNot2": "Para guardar un video: toca '🔳 Pantalla completa', la modelo gira a PÁGINA COMPLETA; grábalo con la GRABACIÓN DE PANTALLA de tu teléfono. Así obtienes solo el video de la modelo.",
   "saGloxordaPaylas": "Compartir en GLOXORG",
-  "saDigerPaylas": "Otras plataformas"
+  "saDigerPaylas": "Otras plataformas",
+  "muzikEkle": "🎵 Añadir música (canción)",
+  "muzikEklendi": "Música añadida",
+  "muzikBenim": "Mi música",
+  "muzikKutuphane": "Biblioteca GLOXORG",
+  "muzikDosyaSec": "Elige una canción del teléfono/ordenador",
+  "muzikBenimNot": "Sube tu propia canción (mp3, m4a, wav). Suena en el feed en tu publicación. Máx. 30 MB.",
+  "muzikKutupBos": "Pronto se añadirán canciones libres de derechos a la biblioteca. Por ahora, usa 'Mi música' para subir tu propia canción.",
+  "muzikTip": "Elige un archivo de audio/canción (mp3, m4a, wav…).",
+  "muzikBuyuk": "La canción es demasiado grande (máx. 30 MB). Elige un archivo más corto/pequeño.",
+  "muzikYukleniyor": "Subiendo música…",
+  "muzikHata": "No se pudo subir la música, inténtalo de nuevo."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1153,7 +1219,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Lance l'ENREGISTREMENT D'ÉCRAN de ton téléphone — le mannequin tourne. Appuie sur ✕ quand tu as fini.",
   "saMankenNot2": "Pour enregistrer une vidéo : appuie sur '🔳 Plein écran', le mannequin tourne en PLEINE PAGE ; capture-le avec l'ENREGISTREMENT D'ÉCRAN de ton téléphone. Ainsi tu n'as que la vidéo du mannequin.",
   "saGloxordaPaylas": "Partager sur GLOXORG",
-  "saDigerPaylas": "Autres plateformes"
+  "saDigerPaylas": "Autres plateformes",
+  "muzikEkle": "🎵 Ajouter de la musique (chanson)",
+  "muzikEklendi": "Musique ajoutée",
+  "muzikBenim": "Ma musique",
+  "muzikKutuphane": "Bibliothèque GLOXORG",
+  "muzikDosyaSec": "Choisir une chanson depuis le téléphone/ordinateur",
+  "muzikBenimNot": "Téléverse ta propre chanson (mp3, m4a, wav). Elle joue dans le fil sur ta publication. Max 30 Mo.",
+  "muzikKutupBos": "Des chansons libres de droits seront bientôt ajoutées à la bibliothèque. Pour l'instant, utilise 'Ma musique' pour téléverser ta chanson.",
+  "muzikTip": "Choisis un fichier audio/chanson (mp3, m4a, wav…).",
+  "muzikBuyuk": "La chanson est trop volumineuse (max 30 Mo). Choisis un fichier plus court/petit.",
+  "muzikYukleniyor": "Téléversement de la musique…",
+  "muzikHata": "Impossible de téléverser la musique, réessaie."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1318,7 +1395,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Avvia la REGISTRAZIONE SCHERMO del telefono — la modella sta ruotando. Tocca ✕ quando hai finito.",
   "saMankenNot2": "Per salvare un video: tocca '🔳 Schermo intero', la modella ruota a PAGINA INTERA; registrala con la REGISTRAZIONE SCHERMO del telefono. Così ottieni solo il video della modella.",
   "saGloxordaPaylas": "Condividi su GLOXORG",
-  "saDigerPaylas": "Altre piattaforme"
+  "saDigerPaylas": "Altre piattaforme",
+  "muzikEkle": "🎵 Aggiungi musica (canzone)",
+  "muzikEklendi": "Musica aggiunta",
+  "muzikBenim": "La mia musica",
+  "muzikKutuphane": "Libreria GLOXORG",
+  "muzikDosyaSec": "Scegli una canzone dal telefono/computer",
+  "muzikBenimNot": "Carica la tua canzone (mp3, m4a, wav). Viene riprodotta nel feed nel tuo post. Max 30 MB.",
+  "muzikKutupBos": "Presto verranno aggiunte canzoni royalty-free alla libreria. Per ora usa 'La mia musica' per caricare la tua canzone.",
+  "muzikTip": "Scegli un file audio/canzone (mp3, m4a, wav…).",
+  "muzikBuyuk": "La canzone è troppo grande (max 30 MB). Scegli un file più corto/piccolo.",
+  "muzikYukleniyor": "Caricamento musica…",
+  "muzikHata": "Impossibile caricare la musica, riprova."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1483,7 +1571,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "Inicie a GRAVAÇÃO DE TELA do seu telefone — o modelo está girando. Toque em ✕ ao terminar.",
   "saMankenNot2": "Para salvar um vídeo: toque em '🔳 Tela cheia', o modelo gira em PÁGINA INTEIRA; capture com a GRAVAÇÃO DE TELA do telefone. Assim você tem só o vídeo do modelo.",
   "saGloxordaPaylas": "Compartilhar no GLOXORG",
-  "saDigerPaylas": "Outras plataformas"
+  "saDigerPaylas": "Outras plataformas",
+  "muzikEkle": "🎵 Adicionar música (canção)",
+  "muzikEklendi": "Música adicionada",
+  "muzikBenim": "Minha música",
+  "muzikKutuphane": "Biblioteca GLOXORG",
+  "muzikDosyaSec": "Escolha uma música do telefone/computador",
+  "muzikBenimNot": "Envie sua própria música (mp3, m4a, wav). Toca no feed na sua publicação. Máx. 30 MB.",
+  "muzikKutupBos": "Em breve serão adicionadas músicas livres de direitos à biblioteca. Por enquanto, use 'Minha música' para enviar sua própria música.",
+  "muzikTip": "Escolha um arquivo de áudio/música (mp3, m4a, wav…).",
+  "muzikBuyuk": "A música é muito grande (máx. 30 MB). Escolha um arquivo menor.",
+  "muzikYukleniyor": "Enviando música…",
+  "muzikHata": "Não foi possível enviar a música, tente novamente."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1648,7 +1747,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "ابدأ تسجيل الشاشة في هاتفك — العارضة تدور. اضغط ✕ عند الانتهاء.",
   "saMankenNot2": "لحفظ فيديو: اضغط '🔳 ملء الشاشة'، تدور العارضة بملء الصفحة؛ سجّلها بتسجيل الشاشة في هاتفك. هكذا تحصل على فيديو العارضة فقط.",
   "saGloxordaPaylas": "شارك على GLOXORG",
-  "saDigerPaylas": "منصات أخرى"
+  "saDigerPaylas": "منصات أخرى",
+  "muzikEkle": "🎵 أضف موسيقى (أغنية)",
+  "muzikEklendi": "تمت إضافة الموسيقى",
+  "muzikBenim": "موسيقاي",
+  "muzikKutuphane": "مكتبة GLOXORG",
+  "muzikDosyaSec": "اختر أغنية من الهاتف/الحاسوب",
+  "muzikBenimNot": "ارفع أغنيتك الخاصة (mp3, m4a, wav). تُشغَّل في الموجز ضمن منشورك. الحد الأقصى 30 ميغابايت.",
+  "muzikKutupBos": "ستُضاف أغانٍ خالية من الحقوق إلى المكتبة قريبًا. في الوقت الحالي استخدم 'موسيقاي' لرفع أغنيتك.",
+  "muzikTip": "يرجى اختيار ملف صوتي/أغنية (mp3, m4a, wav…).",
+  "muzikBuyuk": "الأغنية كبيرة جدًا (الحد الأقصى 30 ميغابايت). اختر ملفًا أقصر/أصغر.",
+  "muzikYukleniyor": "جارٍ رفع الموسيقى…",
+  "muzikHata": "تعذّر رفع الموسيقى، حاول مجددًا."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1813,7 +1923,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "अपने फोन का स्क्रीन रिकॉर्डर शुरू करें — मॉडल घूम रहा है। समाप्त होने पर ✕ दबाएं।",
   "saMankenNot2": "वीडियो सहेजने के लिए: '🔳 पूरी स्क्रीन' दबाएं, मॉडल पूरे पेज पर घूमता है; अपने फोन के स्क्रीन रिकॉर्डर से इसे कैप्चर करें। इस तरह सिर्फ मॉडल का वीडियो मिलेगा।",
   "saGloxordaPaylas": "GLOXORG पर साझा करें",
-  "saDigerPaylas": "अन्य प्लेटफ़ॉर्म"
+  "saDigerPaylas": "अन्य प्लेटफ़ॉर्म",
+  "muzikEkle": "🎵 संगीत जोड़ें (गाना)",
+  "muzikEklendi": "संगीत जोड़ा गया",
+  "muzikBenim": "मेरा संगीत",
+  "muzikKutuphane": "GLOXORG लाइब्रेरी",
+  "muzikDosyaSec": "फोन/कंप्यूटर से गाना चुनें",
+  "muzikBenimNot": "अपना गाना अपलोड करें (mp3, m4a, wav)। यह आपकी पोस्ट में फ़ीड में बजता है। अधिकतम 30 MB।",
+  "muzikKutupBos": "रॉयल्टी-फ्री गाने जल्द ही लाइब्रेरी में जोड़े जाएंगे। अभी के लिए, अपना गाना अपलोड करने हेतु 'मेरा संगीत' का उपयोग करें।",
+  "muzikTip": "कृपया एक ऑडियो/गाना फ़ाइल चुनें (mp3, m4a, wav…)।",
+  "muzikBuyuk": "गाना बहुत बड़ा है (अधिकतम 30 MB)। छोटी फ़ाइल चुनें।",
+  "muzikYukleniyor": "संगीत अपलोड हो रहा है…",
+  "muzikHata": "संगीत अपलोड नहीं हो सका, फिर कोशिश करें।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1978,7 +2099,18 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "开启手机的屏幕录制——模特正在旋转。完成后点击 ✕。",
   "saMankenNot2": "要保存视频：点击'🔳 全屏'，模特全页旋转；用手机的屏幕录制功能录下。这样就只有模特的视频。",
   "saGloxordaPaylas": "在 GLOXORG 分享",
-  "saDigerPaylas": "其他平台"
+  "saDigerPaylas": "其他平台",
+  "muzikEkle": "🎵 添加音乐（歌曲）",
+  "muzikEklendi": "已添加音乐",
+  "muzikBenim": "我的音乐",
+  "muzikKutuphane": "GLOXORG 音乐库",
+  "muzikDosyaSec": "从手机/电脑选择歌曲",
+  "muzikBenimNot": "上传你自己的歌曲（mp3、m4a、wav）。它会在动态里你的帖子上播放。最大 30 MB。",
+  "muzikKutupBos": "无版权歌曲很快会加入音乐库。目前请使用\"我的音乐\"上传你自己的歌曲。",
+  "muzikTip": "请选择音频/歌曲文件（mp3、m4a、wav…）。",
+  "muzikBuyuk": "歌曲太大（最大 30 MB）。请选择更短/更小的文件。",
+  "muzikYukleniyor": "正在上传音乐…",
+  "muzikHata": "音乐上传失败，请重试。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2143,6 +2275,17 @@ export const CEVIRI_EKSIK7 = {
   "saTamEkranNot": "スマホの画面録画を開始してください——モデルが回転しています。終わったら ✕ を押してください。",
   "saMankenNot2": "動画を保存するには：'🔳 全画面'を押すとモデルが全画面で回転します。スマホの画面録画で撮影してください。そうすればモデルの動画だけになります。",
   "saGloxordaPaylas": "GLOXORGで共有",
-  "saDigerPaylas": "他のプラットフォーム"
+  "saDigerPaylas": "他のプラットフォーム",
+  "muzikEkle": "🎵 音楽を追加（曲）",
+  "muzikEklendi": "音楽を追加しました",
+  "muzikBenim": "マイミュージック",
+  "muzikKutuphane": "GLOXORG ライブラリ",
+  "muzikDosyaSec": "スマホ/PCから曲を選ぶ",
+  "muzikBenimNot": "自分の曲をアップロード（mp3, m4a, wav）。フィードの投稿で再生されます。最大30MB。",
+  "muzikKutupBos": "ロイヤリティフリーの曲は近日中にライブラリへ追加されます。今は「マイミュージック」で自分の曲をアップロードしてください。",
+  "muzikTip": "音声/曲ファイルを選んでください（mp3, m4a, wav…）。",
+  "muzikBuyuk": "曲が大きすぎます（最大30MB）。短い/小さいファイルを選んでください。",
+  "muzikYukleniyor": "音楽をアップロード中…",
+  "muzikHata": "音楽をアップロードできませんでした。もう一度お試しください。"
  }
 };

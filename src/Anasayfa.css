@@ -297,6 +297,11 @@
 .ana-post-dosya-ik{ font-size:19px; }
 .ana-post-dosya-ad{ flex:1; min-width:0; color:#e7f4ff; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ana-post-dosya-in{ flex:none; color:#0c1530; background:linear-gradient(135deg,#bfe9ff,#7fc4ff); font-weight:800; font-size:12px; padding:5px 12px; border-radius:20px; }
+/* 🎵 GÖNDERİ MÜZİĞİ — akışta çalar (altın şerit) */
+.ana-post-muzik{ display:flex; align-items:center; gap:9px; margin:8px 12px 0; padding:8px 11px; border-radius:13px; background:linear-gradient(135deg,#fff3cf,#ffe08a); border:1.5px solid #e0b84a; }
+.apm-ik{ font-size:18px; flex:none; }
+.apm-ad{ flex:none; max-width:38%; color:#5a3f00; font-size:13px; font-weight:800; overflow:hidden; white-space:nowrap; }
+.apm-ses{ flex:1; min-width:0; height:36px; }
 .pyl-avatar{ width:46px; height:46px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-weight:800; font-size:19px; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); box-shadow:0 0 0 2px rgba(255,215,0,.4); }
 .pyl-avatar img{ width:100%; height:100%; object-fit:cover; }
@@ -353,6 +358,21 @@
 /* ANKET oluşturma (composer) — altın tema, kare köşeler */
 .pyl-anket-btn{ border-color:rgba(217,182,74,.5); background:rgba(217,182,74,.08); color:#e9d79a; }
 .pyl-anket-btn.acik{ border-color:rgba(217,182,74,.85); background:rgba(217,182,74,.16); color:#ffe9a8; }
+/* 🎵 MÜZİK EKLE (composer) — kendi müziğin YA DA GLOXORG kütüphanesi */
+.pyl-muzik-btn{ border-color:rgba(217,120,220,.5); background:rgba(190,90,210,.08); color:#f0c9f5; }
+.pyl-muzik-btn.acik{ border-color:rgba(217,120,220,.85); background:rgba(190,90,210,.16); color:#ffe0ff; }
+.pyl-muzik-panel{ margin-top:8px; border:1px solid rgba(190,90,210,.4); border-radius:13px; padding:10px; background:rgba(120,60,140,.14); }
+.pyl-muzik-sekme{ display:flex; gap:8px; margin-bottom:10px; }
+.pyl-muzik-sekme button{ flex:1; padding:9px 6px; border-radius:10px; border:1.5px solid rgba(190,90,210,.5); background:transparent; color:#e6c9ee; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
+.pyl-muzik-sekme button.sec{ background:linear-gradient(90deg,#b45bd0,#7a3aa0); color:#fff; border-color:transparent; }
+.pyl-muzik-yukle{ width:100%; padding:13px; border-radius:12px; border:none; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; font-weight:900; font-size:15px; cursor:pointer; font-family:inherit; }
+.pyl-muzik-yukle:active{ transform:scale(.98); }
+.pyl-muzik-not{ margin-top:9px; color:#e6c9ee; font-size:12.5px; line-height:1.5; font-weight:600; }
+.pyl-muzik-liste{ display:flex; flex-direction:column; gap:7px; max-height:220px; overflow-y:auto; }
+.pyl-muzik-oge{ display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:11px; border:1.5px solid rgba(190,90,210,.4); background:rgba(255,255,255,.05); color:#f0e6f5; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; text-align:left; }
+.pyl-muzik-oge.sec{ background:linear-gradient(90deg,#b45bd0,#7a3aa0); color:#fff; border-color:transparent; }
+.pyl-muzik-oge-ik{ font-size:17px; flex:none; }
+.pyl-muzik-oge-ad{ flex:1; min-width:0; }
 .pyl-anket{ margin:8px 0 0; padding:11px; border-radius:12px; border:1px solid rgba(217,182,74,.4); background:rgba(217,182,74,.06); display:flex; flex-direction:column; gap:8px; }
 .pyl-anket-baslik{ font-size:12px; color:#e9d79a; line-height:1.35; opacity:.92; }
 .pyl-anket-satir{ display:flex; align-items:center; gap:8px; }
