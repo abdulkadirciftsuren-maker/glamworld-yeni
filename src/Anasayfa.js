@@ -11108,10 +11108,6 @@ export default function Anasayfa({ pro = false }) {
                   </button>
                 </div>
               )}
-              {/* 🎵 ŞARKI TANIMA — çalan müziği dinleyip hangi şarkı olduğunu Gloxoo tahmin eder (Shazam gibi) */}
-              <button className={"ai-sarki-btn" + (sarkiDinliyor ? " dinliyor" : "")} onClick={sarkiDinle} disabled={yardimciYukleniyor && !sarkiDinliyor}>
-                {sarkiDinliyor ? "⏹️ " + t("sarkiDur", "Dinlemeyi bitir") : "🎵 " + t("sarkiDinleBtn", "Dinle — hangi şarkı çalıyor?")}
-              </button>
               {/* ALT: yazı dikte MİKROFONU + yazı şeridi + GÖNDER (mikrofon şeridin YANINDA — sesi metne çevirir, sen düzenle/gönder) */}
               <div className="ai-yaz-satir">
                 <button className={"ai-ses ai-mik" + (dinliyor && !canliSohbet ? " dinliyor" : "")} onClick={sesleSor} aria-label={dinliyor && !canliSohbet ? t("durdur", "Durdur") : t("yaziDikte", "Sesle yaz (metne çevir)")}>
