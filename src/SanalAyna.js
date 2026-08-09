@@ -173,6 +173,9 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
       const kisiIng = (KISILER.find((x) => x.k === kisi) || {}).ing || "person";
       const renkKismi = renk ? ` Color: ${renk}.` : "";
+      // PROFESYONEL STÜDYO KALİTESİ (kullanıcı: sonuç reklamlardaki gibi kaliteli olsun, sönük/dandik değil).
+      const KALITE = "Ultra photorealistic, professional studio photography, soft cinematic flattering lighting, sharp focus, ultra-high resolution, fashion-magazine quality, clean elegant background, natural skin texture. It must stay the SAME real person — do NOT beautify, slim, age or change the face. Exactly ONE person, no duplicate or extra face. No text, no watermark, no logo.";
+      const boyKategori = (kategori === "elbise" || kategori === "ayakkabi");
       let istem, ref2 = null;
       if (refFoto) {
         // İKİ görsel: 1. kişi (müşteri), 2. ürün → o EXACT ÜRÜNÜ kişinin üstünde, BOYDAN göster (reklamdan "üstümde dene")
@@ -183,10 +186,15 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu }) {
 MUST DO — dress her in that exact product: copy its exact print, pattern, colors, neckline, sleeves, fabric and full length from image 2.${tarifKismi} COMPLETELY remove and replace her current clothes (jacket, vest, top, everything) — no old clothing left on any part of her; BOTH arms and both shoulders wear the new product.
 KEEP HER REAL FACE (most important): her face, head and hair must stay EXACTLY as the woman in image 1 — identical eyes, nose, mouth, eyebrows, face shape, age, skin tone and hair. Do NOT beautify her, do NOT make her younger, slimmer or prettier, do NOT turn her into a fashion model or a different woman. It must be recognizably the SAME real person from image 1. Only her CLOTHES change; her face does NOT. Keep a similar natural background.
 SHOW her FULL BODY from head to feet, standing naturally, wearing elegant WOMEN'S shoes that suit the dress (heels/flats/sandals — NEVER men's shoes, boots or sneakers). If it is a long/maxi dress, show it FULL-LENGTH to the floor with ALL its tiers. Put her face near the TOP and extend the picture DOWNWARD to her feet — do NOT stop at the waist, do NOT add empty sky above her head, nothing cut off at the bottom.${renkKismi}
-EXACTLY ONE person — no duplicate, ghost or extra face. Photorealistic, high quality, no text, no watermark, no logo.
+Present it like a high-end fashion studio photo: elegant pose, soft cinematic lighting, clean background.${renkKismi}
+${KALITE}
 IMPORTANT: the result MUST look different from image 1 — she is now wearing the new product, NOT her original clothes. If she still wears her old jacket/vest, it is WRONG.`;
+      } else if (boyKategori) {
+        // KIYAFET / AYAKKABI → TAM BOY profesyonel moda çekimi (reklamdaki kırmızı elbise gibi)
+        istem = `The person in this photo is a ${kisiIng}. Show the SAME person wearing this ${cfg.ne}: "${model.trim()}".${renkKismi} ${cfg.koru} Show a FULL-BODY shot from head to feet, standing in an elegant natural pose like a professional fashion studio / runway photo, wearing suitable elegant WOMEN'S shoes. Put the face near the TOP and extend downward to the feet — nothing cut off at waist or bottom, no empty space above the head. ${KALITE}`;
       } else {
-        istem = `The person in this photo is a ${kisiIng}. Realistically apply/show this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} If it is clothing/shoes and the photo shows only the face/upper body, generate a FULL-BODY photo of the same person wearing it. Photorealistic, natural, high quality, no text, no watermark, no logo.`;
+        // SAÇ / MAKYAJ / TIRNAK / AKSESUAR → net, iyi ışıklı yakın çekim (o özellik iyi görünsün)
+        istem = `The person in this photo is a ${kisiIng}. Realistically apply this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Clean, well-lit portrait so the new ${cfg.ne} is clearly and beautifully visible. ${KALITE}`;
       }
       // TEK AŞAMA: gövde + elbise + yüzü koru (2 aşamalı yüz yerleştirme yüzü BULANIKLAŞTIRIYORDU → kaldırıldı)
       const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime }, ref2);
