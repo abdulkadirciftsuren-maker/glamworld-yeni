@@ -373,6 +373,9 @@
 .pyl-muzik-oge.sec{ background:linear-gradient(90deg,#b45bd0,#7a3aa0); color:#fff; border-color:transparent; }
 .pyl-muzik-oge-ik{ font-size:17px; flex:none; }
 .pyl-muzik-oge-ad{ flex:1; min-width:0; }
+.pyl-muzik-oniz{ margin-top:8px; padding:10px 12px; border-radius:12px; background:linear-gradient(135deg,#fff3cf,#ffe08a); border:1.5px solid #e0b84a; }
+.pyl-muzik-oniz-bas{ display:block; color:#5a3f00; font-weight:800; font-size:13px; margin-bottom:7px; }
+.pyl-muzik-oniz-ses{ width:100%; height:38px; }
 .pyl-anket{ margin:8px 0 0; padding:11px; border-radius:12px; border:1px solid rgba(217,182,74,.4); background:rgba(217,182,74,.06); display:flex; flex-direction:column; gap:8px; }
 .pyl-anket-baslik{ font-size:12px; color:#e9d79a; line-height:1.35; opacity:.92; }
 .pyl-anket-satir{ display:flex; align-items:center; gap:8px; }
@@ -5160,15 +5163,16 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-manken-btn:disabled{ opacity:.75; }
 .sa-manken-btn:active{ transform:scale(.98); }
 .sa-manken{ margin-top:12px; background:#fff7db; border:2px solid #FFD700; border-radius:16px; padding:10px; }
-@keyframes saFrameGir{ from{ opacity:.3; } to{ opacity:1; } }
-.sa-manken img{ width:100%; border-radius:12px; border:2px solid #a07800; display:block; background:linear-gradient(160deg,#fffdf5,#ffe9a8); animation:saFrameGir .55s ease; }
+/* Kare değişince ÇOK HAFİF geçiş (kullanıcı: "flaş gibi patlama oluyor, hafif olsun") — sadece belli belirsiz yumuşama */
+@keyframes saFrameGir{ from{ opacity:.9; } to{ opacity:1; } }
+.sa-manken img{ width:100%; border-radius:12px; border:2px solid #a07800; display:block; background:linear-gradient(160deg,#fffdf5,#ffe9a8); animation:saFrameGir .35s ease; }
 .sa-manken-dug{ display:flex; gap:8px; margin-top:9px; }
 .sa-manken-dug button{ flex:1; padding:11px 8px; border-radius:11px; border:none; font-weight:900; font-size:14.5px; cursor:pointer; font-family:inherit; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; }
 .sa-manken-dug button:active{ transform:scale(.97); }
 .sa-manken-not{ margin-top:9px; color:#7a5a12; font-weight:700; font-size:13px; line-height:1.45; }
 /* CANLI MANKEN — TAM EKRAN oynatıcı (ekran kaydı için). Zemin ALTIN (siyah YOK — anayasa). */
 .sa-manken-tam{ position:fixed; inset:0; z-index:100090; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle at 50% 30%, #ffe9a8, #f2c14e 70%, #d4af37); }
-.sa-manken-tam img{ max-width:100%; max-height:100%; object-fit:contain; display:block; animation:saFrameGir .55s ease; }
+.sa-manken-tam img{ max-width:100%; max-height:100%; object-fit:contain; display:block; animation:saFrameGir .35s ease; }
 .sa-manken-tam-kapat{ position:absolute; top:14px; right:14px; width:48px; height:48px; border-radius:13px; border:2px solid #7a5a00; background:rgba(255,253,240,.92); color:#7a5a00; font-size:23px; font-weight:900; cursor:pointer; z-index:2; }
 .sa-manken-tam-not{ position:absolute; bottom:16px; left:0; right:0; text-align:center; color:#5a3f00; font-weight:800; font-size:14px; padding:0 16px; }
 @media (min-width:560px){ .sa-baslik{ font-size:26px; } .sa-foto-kutu{ max-height:420px; } .sa-manken-btn{ font-size:19px; } }

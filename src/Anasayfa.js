@@ -1666,6 +1666,15 @@ export default function Anasayfa({ pro = false }) {
   const [resimIndi, setResimIndi] = useState(false);   // Gloxoo resim indirme düğmesinde "İndirildi" geri bildirimi
   // Toast OTOMATİK kapansın (ekranda takılı kalmasın) — 2.2 sn sonra temizle
   useEffect(() => { if (!kucukMesaj) return; const z = setTimeout(() => setKucukMesaj(""), 2200); return () => clearTimeout(z); }, [kucukMesaj]);
+  // MÜZİK ÖNİZLEME — paylaşmadan ÖNCE seçilen şarkıyı dinlemek için link hazırla (kendi dosyası → yerel link; kütüphane → url)
+  useEffect(() => {
+    if (paylasMuzik && paylasMuzik.file) {
+      let u = ""; try { u = URL.createObjectURL(paylasMuzik.file); } catch (e) { u = ""; }
+      setMuzikOnizUrl(u);
+      return () => { try { if (u) URL.revokeObjectURL(u); } catch (e) {} };
+    }
+    setMuzikOnizUrl(paylasMuzik && paylasMuzik.url ? paylasMuzik.url : "");
+  }, [paylasMuzik]);
   const [dahaMenu, setDahaMenu] = useState(null);      // üç nokta menüsü açık gönderi
   const [paylasAcik, setPaylasAcik] = useState(false); // paylaşım yazma penceresi
   const [paylasAvatar, setPaylasAvatar] = useState("profil"); // gönderi avatarı: "profil" (profil fotoğrafım) | "amblem" (şirket amblemi)
@@ -1695,6 +1704,7 @@ export default function Anasayfa({ pro = false }) {
   // MÜZİK — her paylaşıma şarkı ekle: kendi müziğini yükle YA DA GLOXORG kütüphanesinden seç. Akışta çalar.
   const [paylasMuzik, setPaylasMuzik] = useState(null);         // { ad, url?, file? } — file varsa yayında yüklenir; url varsa (kütüphane/düzenleme) doğrudan kullanılır
   const [muzikMenu, setMuzikMenu] = useState("");               // "" | "benim" | "kutuphane" — müzik ekleme paneli
+  const [muzikOnizUrl, setMuzikOnizUrl] = useState("");         // paylaşmadan ÖNCE dinleme (önizleme) linki
   const muzikRef = useRef(null);                                // kendi müzik dosyası seç
   const [aiIstek, setAiIstek] = useState("");                   // kullanıcı Gloxoo'ya ne yazmasını istediğini yazar
   const [aiIstekDinliyor, setAiIstekDinliyor] = useState(false); // Gloxoo'ya konuşarak söyleme (mikrofon aktif mi)
@@ -9905,6 +9915,13 @@ export default function Anasayfa({ pro = false }) {
               <span className="pyl-konum-metin">{paylasMuzik ? ("🎵 " + (paylasMuzik.ad || t("muzikEklendi", "Müzik eklendi"))) : t("muzikEkle", "🎵 Müzik ekle (şarkı ekle)")}</span>
               {paylasMuzik && <span className="pyl-konum-sil" aria-hidden="true" onClick={(e) => { e.stopPropagation(); setPaylasMuzik(null); setMuzikMenu(""); }}>✕</span>}
             </button>
+            {/* SEÇİLEN MÜZİĞİ PAYLAŞMADAN ÖNCE DİNLE (kullanıcı: "önce ince dinlemem lazım") */}
+            {paylasMuzik && muzikOnizUrl && (
+              <div className="pyl-muzik-oniz">
+                <span className="pyl-muzik-oniz-bas">🎧 {t("muzikDinle", "Paylaşmadan önce dinle")}</span>
+                <audio className="pyl-muzik-oniz-ses" src={muzikOnizUrl} controls preload="metadata" />
+              </div>
+            )}
             {muzikMenu && (
               <div className="pyl-muzik-panel">
                 <div className="pyl-muzik-sekme">

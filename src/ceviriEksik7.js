@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Sanal Ayna + Canli Manken + Sarki Tanima + Ayna duzen + manken tam ekran/paylas + Paylasima MUZIK (muzik*) anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Paylasima MUZIK (muzik*) + muzik onizleme (muzikDinle); 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -174,7 +174,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Lütfen bir ses/şarkı dosyası seç (mp3, m4a, wav…).",
   "muzikBuyuk": "Şarkı çok büyük (en fazla 30 MB). Daha kısa/küçük bir dosya seç.",
   "muzikYukleniyor": "Müzik yükleniyor…",
-  "muzikHata": "Müzik yüklenemedi, tekrar dene."
+  "muzikHata": "Müzik yüklenemedi, tekrar dene.",
+  "muzikDinle": "Paylaşmadan önce dinle"
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -350,7 +351,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Please pick an audio/song file (mp3, m4a, wav…).",
   "muzikBuyuk": "The song is too big (max 30 MB). Pick a shorter/smaller file.",
   "muzikYukleniyor": "Uploading music…",
-  "muzikHata": "Music couldn't be uploaded, try again."
+  "muzikHata": "Music couldn't be uploaded, try again.",
+  "muzikDinle": "Listen before posting"
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -526,7 +528,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Bitte wähle eine Audio-/Lieddatei (mp3, m4a, wav…).",
   "muzikBuyuk": "Das Lied ist zu groß (max. 30 MB). Wähle eine kürzere/kleinere Datei.",
   "muzikYukleniyor": "Musik wird hochgeladen…",
-  "muzikHata": "Musik konnte nicht hochgeladen werden, versuche es erneut."
+  "muzikHata": "Musik konnte nicht hochgeladen werden, versuche es erneut.",
+  "muzikDinle": "Vor dem Posten anhören"
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -702,7 +705,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Пожалуйста, выберите аудио/песню (mp3, m4a, wav…).",
   "muzikBuyuk": "Песня слишком большая (макс. 30 МБ). Выберите короче/меньше.",
   "muzikYukleniyor": "Загрузка музыки…",
-  "muzikHata": "Не удалось загрузить музыку, попробуйте снова."
+  "muzikHata": "Не удалось загрузить музыку, попробуйте снова.",
+  "muzikDinle": "Послушать перед публикацией"
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -878,7 +882,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Будь ласка, оберіть аудіо/пісню (mp3, m4a, wav…).",
   "muzikBuyuk": "Пісня надто велика (макс. 30 МБ). Оберіть коротший/менший файл.",
   "muzikYukleniyor": "Завантаження музики…",
-  "muzikHata": "Не вдалося завантажити музику, спробуйте ще раз."
+  "muzikHata": "Не вдалося завантажити музику, спробуйте ще раз.",
+  "muzikDinle": "Послухати перед публікацією"
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -1054,7 +1059,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Elige un archivo de audio/canción (mp3, m4a, wav…).",
   "muzikBuyuk": "La canción es demasiado grande (máx. 30 MB). Elige un archivo más corto/pequeño.",
   "muzikYukleniyor": "Subiendo música…",
-  "muzikHata": "No se pudo subir la música, inténtalo de nuevo."
+  "muzikHata": "No se pudo subir la música, inténtalo de nuevo.",
+  "muzikDinle": "Escuchar antes de publicar"
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1230,7 +1236,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Choisis un fichier audio/chanson (mp3, m4a, wav…).",
   "muzikBuyuk": "La chanson est trop volumineuse (max 30 Mo). Choisis un fichier plus court/petit.",
   "muzikYukleniyor": "Téléversement de la musique…",
-  "muzikHata": "Impossible de téléverser la musique, réessaie."
+  "muzikHata": "Impossible de téléverser la musique, réessaie.",
+  "muzikDinle": "Écouter avant de publier"
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1406,7 +1413,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Scegli un file audio/canzone (mp3, m4a, wav…).",
   "muzikBuyuk": "La canzone è troppo grande (max 30 MB). Scegli un file più corto/piccolo.",
   "muzikYukleniyor": "Caricamento musica…",
-  "muzikHata": "Impossibile caricare la musica, riprova."
+  "muzikHata": "Impossibile caricare la musica, riprova.",
+  "muzikDinle": "Ascolta prima di pubblicare"
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1582,7 +1590,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "Escolha um arquivo de áudio/música (mp3, m4a, wav…).",
   "muzikBuyuk": "A música é muito grande (máx. 30 MB). Escolha um arquivo menor.",
   "muzikYukleniyor": "Enviando música…",
-  "muzikHata": "Não foi possível enviar a música, tente novamente."
+  "muzikHata": "Não foi possível enviar a música, tente novamente.",
+  "muzikDinle": "Ouvir antes de publicar"
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1758,7 +1767,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "يرجى اختيار ملف صوتي/أغنية (mp3, m4a, wav…).",
   "muzikBuyuk": "الأغنية كبيرة جدًا (الحد الأقصى 30 ميغابايت). اختر ملفًا أقصر/أصغر.",
   "muzikYukleniyor": "جارٍ رفع الموسيقى…",
-  "muzikHata": "تعذّر رفع الموسيقى، حاول مجددًا."
+  "muzikHata": "تعذّر رفع الموسيقى، حاول مجددًا.",
+  "muzikDinle": "استمع قبل النشر"
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1934,7 +1944,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "कृपया एक ऑडियो/गाना फ़ाइल चुनें (mp3, m4a, wav…)।",
   "muzikBuyuk": "गाना बहुत बड़ा है (अधिकतम 30 MB)। छोटी फ़ाइल चुनें।",
   "muzikYukleniyor": "संगीत अपलोड हो रहा है…",
-  "muzikHata": "संगीत अपलोड नहीं हो सका, फिर कोशिश करें।"
+  "muzikHata": "संगीत अपलोड नहीं हो सका, फिर कोशिश करें।",
+  "muzikDinle": "पोस्ट करने से पहले सुनें"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -2110,7 +2121,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "请选择音频/歌曲文件（mp3、m4a、wav…）。",
   "muzikBuyuk": "歌曲太大（最大 30 MB）。请选择更短/更小的文件。",
   "muzikYukleniyor": "正在上传音乐…",
-  "muzikHata": "音乐上传失败，请重试。"
+  "muzikHata": "音乐上传失败，请重试。",
+  "muzikDinle": "发布前试听"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2286,6 +2298,7 @@ export const CEVIRI_EKSIK7 = {
   "muzikTip": "音声/曲ファイルを選んでください（mp3, m4a, wav…）。",
   "muzikBuyuk": "曲が大きすぎます（最大30MB）。短い/小さいファイルを選んでください。",
   "muzikYukleniyor": "音楽をアップロード中…",
-  "muzikHata": "音楽をアップロードできませんでした。もう一度お試しください。"
+  "muzikHata": "音楽をアップロードできませんでした。もう一度お試しください。",
+  "muzikDinle": "投稿する前に試聴"
  }
 };
