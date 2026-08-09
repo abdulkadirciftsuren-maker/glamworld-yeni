@@ -1671,7 +1671,6 @@ export default function Anasayfa({ pro = false }) {
   const begeniBasRef = useRef(null);     // kalbe UZUN basma zamanlayıcısı
   const uzunBasildiRef = useRef(false);  // uzun basıldıysa tık'ı (beğeni toggle) bastır
   const [kucukMesaj, setKucukMesaj] = useState("");    // kısa bilgi balonu (kaydet vb.) — alta beliren toast
-  const [sesVar, setSesVar] = useState(false);         // o an bir ses çalıyor mu → "Sesi durdur" düğmesi göster (kullanıcı: ses kesilmiyor)
   const [resimIndi, setResimIndi] = useState(false);   // Gloxoo resim indirme düğmesinde "İndirildi" geri bildirimi
   // Toast OTOMATİK kapansın (ekranda takılı kalmasın) — 2.2 sn sonra temizle
   useEffect(() => { if (!kucukMesaj) return; const z = setTimeout(() => setKucukMesaj(""), 2200); return () => clearTimeout(z); }, [kucukMesaj]);
@@ -3613,7 +3612,7 @@ export default function Anasayfa({ pro = false }) {
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
   // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
   const zilRef = useRef(null);
-  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
+  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
   const zilBaslat = (mod) => {
     zilDurdur();
     try {
@@ -3647,7 +3646,9 @@ export default function Anasayfa({ pro = false }) {
       }
       dongu();
       const iv = setInterval(dongu, aralik);
-      zilRef.current = { ctx, iv };
+      // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar "bildirim sesi gibi" çalma olmasın)
+      const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
+      zilRef.current = { ctx, iv, kapatZmn };
     } catch (e) {}
   };
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
@@ -3656,29 +3657,6 @@ export default function Anasayfa({ pro = false }) {
     else if (gelenArama && !aramaDurum) zilBaslat("aranan");
     else zilDurdur();
   }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 🔇 TÜM SESLERİ DURDUR — nereden gelirse gelsin (Gloxoo, zil, video, şarkı, konuşma tanıma) TEK dokunuşta sustur.
-  // Kullanıcı: "bir ses takılıyor, kapatamıyorum, ancak telefonu kapatınca gidiyor." Artık her yerden erişilir bir düğmeyle kesilir.
-  const tumSesleriDurdur = () => {
-    try { gloxSustur(); } catch (e) {}
-    try { zilDurdur(); } catch (e) {}
-    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
-    try { if (canliSohbetRef.current) canliSohbetToggle(); } catch (e) {}
-    try { if (dikteAcikRef.current) dikteDurdur(); } catch (e) {}
-    try { document.querySelectorAll("audio, video").forEach((el) => { try { el.pause(); } catch (x) {} }); } catch (e) {}
-    try { setAiKonusuyor(false); setAiDuraklat(false); } catch (e) {}
-    setSesVar(false);
-  };
-  // "O an ses çalıyor mu?" — saniyede bir bak (Gloxoo konuşması / çalan video-şarkı / zil). Çalıyorsa "Sesi durdur" düğmesi görünür.
-  useEffect(() => {
-    const iv = setInterval(() => {
-      let v = false;
-      try { v = !!(window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)); } catch (e) {}
-      if (!v) { try { v = Array.from(document.querySelectorAll("audio, video")).some((el) => !el.paused && !el.ended && (el.currentTime || 0) > 0); } catch (e) {} }
-      if (!v) { try { v = !!zilRef.current; } catch (e) {} }
-      setSesVar((onceki) => (onceki === v ? onceki : v));
-    }, 1000);
-    return () => clearInterval(iv);
-  }, []);
   // ARKA PLANA GEÇİNCE (sekme gizlenince) Gloxoo konuşması + zil OTOMATİK sussun (arkada takılı kalmasın)
   useEffect(() => {
     const gizle = () => { if (document.hidden) { try { gloxSustur(); } catch (e) {} try { zilDurdur(); } catch (e) {} try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {} } };
@@ -12213,13 +12191,6 @@ export default function Anasayfa({ pro = false }) {
 
       {/* Kısa bilgi balonu (toast) — kaydet/paylaş açıklaması */}
       {kucukMesaj && <div className="grox-toast" role="status">{kucukMesaj}</div>}
-      {/* 🔇 SESİ DURDUR — bir ses çalıyorsa (Gloxoo/video/şarkı) her yerden görünür; dokununca TÜM sesler susar. Aramada gösterme (aramanın kendi düğmeleri var). */}
-      {sesVar && !aramaDurum && !gelenArama && (
-        <button className="ses-durdur-btn" onClick={tumSesleriDurdur} aria-label={t("sesiDurdur", "Sesi durdur")}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M17 9l5 6M22 9l-5 6" /></svg>
-          <span>{t("sesiDurdur", "Sesi durdur")}</span>
-        </button>
-      )}
 
       {/* PENCERE-İÇİ BİLDİRİM ŞERİDİ — uygulama açıkken mesaj/beğeni/yorum/tepki/takip gelince üstten iner (sistem bildirimi sekme öndeyken çıkmaz) */}
       {pencereBildirim && (
