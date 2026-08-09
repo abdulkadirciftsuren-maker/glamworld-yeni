@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Paylasima MUZIK (muzik*) + muzik onizleme/cal (muzikDinle/muzikCal); 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Paylasima MUZIK + tam ekran ses (sesAc/sesKapat); 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -176,7 +176,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Müzik yükleniyor…",
   "muzikHata": "Müzik yüklenemedi, tekrar dene.",
   "muzikDinle": "Paylaşmadan önce dinle",
-  "muzikCal": "Aç, çal"
+  "muzikCal": "Aç, çal",
+  "sesAc": "Sesi aç",
+  "sesKapat": "Sesi kapat"
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -354,7 +356,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Uploading music…",
   "muzikHata": "Music couldn't be uploaded, try again.",
   "muzikDinle": "Listen before posting",
-  "muzikCal": "Open & play"
+  "muzikCal": "Open & play",
+  "sesAc": "Turn sound on",
+  "sesKapat": "Turn sound off"
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -532,7 +536,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Musik wird hochgeladen…",
   "muzikHata": "Musik konnte nicht hochgeladen werden, versuche es erneut.",
   "muzikDinle": "Vor dem Posten anhören",
-  "muzikCal": "Öffnen & abspielen"
+  "muzikCal": "Öffnen & abspielen",
+  "sesAc": "Ton an",
+  "sesKapat": "Ton aus"
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -710,7 +716,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Загрузка музыки…",
   "muzikHata": "Не удалось загрузить музыку, попробуйте снова.",
   "muzikDinle": "Послушать перед публикацией",
-  "muzikCal": "Открыть, играть"
+  "muzikCal": "Открыть, играть",
+  "sesAc": "Включить звук",
+  "sesKapat": "Выключить звук"
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -888,7 +896,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Завантаження музики…",
   "muzikHata": "Не вдалося завантажити музику, спробуйте ще раз.",
   "muzikDinle": "Послухати перед публікацією",
-  "muzikCal": "Відкрити, грати"
+  "muzikCal": "Відкрити, грати",
+  "sesAc": "Увімкнути звук",
+  "sesKapat": "Вимкнути звук"
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -1066,7 +1076,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Subiendo música…",
   "muzikHata": "No se pudo subir la música, inténtalo de nuevo.",
   "muzikDinle": "Escuchar antes de publicar",
-  "muzikCal": "Abrir y reproducir"
+  "muzikCal": "Abrir y reproducir",
+  "sesAc": "Activar sonido",
+  "sesKapat": "Silenciar"
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1244,7 +1256,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Téléversement de la musique…",
   "muzikHata": "Impossible de téléverser la musique, réessaie.",
   "muzikDinle": "Écouter avant de publier",
-  "muzikCal": "Ouvrir et lire"
+  "muzikCal": "Ouvrir et lire",
+  "sesAc": "Activer le son",
+  "sesKapat": "Couper le son"
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1422,7 +1436,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Caricamento musica…",
   "muzikHata": "Impossibile caricare la musica, riprova.",
   "muzikDinle": "Ascolta prima di pubblicare",
-  "muzikCal": "Apri e riproduci"
+  "muzikCal": "Apri e riproduci",
+  "sesAc": "Attiva audio",
+  "sesKapat": "Disattiva audio"
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1600,7 +1616,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "Enviando música…",
   "muzikHata": "Não foi possível enviar a música, tente novamente.",
   "muzikDinle": "Ouvir antes de publicar",
-  "muzikCal": "Abrir e tocar"
+  "muzikCal": "Abrir e tocar",
+  "sesAc": "Ativar som",
+  "sesKapat": "Desativar som"
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1778,7 +1796,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "جارٍ رفع الموسيقى…",
   "muzikHata": "تعذّر رفع الموسيقى، حاول مجددًا.",
   "muzikDinle": "استمع قبل النشر",
-  "muzikCal": "افتح وشغّل"
+  "muzikCal": "افتح وشغّل",
+  "sesAc": "تشغيل الصوت",
+  "sesKapat": "إيقاف الصوت"
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1956,7 +1976,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "संगीत अपलोड हो रहा है…",
   "muzikHata": "संगीत अपलोड नहीं हो सका, फिर कोशिश करें।",
   "muzikDinle": "पोस्ट करने से पहले सुनें",
-  "muzikCal": "खोलें और चलाएं"
+  "muzikCal": "खोलें और चलाएं",
+  "sesAc": "आवाज़ चालू करें",
+  "sesKapat": "आवाज़ बंद करें"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -2134,7 +2156,9 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "正在上传音乐…",
   "muzikHata": "音乐上传失败，请重试。",
   "muzikDinle": "发布前试听",
-  "muzikCal": "打开播放"
+  "muzikCal": "打开播放",
+  "sesAc": "打开声音",
+  "sesKapat": "关闭声音"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2312,6 +2336,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikYukleniyor": "音楽をアップロード中…",
   "muzikHata": "音楽をアップロードできませんでした。もう一度お試しください。",
   "muzikDinle": "投稿する前に試聴",
-  "muzikCal": "開いて再生"
+  "muzikCal": "開いて再生",
+  "sesAc": "音を入れる",
+  "sesKapat": "音を消す"
  }
 };

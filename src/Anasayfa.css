@@ -303,11 +303,14 @@
 .apmc-ik{ font-size:16px; flex:none; }
 .apmc-ad{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:clip; }
 .apmc-ac{ flex:none; background:#7a5a00; color:#ffe9a8; border-radius:12px; padding:2px 9px; font-size:11.5px; font-weight:900; }
-/* 🎵 TAM EKRAN müzik — fotoğraf açılınca çalar */
-.tf-muzik{ display:flex; align-items:center; gap:9px; margin:0 0 8px; padding:8px 12px; border-radius:14px; background:linear-gradient(135deg,#fff3cf,#ffe08a); border:1.5px solid #e0b84a; }
-.tf-muzik-ik{ font-size:18px; flex:none; }
-.tf-muzik-ad{ flex:none; max-width:34%; color:#5a3f00; font-weight:800; font-size:13px; overflow:hidden; white-space:nowrap; }
-.tf-muzik-ses{ flex:1; min-width:0; height:36px; }
+/* 🎵 TAM EKRAN müzik — İNCE şerit: solda ses ikonu (aç/kapa) + şarkı adı SÜREKLİ sola kayar (geri-ileri değil) */
+.tf-muzik2{ display:flex; align-items:center; gap:9px; margin:0 0 8px; padding:5px 8px; border-radius:12px; background:rgba(90,63,0,.78); border:1px solid rgba(255,215,0,.7); }
+.tf-muzik2-ses{ flex:none; width:38px; height:38px; border-radius:10px; border:1.5px solid #FFD700; background:rgba(0,0,0,.25); color:#ffe9a8; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.tf-muzik2-ses svg{ width:22px; height:22px; }
+.tf-muzik2-ses:active{ transform:scale(.94); }
+.tf-muzik2-serit{ flex:1; min-width:0; overflow:hidden; white-space:nowrap; }
+.tf-muzik2-ic{ display:inline-block; padding-left:100%; color:#ffe9a8; font-weight:800; font-size:13.5px; animation:tfMuzikKay 15s linear infinite; }
+@keyframes tfMuzikKay{ 0%{ transform:translateX(0); } 6%{ transform:translateX(0); } 94%{ transform:translateX(-100%); } 100%{ transform:translateX(-100%); } }
 .pyl-avatar{ width:46px; height:46px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-weight:800; font-size:19px; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); box-shadow:0 0 0 2px rgba(255,215,0,.4); }
 .pyl-avatar img{ width:100%; height:100%; object-fit:cover; }
