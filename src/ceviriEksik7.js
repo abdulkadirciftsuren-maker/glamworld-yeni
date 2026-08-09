@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Paylasima MUZIK (muzik*) + muzik onizleme (muzikDinle); 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Paylasima MUZIK (muzik*) + muzik onizleme/cal (muzikDinle/muzikCal); 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -175,7 +175,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "Şarkı çok büyük (en fazla 30 MB). Daha kısa/küçük bir dosya seç.",
   "muzikYukleniyor": "Müzik yükleniyor…",
   "muzikHata": "Müzik yüklenemedi, tekrar dene.",
-  "muzikDinle": "Paylaşmadan önce dinle"
+  "muzikDinle": "Paylaşmadan önce dinle",
+  "muzikCal": "Aç, çal"
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -352,7 +353,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "The song is too big (max 30 MB). Pick a shorter/smaller file.",
   "muzikYukleniyor": "Uploading music…",
   "muzikHata": "Music couldn't be uploaded, try again.",
-  "muzikDinle": "Listen before posting"
+  "muzikDinle": "Listen before posting",
+  "muzikCal": "Open & play"
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -529,7 +531,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "Das Lied ist zu groß (max. 30 MB). Wähle eine kürzere/kleinere Datei.",
   "muzikYukleniyor": "Musik wird hochgeladen…",
   "muzikHata": "Musik konnte nicht hochgeladen werden, versuche es erneut.",
-  "muzikDinle": "Vor dem Posten anhören"
+  "muzikDinle": "Vor dem Posten anhören",
+  "muzikCal": "Öffnen & abspielen"
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -706,7 +709,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "Песня слишком большая (макс. 30 МБ). Выберите короче/меньше.",
   "muzikYukleniyor": "Загрузка музыки…",
   "muzikHata": "Не удалось загрузить музыку, попробуйте снова.",
-  "muzikDinle": "Послушать перед публикацией"
+  "muzikDinle": "Послушать перед публикацией",
+  "muzikCal": "Открыть, играть"
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -883,7 +887,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "Пісня надто велика (макс. 30 МБ). Оберіть коротший/менший файл.",
   "muzikYukleniyor": "Завантаження музики…",
   "muzikHata": "Не вдалося завантажити музику, спробуйте ще раз.",
-  "muzikDinle": "Послухати перед публікацією"
+  "muzikDinle": "Послухати перед публікацією",
+  "muzikCal": "Відкрити, грати"
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -1060,7 +1065,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "La canción es demasiado grande (máx. 30 MB). Elige un archivo más corto/pequeño.",
   "muzikYukleniyor": "Subiendo música…",
   "muzikHata": "No se pudo subir la música, inténtalo de nuevo.",
-  "muzikDinle": "Escuchar antes de publicar"
+  "muzikDinle": "Escuchar antes de publicar",
+  "muzikCal": "Abrir y reproducir"
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1237,7 +1243,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "La chanson est trop volumineuse (max 30 Mo). Choisis un fichier plus court/petit.",
   "muzikYukleniyor": "Téléversement de la musique…",
   "muzikHata": "Impossible de téléverser la musique, réessaie.",
-  "muzikDinle": "Écouter avant de publier"
+  "muzikDinle": "Écouter avant de publier",
+  "muzikCal": "Ouvrir et lire"
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1414,7 +1421,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "La canzone è troppo grande (max 30 MB). Scegli un file più corto/piccolo.",
   "muzikYukleniyor": "Caricamento musica…",
   "muzikHata": "Impossibile caricare la musica, riprova.",
-  "muzikDinle": "Ascolta prima di pubblicare"
+  "muzikDinle": "Ascolta prima di pubblicare",
+  "muzikCal": "Apri e riproduci"
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1591,7 +1599,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "A música é muito grande (máx. 30 MB). Escolha um arquivo menor.",
   "muzikYukleniyor": "Enviando música…",
   "muzikHata": "Não foi possível enviar a música, tente novamente.",
-  "muzikDinle": "Ouvir antes de publicar"
+  "muzikDinle": "Ouvir antes de publicar",
+  "muzikCal": "Abrir e tocar"
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1768,7 +1777,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "الأغنية كبيرة جدًا (الحد الأقصى 30 ميغابايت). اختر ملفًا أقصر/أصغر.",
   "muzikYukleniyor": "جارٍ رفع الموسيقى…",
   "muzikHata": "تعذّر رفع الموسيقى، حاول مجددًا.",
-  "muzikDinle": "استمع قبل النشر"
+  "muzikDinle": "استمع قبل النشر",
+  "muzikCal": "افتح وشغّل"
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1945,7 +1955,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "गाना बहुत बड़ा है (अधिकतम 30 MB)। छोटी फ़ाइल चुनें।",
   "muzikYukleniyor": "संगीत अपलोड हो रहा है…",
   "muzikHata": "संगीत अपलोड नहीं हो सका, फिर कोशिश करें।",
-  "muzikDinle": "पोस्ट करने से पहले सुनें"
+  "muzikDinle": "पोस्ट करने से पहले सुनें",
+  "muzikCal": "खोलें और चलाएं"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -2122,7 +2133,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "歌曲太大（最大 30 MB）。请选择更短/更小的文件。",
   "muzikYukleniyor": "正在上传音乐…",
   "muzikHata": "音乐上传失败，请重试。",
-  "muzikDinle": "发布前试听"
+  "muzikDinle": "发布前试听",
+  "muzikCal": "打开播放"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2299,6 +2311,7 @@ export const CEVIRI_EKSIK7 = {
   "muzikBuyuk": "曲が大きすぎます（最大30MB）。短い/小さいファイルを選んでください。",
   "muzikYukleniyor": "音楽をアップロード中…",
   "muzikHata": "音楽をアップロードできませんでした。もう一度お試しください。",
-  "muzikDinle": "投稿する前に試聴"
+  "muzikDinle": "投稿する前に試聴",
+  "muzikCal": "開いて再生"
  }
 };

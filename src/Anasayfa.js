@@ -44,15 +44,15 @@ import "./Anasayfa.css";
 
 // CANLI YAPAY ZEKÂ TANITIM KARTI — ana sayfa akışının ARASINA girer (kullanıcı: "ana sayfada canlı yapay zeka tanıtımı, akışta araya girsin").
 // Dönen örnekler + altın parıltı ile "canlı" durur; düğmeler Sanal Ayna'yı ve Gloxoo sohbetini açar.
-// 🎵 GÖNDERİ MÜZİĞİ — paylaşıma eklenen şarkıyı akışta çalar (kullanıcı isteği: her paylaşıma müzik).
-function PostMuzik({ muzik }) {
+// 🎵 GÖNDERİ MÜZİĞİ — küçük "şarkılı" işareti (çirkin ses şeridi DEĞİL). Dokununca fotoğraf TAM EKRAN açılır ve şarkı ORADA çalar.
+function PostMuzik({ muzik, onAc, etiket }) {
   if (!muzik || !muzik.url) return null;
   return (
-    <div className="ana-post-muzik" onClick={(e) => e.stopPropagation()}>
-      <span className="apm-ik" aria-hidden="true">🎵</span>
-      <span className="apm-ad notranslate" translate="no">{muzik.ad || "♪"}</span>
-      <audio className="apm-ses" src={muzik.url} controls preload="none" />
-    </div>
+    <button className="ana-post-muzik-cip" onClick={(e) => { e.stopPropagation(); onAc && onAc(); }}>
+      <span className="apmc-ik" aria-hidden="true">🎵</span>
+      <span className="apmc-ad notranslate" translate="no">{muzik.ad || "♪"}</span>
+      <span className="apmc-ac">{etiket || "▶"}</span>
+    </button>
   );
 }
 function AiTanitimKart({ t, onAyna, onGloxoo }) {
@@ -8544,7 +8544,7 @@ export default function Anasayfa({ pro = false }) {
                         <span className="ana-post-dosya-in">{t("dosyaIndir", "İndir")}</span>
                       </a>
                     )}
-                    <PostMuzik muzik={p.muzik} />
+                    <PostMuzik muzik={p.muzik} onAc={() => setTamFoto(p)} etiket={t("muzikCal", "Aç, çal")} />
                     {/* İKON ŞERİDİ — fotoğrafın/videonun ALTINDA, AYRI şerit (medyanın üzerinde DEĞİL) */}
                     <div className={"apr-rail" + (p.video ? " video" : "")} onClick={(e) => e.stopPropagation()}>
                       <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{((gercekBegeni[p.id] != null ? gercekBegeni[p.id] : (p.begeni || 0))).toLocaleString()}</span></button>
@@ -8627,7 +8627,7 @@ export default function Anasayfa({ pro = false }) {
                       <span className="ana-post-dosya-in">{t("dosyaIndir", "İndir")}</span>
                     </a>
                   )}
-                  <PostMuzik muzik={p.muzik} />
+                  <PostMuzik muzik={p.muzik} onAc={() => setTamFoto(p)} etiket={t("muzikCal", "Aç, çal")} />
                   <div className="ana-post-eylem">
                     <button className={"ana-post-btn ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span>{(p.begeni || 0).toLocaleString()}</span></button>
                     <button className="ana-post-btn ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
@@ -10418,6 +10418,14 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {/* ALT KOLON — yazı/Çevir/Sor → oynatma çubuğu → ikonlar TEK DİKEY kolonda STACK (asla üst üste binmez) */}
             <div className="tf-dip">
+              {/* 🎵 GÖNDERİ MÜZİĞİ — fotoğraf TAM EKRAN açılınca ÇALAR (kullanıcı isteği). Video gönderisinde gösterme (video zaten sesli). */}
+              {p.muzik && p.muzik.url && !p.video && (
+                <div className="tf-muzik" onClick={(e) => e.stopPropagation()}>
+                  <span className="tf-muzik-ik" aria-hidden="true">🎵</span>
+                  <span className="tf-muzik-ad notranslate" translate="no">{p.muzik.ad || "♪"}</span>
+                  <audio className="tf-muzik-ses" src={p.muzik.url} autoPlay loop controls preload="auto" />
+                </div>
+              )}
               {/* İNDİRME + 3 NOKTA — sağ üstte ayrı satır (foto/videoya ait) */}
               <div className="tf-ustarac" onClick={(e) => e.stopPropagation()}>
                 <a className="tf-ic tf-indir" href={p.video || p.gorsel || "#"} download target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} aria-label={pl(aiDil, "indir")}>{Ikon.indir}</a>

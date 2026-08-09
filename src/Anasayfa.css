@@ -297,11 +297,17 @@
 .ana-post-dosya-ik{ font-size:19px; }
 .ana-post-dosya-ad{ flex:1; min-width:0; color:#e7f4ff; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ana-post-dosya-in{ flex:none; color:#0c1530; background:linear-gradient(135deg,#bfe9ff,#7fc4ff); font-weight:800; font-size:12px; padding:5px 12px; border-radius:20px; }
-/* 🎵 GÖNDERİ MÜZİĞİ — akışta çalar (altın şerit) */
-.ana-post-muzik{ display:flex; align-items:center; gap:9px; margin:8px 12px 0; padding:8px 11px; border-radius:13px; background:linear-gradient(135deg,#fff3cf,#ffe08a); border:1.5px solid #e0b84a; }
-.apm-ik{ font-size:18px; flex:none; }
-.apm-ad{ flex:none; max-width:38%; color:#5a3f00; font-size:13px; font-weight:800; overflow:hidden; white-space:nowrap; }
-.apm-ses{ flex:1; min-width:0; height:36px; }
+/* 🎵 GÖNDERİ MÜZİĞİ — küçük "şarkılı" işareti (ses şeridi değil). Dokununca foto tam ekran açılır, şarkı orada çalar. */
+.ana-post-muzik-cip{ display:inline-flex; align-items:center; gap:8px; margin:8px 12px 0; padding:7px 12px; border-radius:20px; background:linear-gradient(135deg,#fff3cf,#ffe08a); border:1.5px solid #e0b84a; color:#5a3f00; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; max-width:calc(100% - 24px); }
+.ana-post-muzik-cip:active{ transform:scale(.98); }
+.apmc-ik{ font-size:16px; flex:none; }
+.apmc-ad{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:clip; }
+.apmc-ac{ flex:none; background:#7a5a00; color:#ffe9a8; border-radius:12px; padding:2px 9px; font-size:11.5px; font-weight:900; }
+/* 🎵 TAM EKRAN müzik — fotoğraf açılınca çalar */
+.tf-muzik{ display:flex; align-items:center; gap:9px; margin:0 0 8px; padding:8px 12px; border-radius:14px; background:linear-gradient(135deg,#fff3cf,#ffe08a); border:1.5px solid #e0b84a; }
+.tf-muzik-ik{ font-size:18px; flex:none; }
+.tf-muzik-ad{ flex:none; max-width:34%; color:#5a3f00; font-weight:800; font-size:13px; overflow:hidden; white-space:nowrap; }
+.tf-muzik-ses{ flex:1; min-width:0; height:36px; }
 .pyl-avatar{ width:46px; height:46px; flex:none; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-weight:800; font-size:19px; color:#0c1530; background:radial-gradient(circle at 38% 32%,#fff,#cfe0ff 55%,#8fb0e8); box-shadow:0 0 0 2px rgba(255,215,0,.4); }
 .pyl-avatar img{ width:100%; height:100%; object-fit:cover; }
