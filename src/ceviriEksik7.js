@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) + Canli Manken (saManken*) + Sarki Tanima (sarki*) anahtarlari; 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: Tanis, ozelAI, resim/cizim, Gloxoo sesi, giris/hesap, Profil + Belgeler/Muhasebe + Sanal Ayna + ana sayfa AI tanitim (ait*) + Canli Manken (saManken*) + Sarki Tanima (sarki*) + Ayna duzen (saNeDenensin/saRenkDokun) anahtarlari; 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -156,7 +156,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "Bu hangi şarkı / ne çalıyor?",
   "sarkiDinleniyor": "🎧 Müziği dinliyorum… (bitirmek için tekrar bas)",
   "sarkiDuyulmadi": "Ses alınamadı, tekrar dene",
-  "sarkiOlmadi": "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene."
+  "sarkiOlmadi": "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene.",
+  "saNeDenensin": "Ne denensin?",
+  "saRenkDokun": "dokun ve seç"
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -314,7 +316,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "What song is this / what's playing?",
   "sarkiDinleniyor": "🎧 Listening to the music… (tap again to finish)",
   "sarkiDuyulmadi": "Couldn't get the audio, try again",
-  "sarkiOlmadi": "Couldn't recognize it right now. Turn the volume up a bit (hold it near the music) and try again."
+  "sarkiOlmadi": "Couldn't recognize it right now. Turn the volume up a bit (hold it near the music) and try again.",
+  "saNeDenensin": "What to try?",
+  "saRenkDokun": "tap to pick"
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -472,7 +476,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "Welches Lied ist das / was läuft?",
   "sarkiDinleniyor": "🎧 Ich höre die Musik… (zum Beenden erneut tippen)",
   "sarkiDuyulmadi": "Ton konnte nicht erfasst werden, versuche es erneut",
-  "sarkiOlmadi": "Konnte es gerade nicht erkennen. Dreh die Lautstärke etwas auf (nah an die Musik halten) und versuch es erneut."
+  "sarkiOlmadi": "Konnte es gerade nicht erkennen. Dreh die Lautstärke etwas auf (nah an die Musik halten) und versuch es erneut.",
+  "saNeDenensin": "Was ausprobieren?",
+  "saRenkDokun": "tippen zum Wählen"
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -630,7 +636,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "Что это за песня / что играет?",
   "sarkiDinleniyor": "🎧 Слушаю музыку… (нажмите снова, чтобы закончить)",
   "sarkiDuyulmadi": "Не удалось получить звук, попробуйте снова",
-  "sarkiOlmadi": "Сейчас не удалось распознать. Сделай погромче (поднеси к музыке) и попробуй снова."
+  "sarkiOlmadi": "Сейчас не удалось распознать. Сделай погромче (поднеси к музыке) и попробуй снова.",
+  "saNeDenensin": "Что примерить?",
+  "saRenkDokun": "нажмите, чтобы выбрать"
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -788,7 +796,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "Що це за пісня / що грає?",
   "sarkiDinleniyor": "🎧 Слухаю музику… (натисніть ще раз, щоб завершити)",
   "sarkiDuyulmadi": "Не вдалося отримати звук, спробуйте ще раз",
-  "sarkiOlmadi": "Зараз не вдалося розпізнати. Зроби гучніше (піднеси до музики) і спробуй ще раз."
+  "sarkiOlmadi": "Зараз не вдалося розпізнати. Зроби гучніше (піднеси до музики) і спробуй ще раз.",
+  "saNeDenensin": "Що приміряти?",
+  "saRenkDokun": "натисніть, щоб вибрати"
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -946,7 +956,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "¿Qué canción es esta / qué suena?",
   "sarkiDinleniyor": "🎧 Escuchando la música… (toca de nuevo para terminar)",
   "sarkiDuyulmadi": "No se pudo captar el audio, inténtalo de nuevo",
-  "sarkiOlmadi": "No pude reconocerla ahora. Sube un poco el volumen (acércalo a la música) e inténtalo de nuevo."
+  "sarkiOlmadi": "No pude reconocerla ahora. Sube un poco el volumen (acércalo a la música) e inténtalo de nuevo.",
+  "saNeDenensin": "¿Qué probar?",
+  "saRenkDokun": "toca para elegir"
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1104,7 +1116,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "Quelle est cette chanson / qu'est-ce qui passe ?",
   "sarkiDinleniyor": "🎧 J'écoute la musique… (appuie à nouveau pour terminer)",
   "sarkiDuyulmadi": "Impossible de capter le son, réessaie",
-  "sarkiOlmadi": "Je n'ai pas pu la reconnaître. Monte un peu le son (approche-le de la musique) et réessaie."
+  "sarkiOlmadi": "Je n'ai pas pu la reconnaître. Monte un peu le son (approche-le de la musique) et réessaie.",
+  "saNeDenensin": "Essayer quoi ?",
+  "saRenkDokun": "touche pour choisir"
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1262,7 +1276,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "Che canzone è / cosa sta suonando?",
   "sarkiDinleniyor": "🎧 Sto ascoltando la musica… (tocca di nuovo per finire)",
   "sarkiDuyulmadi": "Impossibile acquisire l'audio, riprova",
-  "sarkiOlmadi": "Non sono riuscito a riconoscerla ora. Alza un po' il volume (avvicinalo alla musica) e riprova."
+  "sarkiOlmadi": "Non sono riuscito a riconoscerla ora. Alza un po' il volume (avvicinalo alla musica) e riprova.",
+  "saNeDenensin": "Cosa provare?",
+  "saRenkDokun": "tocca per scegliere"
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1420,7 +1436,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "Que música é essa / o que está tocando?",
   "sarkiDinleniyor": "🎧 Ouvindo a música… (toque de novo para terminar)",
   "sarkiDuyulmadi": "Não foi possível captar o áudio, tente novamente",
-  "sarkiOlmadi": "Não consegui reconhecer agora. Aumente um pouco o volume (aproxime da música) e tente de novo."
+  "sarkiOlmadi": "Não consegui reconhecer agora. Aumente um pouco o volume (aproxime da música) e tente de novo.",
+  "saNeDenensin": "O que experimentar?",
+  "saRenkDokun": "toque para escolher"
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1578,7 +1596,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "ما هذه الأغنية / ما الذي يُشغَّل؟",
   "sarkiDinleniyor": "🎧 أستمع إلى الموسيقى… (اضغط مرة أخرى للإنهاء)",
   "sarkiDuyulmadi": "تعذّر التقاط الصوت، حاول مجددًا",
-  "sarkiOlmadi": "لم أتمكن من التعرف عليها الآن. ارفع الصوت قليلًا (قرّبه من الموسيقى) وحاول مجددًا."
+  "sarkiOlmadi": "لم أتمكن من التعرف عليها الآن. ارفع الصوت قليلًا (قرّبه من الموسيقى) وحاول مجددًا.",
+  "saNeDenensin": "ماذا تجرب؟",
+  "saRenkDokun": "اضغط للاختيار"
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -1736,7 +1756,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "यह कौन सा गाना है / क्या बज रहा है?",
   "sarkiDinleniyor": "🎧 संगीत सुन रहा हूँ… (समाप्त करने के लिए फिर से दबाएं)",
   "sarkiDuyulmadi": "ऑडियो नहीं मिल सका, फिर कोशिश करें",
-  "sarkiOlmadi": "अभी पहचान नहीं सका। आवाज़ थोड़ी बढ़ाएं (संगीत के पास रखें) और फिर कोशिश करें।"
+  "sarkiOlmadi": "अभी पहचान नहीं सका। आवाज़ थोड़ी बढ़ाएं (संगीत के पास रखें) और फिर कोशिश करें।",
+  "saNeDenensin": "क्या आज़माएं?",
+  "saRenkDokun": "चुनने के लिए दबाएं"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -1894,7 +1916,9 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "这是什么歌／在播放什么？",
   "sarkiDinleniyor": "🎧 正在聆听音乐……（再次点击结束）",
   "sarkiDuyulmadi": "未能获取声音，请重试",
-  "sarkiOlmadi": "现在无法识别。请把音量调大一点（靠近音乐）再试一次。"
+  "sarkiOlmadi": "现在无法识别。请把音量调大一点（靠近音乐）再试一次。",
+  "saNeDenensin": "试什么？",
+  "saRenkDokun": "点击选择"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2052,6 +2076,8 @@ export const CEVIRI_EKSIK7 = {
   "sarkiSoru": "これは何の曲？何が流れている？",
   "sarkiDinleniyor": "🎧 音楽を聴いています…（もう一度押すと終了）",
   "sarkiDuyulmadi": "音声を取得できませんでした。もう一度お試しください",
-  "sarkiOlmadi": "今は認識できませんでした。音量を少し上げて（音楽に近づけて）もう一度お試しください。"
+  "sarkiOlmadi": "今は認識できませんでした。音量を少し上げて（音楽に近づけて）もう一度お試しください。",
+  "saNeDenensin": "何を試す？",
+  "saRenkDokun": "タップして選ぶ"
  }
 };

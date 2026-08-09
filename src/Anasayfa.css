@@ -5035,6 +5035,26 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-foto-kutu img{ width:100%; height:100%; object-fit:cover; }
 .sa-foto-bos{ color:#a07800; font-weight:800; font-size:18px; text-align:center; line-height:1.6; }
 .sa-foto-degis{ position:absolute; bottom:10px; right:10px; background:rgba(255,253,240,.94); border:1.5px solid #a07800; border-radius:10px; padding:6px 10px; font-weight:800; color:#7a5a00; font-size:13px; }
+/* ===== YENİDEN DÜZEN (kısa sayfa) — üst ikili (fotoğraf + Modellerim yan yana) + tek şeritler ===== */
+.sa-ust-ikili{ display:flex; gap:10px; align-items:stretch; margin-bottom:8px; }
+.sa-ust-ikili .sa-foto-kutu{ flex:1 1 58%; max-height:250px; margin:0; }
+.sa-modellerim-yan{ flex:1 1 42%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; border:2px solid #a07800; border-radius:16px; background:linear-gradient(160deg,#fff1c4,#ffe08a); color:#6a4e10; font-weight:900; cursor:pointer; font-family:inherit; padding:10px; }
+.sa-modellerim-yan:active{ transform:scale(.98); }
+.sa-modellerim-yan.acik{ background:linear-gradient(160deg,#FFD700,#f2a900); }
+.sa-my-ik{ font-size:32px; }
+.sa-my-ad{ font-size:15px; text-align:center; line-height:1.2; }
+.sa-my-say{ background:#7a5a00; color:#ffe9a8; border-radius:9px; padding:1px 9px; font-size:14px; }
+.sa-my-ok{ font-size:13px; opacity:.75; }
+/* TEK ŞERİT — yatay kayan (HEM kendiliğinden yürür HEM parmakla çekilir). Alt alta yığılmaz → sayfa KISA. */
+.sa-serit{ display:flex; flex-wrap:nowrap; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:3px 2px 7px; }
+.sa-serit::-webkit-scrollbar{ display:none; }
+.sa-serit > *{ flex:0 0 auto; white-space:nowrap; }
+.sa-kisi-serit .sa-kisi, .sa-kat-serit .sa-kat{ flex:0 0 auto; min-width:0; }
+/* RENK — küçük kareler tek şerit, İSİM YOK (kullanıcı: renk isimlerini yazma) */
+.sa-renk-kutu2{ background:none; border:none; padding:1px; cursor:pointer; font-family:inherit; }
+.sa-renk-ornek2{ display:block; width:40px; height:40px; border-radius:10px; border:2px solid rgba(120,90,0,.35); box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.sa-renk-kutu2.sec .sa-renk-ornek2{ outline:3px solid #7a5a00; outline-offset:2px; }
+@media (min-width:560px){ .sa-ust-ikili .sa-foto-kutu{ max-height:320px; } .sa-my-ik{ font-size:40px; } .sa-my-ad{ font-size:18px; } .sa-renk-ornek2{ width:48px; height:48px; } }
 .sa-kat-satir{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 10px; }
 .sa-kat{ flex:1 1 28%; min-width:92px; padding:11px 6px; border-radius:12px; border:2px solid rgba(160,120,0,.5); background:#fffbe9; color:#7a5a00; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit; }
 .sa-kat.sec{ background:linear-gradient(120deg,#FFD86B,#F2B705); border-color:#7a5a00; color:#4a3500; box-shadow:0 3px 10px rgba(120,90,0,.3); }

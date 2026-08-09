@@ -65,6 +65,34 @@ const KATEGORILER = [
   { k: "aksesuar", ik: "⌚", ck: "saAksesuar", ad: "Aksesuar" },
 ];
 
+// KAYAN ŞERİT — tek satırlık yatay şerit: HEM kendiliğinden yavaşça yürür HEM parmakla sağa-sola çekilir.
+// Parmakla dokununca yürüme durur, bırakınca 2.5 sn sonra tekrar başlar. (Sayfayı kısaltır: çipler alt alta değil, tek şeritte.)
+// Not: dış kapsayıcıda .sa-serit swipe-ile-kapatmadan MUAF (SanalAyna onTouchStart listesinde), o yüzden çekince sayfa DEĞİŞMEZ.
+function KayanSerit({ className, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    let raf = 0, duraklat = 0, yon = 1;
+    const dur = () => { duraklat = Date.now() + 2500; };
+    const adim = () => {
+      try {
+        if (el && Date.now() > duraklat && el.scrollWidth > el.clientWidth + 4) {
+          el.scrollLeft += 0.4 * yon;
+          if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 1) yon = -1;
+          else if (el.scrollLeft <= 0) yon = 1;
+        }
+      } catch (e) {}
+      raf = requestAnimationFrame(adim);
+    };
+    el.addEventListener("touchstart", dur, { passive: true });
+    el.addEventListener("pointerdown", dur, { passive: true });
+    el.addEventListener("wheel", dur, { passive: true });
+    el.addEventListener("mouseenter", dur, { passive: true });
+    raf = requestAnimationFrame(adim);
+    return () => { try { cancelAnimationFrame(raf); el.removeEventListener("touchstart", dur); el.removeEventListener("pointerdown", dur); el.removeEventListener("wheel", dur); el.removeEventListener("mouseenter", dur); } catch (e) {} };
+  }, []);
+  return <div ref={ref} className={"sa-serit" + (className ? " " + className : "")}>{children}</div>;
+}
 // TAM EKRAN + ZOOM göstericisi (sonuç fotoğrafına dokununca) — iki parmak zoom, tek parmak her yöne kaydır, çift dokunuş.
 function Buyut({ url, onKapat }) {
   const { t } = useTranslation();
@@ -314,8 +342,36 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
         <div className="sa-kaydir">
           <div className="sa-alt">{t("saAlt", "Kendi fotoğrafında saç, tırnak veya makyaj modeli dene. Fotoğrafını yükle, modeli yaz ya da seç; Gloxoo senin üstünde göstersin.")}</div>
 
-          {/* MODELLERİM — kaydettiğin modeller burada durur; görüntüle, kuaförüne gönder (paylaş) ya da sil */}
-          <button className={"sa-modellerim-btn" + (galeriAcik ? " acik" : "")} onClick={() => setGaleriAcik((a) => !a)}>🖼️ {t("saModellerim", "Modellerim")}{modeller.length ? " (" + modeller.length + ")" : ""}{galeriAcik ? " ▲" : " ▼"}</button>
+          {/* Reklamdan gelindiyse: DENENEN ÜRÜN önizlemesi */}
+          {baslangic && baslangic.refFotoUrl && (
+            <div className="sa-urun-serit">
+              <img src={baslangic.refFotoUrl} alt="" referrerPolicy="no-referrer" />
+              <div className="sa-urun-bil"><b>{baslangic.ad || t("saDenenenUrun", "Denenen ürün")}</b><span>{t("saUrunDene", "Bu ürünü fotoğrafına giydirmek için fotoğrafını ekle ve 'Fotoğrafımda dene'ye bas.")}</span></div>
+            </div>
+          )}
+
+          {/* ÜST İKİLİ — SOLDA fotoğraf, SAĞDA Modellerim yan yana (sayfa kısa dursun) */}
+          <div className="sa-ust-ikili">
+            <div className="sa-foto-kutu" onClick={() => inpRef.current && inpRef.current.click()}>
+              {foto ? <img src={foto} alt="" /> : <span className="sa-foto-bos">📷<br />{t("saFotoEkle", "Fotoğrafını ekle")}</span>}
+              {foto && <span className="sa-foto-degis">🔄 {t("saFotoDegis", "Değiştir")}</span>}
+            </div>
+            <button className={"sa-modellerim-yan" + (galeriAcik ? " acik" : "")} onClick={() => setGaleriAcik((a) => !a)}>
+              <span className="sa-my-ik">🖼️</span>
+              <span className="sa-my-ad">{t("saModellerim", "Modellerim")}</span>
+              {modeller.length ? <span className="sa-my-say">{modeller.length}</span> : null}
+              <span className="sa-my-ok">{galeriAcik ? "▲" : "▼"}</span>
+            </button>
+          </div>
+          {/* YÜZÜNÜ ORACIKTA ÇEK ya da GALERİDEN seç */}
+          <div className="sa-foto-dugmeler">
+            <button className="sa-foto-btn" onClick={() => kamRef.current && kamRef.current.click()}>📷 {t("saCek", "Fotoğraf çek")}</button>
+            <button className="sa-foto-btn" onClick={() => inpRef.current && inpRef.current.click()}>🖼️ {t("saGaleri", "Galeriden seç")}</button>
+          </div>
+          <input ref={inpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={fotoSec} />
+          <input ref={kamRef} type="file" accept="image/*" capture="user" style={{ display: "none" }} onChange={fotoSec} />
+
+          {/* MODELLERİM galerisi — açılınca: kaydettiğin modeller (görüntüle / kuaföre gönder / sil) */}
           {galeriAcik && (
             <div className="sa-galeri">
               {modeller.length === 0 ? (
@@ -337,27 +393,7 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
             </div>
           )}
 
-          {/* Reklamdan gelindiyse: DENENEN ÜRÜN önizlemesi */}
-          {baslangic && baslangic.refFotoUrl && (
-            <div className="sa-urun-serit">
-              <img src={baslangic.refFotoUrl} alt="" referrerPolicy="no-referrer" />
-              <div className="sa-urun-bil"><b>{baslangic.ad || t("saDenenenUrun", "Denenen ürün")}</b><span>{t("saUrunDene", "Bu ürünü fotoğrafına giydirmek için fotoğrafını ekle ve 'Fotoğrafımda dene'ye bas.")}</span></div>
-            </div>
-          )}
-
-          {/* 1) FOTOĞRAF */}
-          <div className="sa-foto-kutu" onClick={() => inpRef.current && inpRef.current.click()}>
-            {foto ? <img src={foto} alt="" /> : <span className="sa-foto-bos">📷<br />{t("saFotoEkle", "Fotoğrafını ekle")}</span>}
-            {foto && <span className="sa-foto-degis">🔄 {t("saFotoDegis", "Değiştir")}</span>}
-          </div>
-          {/* YÜZÜNÜ ORACIKTA ÇEK ya da GALERİDEN seç — iki ayrı düğme (kullanıcı: fotoğraf çekme yeri yoktu) */}
-          <div className="sa-foto-dugmeler">
-            <button className="sa-foto-btn" onClick={() => kamRef.current && kamRef.current.click()}>📷 {t("saCek", "Fotoğraf çek")}</button>
-            <button className="sa-foto-btn" onClick={() => inpRef.current && inpRef.current.click()}>🖼️ {t("saGaleri", "Galeriden seç")}</button>
-          </div>
-          <input ref={inpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={fotoSec} />
-          <input ref={kamRef} type="file" accept="image/*" capture="user" style={{ display: "none" }} onChange={fotoSec} />
-          {/* İPUCU: kıyafet denemede en iyi sonuç için BOYU görünen fotoğraf (kullanıcı hep bel-üstü selfie yüklüyordu) */}
+          {/* İPUCU: kıyafet/ayakkabı denemede en iyi sonuç için BOYU görünen fotoğraf */}
           {(kategori === "elbise" || kategori === "ayakkabi" || reklamdan) && (
             <div className="sa-boy-ipucu">{t("saBoyIpucu", "💡 En iyi sonuç için BOYUN görünen (dizden yukarı ya da tam boy) bir fotoğraf yükle. Sadece yüz/omuz olursa elbise tam oturmayabilir.")}</div>
           )}
@@ -367,42 +403,44 @@ IMPORTANT: the result MUST look different from image 1 — she is now wearing th
             <button className="sa-dene sa-dene-buyuk" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>
           ) : (
             <>
-              {/* 1b) KİM İÇİN — bayan/erkek/kız/erkek çocuk/bebek (saç+kıyafet önerileri buna göre) */}
+              {/* 1b) KİM İÇİN — TEK ŞERİT (hem yürür hem parmakla çekilir; çekince sayfa DEĞİŞMEZ) */}
               <div className="sa-kim-bas">{t("saKimIcin", "Kim için?")}</div>
-              <div className="sa-kisi-satir">
+              <KayanSerit className="sa-kisi-serit">
                 {KISILER.map((ks) => (
                   <button key={ks.k} className={"sa-kisi" + (kisi === ks.k ? " sec" : "")} onClick={() => { setKisi(ks.k); setModel(""); }}>{ks.ik} {t(ks.ck, ks.ad)}</button>
                 ))}
-              </div>
+              </KayanSerit>
 
-              {/* 2) KATEGORİ — saç/makyaj/tırnak + kıyafet/ayakkabı/çanta/aksesuar (erkek+bayan) */}
-              <div className="sa-kat-satir">
+              {/* 2) KATEGORİ — TEK ŞERİT */}
+              <div className="sa-kim-bas" style={{ marginTop: 8 }}>{t("saNeDenensin", "Ne denensin?")}</div>
+              <KayanSerit className="sa-kat-serit">
                 {KATEGORILER.map((kt) => (
                   <button key={kt.k} className={"sa-kat" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>{kt.ik} {t(kt.ck, kt.ad)}</button>
                 ))}
-              </div>
+              </KayanSerit>
 
-              {/* 3) MODEL — öneri çipleri + yaz */}
-              <div className="sa-oneri">
-                {oneri.map((o) => (
-                  <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{ac(o)}</button>
-                ))}
-              </div>
+              {/* 3) MODEL — öneri çipleri TEK ŞERİT + yaz */}
+              {oneri.length > 0 && (
+                <KayanSerit className="sa-oneri-serit">
+                  {oneri.map((o) => (
+                    <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{ac(o)}</button>
+                  ))}
+                </KayanSerit>
+              )}
               <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
                 placeholder={t("saModelYaz", "Model yaz (örn. Ombre saç) ya da yukarıdan seç")} />
 
-              {/* 3b) RENK (isteğe bağlı) — saç renkleri ya da genel renkler; tekrar dokununca kaldırılır */}
+              {/* 3b) RENK — üstte açıklama, küçük renk kareleri TEK ŞERİT (İSİM YOK); tekrar dokununca kaldırılır */}
               {renkler.length > 0 && (
                 <>
-                  <div className="sa-kim-bas" style={{ marginTop: 12 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")}</div>
-                  <div className="sa-renk-izgara">
+                  <div className="sa-kim-bas" style={{ marginTop: 8 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")} — {t("saRenkDokun", "dokun ve seç")}</div>
+                  <KayanSerit className="sa-renk-serit">
                     {renkler.map((r) => (
-                      <button key={r} className={"sa-renk-kutu" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)} title={ac(r)} aria-label={ac(r)}>
-                        <span className="sa-renk-ornek" style={{ background: RENK_HEX[r] || "#ccc" }} />
-                        <span className="sa-renk-ad">{ac(r)}</span>
+                      <button key={r} className={"sa-renk-kutu2" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)} title={ac(r)} aria-label={ac(r)}>
+                        <span className="sa-renk-ornek2" style={{ background: RENK_HEX[r] || "#ccc" }} />
                       </button>
                     ))}
-                  </div>
+                  </KayanSerit>
                 </>
               )}
 
