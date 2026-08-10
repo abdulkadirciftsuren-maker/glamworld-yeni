@@ -6596,16 +6596,36 @@ export default function Anasayfa({ pro = false }) {
   };
   // Mevcut konuşmayı KAYITLI KONUŞMALAR (oturumlar) listesine kaydet — sonra üstteki "Konuşmalarım"dan bulunur
   const oturumKaydet = () => {
-    const aktif = (yardimciMod === "site" ? siteMesajlar : yardimciMesajlar).filter((m) => m && m.metin);
+    const aktif = (yardimciMod === "site" ? siteMesajlar : yardimciMesajlar).filter((m) => m && (m.metin || m.foto || m.resimData || m.resimRef));
     if (aktif.length < 2) return; // tek karşılama mesajı varsa kaydetme
     const ilk = aktif.find((m) => m.rol === "user") || aktif[0];
+    // ⛔ ESKİ SORUN: arşive SADECE metin kaydediliyordu; kullanıcının paylaştığı FOTO ve Gloxoo'nun ÜRETTİĞİ resim
+    //   ATILIYORDU → Konuşmalarım'a giden konuşmalar FOTOĞRAFSIZ oluyordu (foto izi bile kalmıyordu). ÇÖZÜM: ağır
+    //   görselleri IndexedDB'ye (medyaDepo) yaz, arşive sadece küçük "ref" koy → arşiv açılınca fotolar GERİ YÜKLENİR.
+    const mesajlarKalici = aktif.map((m) => {
+      const mm = { rol: m.rol, metin: m.metin, zamanMs: m.zamanMs, konum: m.konum || "" };
+      // Gloxoo'nun ÜRETTİĞİ resim (resimData) → IndexedDB'ye yaz, ref sakla
+      if (m.resimData && String(m.resimData).length > 200) {
+        const k = "or_" + (m.resimId || m.zamanMs || "");
+        if (k !== "or_") { try { medyaYaz(k, m.resimData); } catch (e) {} mm.resimRef = k; if (m.resimId) mm.resimId = m.resimId; }
+      } else if (m.resimRef) { mm.resimRef = m.resimRef; if (m.resimId) mm.resimId = m.resimId; }
+      // Kullanıcının paylaştığı/eklediği FOTO → IndexedDB'ye yaz, ref sakla (url varsa onu da koru)
+      if (m.foto) {
+        if (m.foto.dataURL && String(m.foto.dataURL).length > 200) {
+          const k = "of_" + (m.zamanMs || "");
+          if (k !== "of_") { try { medyaYaz(k, m.foto.dataURL); } catch (e) {} mm.foto = { ref: k, mediaType: m.foto.mediaType || "", url: m.foto.url || "" }; }
+        } else if (m.foto.ref) { mm.foto = { ref: m.foto.ref, mediaType: m.foto.mediaType || "", url: m.foto.url || "" }; }
+        else if (m.foto.url) { mm.foto = { url: m.foto.url, dataURL: m.foto.url, mediaType: m.foto.mediaType || "" }; }
+      }
+      return mm;
+    });
     const oturum = {
       id: "o" + (aktif[0].zamanMs || Date.now()),
       baslik: (ilk.metin || "").replace(/\s+/g, " ").trim().slice(0, 60) || "Konuşma",
       zamanMs: aktif[aktif.length - 1].zamanMs || Date.now(),
       mod: yardimciMod,
       konum: (aktif.find((m) => m.konum) || {}).konum || "",
-      mesajlar: aktif.map((m) => ({ rol: m.rol, metin: m.metin, zamanMs: m.zamanMs, konum: m.konum || "" })),
+      mesajlar: mesajlarKalici,
     };
     setOturumlar((prev) => {
       const yeni = [oturum, ...prev.filter((o) => o.id !== oturum.id)].slice(0, 100);
@@ -6646,6 +6666,25 @@ export default function Anasayfa({ pro = false }) {
     aiKarsiladiRef.current = true; // yüklenen konuşmanın üstüne otomatik karşılama BİNMESİN
     if (o.mod === "site") { setYardimciMod("site"); setSiteMesajlar(msj); } else { setYardimciMod("sohbet"); setYardimciMesajlar(msj); }
     aiAltaKay();
+    // FOTOĞRAFLARI GERİ YÜKLE: arşivde sadece küçük "ref" var → asıl görselleri IndexedDB'den oku ve mesajlara doldur
+    // (böylece arşivden açılan konuşmada kullanıcının paylaştığı foto + Gloxoo'nun ürettiği resim GERİ GELİR, kaybolmaz).
+    (async () => {
+      try {
+        const refler = new Set();
+        msj.forEach((m) => { if (m && m.resimRef) refler.add(m.resimRef); if (m && m.foto && m.foto.ref) refler.add(m.foto.ref); });
+        if (!refler.size) return;
+        const harita = {};
+        await Promise.all([...refler].map(async (k) => { try { const d = await medyaOku(k); if (d) harita[k] = d; } catch (e) {} }));
+        if (!Object.keys(harita).length) return;
+        const uygula = (m) => {
+          let mm = m;
+          if (m && m.resimRef && !m.resimData && harita[m.resimRef]) mm = { ...mm, resimData: harita[m.resimRef] };
+          if (m && m.foto && m.foto.ref && !m.foto.dataURL && harita[m.foto.ref]) mm = { ...mm, foto: { ...mm.foto, dataURL: harita[m.foto.ref] } };
+          return mm;
+        };
+        if (o.mod === "site") setSiteMesajlar((prev) => prev.map(uygula)); else setYardimciMesajlar((prev) => prev.map(uygula));
+      } catch (e) {}
+    })();
   };
   // AÇILIŞTA KARŞILAMA: asistan (sohbet) açılınca AI bir kez METİNLE karşılar — ama ARTIK canlı mikrofona/sese OTOMATİK GEÇMEZ
   // (kullanıcı: açınca her yeri kilitliyordu, mikrofonu kapatıp kendim açayım). Ses isteyen CANLI düğmesine basar.
