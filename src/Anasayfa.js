@@ -6727,7 +6727,7 @@ export default function Anasayfa({ pro = false }) {
             const durl = URL.createObjectURL(blob);
             fotoObj = await new Promise((res) => {
               const im = new Image();
-              im.onload = () => { try { const mx = 1400; let w = im.naturalWidth || 800, h = im.naturalHeight || 800; if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); } const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(im, 0, 0, w, h); const d = c.toDataURL("image/jpeg", 0.9); res({ dataURL: d, base64: d.split(",")[1], mediaType: "image/jpeg" }); } catch (e) { res(null); } finally { try { URL.revokeObjectURL(durl); } catch (x) {} } };
+              im.onload = () => { try { const mx = 1024; let w = im.naturalWidth || 800, h = im.naturalHeight || 800; if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); } const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(im, 0, 0, w, h); const d = c.toDataURL("image/jpeg", 0.82); res({ dataURL: d, base64: d.split(",")[1], mediaType: "image/jpeg" }); } catch (e) { res(null); } finally { try { URL.revokeObjectURL(durl); } catch (x) {} } };
               im.onerror = () => { try { URL.revokeObjectURL(durl); } catch (x) {} res(null); };
               im.src = durl;
             });

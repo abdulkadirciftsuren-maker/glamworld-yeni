@@ -154,12 +154,21 @@ export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransi
   // son adımda (yüz yerleştirme) filigran eklenir → çift filigran olmaz.
   const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
   const hatalar = [];
+  // GEÇİCİ hata mı? (503/deadline/overloaded/500/timeout/fetch) → beklenmedik değil, sunucu meşgul → TEKRAR DENE.
+  const geciciMi = (e) => { const m = (_hataMetni(e) || "").toLowerCase(); return m.indexOf("503") !== -1 || m.indexOf("deadline") !== -1 || m.indexOf("overload") !== -1 || m.indexOf("unavailable") !== -1 || m.indexOf("500") !== -1 || m.indexOf("timeout") !== -1 || m.indexOf("fetch") !== -1 || m.indexOf("try again") !== -1; };
   for (const y of yollar) {
-    try {
-      let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
-      const url = await _resimDene(bk, istem, girdiResim, girdiResim2);
-      if (url) { if (filigransiz) return { dataUrl: url }; let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
-    } catch (e) { hatalar.push(y.ad + ": " + _hataMetni(e)); }
+    let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
+    // Her yol için EN FAZLA 3 deneme; geçici hatada bekleyip tekrar dener (503 "Deadline expired" çoğu zaman geçicidir).
+    for (let deneme = 0; deneme < 3; deneme++) {
+      try {
+        const url = await _resimDene(bk, istem, girdiResim, girdiResim2);
+        if (url) { if (filigransiz) return { dataUrl: url }; let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
+        break; // resim gelmedi ama hata da yok → sonraki yola geç
+      } catch (e) {
+        if (geciciMi(e) && deneme < 2) { await new Promise((r) => setTimeout(r, 1600 * (deneme + 1))); continue; } // 1.6s, 3.2s bekle, tekrar dene
+        hatalar.push(y.ad + ": " + _hataMetni(e)); break;
+      }
+    }
   }
   return { hata: (hatalar.join("  ||  ") || "bilinmeyen hata").slice(0, 500) };
 }
