@@ -6714,15 +6714,29 @@ export default function Anasayfa({ pro = false }) {
     // "SOR" → Gloxoo gönderiyi HEMEN anlatsın/çevirsin (boş açılmasın). Kullanıcı: "eskiden yazı/fotoğrafı getirip anlatırdı".
     const tetik = t("gonderiAnlat", "Bu gönderi ne diyor? Çevir ve kısaca anlat.");
     if (p.gorsel) {
-      // FOTOĞRAF → Gloxoo GÖRSÜN. data: (base64) ise doğrudan; http Storage linki ise URL olarak geç (Anthropic sunucuda indirir, CORS YOK).
-      let fotoObj;
-      if (String(p.gorsel).slice(0, 5) === "data:") {
-        fotoObj = { dataURL: p.gorsel, base64: (String(p.gorsel).split(",")[1] || ""), mediaType: (String(p.gorsel).match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg" };
-      } else {
-        fotoObj = { url: p.gorsel, dataURL: p.gorsel }; // dataURL=link → sohbette küçük önizleme de görünür
-      }
-      setYardimciFoto(fotoObj);
-      try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "sohbet", listeSifirla: true }); } catch (e) {}
+      // FOTOĞRAF → Gloxoo GÖRSÜN + gerekirse ÜZERİNDE ÇALIŞSIN (giydir/düzenle → yüzü korumak için base64 ham veri lazım).
+      // data: (base64) doğrudan. http Storage linki → CORS izni AÇIKSA base64 indir (hem görme hem düzenleme çalışır);
+      // izin yoksa URL ile gönder (en azından GÖRME çalışır; düzenlemede yüz korunamaz — CORS açılınca kendiliğinden düzelir).
+      (async () => {
+        let fotoObj = null;
+        if (String(p.gorsel).slice(0, 5) === "data:") {
+          fotoObj = { dataURL: p.gorsel, base64: (String(p.gorsel).split(",")[1] || ""), mediaType: (String(p.gorsel).match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg" };
+        } else {
+          try {
+            const blob = await (await fetch(p.gorsel, { mode: "cors" })).blob();
+            const durl = URL.createObjectURL(blob);
+            fotoObj = await new Promise((res) => {
+              const im = new Image();
+              im.onload = () => { try { const mx = 1400; let w = im.naturalWidth || 800, h = im.naturalHeight || 800; if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); } const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(im, 0, 0, w, h); const d = c.toDataURL("image/jpeg", 0.9); res({ dataURL: d, base64: d.split(",")[1], mediaType: "image/jpeg" }); } catch (e) { res(null); } finally { try { URL.revokeObjectURL(durl); } catch (x) {} } };
+              im.onerror = () => { try { URL.revokeObjectURL(durl); } catch (x) {} res(null); };
+              im.src = durl;
+            });
+          } catch (e) {}
+          if (!fotoObj) fotoObj = { url: p.gorsel, dataURL: p.gorsel }; // CORS yoksa: URL (görme çalışır)
+        }
+        setYardimciFoto(fotoObj);
+        try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "sohbet", listeSifirla: true }); } catch (e) {}
+      })();
     } else {
       // YAZI / VİDEO gönderisi → hemen anlat
       try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "sohbet", listeSifirla: true }); } catch (e) {}
