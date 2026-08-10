@@ -1799,6 +1799,7 @@ export default function Anasayfa({ pro = false }) {
     return false;
   };
   const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
+  const aiDuraklatRef = useRef(false); // ^ aynısının ref'i: okuma döngüsündeki "keepalive" kullanıcının DURAKLAT'ını ezmesin diye
   const maskotBosRef = useRef(0);
   const konusIlerRef = useRef(0);
   const ttsTarayiciIptalRef = useRef(false); // tarayıcı sesi SIRAYLA okurken: susturulunca sıradaki cümleye GEÇMESİN (durunca gerçekten dursun)
@@ -5967,16 +5968,23 @@ export default function Anasayfa({ pro = false }) {
         let basMs = Date.now(), duraklaTop = 0, duraklaBas = 0, boundaryChar = -1, ilerTimer = null, ilerBitti = false;
         const durdurIler = () => { if (ilerTimer) { clearInterval(ilerTimer); ilerTimer = null; } if (!ilerBitti) { ilerBitti = true; if (typeof onIlerleme === "function") { try { onIlerleme(1); } catch (e) {} } } };
         if (typeof onIlerleme === "function") {
-          let baslamisMi = false, tikSay = 0;
+          let baslamisMi = false, tikSay = 0, bosTik = 0;
           ilerTimer = setInterval(() => {
             tikSay++;
             const ss = window.speechSynthesis;
             if (!ss) { durdurIler(); return; }
-            if (ss.speaking || ss.pending) baslamisMi = true;
-            if (baslamisMi && !ss.speaking && !ss.pending) { durdurIler(); return; } // bitti/İPTAL → interval kendini kapatır (sızıntı yok)
+            // ⛔⛔ KÖK HATA ("pembe cümleye gelince imleç ALTA atlıyor / konuşma bitiyor"): Sıralı okumada bir cümle
+            //   bitip diğeri başlarken speaking/pending bir AN false olur. Eski satır bunu "bitti" sayıp imleci ALTA
+            //   atıyordu. ÇÖZÜM: kısa boşlukta DOKUNMA; ancak ~1.4 sn (16 tik) KESİNTİSİZ boşluk olursa gerçekten bitmiştir.
+            if (ss.speaking || ss.pending) { baslamisMi = true; bosTik = 0; }
+            else if (baslamisMi) { bosTik++; if (bosTik >= 16) { durdurIler(); return; } return; } // cümleler arası boşluk → BEKLE, imleci atma
             if (!baslamisMi && tikSay > 60) { durdurIler(); return; }               // ~5.4sn içinde başlamadıysa bırak
             if (!ss.speaking && !ss.pending) return;                                 // henüz başlamadı
-            if (ss.paused) { if (!duraklaBas) duraklaBas = Date.now(); return; }      // DURAKLAT → ilerleme dursun
+            // ⛔ KEEPALIVE: Chrome/Android birkaç cümle sonra sesi SESSİZCE duraklatıp SUSUYOR ("5-6 kelime sonra kesiliyor").
+            //   Kullanıcı DURAKLAT dememişken (aiDuraklatRef=false) ~1.5 sn'de bir uyandır → konuşma sonuna kadar sürsün.
+            if (!aiDuraklatRef.current && tikSay % 16 === 0) { try { ss.resume(); } catch (e) {} }
+            if (ss.paused && !aiDuraklatRef.current) { try { ss.resume(); } catch (e) {} return; } // istemsiz duraklama (Android) → hemen devam
+            if (ss.paused) { if (!duraklaBas) duraklaBas = Date.now(); return; }      // (kullanıcı gerçekten DURAKLAT dediyse) ilerleme dursun
             if (duraklaBas) { duraklaTop += Date.now() - duraklaBas; duraklaBas = 0; }
             let frac;
             if (boundaryChar >= 0) {
@@ -6508,21 +6516,21 @@ export default function Anasayfa({ pro = false }) {
       // GERÇEK ses (mp3) çalıyorsa onu duraklat/devam ettir
       const a = aiSesElemRef.current;
       if (a) {
-        if (aiDuraklat || a.paused) { const p = a.play(); if (p && p.catch) p.catch(() => {}); setAiDuraklat(false); }
-        else { a.pause(); setAiDuraklat(true); }
+        if (aiDuraklat || a.paused) { const p = a.play(); if (p && p.catch) p.catch(() => {}); aiDuraklatRef.current = false; setAiDuraklat(false); }
+        else { a.pause(); aiDuraklatRef.current = true; setAiDuraklat(true); }
         return;
       }
       // Yoksa tarayıcının kendi sesini duraklat/devam ettir
       const ss = window.speechSynthesis; if (!ss) return;
-      if (aiDuraklat || ss.paused) { ss.resume(); setAiDuraklat(false); }
-      else if (ss.speaking) { ss.pause(); setAiDuraklat(true); }
+      if (aiDuraklat || ss.paused) { aiDuraklatRef.current = false; ss.resume(); setAiDuraklat(false); }
+      else if (ss.speaking) { aiDuraklatRef.current = true; ss.pause(); setAiDuraklat(true); }
     } catch (e) {}
   };
   // SUS — konuşmayı tamamen keser (sen hemen konuşabilirsin); canlı modda dinlemeye geçer
   const sesSus = () => {
     gloxSustur();
     aiKonusuyorRef.current = false; setAiKonusuyor(false); // Gloxoo sustu → mikrofon otomatik açılabilir (senin düğmen açılır)
-    setAiDuraklat(false);
+    aiDuraklatRef.current = false; setAiDuraklat(false);
     try { okuTemizle(); } catch (e) {}
     if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // sustuktan sonra SENİ dinle (otomatik)
   };
