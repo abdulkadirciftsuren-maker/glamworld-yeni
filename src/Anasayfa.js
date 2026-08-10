@@ -5386,7 +5386,8 @@ export default function Anasayfa({ pro = false }) {
       if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} }
       if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} }
     }
-    const site = yardimciMod === "site";
+    // "Sor" gibi otomatik açılışta yardimciMod state HENÜZ güncellenmemiş olabilir → modOverride ile DOĞRU listeye yaz (yoksa mesaj görünmez).
+    const site = (opt && typeof opt.modOverride === "string" ? opt.modOverride : yardimciMod) === "site";
     const listeAl = site ? siteMesajlar : yardimciMesajlar;
     const setListe = site ? setSiteMesajlar : setYardimciMesajlar;
     // GÜNLÜK AI LİMİTİ — müşteri (ücretsiz) düşük, Pro yüksek; bitince Claude'a GİTMEZ (maliyet yok), uyarır
@@ -6721,14 +6722,14 @@ export default function Anasayfa({ pro = false }) {
             fotoObj = { dataURL, base64: dataURL.split(",")[1], mediaType: "image/jpeg" };
             setYardimciFoto(fotoObj);
           } catch (e) {}
-          try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam }); } catch (e) {}
+          try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
         };
-        im.onerror = () => { try { yardimciGonder(tetik, { baglamOverride: baglam }); } catch (e) {} };
+        im.onerror = () => { try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (e) {} };
         im.src = p.gorsel;
-      } catch (e) { try { yardimciGonder(tetik, { baglamOverride: baglam }); } catch (x) {} }
+      } catch (e) { try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (x) {} }
     } else {
       // YAZI / VİDEO gönderisi → hemen anlat
-      try { yardimciGonder(tetik, { baglamOverride: baglam }); } catch (e) {}
+      try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
     }
   };
   async function cevirToggle(p, key) {
