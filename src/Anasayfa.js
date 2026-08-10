@@ -6762,7 +6762,9 @@ export default function Anasayfa({ pro = false }) {
   const yaziAISor = (p) => {
     if (!p) return;
     setTamFoto("");
-    try { oturumKaydet(); } catch (e) {} // "Sor" YENİ konuşma açar → mevcut konuşmayı Konuşmalarım'a ARŞİVLE (silinmesin; sonra oradan seçilir)
+    // ⛔ KULLANICI ISRARLA İSTEDİ: "Sor" ARTIK KONUŞMAYI SIFIRLAMAZ/ARŞİVLEMEZ. Soru, AÇIK OLAN konuşmanın DEVAMINA
+    //   eklenir → hiçbir şey silinmez, tek akışta devam eder. (Eskiden oturumKaydet + listeSifirla ile eski konuşmayı
+    //   arşive atıp yeni/boş açıyordu; kullanıcı bunu "konuşmam siliniyor" olarak görüyordu. Kaldırıldı.)
     setYardimciMod("sohbet");
     setYardimciFoto(null);
     const dilAd = { tr: "Türkçe", en: "İngilizce", de: "Almanca", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", ar: "Arapça", uk: "Ukraynaca", zh: "Çince", ja: "Japonca", hi: "Hintçe" }[dil] || "Türkçe";
@@ -6794,11 +6796,12 @@ export default function Anasayfa({ pro = false }) {
           if (!fotoObj) fotoObj = { url: p.gorsel, dataURL: p.gorsel }; // CORS yoksa: URL (görme çalışır)
         }
         setYardimciFoto(fotoObj);
-        try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "sohbet", listeSifirla: true }); } catch (e) {}
+        // listeSifirla YOK → mevcut konuşmanın DEVAMINA eklenir (konuşma silinmez)
+        try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "sohbet" }); } catch (e) {}
       })();
     } else {
-      // YAZI / VİDEO gönderisi → hemen anlat
-      try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "sohbet", listeSifirla: true }); } catch (e) {}
+      // YAZI / VİDEO gönderisi → hemen anlat (mevcut konuşmanın DEVAMINA, silmeden)
+      try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "sohbet" }); } catch (e) {}
     }
   };
   async function cevirToggle(p, key) {
