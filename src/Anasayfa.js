@@ -2362,7 +2362,7 @@ export default function Anasayfa({ pro = false }) {
   };
   const [tfMini, setTfMini] = useState(false);   // TAM EKRAN video KÜÇÜLTÜLDÜ mü → köşede oynar, sayfa kayar
   const [tfVidOran, setTfVidOran] = useState(null); // video en-boy oranı (mini pencere videoya göre → dikey video dikey pencere, kenar karartma yok)
-  function vidTikla(e) { if (e) e.stopPropagation(); const v = tamVideoRef.current; if (!v) return; if (v.muted) v.muted = false; /* dokununca SESİ AÇ (sessiz autoplay'den sonra) */ if (v.paused) v.play(); else v.pause(); }
+  function vidTikla(e) { if (e) e.stopPropagation(); const v = tamVideoRef.current; if (!v) return; if (v.muted) { v.muted = false; if (v.paused) { try { v.play(); } catch (x) {} } return; } /* İLK dokunuş SADECE sesi açar, videoyu DURDURMAZ */ if (v.paused) { try { v.play(); } catch (x) {} } else v.pause(); }
   const vidSn = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
   const [acikYazi, setAcikYazi] = useState({});        // uzun açıklamalar: id->true açıldı
   const [gonderilerim, setGonderilerim] = useState([]); // Profilim'deki kendi paylaşımlarım
@@ -5377,7 +5377,7 @@ export default function Anasayfa({ pro = false }) {
   async function yardimciGonder(metinOverride, opt) {
     const canliIc = !!(opt && opt.canli); // canlı döngünün KENDİ çağrısı (canlıyı kapatma)
     const soru = ((typeof metinOverride === "string" ? metinOverride : yardimciYazi) || "").trim();
-    const foto = yardimciFoto;
+    const foto = (opt && opt.fotoOverride) || yardimciFoto; // "Sor" gibi otomatik gönderimlerde foto doğrudan geçilir (state beklemeye gerek yok)
     const ek = yardimciEk; // video / pdf / metin / diger
     if ((!soru && !foto && !ek) || yardimciYukleniyor) return;
     if (ek && ek.yukleniyor) { setKucukMesaj(t("videoYukleniyor", "Video yükleniyor, bitince gönder")); return; }
@@ -5516,7 +5516,8 @@ export default function Anasayfa({ pro = false }) {
     // GLOXORG HAKKINDA + 7 EKSEN EYLEM PLANI (Gloxoo bilir, sorulunca anlatır/uygular)
     sistem += ` GLOXORG HAKKINDA (sorulursa net anlat, uydurma): GLOXORG dünyaya açık, lüks bir profesyonel sosyal platformdur (web: gloxorg.com). Ben Gloxoo — GLOXORG'un akıllı kalbi ve TEK yardımcısıyım (gloxoo.com): her sayfada yanındayım, o sayfanın uzmanıyım, paylaşım yazarım, yol/bilgi/güncel haber veririm, sana özel yardım ederim. `;
     sistem += ` 7 EKSEN EYLEM PLANI: Kullanıcı "eylem planı", "hedef planı", "yol haritası", "nereden başlarım", "bana plan çıkar" gibi bir şey isterse, ona ÖZEL (mesleği/hedefi/konumuna göre) şu 7 ekseni SIRAYLA sun; her eksende ne YAPACAĞINI somut, kısa ve motive edici tek cümleyle yaz: 1) 🧠 DÜŞÜN — neredesin, ne istiyorsun, netleş. 2) 🔭 GELECEĞİ GÖR — ileriyi, fırsatı, nereye gittiğini gör; vizyon kur. 3) 🎯 HEDEF SEÇ — net, ölçülebilir tek hedef. 4) 🛠️ ÜRET — harekete geç, somut bir şey ortaya koy. 5) ✨ FARK YARAT — seni özel kılanı öne çıkar. 6) 🤝 PAYLAŞ & BAĞ KUR — işini paylaş, doğru insanlar/müşterilerle bağ kur (GLOXORG'un kalbi). 7) 🚀 İLERLE — düzenli ilerle, ölç, geliştir, durma. Sonunda "her adımda yanındayım; ilerlemekten seni alıkoyan neyse birlikte aşarız" de. Bu planı SADECE istendiğinde ver, her mesajda dayatma. `;
-    if (yardimciBaglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${yardimciBaglam} Soruları büyük olasılıkla bununla ilgili.`;
+    const _baglam = (opt && opt.baglamOverride) || yardimciBaglam;
+    if (_baglam) sistem += ` KULLANICININ ŞU AN BULUNDUĞU YER/KONU: ${_baglam} Soruları büyük olasılıkla bununla ilgili.`;
     // SAYFA UZMANLIĞI: o an açık olan sayfanın açıklamasını her yanıta bağlam olarak ekle → Gloxoo o sayfanın uzmanı gibi yardım eder
     try {
       const _ak = mevcutSayfaKodu();
@@ -6700,24 +6701,34 @@ export default function Anasayfa({ pro = false }) {
     setYardimciFoto(null);
     const dilAd = { tr: "Türkçe", en: "İngilizce", de: "Almanca", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", ar: "Arapça", uk: "Ukraynaca", zh: "Çince", ja: "Japonca", hi: "Hintçe" }[dil] || "Türkçe";
     const metin = p.yazi || (p.video ? "(video gönderisi)" : p.gorsel ? "(fotoğraf gönderisi)" : "");
-    setYardimciBaglam(`Kullanıcı şu an bu GÖNDERİYE bakıyor ve hakkında konuşmak/öneri istiyor. Gönderi sahibi: ${p.ad || "—"}${p.meslek ? " ("+mc(p.meslek, dil)+")" : ""}. Gönderi metni: "${metin}".${p.gorsel ? " Gönderinin fotoğrafı da ekli — görseli incele; fotoğrafın İÇİNDE yazı varsa onu OKU." : ""} ÇOK ÖNEMLİ: Kullanıcı gönderinin dilini BİLMİYOR olabilir. Selamlaşmadan, gönderinin içeriğini (yazıyı${p.gorsel ? " ve/veya fotoğraftaki metni" : ""}) ${dilAd} diline KISACA ÇEVİR/özetle ve ne anlattığını anlat. Sonra faydalı öneri/yorum ver, soruları yanıtla, konuşmaya DEVAM et (kesme).`);
+    const baglam = `Kullanıcı şu an bu GÖNDERİYE bakıyor ve hakkında konuşmak/öneri istiyor. Gönderi sahibi: ${p.ad || "—"}${p.meslek ? " (" + mc(p.meslek, dil) + ")" : ""}. Gönderi metni: "${metin}".${p.gorsel ? " Gönderinin fotoğrafı da ekli — görseli incele; fotoğrafın İÇİNDE yazı varsa onu OKU." : ""} ÇOK ÖNEMLİ: Kullanıcı gönderinin dilini BİLMİYOR olabilir. Selamlaşmadan, gönderinin içeriğini (yazıyı${p.gorsel ? " ve/veya fotoğraftaki metni" : ""}) ${dilAd} diline KISACA ÇEVİR/özetle ve ne anlattığını anlat. Sonra faydalı öneri/yorum ver, soruları yanıtla, konuşmaya DEVAM et (kesme).`;
+    setYardimciBaglam(baglam);
     setYardimciAcik(true);
-    // FOTOĞRAFLI gönderi → görseli base64'e çevirip asistana ekle (Claude görebilsin)
+    // "SOR" → Gloxoo gönderiyi HEMEN anlatsın/çevirsin (boş açılmasın). Kullanıcı: "eskiden yazı/fotoğrafı getirip anlatırdı".
+    const tetik = t("gonderiAnlat", "Bu gönderi ne diyor? Çevir ve kısaca anlat.");
     if (p.gorsel) {
+      // FOTOĞRAF: base64'e çevir, hazır olunca foto + bağlamla OTOMATİK gönder (Gloxoo görseli görüp anlatsın)
       try {
         const im = new Image(); im.crossOrigin = "anonymous";
         im.onload = () => {
+          let fotoObj = null;
           try {
             const mx = 1024; let w = im.naturalWidth || 800, h = im.naturalHeight || 800;
             if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); }
             const c = document.createElement("canvas"); c.width = w; c.height = h;
             c.getContext("2d").drawImage(im, 0, 0, w, h);
             const dataURL = c.toDataURL("image/jpeg", 0.82);
-            setYardimciFoto({ dataURL, base64: dataURL.split(",")[1], mediaType: "image/jpeg" });
+            fotoObj = { dataURL, base64: dataURL.split(",")[1], mediaType: "image/jpeg" };
+            setYardimciFoto(fotoObj);
           } catch (e) {}
+          try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam }); } catch (e) {}
         };
+        im.onerror = () => { try { yardimciGonder(tetik, { baglamOverride: baglam }); } catch (e) {} };
         im.src = p.gorsel;
-      } catch (e) {}
+      } catch (e) { try { yardimciGonder(tetik, { baglamOverride: baglam }); } catch (x) {} }
+    } else {
+      // YAZI / VİDEO gönderisi → hemen anlat
+      try { yardimciGonder(tetik, { baglamOverride: baglam }); } catch (e) {}
     }
   };
   async function cevirToggle(p, key) {
@@ -10432,7 +10443,7 @@ export default function Anasayfa({ pro = false }) {
             {/* TAM AÇILIŞ = ORİJİNAL: video ise kontrollü oynat; fotoğraf ise galeri gibi tam + parmakla zoom */}
             {p.video
               ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()} style={tfMini && tfVidOran ? { aspectRatio: tfVidOran.toFixed(3) } : undefined}>
-                  <video ref={tamVideoRef} className="tamfoto-video" src={vidBlob || videoSade(p.video)} autoPlay muted playsInline preload="auto"
+                  <video ref={tamVideoRef} className="tamfoto-video" src={vidBlob || videoSade(p.video)} autoPlay playsInline preload="auto"
                     poster={p.videoPoster || undefined}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}

@@ -1,4 +1,4 @@
-// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + sesi durdur (sesiDurdur); 13 dil.
+// GLOXORG — EKSIK CEVIRILER GRUP 7: ... + Sor otomatik anlat (gonderiAnlat); 13 dil.
 export const CEVIRI_EKSIK7 = {
  "tr": {
   "akBuyut": "Büyütmek için dokun",
@@ -196,7 +196,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Eklenemedi. Firestore kuralını (gloxMuzik) yayınladın mı?",
   "aramaBaglaniyor": "Arama bağlanıyor, bir saniye…",
   "aramaBaglanamadi": "Arama bağlanamadı, tekrar deneyin.",
-  "sesiDurdur": "Sesi durdur"
+  "sesiDurdur": "Sesi durdur",
+  "gonderiAnlat": "Bu gönderi ne diyor? Çevir ve kısaca anlat."
  },
  "en": {
   "akBuyut": "Tap to enlarge",
@@ -394,7 +395,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Couldn't add. Did you publish the Firestore rule (gloxMuzik)?",
   "aramaBaglaniyor": "Connecting the call, one second…",
   "aramaBaglanamadi": "Call couldn't connect, try again.",
-  "sesiDurdur": "Stop sound"
+  "sesiDurdur": "Stop sound",
+  "gonderiAnlat": "What does this post say? Translate and briefly explain."
  },
  "de": {
   "akBuyut": "Zum Vergrößern tippen",
@@ -592,7 +594,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Konnte nicht hinzugefügt werden. Hast du die Firestore-Regel (gloxMuzik) veröffentlicht?",
   "aramaBaglaniyor": "Anruf wird verbunden, einen Moment…",
   "aramaBaglanamadi": "Anruf konnte nicht verbunden werden, versuche es erneut.",
-  "sesiDurdur": "Ton stoppen"
+  "sesiDurdur": "Ton stoppen",
+  "gonderiAnlat": "Was sagt dieser Beitrag? Übersetze und erkläre kurz."
  },
  "ru": {
   "akBuyut": "Нажми, чтобы увеличить",
@@ -790,7 +793,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Не удалось добавить. Вы опубликовали правило Firestore (gloxMuzik)?",
   "aramaBaglaniyor": "Соединяем звонок, секунду…",
   "aramaBaglanamadi": "Не удалось соединить звонок, попробуйте снова.",
-  "sesiDurdur": "Остановить звук"
+  "sesiDurdur": "Остановить звук",
+  "gonderiAnlat": "О чём этот пост? Переведи и кратко объясни."
  },
  "uk": {
   "akBuyut": "Торкнись, щоб збільшити",
@@ -988,7 +992,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Не вдалося додати. Ви опублікували правило Firestore (gloxMuzik)?",
   "aramaBaglaniyor": "З'єднуємо дзвінок, секунду…",
   "aramaBaglanamadi": "Не вдалося з'єднати дзвінок, спробуйте ще раз.",
-  "sesiDurdur": "Зупинити звук"
+  "sesiDurdur": "Зупинити звук",
+  "gonderiAnlat": "Про що цей допис? Переклади і коротко поясни."
  },
  "es": {
   "akBuyut": "Toca para ampliar",
@@ -1186,7 +1191,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "No se pudo añadir. ¿Publicaste la regla de Firestore (gloxMuzik)?",
   "aramaBaglaniyor": "Conectando la llamada, un segundo…",
   "aramaBaglanamadi": "No se pudo conectar la llamada, inténtalo de nuevo.",
-  "sesiDurdur": "Detener sonido"
+  "sesiDurdur": "Detener sonido",
+  "gonderiAnlat": "¿Qué dice esta publicación? Tradúcela y explícala brevemente."
  },
  "fr": {
   "akBuyut": "Touche pour agrandir",
@@ -1384,7 +1390,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Ajout impossible. As-tu publié la règle Firestore (gloxMuzik) ?",
   "aramaBaglaniyor": "Connexion de l'appel, une seconde…",
   "aramaBaglanamadi": "L'appel n'a pas pu se connecter, réessaie.",
-  "sesiDurdur": "Arrêter le son"
+  "sesiDurdur": "Arrêter le son",
+  "gonderiAnlat": "Que dit cette publication ? Traduis et explique brièvement."
  },
  "it": {
   "akBuyut": "Tocca per ingrandire",
@@ -1582,7 +1589,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Impossibile aggiungere. Hai pubblicato la regola Firestore (gloxMuzik)?",
   "aramaBaglaniyor": "Collegamento chiamata, un secondo…",
   "aramaBaglanamadi": "Impossibile collegare la chiamata, riprova.",
-  "sesiDurdur": "Ferma l'audio"
+  "sesiDurdur": "Ferma l'audio",
+  "gonderiAnlat": "Cosa dice questo post? Traduci e spiega brevemente."
  },
  "pt": {
   "akBuyut": "Toque para ampliar",
@@ -1780,7 +1788,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "Não foi possível adicionar. Você publicou a regra do Firestore (gloxMuzik)?",
   "aramaBaglaniyor": "Conectando a chamada, um segundo…",
   "aramaBaglanamadi": "Não foi possível conectar a chamada, tente novamente.",
-  "sesiDurdur": "Parar som"
+  "sesiDurdur": "Parar som",
+  "gonderiAnlat": "O que diz esta publicação? Traduza e explique brevemente."
  },
  "ar": {
   "akBuyut": "المس للتكبير",
@@ -1978,7 +1987,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "تعذّرت الإضافة. هل نشرت قاعدة Firestore (gloxMuzik)؟",
   "aramaBaglaniyor": "جارٍ توصيل المكالمة، لحظة…",
   "aramaBaglanamadi": "تعذّر توصيل المكالمة، حاول مجددًا.",
-  "sesiDurdur": "إيقاف الصوت"
+  "sesiDurdur": "إيقاف الصوت",
+  "gonderiAnlat": "ماذا يقول هذا المنشور؟ ترجمه واشرحه باختصار."
  },
  "hi": {
   "akBuyut": "बड़ा करने के लिए छूएं",
@@ -2176,7 +2186,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "जोड़ा नहीं जा सका। क्या आपने Firestore नियम (gloxMuzik) प्रकाशित किया?",
   "aramaBaglaniyor": "कॉल कनेक्ट हो रही है, एक सेकंड…",
   "aramaBaglanamadi": "कॉल कनेक्ट नहीं हो सकी, फिर कोशिश करें।",
-  "sesiDurdur": "आवाज़ रोकें"
+  "sesiDurdur": "आवाज़ रोकें",
+  "gonderiAnlat": "यह पोस्ट क्या कहती है? अनुवाद करें और संक्षेप में बताएं।"
  },
  "zh": {
   "akBuyut": "点击放大",
@@ -2374,7 +2385,8 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "无法添加。你发布了 Firestore 规则（gloxMuzik）吗？",
   "aramaBaglaniyor": "正在接通通话，请稍候…",
   "aramaBaglanamadi": "通话无法接通，请重试。",
-  "sesiDurdur": "停止声音"
+  "sesiDurdur": "停止声音",
+  "gonderiAnlat": "这条帖子在说什么？翻译并简要说明。"
  },
  "ja": {
   "akBuyut": "タップで拡大",
@@ -2572,6 +2584,7 @@ export const CEVIRI_EKSIK7 = {
   "muzikKutupIzin": "追加できませんでした。Firestoreルール（gloxMuzik）を公開しましたか？",
   "aramaBaglaniyor": "通話を接続中です、少々お待ちを…",
   "aramaBaglanamadi": "通話を接続できませんでした。もう一度お試しください。",
-  "sesiDurdur": "音を止める"
+  "sesiDurdur": "音を止める",
+  "gonderiAnlat": "この投稿は何と言っていますか？翻訳して簡単に説明して。"
  }
 };
