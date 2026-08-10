@@ -1800,6 +1800,7 @@ export default function Anasayfa({ pro = false }) {
   };
   const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
   const aiDuraklatRef = useRef(false); // ^ aynısının ref'i: okuma döngüsündeki "keepalive" kullanıcının DURAKLAT'ını ezmesin diye
+  const aiTurRef = useRef(0); // BARGE-IN: her AI isteğine bir "tur no" verilir; kullanıcı araya girip durdurursa bu artar → gelen ESKİ cevap gösterilmez/okunmaz
   const maskotBosRef = useRef(0);
   const konusIlerRef = useRef(0);
   const ttsTarayiciIptalRef = useRef(false); // tarayıcı sesi SIRAYLA okurken: susturulunca sıradaki cümleye GEÇMESİN (durunca gerçekten dursun)
@@ -5436,6 +5437,7 @@ export default function Anasayfa({ pro = false }) {
     say.sayi++; try { localStorage.setItem("groxAiSayac", JSON.stringify(say)); } catch (e) {}
     const yeniListe = [...listeAl, { rol: "user", metin: soru, foto, ek, zamanMs: Date.now(), konum: myTamKonum || konum.kod }];
     setListe(yeniListe); setYardimciYazi(""); setYardimciFoto(null); setYardimciEk(null); setYardimciYukleniyor(true);
+    const buTur = ++aiTurRef.current; // BU isteğin tur no'su; kullanıcı araya girip durdurursa aiTurRef artar → aşağıda bu cevap İPTAL sayılır
     // BEN GÖNDERDİM → Gloxoo'nun ESKİ konuşma balonu HEMEN kaybolsun (asılı kalmasın) + konuşma/kelime imleci dursun.
     // Yerine "Gloxoo düşünüyor" (canlı ikon) gösterilir; cevap gelince yeni metin balonda çıkar. (Kullanıcı isteği.)
     gloxSustur();
@@ -5747,6 +5749,8 @@ export default function Anasayfa({ pro = false }) {
         metin = metin.replace(/\[SITE:[^\]]*\]/gi, "").trim();
         if (!metin && siteler.length) metin = "İşte ilgili yerler — sitesine gitmek için dokun 👇";
       }
+      // ⛔ BARGE-IN: Kullanıcı beklerken araya girip DURDURDUYSA (yeşil düğme → canliKes), bu ESKİ cevabı GÖSTERME/OKUMA.
+      if (aiTurRef.current !== buTur) { setYardimciYukleniyor(false); return; }
       setListe((s) => [...s, { rol: "ai", metin, oneriler, paylasim, harita, siteler, cizim, resimId, resimIstem, resimYuk: !!resimIstem, zamanMs: Date.now() }]);
       // GERÇEK RESİM ÜRET (async) — cevabı hemen göster, resim gelince o mesajı güncelle (yükleniyor → resim / hata)
       if (resimIstem && resimId) {
@@ -6239,14 +6243,18 @@ export default function Anasayfa({ pro = false }) {
   // CANLI döngüde: AI sesli cevabı BİTENE kadar bekle, sonra tekrar dinle (onend'e güvenme — bazen tetiklenmiyordu → döngü ölüyordu)
   const canliDevam = () => {
     if (!canliSohbetRef.current) return;
-    let bekle = 0;
+    let bekle = 0, sessizTik = 0;
     const ti = setInterval(() => {
       if (!canliSohbetRef.current) { clearInterval(ti); return; }
       bekle += 300;
-      // speaking VE pending: uzun cevap birden çok cümleye bölünür; cümleler ARASI boşlukta speaking bir an false olur
-      // ama sıradaki cümle "pending" (kuyrukta) → ikisini de kontrol et, yoksa mikrofon araya girip okumayı KESİYORDU.
-      let konusuyor = false; try { konusuyor = !!(window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)); } catch (e) {}
-      if ((bekle >= 900 && !konusuyor) || bekle > 45000) { clearInterval(ti); try { canliDinle(); } catch (e) {} }
+      // ⛔⛔ KÖK HATA (kullanıcı: "sona 5-6 kelime kala konuşma duruyor + yeşil düğme takılıp beni dinlemiyor"):
+      //   SIRALI okumada bir cümle bitip diğeri başlarken speaking/pending bir AN false oluyor. Eski kod bu KISA boşluğu
+      //   "Gloxoo bitti" sanıp mikrofonu ERKEN açıyordu → mikrofon ses odağını alınca SON cümle(ler) KESİLİYOR + dinleme
+      //   kilitleniyordu. ÇÖZÜM: (1) gloxKonusuyor() kullan (aiKonusuyorRef kısa boşlukları örter), (2) ARKA ARKAYA
+      //   ~1.2 sn (4 tik) KESİNTİSİZ sessizlik iste → kısa boşlukta mikrofon AÇILMAZ, sadece Gloxoo GERÇEKTEN susunca açılır.
+      let konusuyor = false; try { konusuyor = gloxKonusuyor(); } catch (e) {}
+      if (konusuyor) sessizTik = 0; else sessizTik++;
+      if ((sessizTik >= 4 && bekle >= 900) || bekle > 45000) { clearInterval(ti); try { canliDinle(); } catch (e) {} }
     }, 300);
   };
   const canliDinle = async () => {
@@ -6284,7 +6292,7 @@ export default function Anasayfa({ pro = false }) {
           if (tx && canliSohbetRef.current) { bosSesRef.current = 0; yardimciGonder(tx, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
           else if (canliSohbetRef.current && !gloxKonusuyor()) canliDinle(); // hiç kelime gelmediyse tekrar dinle
         };
-        const molaKur = () => { if (molaTimer) clearTimeout(molaTimer); molaTimer = setTimeout(gonder, 2800); }; // 2.8 sn sessizlik → gönder (kullanıcı: "konuşurken/düşünürken sözümü kesiyor" → 1.7→2.8 sn: cümle ortasında durup düşünmeye zaman VER, kesme)
+        const molaKur = () => { if (molaTimer) clearTimeout(molaTimer); molaTimer = setTimeout(gonder, 3500); }; // 3.5 sn sessizlik → gönder (kullanıcı: "konuşurken/düşünürken sözümü kesiyor" → 2.8→3.5 sn: cümle ortasında durup daha uzun düşünebil, sözün kesilmesin; erken kesilse bile yeşil düğmeyle durdurup yeniden konuşabilirsin)
         const dongu = () => {
           if (bitti) return;
           if (!canliSohbetRef.current || gloxKonusuyor()) { gonder(); return; }
@@ -6540,6 +6548,22 @@ export default function Anasayfa({ pro = false }) {
     aiDuraklatRef.current = false; setAiDuraklat(false);
     try { okuTemizle(); } catch (e) {}
     if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } // sustuktan sonra SENİ dinle (otomatik)
+  };
+  // ⛔ ARAYA GİR + YENİDEN KONUŞ (kullanıcı: "yarım cümlem üzerine DÜŞÜNÜRKEN durdurup tekrar konuşabilmem lazım"):
+  //   Gloxoo KONUŞUYOR ya da DÜŞÜNÜYOR (bekleyen istek) iken çağrılır. Bekleyen cevabı GEÇERSİZ kılar (aiTurRef++ → gelince
+  //   gösterilmez/okunmaz), sesi keser, "düşünüyor" göstergesini kapatır, mevcut dinlemeyi sıfırlar ve HEMEN TEMİZ dinlemeye geçer.
+  const canliKes = () => {
+    aiTurRef.current++;                                    // bekleyen/eski AI cevabını iptal say (gelince yok sayılır)
+    gloxSustur();                                          // konuşmayı/sesi durdur
+    setYardimciYukleniyor(false);                          // "düşünüyor" çemberini kapat
+    aiKonusuyorRef.current = false; setAiKonusuyor(false);
+    aiDuraklatRef.current = false; setAiDuraklat(false);
+    try { okuTemizle(); } catch (e) {}
+    // mevcut dinleme/kaydı temizle → TEMİZ yeniden başlasın (yarım kalmış tanıma birikmesin)
+    try { if (recognitionRef.current) { recognitionRef.current.abort(); recognitionRef.current = null; } } catch (e) {}
+    try { if (mediaRecorderRef.current) { mediaRecorderRef.current.stop(); mediaRecorderRef.current = null; } } catch (e) {}
+    setDinliyor(false);
+    if (canliSohbetRef.current) { setTimeout(() => { try { if (canliSohbetRef.current) canliDinle(); } catch (e) {} }, 200); } // kısa boşluktan sonra seni yeniden dinle
   };
   // MÜŞTERİ → Profesyonele yönlendirme: kısa açıklama (AI hakkı bitti, yeni istek atmadan) + menüyü aç
   const proYukselt = () => {
@@ -11181,7 +11205,7 @@ export default function Anasayfa({ pro = false }) {
                   )}
                 </div>
                 {/* CANLI SOHBET — DÜĞMESİZ: bir kez başlat, sonra konuş-dinle döngüsü (bas=başlat/dur) */}
-                <button className={"ai-ses ai-canli" + (canliSohbet && !kameraAcik ? " aktif" : "")} onClick={canliSohbetToggle} aria-label={t("canliSohbet", "Canlı Sohbet")}>
+                <button className={"ai-ses ai-canli" + (canliSohbet && !kameraAcik ? " aktif" : "") + ((canliSohbet && (aiKonusuyor || aiDuraklat || yardimciYukleniyor)) ? " kesilebilir" : "")} onClick={() => { if (canliSohbet && (aiKonusuyor || aiDuraklat || yardimciYukleniyor)) { canliKes(); } else { canliSohbetToggle(); } }} aria-label={t("canliSohbet", "Canlı Sohbet")} title={(canliSohbet && (aiKonusuyor || aiDuraklat || yardimciYukleniyor)) ? t("durdurKonus", "Durdur ve konuş") : t("canliSohbet", "Canlı Sohbet")}>
                   {canliSohbet && !kameraAcik
                     ? <span className="mi-canli" aria-hidden="true"><i /><i /><i /></span>
                     : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0 0 14 0" /><path d="M12 19v3" /></svg>}

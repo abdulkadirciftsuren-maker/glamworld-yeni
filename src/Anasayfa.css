@@ -3550,6 +3550,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* KAPALI = KIRMIZI (konuşmak için bas), AÇIK = YEŞİL + içi canlı (mini toggle ile aynı mantık) */
 .ai-canli{ color:#ff5a5a; border-color:rgba(224,32,44,.55); background:linear-gradient(135deg,rgba(255,120,120,.16),rgba(224,32,44,.14)); }
 .ai-canli.aktif{ background:linear-gradient(135deg,#5fe08a,#1ea64f); color:#06160d; border-color:#7fe0a8; animation:miniSesYan 1.1s ease-in-out infinite; }
+/* GLOXOO KONUŞUYOR/DÜŞÜNÜYOR → düğme ALTIN/amber olur (bas=DURDUR ve konuş); dinlerken YEŞİL kalır. Böylece durum GÖZLE ayırt edilir. */
+.ai-canli.aktif.kesilebilir{ background:linear-gradient(135deg,#ffd35a,#e8901e); color:#3a2400; border-color:#ffdf8a; animation:miniSesYan .7s ease-in-out infinite; }
+.ai-canli.aktif.kesilebilir .mi-canli i{ background:#4a2e00; }
 .ai-canli .mi-canli{ height:20px; }
 .ai-canli .mi-canli i{ background:#06331c; }
 /* GÖRÜNTÜLÜ SOHBET düğmesi — kapalı altın kamera, açık YEŞİL (kamera aktif) */
