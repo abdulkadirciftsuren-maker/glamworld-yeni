@@ -6198,13 +6198,15 @@ export default function Anasayfa({ pro = false }) {
     if (SR) {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
-        // DÜŞÜNME MOLASI: kullanıcı cümle ortasında DURUP düşünebilsin — duraklamayı HEMEN "bitti" sayma.
-        // Her kelimede 1.7 sn SESSİZLİK sayacı yenilenir; SADECE 1.7 sn hiç yeni kelime gelmezse gönderilir.
-        // continuous=false her turda biter (Android "10x tekrar" hatası bundan kaçınır); her turda YENİ SR ile
-        // dinlemeye DEVAM ederiz, mola sayacı gönderimi yönetir → kullanıcının sözü yarıda KESİLMEZ.
-        let bitti = false, birikmis = "", molaTimer = null, aktifRec = null;
+        // ⛔ BİP SESİ ÇÖZÜMÜ (kullanıcı 10+ kez istedi): Android her SpeechRecognition.start()'ta KENDİ "bip" sesini çalar.
+        // Eskiden continuous=false idi → her cümleden sonra SR biter, YENİDEN başlatılırdı → her 3-4 sn'de BİR BİP.
+        // Artık continuous=true: TEK bir SR açılır ve AÇIK KALIR (konuşma+duraklamalar boyunca yeniden başlatılmaz) →
+        // bip SADECE dinleme başında bir kez çıkar, konuşurken ARTIK çıkmaz. (Uzun sessizlikte Android kendi bitirirse
+        // bir kez daha başlatılır — o da nadir.) "10x tekrar" hatası: SADECE resultIndex'ten sonraki YENİ final
+        // sonuçlar birikir (eski sonuçlar tekrar okunmaz) + tekrarSil() → aynı cümle tekrarlanmaz.
+        let bitti = false, birikmis = "", molaTimer = null, rec = null;
         const basT = Date.now();
-        const kapat = () => { try { if (aktifRec) { aktifRec.onresult = aktifRec.onend = aktifRec.onerror = null; aktifRec.abort(); } } catch (e) {} aktifRec = null; recognitionRef.current = null; };
+        const kapat = () => { try { if (rec) { rec.onresult = rec.onend = rec.onerror = null; rec.abort(); } } catch (e) {} rec = null; recognitionRef.current = null; };
         const gonder = () => {
           if (bitti) return; bitti = true;
           if (molaTimer) { clearTimeout(molaTimer); molaTimer = null; }
@@ -6214,33 +6216,32 @@ export default function Anasayfa({ pro = false }) {
           else if (canliSohbetRef.current && !gloxKonusuyor()) canliDinle(); // hiç kelime gelmediyse tekrar dinle
         };
         const molaKur = () => { if (molaTimer) clearTimeout(molaTimer); molaTimer = setTimeout(gonder, 1700); }; // 1.7 sn sessizlik → gönder
-        const dongu = () => {
+        rec = new SR(); // kurulamazsa dıştaki catch → Whisper yoluna düşer
+        try { rec.lang = aiSesKodu(aiDilRef.current); } catch (e) {} // SEÇİLİ AI dili (gürültüde kaymaz)
+        rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1; // AÇIK KALSIN + ara sonuçlar (mola sayacı için)
+        recognitionRef.current = rec;
+        rec.onresult = (e) => {
           if (bitti) return;
-          if (!canliSohbetRef.current || gloxKonusuyor()) { gonder(); return; }
-          if (Date.now() - basT > 25000) { gonder(); return; } // en fazla 25 sn (sonsuz döngü olmasın)
-          let rec; try { rec = new SR(); } catch (e) { gonder(); return; }
-          try { rec.lang = aiSesKodu(aiDilRef.current); } catch (e) {} // SEÇİLİ AI dili (gürültüde kaymaz)
-          rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
-          aktifRec = rec; recognitionRef.current = rec;
-          rec.onresult = (e) => {
-            if (bitti) return;
-            const son = e.results && e.results[e.results.length - 1];
-            const parca = ((son && son[0] && son[0].transcript) || "").trim();
-            if (parca) { birikmis = birikmis ? (birikmis + " " + parca) : parca; molaKur(); } // kelime geldi → mola sayacını YENİLE (kesme)
-          };
-          rec.onerror = (ev) => {
-            if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; kapat(); setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
-            // no-speech / aborted / network → onend zaten dinlemeye devam ettirir
-          };
-          rec.onend = () => {
-            if (bitti) return;
-            aktifRec = null;
-            if (!birikmis && !molaTimer) molaKur(); // hiç konuşma yok → uzun sessizlikte gönder/tekrar dinle
-            setTimeout(dongu, 120); // KÜÇÜK ara ile yeniden dinle → duraklamada söz KESİLMEZ
-          };
-          try { setDinliyor(true); rec.start(); } catch (e) { aktifRec = null; recognitionRef.current = null; setTimeout(dongu, 200); }
+          let yeni = "";
+          for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r && r.isFinal && r[0]) yeni += (r[0].transcript || "") + " "; } // SADECE yeni final parçalar
+          yeni = yeni.trim();
+          if (yeni) birikmis = birikmis ? (birikmis + " " + yeni) : yeni;
+          molaKur(); // her ses (ara sonuç dahil) mola sayacını YENİLE → düşünürken/durakladığında söz KESİLMEZ
+          if (Date.now() - basT > 25000) gonder(); // en fazla 25 sn
         };
-        dongu();
+        rec.onerror = (ev) => {
+          if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) { bitti = true; kapat(); setDinliyor(false); canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); return; }
+          // no-speech / aborted / network → onend halleder (gerekirse aynı oturumu sürdürür)
+        };
+        rec.onend = () => {
+          if (bitti) return;
+          if (!canliSohbetRef.current || gloxKonusuyor()) { gonder(); return; } // dinleme bitti / Gloxoo konuşuyor → gönder/devret
+          if (birikmis) { gonder(); return; }                                   // konuşma birikti → gönder
+          if (Date.now() - basT > 25000) { gonder(); return; }                  // süre doldu → gönder
+          // Hâlâ dinliyoruz ve konuşma yok → AYNI oturumu sürdür: yeniden başlatmayı DENE (nadir → bip nadir)
+          try { rec.start(); } catch (e) { recognitionRef.current = null; setTimeout(() => { if (!bitti && canliSohbetRef.current) canliDinle(); }, 300); }
+        };
+        try { setDinliyor(true); rec.start(); } catch (e) { recognitionRef.current = null; throw e; } // start olmazsa dıştaki catch → Whisper
         return;
       } catch (e) { try { recognitionRef.current = null; } catch (e2) {} /* başlatılamadı → aşağıdaki Whisper yoluna düş */ }
     }
