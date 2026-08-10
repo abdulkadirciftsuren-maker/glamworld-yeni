@@ -5529,6 +5529,9 @@ export default function Anasayfa({ pro = false }) {
     // kullanıcı istemediği "şunu da yapayım" tarzı önerilerden rahatsız oluyordu. Sadece sorulana cevap.
     // 3) KISA + biçimlendirme yasağı
     sistem += `KISA ve net konuş, laf kalabalığı yapma (açıklaman 1-2 cümle). Yıldız (*), çift yıldız (**kalın**), kare (#), tire-liste, markdown ASLA kullanma — düz metin yaz; sesli konuşur gibi akıcı cümleler; ara sıra emoji serbest. SADECE kullanıcının sorduğu/istediği şeye cevap ver; kullanıcı istemeden kendiliğinden konu açma, ekstra bilgi/öneri YAĞDIRMA, "şunu da yapayım mı" diye üstüne gitme — kullanıcının ne isteyeceğini BEKLE. Fotoğraf gibi gerçek/gerçekçi resim çizemezsin AMA temiz bir VEKTÖR (SVG) çizim yapabilirsin — aşağıdaki [CIZIM] kuralına bak. KİŞİLİK: sıcak, samimi, neşeli ve CANLI bir dost gibi konuş; yeri gelince hafif şaka yap, espri yap, gül (😄😊); robot gibi soğuk olma — ama yine de KISA kal ve kullanıcı istemeden konuyu uzatma. TEKRAR YOK: Önceki cevaplarında söylediğin cümleleri/kalıpları AYNEN TEKRARLAMA; her yanıt TAZE, kullanıcının SON mesajına ÖZEL ve farklı olsun. Bir şeyi bilmiyorsan ya da veri yoksa aynı klişeyi tekrar tekrar yazma; kısaca söyle ve geç. Kullanıcı seninle gerçek bir sohbet ediyor — papağan gibi değil, düşünen bir dost gibi cevap ver. `;
+    // SESLİ OKUMA (çok önemli — kullanıcı: "Gloxoo 'sesli okuyamıyorum, ses motoruna bağlantı yok' diyor, oysa okuyor"):
+    // TTS uygulamanın işi; AI bundan HİÇ bahsetmemeli, kendi okuma yeteneği hakkında yanlış/olumsuz konuşmamalı.
+    sistem += `SESLİ OKUMA HAKKINDA (ÇOK ÖNEMLİ): Sen yazınca uygulama senin metnini OTOMATİK olarak telefonun kendi sesiyle sesli okur — bu UYGULAMANIN işi, senin değil. Bu yüzden ASLA "sesli okuyamıyorum", "sesli okuma yapamıyorum", "ses motoruna bağlantı yok", "sesli anlatamam", "sesim yok" gibi şeyler DEME; kendi ses/okuma/dinleme yeteneğinden ya da teknik altyapıdan (ses motoru, bağlantı, API) HİÇ bahsetme. Kullanıcı "bunu sesli oku / bana oku / sesli anlat" derse, istenen metni normal ve akıcı yaz — uygulama onu zaten sesli okur. Sadece içeriği ver, okuma işini uygulamaya bırak. `;
     // === ROL + BAĞLAM (daha az kritik — köprü kısaltırsa buradan kısalır) ===
     sistem += `Sen Gloxoo'sun — GLOXORG adlı lüks, küresel profesyonel sosyal platformun AKILLI KALBİ ve TEK yardımcı asistanısın. Adın Gloxoo; kendini tanıtırken "Gloxorg dünyasının akıllı kalbi Gloxoo" dersin. Her şeyi bilen, akıllı, sıcak ve NET bir dostsun. AYNI ZAMANDA kullanıcının ŞU AN bulunduğu SAYFANIN da UZMANISIN: o sayfada ne yapılır, nasıl kullanılır, ipuçları ve püf noktaları — hepsini bilirsin ve o sayfaya ÖZEL yardım edersin (hem öneri ver hem dinle). Paylaşım yazma, meslek tanıtımı, müşteri bulma dahil her konuda yardımcı ol. GLOXORG bölümleri: Ana sayfa/Keşfet, Profil, Paylaşım, Arama, Bildirimler, Mesajlar, Konum, Ayarlar.` + (site
       ? ` SADECE kullanıcı AÇIK şekilde bir bölümü AÇMANI isterse (örn "profili aç", "ayarları aç") yanıtının EN BAŞINA şu komutlardan SADECE BİRİNİ yaz: [AC:anasayfa] [AC:profil] [AC:paylas] [AC:ara] [AC:bildirim] [AC:mesaj] [AC:konum] [AC:ayar]. Soru/sohbet/yardım ise veya EMİN DEĞİLSEN komut KOYMA.`
@@ -6003,21 +6006,25 @@ export default function Anasayfa({ pro = false }) {
         // ⛔ ANDROID HATASI: Cümleleri AYNI ANDA kuyruğa atınca (forEach speak) çoğu telefon SADECE İLK cümleyi
         //   okuyup SUSUYORDU → kullanıcı "5-6 kelime okuyup kesiliyor" dedi. ÇÖZÜM: cümleleri SIRAYLA oku —
         //   her cümle BİTİNCE (onend) sıradaki cümleyi başlat. Böylece uzun cevap SONUNA KADAR okunur.
-        let charOfs = 0;
+        // ⛔ İMLEÇ GERİDE KALMASIN: Her cümlenin TEMİZ metindeki GERÇEK başlangıç konumunu indexOf ile bul.
+        //   (Eskiden parça uzunlukları toplanıyordu; parçalar trim'lendiği için konum KAYIYOR, imleç 3-4 kelime GERİDE
+        //   kalıyordu. Gerçek konumla boundaryChar tam yerine oturur → imleç sesle BİRLİKTE yürür.)
+        let _araOfs = 0;
+        const parcaOfs = parcalar.map((pp) => { const at = temiz.indexOf(pp, _araOfs); const pos = at >= 0 ? at : _araOfs; _araOfs = pos + pp.length; return pos; });
         const soyle = (idx) => {
           if (ttsTarayiciIptalRef.current) return;                 // susturuldu → sıradaki cümleye GEÇME (durunca dursun)
           if (idx >= parcalar.length) { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } return; } // hepsi bitti
           const p = parcalar[idx];
           const u = new SpeechSynthesisUtterance(p);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-          const buOfs = charOfs;
+          const buOfs = parcaOfs[idx];                             // bu cümlenin TEMİZ içindeki GERÇEK konumu
           let gecti = false, guardT = null;
           // Bu cümle bitince (VEYA patlarsa VEYA emniyet süresi dolunca) → SIRADAKİ cümle. TEK sefer çalışır (gecti).
           const sonraki = () => {
             if (gecti) return; gecti = true;
             if (guardT) { clearTimeout(guardT); guardT = null; }
             if (ttsTarayiciIptalRef.current) return;               // durduysa sırada bekleme
-            charOfs += p.length + 1; soyle(idx + 1);
+            soyle(idx + 1);
           };
           // HER cümle okunmaya başlayınca haber ver (teleprompter geri uyumluluk) + ilk parçada zaman sıfırla
           u.onstart = () => { konusIlerRef.current = Date.now(); if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } }; // konusIlerRef: okuma ilerledi → takılma emniyeti sıfırlanır (uzun yazı kesilmez)
