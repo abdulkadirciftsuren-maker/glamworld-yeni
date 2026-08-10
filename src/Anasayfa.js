@@ -1773,7 +1773,10 @@ export default function Anasayfa({ pro = false }) {
   const [aiKonusuyor, setAiKonusuyor] = useState(false); // TTS çalıyor mu — maskot ağzını oynatır
   const aiKonusuyorRef = useRef(false); // Gloxoo KONUŞUYOR mu (async okunur): konuşurken mikrofon dinlemez (yarı-çift yönlü)
   const aiSesElemRef = useRef(null); // GERÇEK insan sesi (worker'dan gelen mp3) çalınırken tutulan <audio>; durdurmak/izlemek için
-  const gercekSesKapaliRef = useRef(false); // gerçek ses anahtarı yok/kredisi bittiyse → o oturumda boşuna deneme, direkt tarayıcı sesine geç
+  // VARSAYILAN: TELEFONUN KENDİ SESİ (true). "Gerçek ses" (worker/internet motoru) anahtar sorunları yüzünden
+  //   GÜVENİLMEZDİ → cevabı 5-6 kelimede kesip donuyordu. Artık okuma HEP telefonun kendi sesiyle (internetsiz, hep çalışır,
+  //   cümle cümle sonuna kadar). Kullanıcı Ayarlar'dan bir "gerçek ses" SEÇERSE (satır ~11186) yeniden denenir (false yapılır).
+  const gercekSesKapaliRef = useRef(true);
   const aiHazirlaniyorRef = useRef(false); // gerçek ses YÜKLENİYOR (henüz çalmadı) — bu sırada da "konuşuyor" say (mikrofon araya girmesin)
   const sesZinciriIptalRef = useRef(null); // parça parça (cümle cümle) çalan gerçek ses zincirini durdurmak için — gloxSustur çağırır
   // GLOXOO'YU SUSTUR — hem tarayıcının KENDİ sesini (speechSynthesis) hem GERÇEK sesi (worker mp3) BİRLİKTE durdurur.
@@ -6000,15 +6003,37 @@ export default function Anasayfa({ pro = false }) {
           const u = new SpeechSynthesisUtterance(p);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           const buOfs = charOfs;
+          let gecti = false, guardT = null;
+          // Bu cümle bitince (VEYA patlarsa VEYA emniyet süresi dolunca) → SIRADAKİ cümle. TEK sefer çalışır (gecti).
+          const sonraki = () => {
+            if (gecti) return; gecti = true;
+            if (guardT) { clearTimeout(guardT); guardT = null; }
+            if (ttsTarayiciIptalRef.current) return;               // durduysa sırada bekleme
+            charOfs += p.length + 1; soyle(idx + 1);
+          };
           // HER cümle okunmaya başlayınca haber ver (teleprompter geri uyumluluk) + ilk parçada zaman sıfırla
           u.onstart = () => { konusIlerRef.current = Date.now(); if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } }; // konusIlerRef: okuma ilerledi → takılma emniyeti sıfırlanır (uzun yazı kesilmez)
           // KELİME sınırı (destekleyen tarayıcıda): gerçek karakter konumu → ilerleme kesinleşir
           u.onboundary = (ev) => { konusIlerRef.current = Date.now(); try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} }; // her kelimede ilerleme → emniyet sıfırlanır
-          // Bu cümle bitince (VEYA patlarsa) → SIRADAKİ cümle. Bir cümle hata verse bile DONMAZ, devam eder.
-          const sonraki = () => { if (ttsTarayiciIptalRef.current) return; charOfs += p.length + 1; soyle(idx + 1); };
           u.onend = sonraki;
-          u.onerror = sonraki;
-          try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); }
+          u.onerror = sonraki;                                     // bir cümle patlarsa sıradakine geç → DONMA
+          konusIlerRef.current = Date.now();
+          try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); return; }
+          // ⛔⛔ ANDROID KÖK HATASI ("5-6 kelime okuyup duruyor"): Bu telefonda cümle bitince `onend` OLAYI HİÇ
+          //   TETİKLENMİYORDU → zincir İLK cümlede takılıp kalıyordu. ÇÖZÜM: cümle tahmini süresi kadar bir EMNİYET
+          //   zamanlayıcısı kur; süre dolunca ses HÂLÂ ilerliyorsa (son 1.5sn'de kelime sınırı geldiyse) biraz daha bekle,
+          //   yoksa (onend gelmese bile) ZORLA sıradaki cümleye geç. Böylece uzun cevap SONUNA KADAR okunur.
+          const guardKur = () => {
+            const tahminMs = Math.max(2200, p.length * 100 + 2200);
+            guardT = setTimeout(function kontrol() {
+              if (gecti) return;
+              try { if (window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} // Chrome "duraklatıldı" halinde takılırsa uyandır
+              let konusuyor = false; try { konusuyor = !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (e) {}
+              if (konusuyor && (Date.now() - konusIlerRef.current) < 1500) { guardT = setTimeout(kontrol, 1200); return; } // hâlâ ilerliyor → uzun cümleyi ORTADAN kesme
+              sonraki();                                            // takıldı/onend gelmedi → sıradaki cümle
+            }, tahminMs);
+          };
+          guardKur();
         };
         soyle(0);
       };
