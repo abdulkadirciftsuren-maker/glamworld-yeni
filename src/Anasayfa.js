@@ -5543,10 +5543,14 @@ export default function Anasayfa({ pro = false }) {
       if (mi === sonIdx && kk && kk.base64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: kk.mediaType || "image/jpeg", data: kk.base64 } }, { type: "text", text: m.metin || "Kameradan beni görüyorsun; buna göre konuş." } ] };
       // FOTO HAFIZASI: base64 yoksa (yenileme/güncelleme sonrası kayıttan gelen foto sadece dataURL tutar) → base64'ü dataURL'den TÜRET.
       // Böylece Gloxoo yenilendikten sonra da eklenen fotoğrafı GÖRÜR/HATIRLAR (yalnız ekranda görünüp AI'nın körleşmesi biter).
-      if (m.foto && (m.foto.base64 || m.foto.dataURL)) {
-        const b64 = m.foto.base64 || (((m.foto.dataURL || "") + "").split(",")[1] || "");
-        const mt = m.foto.mediaType || ((((m.foto.dataURL || "") + "").match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1]) || "image/jpeg";
+      if (m.foto && (m.foto.base64 || m.foto.dataURL || m.foto.url)) {
+        const durl = (m.foto.dataURL || "") + "";
+        const b64 = m.foto.base64 || (durl.slice(0, 5) === "data:" ? (durl.split(",")[1] || "") : "");
+        const mt = m.foto.mediaType || ((durl.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1]) || "image/jpeg";
         if (b64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: mt, data: b64 } }, { type: "text", text: m.metin || "Bu görseli incele ve hakkında kısaca konuş." } ] };
+        // base64 YOK ama http RESİM LİNKİ var → URL kaynağı olarak gönder (Anthropic sunucu tarafında indirir; tarayıcı CORS'una takılmaz)
+        const urlStr = m.foto.url || (durl.slice(0, 4) === "http" ? durl : "");
+        if (/^https?:\/\//i.test(urlStr)) return { role: "user", content: [ { type: "image", source: { type: "url", url: urlStr } }, { type: "text", text: m.metin || "Bu görseli incele ve hakkında kısaca konuş." } ] };
       }
       // EK: PDF (AI okur/document), metin dosyası (içeriği yazıya eklenir), video/diğer (AI izleyemez → not)
       if (m.ek) {
@@ -6708,32 +6712,15 @@ export default function Anasayfa({ pro = false }) {
     // "SOR" → Gloxoo gönderiyi HEMEN anlatsın/çevirsin (boş açılmasın). Kullanıcı: "eskiden yazı/fotoğrafı getirip anlatırdı".
     const tetik = t("gonderiAnlat", "Bu gönderi ne diyor? Çevir ve kısaca anlat.");
     if (p.gorsel) {
-      // FOTOĞRAF → Gloxoo GÖRSÜN: resmi BLOB olarak indir (fetch), blob-URL ile yükle (aynı-kaynak → CORS tainti YOK),
-      // küçült + base64 yap, foto + bağlamla OTOMATİK gönder. Böylece Gloxoo fotoğrafın İÇİNİ görüp anlatır/çevirir.
-      (async () => {
-        let fotoObj = null;
-        try {
-          const blob = await (await fetch(p.gorsel, { mode: "cors" })).blob();
-          const url = URL.createObjectURL(blob);
-          fotoObj = await new Promise((res) => {
-            const im = new Image();
-            im.onload = () => {
-              try {
-                const mx = 1200; let w = im.naturalWidth || 800, h = im.naturalHeight || 800;
-                if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); }
-                const c = document.createElement("canvas"); c.width = w; c.height = h;
-                c.getContext("2d").drawImage(im, 0, 0, w, h);
-                const d = c.toDataURL("image/jpeg", 0.85);
-                res({ dataURL: d, base64: d.split(",")[1], mediaType: "image/jpeg" });
-              } catch (e) { res(null); } finally { try { URL.revokeObjectURL(url); } catch (x) {} }
-            };
-            im.onerror = () => { try { URL.revokeObjectURL(url); } catch (x) {} res(null); };
-            im.src = url;
-          });
-        } catch (e) {}
-        if (fotoObj) setYardimciFoto(fotoObj);
-        try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
-      })();
+      // FOTOĞRAF → Gloxoo GÖRSÜN. data: (base64) ise doğrudan; http Storage linki ise URL olarak geç (Anthropic sunucuda indirir, CORS YOK).
+      let fotoObj;
+      if (String(p.gorsel).slice(0, 5) === "data:") {
+        fotoObj = { dataURL: p.gorsel, base64: (String(p.gorsel).split(",")[1] || ""), mediaType: (String(p.gorsel).match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg" };
+      } else {
+        fotoObj = { url: p.gorsel, dataURL: p.gorsel }; // dataURL=link → sohbette küçük önizleme de görünür
+      }
+      setYardimciFoto(fotoObj);
+      try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
     } else {
       // YAZI / VİDEO gönderisi → hemen anlat
       try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
