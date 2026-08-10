@@ -720,8 +720,11 @@
 .hik-ses-btn.aktif{ background:rgba(123,63,242,.18); border-color:rgba(123,63,242,.6); color:#d9c9ff; }
 .hik-konum-kaldir{ opacity:.8; font-weight:800; }
 /* Görüntüleyicide müzik rozeti (çalıyor) */
-.hik-ses-rozet{ position:absolute; top:calc(max(8px,env(safe-area-inset-top)) + 56px); left:14px; z-index:6; background:rgba(0,0,0,.42); color:#fff; font-size:14px; padding:4px 9px; border-radius:12px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); animation:sesTit 1.1s ease-in-out infinite; pointer-events:none; }
-@keyframes sesTit{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.15);} }
+/* SES AÇ/KAPA — sol üstte gerçek düğme (altın zemin, siyah değil). z-index:8 → alttaki "durdur" katmanının (z-index:4) ÜSTÜNDE;
+   pointer-events:auto → dokunuş bu düğmede kalır (videoyu durdurmaz). Ses açıkken hafif titrer, kapalıyken sabit/soluk. */
+.hik-ses-rozet{ position:absolute; top:calc(max(8px,env(safe-area-inset-top)) + 56px); left:14px; z-index:8; display:flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 11px; background:linear-gradient(180deg,#ffe680,#f0c419); color:#2a2000; font-size:19px; border:1.5px solid rgba(255,255,255,.85); border-radius:11px; box-shadow:0 3px 10px rgba(0,0,0,.28); cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; animation:sesTit 1.1s ease-in-out infinite; }
+.hik-ses-rozet.kapali{ background:linear-gradient(180deg,#f3d99a,#d8be7e); opacity:.9; animation:none; }
+@keyframes sesTit{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.12);} }
 .hik-duzen-paylas{ width:100%; padding:13px; border:none; border-radius:13px; cursor:pointer; background:linear-gradient(180deg,#ffe680,#f0c419); color:#2a2000; font-size:16px; font-weight:800; box-shadow:0 3px 12px rgba(240,196,25,.35); }
 .hik-duzen-paylas:disabled{ opacity:.85; }
 .hik-yuzde-cubuk{ height:6px; border-radius:6px; background:rgba(255,255,255,.15); overflow:hidden; margin-top:-2px; }

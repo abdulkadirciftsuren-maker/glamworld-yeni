@@ -1632,6 +1632,7 @@ export default function Anasayfa({ pro = false }) {
   const hikDuraklaRef = useRef(false);                    // ilerleme döngüsü duraklatıldı mı
   const hikVidRef = useRef(null);                         // görüntüleyicideki video (duraklat/oynat)
   const hikSesRef = useRef(null);                         // görüntüleyicideki müzik (duraklat/oynat)
+  const [hikSesli, setHikSesli] = useState(true);         // ışıltı sesi AÇIK mı (müzik/video sesi) — sol üstteki düğme aç/kapar (videoyu DURDURMAZ)
   const hikBasRef = useRef({ x: 0, y: 0 }); // dokunma başlangıç noktası (dokun/kaydır ayrımı)
   // ---- HİKÂYE DÜZENLEYİCİ (paylaşmadan önce: yazı + Gloxoo AI) ----
   const [hikTaslak, setHikTaslak] = useState(null); // {tip,url(önizleme),file,poster} — seçilen medya (düzenleniyor)
@@ -11833,7 +11834,7 @@ export default function Anasayfa({ pro = false }) {
             {hikBildiri ? <div className="hik-toast">{hikBildiri}</div> : null}
             {oge.tip === "video"
               ? <><video className="hik-medya-bg" src={videoSade(oge.url)} muted loop autoPlay playsInline aria-hidden="true" tabIndex={-1} />
-                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={!!oge.ses}
+                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
                     onEnded={() => hikayeGec(1)} /></>
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
@@ -11842,8 +11843,19 @@ export default function Anasayfa({ pro = false }) {
               <div key={i} className="hik-yazi-tas hik-yazi-goster" style={{ left: ((y.xr != null ? y.xr : 0.5) * 100) + "%", top: ((y.yr != null ? y.yr : 0.85) * 100) + "%", color: y.renk || "#ffd700" }}><span style={{ fontSize: Math.round(23 * (y.boyut || 1)) + "px", fontFamily: hikFontCss(y.font) }}>{y.metin}</span></div>
             ))}
             {/* HİKÂYEYE EKLENEN MÜZİK — gösterilirken çalar (döngülü) */}
-            {oge.ses ? <audio key={oge.id + "_ses"} ref={hikSesRef} src={oge.ses} autoPlay loop /> : null}
-            {oge.ses ? <div className="hik-ses-rozet" aria-hidden="true">🎵</div> : null}
+            {oge.ses ? <audio key={oge.id + "_ses"} ref={hikSesRef} src={oge.ses} autoPlay loop muted={!hikSesli} /> : null}
+            {/* SES AÇ/KAPA DÜĞMESİ — sol üstte. Basınca SADECE sesi (müzik/video) açar-kapar; videoyu DURDURMAZ.
+                Eskiden bu sadece süs rozetiydi (pointer-events:none) → basınca dokunuş alttaki "durdur" katmanına düşüp
+                videoyu durduruyordu. Artık gerçek düğme (stopPropagation) — dokunuş durdurma katmanına GEÇMEZ. */}
+            {(oge.ses || oge.tip === "video") ? (
+              <button
+                className={"hik-ses-rozet" + (hikSesli ? "" : " kapali")}
+                onClick={(e) => { e.stopPropagation(); setHikSesli((v) => !v); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => e.stopPropagation()}
+                aria-label={hikSesli ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}
+              >{hikSesli ? "🔊" : "🔇"}</button>
+            ) : null}
             {/* Tüm yüzey: DOKUN = durdur/devam, KAYDIR = hikaye değiştir (sola=sonraki, sağa=önceki) */}
             <div className="hik-dok" onPointerDown={hikBas} onPointerUp={hikBit} />
             {/* ALT MESAJ + TEPKİ ÇUBUĞU (Facebook gibi) — başkasının hikâyesinde: mesaj yaz + hızlı tepki */}
