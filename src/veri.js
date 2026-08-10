@@ -158,6 +158,27 @@ export async function hikayeGorulduSay(id) {
   if (!id) return false;
   try { await updateDoc(doc(db, HIKAYELER, id), { gorulme: increment(1) }); return true; } catch (e) { return false; }
 }
+// ISILTIYA BEĞENİ/TEPKİ KAYDET — "kim beğenmiş" listesi için. Her kişi tek satır (uid'e göre): tekrar tepki verirse üstüne yazar.
+// begenenler = { <uid>: { ad, foto, tepki, zamanMs } } biçiminde bir HARİTA (nokta yolu ile sadece kendi satırını yazar).
+export async function hikayeBegenKaydet(id, kisi, tepki) {
+  if (!id || !kisi || !kisi.uid) return false;
+  try {
+    await updateDoc(doc(db, HIKAYELER, id), {
+      ["begenenler." + kisi.uid]: { ad: kisi.ad || "", foto: kisi.foto || "", tepki: tepki || "begen", zamanMs: Date.now() },
+    });
+    return true;
+  } catch (e) { return false; }
+}
+// Bir ışıltının BEĞENENLERİNİ oku (sahibi kendi ışıltısında görür) — en yeni beğeni başta.
+export async function hikayeBegenenleriOku(id) {
+  if (!id) return [];
+  try {
+    const s = await getDoc(doc(db, HIKAYELER, id));
+    if (!s.exists()) return [];
+    const m = (s.data() && s.data().begenenler) || {};
+    return Object.keys(m).map((uid) => ({ uid, ...(m[uid] || {}) })).sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+  } catch (e) { return []; }
+}
 
 const KULLANICILAR = "kullanicilar";
 
