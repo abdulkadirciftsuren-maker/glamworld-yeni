@@ -6189,13 +6189,13 @@ export default function Anasayfa({ pro = false }) {
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
     // speaking VE pending: sıradaki cümle kuyruktaysa (pending) da dinleme AÇMA → uzun cevap cümleler arası kesilmesin.
     if (gloxKonusuyor()) { setDinliyor(false); canliDevam(); return; }
-    // ===== ÖNCE TARAYICININ KENDİ SES TANIMASI (OpenAI/Whisper GEREKMEZ, ÜCRETSİZ) =====
-    // Ses→yazı için OpenAI anahtarına ihtiyaç YOK: Chrome/Android'in yerleşik tanımasını kullanır.
-    // ÖNEMLİ: continuous=false + interimResults=false + SADECE SON final sonuç alınır → Android'in
-    // "aynı cümleyi biriktirip 10x tekrar" hatası OLMAZ (continuous=true bunu tetikliyordu, geri alındı).
-    // Yine de güvenlik için gönderirken tekrarSil() uygulanır.
+    // ⛔ BİP SESİ — KULLANICI KESİN İSTEMİYOR (10+ kez): Android/Chrome'un KENDİ ses tanıması (SpeechRecognition)
+    //   her başlatmada telefonun "bip" sesini çalar ve bu tarayıcıdan SUSTURULAMAZ. Kullanıcı GEÇMİŞTE bunun
+    //   bip'siz MediaRecorder+Whisper yoluyla çalıştığını DOĞRULADI. Bu yüzden SR (bip'li) KULLANILMAZ →
+    //   doğrudan aşağıdaki BİP'SİZ MediaRecorder+Whisper yoluna geçilir. (SR kodu, gerekirse geri açmak için duruyor.)
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SR) {
+    const SR_KULLAN = false; // ⛔ bip yüzünden tarayıcı tanıması KAPALI; bip'siz Whisper yolu kullanılır
+    if (SR && SR_KULLAN) {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
         // DÜŞÜNME MOLASI: kullanıcı cümle ortasında DURUP düşünebilsin — duraklamayı HEMEN "bitti" sayma.
