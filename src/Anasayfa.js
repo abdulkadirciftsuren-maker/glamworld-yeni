@@ -6702,7 +6702,7 @@ export default function Anasayfa({ pro = false }) {
   const yaziAISor = (p) => {
     if (!p) return;
     setTamFoto("");
-    setYardimciMod("site");
+    setYardimciMod("sohbet"); // "Sor" da normal Gloxoo ile AYNI konuşmaya yazsın → tek konuşma, kapatıp açınca devam eder (kullanıcı: "sıfırdan başlamasın")
     setYardimciFoto(null);
     const dilAd = { tr: "Türkçe", en: "İngilizce", de: "Almanca", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", ar: "Arapça", uk: "Ukraynaca", zh: "Çince", ja: "Japonca", hi: "Hintçe" }[dil] || "Türkçe";
     const metin = p.yazi || (p.video ? "(video gönderisi)" : p.gorsel ? "(fotoğraf gönderisi)" : "");
@@ -6720,10 +6720,10 @@ export default function Anasayfa({ pro = false }) {
         fotoObj = { url: p.gorsel, dataURL: p.gorsel }; // dataURL=link → sohbette küçük önizleme de görünür
       }
       setYardimciFoto(fotoObj);
-      try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
+      try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "sohbet" }); } catch (e) {}
     } else {
       // YAZI / VİDEO gönderisi → hemen anlat
-      try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
+      try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "sohbet" }); } catch (e) {}
     }
   };
   async function cevirToggle(p, key) {
