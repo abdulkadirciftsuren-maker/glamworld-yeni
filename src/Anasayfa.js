@@ -1779,6 +1779,7 @@ export default function Anasayfa({ pro = false }) {
   // GLOXOO'YU SUSTUR — hem tarayıcının KENDİ sesini (speechSynthesis) hem GERÇEK sesi (worker mp3) BİRLİKTE durdurur.
   // Eskiden her yerde sadece speechSynthesis.cancel() vardı; gerçek ses eklenince o tek başına yetmiyor → bu yardımcı ikisini de keser.
   const gloxSustur = () => {
+    try { ttsTarayiciIptalRef.current = true; } catch (e) {} // tarayıcı sesi zinciri de dursun (susunca sıradaki cümleye geçmesin)
     try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
     try { aiHazirlaniyorRef.current = false; } catch (e) {}
     try { if (sesZinciriIptalRef.current) { const ipt = sesZinciriIptalRef.current; sesZinciriIptalRef.current = null; ipt(); } } catch (e) {} // parça parça çalan zinciri de durdur
@@ -1797,6 +1798,8 @@ export default function Anasayfa({ pro = false }) {
   const [aiDuraklat, setAiDuraklat] = useState(false); // konuşma DURAKLATILDI mı (Durdur/Devam)
   const maskotBosRef = useRef(0);
   const konusIlerRef = useRef(0);
+  const ttsTarayiciIptalRef = useRef(false); // tarayıcı sesi SIRAYLA okurken: susturulunca sıradaki cümleye GEÇMESİN (durunca gerçekten dursun)
+  const okuBosRef = useRef(0);                // balon ■ ikonu DONMA emniyeti: ses kaç ölçümdür hiç çalmıyor (temizle sayacı)
   useEffect(() => {
     const id = setInterval(() => {
       let s = false; try { s = (!!(window.speechSynthesis && window.speechSynthesis.speaking)) || (!!(aiSesElemRef.current && !aiSesElemRef.current.paused && !aiSesElemRef.current.ended)); } catch (e) {}
@@ -5933,6 +5936,7 @@ export default function Anasayfa({ pro = false }) {
         .replace(/GLOXORG/gi, "Gloksorg") // marka adını harf-harf değil KELİME gibi oku (Glok-sorg)
         .replace(/\s+/g, " ").trim();
       if (!temiz) return;
+      ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla (bu okuma sonuna kadar sürsün)
       window.speechSynthesis.cancel();
       const lk = sesDilKodu.toLowerCase(), kok = lk.split("-")[0];
       // EN DOĞAL sesi seç: Natural/Neural/Online/Google/Premium (tekleme/robotik ses biter); yoksa bulut sesi; yoksa ilk uygun
@@ -5985,8 +5989,14 @@ export default function Anasayfa({ pro = false }) {
             try { onIlerleme(frac); } catch (e) {}
           }, 90);
         }
+        // ⛔ ANDROID HATASI: Cümleleri AYNI ANDA kuyruğa atınca (forEach speak) çoğu telefon SADECE İLK cümleyi
+        //   okuyup SUSUYORDU → kullanıcı "5-6 kelime okuyup kesiliyor" dedi. ÇÖZÜM: cümleleri SIRAYLA oku —
+        //   her cümle BİTİNCE (onend) sıradaki cümleyi başlat. Böylece uzun cevap SONUNA KADAR okunur.
         let charOfs = 0;
-        parcalar.forEach((p, idx) => {
+        const soyle = (idx) => {
+          if (ttsTarayiciIptalRef.current) return;                 // susturuldu → sıradaki cümleye GEÇME (durunca dursun)
+          if (idx >= parcalar.length) { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } return; } // hepsi bitti
+          const p = parcalar[idx];
           const u = new SpeechSynthesisUtterance(p);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           const buOfs = charOfs;
@@ -5994,11 +6004,13 @@ export default function Anasayfa({ pro = false }) {
           u.onstart = () => { konusIlerRef.current = Date.now(); if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } }; // konusIlerRef: okuma ilerledi → takılma emniyeti sıfırlanır (uzun yazı kesilmez)
           // KELİME sınırı (destekleyen tarayıcıda): gerçek karakter konumu → ilerleme kesinleşir
           u.onboundary = (ev) => { konusIlerRef.current = Date.now(); try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} }; // her kelimede ilerleme → emniyet sıfırlanır
-          // SON parça bitince: ilerlemeyi 1 yap/kapat + haber ver (oku düğmesi × → normale dönsün)
-          if (idx === parcalar.length - 1) u.onend = () => { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } };
-          window.speechSynthesis.speak(u);
-          charOfs += p.length + 1;
-        });
+          // Bu cümle bitince (VEYA patlarsa) → SIRADAKİ cümle. Bir cümle hata verse bile DONMAZ, devam eder.
+          const sonraki = () => { if (ttsTarayiciIptalRef.current) return; charOfs += p.length + 1; soyle(idx + 1); };
+          u.onend = sonraki;
+          u.onerror = sonraki;
+          try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); }
+        };
+        soyle(0);
       };
       let basladi = false;
       const baslat = () => { if (basladi) return; basladi = true; konus(); };
@@ -6010,6 +6022,20 @@ export default function Anasayfa({ pro = false }) {
   const [konusanMesaj, setKonusanMesaj] = useState(-1);
   const konusanMesajRef = useRef(-1);
   const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; okunanKelimeRef.current = -1; setOkunanKelime(-1); }; // imleci de temizle
+  // ⛔ DONMA EMNİYETİ (kullanıcı: "konuşma ikonu sabit/donuk kalıyor"): Gerçek-ses zinciri ortada kesilirse
+  //   balondaki ■ ikonu temizlenmeden DONUP kalıyordu. Burada sürekli bak: bir mesaj "okunuyor" işaretliyken
+  //   ses ~2.5 sn boyunca NE ÇALIYOR ne de HAZIRLANIYORSA → gerçekten durmuş/donmuş demektir → ikonu ZORLA temizle.
+  //   (gloxKonusuyor "hazırlanıyor"u da sayar → cümleler arası kısa boşlukta yanlışlıkla temizlemez.)
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (konusanMesajRef.current < 0) { okuBosRef.current = 0; return; } // okunan mesaj yok
+      let calisiyor = false; try { calisiyor = gloxKonusuyor(); } catch (e) {}
+      if (calisiyor) { okuBosRef.current = 0; return; }                    // hâlâ konuşuyor/hazırlanıyor → dokunma
+      okuBosRef.current++;
+      if (okuBosRef.current >= 5) { okuBosRef.current = 0; okuTemizle(); }  // ~2.5 sn (500ms×5) tam sessizlik → donmuş, temizle
+    }, 500);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const okuToggle = (metin, i) => {
     // TAKILMA DÜZELTMESİ: Düğme "konuşuyor" görünüp de telefon SES ÜRETMEDİYSE (speaking=false),
     // eski kod temizlemiyordu → düğme TAKILI kalıyordu (kullanıcı: "balon düğmesi bozuk, takılıyor").
@@ -6218,7 +6244,7 @@ export default function Anasayfa({ pro = false }) {
           if (tx && canliSohbetRef.current) { bosSesRef.current = 0; yardimciGonder(tx, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
           else if (canliSohbetRef.current && !gloxKonusuyor()) canliDinle(); // hiç kelime gelmediyse tekrar dinle
         };
-        const molaKur = () => { if (molaTimer) clearTimeout(molaTimer); molaTimer = setTimeout(gonder, 1700); }; // 1.7 sn sessizlik → gönder
+        const molaKur = () => { if (molaTimer) clearTimeout(molaTimer); molaTimer = setTimeout(gonder, 2800); }; // 2.8 sn sessizlik → gönder (kullanıcı: "konuşurken/düşünürken sözümü kesiyor" → 1.7→2.8 sn: cümle ortasında durup düşünmeye zaman VER, kesme)
         const dongu = () => {
           if (bitti) return;
           if (!canliSohbetRef.current || gloxKonusuyor()) { gonder(); return; }
