@@ -6194,7 +6194,10 @@ export default function Anasayfa({ pro = false }) {
     //   bip'siz MediaRecorder+Whisper yoluyla çalıştığını DOĞRULADI. Bu yüzden SR (bip'li) KULLANILMAZ →
     //   doğrudan aşağıdaki BİP'SİZ MediaRecorder+Whisper yoluna geçilir. (SR kodu, gerekirse geri açmak için duruyor.)
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const SR_KULLAN = false; // ⛔ bip yüzünden tarayıcı tanıması KAPALI; bip'siz Whisper yolu kullanılır
+    // NOT: Bip'siz Whisper yolu worker'da OPENAI_API_KEY GEREKTİRİR; o anahtar AYARLI DEĞİL ("OPENAI_API_KEY yok" hatası)
+    //   → ses yazıya çevrilemiyordu. O yüzden ÇALIŞAN tarayıcı tanıması (SR) GERİ açıldı (bip var ama ses ÇALIŞIR).
+    //   Kullanıcı OpenAI anahtarını worker'a eklerse SR_KULLAN=false yapılıp bip'siz Whisper'a geçilebilir.
+    const SR_KULLAN = true; // tarayıcı tanıması AÇIK (Whisper anahtarı yokken tek çalışan yol)
     if (SR && SR_KULLAN) {
       if (recognitionRef.current) return; // zaten dinliyor (çift tanıma olmasın)
       try {
