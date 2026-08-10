@@ -6708,25 +6708,32 @@ export default function Anasayfa({ pro = false }) {
     // "SOR" → Gloxoo gönderiyi HEMEN anlatsın/çevirsin (boş açılmasın). Kullanıcı: "eskiden yazı/fotoğrafı getirip anlatırdı".
     const tetik = t("gonderiAnlat", "Bu gönderi ne diyor? Çevir ve kısaca anlat.");
     if (p.gorsel) {
-      // FOTOĞRAF: base64'e çevir, hazır olunca foto + bağlamla OTOMATİK gönder (Gloxoo görseli görüp anlatsın)
-      try {
-        const im = new Image(); im.crossOrigin = "anonymous";
-        im.onload = () => {
-          let fotoObj = null;
-          try {
-            const mx = 1024; let w = im.naturalWidth || 800, h = im.naturalHeight || 800;
-            if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); }
-            const c = document.createElement("canvas"); c.width = w; c.height = h;
-            c.getContext("2d").drawImage(im, 0, 0, w, h);
-            const dataURL = c.toDataURL("image/jpeg", 0.82);
-            fotoObj = { dataURL, base64: dataURL.split(",")[1], mediaType: "image/jpeg" };
-            setYardimciFoto(fotoObj);
-          } catch (e) {}
-          try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
-        };
-        im.onerror = () => { try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (e) {} };
-        im.src = p.gorsel;
-      } catch (e) { try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (x) {} }
+      // FOTOĞRAF → Gloxoo GÖRSÜN: resmi BLOB olarak indir (fetch), blob-URL ile yükle (aynı-kaynak → CORS tainti YOK),
+      // küçült + base64 yap, foto + bağlamla OTOMATİK gönder. Böylece Gloxoo fotoğrafın İÇİNİ görüp anlatır/çevirir.
+      (async () => {
+        let fotoObj = null;
+        try {
+          const blob = await (await fetch(p.gorsel, { mode: "cors" })).blob();
+          const url = URL.createObjectURL(blob);
+          fotoObj = await new Promise((res) => {
+            const im = new Image();
+            im.onload = () => {
+              try {
+                const mx = 1200; let w = im.naturalWidth || 800, h = im.naturalHeight || 800;
+                if (w > mx || h > mx) { const r = Math.min(mx / w, mx / h); w = Math.round(w * r); h = Math.round(h * r); }
+                const c = document.createElement("canvas"); c.width = w; c.height = h;
+                c.getContext("2d").drawImage(im, 0, 0, w, h);
+                const d = c.toDataURL("image/jpeg", 0.85);
+                res({ dataURL: d, base64: d.split(",")[1], mediaType: "image/jpeg" });
+              } catch (e) { res(null); } finally { try { URL.revokeObjectURL(url); } catch (x) {} }
+            };
+            im.onerror = () => { try { URL.revokeObjectURL(url); } catch (x) {} res(null); };
+            im.src = url;
+          });
+        } catch (e) {}
+        if (fotoObj) setYardimciFoto(fotoObj);
+        try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
+      })();
     } else {
       // YAZI / VİDEO gönderisi → hemen anlat
       try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "site" }); } catch (e) {}
