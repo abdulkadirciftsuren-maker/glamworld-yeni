@@ -6422,7 +6422,9 @@ export default function Anasayfa({ pro = false }) {
     if (kameraModRef.current) { try { kameraKapat(); } catch (e) {} } // KARŞILIKLI: Canlı açılınca Kamera kapanır
     canliSohbetRef.current = true; setCanliSohbet(true); setSesliMod(true);
     aiKarsiladiRef.current = true;
-    aiKarsila(); // AI ÖNCE konuşur (karşılama), sonra dinlemeye geçer
+    // ⛔ KULLANICI ISRARLA İSTEDİ: "ben bastım, BEN konuşacağım — sen ÖNCE konuşma, DİREKT dinle."
+    // Karşılama (aiKarsila) KALDIRILDI → düğmeye basınca Gloxoo konuşmadan HEMEN dinlemeye geçer.
+    try { canliDinle(); } catch (e) {}
   };
   // Sesli modu kapatınca konuşmayı sustur
   // Hoparlör = SADECE sonraki cevapların oto-okumasını aç/kapar. ÇALAN konuşmayı KESMEZ (onu sadece balon × düğmesi durdurur — iki düğme AYRI, birbirine bağlı değil).
