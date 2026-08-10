@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -2740,11 +2740,14 @@ export default function Anasayfa({ pro = false }) {
     if (!hikayeGorulenRef.current) { try { hikayeGorulenRef.current = new Set(JSON.parse(localStorage.getItem("gw_hikaye_gorulen") || "[]")); } catch (e) { hikayeGorulenRef.current = new Set(); } }
     return hikayeGorulenRef.current;
   };
-  const hikayeGoruldu = (id) => {
+  const hikayeGoruldu = (id, benimki) => {
     if (!id) return;
     const s = hikayeGorulenSet(); if (s.has(id)) return;
     s.add(id); try { localStorage.setItem("gw_hikaye_gorulen", JSON.stringify(Array.from(s).slice(-500))); } catch (e) {}
     hikayeGorulduSay(id);
+    // BAŞKASININ ışıltısını izliyorsam kimliğimi de yaz (beğenmesem bile) → sahibi "göz atanları" görür. Kendiminkinde yazma.
+    const uu = auth.currentUser;
+    if (!benimki && uu) { try { hikayeGorenYaz(id, { uid: uu.uid, ad: benimAdGetir(), foto: benimFotoGetir() }); } catch (e) {} }
   };
   // Hikâyeleri oku + kişiye göre grupla + "yeni" işaretle (kendi grubun en başta)
   const hikayeleriYukle = async () => {
@@ -3027,7 +3030,7 @@ export default function Anasayfa({ pro = false }) {
     if (!hikayeAcik) return;
     const grup = hikayeGruplar[hikayeAcik.gi]; const oge = grup && grup.ogeler[hikayeAcik.oi];
     if (!oge) { setHikayeAcik(null); return; }
-    hikayeGoruldu(oge.id);
+    hikayeGoruldu(oge.id, grup && grup.uid === (u && u.uid));
     hikDuraklaRef.current = false; setHikayeDurdu(false); // yeni öge → duraklamayı sıfırla
     const onceki = document.body.style.overflow; document.body.style.overflow = "hidden";
     let raf, sil = false;
@@ -11886,34 +11889,35 @@ export default function Anasayfa({ pro = false }) {
                     ))}</>}
               </div>
             )}
-            {/* KENDİ IŞILTIM — altta "kim görmüş / kim beğenmiş" düğmesi (Instagram gibi). Basınca beğenenler listesi açılır. */}
-            {benimki && (() => { const bgn = oge.begenenler || {}; const bsay = Object.keys(bgn).length; return (
+            {/* KENDİ IŞILTIM — altta "kim görmüş (göz) / kim beğenmiş (kalp)" düğmesi (Instagram gibi). Basınca görüntüleyenler listesi açılır.
+                👁 = ışıltıyı GÖREN (kimliğiyle kaydolan) kişi sayısı; ❤️ = onlardan BEĞENENLER (tepki verenler). */}
+            {benimki && (() => { const bgn = oge.begenenler || {}; const gsay = Object.keys(bgn).length; const bsay = Object.keys(bgn).filter((k) => bgn[k] && bgn[k].tepki).length; return (
               <div className="hik-benim-alt" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
                 <button className="hik-begen-ac" onClick={() => hikBegenenleriAc(oge)}>
-                  <span className="hba-goz">👁 {(oge.gorulme || 0).toLocaleString()}</span>
+                  <span className="hba-goz">👁 {gsay.toLocaleString()}</span>
                   <span className="hba-kalp">❤️ {bsay.toLocaleString()}</span>
-                  <span className="hba-et">{t("kimBegenmis", "Kim beğenmiş?")}</span>
+                  <span className="hba-et">{t("gorenler", "Görenler")}</span>
                 </button>
               </div>
             ); })()}
-            {/* KİM BEĞENMİŞ PANELİ — kendi ışıltının beğenenleri (foto + ad + tepki emojisi) */}
+            {/* GÖRÜNTÜLEYENLER PANELİ — kendi ışıltını GÖREN herkes (beğenmese de). Beğenenlerin yanında tepki emojisi, sadece görenlerde 👁. */}
             {hikBegenAcik && (
               <div className="hik-begen-fon" onClick={(e) => { e.stopPropagation(); hikBegenenleriKapat(); }} onPointerDown={(e) => e.stopPropagation()}>
                 <div className="hik-begen-kutu" onClick={(e) => e.stopPropagation()}>
                   <div className="hik-begen-bas">
-                    <b>❤️ {t("begenenler", "Beğenenler")}</b>
+                    <b>👁 {t("goruntuleyenler", "Görüntüleyenler")}</b>
                     <button className="hik-begen-kapat" onClick={hikBegenenleriKapat} aria-label={t("kapat", "Kapat")}>✕</button>
                   </div>
                   {hikBegenAcik.yuk
                     ? <div className="hik-begen-bos">{t("yukleniyor", "Yükleniyor…")}</div>
                     : (hikBegenAcik.liste.length === 0
-                      ? <div className="hik-begen-bos">{t("henuzBegeniYok", "Henüz kimse beğenmedi. Beğenenler burada görünecek.")}</div>
+                      ? <div className="hik-begen-bos">{t("henuzGorenYok", "Henüz kimse görmedi. Işıltını görenler ve beğenenler burada görünecek.")}</div>
                       : <div className="hik-begen-liste">
                           {hikBegenAcik.liste.map((k) => (
                             <div className="hik-begen-sat" key={k.uid}>
                               <span className="hbs-av">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : ((k.ad || "?")[0] || "?").toUpperCase()}</span>
                               <b className="notranslate" translate="no">{k.ad || t("biri", "Biri")}</b>
-                              <span className="hbs-emoji">{tepkiEmoji(k.tepki || "begen")}</span>
+                              <span className="hbs-emoji">{k.tepki ? tepkiEmoji(k.tepki) : "👁"}</span>
                             </div>
                           ))}
                         </div>)}

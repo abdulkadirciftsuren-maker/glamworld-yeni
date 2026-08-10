@@ -160,11 +160,23 @@ export async function hikayeGorulduSay(id) {
 }
 // ISILTIYA BEĞENİ/TEPKİ KAYDET — "kim beğenmiş" listesi için. Her kişi tek satır (uid'e göre): tekrar tepki verirse üstüne yazar.
 // begenenler = { <uid>: { ad, foto, tepki, zamanMs } } biçiminde bir HARİTA (nokta yolu ile sadece kendi satırını yazar).
+// NOT: Bu harita SADECE beğenenleri değil, GÖRÜNTÜLEYENLERİ de tutar (tepki:"" = sadece göz attı, beğenmedi).
 export async function hikayeBegenKaydet(id, kisi, tepki) {
   if (!id || !kisi || !kisi.uid) return false;
   try {
     await updateDoc(doc(db, HIKAYELER, id), {
       ["begenenler." + kisi.uid]: { ad: kisi.ad || "", foto: kisi.foto || "", tepki: tepki || "begen", zamanMs: Date.now() },
+    });
+    return true;
+  } catch (e) { return false; }
+}
+// ISILTIYI KİM GÖRDÜ — görüntüleyeni (beğenmese bile) aynı haritaya yaz (tepki:"" ). Böylece sahibi "göz atanları" da görür.
+// Görüntüleme AÇILIŞTA bir kez (cihaz başına) çağrılır; tepki sonra gelirse üstüne yazıp emojiyi ekler (sıra: önce gör, sonra beğen).
+export async function hikayeGorenYaz(id, kisi) {
+  if (!id || !kisi || !kisi.uid) return false;
+  try {
+    await updateDoc(doc(db, HIKAYELER, id), {
+      ["begenenler." + kisi.uid]: { ad: kisi.ad || "", foto: kisi.foto || "", tepki: "", zamanMs: Date.now() },
     });
     return true;
   } catch (e) { return false; }
