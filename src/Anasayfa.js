@@ -2543,6 +2543,7 @@ export default function Anasayfa({ pro = false }) {
   // sayfa PARLIYOR, konuşma kesiliyor, hiçbir şey yapılamıyordu. Bu, o döngüyü kırar.
   const yenileBekleRef = useRef(false); // güncelleme geldi ama kullanıcı meşguldü → boşalınca yenile
   const mesgulRef = useRef(false);      // foto/paylaşım/pencere açık ya da Gloxoo konuşuyor mu (yenilemeyi ertele → foto/konuşma kaybı OLMASIN)
+  const sonGorunurMs = useRef(Date.now()); // ⛔ ÖNLEM: sayfa en son NE ZAMAN görünür oldu (arka plandan dönüş anı) — dönüşten hemen sonra reload'u ENGELLEMEK için
   const guvenliYenile = (hedefHash) => {
     try {
       if (window.__groxYenilendi) return;
@@ -2556,6 +2557,11 @@ export default function Anasayfa({ pro = false }) {
       // ⛔ MEŞGULKEN YENİLEME YOK: kullanıcı fotoğraf ekliyor/paylaşım yazıyor ya da Gloxoo konuşuyorsa
       // sayfayı yenilemek FOTOĞRAFLARI SİLER / konuşmayı KESER. Ertele; işi bitince (boşalınca) yenile.
       if (mesgulRef.current) { yenileBekleRef.current = true; return; }
+      // ⛔⛔ ÖNLEM (KİLİT — kullanıcı: "bu hata bir daha olursa siteyi kaldırırım"): Kullanıcı arka plandan YENİ DÖNDÜYSE
+      //   (son 12 sn içinde sayfa yeniden görünür olduysa) HİÇBİR koşulda yeniden yükleme YAPMA → ertele. Sayfanın yeniden
+      //   yüklenmesinin TEK yolu burası; bu kilit sayesinde hangi yol tetiklerse tetiklesin (sürüm kontrolü, servis çalışan,
+      //   ileride eklenecek herhangi bir şey), DÖNÜŞ anında sayfa ASLA kendini yeniden yükleyemez → profil/menü/ışıltı yerinde kalır.
+      if (Date.now() - sonGorunurMs.current < 12000) { yenileBekleRef.current = true; return; }
       const simdi = Date.now();
       let son = 0; try { son = parseInt(sessionStorage.getItem("groxSonYenileMs") || "0", 10); } catch (e) {}
       if (son && simdi - son < 90000) return; // 90 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
@@ -2572,6 +2578,15 @@ export default function Anasayfa({ pro = false }) {
       window.location.reload();
     } catch (e) {}
   };
+  // ⛔ ÖNLEM DİNLEYİCİSİ: Sayfa her görünür olduğunda (arka plandan dönüş / sekmeye geçiş) SADECE zamanı kaydet.
+  //   Bu, guvenliYenile'deki 12 sn'lik kilidi besler → dönüşten hemen sonra yeniden yükleme ENGELLENİR. Burada RELOAD YOK,
+  //   sadece zaman damgası. (Eskiden buradaki visibilitychange yeniden yükleme TETİKLİYORDU; o kaldırıldı, bu sadece korur.)
+  useEffect(() => {
+    const g = () => { if (document.visibilityState === "visible") sonGorunurMs.current = Date.now(); };
+    document.addEventListener("visibilitychange", g);
+    window.addEventListener("focus", g);
+    return () => { document.removeEventListener("visibilitychange", g); window.removeEventListener("focus", g); };
+  }, []);
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
