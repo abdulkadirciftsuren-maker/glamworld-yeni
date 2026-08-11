@@ -156,12 +156,16 @@ export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransi
   const hatalar = [];
   // GEÇİCİ hata mı? (503/deadline/overloaded/500/timeout/fetch) → beklenmedik değil, sunucu meşgul → TEKRAR DENE.
   const geciciMi = (e) => { const m = (_hataMetni(e) || "").toLowerCase(); return m.indexOf("503") !== -1 || m.indexOf("deadline") !== -1 || m.indexOf("overload") !== -1 || m.indexOf("unavailable") !== -1 || m.indexOf("500") !== -1 || m.indexOf("timeout") !== -1 || m.indexOf("fetch") !== -1 || m.indexOf("try again") !== -1; };
+  // ⛔ ÇİFT GLOXORG ÖNLE (kullanıcı: "foto zaten GLOXORG'luysa yapay zekâ bir tane daha koyuyor, üst üste biniyor"):
+  //   Girdi fotoğrafında GLOXORG varsa model onu KOPYALIYOR, sonra biz (_filigranEkle) bir tane daha ekleyince ÇİFT oluyordu.
+  //   Modele HER ZAMAN: hiç watermark/logo/GLOXORG EKLEME + girdideki MEVCUDU TEMİZLE. Damgayı hep BİZ ekleriz → tek GLOXORG kalır.
+  const istemTemiz = String(istem || "") + " CRITICAL: Do NOT add, draw, include, or reproduce any watermark, logo, brand mark, caption, sticker, or the word 'GLOXORG' anywhere in the image. If the provided/source image already contains any 'GLOXORG' text, logo, or watermark (e.g. in a corner), REMOVE it completely and cleanly so the final output has NO watermark, logo or brand text at all.";
   for (const y of yollar) {
     let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
     // Her yol için EN FAZLA 3 deneme; geçici hatada bekleyip tekrar dener (503 "Deadline expired" çoğu zaman geçicidir).
     for (let deneme = 0; deneme < 3; deneme++) {
       try {
-        const url = await _resimDene(bk, istem, girdiResim, girdiResim2);
+        const url = await _resimDene(bk, istemTemiz, girdiResim, girdiResim2);
         if (url) { if (filigransiz) return { dataUrl: url }; let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
         break; // resim gelmedi ama hata da yok → sonraki yola geç
       } catch (e) {
