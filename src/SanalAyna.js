@@ -120,7 +120,7 @@ function Buyut({ url, onKapat }) {
   );
 }
 
-export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onGloxorgPaylas }) {
+export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onGloxorgPaylas, onGloxorgVideoPaylas }) {
   const { t, i18n } = useTranslation();
   // Çip yazısını kullanıcının diline çevir; değer (state) Türkçe kalır ki yapay zekâ istemi bozulmasın.
   const ac = (etiket) => { const d = (i18n && i18n.language ? String(i18n.language).slice(0, 2) : "tr"); return (AYNA_CEV[etiket] && AYNA_CEV[etiket][d]) || etiket; };
@@ -145,6 +145,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   const [kareIdx, setKareIdx] = useState(0);      // oynatmada gösterilen kare
   const [oynat, setOynat] = useState(false);      // oynatılıyor mu
   const [mankenTamEkran, setMankenTamEkran] = useState(false); // manken animasyonu TAM EKRAN oynasın (ekran videosu almak için)
+  const [klipYuk, setKlipYuk] = useState(false); // canlı manken → hareketli VİDEO klip hazırlanıyor mu (paylaşım için)
   // MODELLERİM GALERİSİ — ürettiğin her sonucu kalıcı sakla (görsel IndexedDB'de, liste localStorage'da); sonra görüntüle/paylaş/sil.
   const [modeller, setModeller] = useState(() => { try { return JSON.parse(localStorage.getItem("gw_ayna_modeller") || "[]"); } catch (e) { return []; } });
   const [galeriAcik, setGaleriAcik] = useState(false);
@@ -296,12 +297,14 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
   async function canliMankenYap() {
     if (!sonuc || kareYuk) return;
     setKareYuk(true); setHata(""); setKareler([]); setKareIdx(0); setOynat(false);
-    // Açılar: önden (mevcut) → hafif sağ dönük → sağ yandan → arkadan → sola dönüp omuz üstünden bakış → tekrar önden
+    // YÜRÜYEN MANKEN (kullanıcı: "sadece dönmesin; arkadan gelsin, dönsün, yürüyerek gitsin"). Kare0 = mevcut ÖNDEN (varış).
+    // Döngü: önden(varış) → dönmeye başla → yandan yürü → arkadan uzaklaşarak yürü → uzakta arkadan → dönüp ÖNE doğru yürümeye başla → (başa döner)
     const acilar = [
-      "turned about 30 degrees to her right (three-quarter view), as if starting to walk on a fashion runway",
-      "turned to her RIGHT SIDE profile (about 90 degrees), in a natural mid-stride walking pose",
-      "seen from the BACK (about 180 degrees, turned away), clearly showing the BACK of the same outfit, walking away on the runway",
-      "turned about 45 degrees to her LEFT, elegantly looking back over her shoulder toward the camera",
+      "starting to turn to walk away: turned about 45 degrees (three-quarter view), one foot stepping forward, mid-stride, FULL BODY on the runway",
+      "turned to the SIDE profile (about 90 degrees), in a natural mid-stride WALKING pose, moving across the runway, FULL BODY head to feet",
+      "seen from the BACK (about 180 degrees, turned away), clearly showing the BACK of the same outfit, WALKING AWAY from the camera, mid-stride, FULL BODY",
+      "seen from the BACK, now FARTHER AWAY, walking away into the distance on the runway (the person looks smaller, more floor/background visible), FULL BODY",
+      "in the distance, now TURNING AROUND to face the camera again and beginning to WALK BACK TOWARD the camera, the front becoming visible, mid-stride, FULL BODY",
     ];
     const yeni = [sonuc]; // 1. kare = mevcut önden görünüş
     const base64 = sonuc.split(",")[1] || "";
@@ -318,6 +321,38 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
     setKareYuk(false);
     if (yeni.length >= 2) { setKareIdx(0); setOynat(true); }
     else setHata(t("saMankenOlmadi", "Şu an canlı manken yapılamadı, tekrar dene."));
+  }
+  // CANLI MANKEN → HAREKETLİ VİDEO KLİP: kareleri bir canvas'a sırayla çizip MediaRecorder ile kısa bir webm videoya kaydeder.
+  // Böylece "GLOXORG'da paylaş" tek KARE değil, YÜRÜYEN mankenin HAREKETLİ klibini paylaşır (kullanıcı isteği). Olmazsa null döner → tek kareye düşülür.
+  async function mankenKlipYap() {
+    try {
+      if (!kareler || kareler.length < 2 || typeof MediaRecorder === "undefined") return null;
+      const imgs = await Promise.all(kareler.map((src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); try { im.src = src; } catch (e) { res(null); } })));
+      const valid = imgs.filter(Boolean);
+      if (valid.length < 2) return null;
+      let w = valid[0].naturalWidth || 720, h = valid[0].naturalHeight || 1280;
+      if (w > 720) { h = Math.round(h * 720 / w); w = 720; } // boyutu makul tut (dosya şişmesin)
+      if (w < 2 || h < 2) { w = 720; h = 1280; }
+      const canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx || !canvas.captureStream) return null;
+      const stream = canvas.captureStream(30);
+      let mime = "video/webm";
+      try { if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported("video/webm;codecs=vp8")) mime = "video/webm;codecs=vp8"; } catch (e) {}
+      let rec; try { rec = new MediaRecorder(stream, { mimeType: mime }); } catch (e) { try { rec = new MediaRecorder(stream); } catch (e2) { return null; } }
+      const chunks = [];
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      const bitti = new Promise((res) => { rec.onstop = res; });
+      rec.start(120);
+      const ciz = (im) => { try { ctx.fillStyle = "#efe6cf"; ctx.fillRect(0, 0, w, h); ctx.drawImage(im, 0, 0, w, h); } catch (e) {} };
+      const KARE_MS = 750, DONGU = 2; // her kare ~0.75 sn, sıra 2 kez → yürüyüş döngüsü
+      for (let d = 0; d < DONGU; d++) { for (const im of valid) { ciz(im); await new Promise((r) => setTimeout(r, KARE_MS)); } }
+      ciz(valid[0]); await new Promise((r) => setTimeout(r, 200));
+      try { rec.stop(); } catch (e) {}
+      await bitti;
+      if (!chunks.length) return null;
+      return new Blob(chunks, { type: "video/webm" });
+    } catch (e) { return null; }
   }
   // MODELLERİME KAYDET — görseli IndexedDB'ye, kaydı listeye + localStorage'a
   async function kaydetModel() {
@@ -492,11 +527,19 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                     <button onClick={() => { setOynat(true); setMankenTamEkran(true); }}>🔳 {t("saTamEkran", "Tam ekran")}</button>
                   </div>
                   <div className="sa-manken-dug">
-                    {onGloxorgPaylas && <button onClick={() => onGloxorgPaylas(kareler[kareIdx])}>💎 {t("saGloxordaPaylas", "GLOXORG'da paylaş")}</button>}
+                    {(onGloxorgVideoPaylas || onGloxorgPaylas) && <button disabled={klipYuk} onClick={async () => {
+                      if (onGloxorgVideoPaylas) {
+                        setKlipYuk(true);
+                        let blob = null; try { blob = await mankenKlipYap(); } catch (e) {}
+                        setKlipYuk(false);
+                        if (blob) { onGloxorgVideoPaylas(blob, kareler[0]); return; }
+                      }
+                      if (onGloxorgPaylas) onGloxorgPaylas(kareler[kareIdx]); // klip olmazsa: tek kare (yine de paylaşılır)
+                    }}>{klipYuk ? "⏳ " + t("saKlipHaz", "Canlı klip hazırlanıyor…") : "💎 " + t("saGloxordaPaylasCanli", "GLOXORG'da paylaş (canlı)")}</button>}
                     <button onClick={() => paylasVer(kareler[kareIdx], model || kategori)}>📤 {t("saDigerPaylas", "Diğer platformlar")}</button>
                     <button onClick={() => indirVer(kareler[kareIdx], model || kategori)}>⬇️ {t("saIndir", "İndir")}</button>
                   </div>
-                  <div className="sa-manken-not">💡 {t("saMankenNot2", "Video kaydetmek için: '🔳 Tam ekran'a bas, manken TAM SAYFA döner; telefonunun EKRAN KAYDI ile o dönüşü çek. Böylece sadece manken videosu olur.")}</div>
+                  <div className="sa-manken-not">💡 {t("saMankenNot3", "'💎 GLOXORG'da paylaş (canlı)' → yürüyen mankenin HAREKETLİ klibini akışta paylaşır (tek kare değil). İstersen '🔳 Tam ekran' ile oynatıp telefonun EKRAN KAYDIYLA da çekebilirsin.")}</div>
                 </div>
               )}
             </div>

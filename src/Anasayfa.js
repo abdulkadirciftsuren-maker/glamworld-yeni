@@ -8383,7 +8383,17 @@ export default function Anasayfa({ pro = false }) {
       {/* PENCERELER — parmakla sola/sağa kaydırınca veya düğmeye basınca DEĞİŞİR */}
       {aktifKod === "ayna" ? (
         <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>🪞 …</div>}>
-          <SanalAyna sayfaModu baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setAktifKod("home"); setSanalAynaBaslangic(null); }} onGloxorgPaylas={(d) => { setAktifKod("home"); setSanalAynaBaslangic(null); resimGloxordaPaylas(d); }} />
+          <SanalAyna sayfaModu baslangic={sanalAynaBaslangic} onKatman={sanalAynaKatmanDegis} onKapat={() => { setAktifKod("home"); setSanalAynaBaslangic(null); }} onGloxorgPaylas={(d) => { setAktifKod("home"); setSanalAynaBaslangic(null); resimGloxordaPaylas(d); }} onGloxorgVideoPaylas={(blob, poster) => {
+            // CANLI MANKEN KLİBİ → GERÇEK VİDEO GÖNDERİSİ: paylasVideoFile'a koy, paylaş panelini aç (kullanıcı yazı yazıp paylaşır)
+            try {
+              setAktifKod("home"); setSanalAynaBaslangic(null);
+              const file = (blob instanceof File) ? blob : new File([blob], "canli-manken.webm", { type: (blob && blob.type) || "video/webm" });
+              const yerel = URL.createObjectURL(blob);
+              setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]);
+              setPaylasVideoFile(file); setPaylasVideo(yerel); setPaylasVideoPoster(poster || ""); setPaylasDosya(null); setPaylasMuzik(null);
+              setPaylasDurum(""); setAiOneriler([]); setPaylasAcik(true);
+            } catch (e) {}
+          }} />
         </Suspense>
       ) : aktifKod === "muhasebe" ? (
         <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#7a5a00", fontWeight: 900, fontSize: 20 }}>📊 …</div>}>
