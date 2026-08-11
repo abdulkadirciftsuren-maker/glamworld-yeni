@@ -1685,6 +1685,28 @@ export default function Anasayfa({ pro = false }) {
   const begeniSayiBildir = (id, n) => setGercekBegeni((m) => (m[id] === n ? m : { ...m, [id]: n }));
   const [paylasBaslik, setPaylasBaslik] = useState("");     // gönderi BAŞLIĞI (profil şeridinin altında görünür)
   const [baslikAcikSet, setBaslikAcikSet] = useState(() => new Set()); // akışta başlığı "devamını oku" ile açılan gönderiler
+  const [yaziAcikSet, setYaziAcikSet] = useState(() => new Set()); // akışta YAZIYI (alt yazı/gönderi metni) "devamını oku" ile YERİNDE açan gönderiler (fotoğrafın altında; tam ekran AÇMAZ)
+  // BAŞLIK/YAZI aç-kapa yardımcıları (kod tekrarı olmasın): id sette varsa çıkar, yoksa ekle
+  const baslikAcKapa = (id) => setBaslikAcikSet((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const yaziAcKapa = (id) => setYaziAcikSet((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  // ⛔ OTOMATİK KAPANMA (kullanıcı: "açtığım yazı ekrandan kaybolduğu zaman, ben kapatmasam bile kendiliğinden kapansın"):
+  //   Genişletilmiş (başlık/yazı açık) gönderi EKRANDAN TAMAMEN ÇIKINCA IntersectionObserver ile o gönderinin açık metni toplanır.
+  useEffect(() => {
+    if ((!baslikAcikSet.size && !yaziAcikSet.size) || typeof IntersectionObserver === "undefined") return;
+    let obs;
+    const kapat = (pid) => {
+      setBaslikAcikSet((s) => { let v = false; const n = new Set(); s.forEach((x) => { if (String(x) === pid) v = true; else n.add(x); }); return v ? n : s; });
+      setYaziAcikSet((s) => { let v = false; const n = new Set(); s.forEach((x) => { if (String(x) === pid) v = true; else n.add(x); }); return v ? n : s; });
+    };
+    try {
+      obs = new IntersectionObserver((girdiler) => {
+        girdiler.forEach((g) => { if (!g.isIntersecting) { const pid = g.target.getAttribute("data-pid"); if (pid) kapat(pid); } });
+      }, { threshold: 0 });
+      const acik = new Set([...baslikAcikSet, ...yaziAcikSet].map(String));
+      document.querySelectorAll("article[data-pid]").forEach((el) => { if (acik.has(el.getAttribute("data-pid"))) obs.observe(el); });
+    } catch (e) {}
+    return () => { try { obs && obs.disconnect(); } catch (e) {} };
+  }, [baslikAcikSet, yaziAcikSet]);
   const [paylasDurum, setPaylasDurum] = useState("");
   const [paylasTur, setPaylasTur] = useState("");     // Fotoğraf | Video | İş İlanı | Ürün/Hizmet | Tavsiye | Duyuru
   const [paylasGorsel, setPaylasGorsel] = useState(""); // eklenen fotoğraf (dataURL) — 1. (ANA) fotoğraf
@@ -7091,7 +7113,7 @@ export default function Anasayfa({ pro = false }) {
       ulke: (paylasKonum && paylasKonum.ulke) || (profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "",
       konum: paylasKonum ? { yer: paylasKonum.yer || "", sehir: paylasKonum.sehir || "", ulke: paylasKonum.ulke || "", tam: paylasKonum.tam || "", enlem: paylasKonum.enlem, boylam: paylasKonum.boylam } : null,
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
-      baslik: paylasBaslik.trim().slice(0, 200), gorsel: gorselSonUrl, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, muzik: muzikObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
+      baslik: paylasBaslik.trim().slice(0, 20000), gorsel: gorselSonUrl, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, muzik: muzikObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
       duzen: paylasDuzen || null, yaziUstunde: !!yaziMedyaUstunde, gitLinki: !!gitLinki,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
@@ -8685,8 +8707,9 @@ export default function Anasayfa({ pro = false }) {
                     {/* ALTYAZI: yalnız gönderi METNİ (p.yazi) varsa (çeviri açıksa çevirisini) burada gösterilir.
                         Yazı BAŞLIKTAysa çeviri başlıkta, yazı RESMİN İÇİNDEyse çeviri resmin ÜSTÜNDE (apr-resim-ceviri) → burada TEKRAR gösterme (çift olmasın). */}
                     {p.yazi && (
-                      <div translate="no" className={"apr-altyazi notranslate" + (uzun && p.yazi ? " kisa" : "")} onClick={() => uzun && p.yazi && setTamFoto(p)}>
-                        <>{metniLinkle(cevAcik && cevMetin ? cevMetin : p.yazi)}{uzun && <span className="ana-post-devam">{t("devamOku", " …devamını oku")}</span>}</>
+                      // YAZIYA DOKUN → tam ekran AÇMA; fotoğrafın ALTINDA YERİNDE aç/kapa (2 satır ↔ tam yazı). Kullanıcı isteği.
+                      <div translate="no" className={"apr-altyazi notranslate" + (uzun && !yaziAcikSet.has(p.id) ? " kisa" : "") + (yaziAcikSet.has(p.id) ? " acik" : "")} onClick={() => { if (uzun) yaziAcKapa(p.id); }}>
+                        <>{metniLinkle(cevAcik && cevMetin ? cevMetin : p.yazi)}{uzun && <span className="ana-post-devam">{yaziAcikSet.has(p.id) ? t("gizle", " gizle") : t("devamOku", " …devamını oku")}</span>}</>
                       </div>
                     )}
                     <span className="apr-alt-arac">
@@ -8700,7 +8723,7 @@ export default function Anasayfa({ pro = false }) {
                   </>
                 );
                 return (
-                  <article className={"ana-post ana-post-im " + (p.video ? "post-video" : "post-foto")} key={anahtar} style={{ "--pc": pc, "--sep": p.video ? "#e0202c" : "#0d0a05" }}>
+                  <article data-pid={String(p.id)} className={"ana-post ana-post-im " + (p.video ? "post-video" : "post-foto")} key={anahtar} style={{ "--pc": pc, "--sep": p.video ? "#e0202c" : "#0d0a05" }}>
                     {/* PROFİL/İSİM/MESLEK — fotoğrafın DIŞINDA, ÜSTTE ayrı şerit (ANA SAYFADA HEP AYRI — bozma) */}
                     {yazan}
                     {konumRozet}
@@ -8818,7 +8841,7 @@ export default function Anasayfa({ pro = false }) {
               // İÇ YAZI ZEMİNİ ise ÇERÇEVEDEN FARKLI (yazarın seçtiği p.zemin, yoksa koyu lacivert). İki ayrı renk; tek parça DEĞİL.
               const icZemin = p.zemin || "#16223e";
               return (
-                <article className="ana-post ana-post-zemin" key={anahtar} style={{ "--pc": pc, "--sep": "#0d0a05" }}>
+                <article data-pid={String(p.id)} className="ana-post ana-post-zemin" key={anahtar} style={{ "--pc": pc, "--sep": "#0d0a05" }}>
                   {/* Sağ-üst absolute tür amblemi KALDIRILDI — takip yeşil yuvarlağıyla ÜST ÜSTE biniyordu;
                       tür zaten ismin yanında "ana-post-tur" rozetinde yazılı (çakışma giderildi). */}
                   <div className="ana-post-bas">
@@ -8853,14 +8876,14 @@ export default function Anasayfa({ pro = false }) {
                   )}
                   {p.yazi && (
                     /* UZUN yazıya basınca AYRI pencerede (tam ekran okuyucu) açılır — ana sayfada dev metin olarak açılıp kalmaz (✕ ile kapanır) */
-                    <div ref={kesikOlc(anahtar)} translate="no" className="ana-post-yazi notranslate buyuk kisa" style={(() => { const _n = (p.yazi || "").length; const fs = _n > 1400 ? 11.5 : _n > 900 ? 12 : _n > 600 ? 12.5 : _n > 320 ? 13 : 13.5; return { background: icZemin, color: p.yaziRenk || "#fff", fontSize: fs + "px", lineHeight: 1.36 }; })()} onClick={() => setTamFoto(p)}>
+                    <div ref={kesikOlc(anahtar)} translate="no" className={"ana-post-yazi notranslate buyuk" + (yaziAcikSet.has(p.id) ? " acik" : " kisa")} style={(() => { const _n = (p.yazi || "").length; const fs = _n > 1400 ? 11.5 : _n > 900 ? 12 : _n > 600 ? 12.5 : _n > 320 ? 13 : 13.5; return { background: icZemin, color: p.yaziRenk || "#fff", fontSize: fs + "px", lineHeight: 1.36 }; })()} onClick={() => { if (kesik[anahtar] || yaziAcikSet.has(p.id)) yaziAcKapa(p.id); }}>
                       {metniLinkle((ceviri[anahtar] && ceviri[anahtar].acik && ceviri[anahtar].metin) ? ceviri[anahtar].metin : p.yazi)}
                     </div>
                   )}
                   {p.yazi && (
                     /* ÇEVİR + "devamını oku" → yazının İÇİNDE, SAĞDA (yazının bittiği yerde); "devamını oku" SADECE yazı kesilince */
                     <div className="ana-post-altsatir" style={{ background: icZemin }}>
-                      {kesik[anahtar] && <span className="ana-post-devam" onClick={() => setTamFoto(p)}>{t("devamOku", "… devamını oku")}</span>}
+                      {(kesik[anahtar] || yaziAcikSet.has(p.id)) && <span className="ana-post-devam" onClick={() => yaziAcKapa(p.id)}>{yaziAcikSet.has(p.id) ? t("gizle", "gizle") : t("devamOku", "… devamını oku")}</span>}
                       <button className="ana-post-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
                         {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
@@ -9963,7 +9986,7 @@ export default function Anasayfa({ pro = false }) {
               {/* 1) ÜST BAŞLIK ŞERİDİ — medyanın HEMEN ÜSTÜNDE, renkli/belirgin (kullanıcı: sırayla, yakın, müşteri anlasın) */}
               <div className="pyl-serit pyl-serit-baslik">
                 <span className="pyl-serit-et">📌 {t("paylasBaslikEt", "Başlık")}</span>
-                <input className="pyl-baslik" value={paylasBaslik} onChange={(e) => setPaylasBaslik(e.target.value)} placeholder={t("paylasBaslikPh", "Başlık (isteğe bağlı) — kısa ve dikkat çekici")} maxLength={200} />
+                <input className="pyl-baslik" value={paylasBaslik} onChange={(e) => setPaylasBaslik(e.target.value)} placeholder={t("paylasBaslikPh", "Başlık (isteğe bağlı) — dikkat çekici, istediğin kadar uzun")} maxLength={20000} />
               </div>
               {/* 2) MEDYA — FOTOĞRAF + VİDEO küçük KARE ızgara (hepsi TEK pencerede görünür; dokununca tek tek gezilir), + ile ekle.
                   Video de kare olarak görünür (▶ + yükleme %). İlk sıradaki (büyük olacak) "1" rozetli. */}
