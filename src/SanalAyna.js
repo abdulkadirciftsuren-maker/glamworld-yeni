@@ -347,15 +347,9 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
       const bitti = new Promise((res) => { rec.onstop = res; });
       rec.start(120);
-      // ZARİF GLOXORG damgasını her kareye GÖM (kullanıcı: "klipte GLOXORG çıkmıyor"). Paylaşım stiliyle: ince serif, "◈ GLOXORG", zemin YOK, altın.
-      const damgala = () => { try {
-        const fsw = Math.max(15, Math.round(Math.min(w, h) * 0.045)), padw = Math.round(fsw * 0.7), yz = "◈ GLOXORG";
-        ctx.font = "700 " + fsw + "px Georgia, 'Times New Roman', serif"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
-        ctx.shadowColor = "rgba(0,0,0,.75)"; ctx.shadowBlur = Math.round(fsw * 0.35); ctx.shadowOffsetY = 1;
-        ctx.lineWidth = Math.max(2, fsw * 0.14); ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.strokeText(yz, w - padw, h - padw);
-        ctx.shadowColor = "transparent"; ctx.fillStyle = "rgba(255,215,0,.95)"; ctx.fillText(yz, w - padw, h - padw);
-      } catch (e) {} };
-      const ciz = (im) => { try { ctx.fillStyle = "#efe6cf"; ctx.fillRect(0, 0, w, h); ctx.drawImage(im, 0, 0, w, h); damgala(); } catch (e) {} };
+      // ⛔ KLİBE DAMGA GÖMME (kullanıcı gördü: gömünce ÇİFT oluyor): Klip VİDEO olarak paylaşılınca akış ZATEN kendi ZARİF
+      //   "◈ GLOXORG" rozetini koyuyor. Biz de gömersek çift olur → GÖMMÜYORUZ. Kareler temiz kalır, akışın tek rozeti çıkar.
+      const ciz = (im) => { try { ctx.fillStyle = "#efe6cf"; ctx.fillRect(0, 0, w, h); ctx.drawImage(im, 0, 0, w, h); } catch (e) {} };
       const KARE_MS = 750, DONGU = 2; // her kare ~0.75 sn, sıra 2 kez → yürüyüş döngüsü
       for (let d = 0; d < DONGU; d++) { for (const im of valid) { ciz(im); await new Promise((r) => setTimeout(r, KARE_MS)); } }
       ciz(valid[0]); await new Promise((r) => setTimeout(r, 200));
@@ -545,7 +539,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                         setKlipYuk(false);
                         if (blob) { onGloxorgVideoPaylas(blob, kareler[0]); return; }
                       }
-                      if (onGloxorgPaylas) onGloxorgPaylas(kareler[kareIdx]); // klip olmazsa: tek kare (yine de paylaşılır)
+                      if (onGloxorgPaylas) { let ff = kareler[kareIdx]; try { ff = await filigranEkle(ff); } catch (e) {} onGloxorgPaylas(ff); } // klip olmazsa: tek kare (RESİM olur, akış rozeti çıkmaz → damgayı BURADA ekle ki boş kalmasın)
                     }}>{klipYuk ? "⏳ " + t("saKlipHaz", "Canlı klip hazırlanıyor…") : "💎 " + t("saGloxordaPaylasCanli", "GLOXORG'da paylaş (canlı)")}</button>}
                     {/* İNDİR / DİĞER PLATFORM = tek RESİM → burada GLOXORG damgası EKLENİR (kullanıcı: "aynada indir/kaydet damgalı olsun"). Klip (GLOXORG'da paylaş) ise DAMGASIZ kalır (akış kendi rozetini koyar). */}
                     <button onClick={async () => { let f = kareler[kareIdx]; try { f = await filigranEkle(f); } catch (e) {} paylasVer(f, model || kategori); }}>📤 {t("saDigerPaylas", "Diğer platformlar")}</button>
