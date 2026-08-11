@@ -2630,12 +2630,14 @@ export default function Anasayfa({ pro = false }) {
         }
       } catch (e) {}
     };
-    const iv = setInterval(kontrol, 60000);                 // her 60 sn'de bir kontrol
-    const onVis = () => { if (document.visibilityState === "visible") kontrol(); }; // uygulamaya dönünce hemen kontrol
-    document.addEventListener("visibilitychange", onVis);
-    window.addEventListener("focus", kontrol);
-    const ilk = setTimeout(kontrol, 5000);                  // açılıştan ~5 sn sonra ilk kontrol
-    return () => { durdu = true; clearInterval(iv); clearTimeout(ilk); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("focus", kontrol); };
+    const iv = setInterval(kontrol, 60000);                 // her 60 sn'de bir kontrol (SEN aktif kullanırken)
+    // ⛔ ARKA PLANDAN DÖNÜNCE ZORLA YENİDEN YÜKLEME KALDIRILDI (kullanıcı: "başka uygulamaya geçip dönünce
+    //   profil/menü/ışıltı siliniyor, sayfa kendini güncelliyor, geç yükleniyor, video kesik oynuyor").
+    //   ESKİDEN: visibilitychange + focus'ta HEMEN sürüm kontrolü → yeni sürüm varsa sayfa RELOAD → her dönüşte
+    //   her şey baştan yükleniyordu. Bu iki tetik KALDIRILDI. Güncelleme yine gelir (60 sn'lik kontrolle sen
+    //   AKTİFKEN, ya da uygulamayı TEMİZ açtığında); ama arka plandan DÖNÜNCE artık zorla yeniden yükleme YOK.
+    const ilk = setTimeout(kontrol, 5000);                  // açılıştan ~5 sn sonra ilk kontrol (temiz açılışta)
+    return () => { durdu = true; clearInterval(iv); clearTimeout(ilk); };
   }, []);
   // CANLI bildirim dinle (sayfa açıkken anında gelir); yeni gelenleri telefon bildirimi olarak göster
   useEffect(() => {
