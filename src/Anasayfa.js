@@ -10661,6 +10661,7 @@ export default function Anasayfa({ pro = false }) {
             {p.video
               ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()} style={tfMini && tfVidOran ? { aspectRatio: tfVidOran.toFixed(3) } : undefined}>
                   <video ref={tamVideoRef} className="tamfoto-video" src={vidBlob || videoSade(p.video)} autoPlay playsInline preload="auto"
+                    muted={!!(p.muzik && p.muzik.url)}
                     poster={p.videoPoster || undefined}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
@@ -10729,7 +10730,7 @@ export default function Anasayfa({ pro = false }) {
             {/* ALT KOLON — yazı/Çevir/Sor → oynatma çubuğu → ikonlar TEK DİKEY kolonda STACK (asla üst üste binmez) */}
             <div className="tf-dip">
               {/* 🎵 GÖNDERİ MÜZİĞİ — SAĞ ALT KÖŞEDE küçük: üstte ses ikonu (aç/kapa), altında ondan biraz geniş İNCE şerit (şarkı adı ufak ufak sürekli sola geçer). Fotoğrafı KAPLAMAZ. */}
-              {p.muzik && p.muzik.url && !p.video && (
+              {p.muzik && p.muzik.url && (
                 <div className="tf-muzik3" onClick={(e) => e.stopPropagation()}>
                   <button className="tf-muzik3-ses" onClick={muzikAcKapa} aria-label={muzOyn ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
                     {muzOyn

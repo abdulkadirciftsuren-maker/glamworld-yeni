@@ -355,7 +355,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
   }
   // CANLI MANKEN → HAREKETLİ VİDEO KLİP: kareleri bir canvas'a sırayla çizip MediaRecorder ile kısa bir webm videoya kaydeder.
   // Böylece "GLOXORG'da paylaş" tek KARE değil, YÜRÜYEN mankenin HAREKETLİ klibini paylaşır (kullanıcı isteği). Olmazsa null döner → tek kareye düşülür.
-  async function mankenKlipYap() {
+  async function mankenKlipYap(damgali) {
     try {
       if (!kareler || kareler.length < 2 || typeof MediaRecorder === "undefined") return null;
       const imgs = await Promise.all(kareler.map((src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); try { im.src = src; } catch (e) { res(null); } })));
@@ -375,9 +375,16 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
       const bitti = new Promise((res) => { rec.onstop = res; });
       rec.start(120);
-      // ⛔ KLİBE DAMGA GÖMME (kullanıcı gördü: gömünce ÇİFT oluyor): Klip VİDEO olarak paylaşılınca akış ZATEN kendi ZARİF
-      //   "◈ GLOXORG" rozetini koyuyor. Biz de gömersek çift olur → GÖMMÜYORUZ. Kareler temiz kalır, akışın tek rozeti çıkar.
-      const ciz = (im) => { try { ctx.fillStyle = "#efe6cf"; ctx.fillRect(0, 0, w, h); ctx.drawImage(im, 0, 0, w, h); } catch (e) {} };
+      // damgali=FALSE (GLOXORG'da paylaş): GÖMME → akış kendi ZARİF rozetini koyar (çift olmasın).
+      // damgali=TRUE (İNDİR/dosya): akış rozeti OLMAZ → zarif "◈ GLOXORG"u BURADA GÖM (indirilen klip damgasız kalmasın).
+      const damgala = () => { try {
+        const fsw = Math.max(15, Math.round(Math.min(w, h) * 0.045)), padw = Math.round(fsw * 0.7), yz = "◈ GLOXORG";
+        ctx.font = "700 " + fsw + "px Georgia, 'Times New Roman', serif"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+        ctx.shadowColor = "rgba(0,0,0,.75)"; ctx.shadowBlur = Math.round(fsw * 0.35); ctx.shadowOffsetY = 1;
+        ctx.lineWidth = Math.max(2, fsw * 0.14); ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.strokeText(yz, w - padw, h - padw);
+        ctx.shadowColor = "transparent"; ctx.fillStyle = "rgba(255,215,0,.95)"; ctx.fillText(yz, w - padw, h - padw);
+      } catch (e) {} };
+      const ciz = (im) => { try { ctx.fillStyle = "#efe6cf"; ctx.fillRect(0, 0, w, h); ctx.drawImage(im, 0, 0, w, h); if (damgali) damgala(); } catch (e) {} };
       const KARE_MS = 750, DONGU = 2; // her kare ~0.75 sn, sıra 2 kez → yürüyüş döngüsü
       for (let d = 0; d < DONGU; d++) { for (const im of valid) { ciz(im); await new Promise((r) => setTimeout(r, KARE_MS)); } }
       ciz(valid[0]); await new Promise((r) => setTimeout(r, 200));
@@ -554,7 +561,8 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
               </button>
               {kareler.length >= 2 && (
                 <div className="sa-manken">
-                  <img key={kareIdx} src={kareler[kareIdx]} alt="" onClick={() => setBuyuk(kareler[kareIdx])} style={{ cursor: "zoom-in" }} />
+                  {/* ÖNİZLEMEYE DOKUN → tek kareyi büyütme; TAM EKRAN oynatıcıyı aç, KLİP oynasın (kullanıcı: "videoya basınca klip oynasın") */}
+                  <img key={kareIdx} src={kareler[kareIdx]} alt="" onClick={() => { setOynat(true); setMankenTamEkran(true); }} style={{ cursor: "pointer" }} />
                   <div className="sa-manken-dug">
                     <button onClick={() => setOynat((o) => !o)}>{oynat ? "⏸ " + t("saDurdur", "Durdur") : "▶️ " + t("saOynat", "Oynat")}</button>
                     <button onClick={() => { setOynat(true); setMankenTamEkran(true); }}>🔳 {t("saTamEkran", "Tam ekran")}</button>
@@ -571,7 +579,15 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                     }}>{klipYuk ? "⏳ " + t("saKlipHaz", "Canlı klip hazırlanıyor…") : "💎 " + t("saGloxordaPaylasCanli", "GLOXORG'da paylaş (canlı)")}</button>}
                     {/* İNDİR / DİĞER PLATFORM = tek RESİM → burada GLOXORG damgası EKLENİR (kullanıcı: "aynada indir/kaydet damgalı olsun"). Klip (GLOXORG'da paylaş) ise DAMGASIZ kalır (akış kendi rozetini koyar). */}
                     <button onClick={async () => { let f = kareler[kareIdx]; try { f = await filigranEkle(f); } catch (e) {} paylasVer(f, model || kategori); }}>📤 {t("saDigerPaylas", "Diğer platformlar")}</button>
-                    <button onClick={async () => { let f = kareler[kareIdx]; try { f = await filigranEkle(f); } catch (e) {} indirVer(f, model || kategori); }}>⬇️ {t("saIndir", "İndir")}</button>
+                    <button disabled={klipYuk} onClick={async () => {
+                      // İNDİR → tek kare değil, HAREKETLİ KLİP (damgalı) indir (kullanıcı: "klip olarak indirebileyim")
+                      setKlipYuk(true);
+                      let blob = null; try { blob = await mankenKlipYap(true); } catch (e) {}
+                      setKlipYuk(false);
+                      if (blob) {
+                        try { const u = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = u; a.download = "gloxorg-canli-manken.webm"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => { try { URL.revokeObjectURL(u); } catch (e) {} }, 8000); } catch (e) {}
+                      } else { let f = kareler[kareIdx]; try { f = await filigranEkle(f); } catch (e) {} indirVer(f, model || kategori); } // klip olmazsa: tek kare (damgalı)
+                    }}>⬇️ {klipYuk ? t("saKlipHaz2", "Hazırlanıyor…") : t("saIndir", "İndir")}</button>
                   </div>
                   <div className="sa-manken-not">💡 {t("saMankenNot3", "'💎 GLOXORG'da paylaş (canlı)' → yürüyen mankenin HAREKETLİ klibini akışta paylaşır (tek kare değil). İstersen '🔳 Tam ekran' ile oynatıp telefonun EKRAN KAYDIYLA da çekebilirsin.")}</div>
                 </div>
