@@ -28,6 +28,31 @@ const GENEL_RENK = ["Siyah", "Beyaz", "Kırmızı", "Mavi", "Lacivert", "Yeşil"
 // Renk çipini İSİM yerine GERÇEK RENK göstermek için (kullanıcı: "renk isimlerini kaldır, renk yap"). Kare kutu (yuvarlak YOK).
 const RENK_HEX = { "Siyah": "#141414", "Koyu Kahve": "#3b2416", "Kahve": "#6b4423", "Kumral": "#a86a3d", "Sarı": "#e6c15a", "Bal Köpüğü": "#e2b878", "Kızıl": "#b5462a", "Bakır": "#b87333", "Platin Sarı": "#ece2c0", "Gri / Gümüş": "#bcc0c4", "Mavi": "#3a6fd0", "Pembe": "#e58bb0", "Beyaz": "#fafafa", "Kırmızı": "#d63333", "Lacivert": "#1f2a55", "Yeşil": "#2e9e5b", "Mor": "#7a4fd0", "Turuncu": "#e8792a", "Bej": "#e3d1a8", "Gri": "#9aa0a6", "Altın": "#d4af37", "Gümüş": "#c8ccd0" };
 function renkGetir(kategori) { if (kategori === "sac") return SAC_RENK; if (kategori === "makyaj") return []; return GENEL_RENK; }
+// ⛔ ESKİ DAMGAYI KAPAT (kullanıcı: "yüklediğim fotoğrafta eski GLOXORG varsa silmiyor, ikincisini yapıştırıyor → çift"):
+// Yapay zekâya VERMEDEN önce fotoğrafın SAĞ-ALT köşesini arka plan rengiyle kapatırız → AI kopyalayacak eski damga GÖRMEZ → sonuç temiz çıkar.
+function kosevKapat(dataUrl) {
+  return new Promise((res) => {
+    try {
+      if (!dataUrl || typeof document === "undefined") return res(dataUrl);
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+          if (!w || !h) return res(dataUrl);
+          const c = document.createElement("canvas"); c.width = w; c.height = h;
+          const x = c.getContext("2d"); x.drawImage(im, 0, 0);
+          let bg = "rgb(214,214,214)";
+          try { const p = x.getImageData(Math.max(0, Math.round(w * 0.06)), Math.min(h - 1, Math.round(h * 0.95)), 1, 1).data; bg = "rgb(" + p[0] + "," + p[1] + "," + p[2] + ")"; } catch (e) {}
+          x.fillStyle = bg;
+          x.fillRect(Math.round(w * 0.60), Math.round(h * 0.89), Math.ceil(w * 0.40), Math.ceil(h * 0.11)); // sağ-alt köşe (tam boy fotoda burası boş zemin → içerik kapanmaz)
+          res(c.toDataURL("image/png"));
+        } catch (e) { res(dataUrl); }
+      };
+      im.onerror = () => res(dataUrl);
+      im.src = dataUrl;
+    } catch (e) { res(dataUrl); }
+  });
+}
 const ELBISE_KISI = {
   bayan: ["Abiye Elbise", "Yazlık Elbise", "Takım", "Kot & Bluz", "Kışlık Mont"],
   erkek: ["Takım Elbise", "Gömlek", "Ceket", "Kot Pantolon", "Spor Giyim"],
@@ -220,7 +245,9 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
     if (!model.trim()) { setHata(t("saModelOnce", "Bir model yaz ya da yukarıdan seç.")); return; }
     setYuk(true); setHata(""); setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0);
     try {
-      const base64 = foto.split(",")[1] || "";
+      const temizFoto = await kosevKapat(foto); // sağ-alt köşedeki eski GLOXORG'u KAPAT → AI kopyalamasın (çift damga bitsin)
+      const base64 = temizFoto.split(",")[1] || "";
+      const fotoMime2 = (temizFoto.match(/^data:([^;]+);/) || [])[1] || fotoMime || "image/png";
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
       const kisiIng = (KISILER.find((x) => x.k === kisi) || {}).ing || "person";
       const renkKismi = renk ? ` Color: ${renk}.` : "";
@@ -257,7 +284,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
         istem = `The person in this photo is a ${kisiIng}. Realistically apply this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Clean, well-lit portrait so the new ${cfg.ne} is clearly and beautifully visible. ${KALITE}`;
       }
       // TEK AŞAMA: gövde + elbise + yüzü koru (2 aşamalı yüz yerleştirme yüzü BULANIKLAŞTIRIYORDU → kaldırıldı)
-      const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime }, ref2);
+      const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime2 }, ref2);
       if (res && res.dataUrl) setSonuc(res.dataUrl);
       else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene."));
     } catch (e) { setHata((e && e.message) ? String(e.message) : t("saOlmadi", "Şu an yapılamadı, tekrar dene.")); }
@@ -310,7 +337,8 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       "in the distance, now TURNING AROUND to face the camera again and beginning to WALK BACK TOWARD the camera, the front becoming visible, mid-stride, FULL BODY",
     ];
     const yeni = [];
-    const base64 = sonuc.split(",")[1] || "";
+    const temizSonuc = await kosevKapat(sonuc); // sonuç'taki (varsa) eski/mevcut damgayı KAPAT → manken kareleri temiz üretilsin
+    const base64 = temizSonuc.split(",")[1] || "";
     setKareIlerleme(0);
     for (let i = 0; i < acilar.length; i++) {
       const istem = `This image shows a person wearing an outfit. Generate the EXACT SAME real person wearing the EXACT SAME outfit as in this image — identical face, hair, body shape, garment, print, colors, fabric, shoes and the same clean background — but now ${acilar[i]}. Show the FULL BODY from head to feet. Elegant natural pose like a professional fashion studio / runway photo. Ultra photorealistic, soft cinematic flattering lighting, sharp focus, ultra-high resolution. It must stay the SAME real person — do NOT change, beautify, slim or age the face. Exactly ONE person, no duplicate. No text, no watermark, no logo.`;
