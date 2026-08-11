@@ -43,6 +43,13 @@ Açıklamalar **numaralı adımlarla** ve sade olur (1, 2, 3…). Teknik jargon 
   - `Claude-Session: ...` (oturum linki)
 - **Kullanıcı açıkça istemedikçe Pull Request AÇMA.**
 
+### 2.1 🧷 BOZMAMA DİSİPLİNİ (kullanıcı: "her yeni Code sayfayı bilmiyor, düzelttiklerimizi bozuyor" — HARFİYEN uy)
+- **Yeni oturumda ÖNCE `SIRADAKI-PLAN.md`'nin en üstündeki "YENİ OTURUM" bölümünü oku** (sayfa haritası + son düzeltmeler + neye dokunma). Böylece sayfayı bilerek başlarsın, kullanıcıya sıfırdan anlattırmazsın.
+- **Deploy'dan ÖNCE değişikliği KENDİN dene:** build al + Playwright ile `build/`'i yerelde aç (render + konsol hatası kontrolü). Kullanıcıya asla bozuk verme; "oldu" demeden önce doğrula.
+- **Eskiyi SİL, yorumla yedekte bırakma:** bir şeyi düzeltince eski bozuk yolu tamamen kaldır (yedek yol iş kayınca devreye girip yine bozuyor — kullanıcının en büyük şikâyeti).
+- **TEK seferde TEK iş:** yap → yayınla → kullanıcı denesin → onay → sonraki. Toplu değişiklik yapma. **Onaylanmış/çalışan bir şeyi ASLA geri bozma.**
+- **Giriş-içi ekranı buradan göremezsin;** emin olmak için kullanıcıdan ekran görüntüsü iste, körlemesine tahmin etme.
+
 ## 3. 🧭 ONAY İSTEME (anayasadaki kural)
 
 - Code bu anayasayı okuduğunda onay ZATEN alınmış sayılır. İşe başlamak/deploy için "yapayım mı, emin misin, devam edeyim mi" diye **sorma** — kendin yap, bitir, raporla.

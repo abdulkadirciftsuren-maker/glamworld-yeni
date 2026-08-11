@@ -1,3 +1,34 @@
+# ⚡ YENİ OTURUM — ÖNCE BUNU OKU (kullanıcı: "her yeni Code sayfayı bilmiyor, bozuyor, sıfırdan anlattırıyor")
+
+> Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
+> sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
+
+## 🧭 SAYFA HARİTASI (yeni gelen HEMEN bilsin)
+- **Ana sayfa ÜST ikon şeridi (`ana-nav`):** 🪞 Ayna · 🏠 Ana Sayfa · 💎 (Pro/Elite) · 👥 Topluluk · 📹 Video · 📍 Konum · 🎓 Akademi · Profil. **Hepsi buradan açılıyor ve ÇALIŞIYOR.** (Topluluk=Tanış sayfası, Akademi=eğitim+sertifika — ikisi de hazır.)
+- **Alt tab bar:** Keşfet · Ara · Makara (Reels) · Konum · Glome · Profil.
+- **AI asistan = "Gloxoo".** Sesli okuma VARSAYILAN olarak **telefonun kendi sesi** (tarayıcı TTS); internet/worker "gerçek ses" güvenilmez → kapalı (`gercekSesKapaliRef=true`).
+- **Ben (Code) giriş yapmış sayfayı buradan GÖREMEM** (sadece açılış/giriş ekranı). Giriş-içi bir şeyi tam anlamak için kullanıcıdan **ekran görüntüsü** iste; körlemesine tahmin etme.
+
+## 🛠️ ÇALIŞMA DİSİPLİNİ (kırılmayı önleyen kurallar — HARFİYEN)
+1. **Deploy'dan ÖNCE KENDİN dene:** `CI=false npx react-scripts build`, sonra Playwright ile `build/`'i yerelde aç (chromium: `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, `--no-sandbox`, localhost'ta proxy YOK) → sayfa render oluyor mu + konsol hatası var mı bak. Kullanıcıya **bozuk verme.**
+2. **Eskiyi SİL, yorumla bırakma:** bir şeyi düzeltince eski bozuk yolu tamamen kaldır (yedekte kalırsa iş kayınca ona düşüp yine bozulur — kullanıcının en büyük şikâyeti bu).
+3. **TEK seferde TEK iş:** yap → yayınla → kullanıcı denesin → onay → sonrakine geç. Toplu/çoklu değişiklik yapma.
+4. **Onaylanmış/çalışan şeyi ASLA geri bozma.** Emin değilsen `buildGecmisi.js`'i oku.
+5. **Kullanıcı çok yoruldu ve kırıldı.** Sakin, Türkçe, adım adım, tahminsiz. Söz verdiğini yap, olmayanı "oldu" deme.
+6. **Deploy:** `CI=false npx react-scripts build` → `npx gh-pages -d build --dotfiles`. HER deploy: `public/sw.js`'de `SW_SURUM` +1 **ve** `src/buildGecmisi.js`'e en üste Türkçe kayıt.
+
+## ✅ SON DÜZELTMELER (B105→B114 — BOZMA, geri alma)
+- **B106–B109 · Sesli okuma:** cümleler SIRAYLA okunur (Android "ilk cümleden sonra susma" düzeldi) + keepalive (`resume`) + imleç senkron (parça gerçek konumu `indexOf`) + Gloxoo artık "sesli okuyamıyorum/ses motoru" DEMEZ (sistem promptu).
+- **B110 · Canlı sohbet:** son cümlenin kesilmesi + dinleme kilidi düzeldi (`canliDevam` gloxKonusuyor + ~1.2sn kesintisiz sessizlik). **Barge-in:** Gloxoo konuşurken/düşünürken YEŞİL düğme (o an ALTIN olur) = durdur + yeniden dinle (`canliKes`, `aiTurRef`). Mola 3.5sn.
+- **B111–B112 · Arka plandan dönünce ZORLA yeniden yükleme KALDIRILDI.** `guvenliYenile`'ye kilit: `sonGorunurMs` — dönüşten 12sn içinde reload YOK. Otomatik güncelleme KORUNDU (60sn interval + temiz açılış). Dönüşte reload'un tek kapısı burası; kilit orada.
+- **B113 · Akışta yazı YERİNDE açılır:** yazıya dokun → tam ekran değil, fotoğrafın ALTINDA aç/kapa (`yaziAcikSet`; 2 satır + "devamını oku"/"gizle"). Foto tıklama hâlâ tam ekran. Başlık sınırsız (maxLength 20000). Açık yazı ekrandan çıkınca IntersectionObserver ile otomatik kapanır (`data-pid`).
+- **B114 · Menü sadeleşti:** gereksiz "Ana Sayfa / Topluluk·Çok yakında / Akademi·Çok yakında" düğmeleri silindi (üst şeritte zaten var).
+
+## ⏳ AÇIK / DOKUNMA (kullanıcı izni olmadan)
+- **Android GERİ tuşu, ana sayfada 2 kez basınca** sayfanın bir kısmını yeniden yüklüyor. Kullanıcı şimdilik **"B — dokunma"** dedi. Burası sayfanın **EN kırılgan yeri** (buildGecmisi'de defalarca eklenip sökülmüş: pushState koruma kaydı + popstate). Düzeltmeye ancak kullanıcı "başla" derse, KÜÇÜK ve denenmiş şekilde gir.
+
+---
+
 # 🌙 SIRADAKİ PLAN — kullanıcının "WhatsApp gibi GLOME" hayali
 
 > Bu dosya, kullanıcı çok yorulup gece bıraktığında yazıldı (2026-07-14, ~01:00).
