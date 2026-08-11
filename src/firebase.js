@@ -149,7 +149,7 @@ export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransi
   // ⛔ ÇİFT GLOXORG ÖNLE (kullanıcı: "foto zaten GLOXORG'luysa yapay zekâ bir tane daha koyuyor, üst üste biniyor"):
   //   Girdi fotoğrafında GLOXORG varsa model onu KOPYALIYOR, sonra biz (_filigranEkle) bir tane daha ekleyince ÇİFT oluyordu.
   //   Modele HER ZAMAN: hiç watermark/logo/GLOXORG EKLEME + girdideki MEVCUDU TEMİZLE. Damgayı hep BİZ ekleriz → tek GLOXORG kalır.
-  const istemTemiz = String(istem || "") + " CRITICAL: Do NOT add, draw, include, or reproduce any watermark, logo, brand mark, caption, sticker, or the word 'GLOXORG' anywhere in the image. If the provided/source image already contains any 'GLOXORG' text, logo, or watermark (e.g. in a corner), REMOVE it completely and cleanly so the final output has NO watermark, logo or brand text at all.";
+  const istemTemiz = String(istem || "") + " CRITICAL WATERMARK RULE: The output image MUST be completely CLEAN — NO watermark, NO logo, NO brand mark, NO caption, NO sticker and NO text of any kind, especially the word 'GLOXORG'. VERY IMPORTANT: the provided/source image very often ALREADY has a 'GLOXORG' watermark or logo in the BOTTOM-RIGHT corner (sometimes gold text, sometimes on a dark rounded box). You MUST completely ERASE and PAINT OVER that whole corner with the surrounding clean background so that absolutely NO trace of any watermark, box or 'GLOXORG' text remains. NEVER copy, keep or recreate any existing watermark or logo from the source image.";
   for (const y of yollar) {
     let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
     // Her yol için EN FAZLA 3 deneme; geçici hatada bekleyip tekrar dener (503 "Deadline expired" çoğu zaman geçicidir).

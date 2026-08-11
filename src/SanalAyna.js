@@ -347,7 +347,15 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
       const bitti = new Promise((res) => { rec.onstop = res; });
       rec.start(120);
-      const ciz = (im) => { try { ctx.fillStyle = "#efe6cf"; ctx.fillRect(0, 0, w, h); ctx.drawImage(im, 0, 0, w, h); } catch (e) {} };
+      // ZARİF GLOXORG damgasını her kareye GÖM (kullanıcı: "klipte GLOXORG çıkmıyor"). Paylaşım stiliyle: ince serif, "◈ GLOXORG", zemin YOK, altın.
+      const damgala = () => { try {
+        const fsw = Math.max(15, Math.round(Math.min(w, h) * 0.045)), padw = Math.round(fsw * 0.7), yz = "◈ GLOXORG";
+        ctx.font = "700 " + fsw + "px Georgia, 'Times New Roman', serif"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+        ctx.shadowColor = "rgba(0,0,0,.75)"; ctx.shadowBlur = Math.round(fsw * 0.35); ctx.shadowOffsetY = 1;
+        ctx.lineWidth = Math.max(2, fsw * 0.14); ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.strokeText(yz, w - padw, h - padw);
+        ctx.shadowColor = "transparent"; ctx.fillStyle = "rgba(255,215,0,.95)"; ctx.fillText(yz, w - padw, h - padw);
+      } catch (e) {} };
+      const ciz = (im) => { try { ctx.fillStyle = "#efe6cf"; ctx.fillRect(0, 0, w, h); ctx.drawImage(im, 0, 0, w, h); damgala(); } catch (e) {} };
       const KARE_MS = 750, DONGU = 2; // her kare ~0.75 sn, sıra 2 kez → yürüyüş döngüsü
       for (let d = 0; d < DONGU; d++) { for (const im of valid) { ciz(im); await new Promise((r) => setTimeout(r, KARE_MS)); } }
       ciz(valid[0]); await new Promise((r) => setTimeout(r, 200));
