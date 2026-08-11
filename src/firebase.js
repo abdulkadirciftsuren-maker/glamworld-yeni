@@ -90,30 +90,20 @@ function _filigranEkle(dataUrl) {
           const c = document.createElement("canvas"); c.width = g; c.height = h;
           const x = c.getContext("2d");
           x.drawImage(img, 0, 0, g, h);
-          const yazi = "GLOXORG";
-          const boy = Math.max(20, Math.round(Math.min(g, h) * 0.05)); // yazı boyu (kısa kenara göre — çok büyüyüp taşmasın)
-          const pay = Math.round(Math.min(g, h) * 0.055);        // köşe boşluğu DAHA GENİŞ (kısa kenara göre) → alt/sağ kenarda KESİLMEZ
-          x.font = "800 " + boy + "px Arial, Helvetica, sans-serif";
-          x.textAlign = "right"; x.textBaseline = "alphabetic";
-          const yaziEn = x.measureText(yazi).width;
-          const dolguX = Math.round(boy * 0.45), dolguY = Math.round(boy * 0.30);
-          const serEn = yaziEn + dolguX * 2, serBoy = boy + dolguY * 2;
-          const serX = g - pay - serEn, serY = h - pay - serBoy;
-          // ARKA ŞERİT: koyu yarı saydam yuvarlatılmış zemin → altın yazı HER resimde net okunur (parlak/açık resimde bile)
-          const r = Math.round(serBoy * 0.28);
-          x.fillStyle = "rgba(0,0,0,0.42)";
-          x.beginPath();
-          x.moveTo(serX + r, serY);
-          x.arcTo(serX + serEn, serY, serX + serEn, serY + serBoy, r);
-          x.arcTo(serX + serEn, serY + serBoy, serX, serY + serBoy, r);
-          x.arcTo(serX, serY + serBoy, serX, serY, r);
-          x.arcTo(serX, serY, serX + serEn, serY, r);
-          x.closePath(); x.fill();
-          // YAZI: önce ince koyu kontur, sonra ALTIN dolgu (kalın, belirgin)
-          const tx = g - pay - dolguX, ty = h - pay - dolguY;
-          x.lineWidth = Math.max(2, Math.round(boy * 0.12)); x.lineJoin = "round";
-          x.strokeStyle = "rgba(0,0,0,0.85)"; x.strokeText(yazi, tx, ty);
-          x.fillStyle = "#FFD700"; x.fillText(yazi, tx, ty);
+          // ⛔ ZARİF DAMGA (kullanıcı: "aynadaki eski ÇİRKİN/zeminli damgayı kaldır; paylaşımdaki gibi ZARİF olsun"):
+          //   Paylaşım filigranı (Anasayfa fotoFiligranla) ile BİREBİR AYNI stil → koyu ZEMİN KUTUSU YOK, ince SERİF,
+          //   "◈ GLOXORG", yumuşak gölge + altın. Böylece ayna, indir/kaydet ve tüm üretilen resimler paylaşımdaki gibi zarif çıkar.
+          const yazi = "◈ GLOXORG";
+          const fs = Math.max(15, Math.round(Math.min(g, h) * 0.045));
+          const pay = Math.round(fs * 0.7);
+          x.font = "700 " + fs + "px Georgia, 'Times New Roman', serif";
+          x.textAlign = "right"; x.textBaseline = "bottom";
+          x.shadowColor = "rgba(0,0,0,.75)"; x.shadowBlur = Math.round(fs * 0.35); x.shadowOffsetY = 1;
+          x.lineWidth = Math.max(2, fs * 0.14); x.strokeStyle = "rgba(0,0,0,.55)";
+          x.strokeText(yazi, g - pay, h - pay);
+          x.shadowColor = "transparent";
+          x.fillStyle = "rgba(255,215,0,.95)"; // altın
+          x.fillText(yazi, g - pay, h - pay);
           cz(c.toDataURL("image/png"));
         } catch (e) { cz(dataUrl); }
       };

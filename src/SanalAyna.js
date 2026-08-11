@@ -2,7 +2,7 @@
 // Google/Gemini görsel yolu (gloxooResimUret) fotoğraf GİRDİSİ alır → kişinin yüzünü koruyup istenen modeli uygular.
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { gloxooResimUret } from "./firebase";
+import { gloxooResimUret, filigranEkle } from "./firebase";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // üretilen modelleri KALICI sakla (IndexedDB) → "Modellerim" galerisi
 import { AYNA_CEV } from "./ceviriAyna"; // saç modeli/renk/kıyafet çiplerini kullanıcının diline çevir (değer Türkçe kalır, sadece görünüm çevrilir)
 
@@ -297,22 +297,25 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
   async function canliMankenYap() {
     if (!sonuc || kareYuk) return;
     setKareYuk(true); setHata(""); setKareler([]); setKareIdx(0); setOynat(false);
-    // YÜRÜYEN MANKEN (kullanıcı: "sadece dönmesin; arkadan gelsin, dönsün, yürüyerek gitsin"). Kare0 = mevcut ÖNDEN (varış).
-    // Döngü: önden(varış) → dönmeye başla → yandan yürü → arkadan uzaklaşarak yürü → uzakta arkadan → dönüp ÖNE doğru yürümeye başla → (başa döner)
+    // YÜRÜYEN MANKEN (kullanıcı: "sadece dönmesin; arkadan gelsin, dönsün, yürüyerek gitsin").
+    // ⛔ AYNA (GLOXORG) DAMGASI YOK (kullanıcı: "paylaşımda aynadan geleni sil; akışın küçük/şık GLOXORG'unu kullan, çift olmasın"):
+    //   Kareler filigransiz üretilir → klip video olarak paylaşınca akışın KÜÇÜK rozeti tek başına kalır, büyük ayna damgası ÇİFT olmaz.
+    //   sonuc'ta zaten gömülü ayna damgası olduğu için onu KARE0 yapmıyoruz; kare0'ı da ÖNDEN görünüşle filigransiz yeniden üretiyoruz.
     const acilar = [
+      "standing and facing the camera in a relaxed natural FRONT pose, arrived at the front of the runway, FULL BODY head to feet",
       "starting to turn to walk away: turned about 45 degrees (three-quarter view), one foot stepping forward, mid-stride, FULL BODY on the runway",
       "turned to the SIDE profile (about 90 degrees), in a natural mid-stride WALKING pose, moving across the runway, FULL BODY head to feet",
       "seen from the BACK (about 180 degrees, turned away), clearly showing the BACK of the same outfit, WALKING AWAY from the camera, mid-stride, FULL BODY",
       "seen from the BACK, now FARTHER AWAY, walking away into the distance on the runway (the person looks smaller, more floor/background visible), FULL BODY",
       "in the distance, now TURNING AROUND to face the camera again and beginning to WALK BACK TOWARD the camera, the front becoming visible, mid-stride, FULL BODY",
     ];
-    const yeni = [sonuc]; // 1. kare = mevcut önden görünüş
+    const yeni = [];
     const base64 = sonuc.split(",")[1] || "";
-    setKareIlerleme(1);
+    setKareIlerleme(0);
     for (let i = 0; i < acilar.length; i++) {
       const istem = `This image shows a person wearing an outfit. Generate the EXACT SAME real person wearing the EXACT SAME outfit as in this image — identical face, hair, body shape, garment, print, colors, fabric, shoes and the same clean background — but now ${acilar[i]}. Show the FULL BODY from head to feet. Elegant natural pose like a professional fashion studio / runway photo. Ultra photorealistic, soft cinematic flattering lighting, sharp focus, ultra-high resolution. It must stay the SAME real person — do NOT change, beautify, slim or age the face. Exactly ONE person, no duplicate. No text, no watermark, no logo.`;
       try {
-        const r = await gloxooResimUret(istem, { base64, mediaType: "image/png" });
+        const r = await gloxooResimUret(istem, { base64, mediaType: "image/png" }, undefined, true); // filigransiz=true → AYNA damgası EKLENMEZ (klip temiz kalır)
         if (r && r.dataUrl) yeni.push(r.dataUrl);
       } catch (e) {}
       setKareIlerleme(yeni.length);
@@ -516,8 +519,8 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
               {/* 🎬 CANLI MANKEN — aynı kişi+aynı kıyafet birçok açıdan üretilip döndürülür (reklamdaki gibi dönen manken) */}
               <button className="sa-manken-btn" disabled={kareYuk} onClick={canliMankenYap}>
                 {kareYuk
-                  ? "⏳ " + t("saMankenYap", "Canlı manken hazırlanıyor…") + " (" + kareIlerleme + "/5)"
-                  : "🎬 " + t("saManken", "Canlı manken yap (döndür)")}
+                  ? "⏳ " + t("saMankenYap", "Canlı manken hazırlanıyor…") + " (" + kareIlerleme + "/6)"
+                  : "🎬 " + t("saManken", "Canlı manken yap (yürüt)")}
               </button>
               {kareler.length >= 2 && (
                 <div className="sa-manken">
@@ -536,8 +539,9 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                       }
                       if (onGloxorgPaylas) onGloxorgPaylas(kareler[kareIdx]); // klip olmazsa: tek kare (yine de paylaşılır)
                     }}>{klipYuk ? "⏳ " + t("saKlipHaz", "Canlı klip hazırlanıyor…") : "💎 " + t("saGloxordaPaylasCanli", "GLOXORG'da paylaş (canlı)")}</button>}
-                    <button onClick={() => paylasVer(kareler[kareIdx], model || kategori)}>📤 {t("saDigerPaylas", "Diğer platformlar")}</button>
-                    <button onClick={() => indirVer(kareler[kareIdx], model || kategori)}>⬇️ {t("saIndir", "İndir")}</button>
+                    {/* İNDİR / DİĞER PLATFORM = tek RESİM → burada GLOXORG damgası EKLENİR (kullanıcı: "aynada indir/kaydet damgalı olsun"). Klip (GLOXORG'da paylaş) ise DAMGASIZ kalır (akış kendi rozetini koyar). */}
+                    <button onClick={async () => { let f = kareler[kareIdx]; try { f = await filigranEkle(f); } catch (e) {} paylasVer(f, model || kategori); }}>📤 {t("saDigerPaylas", "Diğer platformlar")}</button>
+                    <button onClick={async () => { let f = kareler[kareIdx]; try { f = await filigranEkle(f); } catch (e) {} indirVer(f, model || kategori); }}>⬇️ {t("saIndir", "İndir")}</button>
                   </div>
                   <div className="sa-manken-not">💡 {t("saMankenNot3", "'💎 GLOXORG'da paylaş (canlı)' → yürüyen mankenin HAREKETLİ klibini akışta paylaşır (tek kare değil). İstersen '🔳 Tam ekran' ile oynatıp telefonun EKRAN KAYDIYLA da çekebilirsin.")}</div>
                 </div>
