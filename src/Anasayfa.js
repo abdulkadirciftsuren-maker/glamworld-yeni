@@ -11366,9 +11366,9 @@ export default function Anasayfa({ pro = false }) {
             <p className="ana-menu-kul">{adTam}</p>
             {/* GLOXORG EYLEM PLANI (Hakkında + 7 Eksen) — kullanıcı isteği: menüde EN ÜSTTE */}
             <button className="ana-menu-oge c-mavi" onClick={() => { setMenuAcik(false); setHakkindaAcik(true); }}><span className="ana-menu-ik">💠</span>{(HAKKINDA_CEVIRI[dil] || HAKKINDA_CEVIRI.en).menu}</button>
-            <button className="ana-menu-oge c-mavi" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🏠</span>{t("navAnaSayfa")}</button>
-            <button className="ana-menu-oge c-yesil" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🌍</span>{t("navTopluluk")} · {t("anaYakinda")}</button>
-            <button className="ana-menu-oge c-mor" onClick={() => setMenuAcik(false)}><span className="ana-menu-ik">🎓</span>{t("navAkademi")} · {t("anaYakinda")}</button>
+            {/* ⛔ KALDIRILDI (kullanıcı: "menüyü şişiriyor, gereksiz"): Ana Sayfa + Topluluk + Akademi düğmeleri.
+                SEBEP: Bunların hepsi ZATEN üstteki ikon şeridinde (ana-nav) var ve oradan AÇILIYOR (Topluluk/Akademi çalışıyor).
+                Menüdeki bu 3 düğme boştu (sadece menüyü kapatıp ana sayfaya düşüyordu) → gereksiz tekrar + "Çok yakında" yanlış etiket. */}
             <button className="ana-menu-oge c-yesil" onClick={() => { setMenuAcik(false); setAktifKod("muhasebe"); }}><span className="ana-menu-ik">📊</span>{t("muhBaslik", "Muhasebe")}</button>
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); setUyelikKartAcik(true); }}><span className="ana-menu-ik">💎</span>{t("proOlBaslik", "Profesyonel Ol")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
