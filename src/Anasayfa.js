@@ -2580,10 +2580,11 @@ export default function Anasayfa({ pro = false }) {
   const guvenliYenile = (hedefHash) => {
     try {
       if (window.__groxYenilendi) return;
-      // ⛔ AÇILIŞ KORUMASI: sayfa yeni açıldıysa (ilk 35 sn) profil/ayar/foto verisi HÂLÂ yükleniyor olabilir.
-      // Şimdi yenilersek yükleme YARIDA kalır → sayfa EKSİK gelir (profil resmi/ayarlar gelmez). O yüzden ilk 35 sn
-      // yenileme YOK; veri tam otursun. Güncelleme kaçmaz — 60 sn'lik kontrol birazdan yine deneyip (süre dolunca) yeniler.
-      if (Date.now() - ACILIS_MS < 35000) return;
+      // ⛔ AÇILIŞ KORUMASI: sayfa yeni açıldıysa (ilk 18 sn) profil/ayar/foto verisi HÂLÂ yükleniyor olabilir.
+      // Şimdi yenilersek yükleme YARIDA kalır → sayfa EKSİK gelir (profil resmi/ayarlar gelmez). O yüzden ilk 18 sn
+      // yenileme YOK; veri tam otursun. (Eskiden 35 sn'ydi; kullanıcı "yeni sürüm geç geliyor, elle güncelliyorum" dedi →
+      // 18'e indirdim ki AÇILIŞTAN kısa süre sonra otomatik güncel sürüme geçsin. Reload tam yeniden yükleme olduğu için eksik kalmaz.)
+      if (Date.now() - ACILIS_MS < 18000) return;
       // ⛔ MUHASEBEDE YENİLEME YOK: kullanıcı belge/tablo/yazı hazırlarken sayfa kendini yenilerse YAPTIĞI İŞ UÇAR
       // (kullanıcı: "Word'de yazdığım siliniyor, işimi bitirmeden çıkıyorum"). Muhasebeden çıkınca (60 sn kontrol) yenilenir.
       if (aktifKodRef.current === "muhasebe") { yenileBekleRef.current = true; return; }
@@ -2678,14 +2679,17 @@ export default function Anasayfa({ pro = false }) {
         }
       } catch (e) {}
     };
-    const iv = setInterval(kontrol, 60000);                 // her 60 sn'de bir kontrol (SEN aktif kullanırken)
+    const iv = setInterval(kontrol, 25000);                 // her 25 sn'de bir kontrol (SEN aktif kullanırken) — yeni sürüm daha çabuk insin (kullanıcı: "geç güncelliyor")
     // ⛔ ARKA PLANDAN DÖNÜNCE ZORLA YENİDEN YÜKLEME KALDIRILDI (kullanıcı: "başka uygulamaya geçip dönünce
     //   profil/menü/ışıltı siliniyor, sayfa kendini güncelliyor, geç yükleniyor, video kesik oynuyor").
     //   ESKİDEN: visibilitychange + focus'ta HEMEN sürüm kontrolü → yeni sürüm varsa sayfa RELOAD → her dönüşte
     //   her şey baştan yükleniyordu. Bu iki tetik KALDIRILDI. Güncelleme yine gelir (60 sn'lik kontrolle sen
     //   AKTİFKEN, ya da uygulamayı TEMİZ açtığında); ama arka plandan DÖNÜNCE artık zorla yeniden yükleme YOK.
-    const ilk = setTimeout(kontrol, 5000);                  // açılıştan ~5 sn sonra ilk kontrol (temiz açılışta)
-    return () => { durdu = true; clearInterval(iv); clearTimeout(ilk); };
+    // AÇILIŞ KONTROLLERİ — birden çok kez dene ki yeni sürüm açılıştan kısa süre sonra otomatik insin (18 sn'lik açılış koruması geçince uygulanır)
+    const ilk1 = setTimeout(kontrol, 5000);                 // ~5 sn (sürümü erken tespit et; koruma geçince yeniler)
+    const ilk2 = setTimeout(kontrol, 19000);               // ~19 sn (açılış koruması yeni geçti → varsa hemen güncelle)
+    const ilk3 = setTimeout(kontrol, 32000);               // ~32 sn (yavaş bağlantıda kaçmasın)
+    return () => { durdu = true; clearInterval(iv); clearTimeout(ilk1); clearTimeout(ilk2); clearTimeout(ilk3); };
   }, []);
   // CANLI bildirim dinle (sayfa açıkken anında gelir); yeni gelenleri telefon bildirimi olarak göster
   useEffect(() => {
@@ -6088,19 +6092,30 @@ export default function Anasayfa({ pro = false }) {
           u.onerror = sonraki;                                     // bir cümle patlarsa sıradakine geç → DONMA
           konusIlerRef.current = Date.now();
           try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); return; }
-          // ⛔⛔ ANDROID KÖK HATASI ("5-6 kelime okuyup duruyor"): Bu telefonda cümle bitince `onend` OLAYI HİÇ
-          //   TETİKLENMİYORDU → zincir İLK cümlede takılıp kalıyordu. ÇÖZÜM: cümle tahmini süresi kadar bir EMNİYET
-          //   zamanlayıcısı kur; süre dolunca ses HÂLÂ ilerliyorsa (son 1.5sn'de kelime sınırı geldiyse) biraz daha bekle,
-          //   yoksa (onend gelmese bile) ZORLA sıradaki cümleye geç. Böylece uzun cevap SONUNA KADAR okunur.
+          // ⛔⛔ ANDROID KÖK HATASI ("Gloxoo konuşmayı yarıda kesiyor, birazını okuyup duruyor"): Telefon `onboundary`
+          //   (kelime sınırı) olayını GÖNDERMEYİNCE (Android'de çoğu ses göndermez) konusIlerRef güncellenmiyor; eski
+          //   koru zamanlayıcı bunu "1.5 sn'dir ilerlemiyor → takıldı" sanıp ses HÂLÂ ÇALIYORKEN cümleyi kesip sonrakine
+          //   atlıyordu → konuşma yarıda kesiliyordu. KÖK ÇÖZÜM: karar ölçütü artık kelime sınırı DEĞİL, sadece
+          //   speechSynthesis.speaking. Ses ÇALIYORSA cümle ASLA kesilmez (çok cömert bir üst sınıra kadar bekler);
+          //   ses gerçekten SUSUNCA (onend gelmese bile) hızlıca sıradaki cümleye geçer. Böylece uzun cevap SONUNA KADAR okunur.
           const guardKur = () => {
-            const tahminMs = Math.max(2200, p.length * 100 + 2200);
-            guardT = setTimeout(function kontrol() {
+            const basZ = Date.now();
+            // bu cümlenin GERÇEK konuşma süresinden uzun, ÇOK cömert üst sınır (ses hâlâ çalıyorsa bu süreye kadar kesme YOK)
+            const enFazlaMs = Math.max(6000, p.length * 160 + 5000);
+            let basladiMi = false, sessizTik = 0;
+            const kontrol = () => {
               if (gecti) return;
-              try { if (window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} // Chrome "duraklatıldı" halinde takılırsa uyandır
-              let konusuyor = false; try { konusuyor = !!(window.speechSynthesis && window.speechSynthesis.speaking); } catch (e) {}
-              if (konusuyor && (Date.now() - konusIlerRef.current) < 1500) { guardT = setTimeout(kontrol, 1200); return; } // hâlâ ilerliyor → uzun cümleyi ORTADAN kesme
-              sonraki();                                            // takıldı/onend gelmedi → sıradaki cümle
-            }, tahminMs);
+              try { if (window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} // Chrome/Android istemsiz duraklamayı uyandır (~15sn kesilmesi olmasın)
+              let sp = false, pend = false;
+              try { const ss2 = window.speechSynthesis; sp = !!(ss2 && ss2.speaking); pend = !!(ss2 && ss2.pending); } catch (e) {}
+              const gecenMs = Date.now() - basZ;
+              if (sp || pend) { basladiMi = true; sessizTik = 0; if (gecenMs < enFazlaMs) { guardT = setTimeout(kontrol, 1000); return; } sonraki(); return; } // KONUŞUYOR → kesme, bekle (cömert sınıra kadar)
+              if (!basladiMi) { if (gecenMs < 8000) { guardT = setTimeout(kontrol, 300); return; } sonraki(); return; } // henüz başlamadı (sesler yükleniyor) → cümleyi ATLAMA, bekle
+              sessizTik++;                                            // başlamıştı, şimdi sustu → onend gelmemiş olabilir; kısa doğrula sonra geç
+              if (sessizTik < 2) { guardT = setTimeout(kontrol, 350); return; }
+              sonraki();
+            };
+            guardT = setTimeout(kontrol, 1200);
           };
           guardKur();
         };
