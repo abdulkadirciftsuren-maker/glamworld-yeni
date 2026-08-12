@@ -3507,7 +3507,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 @keyframes aiYaz{ 0%,60%,100%{ opacity:.3; transform:translateY(0); } 30%{ opacity:1; transform:translateY(-3px); } }
 /* AI giriş: İKİ SATIR — üstte ikon araçları, ALTTA yazı şeridi + gönder (içine rahat yazılır, ikonlar kaplamaz) */
 .ai-giris{ flex:none; display:flex; flex-direction:column; gap:8px; padding:10px 12px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,215,0,.16); }
-.ai-arac{ display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
+.ai-arac{ display:flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap; }
 /* yazı şeridi: tek satır DİKEY ORTALI (placeholder ortada), yazdıkça büyür; kaydırma çubuğu DIŞARI taşmaz */
 .ai-yaz-satir{ display:flex; gap:8px; align-items:flex-end; }
 /* 🎵 ŞARKI TANIMA düğmesi — çalan müziği dinleyip Gloxoo hangi şarkı olduğunu söyler */
@@ -3623,10 +3623,27 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* Her mesajın SAATİ (sağ-alt, soluk) */
 .ai-msj-saat{ display:inline-block; font-size:9.5px; opacity:.5; margin-left:7px; vertical-align:baseline; white-space:nowrap; font-family:'Cormorant Garamond',serif; letter-spacing:.02em; } /* yazıya YAPIŞIK (aynı satır sonunda), ayrı satır değil */
 /* AI mesajını TEKRAR sesli okut — mesaj içinde küçük hoparlör */
-.ai-oku-btn{ display:inline-flex; align-items:center; justify-content:center; width:25px; height:25px; margin-left:7px; padding:0; border:none; border-radius:8px; background:rgba(255,215,0,.16); color:#FFD700; cursor:pointer; vertical-align:middle; }
-.ai-oku-btn svg{ width:14px; height:14px; }
+/* SESLİ OKU GRUBU — okuma ikonu + (okurken) Duraklat/Sus TAM YANINDA (yazının yanında, balon içinde) */
+.ai-oku-grup{ display:inline-flex; align-items:center; gap:6px; vertical-align:middle; margin-left:7px; }
+.ai-oku-btn{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0; border:none; border-radius:10px; background:rgba(255,215,0,.16); color:#FFD700; cursor:pointer; vertical-align:middle; }
+.ai-oku-btn svg{ width:19px; height:19px; }
 .ai-oku-btn:active{ transform:scale(.9); }
-.ai-oku-btn.okuyor{ background:#ff5d6c; color:#fff; } /* okurken: dolu kırmızı + durdur (×) ikonu */
+/* OKURKEN: canlı ALTIN düğme + nabız halkası → "konuşuyor" belli olur */
+.ai-oku-btn.okuyor{ background:linear-gradient(180deg,#FFE9A8,#FFD700); color:#5a3f00; box-shadow:0 0 0 0 rgba(255,200,40,.6); animation:okuNabiz 1.15s ease-in-out infinite; }
+@keyframes okuNabiz{ 0%{ box-shadow:0 0 0 0 rgba(255,200,40,.55); } 70%{ box-shadow:0 0 0 8px rgba(255,200,40,0); } 100%{ box-shadow:0 0 0 0 rgba(255,200,40,0); } }
+/* KONUŞMA DALGASI — okurken oynayan çubuklar (konuştuğu görünsün) */
+.ai-oku-dalga{ display:inline-flex; align-items:center; gap:2px; height:16px; }
+.ai-oku-dalga i{ width:3px; height:6px; border-radius:2px; background:currentColor; animation:okuDalga .9s ease-in-out infinite; }
+.ai-oku-dalga i:nth-child(2){ animation-delay:.15s; }
+.ai-oku-dalga i:nth-child(3){ animation-delay:.3s; }
+.ai-oku-dalga i:nth-child(4){ animation-delay:.45s; }
+@keyframes okuDalga{ 0%,100%{ height:5px; } 50%{ height:15px; } }
+/* MİNİ Duraklat/Sus — okuma ikonunun yanında (uzaktaki büyük çubuklar yerine) */
+.ai-oku-mini{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0; border:none; border-radius:10px; cursor:pointer; vertical-align:middle; }
+.ai-oku-mini svg{ width:19px; height:19px; }
+.ai-oku-mini:active{ transform:scale(.9); }
+.ai-oku-mini.durakla{ background:linear-gradient(135deg,#8fd3ff,#2b8fe0); color:#06213b; }
+.ai-oku-mini.sus{ background:linear-gradient(135deg,#ff9a9a,#e0202c); color:#fff; }
 /* TIKLANABİLİR ÖNERİLER — AI'nin sunduğu sonraki adımlar; her biri FARKLI CANLI renk; dokununca direkt gönderilir */
 .ai-oneri-sar{ align-self:flex-start; max-width:94%; display:flex; flex-wrap:wrap; gap:8px; margin:-1px 0 4px; }
 .ai-oneri-cip{ display:inline-flex; align-items:center; gap:6px; background:var(--oc,#FFD700); border:none; color:#10131c; font-family:inherit; font-size:13px; font-weight:700; padding:8px 14px; border-radius:14px; cursor:pointer; text-align:left; line-height:1.25; box-shadow:0 3px 10px rgba(0,0,0,.28); }
@@ -3787,6 +3804,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-tema-musteri .ai-paylasim-btn.kopya{ background:rgba(150,100,30,.14); color:#7a5410; border-color:rgba(150,100,30,.5); }
 .ai-tema-musteri .ai-paylasim-btn.indir{ background:rgba(47,110,200,.12); color:#1d5fb0; border-color:rgba(47,110,200,.5); }
 .ai-tema-musteri .ai-oku-btn{ background:rgba(150,100,30,.16); color:#9a5a0a; }
+/* müşteri temasında da OKURKEN canlı altın kalsın (yukarıdaki müşteri kuralı ezmesin) */
+.ai-tema-musteri .ai-oku-btn.okuyor{ background:linear-gradient(180deg,#FFE9A8,#FFD700); color:#5a3f00; }
 /* GÜNLÜK ARŞİV penceresi — tıklanır günlük dosyalar (renkli), ay grupları, oku */
 .ai-arsiv-btn{ flex:none; width:38px; height:38px; border-radius:11px; border:1px solid rgba(240,150,46,.45); background:rgba(240,150,46,.12); color:#f0962e; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .ai-arsiv-btn svg{ width:23px; height:23px; }
@@ -3808,7 +3827,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ai-msj{ font-size:23px !important; max-width:86%; } .ai-karsilama{ font-size:23px !important; }
   .ai-input{ font-size:20px !important; min-height:58px; } .ai-msj-saat{ font-size:12px; }
   .ai-oneri-cip{ font-size:17px !important; padding:11px 18px; } .ai-paylasim-metin{ font-size:19px !important; } .ai-paylasim-btn{ font-size:16px; } .ai-harita-btn{ font-size:16px !important; padding:11px 18px; } .ai-harita-btn svg{ width:20px; height:20px; } .ai-site-btn{ font-size:16px !important; padding:11px 18px; } .ai-site-btn svg{ width:20px; height:20px; }
-  .ai-oku-btn{ width:30px; height:30px; } .ai-oku-btn svg{ width:17px; height:17px; }
+  .ai-oku-btn, .ai-oku-mini{ width:40px; height:40px; } .ai-oku-btn svg, .ai-oku-mini svg{ width:22px; height:22px; } .ai-oku-dalga{ height:20px; } .ai-oku-dalga i{ width:3.5px; }
   .ai-dil-oge{ font-size:16px; }
   .ai-ekle-oge{ font-size:18px !important; padding:13px 16px; } .ai-ekle-oge svg{ width:26px; height:26px; } .ai-ekle-menu{ min-width:200px; }
   .ai-msj-video{ max-width:320px; } .ai-msj-dosya{ font-size:15px; } .ai-ek-ad{ font-size:15px; }
@@ -3821,7 +3840,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ai-msj{ font-size:26px !important; } .ai-karsilama{ font-size:26px !important; }
   .ai-input{ font-size:23px !important; min-height:64px; } .ai-msj-saat{ font-size:13px; }
   .ai-oneri-cip{ font-size:18px !important; padding:13px 21px; } .ai-paylasim-metin{ font-size:22px !important; } .ai-paylasim-btn{ font-size:17px; } .ai-harita-btn{ font-size:18px !important; padding:13px 21px; } .ai-harita-btn svg{ width:22px; height:22px; } .ai-site-btn{ font-size:18px !important; padding:13px 21px; } .ai-site-btn svg{ width:22px; height:22px; }
-  .ai-oku-btn{ width:34px; height:34px; } .ai-oku-btn svg{ width:19px; height:19px; }
+  .ai-oku-btn, .ai-oku-mini{ width:46px; height:46px; } .ai-oku-btn svg, .ai-oku-mini svg{ width:25px; height:25px; } .ai-oku-dalga{ height:24px; } .ai-oku-dalga i{ width:4px; }
   .ai-dil-oge{ font-size:17px; }
   .ai-ekle-oge{ font-size:21px !important; padding:15px 18px; } .ai-ekle-oge svg{ width:30px; height:30px; } .ai-ekle-menu{ min-width:240px; }
   .ai-msj-video{ max-width:380px; } .ai-msj-dosya{ font-size:16px; } .ai-ek-ad{ font-size:16px; }

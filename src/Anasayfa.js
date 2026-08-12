@@ -11165,13 +11165,27 @@ export default function Anasayfa({ pro = false }) {
                       {/* RENK: müşteri temasında balon BEYAZ → KOYU palet (okunur); pro temasında balon koyu → AÇIK palet. OKURKEN: kelime imleci (▸) yerine okunan CÜMLE vurgulanır (güvenilir, konuşmayla gider) */}
                       {m.rol === "user" ? m.metin : (konusanMesaj === i ? <span className="ai-msj-okunan">{renkliCumleler(m.metin, proUye ? RC_ACIK : RC_KOYU, okunanCumle)}</span> : renkliCumleler(m.metin, proUye ? RC_ACIK : RC_KOYU))}
                       {m.zamanMs && <span className="ai-msj-saat">{new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" })}</span>}
-                      {/* AI mesajını TEKRAR sesli okut (istediğin kadar) */}
+                      {/* SESLİ OKU + (OKURKEN) DURAKLAT/SUS — hepsi YAZININ yanında (kullanıcı: aşağıdaki uzak düğmeleri okuma ikonu yanına, balon içine al). Okurken ikon CANLI (konuştuğu belli). */}
                       {m.rol !== "user" && m.metin && (
-                        <button className={"ai-oku-btn" + (konusanMesaj === i ? " okuyor" : "")} onClick={(e) => { e.stopPropagation(); okuToggle(m.metin, i); }} aria-label={konusanMesaj === i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")}>
-                          {konusanMesaj === i
-                            ? <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
-                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>}
-                        </button>
+                        <span className="ai-oku-grup">
+                          <button className={"ai-oku-btn" + (konusanMesaj === i ? " okuyor" : "")} onClick={(e) => { e.stopPropagation(); okuToggle(m.metin, i); }} aria-label={konusanMesaj === i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")} title={konusanMesaj === i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")}>
+                            {konusanMesaj === i
+                              ? <span className="ai-oku-dalga" aria-hidden="true"><i/><i/><i/><i/></span>
+                              : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>}
+                          </button>
+                          {konusanMesaj === i && (aiKonusuyor || aiDuraklat) && (
+                            <>
+                              <button className="ai-oku-mini durakla" onClick={(e) => { e.stopPropagation(); sesDuraklaToggle(); }} aria-label={aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")} title={aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")}>
+                                {aiDuraklat
+                                  ? <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                                  : <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>}
+                              </button>
+                              <button className="ai-oku-mini sus" onClick={(e) => { e.stopPropagation(); sesSus(); }} aria-label={pl(aiDil, "sus")} title={pl(aiDil, "sus")}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+                              </button>
+                            </>
+                          )}
+                        </span>
                       )}
                     </div>
                     {/* YAZININ HEMEN ALTINDA (fotoğrafın DEĞİL) Kopyala/İndir/Paylaş — bu düğmeler YAZIYI alır; fotoğrafın kendi düğmeleri kartında ayrı. [PAYLASIM] kartı varsa onun düğmeleri geçerli olduğu için burada gösterme */}
@@ -11355,6 +11369,10 @@ export default function Anasayfa({ pro = false }) {
               <input ref={yardimciCanliVideoRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={yardimciVideoSec} />
               {/* ÜST: ikon araçları (foto/canlı/mikrofon/hoparlör) — AYRI satır */}
               <div className="ai-arac">
+                {/* YENİ KONUŞMA (+) — EN BAŞTA (kullanıcı: "artı en başta olsun, yeni konuşma diye"). Görünümü temizler (geçmiş arşivde kalır). */}
+                <button className="ai-ses ai-yeni" onClick={yeniKonusma} aria-label={t("yeniKonusma", "Yeni konuşma")} title={t("yeniKonusma", "Yeni konuşma")}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
                 {/* EKLE — tek düğme: Fotoğraf (vision) + Video + Dosya (PDF/metin); dokununca menü açılır */}
                 <div className="ai-ekle-sar">
                   <button className="ai-ses ai-foto-ekle" onClick={() => setYardimciEkMenu((v) => !v)} aria-label={t("ekle", "Ekle")}>
@@ -11449,13 +11467,10 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                   )}
                 </div>
-                {/* YENİ KONUŞMA — görünümü temizler (geçmiş arşivde kalır) */}
-                <button className="ai-ses ai-yeni" onClick={yeniKonusma} aria-label={t("yeniKonusma", "Yeni konuşma")}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                </button>
               </div>
-              {/* KONUŞMA KONTROL — Gloxoo konuşurken çıkar: Duraklat/Devam + Sus (kullanıcı isteği) */}
-              {(aiKonusuyor || aiDuraklat) && (
+              {/* KONUŞMA KONTROL (YEDEK) — SADECE belirli bir mesaja bağlı OLMAYAN konuşmada (konusanMesaj<0: örn ses örneği) çıkar.
+                  Bir mesaj okunurken Duraklat/Sus artık o mesajın YANINDA (balon içinde) → aşağıda tekrar gösterme (sayfayı uzatmasın, uzakta kalmasın). */}
+              {(aiKonusuyor || aiDuraklat) && konusanMesaj < 0 && (
                 <div className="ai-konus-kontrol">
                   <button className="ai-kk-btn durakla" onClick={sesDuraklaToggle}>
                     {aiDuraklat
