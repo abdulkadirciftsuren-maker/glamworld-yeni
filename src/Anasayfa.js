@@ -6169,27 +6169,28 @@ export default function Anasayfa({ pro = false }) {
           u.onend = sonraki;
           u.onerror = sonraki;                                     // bir cümle patlarsa sıradakine geç → DONMA
           konusIlerRef.current = Date.now();
+          // ⛔ SAMSUNG/ANDROID KÖK HATASI ("kırmızıyı okuyup duruyor, imleç ilerlemiyor, sonraki cümleye geçmiyor"):
+          //   Motor İLK cümleden sonra TAKILIYOR → speaking=true kalıyor, onend HİÇ gelmiyor, sonraki speak() YUTULUYOR.
+          //   ÇÖZÜM (kalıcı): (1) HER cümlede önce cancel() ile motoru SIFIRLA, sonra speak() → takılma temizlenir, cümle YUTULMAZ.
+          //   (2) Sıradakine geçişi "speaking"in bitti demesine GÜVENEREK değil, motor bitti diyorsa HEMEN, demiyorsa (Samsung
+          //   takılı) CÖMERT bir tahmini süre sonra yap → hem hızlı cihazda tam senkron hem Samsung'da SONUNA KADAR okunur.
+          try { window.speechSynthesis.cancel(); } catch (e) {}     // önceki cümlenin TAKILAN durumunu temizle (yutulmayı önler)
           try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); return; }
-          // KORU ZAMANLAYICI: ses çalıyorsa cümle asla kesilmez; gerçekten susunca (onend gelmese bile) sıradakine geçer → sonuna kadar okunur.
-          const guardKur = () => {
-            const basZ = Date.now();
-            const enFazlaMs = Math.max(6000, p.length * 160 + 5000);
-            let basladiMi = false, sessizTik = 0;
-            const kontrol = () => {
-              if (gecti) return;
-              try { if (window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} // Chrome/Android istemsiz duraklamayı uyandır (~15sn kesilmesi olmasın)
-              let sp = false, pend = false;
-              try { const ss2 = window.speechSynthesis; sp = !!(ss2 && ss2.speaking); pend = !!(ss2 && ss2.pending); } catch (e) {}
-              const gecenMs = Date.now() - basZ;
-              if (sp || pend) { basladiMi = true; sessizTik = 0; if (gecenMs < enFazlaMs) { guardT = setTimeout(kontrol, 1000); return; } sonraki(); return; } // KONUŞUYOR → kesme, bekle (cömert sınıra kadar)
-              if (!basladiMi) { if (gecenMs < 8000) { guardT = setTimeout(kontrol, 300); return; } sonraki(); return; } // henüz başlamadı (sesler yükleniyor) → cümleyi ATLAMA, bekle
-              sessizTik++;                                            // başlamıştı, şimdi sustu → onend gelmemiş olabilir; kısa doğrula sonra geç
-              if (sessizTik < 2) { guardT = setTimeout(kontrol, 350); return; }
-              sonraki();
-            };
-            guardT = setTimeout(kontrol, 1200);
+          try { window.speechSynthesis.resume(); } catch (e) {}
+          const basZ = Date.now();
+          const enAzMs = Math.max(700, p.length * 45 + 400);        // en hızlı ihtimalde bile bu kadar sürer → ÖNCE atlama (erken kesme yok)
+          const enCokMs = Math.max(2600, p.length * 82 + 900);      // Samsung takılırsa bu kadar sonra KESİN sıradakine geç (cömert → cümleyi kesmez)
+          const kontrol = () => {
+            if (gecti) return;
+            try { if (window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} // Chrome/Android istemsiz duraklamayı uyandır
+            const gecen = Date.now() - basZ;
+            let sp = false; try { const ss2 = window.speechSynthesis; sp = !!(ss2 && (ss2.speaking || ss2.pending)); } catch (e) {}
+            if (gecen < enAzMs) { guardT = setTimeout(kontrol, 250); return; }   // henüz erken → bekle (cümleyi kesme)
+            if (!sp) { sonraki(); return; }                                     // motor BİTTİ diyor (Samsung dışı cihaz) → hemen sıradakine
+            if (gecen >= enCokMs) { sonraki(); return; }                        // Samsung takıldı (speaking hep true) → cömert süre doldu, sıradakine geç
+            guardT = setTimeout(kontrol, 300);
           };
-          guardKur();
+          guardT = setTimeout(kontrol, Math.min(enAzMs + 50, 900));
         };
         soyle(0);
       };
