@@ -6003,15 +6003,12 @@ export default function Anasayfa({ pro = false }) {
       oynatSira(0);
     } catch (e) { dus(); }
   };
-  // AI cevabını SESLİ oku: kullanıcı Gloxoo Sesi'nden bir ses SEÇTİYSE gerçek insan sesi (Gemini — erkek/kadın, her dil, farklı sesler);
-  // seçmediyse ya da gerçek ses gelmezse TARAYICININ kendi sesi (yedek). Kullanıcı: "eski konuşma erkek/kadın her dilde çalışacaktı, geri getir."
+  // AI cevabını SESLİ oku — ARTIK HER ZAMAN TARAYICININ KENDİ SESİ (TEK PARÇA yöntemi, güvenilir, sonuna kadar okur).
+  // ⛔ Gemini (gerçek ses) yolu DEVRE DIŞI: kullanıcı ("kirmizi cumleyi okuyup DURUYOR, hicbir sey degismiyor") Gemini yolundaydı
+  //   ve o yol ilk cümleden sonra kesiliyordu; benim tek-parça düzeltmem tarayıcı yolundaydı → ona hiç ulaşmıyordu. Artık HEP tarayıcı yolu.
   const sesliOku = (metin, onBitti, onCumle, onIlerleme) => {
     if (!metin) { if (typeof onBitti === "function") onBitti(); return; }
-    try {
-      if (gercekSesKapaliRef.current) { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); return; }
-      // Gerçek ses (Gemini). Herhangi bir parça gelmezse o parça TARAYICI sesiyle okunur (aşağıda) → ASLA yarıda durmaz.
-      gercekSesOku(metin, onBitti, onCumle, onIlerleme, () => { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {} });
-    } catch (e) { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (x) {} }
+    try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {}
   };
   // AI cevabını TARAYICININ KENDİ sesiyle oku (yedek) — dil kodu HER ZAMAN güncel aiDilRef'ten
   const sesliOkuTarayici = (metin, onBitti, onCumle, onIlerleme) => {
@@ -11369,8 +11366,8 @@ export default function Anasayfa({ pro = false }) {
                       <div className="ai-ses-baslik">🔊 Gloxoo Sesi</div>
                       {GLOX_SESLER.map((s) => (
                         <button key={s.id} className={"ai-dil-oge" + (s.id === gloxSes ? " sec" : "")} onClick={() => {
-                          setGloxSes(s.id); gloxSesRef.current = s.id; gercekSesKapaliRef.current = false; // GERÇEK SES aç → seçilen ses (erkek/kadın, her dil) kullanılsın
-                          // KISA ÖRNEK: seçilen sesi HEMEN duy
+                          setGloxSes(s.id); gloxSesRef.current = s.id; // (Gemini yolu kapalı → seçim tarayıcı sesinin CİNSİYET tercihine etki eder; önce SONUNA KADAR okuma garanti)
+                          // KISA ÖRNEK: seçilen sesi HEMEN duy (tek parça, tarayıcı sesi)
                           try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
                         }}>
                           <span className="ai-dil-oge-ad">{s.id === gloxSes ? "✓ " : ""}{s.ad} · {s.cins}</span>
