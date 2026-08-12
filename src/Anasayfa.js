@@ -5917,6 +5917,8 @@ export default function Anasayfa({ pro = false }) {
       // ── HIZLI BAŞLAT: metni CÜMLELERE böl; İLK parçayı hemen seslendirip ÇAL, o çalarken
       //    sonraki parçaları arkadan hazırla → ses 30-60 sn değil, birkaç saniyede başlar. ──
       const parcalar = _sesBol(temiz.slice(0, 2400));               // parça metinleri
+      // DEVAM için: gerçek-ses parçalarını da sakla (ses parçası bittiği anda Duraklat'a basılırsa tarayıcı yoluyla KALDIĞI parçadan devam edilir)
+      try { okuParcaRef.current = parcalar.map((pp) => ({ metin: pp })); okuIdxRef.current = 0; okuCbRef.current = { onBitti, onCumle, onIlerleme }; } catch (e) {}
       const uzun = parcalar.map((p) => p.length || 1);              // her parçanın karakter uzunluğu (kelime imleci için)
       const toplamChar = uzun.reduce((a, b) => a + b, 0) || 1;
       let oncekiChar = 0;                                           // tamamlanan parçaların toplam karakteri
@@ -5956,6 +5958,7 @@ export default function Anasayfa({ pro = false }) {
       };
       const oynatSira = async (idx) => {
         if (durduruldu) return;
+        okuIdxRef.current = idx;                                      // DEVAM için: kaçıncı gerçek-ses parçasındayız
         if (idx >= parcalar.length) { bitir(); return; }             // hepsi bitti
         let sonuc = await sesGetir(idx);
         if (durduruldu) return;
@@ -6039,6 +6042,7 @@ export default function Anasayfa({ pro = false }) {
       if (!temiz) return;
       ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla (bu okuma sonuna kadar sürsün)
       if (aiDuraklatRef.current) { aiDuraklatRef.current = false; try { setAiDuraklat(false); } catch (e) {} } // eski DURAKLAT durumu yeni okumayı dondurmasın
+      try { if (aiSesElemRef.current && aiSesElemRef.current.ended) aiSesElemRef.current = null; } catch (e) {} // ⛔ TARAYICI okumasında Duraklat, eski BİTMİŞ gerçek-ses parçasını yakalamasın (baştan çalmasın)
       window.speechSynthesis.cancel();
       // EN DOĞAL sesi DİLE GÖRE seç — cache'li. Kullanıcının seçtiği Gloxoo Sesi'nin CİNSİYETİNE (Kadın/Erkek) göre kadın/erkek
       //   tarayıcı sesi tercih edilir (telefonda o dilde erkek+kadın ses yüklüyse SEÇİM İŞE YARAR). Karışık dilde her parça kendi diliyle.
@@ -6686,9 +6690,10 @@ export default function Anasayfa({ pro = false }) {
   // DURAKLAT/DEVAM — konuşmayı olduğu yerde durdurur; tekrar basınca kaldığı yerden devam eder
   const sesDuraklaToggle = () => {
     try {
-      // GERÇEK ses (mp3) çalıyorsa onu duraklat/devam ettir
+      // GERÇEK ses (mp3) ÇALIYORSA/DURAKLADIYSA onu duraklat/devam ettir. ⛔ BİTMİŞ (ended) sesi YAKALAMA — yoksa "Duraklat" eski
+      //   parçayı BAŞTAN çalıyordu (kullanıcı: "pauza baştan başlatıyor"). Sadece GERÇEKTEN aktif (bitmemiş) ses için bu dal.
       const a = aiSesElemRef.current;
-      if (a) {
+      if (a && !a.ended) {
         if (aiDuraklat || a.paused) { const p = a.play(); if (p && p.catch) p.catch(() => {}); aiDuraklatRef.current = false; setAiDuraklat(false); }
         else { a.pause(); aiDuraklatRef.current = true; setAiDuraklat(true); }
         return;
