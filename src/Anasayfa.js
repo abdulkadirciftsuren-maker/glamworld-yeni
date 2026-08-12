@@ -1837,11 +1837,6 @@ export default function Anasayfa({ pro = false }) {
   const maskotBosRef = useRef(0);
   const konusIlerRef = useRef(0);
   const ttsTarayiciIptalRef = useRef(false); // tarayıcı sesi SIRAYLA okurken: susturulunca sıradaki cümleye GEÇMESİN (durunca gerçekten dursun)
-  // DURAKLAT/DEVAM için: o an okunan parçalar + kaçıncı parçada olduğumuz + geri çağrılar → Devam'da (native resume işlemezse) KALDIĞI parçadan yeniden okunur
-  const okuParcaRef = useRef([]);
-  const okuIdxRef = useRef(0);
-  const okuCbRef = useRef(null);
-  const okuEpochRef = useRef(0); // her YENİ okuma bir tur no alır; ESKİ okuma zinciri (soyle/guard) bu no değişince kendini keser → çift ses OLMAZ
   const okuBosRef = useRef(0);                // balon ■ ikonu DONMA emniyeti: ses kaç ölçümdür hiç çalmıyor (temizle sayacı)
   useEffect(() => {
     const id = setInterval(() => {
@@ -5917,8 +5912,6 @@ export default function Anasayfa({ pro = false }) {
       // ── HIZLI BAŞLAT: metni CÜMLELERE böl; İLK parçayı hemen seslendirip ÇAL, o çalarken
       //    sonraki parçaları arkadan hazırla → ses 30-60 sn değil, birkaç saniyede başlar. ──
       const parcalar = _sesBol(temiz.slice(0, 2400));               // parça metinleri
-      // DEVAM için: gerçek-ses parçalarını da sakla (ses parçası bittiği anda Duraklat'a basılırsa tarayıcı yoluyla KALDIĞI parçadan devam edilir)
-      try { okuParcaRef.current = parcalar.map((pp) => ({ metin: pp })); okuIdxRef.current = 0; okuCbRef.current = { onBitti, onCumle, onIlerleme }; } catch (e) {}
       const uzun = parcalar.map((p) => p.length || 1);              // her parçanın karakter uzunluğu (kelime imleci için)
       const toplamChar = uzun.reduce((a, b) => a + b, 0) || 1;
       let oncekiChar = 0;                                           // tamamlanan parçaların toplam karakteri
@@ -5958,7 +5951,6 @@ export default function Anasayfa({ pro = false }) {
       };
       const oynatSira = async (idx) => {
         if (durduruldu) return;
-        okuIdxRef.current = idx;                                      // DEVAM için: kaçıncı gerçek-ses parçasındayız
         if (idx >= parcalar.length) { bitir(); return; }             // hepsi bitti
         let sonuc = await sesGetir(idx);
         if (durduruldu) return;
@@ -6041,8 +6033,6 @@ export default function Anasayfa({ pro = false }) {
         .replace(/\s+/g, " ").trim();
       if (!temiz) return;
       ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla (bu okuma sonuna kadar sürsün)
-      if (aiDuraklatRef.current) { aiDuraklatRef.current = false; try { setAiDuraklat(false); } catch (e) {} } // eski DURAKLAT durumu yeni okumayı dondurmasın
-      try { if (aiSesElemRef.current && aiSesElemRef.current.ended) aiSesElemRef.current = null; } catch (e) {} // ⛔ TARAYICI okumasında Duraklat, eski BİTMİŞ gerçek-ses parçasını yakalamasın (baştan çalmasın)
       window.speechSynthesis.cancel();
       // EN DOĞAL sesi DİLE GÖRE seç — cache'li. Kullanıcının seçtiği Gloxoo Sesi'nin CİNSİYETİNE (Kadın/Erkek) göre kadın/erkek
       //   tarayıcı sesi tercih edilir (telefonda o dilde erkek+kadın ses yüklüyse SEÇİM İŞE YARAR). Karışık dilde her parça kendi diliyle.
@@ -6103,9 +6093,6 @@ export default function Anasayfa({ pro = false }) {
         });
       });
       if (!parcalar.length) parcalar.push({ metin: temiz, sesKod: sesDilKodu, cumle: 0, ofs: 0 });
-      // DEVAM için sakla: parçalar + geri çağrılar (native resume işlemezse kaldığı parçadan yeniden okunur)
-      okuParcaRef.current = parcalar; okuIdxRef.current = 0; okuCbRef.current = { onBitti, onCumle, onIlerleme };
-      const benimEpoch = ++okuEpochRef.current; // BU okumanın tur no'su → yeni okuma başlarsa eski zincir (aşağıdaki soyle/guard) kendini keser
       const konus = () => {
         // ── KELİME KELİME İLERLEME (teleprompter) ──
         // İlerleme 0→1 hesaplanır: onboundary VARSA gerçek karakter konumundan (kesin), YOKSA zamana göre (tahmin).
@@ -6153,12 +6140,10 @@ export default function Anasayfa({ pro = false }) {
         //   her cümle BİTİNCE (onend) sıradaki cümleyi başlat. Böylece uzun cevap SONUNA KADAR okunur.
         // (Parça konumu/ofs YUKARIDA hesaplandı — her parça kendi TEMİZ içindeki gerçek konumunu, dilini ve cümle no'sunu taşır.)
         const soyle = (idx) => {
-          if (okuEpochRef.current !== benimEpoch) return;          // YENİ bir okuma başladı → bu ESKİ zincir kendini kessin (çift ses olmasın)
           if (ttsTarayiciIptalRef.current) return;                 // susturuldu → sıradaki parçaya GEÇME (durunca dursun)
           if (idx >= parcalar.length) { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } return; } // hepsi bitti
           const seg = parcalar[idx];
           const p = seg.metin;
-          okuIdxRef.current = idx;                                  // DEVAM için: kaçıncı parçadayız (native resume işlemezse buradan yeniden okunur)
           // CÜMLE VURGUSU: onboundary'e GÜVENME (Android çoğu zaman göndermez → desenkron). Parçanın CÜMLE no'suyla haber ver
           //   → sohbette o cümle vurgulanır, konuşmayla BİRLİKTE ilerler. (Aynı cümlenin farklı dil parçalarında idx aynı → teleCumle no-op.)
           if (typeof onCumle === "function") { try { onCumle(seg.cumle); } catch (e) {} }
@@ -6170,8 +6155,6 @@ export default function Anasayfa({ pro = false }) {
           let gecti = false, guardT = null;
           // Bu cümle bitince (VEYA patlarsa VEYA emniyet süresi dolunca) → SIRADAKİ cümle. TEK sefer çalışır (gecti).
           const sonraki = () => {
-            if (okuEpochRef.current !== benimEpoch) return;        // eski zincir → sus
-            if (aiDuraklatRef.current) return;                     // ⛔ DURAKLATILDI → ilerleme (bu çağrı iptal cancel'dan gelmiş olabilir); Devam'da devralınır
             if (gecti) return; gecti = true;
             if (guardT) { clearTimeout(guardT); guardT = null; }
             if (ttsTarayiciIptalRef.current) return;               // durduysa sırada bekleme
@@ -6197,10 +6180,7 @@ export default function Anasayfa({ pro = false }) {
             const enFazlaMs = Math.max(6000, p.length * 160 + 5000);
             let basladiMi = false, sessizTik = 0;
             const kontrol = () => {
-              if (gecti || okuEpochRef.current !== benimEpoch) return; // bitti VEYA yeni okuma başladı → bu guard dursun
-              // ⛔ KULLANICI DURAKLATTI (Duraklat düğmesi): resume ETME, sıradakine GEÇME → duraklama TUTSUN. Süre sayacını da
-              //   dondur (basZ'yi ileri it) ki uzun duraklamadan sonra cümle "süre doldu" sanılıp atlanmasın (Devam'da kaldığı yerden).
-              if (aiDuraklatRef.current) { basZ += 400; guardT = setTimeout(kontrol, 400); return; }
+              if (gecti) return;
               try { if (window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} // Chrome/Android istemsiz duraklamayı uyandır (~15sn kesilmesi olmasın)
               let sp = false, pend = false;
               try { const ss2 = window.speechSynthesis; sp = !!(ss2 && ss2.speaking); pend = !!(ss2 && ss2.pending); } catch (e) {}
@@ -6234,7 +6214,6 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     const id = setInterval(() => {
       if (konusanMesajRef.current < 0) { okuBosRef.current = 0; return; } // okunan mesaj yok
-      if (aiDuraklatRef.current) { okuBosRef.current = 0; return; }        // ⛔ KULLANICI DURAKLATTI → ses yok ama DONMUŞ DEĞİL; temizleme (yoksa Duraklat'ta kontroller kaybolup okuma kapanıyordu)
       let calisiyor = false; try { calisiyor = gloxKonusuyor(); } catch (e) {}
       if (calisiyor) { okuBosRef.current = 0; return; }                    // hâlâ konuşuyor/hazırlanıyor → dokunma
       okuBosRef.current++;
@@ -6687,38 +6666,8 @@ export default function Anasayfa({ pro = false }) {
   // Sesli modu kapatınca konuşmayı sustur
   // Hoparlör = SADECE sonraki cevapların oto-okumasını aç/kapar. ÇALAN konuşmayı KESMEZ (onu sadece balon × düğmesi durdurur — iki düğme AYRI, birbirine bağlı değil).
   const sesliModToggle = () => { setSesliMod((v) => !v); };
-  // DURAKLAT/DEVAM — konuşmayı olduğu yerde durdurur; tekrar basınca kaldığı yerden devam eder
-  const sesDuraklaToggle = () => {
-    try {
-      // GERÇEK ses (mp3) ÇALIYORSA/DURAKLADIYSA onu duraklat/devam ettir. ⛔ BİTMİŞ (ended) sesi YAKALAMA — yoksa "Duraklat" eski
-      //   parçayı BAŞTAN çalıyordu (kullanıcı: "pauza baştan başlatıyor"). Sadece GERÇEKTEN aktif (bitmemiş) ses için bu dal.
-      const a = aiSesElemRef.current;
-      if (a && !a.ended) {
-        if (aiDuraklat || a.paused) { const p = a.play(); if (p && p.catch) p.catch(() => {}); aiDuraklatRef.current = false; setAiDuraklat(false); }
-        else { a.pause(); aiDuraklatRef.current = true; setAiDuraklat(true); }
-        return;
-      }
-      // Tarayıcı sesi — DETERMİNİSTİK (kullanıcı: "Devam açmıyor, kontroller kayboluyor"). Android'de native pause/resume
-      //   güvenilmez (pause bazen sesi tamamen siler). O yüzden: DURAKLAT = zinciri durdur + sesi kes; DEVAM = KALDIĞI
-      //   parçadan metni YENİDEN okut. Böylece hem "açmıyor" hem "çift ses" biter.
-      const ss = window.speechSynthesis; if (!ss) return;
-      if (aiDuraklat) {
-        // DEVAM: kaldığı parçadan itibaren yeniden oku
-        aiDuraklatRef.current = false; setAiDuraklat(false);
-        const parc = okuParcaRef.current || []; const idx = okuIdxRef.current || 0;
-        const kalan = parc.slice(idx).map((s) => s && s.metin).filter(Boolean).join(" ");
-        const cb = okuCbRef.current || {};
-        try { ss.cancel(); } catch (e) {}
-        if (kalan) { try { sesliOku(kalan, cb.onBitti); } catch (e) {} } // onCumle/onIlerleme yok → cümle vurgusu yerinde kalır
-        else { try { okuTemizle(); } catch (e) {} }                     // okunacak bir şey kalmadıysa temizle
-      } else if (ss.speaking || ss.pending || (okuParcaRef.current && okuParcaRef.current.length)) {
-        // DURAKLAT: zinciri TAMAMEN durdur (sonraki parçaya geçmesin) + sesi kes. Watchdog aiDuraklatRef sayesinde temizlemez.
-        aiDuraklatRef.current = true; setAiDuraklat(true);
-        ttsTarayiciIptalRef.current = true;                            // zincir sıradakine GEÇMESİN
-        try { ss.cancel(); } catch (e) {}                              // sesi hemen kes (Android'de en güvenilir duruş)
-      }
-    } catch (e) {}
-  };
+  // (DURAKLAT/DEVAM KALDIRILDI — kullanıcı isteği: "pauza ikonunu kaldır, konuşma ikonu oku/durdur çalışsın".
+  //  Artık okuma ikonu tek başına oku↔durdur toggle'ı; ayrı Duraklat yok. Durdurmak = okuma ikonuna (kare) veya Sus.)
   // SUS — konuşmayı tamamen keser (sen hemen konuşabilirsin); canlı modda dinlemeye geçer
   const sesSus = () => {
     gloxSustur();
@@ -11132,9 +11081,8 @@ export default function Anasayfa({ pro = false }) {
           </div>
           {dinliyor ? <div className="maskot-tanit-dinle"><span className="mtd-nokta" /><span className="mtd-nokta" /><span className="mtd-nokta" /> {t("maskotDinliyor", "Seni dinliyorum — buyur, söyle")}</div>
             : (canliSohbet && !aiKonusuyor && !yardimciYukleniyor) ? <div className="maskot-tanit-dinle bekle">⏳ {t("maskotBekle", "Seni bekliyorum, ne dersen söyle")}</div> : null}
-          {(aiKonusuyor || aiDuraklat) && (
+          {aiKonusuyor && (
             <div className="maskot-tanit-dugmeler">
-              <button className="maskot-tanit-btn mt-durakla" onClick={(e) => { e.stopPropagation(); sesDuraklaToggle(); }}>{aiDuraklat ? "▶" : "⏸"} {aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")}</button>
               <button className="maskot-tanit-btn mt-sus" onClick={(e) => { e.stopPropagation(); sesSus(); }}>🔇 {pl(aiDil, "sus")}</button>
             </div>
           )}
@@ -11217,27 +11165,14 @@ export default function Anasayfa({ pro = false }) {
                       {/* RENK: müşteri temasında balon BEYAZ → KOYU palet (okunur); pro temasında balon koyu → AÇIK palet. OKURKEN: kelime imleci (▸) yerine okunan CÜMLE vurgulanır (güvenilir, konuşmayla gider) */}
                       {m.rol === "user" ? m.metin : (konusanMesaj === i ? <span className="ai-msj-okunan">{renkliCumleler(m.metin, proUye ? RC_ACIK : RC_KOYU, okunanCumle)}</span> : renkliCumleler(m.metin, proUye ? RC_ACIK : RC_KOYU))}
                       {m.zamanMs && <span className="ai-msj-saat">{new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" })}</span>}
-                      {/* SESLİ OKU + (OKURKEN) DURAKLAT/SUS — hepsi YAZININ yanında (kullanıcı: aşağıdaki uzak düğmeleri okuma ikonu yanına, balon içine al). Okurken ikon CANLI (konuştuğu belli). */}
+                      {/* SESLİ OKU — TEK DÜĞME, play/pause gibi (kullanıcı: "Duraklat'ı kaldır, konuşma ikonu oku/durdur çalışsın").
+                          Boşta: hoparlör (bas=oku). Okurken: DURDUR (kare) — basınca konuşma durur. Ayrı Duraklat YOK. */}
                       {m.rol !== "user" && m.metin && (
-                        <span className="ai-oku-grup">
-                          <button className={"ai-oku-btn" + (konusanMesaj === i ? " okuyor" : "")} onClick={(e) => { e.stopPropagation(); okuToggle(m.metin, i); }} aria-label={konusanMesaj === i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")} title={konusanMesaj === i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")}>
-                            {konusanMesaj === i
-                              ? <span className="ai-oku-dalga" aria-hidden="true"><i/><i/><i/><i/></span>
-                              : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>}
-                          </button>
-                          {konusanMesaj === i && (aiKonusuyor || aiDuraklat) && (
-                            <>
-                              <button className="ai-oku-mini durakla" onClick={(e) => { e.stopPropagation(); sesDuraklaToggle(); }} aria-label={aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")} title={aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")}>
-                                {aiDuraklat
-                                  ? <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                                  : <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>}
-                              </button>
-                              <button className="ai-oku-mini sus" onClick={(e) => { e.stopPropagation(); sesSus(); }} aria-label={pl(aiDil, "sus")} title={pl(aiDil, "sus")}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
-                              </button>
-                            </>
-                          )}
-                        </span>
+                        <button className={"ai-oku-btn" + (konusanMesaj === i ? " okuyor" : "")} onClick={(e) => { e.stopPropagation(); okuToggle(m.metin, i); }} aria-label={konusanMesaj === i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")} title={konusanMesaj === i ? t("durdur", "Durdur") : t("tekrarOku", "Sesli oku")}>
+                          {konusanMesaj === i
+                            ? <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
+                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>}
+                        </button>
                       )}
                     </div>
                     {/* YAZININ HEMEN ALTINDA (fotoğrafın DEĞİL) Kopyala/İndir/Paylaş — bu düğmeler YAZIYI alır; fotoğrafın kendi düğmeleri kartında ayrı. [PAYLASIM] kartı varsa onun düğmeleri geçerli olduğu için burada gösterme */}
@@ -11526,16 +11461,10 @@ export default function Anasayfa({ pro = false }) {
                   )}
                 </div>
               </div>
-              {/* KONUŞMA KONTROL (YEDEK) — SADECE belirli bir mesaja bağlı OLMAYAN konuşmada (konusanMesaj<0: örn ses örneği) çıkar.
-                  Bir mesaj okunurken Duraklat/Sus artık o mesajın YANINDA (balon içinde) → aşağıda tekrar gösterme (sayfayı uzatmasın, uzakta kalmasın). */}
-              {(aiKonusuyor || aiDuraklat) && konusanMesaj < 0 && (
+              {/* KONUŞMA DURDUR (YEDEK) — SADECE belirli bir mesaja bağlı OLMAYAN konuşmada (konusanMesaj<0: örn ses örneği) çıkar.
+                  Duraklat KALDIRILDI (kullanıcı isteği) → sadece DURDUR. Mesaj okunurken durdurma zaten o mesajın okuma ikonunda (kare). */}
+              {aiKonusuyor && konusanMesaj < 0 && (
                 <div className="ai-konus-kontrol">
-                  <button className="ai-kk-btn durakla" onClick={sesDuraklaToggle}>
-                    {aiDuraklat
-                      ? <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-                      : <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>}
-                    <span>{aiDuraklat ? pl(aiDil, "devam") : pl(aiDil, "durakla")}</span>
-                  </button>
                   <button className="ai-kk-btn sus" onClick={sesSus}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M17 9l5 6M22 9l-5 6" /></svg>
                     <span>{pl(aiDil, "sus")}</span>
