@@ -3506,8 +3506,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-yaziyor i:nth-child(2){ animation-delay:.15s; } .ai-yaziyor i:nth-child(3){ animation-delay:.3s; }
 @keyframes aiYaz{ 0%,60%,100%{ opacity:.3; transform:translateY(0); } 30%{ opacity:1; transform:translateY(-3px); } }
 /* AI giriş: İKİ SATIR — üstte ikon araçları, ALTTA yazı şeridi + gönder (içine rahat yazılır, ikonlar kaplamaz) */
-.ai-giris{ flex:none; display:flex; flex-direction:column; gap:8px; padding:10px 12px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,215,0,.16); }
-.ai-arac{ display:flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap; }
+.ai-giris{ flex:none; display:flex; flex-direction:column; gap:8px; padding:10px 8px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,215,0,.16); }
+/* ARAÇ İKONLARI — TEK SIRA (kullanıcı: "hepsi tek sıra olacak, son ikon alta düşmesin"): sarma KAPALI, aralık dar, gerekirse hafif küçülür */
+.ai-arac{ display:flex; gap:4px; align-items:center; justify-content:center; flex-wrap:nowrap; }
 /* yazı şeridi: tek satır DİKEY ORTALI (placeholder ortada), yazdıkça büyür; kaydırma çubuğu DIŞARI taşmaz */
 .ai-yaz-satir{ display:flex; gap:8px; align-items:flex-end; }
 /* 🎵 ŞARKI TANIMA düğmesi — çalan müziği dinleyip Gloxoo hangi şarkı olduğunu söyler */
@@ -3537,7 +3538,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-gonder svg{ width:20px; height:20px; }
 .ai-gonder:disabled{ opacity:.5; cursor:default; }
 /* DÜĞMELER KARE (ana sayfadaki gibi, yuvarlak değil) — mikrofon + hoparlör + foto + dil + yeni + canlı */
-.ai-ses{ flex:none; width:42px; height:42px; border-radius:12px; border:1px solid rgba(255,215,0,.4); cursor:pointer; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.08); color:#FFD700; }
+.ai-ses{ flex:0 0 auto; width:40px; height:40px; border-radius:12px; border:1px solid rgba(255,215,0,.4); cursor:pointer; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.08); color:#FFD700; }
 .ai-ses svg{ width:19px; height:19px; }
 .ai-ses:active{ transform:scale(.92); }
 /* HER İKON KENDİ RENGİNDE (kırmızı + krem her iki temada görünür) — sade/renksiz değil */

@@ -2069,20 +2069,27 @@ export default function Anasayfa({ pro = false }) {
     if (w === okunanKelimeRef.current) return; // aynı kelime → gereksiz yeniden çizim yok
     okunanKelimeRef.current = w; setOkunanKelime(w); maskotKaydirKelime(w);
   };
-  // Okunan CÜMLEYİ sohbet kabında ORTAYA kaydır (yazı okundukça yukarı yürür) — kelime yerine cümle bazlı (rahat, güvenilir)
+  // Okunan CÜMLEYİ sohbet kabında ORTAYA getir (okuma ilerledikçe ekran o cümleye kaysın — kullanıcı: "konuşma geçince o bölüm ekrana gelmiyor").
+  // DOM güncellensin diye bir kare bekle; önce scrollIntoView (kabın kendi kaydırması), olmazsa elle hesap.
   const maskotKaydirCumle = (ci) => {
     if (elleKaydirRef.current) return;
-    try {
-      const kap = document.querySelector('.ai-msj-okunan');
-      const el = kap && kap.querySelector ? kap.querySelector('[data-ci="' + ci + '"]') : null;
-      if (!el) return;
-      let sc = el.parentElement;
-      while (sc && sc !== document.body) { const st = getComputedStyle(sc); if ((st.overflowY === "auto" || st.overflowY === "scroll") && sc.scrollHeight > sc.clientHeight + 4) break; sc = sc.parentElement; }
-      if (!sc || sc === document.body) return;
-      const scR = sc.getBoundingClientRect(), elR = el.getBoundingClientRect();
-      const hedef = sc.scrollTop + (elR.top - scR.top) - sc.clientHeight / 2 + elR.height / 2;
-      try { sc.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { sc.scrollTop = Math.max(0, hedef); }
-    } catch (e) {}
+    const yap = () => {
+      try {
+        const kap = document.querySelector('.ai-msj-okunan');
+        const el = kap && kap.querySelector ? kap.querySelector('[data-ci="' + ci + '"]') : null;
+        if (!el) return;
+        // 1) EN GÜVENİLİR: elemanın kendi scrollIntoView'i (en yakın kaydırılabilir kabı ORTALAR) — chat kabı .ai-akis
+        try { el.scrollIntoView({ block: "center", behavior: "smooth" }); return; } catch (e) {}
+        // 2) YEDEK: elle kap bul + ortaya kaydır
+        let sc = el.parentElement;
+        while (sc && sc !== document.body) { const st = getComputedStyle(sc); if ((st.overflowY === "auto" || st.overflowY === "scroll") && sc.scrollHeight > sc.clientHeight + 4) break; sc = sc.parentElement; }
+        if (!sc || sc === document.body) return;
+        const scR = sc.getBoundingClientRect(), elR = el.getBoundingClientRect();
+        const hedef = sc.scrollTop + (elR.top - scR.top) - sc.clientHeight / 2 + elR.height / 2;
+        try { sc.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { sc.scrollTop = Math.max(0, hedef); }
+      } catch (e) {}
+    };
+    try { requestAnimationFrame(() => requestAnimationFrame(yap)); } catch (e) { yap(); }
   };
   // TTS her CÜMLE başında çağrılır (onCumle) → o cümleyi vurgula + ortaya kaydır (konuşmayla birlikte, güvenilir)
   const teleCumle = (idx) => {
@@ -6166,6 +6173,9 @@ export default function Anasayfa({ pro = false }) {
             let basladiMi = false, sessizTik = 0;
             const kontrol = () => {
               if (gecti) return;
+              // ⛔ KULLANICI DURAKLATTI (Duraklat düğmesi): resume ETME, sıradakine GEÇME → duraklama TUTSUN. Süre sayacını da
+              //   dondur (basZ'yi ileri it) ki uzun duraklamadan sonra cümle "süre doldu" sanılıp atlanmasın (Devam'da kaldığı yerden).
+              if (aiDuraklatRef.current) { basZ += 400; guardT = setTimeout(kontrol, 400); return; }
               try { if (window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} // Chrome/Android istemsiz duraklamayı uyandır (~15sn kesilmesi olmasın)
               let sp = false, pend = false;
               try { const ss2 = window.speechSynthesis; sp = !!(ss2 && ss2.speaking); pend = !!(ss2 && ss2.pending); } catch (e) {}
@@ -6663,8 +6673,15 @@ export default function Anasayfa({ pro = false }) {
       }
       // Yoksa tarayıcının kendi sesini duraklat/devam ettir
       const ss = window.speechSynthesis; if (!ss) return;
-      if (aiDuraklat || ss.paused) { aiDuraklatRef.current = false; ss.resume(); setAiDuraklat(false); }
-      else if (ss.speaking) { aiDuraklatRef.current = true; ss.pause(); setAiDuraklat(true); }
+      if (aiDuraklat || ss.paused) {
+        // DEVAM: önce bayrağı indir (guardKur artık resume/ilerleme yapabilsin), sonra resume — Android bazen tek resume'u
+        //   yutar, o yüzden birkaç kez dene. Yine de gelmezse guardKur ses susmuşsa kaldığı parçadan sıradakini okur (sessiz kalmaz).
+        aiDuraklatRef.current = false; setAiDuraklat(false);
+        try { ss.resume(); } catch (e) {}
+        setTimeout(() => { try { if (!aiDuraklatRef.current && window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} }, 120);
+        setTimeout(() => { try { if (!aiDuraklatRef.current && window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} }, 350);
+      }
+      else if (ss.speaking) { aiDuraklatRef.current = true; setAiDuraklat(true); try { ss.pause(); } catch (e) {} }
     } catch (e) {}
   };
   // SUS — konuşmayı tamamen keser (sen hemen konuşabilirsin); canlı modda dinlemeye geçer
