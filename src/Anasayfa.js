@@ -6015,67 +6015,38 @@ export default function Anasayfa({ pro = false }) {
     try {
       if (!("speechSynthesis" in window) || !metin) { if (typeof onBitti === "function") onBitti(); return; }
       const sesDilKodu = aiSesKodu(aiDilRef.current);
-      // İŞARETLERİ TEMİZLE: yıldız/markdown/emoji sesli okunmasın ("yıldız yıldız" saçmalığı biter)
+      // BİR CÜMLEYİ SESLİ OKUMAYA HAZIRLA: işaret/emoji/markdown temizle, e-posta/@ ve marka adları düzgün okunsun.
       const _okDil = (sesDilKodu || "tr").toLowerCase().split("-")[0];
       const _et = _okDil === "tr" ? " et " : " at ";
       const _nokta = _okDil === "tr" ? " nokta " : " dot ";
-      const temiz = String(metin)
-        // E-POSTA/@ DOĞRU OKUNSUN: "ali@gmail.com" -> "ali et gmail nokta com"; tek "@" -> "et/at"
+      const cumleTemizle = (str) => String(str)
         .replace(/([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, (m, u, d) => (u + _et + d).replace(/\./g, _nokta))
         .replace(/@/g, _et)
         .replace(/\*\*?|__?|`+|#+|>|~+|\|/g, " ")
         .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
         .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, "")
         .replace(/[•★☆◆♦]/g, " ")
-        .replace(/Gloxoo/gi, "Gloksu") // AI maskot adı: harf-harf değil net söylensin (Glok-su)
-        .replace(/GLOXORG/gi, "Gloksorg") // marka adını harf-harf değil KELİME gibi oku (Glok-sorg)
+        .replace(/Gloxoo/gi, "Gloksu").replace(/GLOXORG/gi, "Gloksorg")
         .replace(/\s+/g, " ").trim();
-      if (!temiz) return;
-      ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla (bu okuma sonuna kadar sürsün)
+      // ⛔ İMLEÇ KAYMASIN — TEK KAYNAK: cümleleri HAM metinden (metin) böl → ekrandaki renkliCumleler ile TAM AYNI dizi ve AYNI indeks.
+      //   onCumle(idx) = ekrandaki data-ci=idx → imleç HER ZAMAN okunan cümlenin üstünde (geride/ileride kalmaz). Boş cümlelerin bile
+      //   indeksi korunur (renkliCumleler onları görünmez bırakır ama indeks aynı). Eski TEMİZ-metin bölmesi/cumleBas/cumleBul/runDili/scriptTip SİLİNDİ.
+      const hamCumleler = String(metin).match(/[^.!?…\n]+[.!?…]*/g) || [String(metin)];
+      if (!hamCumleler.some((c) => cumleTemizle(c))) { if (typeof onBitti === "function") onBitti(); return; } // okunacak bir şey yok
+      ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla
       window.speechSynthesis.cancel();
-      // EN DOĞAL sesi DİLE GÖRE seç — cache'li. Kullanıcının seçtiği Gloxoo Sesi'nin CİNSİYETİNE (Kadın/Erkek) göre kadın/erkek
-      //   tarayıcı sesi tercih edilir (telefonda o dilde erkek+kadın ses yüklüyse SEÇİM İŞE YARAR). Karışık dilde her parça kendi diliyle.
+      // OKUMA SESİ (dile göre; kullanıcının seçtiği Kadın/Erkek tercihi — telefonda o dilde ses varsa)
       const _istenenCins = ((typeof GLOX_SESLER !== "undefined" ? GLOX_SESLER : []).find((s) => s.id === gloxSesRef.current) || {}).cins || "Kadın";
-      const _sesCache = {};
       const sesSecDil = (dk) => {
-        const key = String(dk || "").toLowerCase(); if (key in _sesCache) return _sesCache[key];
-        const l = key, k = l.split("-")[0];
+        const l = String(dk || "").toLowerCase(), k = l.split("-")[0];
         const sesler = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || [];
         const dilli = sesler.filter((v) => v.lang && (v.lang.toLowerCase() === l || v.lang.toLowerCase().startsWith(k)));
-        const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || ""); // bulut/doğal = tekleme YOK
-        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|google türkçe|google.*(female)/i.test(v.name || "");
-        const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|dmitri|pavel|yuri|artem|maxim|ahmet|mehmet|tolga|çağ|onur|google.*(male)/i.test(v.name || "");
-        const isterErkek = _istenenCins === "Erkek";
-        const cinsUyar = (v) => (isterErkek ? erkek(v) : kadin(v));      // seçilen cinsiyet
-        const sec = dilli.find((v) => iyi(v) && cinsUyar(v))              // doğal + istenen cinsiyet
-          || dilli.find((v) => v.localService === false && cinsUyar(v))  // bulut + istenen cinsiyet
-          || dilli.find(cinsUyar)                                        // istenen cinsiyet (herhangi)
-          || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null; // yoksa en iyi mevcut
-        _sesCache[key] = sec; return sec;
+        const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || "");
+        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|google türkçe/i.test(v.name || "");
+        const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|dmitri|pavel|yuri|artem|maxim|ahmet|mehmet|tolga|onur/i.test(v.name || "");
+        const uyar = (v) => (_istenenCins === "Erkek" ? erkek(v) : kadin(v));
+        return dilli.find((v) => iyi(v) && uyar(v)) || dilli.find((v) => v.localService === false && uyar(v)) || dilli.find(uyar) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
       };
-      // ── KARIŞIK DİL (kullanıcı: "Rusça kelime Rusça, Türkçe kelime Türkçe okunsun"): metni YAZI TİPİNE (script) göre parçala;
-      //    her parçanın DİLİNİ tespit et → o parçayı KENDİ diliyle/sesiyle oku (yanlış telaffuz biter). ──
-      const baseDil = String(aiDilRef.current || "tr");
-      const runDili = (rt) => {
-        if (/[Ѐ-ӿ]/.test(rt)) return (baseDil === "uk" ? "uk" : "ru"); // Kiril → Rusça (Ukraynaca okuyorsa uk)
-        if (/[؀-ۿ]/.test(rt)) return "ar";                              // Arap harfi → Arapça
-        if (/[一-鿿]/.test(rt)) return "zh";                              // Çince
-        if (/[぀-ヿ]/.test(rt)) return "ja";                              // Japonca
-        if (/[ığşİĞŞ]/.test(rt)) return "tr";                                     // Türkçe'ye ÖZGÜ harfler (ı/İ/ğ/ş) → kesin Türkçe
-        return ["tr", "en", "de", "fr", "es", "it", "pt"].indexOf(baseDil) !== -1 ? baseDil : "tr"; // düz Latin → okuma dili (Latinse), değilse Türkçe (uygulama Türkçe ağırlıklı)
-      };
-      const scriptTip = (ch) => {
-        if (/[Ѐ-ӿ]/.test(ch)) return "cyr";
-        if (/[؀-ۿ]/.test(ch)) return "arab";
-        if (/[一-鿿]/.test(ch)) return "cjk";
-        if (/[぀-ヿ]/.test(ch)) return "jp";
-        if (/[A-Za-zÀ-ÿĀ-ſ]/.test(ch)) return "lat"; // Latin (Türkçe harfler dahil)
-        return null;                                  // rakam/işaret/boşluk → mevcut parçaya YAPIŞIR (parça bölmez)
-      };
-      // CÜMLELER (imleç: hangi cümle vurgulanacak) — TEMİZ metindeki başlangıç konumlarıyla
-      const cumleler = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
-      const cumleBas = []; { let _o = 0; for (const c of cumleler) { const at = temiz.indexOf(c, _o); const pos = at >= 0 ? at : _o; _o = pos + c.length; cumleBas.push(pos); } }
-      const cumleBul = (ci) => { let s = 0; for (let k = 0; k < cumleBas.length; k++) { if (ci >= cumleBas[k]) s = k; else break; } return s; };
       // ⛔⛔ GLOXOO KONUŞMASI SIFIRDAN YENİDEN (kullanıcı: "eski yazılımları at, konuşmayı düzgün yeniden yapılandır; imleç
       //   yukarıda takılıyor, konuşma imleçsiz devam ediyor"). BASİT ve NET zincir: her cümleyi TEK TEK okut; telefon "bittim"
       //   (onend) der demez sıradakini başlat. onend HER cümlede geldiği için (senin telefonunda geliyor) zincir sonuna kadar
@@ -6087,11 +6058,11 @@ export default function Anasayfa({ pro = false }) {
         const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
         const oku = (idx) => {
           if (ttsTarayiciIptalRef.current) return;                 // susturuldu → dur (sıradakine geçme)
-          if (idx >= cumleler.length) { bit(); return; }           // hepsi okundu → bitti
-          const c = (cumleler[idx] || "").trim();
-          if (!c) { oku(idx + 1); return; }                        // boş cümle → atla
-          if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} }                          // İMLEÇ: bu cümle
-          if (typeof onIlerleme === "function") { try { onIlerleme(idx / cumleler.length); } catch (e) {} }
+          if (idx >= hamCumleler.length) { bit(); return; }        // hepsi okundu → bitti
+          const c = cumleTemizle(hamCumleler[idx]);                // bu cümleyi okumaya hazırla (temizle)
+          if (!c) { oku(idx + 1); return; }                        // temizlenince boş (sadece işaret/emoji) → konuşma, imleç KOYMA, atla (HAM indeks korunur → imleç kaymaz)
+          if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} }                          // İMLEÇ: HAM idx → ekrandaki renkliCumleler data-ci=idx ile BİREBİR (kaymaz)
+          if (typeof onIlerleme === "function") { try { onIlerleme(idx / hamCumleler.length); } catch (e) {} }
           const u = new SpeechSynthesisUtterance(c);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           let gecti = false, fb = null;
