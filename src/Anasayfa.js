@@ -1770,6 +1770,17 @@ export default function Anasayfa({ pro = false }) {
     } catch (er) { setKucukMesaj(t("muzikKutupIzin", "Eklenemedi. Firestore kuralını (gloxMuzik) yayınladın mı?")); }
     setKutupYukleniyor(false);
   };
+  // SAHİBİN kütüphaneden şarkı SİLMESİ (sadece site sahibi): onay iste → gloxMuzikSil → liste yenilenir
+  const muzikKutupSil = async (mz) => {
+    if (!mz || !mz.id) return;
+    try { if (!window.confirm(t("muzikSilOnay", "Bu şarkıyı kütüphaneden silmek istediğine emin misin?") + "\n\n🎵 " + (mz.ad || ""))) return; } catch (e) {}
+    try {
+      await gloxMuzikSil(mz.id);
+      const l = await gloxMuzikOku(); setGloxMuzikListe(l);
+      if (paylasMuzik && paylasMuzik.url === mz.url) setPaylasMuzik(null); // seçiliyse paylaşımdan da kaldır
+      setKucukMesaj(t("muzikKutupSilindi", "Şarkı kütüphaneden silindi 🗑️"));
+    } catch (e) { setKucukMesaj(t("muzikSilHata", "Silinemedi, tekrar dene.")); }
+  };
   const [aiIstek, setAiIstek] = useState("");                   // kullanıcı Gloxoo'ya ne yazmasını istediğini yazar
   const [aiIstekDinliyor, setAiIstekDinliyor] = useState(false); // Gloxoo'ya konuşarak söyleme (mikrofon aktif mi)
   const [aiYorumAcik, setAiYorumAcik] = useState(-1);           // beğenmedim → "neyi beğenmedin" kutusu açık öneri indeksi (-1 kapalı)
@@ -10252,6 +10263,7 @@ export default function Anasayfa({ pro = false }) {
                               <span className="pyl-muzik-oge-ik" aria-hidden="true">🎵</span>
                               <span className="pyl-muzik-oge-ad notranslate">{mz.ad}</span>
                               {mz.kategori ? <span className="pyl-muzik-oge-kat">{(MUZIK_KATEGORI.find((x) => x.k === mz.kategori) || {}).ad || ""}</span> : null}
+                              {yoneticiMi() && <span className="pyl-muzik-oge-sil" role="button" title={t("sil", "Sil")} aria-label={t("sil", "Sil")} onClick={(e) => { e.stopPropagation(); muzikKutupSil(mz); }}>✕</span>}
                             </button>
                           ))}
                         </div>

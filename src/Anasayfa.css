@@ -383,6 +383,9 @@
 .pyl-muzik-oge-ik{ font-size:17px; flex:none; }
 .pyl-muzik-oge-ad{ flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:clip; }
 .pyl-muzik-oge-kat{ flex:none; background:rgba(190,90,210,.3); color:#f0d6f5; border-radius:9px; padding:2px 8px; font-size:11px; font-weight:800; }
+/* SAHİBE ÖZEL kütüphane şarkı SİL (✕) — sağda küçük kırmızı yuvarlak */
+.pyl-muzik-oge-sil{ flex:none; margin-left:2px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:rgba(224,32,44,.9); color:#fff; font-size:13px; font-weight:900; line-height:1; }
+.pyl-muzik-oge.sec .pyl-muzik-oge-sil{ background:rgba(255,255,255,.28); }
 /* KATEGORİ şeridi — Pop / Arabesk / Uzun Hava … (yatay kaydırılır) */
 .pyl-muzik-kat{ display:flex; flex-wrap:nowrap; gap:7px; overflow-x:auto; scrollbar-width:none; padding-bottom:8px; margin-bottom:8px; }
 .pyl-muzik-kat::-webkit-scrollbar{ display:none; }
