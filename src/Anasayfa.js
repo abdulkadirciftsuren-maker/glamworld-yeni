@@ -6076,53 +6076,39 @@ export default function Anasayfa({ pro = false }) {
       const cumleler = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
       const cumleBas = []; { let _o = 0; for (const c of cumleler) { const at = temiz.indexOf(c, _o); const pos = at >= 0 ? at : _o; _o = pos + c.length; cumleBas.push(pos); } }
       const cumleBul = (ci) => { let s = 0; for (let k = 0; k < cumleBas.length; k++) { if (ci >= cumleBas[k]) s = k; else break; } return s; };
-      // ⛔⛔ KÖK ÇÖZÜM (kullanıcı: "kırmızıyı okuyup duruyor, imleç sonraki cümleye geçmiyor, sesle gitmiyor"): Samsung/Android
-      //   ses motoru CÜMLE CÜMLE (çok utterance) okumada İLK cümleden sonra TAKILIYOR (2. speak yutuluyor, imleç sesten kopuyor).
-      //   ÇÖZÜM: metni cümlelere BÖLMEDEN, TEK PARÇA (tek utterance) okut → tek utterance takılmadan SONUNA KADAR okunur.
-      //   İmleç, motorun verdiği GERÇEK okuma konumundan (onboundary) yürür → sesle BİREBİR. onboundary gelmezse zamana göre yaklaşık yürür.
+      // ⛔⛔ GLOXOO KONUŞMASI SIFIRDAN YENİDEN (kullanıcı: "eski yazılımları at, konuşmayı düzgün yeniden yapılandır; imleç
+      //   yukarıda takılıyor, konuşma imleçsiz devam ediyor"). BASİT ve NET zincir: her cümleyi TEK TEK okut; telefon "bittim"
+      //   (onend) der demez sıradakini başlat. onend HER cümlede geldiği için (senin telefonunda geliyor) zincir sonuna kadar
+      //   ilerler. İMLEÇ her cümlede o cümleye geçer (sesle birlikte — takılmaz). Karmaşık tahmin/kontrol YOK; cancel YOK (yutmayı
+      //   önler); sadece: onend → sıradaki + onend hiç gelmezse cömert bir emniyet süresi.
       const konus = () => {
-        const toplamChar = temiz.length || 1;
-        const ses = sesSecDil(sesDilKodu);                          // TEK ses (tüm metin okuma diliyle) — Samsung tek utterance'ı takılmadan okur
-        const tahminMs = Math.max(2000, toplamChar * 80);           // tüm metnin tahmini süresi (onboundary yoksa imleç/ilerleme buna göre)
-        const basMs = Date.now();
-        let bitti = false, boundaryGeldi = false, dTimer = null;
-        const u = new SpeechSynthesisUtterance(temiz);
-        u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-        const bit = () => { if (bitti) return; bitti = true; try { if (dTimer) clearInterval(dTimer); } catch (e) {} try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
-        u.onstart = () => { konusIlerRef.current = Date.now(); if (typeof onCumle === "function") { try { onCumle(0); } catch (e) {} } };
-        u.onboundary = (ev) => {
-          boundaryGeldi = true; konusIlerRef.current = Date.now();
-          try {
-            const ci = (ev && typeof ev.charIndex === "number") ? ev.charIndex : -1;
-            if (ci >= 0) {
-              if (typeof onCumle === "function") { try { onCumle(cumleBul(ci)); } catch (e) {} }             // imleç: o an OKUNAN cümle (sesle birebir)
-              if (typeof onIlerleme === "function") { let f = ci / toplamChar; if (f < 0) f = 0; if (f > 1) f = 1; try { onIlerleme(f); } catch (e) {} }
-            }
-          } catch (e) {}
+        const ses = sesSecDil(sesDilKodu);
+        let bitti = false;
+        const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
+        const oku = (idx) => {
+          if (ttsTarayiciIptalRef.current) return;                 // susturuldu → dur (sıradakine geçme)
+          if (idx >= cumleler.length) { bit(); return; }           // hepsi okundu → bitti
+          const c = (cumleler[idx] || "").trim();
+          if (!c) { oku(idx + 1); return; }                        // boş cümle → atla
+          if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} }                          // İMLEÇ: bu cümle (sesi bununla başlıyor → senkron)
+          if (typeof onIlerleme === "function") { try { onIlerleme(idx / cumleler.length); } catch (e) {} }
+          const u = new SpeechSynthesisUtterance(c);
+          u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+          let gecti = false, fb = null;
+          const sonra = () => {                                     // TEK sefer: bu cümle bitti → sıradaki
+            if (gecti) return; gecti = true;
+            if (fb) { try { clearTimeout(fb); } catch (e) {} }
+            if (ttsTarayiciIptalRef.current) return;
+            oku(idx + 1);
+          };
+          u.onend = sonra; u.onerror = sonra;                       // telefon "bittim" der demez sıradaki cümle
+          konusIlerRef.current = Date.now();
+          // EMNİYET: onend HİÇ gelmezse (nadir) cömert süre sonra sıradakine geç → asılı kalmaz
+          fb = setTimeout(sonra, Math.max(5000, c.length * 120 + 3500));
+          try { window.speechSynthesis.resume(); } catch (e) {}     // istemsiz duraklamayı uyandır
+          try { window.speechSynthesis.speak(u); } catch (e) { sonra(); return; }
         };
-        u.onend = bit; u.onerror = bit;
-        konusIlerRef.current = Date.now();
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-        try { window.speechSynthesis.speak(u); } catch (e) { bit(); return; }
-        try { window.speechSynthesis.resume(); } catch (e) {}
-        // TEK ZAMANLAYICI: (a) KEEPALIVE (Chrome ~15sn'de sessizce duraklar → uyandır), (b) onboundary YOKSA imleci ZAMANA göre yürüt,
-        //   (c) EMNİYET: ses gerçekten susunca (onend gelmese bile) VEYA çok uzun sürerse bitir → asla asılı/sonsuz kalmaz.
-        dTimer = setInterval(() => {
-          if (ttsTarayiciIptalRef.current) { bit(); return; }
-          if (bitti) { try { clearInterval(dTimer); } catch (e) {} return; }
-          let sp = false; try { const s2 = window.speechSynthesis; sp = !!(s2 && (s2.speaking || s2.pending)); } catch (e) {}
-          try { if (sp) window.speechSynthesis.resume(); } catch (e) {}                 // keepalive
-          const gecen = Date.now() - basMs;
-          if (!boundaryGeldi && gecen > 400) {                                          // onboundary GELMİYOR (Samsung) → imleci/ilerlemeyi ZAMANA göre yaklaşık yürüt
-            let f = gecen / tahminMs; if (f > 0.98) f = 0.98; if (f < 0) f = 0;
-            try { if (typeof onIlerleme === "function") onIlerleme(f); } catch (e) {}
-            try { if (typeof onCumle === "function") onCumle(cumleBul(Math.floor(f * toplamChar))); } catch (e) {}
-          }
-          // ⛔ ARTIK "speaking=false" GÖRÜNCE OKUMAYI KESMİYORUM (kullanıcı: "kırmızıdan sonra duruyor"): Bazı Samsung telefonlar
-          //   OKURKEN BİLE speaking=false diyor → eski kod bunu "bitti" sanıp okumayı ERKEN kesiyordu. Artık okuma SADECE gerçek
-          //   onend/onerror ile YA DA çok uzun sürerse (güvenlik) biter. Böylece okuma erken KESİLMEZ, sonuna kadar gider.
-          if (gecen > tahminMs * 3 + 15000) { bit(); return; }                          // güvenlik: aşırı uzun sürdü → asla sonsuz dönme (normalde onend bitirir)
-        }, 200);
+        oku(0);
       };
       let basladi = false;
       const baslat = () => { if (basladi) return; basladi = true; konus(); };
