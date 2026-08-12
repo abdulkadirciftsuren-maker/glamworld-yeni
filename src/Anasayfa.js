@@ -6003,13 +6003,12 @@ export default function Anasayfa({ pro = false }) {
       oynatSira(0);
     } catch (e) { dus(); }
   };
-  // AI cevabını SESLİ oku: ÖNCE gerçek insan sesi (Google/Gemini), olmazsa tarayıcının kendi sesi. Dışarıdan hep bu çağrılır.
+  // AI cevabını SESLİ oku — ARTIK SADECE TARAYICININ KENDİ SESİ (güvenilir, SONUNA KADAR okur, karışık dil doğru telaffuz).
+  // ⛔ ESKİ "gerçek ses (Gemini)" YOLU KALDIRILDI (kullanıcı: "o bozuk yazılım duruyor, gene ona dönüp okumayı kesiyor; kırmızı
+  //   cümleyi okuyup duruyor"). Gemini yolu ağ/kota/parça-zinciri yüzünden İLK cümleden sonra kesiliyordu → tamamen devre dışı.
   const sesliOku = (metin, onBitti, onCumle, onIlerleme) => {
     if (!metin) { if (typeof onBitti === "function") onBitti(); return; }
-    try {
-      if (gercekSesKapaliRef.current) { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); return; }
-      gercekSesOku(metin, onBitti, onCumle, onIlerleme, () => { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {} });
-    } catch (e) { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (x) {} }
+    try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {}
   };
   // AI cevabını TARAYICININ KENDİ sesiyle oku (yedek) — dil kodu HER ZAMAN güncel aiDilRef'ten
   const sesliOkuTarayici = (metin, onBitti, onCumle, onIlerleme) => {
@@ -11441,8 +11440,8 @@ export default function Anasayfa({ pro = false }) {
                       <div className="ai-ses-baslik">🔊 Gloxoo Sesi</div>
                       {GLOX_SESLER.map((s) => (
                         <button key={s.id} className={"ai-dil-oge" + (s.id === gloxSes ? " sec" : "")} onClick={() => {
-                          setGloxSes(s.id); gloxSesRef.current = s.id; gercekSesKapaliRef.current = false;
-                          // KISA ÖRNEK: seçilen sesi HEMEN duy (yeni sesle okunur)
+                          setGloxSes(s.id); gloxSesRef.current = s.id; // (gerçek ses/Gemini yolu KALDIRILDI → sadece cinsiyet tercihi: Kadın/Erkek tarayıcı sesi)
+                          // KISA ÖRNEK: seçilen cinsiyet/hızla tarayıcı sesinden duy
                           try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
                         }}>
                           <span className="ai-dil-oge-ad">{s.id === gloxSes ? "✓ " : ""}{s.ad} · {s.cins}</span>
