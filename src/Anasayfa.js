@@ -6090,23 +6090,27 @@ export default function Anasayfa({ pro = false }) {
           if (idx >= cumleler.length) { bit(); return; }           // hepsi okundu → bitti
           const c = (cumleler[idx] || "").trim();
           if (!c) { oku(idx + 1); return; }                        // boş cümle → atla
-          if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} }                          // İMLEÇ: bu cümle (sesi bununla başlıyor → senkron)
           if (typeof onIlerleme === "function") { try { onIlerleme(idx / cumleler.length); } catch (e) {} }
           const u = new SpeechSynthesisUtterance(c);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-          let gecti = false, fb = null;
+          let gecti = false, fb = null, imlecGosterildi = false;
+          // İMLEÇ: sesi "speak çağrıldığında" değil, ses GERÇEKTEN bu cümleye başlayınca (onstart) o cümleye koy → sesle BİREBİR,
+          //   bir cümle geride kalmaz. onstart gelmezse 400ms sonra yine de göster (imleç asla takılıp kalmaz).
+          const imlecKoy = () => { if (imlecGosterildi) return; imlecGosterildi = true; if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } };
           const sonra = () => {                                     // TEK sefer: bu cümle bitti → sıradaki
             if (gecti) return; gecti = true;
             if (fb) { try { clearTimeout(fb); } catch (e) {} }
             if (ttsTarayiciIptalRef.current) return;
             oku(idx + 1);
           };
+          u.onstart = () => { konusIlerRef.current = Date.now(); imlecKoy(); };  // ses BU cümleye başladı → imleç buraya (senkron)
           u.onend = sonra; u.onerror = sonra;                       // telefon "bittim" der demez sıradaki cümle
           konusIlerRef.current = Date.now();
           // EMNİYET: onend HİÇ gelmezse (nadir) cömert süre sonra sıradakine geç → asılı kalmaz
           fb = setTimeout(sonra, Math.max(5000, c.length * 120 + 3500));
           try { window.speechSynthesis.resume(); } catch (e) {}     // istemsiz duraklamayı uyandır
           try { window.speechSynthesis.speak(u); } catch (e) { sonra(); return; }
+          setTimeout(imlecKoy, 400);                                // güvenlik: onstart gelmezse imleç yine de bu cümleye gelsin
         };
         oku(0);
       };
