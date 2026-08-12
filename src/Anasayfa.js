@@ -5946,9 +5946,7 @@ export default function Anasayfa({ pro = false }) {
           if (typeof onIlerleme === "function") ilerIv = setInterval(() => { const fr = Math.min(0.95, (Date.now() - t0) / sure); try { onIlerleme(Math.min(1, (buBas + fr * cLen) / toplamChar)); } catch (e) {} konusIlerRef.current = Date.now(); }, 90);
           utter.onend = bit; utter.onerror = bit;
           guard = setTimeout(bit, sure + 8000);     // ne olursa olsun asla takılmasın → sonraki cümleye geç
-          // ANDROID YUTULMA: motoru SIFIRLA + kısa ara sonra konuş (yedek parça da yutulmasın); resume ile uyandır
-          try { window.speechSynthesis.cancel(); } catch (e) {}
-          setTimeout(() => { if (gecti || durduruldu) return; try { window.speechSynthesis.speak(utter); window.speechSynthesis.resume(); } catch (e) { bit(); } }, 160);
+          try { window.speechSynthesis.speak(utter); } catch (e) { bit(); }
         } catch (e) { bit(); }
       };
       const oynatSira = async (idx) => {
@@ -6153,7 +6151,7 @@ export default function Anasayfa({ pro = false }) {
           if (typeof onCumle === "function") { try { onCumle(seg.cumle); } catch (e) {} }
           const u = new SpeechSynthesisUtterance(p);
           // KARIŞIK DİL: bu parçanın KENDİ dili/sesi (Kiril→Rusça, Türkçe harfli→Türkçe...) → doğru telaffuz. HIZ: kullanıcının seçtiği (Yavaş/Normal/Hızlı).
-          u.lang = seg.sesKod || sesDilKodu; u.rate = gloxHizRef.current || 1; u.pitch = 1;
+          u.lang = seg.sesKod || sesDilKodu; u.rate = 1; u.pitch = 1;
           const segSes = sesSecDil(seg.sesKod || sesDilKodu); if (segSes) u.voice = segSes;
           const buOfs = seg.ofs;                                   // bu parçanın TEMİZ içindeki GERÇEK konumu (imleç)
           let gecti = false, guardT = null;
@@ -6170,13 +6168,11 @@ export default function Anasayfa({ pro = false }) {
           u.onboundary = (ev) => { konusIlerRef.current = Date.now(); try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} }; // her kelimede ilerleme → emniyet sıfırlanır
           u.onend = sonraki;
           u.onerror = sonraki;                                     // bir cümle patlarsa sıradakine geç → DONMA
-          // ⛔⛔ ANDROID/SAMSUNG KÖK HATASI ("kırmızı cümleyi okuyup DURUYOR, sonraki (mavi) cümleye GEÇMİYOR"): Telefon İLK
-          //   cümleden SONRAKİ speechSynthesis.speak() çağrısını çoğu zaman YUTUYOR (ses hiç çıkmıyor) → zincir 1. cümlede kalıyor.
-          //   ÇÖZÜM: 2. ve sonraki cümleler ÖNCE cancel() ile motoru SIFIRLA, kısa bir an bekle, sonra speak(); speak sonrası resume().
-          //   Böylece her cümle temiz başlar, YUTULMAZ → gönderi SONUNA KADAR okunur.
+          konusIlerRef.current = Date.now();
+          try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); return; }
+          // KORU ZAMANLAYICI: ses çalıyorsa cümle asla kesilmez; gerçekten susunca (onend gelmese bile) sıradakine geçer → sonuna kadar okunur.
           const guardKur = () => {
             const basZ = Date.now();
-            // bu cümlenin GERÇEK konuşma süresinden uzun, ÇOK cömert üst sınır (ses hâlâ çalıyorsa bu süreye kadar kesme YOK)
             const enFazlaMs = Math.max(6000, p.length * 160 + 5000);
             let basladiMi = false, sessizTik = 0;
             const kontrol = () => {
@@ -6193,15 +6189,7 @@ export default function Anasayfa({ pro = false }) {
             };
             guardT = setTimeout(kontrol, 1200);
           };
-          const konusEt = () => {
-            if (ttsTarayiciIptalRef.current) return;               // arada durdurulduysa başlatma
-            konusIlerRef.current = Date.now();
-            try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); return; }
-            try { window.speechSynthesis.resume(); } catch (e) {}  // Android: bazen "paused" başlar → hemen uyandır (yutulmayı önler)
-            guardKur();
-          };
-          if (idx === 0) konusEt();                                // ilk cümle: baştan cancel edildi → hemen konuş
-          else { try { window.speechSynthesis.cancel(); } catch (e) {} setTimeout(konusEt, 180); } // 2. ve sonrası: motoru SIFIRLA + kısa ara → YUTULMASIN
+          guardKur();
         };
         soyle(0);
       };
