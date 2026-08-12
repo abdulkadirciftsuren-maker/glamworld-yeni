@@ -10207,7 +10207,8 @@ export default function Anasayfa({ pro = false }) {
               {paylasKonum && <span className="pyl-konum-sil" aria-hidden="true">✕</span>}
             </button>
             {/* 🎵 MÜZİK EKLE — kendi şarkını yükle YA DA GLOXORG kütüphanesinden seç (paylaşımda akışta çalar) */}
-            <input ref={muzikRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={paylasMuzikSec} />
+            {/* SADECE müzik DOSYASI türleri (audio/* koymuyoruz → Android "Ses Kaydedici"yi teklif etmesin, direkt dosya/müzik seçiciye gitsin ve fotoğraflar süzülsün) */}
+            <input ref={muzikRef} type="file" accept=".mp3,.m4a,.aac,.wav,.ogg,.oga,.flac,.opus,.wma,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/ogg,audio/flac" style={{ display: "none" }} onChange={paylasMuzikSec} />
             <button className={"pyl-konum-btn pyl-muzik-btn" + (paylasMuzik ? " acik" : "")} onClick={() => setMuzikMenu((v) => (v ? "" : "benim"))}>
               <span className="pyl-konum-ik" aria-hidden="true">🎵</span>
               <span className="pyl-konum-metin">{paylasMuzik ? ("🎵 " + (paylasMuzik.ad || t("muzikEklendi", "Müzik eklendi"))) : t("muzikEkle", "🎵 Müzik ekle (şarkı ekle)")}</span>
