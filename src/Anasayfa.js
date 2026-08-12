@@ -6118,8 +6118,10 @@ export default function Anasayfa({ pro = false }) {
             try { if (typeof onIlerleme === "function") onIlerleme(f); } catch (e) {}
             try { if (typeof onCumle === "function") onCumle(cumleBul(Math.floor(f * toplamChar))); } catch (e) {}
           }
-          if (!sp && gecen > Math.max(3500, tahminMs * 0.4)) { bit(); return; }         // motor sustu (bitti) ama onend gelmedi → bitir (erken bitmesin diye alt sınır)
-          if (gecen > tahminMs * 2.6 + 9000) { bit(); return; }                         // güvenlik: çok uzun sürdü → asla sonsuz dönme
+          // ⛔ ARTIK "speaking=false" GÖRÜNCE OKUMAYI KESMİYORUM (kullanıcı: "kırmızıdan sonra duruyor"): Bazı Samsung telefonlar
+          //   OKURKEN BİLE speaking=false diyor → eski kod bunu "bitti" sanıp okumayı ERKEN kesiyordu. Artık okuma SADECE gerçek
+          //   onend/onerror ile YA DA çok uzun sürerse (güvenlik) biter. Böylece okuma erken KESİLMEZ, sonuna kadar gider.
+          if (gecen > tahminMs * 3 + 15000) { bit(); return; }                          // güvenlik: aşırı uzun sürdü → asla sonsuz dönme (normalde onend bitirir)
         }, 200);
       };
       let basladi = false;
