@@ -2033,6 +2033,10 @@ export default function Anasayfa({ pro = false }) {
   const maskotBalonRef = useRef(null); // BÜYÜK maskot balonu — okurken teleprompter gibi kaydırma
   const [okunanKelime, setOkunanKelime] = useState(-1); // ŞU AN okunan KELİME indeksi (balonda vurgulanır + ▸ imleç)
   const okunanKelimeRef = useRef(-1);
+  // ŞU AN okunan CÜMLE indeksi — sohbette kelime imleci (▸) yerine CÜMLE vurgulanır (kullanıcı: "kelime imleci konuşmayla
+  //   senkron değil, şaşırtıyor"). Cümle her başında GÜVENİLİR tetiklenir (onCumle) → vurgu konuşmayla birlikte yürür.
+  const [okunanCumle, setOkunanCumle] = useState(-1);
+  const okunanCumleRef = useRef(-1);
   const toplamKelimeRef = useRef(0);                    // maskotMetni'nin kelime sayısı (ilerleme→kelime)
   const elleKaydirRef = useRef(false);                  // kullanıcı PARMAĞIYLA kaydırdıysa → oto-kaydırma DURUR (serbest)
   // Okunan KELİMEYİ balonun ORTASINA kaydır (alt yazı/şerit gibi tek tek yukarı yürür, sonuna kadar).
@@ -2064,6 +2068,26 @@ export default function Anasayfa({ pro = false }) {
     let w = Math.floor(frac * n); if (w >= n) w = n - 1; if (w < 0) w = 0;
     if (w === okunanKelimeRef.current) return; // aynı kelime → gereksiz yeniden çizim yok
     okunanKelimeRef.current = w; setOkunanKelime(w); maskotKaydirKelime(w);
+  };
+  // Okunan CÜMLEYİ sohbet kabında ORTAYA kaydır (yazı okundukça yukarı yürür) — kelime yerine cümle bazlı (rahat, güvenilir)
+  const maskotKaydirCumle = (ci) => {
+    if (elleKaydirRef.current) return;
+    try {
+      const kap = document.querySelector('.ai-msj-okunan');
+      const el = kap && kap.querySelector ? kap.querySelector('[data-ci="' + ci + '"]') : null;
+      if (!el) return;
+      let sc = el.parentElement;
+      while (sc && sc !== document.body) { const st = getComputedStyle(sc); if ((st.overflowY === "auto" || st.overflowY === "scroll") && sc.scrollHeight > sc.clientHeight + 4) break; sc = sc.parentElement; }
+      if (!sc || sc === document.body) return;
+      const scR = sc.getBoundingClientRect(), elR = el.getBoundingClientRect();
+      const hedef = sc.scrollTop + (elR.top - scR.top) - sc.clientHeight / 2 + elR.height / 2;
+      try { sc.scrollTo({ top: Math.max(0, hedef), behavior: "smooth" }); } catch (e) { sc.scrollTop = Math.max(0, hedef); }
+    } catch (e) {}
+  };
+  // TTS her CÜMLE başında çağrılır (onCumle) → o cümleyi vurgula + ortaya kaydır (konuşmayla birlikte, güvenilir)
+  const teleCumle = (idx) => {
+    if (idx === okunanCumleRef.current) return;
+    okunanCumleRef.current = idx; setOkunanCumle(idx); maskotKaydirCumle(idx);
   };
   // Kullanıcı balona parmağıyla dokunup kaydırınca → oto-kaydırmayı bırak (serbest); yeni cevap gelince tekrar otomatiğe döner
   const maskotElleKaydir = () => { elleKaydirRef.current = true; };
@@ -5840,11 +5864,11 @@ export default function Anasayfa({ pro = false }) {
       if (sesliMod && metin) {
         const yi = yeniListe.length; setKonusanMesaj(yi); konusanMesajRef.current = yi;
         // KELİME İMLECİ: okurken hangi kelimede olduğu bu cevabın üstünde ▸ ile yürüsün (balonda da görünür)
-        toplamKelimeRef.current = kelimeSayisi(metin); okunanKelimeRef.current = -1; setOkunanKelime(-1);
+        toplamKelimeRef.current = kelimeSayisi(metin); okunanKelimeRef.current = -1; setOkunanKelime(-1); okunanCumleRef.current = -1; setOkunanCumle(-1);
         // OKUMA BİTİNCE dinlemeye geç. ESKİDEN: okuma başlar başlamaz canliDevam çağrılıyordu → mikrofon okuma
         // daha bitmeden devreye girip okumayı 5-6 KELİMEDE KESİYORDU (kullanıcı: "uzun yazıyı okumuyor, kesiyor").
         // Artık mikrofon SADECE Gloxoo tüm cevabı OKUYUP BİTİRDİKTEN sonra açılır → yazının tamamı okunur.
-        sesliOku(metin, () => { okuTemizle(); if (canliIc && canliSohbetRef.current) canliDevam(); }, undefined, teleIlerleme);
+        sesliOku(metin, () => { okuTemizle(); if (canliIc && canliSohbetRef.current) canliDevam(); }, teleCumle, teleIlerleme);
       } else if (canliIc && canliSohbetRef.current) canliDevam(); // sesli okuma yoksa hemen dinlemeye geç
       if (komut) setTimeout(() => komutAc(komut), 650);
     } catch (e) {
@@ -6073,6 +6097,9 @@ export default function Anasayfa({ pro = false }) {
           if (ttsTarayiciIptalRef.current) return;                 // susturuldu → sıradaki cümleye GEÇME (durunca dursun)
           if (idx >= parcalar.length) { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } return; } // hepsi bitti
           const p = parcalar[idx];
+          // CÜMLE VURGUSU: onboundary'e GÜVENME (Android çoğu zaman göndermez → desenkron). Cümleye GEÇER GEÇMEZ haber ver
+          //   → sohbette o cümle vurgulanır, konuşmayla BİRLİKTE ilerler (kelime imlecinden çok daha güvenilir/rahat).
+          if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} }
           const u = new SpeechSynthesisUtterance(p);
           u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           const buOfs = parcaOfs[idx];                             // bu cümlenin TEMİZ içindeki GERÇEK konumu
@@ -6085,7 +6112,7 @@ export default function Anasayfa({ pro = false }) {
             soyle(idx + 1);
           };
           // HER cümle okunmaya başlayınca haber ver (teleprompter geri uyumluluk) + ilk parçada zaman sıfırla
-          u.onstart = () => { konusIlerRef.current = Date.now(); if (idx === 0) basMs = Date.now(); if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} } }; // konusIlerRef: okuma ilerledi → takılma emniyeti sıfırlanır (uzun yazı kesilmez)
+          u.onstart = () => { konusIlerRef.current = Date.now(); if (idx === 0) basMs = Date.now(); }; // konusIlerRef: okuma ilerledi → takılma emniyeti sıfırlanır (uzun yazı kesilmez). (onCumle artık soyle başında, güvenilir.)
           // KELİME sınırı (destekleyen tarayıcıda): gerçek karakter konumu → ilerleme kesinleşir
           u.onboundary = (ev) => { konusIlerRef.current = Date.now(); try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} }; // her kelimede ilerleme → emniyet sıfırlanır
           u.onend = sonraki;
@@ -6130,7 +6157,7 @@ export default function Anasayfa({ pro = false }) {
   // BALON İÇİ "OKU" DÜĞMESİ — mikrofondan TAMAMEN AYRI (sadece TTS). Bas=oku, tekrar bas=dur; okurken × gösterir.
   const [konusanMesaj, setKonusanMesaj] = useState(-1);
   const konusanMesajRef = useRef(-1);
-  const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; okunanKelimeRef.current = -1; setOkunanKelime(-1); }; // imleci de temizle
+  const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; okunanKelimeRef.current = -1; setOkunanKelime(-1); okunanCumleRef.current = -1; setOkunanCumle(-1); }; // imleci + cümle vurgusunu temizle
   // ⛔ DONMA EMNİYETİ (kullanıcı: "konuşma ikonu sabit/donuk kalıyor"): Gerçek-ses zinciri ortada kesilirse
   //   balondaki ■ ikonu temizlenmeden DONUP kalıyordu. Burada sürekli bak: bir mesaj "okunuyor" işaretliyken
   //   ses ~2.5 sn boyunca NE ÇALIYOR ne de HAZIRLANIYORSA → gerçekten durmuş/donmuş demektir → ikonu ZORLA temizle.
@@ -6157,8 +6184,8 @@ export default function Anasayfa({ pro = false }) {
     try { window.speechSynthesis && window.speechSynthesis.resume(); } catch (e) {} // Chrome bazen "duraklatılmış" takılır → uyandır (ses çıksın)
     setKonusanMesaj(i); konusanMesajRef.current = i;
     // KELİME İMLECİ: okurken hangi kelimede olduğu bu mesajın üstünde ▸ ile yürüsün (kullanıcı: "konuşma nerede, o kelimede görünsün")
-    toplamKelimeRef.current = kelimeSayisi(metin); okunanKelimeRef.current = -1; setOkunanKelime(-1);
-    sesliOku(metin, okuTemizle, undefined, teleIlerleme);
+    toplamKelimeRef.current = kelimeSayisi(metin); okunanKelimeRef.current = -1; setOkunanKelime(-1); okunanCumleRef.current = -1; setOkunanCumle(-1);
+    sesliOku(metin, okuTemizle, teleCumle, teleIlerleme);
   };
   // Canlı dikteyi DURDUR (gönderince / tekrar basınca) — şeritteki metin KALIR
   const dikteDurdur = () => {
@@ -11075,8 +11102,8 @@ export default function Anasayfa({ pro = false }) {
             <div className="ai-akis" ref={yardimciAkisRef}>
               {aktifMesajlar.length === 0 && (
                 <div className="ai-karsilama">{yardimciMod === "site"
-                  ? renkliCumleler(t("siteKarsilama", "Site asistanınım. \"Profilimi aç\", \"paylaşım penceresini aç\", \"aramayı aç\" de — senin için açayım. 🧭"), RC_ACIK)
-                  : renkliCumleler(t("yardimciKarsilama", "Merhaba! Ben Gloxoo, Gloxorg dünyasının akıllı kalbi. Paylaşım yazma, meslek tanıtımı, müşteri bulma — ne istersen sor. 🤖"), RC_ACIK)}</div>
+                  ? renkliCumleler(t("siteKarsilama", "Site asistanınım. \"Profilimi aç\", \"paylaşım penceresini aç\", \"aramayı aç\" de — senin için açayım. 🧭"), proUye ? RC_ACIK : RC_KOYU)
+                  : renkliCumleler(t("yardimciKarsilama", "Merhaba! Ben Gloxoo, Gloxorg dünyasının akıllı kalbi. Paylaşım yazma, meslek tanıtımı, müşteri bulma — ne istersen sor. 🤖"), proUye ? RC_ACIK : RC_KOYU)}</div>
               )}
               {aktifMesajlar.map((m, i) => {
                 const onceki = aktifMesajlar[i - 1];
@@ -11101,7 +11128,8 @@ export default function Anasayfa({ pro = false }) {
                       {m.foto && m.foto.dataURL && <img className="ai-msj-foto" src={m.foto.dataURL} alt="" />}
                       {m.ek && m.ek.tur === "video" && (m.ek.url || m.ek.dataURL) && <video className="ai-msj-video" src={m.ek.url || m.ek.dataURL} controls playsInline />}
                       {m.ek && m.ek.tur !== "video" && <span className="ai-msj-dosya">{m.ek.tur === "pdf" ? "📄" : m.ek.tur === "metin" ? "📝" : "📎"} {m.ek.ad}</span>}
-                      {m.rol === "user" ? m.metin : (konusanMesaj === i ? <span className="ai-msj-okunan">{kelimeBalon(m.metin, RC_ACIK, okunanKelime)}</span> : renkliCumleler(m.metin, RC_ACIK))}
+                      {/* RENK: müşteri temasında balon BEYAZ → KOYU palet (okunur); pro temasında balon koyu → AÇIK palet. OKURKEN: kelime imleci (▸) yerine okunan CÜMLE vurgulanır (güvenilir, konuşmayla gider) */}
+                      {m.rol === "user" ? m.metin : (konusanMesaj === i ? <span className="ai-msj-okunan">{renkliCumleler(m.metin, proUye ? RC_ACIK : RC_KOYU, okunanCumle)}</span> : renkliCumleler(m.metin, proUye ? RC_ACIK : RC_KOYU))}
                       {m.zamanMs && <span className="ai-msj-saat">{new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" })}</span>}
                       {/* AI mesajını TEKRAR sesli okut (istediğin kadar) */}
                       {m.rol !== "user" && m.metin && (

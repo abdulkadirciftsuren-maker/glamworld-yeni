@@ -3416,6 +3416,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .rc-ik{ font-size:.72em; margin-right:3px; opacity:.9; vertical-align:1px; }
 /* ŞU AN OKUNAN CÜMLE — kalın + parıltı + hafif zemin (kullanıcı nerede okunduğunu görür, alt yazı gibi) */
 .rc-aktif{ font-weight:800 !important; text-shadow:0 0 10px rgba(255,255,255,.65); background:rgba(255,235,150,.20); box-shadow:0 0 0 2px rgba(255,235,150,.22); }
+/* MÜŞTERİ TEMASI: sohbet balonu BEYAZ → beyaz parıltı görünmez. Okunan cümle vurgusu SICAK ALTIN zemin + koyu halka (net görünür, göz yormaz) */
+.ai-tema-musteri .ai-msj.ai .rc-aktif{ text-shadow:none; background:rgba(255,196,60,.30); box-shadow:0 0 0 2px rgba(190,130,15,.32); }
 /* KELİME KELİME balon (teleprompter): her kelime span; OKUNAN kelime vurgulu + üstünde ▸ imleç */
 .kb-kel{ display:inline; border-radius:6px; padding:0 1px; transition:background .12s ease, text-shadow .12s ease; }
 .kb-aktif{ font-weight:800 !important; background:rgba(255,224,120,.32); text-shadow:0 0 11px rgba(255,240,170,.9); box-shadow:0 0 0 2px rgba(255,224,120,.38); border-radius:6px; }
