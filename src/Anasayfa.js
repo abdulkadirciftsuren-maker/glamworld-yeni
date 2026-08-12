@@ -5946,7 +5946,9 @@ export default function Anasayfa({ pro = false }) {
           if (typeof onIlerleme === "function") ilerIv = setInterval(() => { const fr = Math.min(0.95, (Date.now() - t0) / sure); try { onIlerleme(Math.min(1, (buBas + fr * cLen) / toplamChar)); } catch (e) {} konusIlerRef.current = Date.now(); }, 90);
           utter.onend = bit; utter.onerror = bit;
           guard = setTimeout(bit, sure + 8000);     // ne olursa olsun asla takılmasın → sonraki cümleye geç
-          try { window.speechSynthesis.speak(utter); } catch (e) { bit(); }
+          // ANDROID YUTULMA: motoru SIFIRLA + kısa ara sonra konuş (yedek parça da yutulmasın); resume ile uyandır
+          try { window.speechSynthesis.cancel(); } catch (e) {}
+          setTimeout(() => { if (gecti || durduruldu) return; try { window.speechSynthesis.speak(utter); window.speechSynthesis.resume(); } catch (e) { bit(); } }, 160);
         } catch (e) { bit(); }
       };
       const oynatSira = async (idx) => {
@@ -6003,12 +6005,15 @@ export default function Anasayfa({ pro = false }) {
       oynatSira(0);
     } catch (e) { dus(); }
   };
-  // AI cevabını SESLİ oku — ARTIK SADECE TARAYICININ KENDİ SESİ (güvenilir, SONUNA KADAR okur, karışık dil doğru telaffuz).
-  // ⛔ ESKİ "gerçek ses (Gemini)" YOLU KALDIRILDI (kullanıcı: "o bozuk yazılım duruyor, gene ona dönüp okumayı kesiyor; kırmızı
-  //   cümleyi okuyup duruyor"). Gemini yolu ağ/kota/parça-zinciri yüzünden İLK cümleden sonra kesiliyordu → tamamen devre dışı.
+  // AI cevabını SESLİ oku: kullanıcı Gloxoo Sesi'nden bir ses SEÇTİYSE gerçek insan sesi (Gemini — erkek/kadın, her dil, farklı sesler);
+  // seçmediyse ya da gerçek ses gelmezse TARAYICININ kendi sesi (yedek). Kullanıcı: "eski konuşma erkek/kadın her dilde çalışacaktı, geri getir."
   const sesliOku = (metin, onBitti, onCumle, onIlerleme) => {
     if (!metin) { if (typeof onBitti === "function") onBitti(); return; }
-    try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {}
+    try {
+      if (gercekSesKapaliRef.current) { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); return; }
+      // Gerçek ses (Gemini). Herhangi bir parça gelmezse o parça TARAYICI sesiyle okunur (aşağıda) → ASLA yarıda durmaz.
+      gercekSesOku(metin, onBitti, onCumle, onIlerleme, () => { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {} });
+    } catch (e) { try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (x) {} }
   };
   // AI cevabını TARAYICININ KENDİ sesiyle oku (yedek) — dil kodu HER ZAMAN güncel aiDilRef'ten
   const sesliOkuTarayici = (metin, onBitti, onCumle, onIlerleme) => {
@@ -6165,14 +6170,10 @@ export default function Anasayfa({ pro = false }) {
           u.onboundary = (ev) => { konusIlerRef.current = Date.now(); try { if (ev && typeof ev.charIndex === "number") boundaryChar = buOfs + ev.charIndex; } catch (e) {} }; // her kelimede ilerleme → emniyet sıfırlanır
           u.onend = sonraki;
           u.onerror = sonraki;                                     // bir cümle patlarsa sıradakine geç → DONMA
-          konusIlerRef.current = Date.now();
-          try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); return; }
-          // ⛔⛔ ANDROID KÖK HATASI ("Gloxoo konuşmayı yarıda kesiyor, birazını okuyup duruyor"): Telefon `onboundary`
-          //   (kelime sınırı) olayını GÖNDERMEYİNCE (Android'de çoğu ses göndermez) konusIlerRef güncellenmiyor; eski
-          //   koru zamanlayıcı bunu "1.5 sn'dir ilerlemiyor → takıldı" sanıp ses HÂLÂ ÇALIYORKEN cümleyi kesip sonrakine
-          //   atlıyordu → konuşma yarıda kesiliyordu. KÖK ÇÖZÜM: karar ölçütü artık kelime sınırı DEĞİL, sadece
-          //   speechSynthesis.speaking. Ses ÇALIYORSA cümle ASLA kesilmez (çok cömert bir üst sınıra kadar bekler);
-          //   ses gerçekten SUSUNCA (onend gelmese bile) hızlıca sıradaki cümleye geçer. Böylece uzun cevap SONUNA KADAR okunur.
+          // ⛔⛔ ANDROID/SAMSUNG KÖK HATASI ("kırmızı cümleyi okuyup DURUYOR, sonraki (mavi) cümleye GEÇMİYOR"): Telefon İLK
+          //   cümleden SONRAKİ speechSynthesis.speak() çağrısını çoğu zaman YUTUYOR (ses hiç çıkmıyor) → zincir 1. cümlede kalıyor.
+          //   ÇÖZÜM: 2. ve sonraki cümleler ÖNCE cancel() ile motoru SIFIRLA, kısa bir an bekle, sonra speak(); speak sonrası resume().
+          //   Böylece her cümle temiz başlar, YUTULMAZ → gönderi SONUNA KADAR okunur.
           const guardKur = () => {
             const basZ = Date.now();
             // bu cümlenin GERÇEK konuşma süresinden uzun, ÇOK cömert üst sınır (ses hâlâ çalıyorsa bu süreye kadar kesme YOK)
@@ -6192,7 +6193,15 @@ export default function Anasayfa({ pro = false }) {
             };
             guardT = setTimeout(kontrol, 1200);
           };
-          guardKur();
+          const konusEt = () => {
+            if (ttsTarayiciIptalRef.current) return;               // arada durdurulduysa başlatma
+            konusIlerRef.current = Date.now();
+            try { window.speechSynthesis.speak(u); } catch (e) { sonraki(); return; }
+            try { window.speechSynthesis.resume(); } catch (e) {}  // Android: bazen "paused" başlar → hemen uyandır (yutulmayı önler)
+            guardKur();
+          };
+          if (idx === 0) konusEt();                                // ilk cümle: baştan cancel edildi → hemen konuş
+          else { try { window.speechSynthesis.cancel(); } catch (e) {} setTimeout(konusEt, 180); } // 2. ve sonrası: motoru SIFIRLA + kısa ara → YUTULMASIN
         };
         soyle(0);
       };
@@ -11440,8 +11449,8 @@ export default function Anasayfa({ pro = false }) {
                       <div className="ai-ses-baslik">🔊 Gloxoo Sesi</div>
                       {GLOX_SESLER.map((s) => (
                         <button key={s.id} className={"ai-dil-oge" + (s.id === gloxSes ? " sec" : "")} onClick={() => {
-                          setGloxSes(s.id); gloxSesRef.current = s.id; // (gerçek ses/Gemini yolu KALDIRILDI → sadece cinsiyet tercihi: Kadın/Erkek tarayıcı sesi)
-                          // KISA ÖRNEK: seçilen cinsiyet/hızla tarayıcı sesinden duy
+                          setGloxSes(s.id); gloxSesRef.current = s.id; gercekSesKapaliRef.current = false; // GERÇEK SES aç → seçilen ses (erkek/kadın, her dil) kullanılsın
+                          // KISA ÖRNEK: seçilen sesi HEMEN duy
                           try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
                         }}>
                           <span className="ai-dil-oge-ad">{s.id === gloxSes ? "✓ " : ""}{s.ad} · {s.cins}</span>
