@@ -3,7 +3,17 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
-## 🚨 SESLİ OKUMA — EN ÇOK ACI VEREN KONU (12 Ağu 2026, B133 — kullanıcı çılgına döndü, "sil yeniden kur" dedi)
+## ✅ SESLİ OKUMA + İMLEÇ — ÇALIŞIYOR (12 Ağu 2026, B143). ⛔⛔ BU BÖLÜMÜ OKU, BURAYA DOKUNMA — bozarsan kullanıcı yıkılır (günlerce acı çekti, sonunda düzeldi).
+> **KULLANICI SÖZÜ (ders):** "Eskiyi sildiğin zaman her şey düzeliyor." → **KURAL: TEK uygulama, eskiyi SİL (yorumla/yedekte bırakma), üstüne yama yapma. Yeni bir "iyileştirme" EKLEME — çalışıyor.**
+- **NEREDE:** `src/Anasayfa.js` → `sesliOkuTarayici` (okuma) + `renkliCumleler` (ekranda cümle vurgusu/imleç) + `okunanCumle`/`teleCumle`/`maskotKaydirCumle`.
+- **ÇALIŞAN YAPI (B140-B143) — DEĞİŞTİRME:**
+  1. Okuma **cümle cümle**: her cümle ayrı `SpeechSynthesisUtterance`; `u.onend/onerror → oku(idx+1)`. Samsung ilk cümleden sonra "bittim" (onend) sinyali GÖNDERİYOR, o yüzden zincir sonuna kadar ilerler. **`cancel()` YOK (cümle yutulur), `speaking` tabanlı kontrol YOK (Samsung okurken bile speaking=false diyor → erken keser), tahmin zamanlayıcı YOK.** Sadece onend + onend hiç gelmezse cömert emniyet (`c.length*120+3500`).
+  2. **İMLEÇ KAYMASIN (B143 kök çözüm):** cümleler `metin` (HAM) üstünden `renkliCumleler` ile **AYNI regex** (`/[^.!?…\n]+[.!?…]*/g`) bölünür (`hamCumleler`). `onCumle(idx)` = ekrandaki `data-ci=idx`. Her cümle okumadan önce `cumleTemizle()` ile temizlenir; temizlenince boş kalan (◆/emoji) cümle konuşulmaz ama **HAM indeks korunur** → imleç ekrandaki cümleyle birebir. **Okuma ve imleç AYNI kaynaktan sayar; iki ayrı bölme = imleç kayar (eski hata).**
+- **SİLİNDİ, GERİ EKLEME:** Gemini/gerçek-ses okuma yolu (`gercekSesOku` çağrılmıyor, `gercekSesKapaliRef` hep true), tek-parça(onboundary) okuma, `temiz`-metin bölmesi, `cumleBas/cumleBul/runDili/scriptTip/_sesCache`, çok-utterance guard'ları, `cancel()`-arası, Duraklat/Devam, kelime imleci (`okunanKelime`) sohbette. **Bunları geri getirme = bozma.**
+- **TAKAS (bilerek):** okuma TEK sesle (dil ayrımı yok — karışık dilde tek ses). Kullanıcı önceliği: SONUNA KADAR + imleç senkron. Erkek/kadın telefonun TTS'inde O dilde ses varsa değişir (kod değiştiremez).
+- **AÇIK KALAN (kullanıcı sonra isterse, TEK TEK bak, dokunmadan):** canlı sohbette mikrofonun erken açılması / Gloxoo'nun kendi sesini dinlemesi (echo).
+
+## 🚨 (ESKİ NOTLAR — çözüm süreci, B133) SESLİ OKUMA ACISI
 - **KÖK SEBEP (nihayet bulundu, B133):** Kullanıcı Gloxoo Sesi menüsünden ses seçince `gercekSesKapaliRef=false` oluyordu → okuma
   ARTIK çalışan tarayıcı yolundan (`sesliOkuTarayici`) DEĞİL, eski **BOZUK "gerçek ses (Gemini)" yolundan** (`gercekSesOku`)
   gidiyordu; o yol İLK CÜMLEDEN (kırmızı cümle) sonra ağ/kota/parça-zinciri yüzünden KESİLİYORDU. Kullanıcının "ses örneği
