@@ -1837,6 +1837,11 @@ export default function Anasayfa({ pro = false }) {
   const maskotBosRef = useRef(0);
   const konusIlerRef = useRef(0);
   const ttsTarayiciIptalRef = useRef(false); // tarayıcı sesi SIRAYLA okurken: susturulunca sıradaki cümleye GEÇMESİN (durunca gerçekten dursun)
+  // DURAKLAT/DEVAM için: o an okunan parçalar + kaçıncı parçada olduğumuz + geri çağrılar → Devam'da (native resume işlemezse) KALDIĞI parçadan yeniden okunur
+  const okuParcaRef = useRef([]);
+  const okuIdxRef = useRef(0);
+  const okuCbRef = useRef(null);
+  const okuEpochRef = useRef(0); // her YENİ okuma bir tur no alır; ESKİ okuma zinciri (soyle/guard) bu no değişince kendini keser → çift ses OLMAZ
   const okuBosRef = useRef(0);                // balon ■ ikonu DONMA emniyeti: ses kaç ölçümdür hiç çalmıyor (temizle sayacı)
   useEffect(() => {
     const id = setInterval(() => {
@@ -6033,8 +6038,11 @@ export default function Anasayfa({ pro = false }) {
         .replace(/\s+/g, " ").trim();
       if (!temiz) return;
       ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla (bu okuma sonuna kadar sürsün)
+      if (aiDuraklatRef.current) { aiDuraklatRef.current = false; try { setAiDuraklat(false); } catch (e) {} } // eski DURAKLAT durumu yeni okumayı dondurmasın
       window.speechSynthesis.cancel();
-      // EN DOĞAL sesi (Natural/Neural/Online/Google + KADIN) DİLE GÖRE seç — cache'li. Karışık dilde HER parça KENDİ diliyle okunur.
+      // EN DOĞAL sesi DİLE GÖRE seç — cache'li. Kullanıcının seçtiği Gloxoo Sesi'nin CİNSİYETİNE (Kadın/Erkek) göre kadın/erkek
+      //   tarayıcı sesi tercih edilir (telefonda o dilde erkek+kadın ses yüklüyse SEÇİM İŞE YARAR). Karışık dilde her parça kendi diliyle.
+      const _istenenCins = ((typeof GLOX_SESLER !== "undefined" ? GLOX_SESLER : []).find((s) => s.id === gloxSesRef.current) || {}).cins || "Kadın";
       const _sesCache = {};
       const sesSecDil = (dk) => {
         const key = String(dk || "").toLowerCase(); if (key in _sesCache) return _sesCache[key];
@@ -6043,7 +6051,13 @@ export default function Anasayfa({ pro = false }) {
         const dilli = sesler.filter((v) => v.lang && (v.lang.toLowerCase() === l || v.lang.toLowerCase().startsWith(k)));
         const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || ""); // bulut/doğal = tekleme YOK
         const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|google türkçe|google.*(female)/i.test(v.name || "");
-        const sec = dilli.find((v) => iyi(v) && kadin(v)) || dilli.find((v) => v.localService === false && kadin(v)) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli.find(kadin) || dilli[0] || null;
+        const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|dmitri|pavel|yuri|artem|maxim|ahmet|mehmet|tolga|çağ|onur|google.*(male)/i.test(v.name || "");
+        const isterErkek = _istenenCins === "Erkek";
+        const cinsUyar = (v) => (isterErkek ? erkek(v) : kadin(v));      // seçilen cinsiyet
+        const sec = dilli.find((v) => iyi(v) && cinsUyar(v))              // doğal + istenen cinsiyet
+          || dilli.find((v) => v.localService === false && cinsUyar(v))  // bulut + istenen cinsiyet
+          || dilli.find(cinsUyar)                                        // istenen cinsiyet (herhangi)
+          || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null; // yoksa en iyi mevcut
         _sesCache[key] = sec; return sec;
       };
       // ── KARIŞIK DİL (kullanıcı: "Rusça kelime Rusça, Türkçe kelime Türkçe okunsun"): metni YAZI TİPİNE (script) göre parçala;
@@ -6085,6 +6099,9 @@ export default function Anasayfa({ pro = false }) {
         });
       });
       if (!parcalar.length) parcalar.push({ metin: temiz, sesKod: sesDilKodu, cumle: 0, ofs: 0 });
+      // DEVAM için sakla: parçalar + geri çağrılar (native resume işlemezse kaldığı parçadan yeniden okunur)
+      okuParcaRef.current = parcalar; okuIdxRef.current = 0; okuCbRef.current = { onBitti, onCumle, onIlerleme };
+      const benimEpoch = ++okuEpochRef.current; // BU okumanın tur no'su → yeni okuma başlarsa eski zincir (aşağıdaki soyle/guard) kendini keser
       const konus = () => {
         // ── KELİME KELİME İLERLEME (teleprompter) ──
         // İlerleme 0→1 hesaplanır: onboundary VARSA gerçek karakter konumundan (kesin), YOKSA zamana göre (tahmin).
@@ -6132,21 +6149,25 @@ export default function Anasayfa({ pro = false }) {
         //   her cümle BİTİNCE (onend) sıradaki cümleyi başlat. Böylece uzun cevap SONUNA KADAR okunur.
         // (Parça konumu/ofs YUKARIDA hesaplandı — her parça kendi TEMİZ içindeki gerçek konumunu, dilini ve cümle no'sunu taşır.)
         const soyle = (idx) => {
+          if (okuEpochRef.current !== benimEpoch) return;          // YENİ bir okuma başladı → bu ESKİ zincir kendini kessin (çift ses olmasın)
           if (ttsTarayiciIptalRef.current) return;                 // susturuldu → sıradaki parçaya GEÇME (durunca dursun)
           if (idx >= parcalar.length) { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } return; } // hepsi bitti
           const seg = parcalar[idx];
           const p = seg.metin;
+          okuIdxRef.current = idx;                                  // DEVAM için: kaçıncı parçadayız (native resume işlemezse buradan yeniden okunur)
           // CÜMLE VURGUSU: onboundary'e GÜVENME (Android çoğu zaman göndermez → desenkron). Parçanın CÜMLE no'suyla haber ver
           //   → sohbette o cümle vurgulanır, konuşmayla BİRLİKTE ilerler. (Aynı cümlenin farklı dil parçalarında idx aynı → teleCumle no-op.)
           if (typeof onCumle === "function") { try { onCumle(seg.cumle); } catch (e) {} }
           const u = new SpeechSynthesisUtterance(p);
-          // KARIŞIK DİL: bu parçanın KENDİ dili/sesi (Kiril→Rusça, Türkçe harfli→Türkçe...) → doğru telaffuz
-          u.lang = seg.sesKod || sesDilKodu; u.rate = 1; u.pitch = 1;
+          // KARIŞIK DİL: bu parçanın KENDİ dili/sesi (Kiril→Rusça, Türkçe harfli→Türkçe...) → doğru telaffuz. HIZ: kullanıcının seçtiği (Yavaş/Normal/Hızlı).
+          u.lang = seg.sesKod || sesDilKodu; u.rate = gloxHizRef.current || 1; u.pitch = 1;
           const segSes = sesSecDil(seg.sesKod || sesDilKodu); if (segSes) u.voice = segSes;
           const buOfs = seg.ofs;                                   // bu parçanın TEMİZ içindeki GERÇEK konumu (imleç)
           let gecti = false, guardT = null;
           // Bu cümle bitince (VEYA patlarsa VEYA emniyet süresi dolunca) → SIRADAKİ cümle. TEK sefer çalışır (gecti).
           const sonraki = () => {
+            if (okuEpochRef.current !== benimEpoch) return;        // eski zincir → sus
+            if (aiDuraklatRef.current) return;                     // ⛔ DURAKLATILDI → ilerleme (bu çağrı iptal cancel'dan gelmiş olabilir); Devam'da devralınır
             if (gecti) return; gecti = true;
             if (guardT) { clearTimeout(guardT); guardT = null; }
             if (ttsTarayiciIptalRef.current) return;               // durduysa sırada bekleme
@@ -6172,7 +6193,7 @@ export default function Anasayfa({ pro = false }) {
             const enFazlaMs = Math.max(6000, p.length * 160 + 5000);
             let basladiMi = false, sessizTik = 0;
             const kontrol = () => {
-              if (gecti) return;
+              if (gecti || okuEpochRef.current !== benimEpoch) return; // bitti VEYA yeni okuma başladı → bu guard dursun
               // ⛔ KULLANICI DURAKLATTI (Duraklat düğmesi): resume ETME, sıradakine GEÇME → duraklama TUTSUN. Süre sayacını da
               //   dondur (basZ'yi ileri it) ki uzun duraklamadan sonra cümle "süre doldu" sanılıp atlanmasın (Devam'da kaldığı yerden).
               if (aiDuraklatRef.current) { basZ += 400; guardT = setTimeout(kontrol, 400); return; }
@@ -6209,6 +6230,7 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     const id = setInterval(() => {
       if (konusanMesajRef.current < 0) { okuBosRef.current = 0; return; } // okunan mesaj yok
+      if (aiDuraklatRef.current) { okuBosRef.current = 0; return; }        // ⛔ KULLANICI DURAKLATTI → ses yok ama DONMUŞ DEĞİL; temizleme (yoksa Duraklat'ta kontroller kaybolup okuma kapanıyordu)
       let calisiyor = false; try { calisiyor = gloxKonusuyor(); } catch (e) {}
       if (calisiyor) { okuBosRef.current = 0; return; }                    // hâlâ konuşuyor/hazırlanıyor → dokunma
       okuBosRef.current++;
@@ -6671,17 +6693,25 @@ export default function Anasayfa({ pro = false }) {
         else { a.pause(); aiDuraklatRef.current = true; setAiDuraklat(true); }
         return;
       }
-      // Yoksa tarayıcının kendi sesini duraklat/devam ettir
+      // Tarayıcı sesi — DETERMİNİSTİK (kullanıcı: "Devam açmıyor, kontroller kayboluyor"). Android'de native pause/resume
+      //   güvenilmez (pause bazen sesi tamamen siler). O yüzden: DURAKLAT = zinciri durdur + sesi kes; DEVAM = KALDIĞI
+      //   parçadan metni YENİDEN okut. Böylece hem "açmıyor" hem "çift ses" biter.
       const ss = window.speechSynthesis; if (!ss) return;
-      if (aiDuraklat || ss.paused) {
-        // DEVAM: önce bayrağı indir (guardKur artık resume/ilerleme yapabilsin), sonra resume — Android bazen tek resume'u
-        //   yutar, o yüzden birkaç kez dene. Yine de gelmezse guardKur ses susmuşsa kaldığı parçadan sıradakini okur (sessiz kalmaz).
+      if (aiDuraklat) {
+        // DEVAM: kaldığı parçadan itibaren yeniden oku
         aiDuraklatRef.current = false; setAiDuraklat(false);
-        try { ss.resume(); } catch (e) {}
-        setTimeout(() => { try { if (!aiDuraklatRef.current && window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} }, 120);
-        setTimeout(() => { try { if (!aiDuraklatRef.current && window.speechSynthesis) window.speechSynthesis.resume(); } catch (e) {} }, 350);
+        const parc = okuParcaRef.current || []; const idx = okuIdxRef.current || 0;
+        const kalan = parc.slice(idx).map((s) => s && s.metin).filter(Boolean).join(" ");
+        const cb = okuCbRef.current || {};
+        try { ss.cancel(); } catch (e) {}
+        if (kalan) { try { sesliOku(kalan, cb.onBitti); } catch (e) {} } // onCumle/onIlerleme yok → cümle vurgusu yerinde kalır
+        else { try { okuTemizle(); } catch (e) {} }                     // okunacak bir şey kalmadıysa temizle
+      } else if (ss.speaking || ss.pending || (okuParcaRef.current && okuParcaRef.current.length)) {
+        // DURAKLAT: zinciri TAMAMEN durdur (sonraki parçaya geçmesin) + sesi kes. Watchdog aiDuraklatRef sayesinde temizlemez.
+        aiDuraklatRef.current = true; setAiDuraklat(true);
+        ttsTarayiciIptalRef.current = true;                            // zincir sıradakine GEÇMESİN
+        try { ss.cancel(); } catch (e) {}                              // sesi hemen kes (Android'de en güvenilir duruş)
       }
-      else if (ss.speaking) { aiDuraklatRef.current = true; setAiDuraklat(true); try { ss.pause(); } catch (e) {} }
     } catch (e) {}
   };
   // SUS — konuşmayı tamamen keser (sen hemen konuşabilirsin); canlı modda dinlemeye geçer
@@ -11445,6 +11475,9 @@ export default function Anasayfa({ pro = false }) {
                     <span className="ai-dil-kod">{(DILLER.find((d) => d.kod === aiDil)?.bayrak || "tr").toUpperCase()}</span>
                   </button>
                   {aiDilAcik && (
+                    <div className="ai-menu-kapatan" onClick={() => setAiDilAcik(false)} aria-hidden="true" />
+                  )}
+                  {aiDilAcik && (
                     <div className="ai-dil-liste ai-dil-yukari">
                       {DILLER.map((d) => (
                         <button key={d.kod} className={"ai-dil-oge" + (d.kod === aiDil ? " sec" : "")} onClick={() => { setAiDil(d.kod); aiDilRef.current = d.kod; setAiDilAcik(false); }}>
@@ -11455,11 +11488,14 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                   )}
                 </div>
-                {/* GLOXOO SES SEÇİCİ — Google'ın doğal sesleri; seçince kısa örnek okur (sesi duyarsın) */}
+                {/* GLOXOO SES SEÇİCİ — Google'ın doğal sesleri; seçince kısa örnek okur (sesi duyarsın). İKON: kişi + ses dalgası (hoparlörden AYRI, "kimin sesi") */}
                 <div className="ai-dil-sar">
-                  <button className="ai-ses ai-dil-btn" onClick={() => setGloxSesAcik((v) => !v)} aria-label={t("gloxSes", "Gloxoo sesi")}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a3 3 0 0 1 0 6M18.5 7a6 6 0 0 1 0 10"/></svg>
+                  <button className="ai-ses ai-gloxses" onClick={() => setGloxSesAcik((v) => !v)} aria-label={t("gloxSes", "Gloxoo sesi")} title={t("gloxSes", "Gloxoo sesi")}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5"/><path d="M15.5 8.5a3.2 3.2 0 0 1 0 7M18 6a6 6 0 0 1 0 12"/></svg>
                   </button>
+                  {gloxSesAcik && (
+                    <div className="ai-menu-kapatan" onClick={() => setGloxSesAcik(false)} aria-hidden="true" />
+                  )}
                   {gloxSesAcik && (
                     <div className="ai-dil-liste ai-dil-yukari">
                       <div className="ai-ses-baslik">🔊 Gloxoo Sesi</div>

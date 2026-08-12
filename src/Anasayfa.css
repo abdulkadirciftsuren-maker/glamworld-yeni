@@ -3545,6 +3545,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-foto-ekle{ color:#13b6c4; border-color:rgba(19,182,196,.5); }
 .ai-mik{ color:#ff5d7a; border-color:rgba(255,93,122,.5); }
 .ai-hoparlor{ color:#f0962e; border-color:rgba(240,150,46,.5); }
+/* GLOXOO SES SEÇİCİ — mor, hoparlörden AYRI (kişi+dalga ikonu) */
+.ai-gloxses{ color:#9b6bff; border-color:rgba(155,107,255,.55); background:rgba(155,107,255,.10); }
+/* MENÜ ARKA PERDESİ — dil/ses menüsü açıkken ekranın herhangi yerine dokununca kapanır (kullanıcı: "pencere açıkken ekrana dokununca kapansın") */
+.ai-menu-kapatan{ position:fixed; inset:0; z-index:39; background:transparent; }
 .ai-dil-btn{ color:#a86bff; border-color:rgba(168,107,255,.5); }
 .ai-yeni{ color:#2f95ff; border-color:rgba(47,149,255,.5); }
 /* Dinlerken SABİT (yanıp sönme/nabız YOK — parlama sebebiydi); sadece dolu kırmızı + durdur ikonu gösterilir */
