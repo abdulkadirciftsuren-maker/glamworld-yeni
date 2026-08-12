@@ -6027,23 +6027,58 @@ export default function Anasayfa({ pro = false }) {
       if (!temiz) return;
       ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla (bu okuma sonuna kadar sürsün)
       window.speechSynthesis.cancel();
-      const lk = sesDilKodu.toLowerCase(), kok = lk.split("-")[0];
-      // EN DOĞAL sesi seç: Natural/Neural/Online/Google/Premium (tekleme/robotik ses biter); yoksa bulut sesi; yoksa ilk uygun
-      const sesSec = () => {
+      // EN DOĞAL sesi (Natural/Neural/Online/Google + KADIN) DİLE GÖRE seç — cache'li. Karışık dilde HER parça KENDİ diliyle okunur.
+      const _sesCache = {};
+      const sesSecDil = (dk) => {
+        const key = String(dk || "").toLowerCase(); if (key in _sesCache) return _sesCache[key];
+        const l = key, k = l.split("-")[0];
         const sesler = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || [];
-        const dilli = sesler.filter((v) => v.lang && (v.lang.toLowerCase() === lk || v.lang.toLowerCase().startsWith(kok)));
+        const dilli = sesler.filter((v) => v.lang && (v.lang.toLowerCase() === l || v.lang.toLowerCase().startsWith(k)));
         const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || ""); // bulut/doğal = tekleme YOK
-        // KADIN + DÜZGÜN ses tercih et (kullanıcı: tekleyen kadın sesini değiştir). Bilinen kadın ses adları + female/kadın.
-        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|google türkçe|google.*(female)/i.test(v.name || "");
-        return dilli.find((v) => iyi(v) && kadin(v)) // en iyi: doğal + kadın
-          || dilli.find((v) => v.localService === false && kadin(v)) // bulut + kadın
-          || dilli.find((v) => v.localService === false) // bulut (tekleme yok)
-          || dilli.find(iyi) || dilli.find(kadin) || dilli[0] || null;
+        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|google türkçe|google.*(female)/i.test(v.name || "");
+        const sec = dilli.find((v) => iyi(v) && kadin(v)) || dilli.find((v) => v.localService === false && kadin(v)) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli.find(kadin) || dilli[0] || null;
+        _sesCache[key] = sec; return sec;
       };
-      // UZUN metni CÜMLELERE böl: Chrome masaüstünde uzun metin kesiliyor/tekliyor → kısa parçalar akıcı okunur
-      const parcalar = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
+      // ── KARIŞIK DİL (kullanıcı: "Rusça kelime Rusça, Türkçe kelime Türkçe okunsun"): metni YAZI TİPİNE (script) göre parçala;
+      //    her parçanın DİLİNİ tespit et → o parçayı KENDİ diliyle/sesiyle oku (yanlış telaffuz biter). ──
+      const baseDil = String(aiDilRef.current || "tr");
+      const runDili = (rt) => {
+        if (/[Ѐ-ӿ]/.test(rt)) return (baseDil === "uk" ? "uk" : "ru"); // Kiril → Rusça (Ukraynaca okuyorsa uk)
+        if (/[؀-ۿ]/.test(rt)) return "ar";                              // Arap harfi → Arapça
+        if (/[一-鿿]/.test(rt)) return "zh";                              // Çince
+        if (/[぀-ヿ]/.test(rt)) return "ja";                              // Japonca
+        if (/[ığşİĞŞ]/.test(rt)) return "tr";                                     // Türkçe'ye ÖZGÜ harfler (ı/İ/ğ/ş) → kesin Türkçe
+        return ["tr", "en", "de", "fr", "es", "it", "pt"].indexOf(baseDil) !== -1 ? baseDil : "tr"; // düz Latin → okuma dili (Latinse), değilse Türkçe (uygulama Türkçe ağırlıklı)
+      };
+      const scriptTip = (ch) => {
+        if (/[Ѐ-ӿ]/.test(ch)) return "cyr";
+        if (/[؀-ۿ]/.test(ch)) return "arab";
+        if (/[一-鿿]/.test(ch)) return "cjk";
+        if (/[぀-ヿ]/.test(ch)) return "jp";
+        if (/[A-Za-zÀ-ÿĀ-ſ]/.test(ch)) return "lat"; // Latin (Türkçe harfler dahil)
+        return null;                                  // rakam/işaret/boşluk → mevcut parçaya YAPIŞIR (parça bölmez)
+      };
+      // CÜMLELER (vurgu indeksi renkliCumleler ile AYNI kalsın) → her cümle SCRIPT parçalarına bölünür; her parça kendi cümle no'sunu taşır
+      const cumleler = (temiz.match(/[^.!?…\n]+[.!?…]*/g) || [temiz]).map((s) => s.trim()).filter(Boolean);
+      const parcalar = []; // { metin, sesKod, cumle, ofs }
+      let _taraOfs = 0;
+      cumleler.forEach((c, ci) => {
+        const gruplar = []; let cur = "", curS = null;
+        for (const ch of c) {
+          const s = scriptTip(ch);
+          if (s === null) { cur += ch; continue; }          // işaret/boşluk → mevcut gruba
+          if (curS === null || s === curS) { curS = s; cur += ch; continue; }
+          gruplar.push(cur); cur = ch; curS = s;            // script değişti → yeni grup
+        }
+        if (cur) gruplar.push(cur);
+        (gruplar.length ? gruplar : [c]).forEach((g) => {
+          if (!g.trim()) return;
+          const at = temiz.indexOf(g, _taraOfs); const pos = at >= 0 ? at : _taraOfs; _taraOfs = pos + g.length; // TEMİZ içindeki gerçek konum (imleç için)
+          parcalar.push({ metin: g.trim(), sesKod: aiSesKodu(runDili(g)), cumle: ci, ofs: pos });
+        });
+      });
+      if (!parcalar.length) parcalar.push({ metin: temiz, sesKod: sesDilKodu, cumle: 0, ofs: 0 });
       const konus = () => {
-        const ses = sesSec();
         // ── KELİME KELİME İLERLEME (teleprompter) ──
         // İlerleme 0→1 hesaplanır: onboundary VARSA gerçek karakter konumundan (kesin), YOKSA zamana göre (tahmin).
         // Böylece Android onboundary desteklemese bile yazı kelime kelime akmaya DEVAM eder (sonuna kadar).
@@ -6088,21 +6123,20 @@ export default function Anasayfa({ pro = false }) {
         // ⛔ ANDROID HATASI: Cümleleri AYNI ANDA kuyruğa atınca (forEach speak) çoğu telefon SADECE İLK cümleyi
         //   okuyup SUSUYORDU → kullanıcı "5-6 kelime okuyup kesiliyor" dedi. ÇÖZÜM: cümleleri SIRAYLA oku —
         //   her cümle BİTİNCE (onend) sıradaki cümleyi başlat. Böylece uzun cevap SONUNA KADAR okunur.
-        // ⛔ İMLEÇ GERİDE KALMASIN: Her cümlenin TEMİZ metindeki GERÇEK başlangıç konumunu indexOf ile bul.
-        //   (Eskiden parça uzunlukları toplanıyordu; parçalar trim'lendiği için konum KAYIYOR, imleç 3-4 kelime GERİDE
-        //   kalıyordu. Gerçek konumla boundaryChar tam yerine oturur → imleç sesle BİRLİKTE yürür.)
-        let _araOfs = 0;
-        const parcaOfs = parcalar.map((pp) => { const at = temiz.indexOf(pp, _araOfs); const pos = at >= 0 ? at : _araOfs; _araOfs = pos + pp.length; return pos; });
+        // (Parça konumu/ofs YUKARIDA hesaplandı — her parça kendi TEMİZ içindeki gerçek konumunu, dilini ve cümle no'sunu taşır.)
         const soyle = (idx) => {
-          if (ttsTarayiciIptalRef.current) return;                 // susturuldu → sıradaki cümleye GEÇME (durunca dursun)
+          if (ttsTarayiciIptalRef.current) return;                 // susturuldu → sıradaki parçaya GEÇME (durunca dursun)
           if (idx >= parcalar.length) { durdurIler(); if (typeof onBitti === "function") { try { onBitti(); } catch (e) {} } return; } // hepsi bitti
-          const p = parcalar[idx];
-          // CÜMLE VURGUSU: onboundary'e GÜVENME (Android çoğu zaman göndermez → desenkron). Cümleye GEÇER GEÇMEZ haber ver
-          //   → sohbette o cümle vurgulanır, konuşmayla BİRLİKTE ilerler (kelime imlecinden çok daha güvenilir/rahat).
-          if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} }
+          const seg = parcalar[idx];
+          const p = seg.metin;
+          // CÜMLE VURGUSU: onboundary'e GÜVENME (Android çoğu zaman göndermez → desenkron). Parçanın CÜMLE no'suyla haber ver
+          //   → sohbette o cümle vurgulanır, konuşmayla BİRLİKTE ilerler. (Aynı cümlenin farklı dil parçalarında idx aynı → teleCumle no-op.)
+          if (typeof onCumle === "function") { try { onCumle(seg.cumle); } catch (e) {} }
           const u = new SpeechSynthesisUtterance(p);
-          u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
-          const buOfs = parcaOfs[idx];                             // bu cümlenin TEMİZ içindeki GERÇEK konumu
+          // KARIŞIK DİL: bu parçanın KENDİ dili/sesi (Kiril→Rusça, Türkçe harfli→Türkçe...) → doğru telaffuz
+          u.lang = seg.sesKod || sesDilKodu; u.rate = 1; u.pitch = 1;
+          const segSes = sesSecDil(seg.sesKod || sesDilKodu); if (segSes) u.voice = segSes;
+          const buOfs = seg.ofs;                                   // bu parçanın TEMİZ içindeki GERÇEK konumu (imleç)
           let gecti = false, guardT = null;
           // Bu cümle bitince (VEYA patlarsa VEYA emniyet süresi dolunca) → SIRADAKİ cümle. TEK sefer çalışır (gecti).
           const sonraki = () => {
