@@ -3,6 +3,17 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
+## 🚨 SESLİ OKUMA — EN ÇOK ACI VEREN KONU (12 Ağu 2026, B133 — kullanıcı çılgına döndü, "sil yeniden kur" dedi)
+- **KÖK SEBEP (nihayet bulundu, B133):** Kullanıcı Gloxoo Sesi menüsünden ses seçince `gercekSesKapaliRef=false` oluyordu → okuma
+  ARTIK çalışan tarayıcı yolundan (`sesliOkuTarayici`) DEĞİL, eski **BOZUK "gerçek ses (Gemini)" yolundan** (`gercekSesOku`)
+  gidiyordu; o yol İLK CÜMLEDEN (kırmızı cümle) sonra ağ/kota/parça-zinciri yüzünden KESİLİYORDU. Kullanıcının "ses örneği
+  çalışıyor ama mesaj kesiliyor" gözlemi bunu doğruladı (örnek kısa=1 parça, mesaj uzun=zincir kesilir).
+- **ÇÖZÜM (B133):** `sesliOku` ARTIK HER ZAMAN `sesliOkuTarayici` çağırır. Ses seçici `gercekSesKapaliRef`'i false YAPMAZ.
+  `gercekSesOku` artık HİÇ çağrılmıyor (ölü kod, çalışamaz). **⛔ SAKIN Gemini/gerçek-ses yolunu geri açma — kesilmenin sebebi oydu.**
+- **Duraklat/Devam KALDIRILDI (B132):** Okuma ikonu tek başına oku↔durdur (play/pause). Ayrı Duraklat YOK. Geri ekleme.
+- **Erkek ses:** Telefonun TTS motorunda O DİLDE erkek ses yüklüyse gelir (kullanıcının Samsung TTS'inde Türkçe TEK ses=Kadın; Rusça 2 ses). Kod bunu değiştiremez — dürüstçe söyle.
+- **KULLANICI GERİ BİLDİRİMİ (aynen, saygıyla):** "Sen 'bir şeyler yaptım' diyorsun ama inanmıyorum, daha çok yer bozdun diye düşünüyorum. Gloxoo çok fazla şişirilmiş/bozuk yazılım içeriyor; eskiyi silmezsen gene ona dönüyor." → **DERS: konuşma değil SONUÇ. Bozuk/yedek yolları YORUMLA bırakma, ÇAĞRILMAZ hale getir/SİL. Tek iş yap, doğrula, kullanıcı denesin.**
+
 ## 🧭 SAYFA HARİTASI (yeni gelen HEMEN bilsin)
 - **Ana sayfa ÜST ikon şeridi (`ana-nav`):** 🪞 Ayna · 🏠 Ana Sayfa · 💎 (Pro/Elite) · 👥 Topluluk · 📹 Video · 📍 Konum · 🎓 Akademi · Profil. **Hepsi buradan açılıyor ve ÇALIŞIYOR.** (Topluluk=Tanış sayfası, Akademi=eğitim+sertifika — ikisi de hazır.)
 - **Alt tab bar:** Keşfet · Ara · Makara (Reels) · Konum · Glome · Profil.
