@@ -6958,8 +6958,27 @@ export default function Anasayfa({ pro = false }) {
         // listeSifirla YOK → mevcut konuşmanın DEVAMINA eklenir (konuşma silinmez)
         try { yardimciGonder(tetik, { fotoOverride: fotoObj, baglamOverride: baglam, modOverride: "sohbet" }); } catch (e) {}
       })();
+    } else if (p.video) {
+      // ⛔ VİDEO gönderisi (kullanıcı: "manken animasyon videosunu Sor'a attım, video gitmedi, ne olduğunu anlamadı"):
+      //   Eskiden video gönderisinde Gloxoo'ya HİÇ görüntü gitmiyordu → "videoyu göremiyorum" diyordu. ÇÖZÜM: videodan bir
+      //   KARE yakala (önce paylaşımda saklı kapak/videoPoster — yerelde çekildiği için CORS yok; yoksa canlı kare) ve
+      //   RESİM olarak gönder → Gloxoo kareye bakıp videoda ne olduğunu anlatır.
+      (async () => {
+        let kareUrl = "";
+        if (p.videoPoster && String(p.videoPoster).slice(0, 5) === "data:") kareUrl = p.videoPoster; // paylaşımda saklanan kapak (en garantisi)
+        if (!kareUrl) { try { kareUrl = await videoKareYakala(videoSade(p.video)); } catch (e) {} }     // yoksa videodan canlı kare çek
+        let fotoObj = null;
+        if (kareUrl && String(kareUrl).slice(0, 5) === "data:") {
+          fotoObj = { dataURL: kareUrl, base64: (String(kareUrl).split(",")[1] || ""), mediaType: (String(kareUrl).match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg" };
+        }
+        const videoBaglam = fotoObj
+          ? `Kullanıcı şu an bir VİDEO gönderisine bakıyor ve ne olduğunu soruyor. Gönderi sahibi: ${p.ad || "—"}${p.meslek ? " (" + mc(p.meslek, dil) + ")" : ""}. Ekteki görüntü, bu videodan alınmış bir KAREDİR (videonun içeriğini temsil eder). ÇOK ÖNEMLİ: "videoyu göremiyorum/izleyemiyorum" DEME; ekteki kareye bakarak videoda ne olduğunu (kişi, kıyafet/giyim, poz, sahne, hareket) ${dilAd} dilinde KISACA anlat, varsa görseldeki yazıyı oku, sonra faydalı yorum/öneri ver. Konuşmaya DEVAM et (kesme).`
+          : baglam;
+        setYardimciFoto(fotoObj);
+        try { yardimciGonder(tetik, { fotoOverride: fotoObj || undefined, baglamOverride: videoBaglam, modOverride: "sohbet" }); } catch (e) {}
+      })();
     } else {
-      // YAZI / VİDEO gönderisi → hemen anlat (mevcut konuşmanın DEVAMINA, silmeden)
+      // YAZI gönderisi (medya yok) → hemen anlat (mevcut konuşmanın DEVAMINA, silmeden)
       try { yardimciGonder(tetik, { baglamOverride: baglam, modOverride: "sohbet" }); } catch (e) {}
     }
   };
@@ -7272,6 +7291,26 @@ export default function Anasayfa({ pro = false }) {
         setTimeout(() => { if (!bitti) { bitti = true; resolve(null); } }, 4000);
         v.src = url;
       } catch (e) { resolve(null); }
+    });
+  }
+  // Bir dataURL resmi KÜÇÜLT (en fazla mx piksel, jpeg) → küçük dataURL döndür. Video KAPAĞINI (poster) Firestore'a sığdırmak
+  // için: manken kapağı tam boy AI karesidir (~500KB+), küçültülmezse videoPoster kaydedilmez → sonra Gloxoo "videoyu göremiyorum" der.
+  function resmiKucult(dataUrl, mx) {
+    return new Promise((resolve) => {
+      try {
+        if (!dataUrl || String(dataUrl).slice(0, 5) !== "data:") { resolve(dataUrl || ""); return; }
+        const im = new Image();
+        im.onload = () => {
+          try {
+            let w = im.naturalWidth || 640, h = im.naturalHeight || 640; const m = mx || 640;
+            if (w > m || h > m) { const r = Math.min(m / w, m / h); w = Math.round(w * r); h = Math.round(h * r); }
+            const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(im, 0, 0, w, h);
+            resolve(c.toDataURL("image/jpeg", 0.75));
+          } catch (e) { resolve(dataUrl); }
+        };
+        im.onerror = () => resolve(dataUrl);
+        im.src = dataUrl;
+      } catch (e) { resolve(dataUrl); }
     });
   }
   // ad = KAYITLI değer (DEĞİŞMEZ — eski gönderiler bununla eşleşir); cev = ekranda gösterilen çeviri anahtarı
@@ -8416,7 +8455,10 @@ export default function Anasayfa({ pro = false }) {
               const file = (blob instanceof File) ? blob : new File([blob], "canli-manken.webm", { type: (blob && blob.type) || "video/webm" });
               const yerel = URL.createObjectURL(blob);
               setDuzenlenen(null); setPaylasYazi(""); setPaylasBaslik(""); setPaylasTur(""); setPaylasGorsel(""); setPaylasEkFotolar([]);
-              setPaylasVideoFile(file); setPaylasVideo(yerel); setPaylasVideoPoster(poster || ""); setPaylasDosya(null); setPaylasMuzik(null);
+              setPaylasVideoFile(file); setPaylasVideo(yerel); setPaylasDosya(null); setPaylasMuzik(null);
+              // KAPAK: manken karesi tam boy (~500KB+) → KÜÇÜLT ki videoPoster kaydedilsin (sonra Gloxoo "Sor"da videoyu bu kareden görsün)
+              setPaylasVideoPoster(poster || "");
+              (async () => { try { const kp = await resmiKucult(poster, 640); if (kp) setPaylasVideoPoster(kp); } catch (e) {} })();
               setPaylasDurum(""); setAiOneriler([]); setPaylasAcik(true);
             } catch (e) {}
           }} />
