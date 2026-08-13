@@ -3788,35 +3788,35 @@ export default function Anasayfa({ pro = false }) {
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       const ctx = new AC(); try { ctx.resume(); } catch (e) {}
-      // ZARİF ÇAN — yumuşak, sıcak, YAVAŞ (kaba "brrr"/bip değil): nazik giriş, uzun doğal sönüm (çan gibi çınlar).
-      // Hafif ikinci harmonik (oktav) eklenir → sıcak çan tınısı. Ses düşük tutulur (zarif, bağırmaz).
-      const cingir = (freq, gecikme, ses, sonum) => {
+      // 📞 GÜÇLÜ, NET TELEFON ZİLİ (kullanıcı: "zil çok az ve kötü") — belirgin, dolgun, klasik "çin-çin" darbeler.
+      //   Her darbe: iki nota (üçlü akor hissi) + kısa parlak vuruş; SES YÜKSEK ama kulak tırmalamaz (limiter'lı gain).
+      const master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
+      const vur = (freq, gecikme, sure, tepe) => {
         try {
           const t0 = ctx.currentTime + gecikme;
-          [[freq, ses], [freq * 2, ses * 0.28]].forEach(([f, v]) => { // temel + yumuşak oktav
-            const o = ctx.createOscillator(), g = ctx.createGain();
-            o.type = "sine"; o.frequency.value = f;
-            o.connect(g); g.connect(ctx.destination);
-            g.gain.setValueAtTime(0.0001, t0);
-            g.gain.exponentialRampToValueAtTime(v, t0 + 0.07);     // yumuşak giriş
-            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sonum); // uzun, zarif sönüm
-            o.start(t0); o.stop(t0 + sonum + 0.05);
-          });
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = "triangle"; o.frequency.value = freq;         // triangle: dolu ama yumuşak (bip değil)
+          o.connect(g); g.connect(master);
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(tepe, t0 + 0.02);   // hızlı, belirgin giriş (net duyulur)
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
+          o.start(t0); o.stop(t0 + sure + 0.03);
         } catch (e) {}
       };
       let dongu, aralik;
       if (mod === "aranan") {
-        // GELEN ÇAĞRI — yumuşak "çiin … çiin" iki nazik çan notası (tatlı yükseliş), YAVAŞ ve zarif.
-        dongu = () => { cingir(783.99, 0.0, 0.17, 1.2); cingir(1046.5, 0.5, 0.15, 1.4); }; // G5 → C6, uzun çınlar
-        aralik = 3200; // yavaş
+        // GELEN ÇAĞRI — klasik çift darbe "DRING-DRING" (yüksek, tanıdık, dikkat çeker): iki ton üst üste, iki kez.
+        const darbe = (g) => { vur(1046.5, g, 0.42, 0.55); vur(1318.5, g, 0.42, 0.34); }; // C6+E6 birlikte
+        dongu = () => { darbe(0.0); darbe(0.55); }; // çin-çin
+        aralik = 2400;
       } else {
-        // ARAYAN (giden) — tek yumuşak nota, karşı taraf çalıyor hissi (nazik, alçak).
-        dongu = () => { cingir(587.33, 0.0, 0.11, 1.3); }; // D5, yumuşak
-        aralik = 3400;
+        // ARAYAN (giden) — karşı taraf çalıyor tonu: alçak, sakin tek darbe (klasik "çalıyor" tonu gibi).
+        dongu = () => { vur(440, 0.0, 1.0, 0.30); };
+        aralik = 3600;
       }
       dongu();
       const iv = setInterval(dongu, aralik);
-      // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar "bildirim sesi gibi" çalma olmasın)
+      // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar çalma olmasın)
       const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
       zilRef.current = { ctx, iv, kapatZmn };
     } catch (e) {}
