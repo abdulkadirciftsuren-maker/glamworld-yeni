@@ -1534,6 +1534,7 @@ export default function Anasayfa({ pro = false }) {
   const aramaKucukRef = useRef(false); useEffect(() => { aramaKucukRef.current = aramaKucuk; }, [aramaKucuk]); // geri tuşu: arama açıkken ÖNCE küçültür, kapatmaz
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const pcRef = useRef(null);                          // RTCPeerConnection
+  const bekleyenAdaylarRef = useRef([]);               // remote description SET olmadan gelen ICE adayları → kuyruğa al, sonra ekle (yoksa adaylar kaybolur, ses gelmez)
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
   const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
@@ -3588,10 +3589,14 @@ export default function Anasayfa({ pro = false }) {
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
+    // TURN (röle) — farklı ağlardaki iki cihaz (ör. iPhone hücresel ↔ Android Wi-Fi) doğrudan bağlanamaz; medyayı röle aktarır.
+    // Open Relay'in TÜM kapıları (80/443 + TCP + TLS 'turns') → biri kapalıysa diğeri denenir, bağlantı/ses şansı artar.
     { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:80?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-  ], iceCandidatePoolSize: 4 };
+    { urls: "turns:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+  ], iceCandidatePoolSize: 6 };
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
@@ -3655,12 +3660,39 @@ export default function Anasayfa({ pro = false }) {
     if (tip === "goruntulu") { setTimeout(() => { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = stream; }, 50); }
     return stream;
   };
+  // 🔓 iOS SES KİLİDİ: Safari, sesi ancak kullanıcı JESTİ (Ara/Kabul Et'e basma) anında "açılan" bir <audio>'da çalar. Jest anında
+  //   elementi play() ile açarız (henüz ses yok ama iOS "kullanıcı başlattı" işaretler) + WebAudio bağlamını uyandırırız → karşıdan ses gelince ÇALAR.
+  const sesKilidiAc = () => {
+    try { const el = uzakSesRef.current; if (el) { el.muted = false; el.volume = 1; const p = el.play(); if (p && p.catch) p.catch(() => {}); } } catch (e) {}
+    try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { const c = new AC(); if (c.state === "suspended") { c.resume().catch(() => {}); } setTimeout(() => { try { c.close(); } catch (e) {} }, 900); } } catch (e) {}
+  };
+  // ICE adayı GÜVENLİ ekle: remote description HENÜZ set değilse adayı KUYRUĞA al (yoksa addIceCandidate hata verip adayı DÜŞÜRÜR → medya yolu kurulamaz → SES GELMEZ). Set olunca kuyruk boşaltılır.
+  const guvenliAdayEkle = async (pc, cand) => {
+    if (!pc || !cand) return;
+    try {
+      if (pc.remoteDescription && pc.remoteDescription.type) { await pc.addIceCandidate(new RTCIceCandidate(cand)); }
+      else { bekleyenAdaylarRef.current.push(cand); }
+    } catch (e) { try { bekleyenAdaylarRef.current.push(cand); } catch (x) {} }
+  };
+  const bekleyenAdaylariBosalt = async (pc) => {
+    const liste = bekleyenAdaylarRef.current || []; bekleyenAdaylarRef.current = [];
+    for (const c of liste) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch (e) {} }
+  };
   // Karşıdan gelen ses/görüntüyü uygun elemente bağla (sesli → <audio>, görüntülü → <video>) ve OYNAT.
+  // iOS Safari: play() bazen ilk denemede (autoplay kısıtı) reddolur → SES GELMEZ. Bu yüzden BİRKAÇ KEZ, artan gecikmeyle tekrar dene.
   const baglaUzakMedya = () => {
     const st = uzakStreamRef.current; if (!st) return;
     const el = uzakVideoRef.current || uzakSesRef.current; // görüntülüde video, seslide audio
-    if (el && el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
-    if (el) { try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+    if (!el) return;
+    if (el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
+    try { el.muted = false; el.volume = 1; } catch (e) {}
+    const dene = (kalan) => {
+      try {
+        const p = el.play();
+        if (p && p.then) p.then(() => {}).catch(() => { if (kalan > 0) setTimeout(() => dene(kalan - 1), 400); });
+      } catch (e) { if (kalan > 0) setTimeout(() => dene(kalan - 1), 400); }
+    };
+    dene(5); // en fazla ~5 tekrar (iOS ilk redlerini aş)
   };
   const pcOlustur = (aramaId, kim) => {
     const pc = new RTCPeerConnection(ICE_SUNUCULAR);
@@ -3673,7 +3705,9 @@ export default function Anasayfa({ pro = false }) {
       setTimeout(baglaUzakMedya, 30);
     };
     pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
-    pc.onconnectionstatechange = () => { try { if (pc.connectionState === "connected") setAramaDurum("konusuyor"); } catch (x) {} };
+    pc.onconnectionstatechange = () => { try { if (pc.connectionState === "connected") { setAramaDurum("konusuyor"); baglaUzakMedya(); } } catch (x) {} };
+    // ICE gerçekten bağlanınca (connected/completed) sesi TEKRAR bağla+oynat → medya yolu hazır olunca ses garanti başlar
+    pc.oniceconnectionstatechange = () => { try { const s = pc.iceConnectionState; if (s === "connected" || s === "completed") { setAramaDurum("konusuyor"); baglaUzakMedya(); } } catch (x) {} };
     return pc;
   };
   const aramaBaslat = async (kisi, tip) => {
@@ -3681,6 +3715,8 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser; if (!uu) return;
     if (kisi.uid === uu.uid) { bilgiBalonu(t("kendiniArama", "Kendini arayamazsın 🙂 Aramak için başka bir GLOXORG hesabı gerekir.")); return; }
     if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın
+    bekleyenAdaylarRef.current = []; // yeni arama → aday kuyruğunu sıfırla
+    sesKilidiAc(); // iOS: kullanıcı JESTİ anında uzak ses elementini "aç" (yoksa gelen ses çalınamaz)
     // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
     benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
@@ -3699,15 +3735,17 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) { aramaKapat(); return; }
     const ab1 = aramaDinle(id, async (a) => {
       if (!a) { aramaKapat(false); return; }
-      if (a.answer && !pc.currentRemoteDescription) { try { await pc.setRemoteDescription(new RTCSessionDescription(a.answer)); setAramaDurum("konusuyor"); } catch (e) {} }
+      if (a.answer && !pc.currentRemoteDescription) { try { await pc.setRemoteDescription(new RTCSessionDescription(a.answer)); setAramaDurum("konusuyor"); await bekleyenAdaylariBosalt(pc); } catch (e) {} } // answer set → biriken adayları şimdi ekle
       if (a.durum === "red") { bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); }
       else if (a.durum === "bitti") { aramaKapat(false); }
     });
-    const ab2 = iceAdaylariDinle(id, "aranan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
+    const ab2 = iceAdaylariDinle(id, "aranan", (cand) => { guvenliAdayEkle(pc, cand); }); // remote desc yoksa kuyruğa alınır (kaybolmaz)
     aramaAbonelikRef.current.push(ab1, ab2);
   };
   const aramaKabulEt = async () => {
     let g = gelenArama; if (!g) return;
+    bekleyenAdaylarRef.current = []; // yeni arama → aday kuyruğunu sıfırla
+    sesKilidiAc(); // iOS: KABUL ET jesti anında uzak ses elementini "aç" (gelen ses çalınabilsin)
     // TEKLİF (offer) henüz gelmediyse aramayı DÜŞÜRME — arayanın teklifi birkaç saniyede gelir; KISA SÜRE BEKLE, sonra bağla.
     if (!g.offer || !g.offer.sdp) {
       bilgiBalonu(t("aramaBaglaniyor", "Arama bağlanıyor, bir saniye…"));
@@ -3731,9 +3769,10 @@ export default function Anasayfa({ pro = false }) {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       await aramaGuncelle(g.id, { answer: { type: answer.type, sdp: answer.sdp }, durum: "kabul" });
+      await bekleyenAdaylariBosalt(pc); // offer set edildi → biriken adayları ekle
     } catch (e) { aramaKapat(); return; }
     const ab1 = aramaDinle(g.id, (a) => { if (!a || a.durum === "bitti") aramaKapat(false); });
-    const ab2 = iceAdaylariDinle(g.id, "arayan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
+    const ab2 = iceAdaylariDinle(g.id, "arayan", (cand) => { guvenliAdayEkle(pc, cand); });
     aramaAbonelikRef.current.push(ab1, ab2);
   };
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
@@ -9970,6 +10009,9 @@ export default function Anasayfa({ pro = false }) {
         </div>
       )}
 
+      {/* Uzak SES elementi — KALICI (arama açık olmasa da her zaman DOM'da). iOS Safari, sesi ancak kullanıcı JESTİ (Ara/Kabul Et)
+          anında açılan bir <audio>'da çalar; element koşullu olsaydı jest anında henüz mount olmaz, ses HİÇ gelmezdi. */}
+      <audio ref={uzakSesRef} autoPlay playsInline style={{ display: "none" }} />
       {/* AKTİF ARAMA — konuşma ekranı (sesli: avatar; görüntülü: video) */}
       {aramaDurum && aktifArama && (
         <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli") + (aramaKucuk ? " arama-mini" : "")}
@@ -9978,7 +10020,7 @@ export default function Anasayfa({ pro = false }) {
             ? <video ref={uzakVideoRef} className={"arama-video " + (videoBuyuk === "uzak" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline
                 style={videoBuyuk !== "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
                 onPointerDown={videoBuyuk !== "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk !== "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk !== "uzak" ? kucukVideoBitir : undefined} />
-            : <audio ref={uzakSesRef} autoPlay playsInline />}
+            : null /* sesli aramada uzak ses artık YUKARIDAKİ kalıcı <audio> elementinden çalar */}
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
               <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
