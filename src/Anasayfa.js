@@ -360,13 +360,17 @@ function _sesBol(metin) {
   return parcalar;
 }
 // GLOXOO SESLERİ — Google/Gemini'nin doğal sesleri; kullanıcı Ayarlar'dan seçer (id = Gemini ses adı, ad = Türkçe etiket).
+// ⛔ HER SES GERÇEKTEN FARKLI DUYULSUN (kullanıcı: "hepsi aynı konuşmayı veriyor, erkek sesi yok, stil yok").
+//   SEBEP: telefonda çoğu dilde TEK tarayıcı sesi var → sadece o sesi seçince hepsi aynı çıkıyordu. ÇÖZÜM: her seçeneğe
+//   kendi SES PERDESİ (pitch: erkek=kalın/düşük, kadın=ince/yüksek) + kendi HIZI (rate) verildi → tek ses olsa bile
+//   Derin·Erkek kalın-yavaş, Genç·Kadın ince-canlı... belirgin FARKLI duyulur. Cinsiyete uygun gerçek ses varsa o da seçilir.
 const GLOX_SESLER = [
-  { id: "Aoede", ad: "Sıcak", cins: "Kadın" },
-  { id: "Kore", ad: "Net", cins: "Kadın" },
-  { id: "Leda", ad: "Genç", cins: "Kadın" },
-  { id: "Charon", ad: "Derin", cins: "Erkek" },
-  { id: "Puck", ad: "Neşeli", cins: "Erkek" },
-  { id: "Orus", ad: "Sakin", cins: "Erkek" },
+  { id: "Aoede", ad: "Sıcak", cins: "Kadın", pitch: 1.18, hiz: 0.98 }, // sıcak/yumuşak kadın
+  { id: "Kore", ad: "Net", cins: "Kadın", pitch: 1.04, hiz: 1.06 },   // net/açık kadın
+  { id: "Leda", ad: "Genç", cins: "Kadın", pitch: 1.38, hiz: 1.10 },  // genç/ince/canlı kadın
+  { id: "Charon", ad: "Derin", cins: "Erkek", pitch: 0.58, hiz: 0.90 }, // derin/kalın/ağır erkek
+  { id: "Puck", ad: "Neşeli", cins: "Erkek", pitch: 0.86, hiz: 1.14 }, // neşeli/canlı erkek
+  { id: "Orus", ad: "Sakin", cins: "Erkek", pitch: 0.70, hiz: 0.92 }, // sakin/kalın/dingin erkek
 ];
 // ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
 // ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
@@ -6072,6 +6076,10 @@ export default function Anasayfa({ pro = false }) {
       const konus = () => {
         const sesCache = {};                                            // dil koduna göre ses önbelleği (her cümlede yeniden aramasın)
         const sesAl = (dk) => { if (!(dk in sesCache)) sesCache[dk] = sesSecDil(dk); return sesCache[dk]; };
+        // 🎭 SEÇİLİ SESİN KARAKTERİ: kendi ses perdesi (pitch) + kendi hızı; kullanıcının Yavaş/Normal/Hızlı seçimi (gloxHiz) çarpan olarak eklenir.
+        const _sesP = (GLOX_SESLER.find((s) => s.id === gloxSesRef.current) || {});
+        const _pitch = Math.max(0.4, Math.min(1.8, _sesP.pitch || 1));  // güvenli aralık
+        const _rate = Math.max(0.5, Math.min(1.6, (_sesP.hiz || 1) * ((gloxHizRef.current || 0.9) / 0.9))); // karakter hızı × (Yavaş/Normal/Hızlı)
         let bitti = false;
         const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
         const oku = (idx) => {
@@ -6084,7 +6092,7 @@ export default function Anasayfa({ pro = false }) {
           const dk = metinDili(c);                                 // 🌍 BU cümlenin dili (yazı karakterine göre) — Rusça metin→ru, Türkçe→tr...
           const ses = sesAl(dk);                                   // o dilin (seçili Kadın/Erkek) sesi; yoksa sistem o dilin motoruyla okur
           const u = new SpeechSynthesisUtterance(c);
-          u.lang = dk; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+          u.lang = dk; u.rate = _rate; u.pitch = _pitch; if (ses) u.voice = ses; // 🎭 seçili sesin perdesi+hızı → her seçenek FARKLI duyulur
           let gecti = false, fb = null;
           const sonra = () => {                                     // TEK sefer: bu cümle bitti → sıradaki
             if (gecti) return; gecti = true;
