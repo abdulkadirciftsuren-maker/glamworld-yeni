@@ -6074,9 +6074,11 @@ export default function Anasayfa({ pro = false }) {
         const l = String(dk || "").toLowerCase(), k = l.split("-")[0];
         const sesler = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || [];
         const dilli = sesler.filter((v) => v.lang && (v.lang.toLowerCase() === l || v.lang.toLowerCase().startsWith(k)));
-        const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || "");
-        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|alena|dariya|tatyana|google türkçe|standard-a|standard-c|wavenet-a|wavenet-c/i.test(v.name || "");
-        const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|guy|fred|dmitri|dmitry|pavel|yuri|artem|maxim|nikolai|sergei|ivan|ahmet|mehmet|tolga|onur|burak|standard-b|standard-d|wavenet-b|wavenet-d|-b-|-d-/i.test(v.name || "");
+        // İsim + voiceURI birlikte bakılır — Android'de cinsiyet ipucu bazen voiceURI'de gizli (örn "...-x-...male...").
+        const _ad = (v) => (((v && v.name) || "") + " " + ((v && v.voiceURI) || "")).toLowerCase();
+        const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(_ad(v));
+        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|alena|dariya|tatyana|google türkçe|standard-a|standard-c|wavenet-a|wavenet-c/i.test(_ad(v));
+        const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|guy|fred|dmitri|dmitry|pavel|yuri|artem|maxim|nikolai|sergei|ivan|ahmet|mehmet|tolga|onur|burak|standard-b|standard-d|wavenet-b|wavenet-d/i.test(_ad(v));
         const kadinDegil = (v) => !kadin(v);
         if (_istenenCins === "Erkek") {
           // GERÇEK erkek sesi bul: (1) isimden erkek, (2) kadın OLMAYAN, (3) kadın sesinden FARKLI ikinci ses (telefonda 2 ses varsa) → kadını kalınlaştırmaktan KAÇIN
@@ -6098,7 +6100,12 @@ export default function Anasayfa({ pro = false }) {
         const _pitch = Math.max(0.4, Math.min(1.8, gloxTonRef.current || 1));  // İNCE↔KALIN (yüksek=ince, düşük=kalın)
         const _rate = Math.max(0.5, Math.min(1.6, gloxHizRef.current || 0.9)); // YAVAŞ↔HIZLI
         let bitti = false;
-        const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
+        // ⛔ UZUN YAZI YARIDA KESİLMESİN (kullanıcı: "uzun yazıyı sonuna kadar okumuyor, yarıda kesiyor") — KÖK: Chrome/Android ses
+        //   motoru ~15 sn sonra kendini DURAKLATIR → uzun okuma ortada susar. Her ~7 sn resume() ile motoru CANLI tut (B140 rebuild'de
+        //   bu keepalive silinmişti; kısa cevapta sorun yoktu, uzun cevap 15 sn'yi aşınca kesiliyordu). Okuma bitince/susturunca durur.
+        let kaTimer = null;
+        try { kaTimer = setInterval(() => { try { if (ttsTarayiciIptalRef.current || bitti) { clearInterval(kaTimer); return; } if (window.speechSynthesis.speaking) window.speechSynthesis.resume(); } catch (e) {} }, 7000); } catch (e) {}
+        const bit = () => { if (bitti) return; bitti = true; if (kaTimer) { try { clearInterval(kaTimer); } catch (e) {} } try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
         const oku = (idx) => {
           if (ttsTarayiciIptalRef.current) return;                 // susturuldu → dur (sıradakine geçme)
           if (idx >= hamCumleler.length) { bit(); return; }        // hepsi okundu → bitti
