@@ -6034,6 +6034,22 @@ export default function Anasayfa({ pro = false }) {
       //   indeksi korunur (renkliCumleler onları görünmez bırakır ama indeks aynı). Eski TEMİZ-metin bölmesi/cumleBas/cumleBul/runDili/scriptTip SİLİNDİ.
       const hamCumleler = String(metin).match(/[^.!?…\n]+[.!?…]*/g) || [String(metin)];
       if (!hamCumleler.some((c) => cumleTemizle(c))) { if (typeof onBitti === "function") onBitti(); return; } // okunacak bir şey yok
+      // 🌍 GLOXOO AKILLI: BALON HANGİ DİLDEYSE O DİLDE OKUSUN (kullanıcı: "balonda Rusça/başka dil geçiyorsa Gloxoo o yazı
+      //   karakterini bilecek ve ona göre konuşacak"). Cümlenin YAZI KARAKTERİNE (script) göre dil kodu bulunur; seçili dil (TR)
+      //   sabit DEĞİL. Kiril→Rusça (Ukraynaca'ya özgü harf varsa Ukraynaca), Arap→Arapça, Kana→Japonca, Han→Çince, Yunan/İbrani→kendi
+      //   dili; Türkçe'ye özgü harf (ığşİĞŞ)→Türkçe; düz Latin/belirsiz→kullanıcının seçtiği dil (sesDilKodu). Böylece Rusça metni
+      //   Rusça sesle, Türkçe metni Türkçe sesle okur; imleç/zincir DEĞİŞMEZ (sadece o cümlenin dili/sesi seçilir).
+      const metinDili = (s) => {
+        const t = String(s || "");
+        if (/[Ѐ-ӿ]/.test(t)) return /[іїєґІЇЄҐ]/.test(t) ? "uk-UA" : "ru-RU"; // Kiril → Ukraynaca'ya özgü harf varsa uk, yoksa ru
+        if (/[؀-ۿݐ-ݿ]/.test(t)) return "ar-SA";  // Arapça
+        if (/[぀-ヿ]/.test(t)) return "ja-JP";               // Japonca (hiragana/katakana)
+        if (/[一-鿿]/.test(t)) return "zh-CN";               // Çince (Han)
+        if (/[Ͱ-Ͽ]/.test(t)) return "el-GR";               // Yunanca
+        if (/[֐-׿]/.test(t)) return "he-IL";               // İbranice
+        if (/[ığşİĞŞ]/.test(t)) return "tr-TR";                      // Türkçe'ye ÖZGÜ harf (ı/ğ/ş) → Türkçe (çöü başka Latin dillerde de var, onları çekme)
+        return sesDilKodu;                                           // düz Latin/belirsiz → kullanıcının seçtiği dil
+      };
       ttsTarayiciIptalRef.current = false; // YENİ okuma başlıyor → iptal bayrağını sıfırla
       window.speechSynthesis.cancel();
       // OKUMA SESİ (dile göre; kullanıcının seçtiği Kadın/Erkek tercihi — telefonda o dilde ses varsa)
@@ -6054,7 +6070,8 @@ export default function Anasayfa({ pro = false }) {
       //   ilerler. İMLEÇ her cümlede o cümleye geçer (sesle birlikte — takılmaz). Karmaşık tahmin/kontrol YOK; cancel YOK (yutmayı
       //   önler); sadece: onend → sıradaki + onend hiç gelmezse cömert bir emniyet süresi.
       const konus = () => {
-        const ses = sesSecDil(sesDilKodu);
+        const sesCache = {};                                            // dil koduna göre ses önbelleği (her cümlede yeniden aramasın)
+        const sesAl = (dk) => { if (!(dk in sesCache)) sesCache[dk] = sesSecDil(dk); return sesCache[dk]; };
         let bitti = false;
         const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
         const oku = (idx) => {
@@ -6064,8 +6081,10 @@ export default function Anasayfa({ pro = false }) {
           if (!c) { oku(idx + 1); return; }                        // temizlenince boş (sadece işaret/emoji) → konuşma, imleç KOYMA, atla (HAM indeks korunur → imleç kaymaz)
           if (typeof onCumle === "function") { try { onCumle(idx); } catch (e) {} }                          // İMLEÇ: HAM idx → ekrandaki renkliCumleler data-ci=idx ile BİREBİR (kaymaz)
           if (typeof onIlerleme === "function") { try { onIlerleme(idx / hamCumleler.length); } catch (e) {} }
+          const dk = metinDili(c);                                 // 🌍 BU cümlenin dili (yazı karakterine göre) — Rusça metin→ru, Türkçe→tr...
+          const ses = sesAl(dk);                                   // o dilin (seçili Kadın/Erkek) sesi; yoksa sistem o dilin motoruyla okur
           const u = new SpeechSynthesisUtterance(c);
-          u.lang = sesDilKodu; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
+          u.lang = dk; u.rate = 1; u.pitch = 1; if (ses) u.voice = ses;
           let gecti = false, fb = null;
           const sonra = () => {                                     // TEK sefer: bu cümle bitti → sıradaki
             if (gecti) return; gecti = true;
