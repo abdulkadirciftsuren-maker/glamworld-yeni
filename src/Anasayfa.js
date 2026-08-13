@@ -360,17 +360,20 @@ function _sesBol(metin) {
   return parcalar;
 }
 // GLOXOO SESLERİ — Google/Gemini'nin doğal sesleri; kullanıcı Ayarlar'dan seçer (id = Gemini ses adı, ad = Türkçe etiket).
-// ⛔ HER SES GERÇEKTEN FARKLI DUYULSUN (kullanıcı: "hepsi aynı konuşmayı veriyor, erkek sesi yok, stil yok").
-//   SEBEP: telefonda çoğu dilde TEK tarayıcı sesi var → sadece o sesi seçince hepsi aynı çıkıyordu. ÇÖZÜM: her seçeneğe
-//   kendi SES PERDESİ (pitch: erkek=kalın/düşük, kadın=ince/yüksek) + kendi HIZI (rate) verildi → tek ses olsa bile
-//   Derin·Erkek kalın-yavaş, Genç·Kadın ince-canlı... belirgin FARKLI duyulur. Cinsiyete uygun gerçek ses varsa o da seçilir.
+// ⛔ HER SES GERÇEKTEN FARKLI DUYULSUN (kullanıcı: "hepsi aynı konuşmayı veriyor, erkek sesi yok, stil yok; birkaç ses daha ekle").
+//   SEBEP: telefonda çoğu dilde TEK tarayıcı sesi var → sadece o sesi seçince hepsi aynı çıkıyordu. ÇÖZÜM: her seçeneğe kendi BAZ
+//   SES PERDESİ (pitch: erkek=kalın/düşük, kadın=ince/yüksek) verildi → tek ses olsa bile belirgin FARKLI duyulur. Ayrıca kullanıcı
+//   alttaki İNCE↔KALIN şeridiyle tonu elle ayarlar (gloxTon), YAVAŞ↔HIZLI şeridiyle hızı (gloxHiz). Cinsiyete uygun gerçek ses varsa o da seçilir.
+//   adK = çeviri anahtarı (menü etiketi kullanıcının dilinde görünür). 4 Kadın + 4 Erkek.
 const GLOX_SESLER = [
-  { id: "Aoede", ad: "Sıcak", cins: "Kadın", pitch: 1.18, hiz: 0.98 }, // sıcak/yumuşak kadın
-  { id: "Kore", ad: "Net", cins: "Kadın", pitch: 1.04, hiz: 1.06 },   // net/açık kadın
-  { id: "Leda", ad: "Genç", cins: "Kadın", pitch: 1.38, hiz: 1.10 },  // genç/ince/canlı kadın
-  { id: "Charon", ad: "Derin", cins: "Erkek", pitch: 0.58, hiz: 0.90 }, // derin/kalın/ağır erkek
-  { id: "Puck", ad: "Neşeli", cins: "Erkek", pitch: 0.86, hiz: 1.14 }, // neşeli/canlı erkek
-  { id: "Orus", ad: "Sakin", cins: "Erkek", pitch: 0.70, hiz: 0.92 }, // sakin/kalın/dingin erkek
+  { id: "Aoede", adK: "ses_sicak", cins: "Kadın", pitch: 1.16 },  // sıcak/yumuşak kadın
+  { id: "Kore", adK: "ses_net", cins: "Kadın", pitch: 1.06 },    // net/açık kadın
+  { id: "Vega", adK: "ses_berrak", cins: "Kadın", pitch: 1.26 }, // berrak kadın
+  { id: "Leda", adK: "ses_genc", cins: "Kadın", pitch: 1.40 },   // genç/ince/canlı kadın
+  { id: "Charon", adK: "ses_derin", cins: "Erkek", pitch: 0.56 }, // derin/kalın/ağır erkek
+  { id: "Zephyr", adK: "ses_guclu", cins: "Erkek", pitch: 0.64 }, // güçlü/dolgun erkek
+  { id: "Orus", adK: "ses_sakin", cins: "Erkek", pitch: 0.72 },  // sakin/dingin erkek
+  { id: "Puck", adK: "ses_neseli", cins: "Erkek", pitch: 0.88 }, // neşeli/canlı erkek
 ];
 // ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
 // ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
@@ -1928,6 +1931,14 @@ export default function Anasayfa({ pro = false }) {
   const gloxSesRef = useRef(gloxSes);
   useEffect(() => { gloxSesRef.current = gloxSes; try { localStorage.setItem("gw_gloxSes", gloxSes); } catch (e) {} }, [gloxSes]);
   const [gloxSesAcik, setGloxSesAcik] = useState(false); // ses seçici açık mı
+  // GLOXOO SES TONU (İNCE↔KALIN) — kullanıcı şeritle elle ayarlar (pitch). Düşük=kalın (erkek), yüksek=ince (kadın).
+  //   Kayıt yoksa seçili sesin BAZ perdesinden başlar. 0.4..1.8 arası güvenli.
+  const [gloxTon, setGloxTon] = useState(() => {
+    try { const v = parseFloat(localStorage.getItem("gw_gloxTon")); if (v >= 0.4 && v <= 1.8) return v; } catch (e) {}
+    try { const sid = localStorage.getItem("gw_gloxSes") || "Aoede"; return (GLOX_SESLER.find((s) => s.id === sid) || {}).pitch || 1.1; } catch (e) { return 1.1; }
+  });
+  const gloxTonRef = useRef(gloxTon);
+  useEffect(() => { gloxTonRef.current = gloxTon; try { localStorage.setItem("gw_gloxTon", String(gloxTon)); } catch (e) {} }, [gloxTon]);
   // GLOXOO KONUŞMA HIZI — kullanıcı ayarlar (çok hızlı bulmuştu). 0.8 yavaş · 0.9 normal · 1.05 hızlı
   const [gloxHiz, setGloxHiz] = useState(() => { try { const v = parseFloat(localStorage.getItem("gw_gloxHiz")); return (v >= 0.6 && v <= 1.5) ? v : 0.9; } catch (e) { return 0.9; } });
   const gloxHizRef = useRef(gloxHiz);
@@ -6076,10 +6087,10 @@ export default function Anasayfa({ pro = false }) {
       const konus = () => {
         const sesCache = {};                                            // dil koduna göre ses önbelleği (her cümlede yeniden aramasın)
         const sesAl = (dk) => { if (!(dk in sesCache)) sesCache[dk] = sesSecDil(dk); return sesCache[dk]; };
-        // 🎭 SEÇİLİ SESİN KARAKTERİ: kendi ses perdesi (pitch) + kendi hızı; kullanıcının Yavaş/Normal/Hızlı seçimi (gloxHiz) çarpan olarak eklenir.
-        const _sesP = (GLOX_SESLER.find((s) => s.id === gloxSesRef.current) || {});
-        const _pitch = Math.max(0.4, Math.min(1.8, _sesP.pitch || 1));  // güvenli aralık
-        const _rate = Math.max(0.5, Math.min(1.6, (_sesP.hiz || 1) * ((gloxHizRef.current || 0.9) / 0.9))); // karakter hızı × (Yavaş/Normal/Hızlı)
+        // 🎭 SES TONU (İNCE↔KALIN şeridi) + HIZ (YAVAŞ↔HIZLI şeridi): kullanıcının elle ayarladığı değerler. Ses seçince ton o sesin
+        //   baz perdesine gider, sonra kullanıcı şeritle inceltip kalınlaştırabilir. Böylece her seçenek + elle ayar = istenen ses.
+        const _pitch = Math.max(0.4, Math.min(1.8, gloxTonRef.current || 1));  // İNCE↔KALIN (yüksek=ince, düşük=kalın)
+        const _rate = Math.max(0.5, Math.min(1.6, gloxHizRef.current || 0.9)); // YAVAŞ↔HIZLI
         let bitti = false;
         const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
         const oku = (idx) => {
@@ -11360,25 +11371,50 @@ export default function Anasayfa({ pro = false }) {
                     <div className="ai-menu-kapatan" onClick={() => setGloxSesAcik(false)} aria-hidden="true" />
                   )}
                   {gloxSesAcik && (
-                    <div className="ai-dil-liste ai-dil-yukari">
-                      <div className="ai-ses-baslik">🔊 Gloxoo Sesi</div>
-                      {GLOX_SESLER.map((s) => (
-                        <button key={s.id} className={"ai-dil-oge" + (s.id === gloxSes ? " sec" : "")} onClick={() => {
-                          setGloxSes(s.id); gloxSesRef.current = s.id; // (Gemini yolu kapalı → seçim tarayıcı sesinin CİNSİYET tercihine etki eder; önce SONUNA KADAR okuma garanti)
-                          // KISA ÖRNEK: seçilen sesi HEMEN duy (tek parça, tarayıcı sesi)
-                          try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
-                        }}>
-                          <span className="ai-dil-oge-ad">{s.id === gloxSes ? "✓ " : ""}{s.ad} · {s.cins}</span>
-                        </button>
-                      ))}
-                      <div className="ai-ses-baslik">🐢 Konuşma Hızı</div>
-                      <div className="ai-ses-hiz">
-                        {[{ v: 0.8, ad: "🐢 Yavaş" }, { v: 0.9, ad: "Normal" }, { v: 1.05, ad: "🐇 Hızlı" }].map((h) => (
-                          <button key={h.v} className={"ai-ses-hiz-btn" + (Math.abs(gloxHiz - h.v) < 0.03 ? " sec" : "")} onClick={() => {
-                            setGloxHiz(h.v); gloxHizRef.current = h.v;
-                            try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {}
-                          }}>{h.ad}</button>
+                    <div className="ai-dil-liste ai-dil-yukari gs-pencere">
+                      <div className="gs-baslik notranslate" translate="no">🔊 {t("gsBaslik", "Gloxoo Sesi")}</div>
+                      {/* 8 HAZIR SES (4 Kadın + 4 Erkek) — kare köşeli, cinsiyete göre renk ipucu; seçince ton o sesin bazına gider + kısa örnek */}
+                      <div className="gs-sesler">
+                        {GLOX_SESLER.map((s) => (
+                          <button key={s.id} className={"gs-ses-btn gs-" + (s.cins === "Erkek" ? "erkek" : "kadin") + (s.id === gloxSes ? " sec" : "")} onClick={() => {
+                            const bazTon = s.pitch || 1.1;
+                            setGloxSes(s.id); gloxSesRef.current = s.id;
+                            setGloxTon(bazTon); gloxTonRef.current = bazTon;                 // ses seçince İNCE↔KALIN şeridi o sesin baz perdesine gider
+                            try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {} // seçileni HEMEN duy
+                          }}>
+                            <span className="gs-ses-ad">{s.id === gloxSes ? "✓ " : ""}{t(s.adK, s.adK)}</span>
+                            <span className="gs-ses-cins">{s.cins === "Erkek" ? t("cinsErkek", "Erkek") : t("cinsKadin", "Kadın")}</span>
+                          </button>
                         ))}
+                      </div>
+                      {/* İNCE ↔ KALIN ses tonu şeridi (parmakla kaydır) — sol ince (yüksek perde), sağ kalın (düşük perde) */}
+                      <div className="gs-serit-blok">
+                        <div className="gs-serit-baslik">🎚️ {t("gsTon", "Ses Tonu")}</div>
+                        <div className="gs-serit-satir">
+                          <span className="gs-serit-et">{t("gsInce", "İnce")}</span>
+                          <input type="range" className="gs-range" min="0" max="100" step="1"
+                            value={Math.max(0, Math.min(100, Math.round((1.6 - gloxTon) / 1.1 * 100)))}
+                            onChange={(e) => { const p = Math.max(0.5, Math.min(1.6, 1.6 - (+e.target.value) / 100 * 1.1)); gloxTonRef.current = p; setGloxTon(p); }}
+                            onPointerUp={() => { try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {} }}
+                            onTouchEnd={() => { try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {} }}
+                            aria-label={t("gsTon", "Ses Tonu")} />
+                          <span className="gs-serit-et">{t("gsKalin", "Kalın")}</span>
+                        </div>
+                      </div>
+                      {/* YAVAŞ ↔ HIZLI konuşma hızı şeridi (parmakla kaydır) — ortası Normal */}
+                      <div className="gs-serit-blok">
+                        <div className="gs-serit-baslik">🕒 {t("gsHiz", "Konuşma Hızı")}</div>
+                        <div className="gs-serit-satir">
+                          <span className="gs-serit-et">🐢 {t("gsYavas", "Yavaş")}</span>
+                          <input type="range" className="gs-range" min="0.6" max="1.4" step="0.05"
+                            value={Math.max(0.6, Math.min(1.4, gloxHiz))}
+                            onChange={(e) => { const r = Math.max(0.6, Math.min(1.4, +e.target.value)); gloxHizRef.current = r; setGloxHiz(r); }}
+                            onPointerUp={() => { try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {} }}
+                            onTouchEnd={() => { try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {} }}
+                            aria-label={t("gsHiz", "Konuşma Hızı")} />
+                          <span className="gs-serit-et">🐇 {t("gsHizli", "Hızlı")}</span>
+                        </div>
+                        <div className="gs-normal-et">· {t("gsNormal", "Normal")} ·</div>
                       </div>
                     </div>
                   )}
