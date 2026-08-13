@@ -366,14 +366,14 @@ function _sesBol(metin) {
 //   alttaki İNCE↔KALIN şeridiyle tonu elle ayarlar (gloxTon), YAVAŞ↔HIZLI şeridiyle hızı (gloxHiz). Cinsiyete uygun gerçek ses varsa o da seçilir.
 //   adK = çeviri anahtarı (menü etiketi kullanıcının dilinde görünür). 4 Kadın + 4 Erkek.
 const GLOX_SESLER = [
-  { id: "Aoede", adK: "ses_sicak", cins: "Kadın", pitch: 1.16 },  // sıcak/yumuşak kadın
-  { id: "Kore", adK: "ses_net", cins: "Kadın", pitch: 1.06 },    // net/açık kadın
-  { id: "Vega", adK: "ses_berrak", cins: "Kadın", pitch: 1.26 }, // berrak kadın
-  { id: "Leda", adK: "ses_genc", cins: "Kadın", pitch: 1.40 },   // genç/ince/canlı kadın
-  { id: "Charon", adK: "ses_derin", cins: "Erkek", pitch: 0.70 }, // derin erkek (gerçek erkek voice varsa doğal kalın; grotesk boğukluk YOK)
-  { id: "Zephyr", adK: "ses_guclu", cins: "Erkek", pitch: 0.78 }, // güçlü/dolgun erkek
-  { id: "Orus", adK: "ses_sakin", cins: "Erkek", pitch: 0.86 },  // sakin erkek
-  { id: "Puck", adK: "ses_neseli", cins: "Erkek", pitch: 0.92 }, // neşeli/net erkek
+  { id: "Aoede", adK: "ses_sicak", cins: "Kadın", pitch: 1.14 },  // sıcak/yumuşak kadın (ince)
+  { id: "Kore", adK: "ses_net", cins: "Kadın", pitch: 1.22 },    // net/açık kadın
+  { id: "Vega", adK: "ses_berrak", cins: "Kadın", pitch: 1.30 }, // berrak kadın
+  { id: "Leda", adK: "ses_genc", cins: "Kadın", pitch: 1.40 },   // genç/en ince/canlı kadın
+  { id: "Charon", adK: "ses_derin", cins: "Erkek", pitch: 0.62 }, // derin/en kalın erkek
+  { id: "Zephyr", adK: "ses_guclu", cins: "Erkek", pitch: 0.70 }, // güçlü/dolgun erkek
+  { id: "Orus", adK: "ses_sakin", cins: "Erkek", pitch: 0.78 },  // sakin erkek
+  { id: "Puck", adK: "ses_neseli", cins: "Erkek", pitch: 0.86 }, // neşeli/canlı erkek
 ];
 // ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
 // ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
@@ -6079,8 +6079,9 @@ export default function Anasayfa({ pro = false }) {
         const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|guy|fred|dmitri|dmitry|pavel|yuri|artem|maxim|nikolai|sergei|ivan|ahmet|mehmet|tolga|onur|burak|standard-b|standard-d|wavenet-b|wavenet-d|-b-|-d-/i.test(v.name || "");
         const kadinDegil = (v) => !kadin(v);
         if (_istenenCins === "Erkek") {
-          // GERÇEK erkek sesi bul: önce isimden ERKEK olan, sonra "kadın OLMAYAN" (telefonda 2. bir ses varsa onu dene) → kadın sesini kalınlaştırmaktan KAÇIN
-          return dilli.find((v) => iyi(v) && erkek(v)) || dilli.find(erkek) || dilli.find((v) => v.localService === false && kadinDegil(v)) || dilli.find(kadinDegil) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
+          // GERÇEK erkek sesi bul: (1) isimden erkek, (2) kadın OLMAYAN, (3) kadın sesinden FARKLI ikinci ses (telefonda 2 ses varsa) → kadını kalınlaştırmaktan KAÇIN
+          const _kadinSes = dilli.find(kadin);
+          return dilli.find((v) => iyi(v) && erkek(v)) || dilli.find(erkek) || dilli.find((v) => kadinDegil(v)) || dilli.find((v) => v !== _kadinSes) || dilli.find((v) => v.localService === false) || dilli[0] || null;
         }
         return dilli.find((v) => iyi(v) && kadin(v)) || dilli.find(kadin) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
       };
@@ -6096,9 +6097,6 @@ export default function Anasayfa({ pro = false }) {
         //   baz perdesine gider, sonra kullanıcı şeritle inceltip kalınlaştırabilir. Böylece her seçenek + elle ayar = istenen ses.
         const _pitch = Math.max(0.4, Math.min(1.8, gloxTonRef.current || 1));  // İNCE↔KALIN (yüksek=ince, düşük=kalın)
         const _rate = Math.max(0.5, Math.min(1.6, gloxHizRef.current || 0.9)); // YAVAŞ↔HIZLI
-        const _seciliCins = (GLOX_SESLER.find((s) => s.id === gloxSesRef.current) || {}).cins; // Kadın/Erkek
-        // GERÇEK erkek voice mi? (isimden). Gerçek erkek sesinde perdeyi grotesk düşürmeyiz → boğuk/"dönme" sesi olmaz, doğal kalın erkek.
-        const _erkekIsim = (v) => !!(v && /male|erkek|\bman\b|david|george|daniel|mark|paul|guy|fred|dmitri|dmitry|pavel|yuri|artem|maxim|nikolai|sergei|ivan|ahmet|mehmet|tolga|onur|burak|standard-b|standard-d|wavenet-b|wavenet-d|-b-|-d-/i.test(v.name || ""));
         let bitti = false;
         const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
         const oku = (idx) => {
@@ -6110,11 +6108,8 @@ export default function Anasayfa({ pro = false }) {
           if (typeof onIlerleme === "function") { try { onIlerleme(idx / hamCumleler.length); } catch (e) {} }
           const dk = metinDili(c);                                 // 🌍 BU cümlenin dili (yazı karakterine göre) — Rusça metin→ru, Türkçe→tr...
           const ses = sesAl(dk);                                   // o dilin (seçili Kadın/Erkek) sesi; yoksa sistem o dilin motoruyla okur
-          // GERÇEK erkek voice bulunduysa perdeyi grotesk düşürme (boğuk/"dönme" sesi olmasın) → doğal kalın erkek. Aksi halde kullanıcının ton şeridi geçerli.
-          let uPitch = _pitch;
-          if (_seciliCins === "Erkek" && _erkekIsim(ses)) uPitch = Math.max(0.9, Math.min(1.15, _pitch + 0.25));
           const u = new SpeechSynthesisUtterance(c);
-          u.lang = dk; u.rate = _rate; u.pitch = Math.max(0.4, Math.min(1.8, uPitch)); if (ses) u.voice = ses; // 🎭 seçili sesin perdesi+hızı → her seçenek FARKLI duyulur
+          u.lang = dk; u.rate = _rate; u.pitch = _pitch; if (ses) u.voice = ses; // 🎭 seçili sesin perdesi (İnce↔Kalın şeridi/baz) → erkek kalın, kadın ince
           let gecti = false, fb = null;
           const sonra = () => {                                     // TEK sefer: bu cümle bitti → sıradaki
             if (gecti) return; gecti = true;
