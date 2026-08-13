@@ -3485,12 +3485,13 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-ses-hiz-btn.sec{ background:linear-gradient(180deg,#FFE9A8,#FFD700); color:#3a2c00; border-color:#b8860b; }
 /* 🔊 GLOXOO SESİ PENCERESİ — YENİDEN TASARIM (kullanıcı: "pencerenin dizaynını yeniden yap; sesler, ince/kalın + hız şeritleri parmakla").
    ⛔ SİYAH/KOYU ZEMİN YOK → sıcak ALTIN zemin; düğmeler KARE köşeli (tam daire yok). */
-.gs-pencere{ background:linear-gradient(165deg,#4a3300,#6d4d00) !important; border:1.5px solid rgba(255,215,0,.6) !important; border-radius:16px !important; padding:10px !important; min-width:258px !important; max-width:310px !important; max-height:74vh !important; overflow-y:auto !important; box-shadow:0 12px 36px rgba(50,25,0,.6) !important; gap:0 !important; }
-.gs-baslik{ font-size:14.5px; font-weight:900; color:#FFE9A8; text-align:center; padding:2px 4px 9px; letter-spacing:.02em; }
-.gs-sesler{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px; }
-.gs-ses-btn{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:9px 6px; border-radius:11px; border:1.5px solid rgba(255,255,255,.28); background:rgba(255,255,255,.10); color:#fff6d8; font-family:inherit; cursor:pointer; }
-.gs-ses-ad{ font-size:13.5px; font-weight:800; }
-.gs-ses-cins{ font-size:10px; font-weight:700; opacity:.82; }
+/* EKRANA SIĞSIN (kullanıcı: "pencere/ikonlar ekran dışında kalıyor, ufalt tam görünsün"): sağ kenara yaslı, genişlik viewport'a bağlı → taşmaz. */
+.gs-pencere{ background:linear-gradient(165deg,#4a3300,#6d4d00) !important; border:1.5px solid rgba(255,215,0,.6) !important; border-radius:16px !important; padding:8px !important; left:auto !important; right:2px !important; transform:none !important; width:min(322px,95vw) !important; min-width:0 !important; max-width:95vw !important; max-height:76vh !important; overflow-y:auto !important; box-shadow:0 12px 36px rgba(50,25,0,.6) !important; gap:0 !important; }
+.gs-baslik{ font-size:14px; font-weight:900; color:#FFE9A8; text-align:center; padding:2px 4px 8px; letter-spacing:.02em; }
+.gs-sesler{ display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:6px; }
+.gs-ses-btn{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 4px; border-radius:10px; border:1.5px solid rgba(255,255,255,.28); background:rgba(255,255,255,.10); color:#fff6d8; font-family:inherit; cursor:pointer; min-width:0; }
+.gs-ses-ad{ font-size:12.5px; font-weight:800; }
+.gs-ses-cins{ font-size:9.5px; font-weight:700; opacity:.82; }
 .gs-kadin{ border-color:rgba(255,150,200,.55); }
 .gs-erkek{ border-color:rgba(130,190,255,.55); }
 .gs-ses-btn.sec{ background:linear-gradient(180deg,#FFE9A8,#FFD700); color:#4a2c00; border-color:#b8860b; box-shadow:0 2px 12px rgba(255,215,0,.45); }
@@ -3506,10 +3507,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .gs-range::-moz-range-thumb{ width:26px; height:26px; border-radius:8px; background:linear-gradient(180deg,#FFE9A8,#FFD700); border:2px solid #b8860b; cursor:pointer; }
 /* Bilgisayarda (desktop) yazılar telefondan KÜÇÜK olmasın → biraz büyüt */
 @media (min-width:560px){
-  .gs-pencere{ min-width:300px !important; max-width:340px !important; }
+  .gs-pencere{ width:344px !important; max-width:90vw !important; padding:11px !important; }
   .gs-baslik{ font-size:16px; }
   .gs-ses-ad{ font-size:15px; }
   .gs-ses-cins{ font-size:11px; }
+  .gs-ses-btn{ padding:9px 6px; }
   .gs-serit-baslik{ font-size:14px; }
   .gs-serit-et{ font-size:12.5px; }
 }

@@ -370,10 +370,10 @@ const GLOX_SESLER = [
   { id: "Kore", adK: "ses_net", cins: "Kadın", pitch: 1.06 },    // net/açık kadın
   { id: "Vega", adK: "ses_berrak", cins: "Kadın", pitch: 1.26 }, // berrak kadın
   { id: "Leda", adK: "ses_genc", cins: "Kadın", pitch: 1.40 },   // genç/ince/canlı kadın
-  { id: "Charon", adK: "ses_derin", cins: "Erkek", pitch: 0.56 }, // derin/kalın/ağır erkek
-  { id: "Zephyr", adK: "ses_guclu", cins: "Erkek", pitch: 0.64 }, // güçlü/dolgun erkek
-  { id: "Orus", adK: "ses_sakin", cins: "Erkek", pitch: 0.72 },  // sakin/dingin erkek
-  { id: "Puck", adK: "ses_neseli", cins: "Erkek", pitch: 0.88 }, // neşeli/canlı erkek
+  { id: "Charon", adK: "ses_derin", cins: "Erkek", pitch: 0.42 }, // derin/en kalın erkek
+  { id: "Zephyr", adK: "ses_guclu", cins: "Erkek", pitch: 0.50 }, // güçlü/dolgun erkek
+  { id: "Orus", adK: "ses_sakin", cins: "Erkek", pitch: 0.58 },  // sakin/kalın erkek
+  { id: "Puck", adK: "ses_neseli", cins: "Erkek", pitch: 0.66 }, // neşeli ama net erkek
 ];
 // ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
 // ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
@@ -11393,8 +11393,8 @@ export default function Anasayfa({ pro = false }) {
                         <div className="gs-serit-satir">
                           <span className="gs-serit-et">{t("gsInce", "İnce")}</span>
                           <input type="range" className="gs-range" min="0" max="100" step="1"
-                            value={Math.max(0, Math.min(100, Math.round((1.6 - gloxTon) / 1.1 * 100)))}
-                            onChange={(e) => { const p = Math.max(0.5, Math.min(1.6, 1.6 - (+e.target.value) / 100 * 1.1)); gloxTonRef.current = p; setGloxTon(p); }}
+                            value={Math.max(0, Math.min(100, Math.round((1.6 - gloxTon) / 1.2 * 100)))}
+                            onChange={(e) => { const p = Math.max(0.4, Math.min(1.6, 1.6 - (+e.target.value) / 100 * 1.2)); gloxTonRef.current = p; setGloxTon(p); }}
                             onPointerUp={() => { try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {} }}
                             onTouchEnd={() => { try { sesliOku(t("sesOrnek", "Merhaba, ben Gloxoo. Sesim böyle olacak.")); } catch (e) {} }}
                             aria-label={t("gsTon", "Ses Tonu")} />
