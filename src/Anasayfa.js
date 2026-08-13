@@ -1954,6 +1954,7 @@ export default function Anasayfa({ pro = false }) {
   const eksperPenRef = useRef(null);                   // ekspert köşe kartı (sürükleme sınırı için)
   const yardimciAcikOnceRef = useRef(false);           // Gloxoo panelinin önceki açık/kapalı durumu (kapanışı yakalamak için)
   const recognitionRef = useRef(null);     // CANLI DİKTE (tarayıcı SpeechRecognition) — konuştukça şeride yazar
+  const dinlemeMolaRef = useRef(false);    // ⏸ OKUMA MOLASI: bir mesaj sesli okunurken canlı dinleme DURUR (Gloxoo kendi sesini duymasın); okuma bitince otomatik devam
   const dikteTabanRef = useRef("");        // dikte başlarken şeritte olan metin (üzerine eklenir, silinmez)
   const dikteBazRef = useRef("");          // dikte başlarken şeritte olan metin (üzerine eklenir)
   const dikteAcikRef = useRef(false);      // canlı dikte açık mı (onend'de yeniden başlat için)
@@ -6090,7 +6091,7 @@ export default function Anasayfa({ pro = false }) {
   // BALON İÇİ "OKU" DÜĞMESİ — mikrofondan TAMAMEN AYRI (sadece TTS). Bas=oku, tekrar bas=dur; okurken × gösterir.
   const [konusanMesaj, setKonusanMesaj] = useState(-1);
   const konusanMesajRef = useRef(-1);
-  const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; okunanKelimeRef.current = -1; setOkunanKelime(-1); okunanCumleRef.current = -1; setOkunanCumle(-1); }; // imleci + cümle vurgusunu temizle
+  const okuTemizle = () => { setKonusanMesaj(-1); konusanMesajRef.current = -1; okunanKelimeRef.current = -1; setOkunanKelime(-1); okunanCumleRef.current = -1; setOkunanCumle(-1); dinlemeMolaRef.current = false; }; // imleç + cümle vurgusu + okuma molası temizlenir (mola takılı kalmasın)
   // ⛔ DONMA EMNİYETİ (kullanıcı: "konuşma ikonu sabit/donuk kalıyor"): Gerçek-ses zinciri ortada kesilirse
   //   balondaki ■ ikonu temizlenmeden DONUP kalıyordu. Burada sürekli bak: bir mesaj "okunuyor" işaretliyken
   //   ses ~2.5 sn boyunca NE ÇALIYOR ne de HAZIRLANIYORSA → gerçekten durmuş/donmuş demektir → ikonu ZORLA temizle.
@@ -6113,11 +6114,20 @@ export default function Anasayfa({ pro = false }) {
     let konusuyor = false;
     try { konusuyor = gloxKonusuyor(); } catch (e) {}
     gloxSustur();
-    if (konusuyor || buMesajAcik) { okuTemizle(); return; } // konuşuyordu YA DA takılıydı → DURDUR + temizle (bir daha basınca yeniden okur)
+    if (konusuyor || buMesajAcik) { okuTemizle(); if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } return; } // DURDUR + temizle; canlı sohbetteyse dinleme yeniden açılsın (mola bitti)
     try { window.speechSynthesis && window.speechSynthesis.resume(); } catch (e) {} // Chrome bazen "duraklatılmış" takılır → uyandır (ses çıksın)
     setKonusanMesaj(i); konusanMesajRef.current = i;
     // KELİME İMLECİ: okurken hangi kelimede olduğu bu mesajın üstünde ▸ ile yürüsün (kullanıcı: "konuşma nerede, o kelimede görünsün")
     toplamKelimeRef.current = kelimeSayisi(metin); okunanKelimeRef.current = -1; setOkunanKelime(-1); okunanCumleRef.current = -1; setOkunanCumle(-1);
+    // ⏸ CANLI SOHBET AÇIKSA (kullanıcı: "oku'ya basınca dinleme DURSUN, Gloxoo kendi okumasını duyup kesmesin; okuma bitince
+    //   dinleme OTOMATİK açılsın"): dinlemeyi MOLAYA al (mikrofonu durdur, canlı modu KAPATMA), oku, bitince otomatik devam.
+    if (canliSohbetRef.current) {
+      dinlemeMolaRef.current = true;                                              // dinleme molası → mikrofon Gloxoo'yu duymaz/göndermez
+      try { if (recognitionRef.current) { const r = recognitionRef.current; r.onresult = r.onend = r.onerror = null; r.abort(); recognitionRef.current = null; } } catch (e) {} // aktif dinlemeyi HEMEN durdur
+      setDinliyor(false);
+      sesliOku(metin, () => { okuTemizle(); dinlemeMolaRef.current = false; if (canliSohbetRef.current) { try { canliDevam(); } catch (e) {} } }, teleCumle, teleIlerleme); // okuma bitince: mola bitti → dinleme otomatik devam
+      return;
+    }
     sesliOku(metin, okuTemizle, teleCumle, teleIlerleme);
   };
   // Canlı dikteyi DURDUR (gönderince / tekrar basınca) — şeritteki metin KALIR
@@ -6284,6 +6294,7 @@ export default function Anasayfa({ pro = false }) {
   };
   const canliDinle = async () => {
     if (!canliSohbetRef.current) return;
+    if (dinlemeMolaRef.current) { setDinliyor(false); return; } // ⏸ okuma molası → dinleme BAŞLATMA (okuma bitince canliDevam yeniden çağırır)
     if (mediaRecorderRef.current) return; // zaten dinliyor (çift kayıt olmasın)
     // YARI-ÇİFT YÖNLÜ: GLOXOO KONUŞURKEN MİKROFON KAPALI — kendi sesini/etraf gürültüsünü algılayıp konuşmasını kesmesin.
     // speaking VE pending: sıradaki cümle kuyruktaysa (pending) da dinleme AÇMA → uzun cevap cümleler arası kesilmesin.
@@ -6313,6 +6324,7 @@ export default function Anasayfa({ pro = false }) {
           if (bitti) return; bitti = true;
           if (molaTimer) { clearTimeout(molaTimer); molaTimer = null; }
           kapat(); setDinliyor(false);
+          if (dinlemeMolaRef.current) return;                             // ⏸ okuma molası → duyulanı (Gloxoo'nun kendi sesi olabilir) GÖNDERME, sadece dur (okuma bitince canliDevam yeniden dinletir)
           const tx = tekrarSil((birikmis || "").trim());
           if (tx && canliSohbetRef.current) { bosSesRef.current = 0; yardimciGonder(tx, { canli: true, kameraKare: kameraModRef.current ? kameraKare() : null }); }
           else if (canliSohbetRef.current && !gloxKonusuyor()) canliDinle(); // hiç kelime gelmediyse tekrar dinle
