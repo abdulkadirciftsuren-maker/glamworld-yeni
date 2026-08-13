@@ -370,10 +370,10 @@ const GLOX_SESLER = [
   { id: "Kore", adK: "ses_net", cins: "Kadın", pitch: 1.06 },    // net/açık kadın
   { id: "Vega", adK: "ses_berrak", cins: "Kadın", pitch: 1.26 }, // berrak kadın
   { id: "Leda", adK: "ses_genc", cins: "Kadın", pitch: 1.40 },   // genç/ince/canlı kadın
-  { id: "Charon", adK: "ses_derin", cins: "Erkek", pitch: 0.42 }, // derin/en kalın erkek
-  { id: "Zephyr", adK: "ses_guclu", cins: "Erkek", pitch: 0.50 }, // güçlü/dolgun erkek
-  { id: "Orus", adK: "ses_sakin", cins: "Erkek", pitch: 0.58 },  // sakin/kalın erkek
-  { id: "Puck", adK: "ses_neseli", cins: "Erkek", pitch: 0.66 }, // neşeli ama net erkek
+  { id: "Charon", adK: "ses_derin", cins: "Erkek", pitch: 0.70 }, // derin erkek (gerçek erkek voice varsa doğal kalın; grotesk boğukluk YOK)
+  { id: "Zephyr", adK: "ses_guclu", cins: "Erkek", pitch: 0.78 }, // güçlü/dolgun erkek
+  { id: "Orus", adK: "ses_sakin", cins: "Erkek", pitch: 0.86 },  // sakin erkek
+  { id: "Puck", adK: "ses_neseli", cins: "Erkek", pitch: 0.92 }, // neşeli/net erkek
 ];
 // ARDIŞIK TEKRAR SİL — Android ses tanıması aynı kelimeyi/öbeği/CÜMLEYİ üst üste üretebiliyor
 // ("merhaba merhaba…" ya da "otomat arıyorum fırına otomat arıyorum fırına…" onlarca kez). Şeride/metne
@@ -1931,6 +1931,7 @@ export default function Anasayfa({ pro = false }) {
   const gloxSesRef = useRef(gloxSes);
   useEffect(() => { gloxSesRef.current = gloxSes; try { localStorage.setItem("gw_gloxSes", gloxSes); } catch (e) {} }, [gloxSes]);
   const [gloxSesAcik, setGloxSesAcik] = useState(false); // ses seçici açık mı
+  const gloxSesAcikRef = useRef(false); useEffect(() => { gloxSesAcikRef.current = gloxSesAcik; }, [gloxSesAcik]); // Android geri tuşu bu pencereyi kapatabilsin (merkezi geri yönetimi)
   // GLOXOO SES TONU (İNCE↔KALIN) — kullanıcı şeritle elle ayarlar (pitch). Düşük=kalın (erkek), yüksek=ince (kadın).
   //   Kayıt yoksa seçili sesin BAZ perdesinden başlar. 0.4..1.8 arası güvenli.
   const [gloxTon, setGloxTon] = useState(() => {
@@ -6074,10 +6075,14 @@ export default function Anasayfa({ pro = false }) {
         const sesler = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || [];
         const dilli = sesler.filter((v) => v.lang && (v.lang.toLowerCase() === l || v.lang.toLowerCase().startsWith(k)));
         const iyi = (v) => /natural|neural|online|premium|enhanced|google/i.test(v.name || "");
-        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|google türkçe/i.test(v.name || "");
-        const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|dmitri|pavel|yuri|artem|maxim|ahmet|mehmet|tolga|onur/i.test(v.name || "");
-        const uyar = (v) => (_istenenCins === "Erkek" ? erkek(v) : kadin(v));
-        return dilli.find((v) => iyi(v) && uyar(v)) || dilli.find((v) => v.localService === false && uyar(v)) || dilli.find(uyar) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
+        const kadin = (v) => /female|kadın|woman|yelda|seda|filiz|aylin|elif|aria|jenny|zira|samantha|sonia|emma|katja|hedda|milena|svetlana|alena|dariya|tatyana|google türkçe|standard-a|standard-c|wavenet-a|wavenet-c/i.test(v.name || "");
+        const erkek = (v) => /male|erkek|\bman\b|david|george|daniel|mark|paul|guy|fred|dmitri|dmitry|pavel|yuri|artem|maxim|nikolai|sergei|ivan|ahmet|mehmet|tolga|onur|burak|standard-b|standard-d|wavenet-b|wavenet-d|-b-|-d-/i.test(v.name || "");
+        const kadinDegil = (v) => !kadin(v);
+        if (_istenenCins === "Erkek") {
+          // GERÇEK erkek sesi bul: önce isimden ERKEK olan, sonra "kadın OLMAYAN" (telefonda 2. bir ses varsa onu dene) → kadın sesini kalınlaştırmaktan KAÇIN
+          return dilli.find((v) => iyi(v) && erkek(v)) || dilli.find(erkek) || dilli.find((v) => v.localService === false && kadinDegil(v)) || dilli.find(kadinDegil) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
+        }
+        return dilli.find((v) => iyi(v) && kadin(v)) || dilli.find(kadin) || dilli.find((v) => v.localService === false) || dilli.find(iyi) || dilli[0] || null;
       };
       // ⛔⛔ GLOXOO KONUŞMASI SIFIRDAN YENİDEN (kullanıcı: "eski yazılımları at, konuşmayı düzgün yeniden yapılandır; imleç
       //   yukarıda takılıyor, konuşma imleçsiz devam ediyor"). BASİT ve NET zincir: her cümleyi TEK TEK okut; telefon "bittim"
@@ -6091,6 +6096,9 @@ export default function Anasayfa({ pro = false }) {
         //   baz perdesine gider, sonra kullanıcı şeritle inceltip kalınlaştırabilir. Böylece her seçenek + elle ayar = istenen ses.
         const _pitch = Math.max(0.4, Math.min(1.8, gloxTonRef.current || 1));  // İNCE↔KALIN (yüksek=ince, düşük=kalın)
         const _rate = Math.max(0.5, Math.min(1.6, gloxHizRef.current || 0.9)); // YAVAŞ↔HIZLI
+        const _seciliCins = (GLOX_SESLER.find((s) => s.id === gloxSesRef.current) || {}).cins; // Kadın/Erkek
+        // GERÇEK erkek voice mi? (isimden). Gerçek erkek sesinde perdeyi grotesk düşürmeyiz → boğuk/"dönme" sesi olmaz, doğal kalın erkek.
+        const _erkekIsim = (v) => !!(v && /male|erkek|\bman\b|david|george|daniel|mark|paul|guy|fred|dmitri|dmitry|pavel|yuri|artem|maxim|nikolai|sergei|ivan|ahmet|mehmet|tolga|onur|burak|standard-b|standard-d|wavenet-b|wavenet-d|-b-|-d-/i.test(v.name || ""));
         let bitti = false;
         const bit = () => { if (bitti) return; bitti = true; try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
         const oku = (idx) => {
@@ -6102,8 +6110,11 @@ export default function Anasayfa({ pro = false }) {
           if (typeof onIlerleme === "function") { try { onIlerleme(idx / hamCumleler.length); } catch (e) {} }
           const dk = metinDili(c);                                 // 🌍 BU cümlenin dili (yazı karakterine göre) — Rusça metin→ru, Türkçe→tr...
           const ses = sesAl(dk);                                   // o dilin (seçili Kadın/Erkek) sesi; yoksa sistem o dilin motoruyla okur
+          // GERÇEK erkek voice bulunduysa perdeyi grotesk düşürme (boğuk/"dönme" sesi olmasın) → doğal kalın erkek. Aksi halde kullanıcının ton şeridi geçerli.
+          let uPitch = _pitch;
+          if (_seciliCins === "Erkek" && _erkekIsim(ses)) uPitch = Math.max(0.9, Math.min(1.15, _pitch + 0.25));
           const u = new SpeechSynthesisUtterance(c);
-          u.lang = dk; u.rate = _rate; u.pitch = _pitch; if (ses) u.voice = ses; // 🎭 seçili sesin perdesi+hızı → her seçenek FARKLI duyulur
+          u.lang = dk; u.rate = _rate; u.pitch = Math.max(0.4, Math.min(1.8, uPitch)); if (ses) u.voice = ses; // 🎭 seçili sesin perdesi+hızı → her seçenek FARKLI duyulur
           let gecti = false, fb = null;
           const sonra = () => {                                     // TEK sefer: bu cümle bitti → sıradaki
             if (gecti) return; gecti = true;
@@ -7983,7 +7994,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0) + (akademiDerinlik || 0) + (sanalAynaDerinlik || 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0) + (akademiDerinlik || 0) + (sanalAynaDerinlik || 0) + (gloxSesAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -7991,7 +8002,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik, sanalAynaDerinlik, muhasebeDerinlik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik, sanalAynaDerinlik, muhasebeDerinlik, gloxSesAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -8005,6 +8016,7 @@ export default function Anasayfa({ pro = false }) {
       else if (sanalAynaDerinlikRef.current > 0) { if (sanalAynaGeriRef.current) { try { sanalAynaGeriRef.current(); } catch (e) {} } }
       // MUHASEBE: müşteri açıkken geri → listeye dön (sayfada kal); listede geri → ana sayfaya (kayıtlar KAYBOLMAZ)
       else if (muhasebeDerinlikRef.current > 0) { if (muhasebeGeriRef.current) { try { muhasebeGeriRef.current(); } catch (e) {} } }
+      else if (gloxSesAcikRef.current) { gloxSesAcikRef.current = false; setGloxSesAcik(false); } // Gloxoo Sesi penceresi → geri tuşu ONU kapatır (sohbette KAL)
       else if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
       else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
       else if (haritaTamRef.current) { haritaTamRef.current = false; setHaritaTam(false); if (haritaKapatRef.current) { try { haritaKapatRef.current(); } catch (e) {} haritaKapatRef.current = null; } } // Konum haritası tam ekran → sadece kapat, Konum'da KAL
@@ -11372,7 +11384,10 @@ export default function Anasayfa({ pro = false }) {
                   )}
                   {gloxSesAcik && (
                     <div className="ai-dil-liste ai-dil-yukari gs-pencere">
-                      <div className="gs-baslik notranslate" translate="no">🔊 {t("gsBaslik", "Gloxoo Sesi")}</div>
+                      <div className="gs-baslik-satir">
+                        <span className="gs-baslik notranslate" translate="no">🔊 {t("gsBaslik", "Gloxoo Sesi")}</span>
+                        <button className="gs-kapat" onClick={() => setGloxSesAcik(false)} aria-label={t("kapat", "Kapat")} title={t("kapat", "Kapat")}>✕</button>
+                      </div>
                       {/* 8 HAZIR SES (4 Kadın + 4 Erkek) — kare köşeli, cinsiyete göre renk ipucu; seçince ton o sesin bazına gider + kısa örnek */}
                       <div className="gs-sesler">
                         {GLOX_SESLER.map((s) => (

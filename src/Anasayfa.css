@@ -3487,7 +3487,10 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
    ⛔ SİYAH/KOYU ZEMİN YOK → sıcak ALTIN zemin; düğmeler KARE köşeli (tam daire yok). */
 /* EKRANA SIĞSIN (kullanıcı: "pencere/ikonlar ekran dışında kalıyor, ufalt tam görünsün"): sağ kenara yaslı, genişlik viewport'a bağlı → taşmaz. */
 .gs-pencere{ background:linear-gradient(165deg,#4a3300,#6d4d00) !important; border:1.5px solid rgba(255,215,0,.6) !important; border-radius:16px !important; padding:8px !important; left:auto !important; right:2px !important; transform:none !important; width:min(322px,95vw) !important; min-width:0 !important; max-width:95vw !important; max-height:76vh !important; overflow-y:auto !important; box-shadow:0 12px 36px rgba(50,25,0,.6) !important; gap:0 !important; }
-.gs-baslik{ font-size:14px; font-weight:900; color:#FFE9A8; text-align:center; padding:2px 4px 8px; letter-spacing:.02em; }
+.gs-baslik-satir{ display:flex; align-items:center; justify-content:center; position:relative; padding:1px 4px 8px; }
+.gs-baslik{ font-size:14px; font-weight:900; color:#FFE9A8; text-align:center; letter-spacing:.02em; }
+.gs-kapat{ position:absolute; right:0; top:-3px; width:32px; height:32px; border-radius:9px; border:1.5px solid rgba(255,215,0,.55); background:rgba(255,255,255,.14); color:#FFE9A8; font-size:15px; font-weight:900; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+.gs-kapat:active{ background:rgba(255,215,0,.3); }
 .gs-sesler{ display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:6px; }
 .gs-ses-btn{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 4px; border-radius:10px; border:1.5px solid rgba(255,255,255,.28); background:rgba(255,255,255,.10); color:#fff6d8; font-family:inherit; cursor:pointer; min-width:0; }
 .gs-ses-ad{ font-size:12.5px; font-weight:800; }
