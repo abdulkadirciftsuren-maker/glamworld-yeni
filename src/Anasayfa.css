@@ -4519,6 +4519,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-avatar img{ width:100%; height:100%; object-fit:cover; }
 .arama-kisi b{ font-size:24px; font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,.4); }
 .arama-kisi i{ font-size:15px; font-style:normal; opacity:.95; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+/* DURUM göstergesi (teşhis) — kullanıcı okuyup söyler: Bağlanıyor/Bağlandı/Bağlanamadı */
+.arama-teshis{ font-size:13px; font-weight:800; color:#FFE9A8; background:rgba(0,0,0,.28); padding:4px 12px; border-radius:10px; margin-top:4px; text-shadow:0 1px 3px rgba(0,0,0,.5); }
 /* gelen çağrı: kabul/reddet */
 .arama-cagri-dugmeler{ position:absolute; bottom:56px; display:flex; gap:64px; z-index:4; }
 .arama-btn{ width:70px; height:70px; border-radius:22px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.35); }

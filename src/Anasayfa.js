@@ -1523,6 +1523,7 @@ export default function Anasayfa({ pro = false }) {
   const [aramaDurum, setAramaDurum] = useState("");    // "" | "ariyor" (ben aradım, bekliyor) | "geliyor" (bana çağrı) | "konusuyor"
   const [aktifArama, setAktifArama] = useState(null);  // { id, karsiAd, karsiFoto, tip } — açık arama
   const [aramaSaniye, setAramaSaniye] = useState(0);   // konuşma süresi (sn) — arama ekranında canlı sayaç için
+  const [aramaTeshis, setAramaTeshis] = useState("");  // arama DURUM göstergesi (Bağlanıyor/Bağlandı/Bağlanamadı) — kullanıcı okuyup bana söyler, teşhis için
   const [gelenArama, setGelenArama] = useState(null);  // { id, arayanAd, arayanFoto, tip, offer } — bana gelen çağrı
   const [mikKapali, setMikKapali] = useState(false);   // mikrofon sessiz mi
   const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
@@ -3656,7 +3657,7 @@ export default function Anasayfa({ pro = false }) {
     benAradimRef.current = false; aramaKarsiRef.current = null; aramaKonusBasRef.current = 0;
     aramaTemizle();
     aramaBildirimKapat(); // arama bitti → kalan "seni aradılar" bildirimini kapat
-    setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null); setAramaZoom(1);
+    setAktifArama(null); setAramaDurum(""); setAramaTeshis(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null); setAramaZoom(1);
   };
   const medyaAl = async (tip) => {
     // Ses: yankı(echo)/gürültü engelleme AÇIK → ses kesilmesin, tekrar etmesin (kullanıcı: ses kesiliyor, 2-3 kez tekrarlıyor)
@@ -3709,12 +3710,26 @@ export default function Anasayfa({ pro = false }) {
       // Karşının akışını DOĞRUDAN kullan (yeni MediaStream'e track kopyalama YOK → aynı ses iki kez eklenmez, tekrar/echo olmaz)
       if (e.streams && e.streams[0]) uzakStreamRef.current = e.streams[0];
       else { if (!uzakStreamRef.current) uzakStreamRef.current = new MediaStream(); try { uzakStreamRef.current.addTrack(e.track); } catch (x) {} }
+      setAramaTeshis("🔊 Ses bağlandı"); // karşıdan medya (ses) akışı GELDİ
       setTimeout(baglaUzakMedya, 30);
     };
     pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
-    pc.onconnectionstatechange = () => { try { if (pc.connectionState === "connected") { setAramaDurum("konusuyor"); baglaUzakMedya(); } } catch (x) {} };
-    // ICE gerçekten bağlanınca (connected/completed) sesi TEKRAR bağla+oynat → medya yolu hazır olunca ses garanti başlar
-    pc.oniceconnectionstatechange = () => { try { const s = pc.iceConnectionState; if (s === "connected" || s === "completed") { setAramaDurum("konusuyor"); baglaUzakMedya(); } } catch (x) {} };
+    // 🔎 DURUM GÖSTERGESİ (teşhis): kullanıcı ekranda bunu okuyup bana söyler → tam nerede takıldığını görürüm.
+    pc.onconnectionstatechange = () => {
+      try { const s = pc.connectionState;
+        if (s === "connecting") setAramaTeshis("🔄 Bağlanıyor…");
+        else if (s === "connected") { setAramaTeshis("✅ Bağlandı"); setAramaDurum("konusuyor"); baglaUzakMedya(); }
+        else if (s === "failed") setAramaTeshis("❌ Bağlanamadı (röle gerekli)");
+        else if (s === "disconnected") setAramaTeshis("⚠️ Bağlantı koptu");
+      } catch (x) {}
+    };
+    pc.oniceconnectionstatechange = () => {
+      try { const s = pc.iceConnectionState;
+        if (s === "checking") setAramaTeshis((t) => t || "🔄 Bağlanıyor…");
+        else if (s === "connected" || s === "completed") { setAramaTeshis("✅ Bağlandı"); setAramaDurum("konusuyor"); baglaUzakMedya(); }
+        else if (s === "failed") setAramaTeshis("❌ Bağlanamadı (röle gerekli)");
+      } catch (x) {}
+    };
     return pc;
   };
   const aramaBaslat = async (kisi, tip) => {
@@ -3728,7 +3743,7 @@ export default function Anasayfa({ pro = false }) {
     benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
-    setAramaDurum("ariyor");
+    setAramaDurum("ariyor"); setAramaTeshis("🔄 Bağlanıyor…");
     setAktifArama({ id: "", karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     // arayanFoto: telefon bildiriminde arayanın fotoğrafı görünsün diye KISA http URL (base64 FCM'e sığmaz, atılır → G kalırdı)
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
@@ -3772,7 +3787,7 @@ export default function Anasayfa({ pro = false }) {
     // ARAMA GÜNLÜĞÜ: BEN aramadım (gelen aramayı kabul ettim) → günlüğü ARAYAN yazar, ben yazmam (mükerrer olmasın)
     benAradimRef.current = false; aramaKarsiRef.current = { uid: g.arayanUid, ad: g.arayanAd || "", foto: g.arayanFoto || "" }; aramaKonusBasRef.current = 0;
     try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
-    setAramaDurum("konusuyor");
+    setAramaDurum("konusuyor"); setAramaTeshis("🔄 Bağlanıyor…");
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
     const pc = pcOlustur(g.id, "aranan");
     try {
@@ -3844,7 +3859,7 @@ export default function Anasayfa({ pro = false }) {
       const basla = () => {
         try { dongu(); } catch (e) {}
         const iv = setInterval(dongu, aralik);
-        const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 55000); // zil de 55 sn çalsın (arama süresiyle uyumlu)
+        const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 40000); // zil de 55 sn çalsın (arama süresiyle uyumlu)
         zilRef.current = { iv, kapatZmn };
       };
       if (ctx.state === "suspended") { ctx.resume().then(basla).catch(basla); } else { basla(); }
@@ -3882,7 +3897,7 @@ export default function Anasayfa({ pro = false }) {
         try { bilgiBalonu(t("aramaUlasilamadi", "Ulaşılamıyor — cevap yok")); } catch (e) {}
         try { aramaKapat(false); } catch (e) {}
       }
-    }, 55000);
+    }, 40000);
     return () => clearTimeout(zmn);
   }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
   // Küçük videoyu PARMAKLA TAŞI (istediğin yere) + DOKUN → büyük/küçük yer değiştir (swap)
@@ -10073,6 +10088,7 @@ export default function Anasayfa({ pro = false }) {
               <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
               <b className="notranslate" translate="no">{aktifArama.karsiAd}</b>
               <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : (aramaDurum === "konusuyor" ? sureBicim(aramaSaniye) : t("baglandi", "Bağlandı"))}</i>
+              {aramaTeshis && <span className="arama-teshis">{aramaTeshis}</span>}
             </div>
           )}
           {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline muted
