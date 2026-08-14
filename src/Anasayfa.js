@@ -2746,9 +2746,13 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     if (!u || !u.uid) { setBildirimListe([]); gorulenBildirimRef.current = null; return; }
     const unsub = bildirimleriDinle(u.uid, (liste) => {
-      setBildirimListe(liste);
-      if (gorulenBildirimRef.current === null) { gorulenBildirimRef.current = new Set(liste.map((b) => b.id)); return; } // ilk yükleme: sessiz
-      for (const b of liste) {
+      // ⛔ ARAMA bildirimini UYGULAMA İÇİNDE GÖSTERME (kullanıcı teşhisi: "bildirim ve arama aynı anda gelince birbirini ENGELLİYOR").
+      //   Gelen arama zaten TAM EKRAN geliyor; ayrıca sistem bildirimi + pencere şeridi çıkınca ÇAKIŞIYOR, arama ekranı bloke oluyordu.
+      //   Push (uygulama KAPALIYKEN telefon bildirimi) sunucudan gider, bu filtreden ETKİLENMEZ. Uygulama açıkken → SADECE arama ekranı.
+      const gorunecek = (liste || []).filter((b) => b.tip !== "arama");
+      setBildirimListe(gorunecek);
+      if (gorulenBildirimRef.current === null) { gorulenBildirimRef.current = new Set(gorunecek.map((b) => b.id)); return; } // ilk yükleme: sessiz
+      for (const b of gorunecek) {
         if (!gorulenBildirimRef.current.has(b.id)) {
           gorulenBildirimRef.current.add(b.id);
           if (!b.okundu) { telefonBildirimGoster(bildirimMetni(b), b.gonderenFoto); pencereBildirimGoster(b); } // sistem bildirimi + pencere-içi şerit
