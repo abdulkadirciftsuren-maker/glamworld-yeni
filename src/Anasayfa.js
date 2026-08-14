@@ -3752,10 +3752,9 @@ export default function Anasayfa({ pro = false }) {
     // arayanFoto: telefon bildiriminde arayanın fotoğrafı görünsün diye KISA http URL (base64 FCM'e sığmaz, atılır → G kalırdı)
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
-    // ⛔ KARŞI TARAFA HABER VER (kullanıcı: "karşı tarafta aranma göstermiyor, zil yok"): Mesajlar gibi BİLDİRİM bırak → sunucu
-    //   (Cloud Function) bunu telefon PUSH bildirimine çevirir → karşıda uygulama KAPALI/arka planda olsa bile "seni arıyor" çıkar + çalar.
-    //   Eskiden arama SADECE Firestore'a yazıyordu, bildirim BIRAKMIYORDU → karşı taraf ancak uygulama açıksa görürdü. tip:"arama" (sw.js bunu arama olarak gösterir).
-    try { bildirimEkle({ aliciUid: kisi.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: bildirimFotoUrl || "", tip: "arama", metin: (tip === "goruntulu" ? "📹 Görüntülü arıyor…" : "📞 Sesli arıyor…") }).catch(() => {}); } catch (e) {}
+    // ⛔ ARAMA ANINDA BİLDİRİM GÖNDERİLMİYOR (kullanıcı teşhisi): canlı arama bildirimi (push "Aç/Reddet") gelen arama EKRANIYLA
+    //   ÇAKIŞIYOR + geç gelince arama çoktan kapanmış oluyor ("Aç/Reddet" ama arama yok). Uygulama açıkken gelen arama EKRANI (listener)
+    //   yeterli. Karşı taraf açmazsa → CEVAPSIZ arama kaydı/bildirimi sonra gider (aramaKapat), oradan geri arar. Zamanlama böyle doğru.
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     const pc = pcOlustur(id, "arayan");
     try {
