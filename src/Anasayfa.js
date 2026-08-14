@@ -1522,8 +1522,6 @@ export default function Anasayfa({ pro = false }) {
   // İNTERNET ARAMASI (WebRTC)
   const [aramaDurum, setAramaDurum] = useState("");    // "" | "ariyor" (ben aradım, bekliyor) | "geliyor" (bana çağrı) | "konusuyor"
   const [aktifArama, setAktifArama] = useState(null);  // { id, karsiAd, karsiFoto, tip } — açık arama
-  const [aramaSaniye, setAramaSaniye] = useState(0);   // konuşma süresi (sn) — arama ekranında canlı sayaç için
-  const [aramaTeshis, setAramaTeshis] = useState("");  // arama DURUM göstergesi (Bağlanıyor/Bağlandı/Bağlanamadı) — kullanıcı okuyup bana söyler, teşhis için
   const [gelenArama, setGelenArama] = useState(null);  // { id, arayanAd, arayanFoto, tip, offer } — bana gelen çağrı
   const [mikKapali, setMikKapali] = useState(false);   // mikrofon sessiz mi
   const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
@@ -1536,7 +1534,6 @@ export default function Anasayfa({ pro = false }) {
   const aramaKucukRef = useRef(false); useEffect(() => { aramaKucukRef.current = aramaKucuk; }, [aramaKucuk]); // geri tuşu: arama açıkken ÖNCE küçültür, kapatmaz
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const pcRef = useRef(null);                          // RTCPeerConnection
-  const bekleyenAdaylarRef = useRef([]);               // remote description SET olmadan gelen ICE adayları → kuyruğa al, sonra ekle (yoksa adaylar kaybolur, ses gelmez)
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
   const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
@@ -2746,13 +2743,9 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     if (!u || !u.uid) { setBildirimListe([]); gorulenBildirimRef.current = null; return; }
     const unsub = bildirimleriDinle(u.uid, (liste) => {
-      // ⛔ ARAMA bildirimini UYGULAMA İÇİNDE GÖSTERME (kullanıcı teşhisi: "bildirim ve arama aynı anda gelince birbirini ENGELLİYOR").
-      //   Gelen arama zaten TAM EKRAN geliyor; ayrıca sistem bildirimi + pencere şeridi çıkınca ÇAKIŞIYOR, arama ekranı bloke oluyordu.
-      //   Push (uygulama KAPALIYKEN telefon bildirimi) sunucudan gider, bu filtreden ETKİLENMEZ. Uygulama açıkken → SADECE arama ekranı.
-      const gorunecek = (liste || []).filter((b) => b.tip !== "arama");
-      setBildirimListe(gorunecek);
-      if (gorulenBildirimRef.current === null) { gorulenBildirimRef.current = new Set(gorunecek.map((b) => b.id)); return; } // ilk yükleme: sessiz
-      for (const b of gorunecek) {
+      setBildirimListe(liste);
+      if (gorulenBildirimRef.current === null) { gorulenBildirimRef.current = new Set(liste.map((b) => b.id)); return; } // ilk yükleme: sessiz
+      for (const b of liste) {
         if (!gorulenBildirimRef.current.has(b.id)) {
           gorulenBildirimRef.current.add(b.id);
           if (!b.okundu) { telefonBildirimGoster(bildirimMetni(b), b.gonderenFoto); pencereBildirimGoster(b); } // sistem bildirimi + pencere-içi şerit
@@ -3591,35 +3584,25 @@ export default function Anasayfa({ pro = false }) {
   // ICE sunucuları: STUN + TURN. SADECE STUN varken iPhone (özellikle hücresel veri/operatör ağı) arkasında iki taraf
   // birbirine DOĞRUDAN bağlanamıyor → arama "bağlandı" görünüp SES/GÖRÜNTÜ HİÇ GELMİYORDU. TURN (röle) sunucusu bu durumda
   // medyayı aktarır. Aşağıdaki açık/ücretsiz TURN (Open Relay) eklendi; önce STUN denenir, gerekince TURN devreye girer.
-  // NOT: 'turns:' (TLS) satırı bazı tarayıcılarda RTCPeerConnection'ı kurarken hata verip aramayı AÇILIR-AÇILMAZ kapatabiliyordu
-  //   (kullanıcı: "arama açılıp kayboluyor") → KALDIRILDI. Sade, kesin çalışan STUN + Open Relay TURN (80/443 + tcp) bırakıldı.
   const ICE_SUNUCULAR = { iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
     { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
   ], iceCandidatePoolSize: 4 };
-  // ⛔ KUSURSUZ TEMİZLİK (kullanıcı: "ilk arama çalıştı, İKİNCİ bozuldu") — İKİNCİ arama bozulmasının KÖK SEBEBİ: ilk aramanın
-  //   bağlantısı/akışı/dinleyicileri tam kapanmayınca ikinci arama KİRLİ başlıyordu. Burada HER ŞEY sıfırlanır: dinleyiciler iptal,
-  //   pc olay-işleyicileri (ontrack/onicecandidate/onconnectionstate...) null (eski çağrı yeni aramayı ETKİLEMESİN), pc kapat, tüm
-  //   track'ler durdur, uzak/yerel akışlar ve srcObject'ler temiz, bekleyen ICE aday kuyruğu boş.
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
-    try {
-      const pc = pcRef.current;
-      if (pc) { try { pc.ontrack = pc.onicecandidate = pc.onconnectionstatechange = pc.oniceconnectionstatechange = pc.onnegotiationneeded = null; } catch (e) {} try { pc.getSenders && pc.getSenders().forEach((s) => { try { s.track && s.track.stop(); } catch (x) {} }); } catch (e) {} try { pc.close(); } catch (e) {} }
-    } catch (e) {}
+    try { if (pcRef.current) pcRef.current.close(); } catch (e) {}
     pcRef.current = null;
-    bekleyenAdaylarRef.current = []; // biriken ICE adaylarını temizle (ikinci aramaya sızmasın)
-    try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch (x) {} }); } catch (e) {}
+    try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
     yerelStreamRef.current = null;
-    try { if (uzakStreamRef.current) uzakStreamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch (x) {} }); } catch (e) {}
     uzakStreamRef.current = null;
-    try { if (uzakVideoRef.current) { uzakVideoRef.current.srcObject = null; } } catch (e) {}
-    try { if (uzakSesRef.current) { uzakSesRef.current.srcObject = null; } } catch (e) {}
-    try { if (yerelVideoRef.current) { yerelVideoRef.current.srcObject = null; } } catch (e) {}
+    try { if (uzakVideoRef.current) uzakVideoRef.current.srcObject = null; } catch (e) {}
+    try { if (uzakSesRef.current) uzakSesRef.current.srcObject = null; } catch (e) {}
+    try { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = null; } catch (e) {}
   };
   // "Seni arıyor" bildirimini KAPAT — arama açılınca/bitince/reddedilince. Kullanıcı: "aramayı açıp konuştuğum halde
   // 'seni aradılar, cevap ver' bildirimi ekranda kalıyor". Aramayı ele aldığımız cihazda o bildirimi (tag grox-arama) kapatırız.
@@ -3661,7 +3644,7 @@ export default function Anasayfa({ pro = false }) {
     benAradimRef.current = false; aramaKarsiRef.current = null; aramaKonusBasRef.current = 0;
     aramaTemizle();
     aramaBildirimKapat(); // arama bitti → kalan "seni aradılar" bildirimini kapat
-    setAktifArama(null); setAramaDurum(""); setAramaTeshis(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null); setAramaZoom(1);
+    setAktifArama(null); setAramaDurum(""); setMikKapali(false); setKamKapali(false); setVideoBuyuk("uzak"); setKucukYer(null); setAramaZoom(1);
   };
   const medyaAl = async (tip) => {
     // Ses: yankı(echo)/gürültü engelleme AÇIK → ses kesilmesin, tekrar etmesin (kullanıcı: ses kesiliyor, 2-3 kez tekrarlıyor)
@@ -3672,39 +3655,12 @@ export default function Anasayfa({ pro = false }) {
     if (tip === "goruntulu") { setTimeout(() => { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = stream; }, 50); }
     return stream;
   };
-  // 🔓 iOS SES KİLİDİ: Safari, sesi ancak kullanıcı JESTİ (Ara/Kabul Et'e basma) anında "açılan" bir <audio>'da çalar. Jest anında
-  //   elementi play() ile açarız (henüz ses yok ama iOS "kullanıcı başlattı" işaretler) + WebAudio bağlamını uyandırırız → karşıdan ses gelince ÇALAR.
-  const sesKilidiAc = () => {
-    try { const el = uzakSesRef.current; if (el) { el.muted = false; el.volume = 1; const p = el.play(); if (p && p.catch) p.catch(() => {}); } } catch (e) {}
-    try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { const c = new AC(); if (c.state === "suspended") { c.resume().catch(() => {}); } setTimeout(() => { try { c.close(); } catch (e) {} }, 900); } } catch (e) {}
-  };
-  // ICE adayı GÜVENLİ ekle: remote description HENÜZ set değilse adayı KUYRUĞA al (yoksa addIceCandidate hata verip adayı DÜŞÜRÜR → medya yolu kurulamaz → SES GELMEZ). Set olunca kuyruk boşaltılır.
-  const guvenliAdayEkle = async (pc, cand) => {
-    if (!pc || !cand) return;
-    try {
-      if (pc.remoteDescription && pc.remoteDescription.type) { await pc.addIceCandidate(new RTCIceCandidate(cand)); }
-      else { bekleyenAdaylarRef.current.push(cand); }
-    } catch (e) { try { bekleyenAdaylarRef.current.push(cand); } catch (x) {} }
-  };
-  const bekleyenAdaylariBosalt = async (pc) => {
-    const liste = bekleyenAdaylarRef.current || []; bekleyenAdaylarRef.current = [];
-    for (const c of liste) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch (e) {} }
-  };
   // Karşıdan gelen ses/görüntüyü uygun elemente bağla (sesli → <audio>, görüntülü → <video>) ve OYNAT.
-  // iOS Safari: play() bazen ilk denemede (autoplay kısıtı) reddolur → SES GELMEZ. Bu yüzden BİRKAÇ KEZ, artan gecikmeyle tekrar dene.
   const baglaUzakMedya = () => {
     const st = uzakStreamRef.current; if (!st) return;
     const el = uzakVideoRef.current || uzakSesRef.current; // görüntülüde video, seslide audio
-    if (!el) return;
-    if (el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
-    try { el.muted = false; el.volume = 1; } catch (e) {}
-    const dene = (kalan) => {
-      try {
-        const p = el.play();
-        if (p && p.then) p.then(() => {}).catch(() => { if (kalan > 0) setTimeout(() => dene(kalan - 1), 400); });
-      } catch (e) { if (kalan > 0) setTimeout(() => dene(kalan - 1), 400); }
-    };
-    dene(5); // en fazla ~5 tekrar (iOS ilk redlerini aş)
+    if (el && el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
+    if (el) { try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
   };
   const pcOlustur = (aramaId, kim) => {
     const pc = new RTCPeerConnection(ICE_SUNUCULAR);
@@ -3714,47 +3670,26 @@ export default function Anasayfa({ pro = false }) {
       // Karşının akışını DOĞRUDAN kullan (yeni MediaStream'e track kopyalama YOK → aynı ses iki kez eklenmez, tekrar/echo olmaz)
       if (e.streams && e.streams[0]) uzakStreamRef.current = e.streams[0];
       else { if (!uzakStreamRef.current) uzakStreamRef.current = new MediaStream(); try { uzakStreamRef.current.addTrack(e.track); } catch (x) {} }
-      setAramaTeshis("🔊 Ses bağlandı"); // karşıdan medya (ses) akışı GELDİ
       setTimeout(baglaUzakMedya, 30);
     };
     pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
-    // 🔎 DURUM GÖSTERGESİ (teşhis): kullanıcı ekranda bunu okuyup bana söyler → tam nerede takıldığını görürüm.
-    pc.onconnectionstatechange = () => {
-      try { const s = pc.connectionState;
-        if (s === "connecting") setAramaTeshis("🔄 Bağlanıyor…");
-        else if (s === "connected") { setAramaTeshis("✅ Bağlandı"); setAramaDurum("konusuyor"); baglaUzakMedya(); }
-        else if (s === "failed") setAramaTeshis("❌ Bağlanamadı (röle gerekli)");
-        else if (s === "disconnected") setAramaTeshis("⚠️ Bağlantı koptu");
-      } catch (x) {}
-    };
-    pc.oniceconnectionstatechange = () => {
-      try { const s = pc.iceConnectionState;
-        if (s === "checking") setAramaTeshis((t) => t || "🔄 Bağlanıyor…");
-        else if (s === "connected" || s === "completed") { setAramaTeshis("✅ Bağlandı"); setAramaDurum("konusuyor"); baglaUzakMedya(); }
-        else if (s === "failed") setAramaTeshis("❌ Bağlanamadı (röle gerekli)");
-      } catch (x) {}
-    };
+    pc.onconnectionstatechange = () => { try { if (pc.connectionState === "connected") setAramaDurum("konusuyor"); } catch (x) {} };
     return pc;
   };
   const aramaBaslat = async (kisi, tip) => {
     if (!kisi || !kisi.uid) return;
     const uu = auth.currentUser; if (!uu) return;
     if (kisi.uid === uu.uid) { bilgiBalonu(t("kendiniArama", "Kendini arayamazsın 🙂 Aramak için başka bir GLOXORG hesabı gerekir.")); return; }
-    if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın (aramaKapat → aramaTemizle: pc/stream/dinleyici artıkları temizlenir)
-    bekleyenAdaylarRef.current = []; // yeni arama → ICE aday kuyruğunu sıfırla
-    sesKilidiAc(); // iOS: kullanıcı JESTİ anında uzak ses elementini "aç" (yoksa gelen ses çalınamaz)
+    if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın
     // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
     benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
-    setAramaDurum("ariyor"); setAramaTeshis("🔄 Bağlanıyor…");
+    setAramaDurum("ariyor");
     setAktifArama({ id: "", karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     // arayanFoto: telefon bildiriminde arayanın fotoğrafı görünsün diye KISA http URL (base64 FCM'e sığmaz, atılır → G kalırdı)
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
-    // ⛔ ARAMA ANINDA BİLDİRİM GÖNDERİLMİYOR (kullanıcı teşhisi): canlı arama bildirimi (push "Aç/Reddet") gelen arama EKRANIYLA
-    //   ÇAKIŞIYOR + geç gelince arama çoktan kapanmış oluyor ("Aç/Reddet" ama arama yok). Uygulama açıkken gelen arama EKRANI (listener)
-    //   yeterli. Karşı taraf açmazsa → CEVAPSIZ arama kaydı/bildirimi sonra gider (aramaKapat), oradan geri arar. Zamanlama böyle doğru.
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     const pc = pcOlustur(id, "arayan");
     try {
@@ -3764,17 +3699,15 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) { aramaKapat(); return; }
     const ab1 = aramaDinle(id, async (a) => {
       if (!a) { aramaKapat(false); return; }
-      if (a.answer && !pc.currentRemoteDescription) { try { await pc.setRemoteDescription(new RTCSessionDescription(a.answer)); setAramaDurum("konusuyor"); await bekleyenAdaylariBosalt(pc); } catch (e) {} } // answer set → biriken adayları şimdi ekle
+      if (a.answer && !pc.currentRemoteDescription) { try { await pc.setRemoteDescription(new RTCSessionDescription(a.answer)); setAramaDurum("konusuyor"); } catch (e) {} }
       if (a.durum === "red") { bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); }
       else if (a.durum === "bitti") { aramaKapat(false); }
     });
-    const ab2 = iceAdaylariDinle(id, "aranan", (cand) => { guvenliAdayEkle(pc, cand); }); // remote desc yoksa kuyruğa alınır (kaybolmaz)
+    const ab2 = iceAdaylariDinle(id, "aranan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
     aramaAbonelikRef.current.push(ab1, ab2);
   };
   const aramaKabulEt = async () => {
     let g = gelenArama; if (!g) return;
-    bekleyenAdaylarRef.current = []; // yeni arama → ICE aday kuyruğunu sıfırla
-    sesKilidiAc(); // iOS: KABUL ET jesti anında uzak ses elementini "aç" (gelen ses çalınabilsin)
     // TEKLİF (offer) henüz gelmediyse aramayı DÜŞÜRME — arayanın teklifi birkaç saniyede gelir; KISA SÜRE BEKLE, sonra bağla.
     if (!g.offer || !g.offer.sdp) {
       bilgiBalonu(t("aramaBaglaniyor", "Arama bağlanıyor, bir saniye…"));
@@ -3790,7 +3723,7 @@ export default function Anasayfa({ pro = false }) {
     // ARAMA GÜNLÜĞÜ: BEN aramadım (gelen aramayı kabul ettim) → günlüğü ARAYAN yazar, ben yazmam (mükerrer olmasın)
     benAradimRef.current = false; aramaKarsiRef.current = { uid: g.arayanUid, ad: g.arayanAd || "", foto: g.arayanFoto || "" }; aramaKonusBasRef.current = 0;
     try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
-    setAramaDurum("konusuyor"); setAramaTeshis("🔄 Bağlanıyor…");
+    setAramaDurum("konusuyor");
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
     const pc = pcOlustur(g.id, "aranan");
     try {
@@ -3798,101 +3731,66 @@ export default function Anasayfa({ pro = false }) {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       await aramaGuncelle(g.id, { answer: { type: answer.type, sdp: answer.sdp }, durum: "kabul" });
-      await bekleyenAdaylariBosalt(pc); // offer set edildi → biriken adayları ekle
     } catch (e) { aramaKapat(); return; }
     const ab1 = aramaDinle(g.id, (a) => { if (!a || a.durum === "bitti") aramaKapat(false); });
-    const ab2 = iceAdaylariDinle(g.id, "arayan", (cand) => { guvenliAdayEkle(pc, cand); });
+    const ab2 = iceAdaylariDinle(g.id, "arayan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
     aramaAbonelikRef.current.push(ab1, ab2);
   };
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
   // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
   const zilRef = useRef(null);
-  // 🔓 GLOBAL SES BAĞLAMI — kullanıcı sayfada her dokunduğunda "açılır" (resume). Tarayıcı, kullanıcı dokunmadan ses ÇIKARAMAZ;
-  //   gelen arama zili kullanıcı dokunmadan çalmaya çalışıp SESSİZ kalıyordu. Bu bağlam önceden açıldığı için zil ARTIK ÇALAR.
-  const sesCtxRef = useRef(null);
-  useEffect(() => {
-    const ac = () => {
-      try {
-        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-        if (!sesCtxRef.current) sesCtxRef.current = new AC();
-        if (sesCtxRef.current.state === "suspended") sesCtxRef.current.resume().catch(() => {});
-      } catch (e) {}
-    };
-    document.addEventListener("pointerdown", ac);
-    document.addEventListener("touchstart", ac);
-    document.addEventListener("click", ac);
-    return () => { document.removeEventListener("pointerdown", ac); document.removeEventListener("touchstart", ac); document.removeEventListener("click", ac); };
-  }, []);
-  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} } zilRef.current = null; }; // GLOBAL bağlam KAPATILMAZ (tekrar kullanılır)
+  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
   const zilBaslat = (mod) => {
     zilDurdur();
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      if (!sesCtxRef.current) sesCtxRef.current = new AC();
-      const ctx = sesCtxRef.current;
-      // 📞 KLASİK TELEFON ZİLİ (kullanıcı: "yavaş çınlayarak normal telefon sesi") — 440+480 Hz çift ton (tanıdık telefon zili),
-      //   compressor ile YÜKSEK ve dolgun (kısılmadan). Aynı ses hem gelen çağrıda hem çalıyor tonunda.
-      const comp = ctx.createDynamicsCompressor();
-      const master = ctx.createGain(); master.gain.value = 1.0;
-      master.connect(comp); comp.connect(ctx.destination);
-      const zilCal = (t0, sure) => {
-        [440, 480].forEach((f) => { // klasik telefon zili çift tonu
-          try {
+      const ctx = new AC(); try { ctx.resume(); } catch (e) {}
+      // ZARİF ÇAN — yumuşak, sıcak, YAVAŞ (kaba "brrr"/bip değil): nazik giriş, uzun doğal sönüm (çan gibi çınlar).
+      // Hafif ikinci harmonik (oktav) eklenir → sıcak çan tınısı. Ses düşük tutulur (zarif, bağırmaz).
+      const cingir = (freq, gecikme, ses, sonum) => {
+        try {
+          const t0 = ctx.currentTime + gecikme;
+          [[freq, ses], [freq * 2, ses * 0.28]].forEach(([f, v]) => { // temel + yumuşak oktav
             const o = ctx.createOscillator(), g = ctx.createGain();
-            o.type = "sine"; o.frequency.value = f; o.connect(g); g.connect(master);
+            o.type = "sine"; o.frequency.value = f;
+            o.connect(g); g.connect(ctx.destination);
             g.gain.setValueAtTime(0.0001, t0);
-            g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.05);
-            g.gain.setValueAtTime(0.5, t0 + Math.max(0.1, sure - 0.06));
-            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
-            o.start(t0); o.stop(t0 + sure + 0.03);
-          } catch (e) {}
-        });
+            g.gain.exponentialRampToValueAtTime(v, t0 + 0.07);     // yumuşak giriş
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sonum); // uzun, zarif sönüm
+            o.start(t0); o.stop(t0 + sonum + 0.05);
+          });
+        } catch (e) {}
       };
       let dongu, aralik;
       if (mod === "aranan") {
-        // GELEN ÇAĞRI — klasik çift "rrring-rrring" (tanıdık telefon zili), sonra ara.
-        dongu = () => { const t = ctx.currentTime; zilCal(t + 0.0, 0.45); zilCal(t + 0.62, 0.45); };
-        aralik = 2600;
+        // GELEN ÇAĞRI — yumuşak "çiin … çiin" iki nazik çan notası (tatlı yükseliş), YAVAŞ ve zarif.
+        dongu = () => { cingir(783.99, 0.0, 0.17, 1.2); cingir(1046.5, 0.5, 0.15, 1.4); }; // G5 → C6, uzun çınlar
+        aralik = 3200; // yavaş
       } else {
-        // ARAYAN — "çalıyor" tonu: tek uzun çınlama, karşı taraf açana kadar (klasik telefon çalıyor sesi).
-        dongu = () => { const t = ctx.currentTime; zilCal(t + 0.0, 1.0); };
-        aralik = 3800;
+        // ARAYAN (giden) — tek yumuşak nota, karşı taraf çalıyor hissi (nazik, alçak).
+        dongu = () => { cingir(587.33, 0.0, 0.11, 1.3); }; // D5, yumuşak
+        aralik = 3400;
       }
-      // Ses bağlamı "duraklamış"sa ÖNCE aç, SONRA çal (yoksa zil sessiz başlar).
-      const basla = () => {
-        try { dongu(); } catch (e) {}
-        const iv = setInterval(dongu, aralik);
-        const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 40000); // zil de 55 sn çalsın (arama süresiyle uyumlu)
-        zilRef.current = { iv, kapatZmn };
-      };
-      if (ctx.state === "suspended") { ctx.resume().then(basla).catch(basla); } else { basla(); }
-      return;
+      dongu();
+      const iv = setInterval(dongu, aralik);
+      // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar "bildirim sesi gibi" çalma olmasın)
+      const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
+      zilRef.current = { ctx, iv, kapatZmn };
     } catch (e) {}
   };
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
   useEffect(() => {
     if (aramaDurum === "ariyor") zilBaslat("arayan");
-    else if (gelenArama && !aktifArama) zilBaslat("aranan");
+    else if (gelenArama && !aramaDurum) zilBaslat("aranan");
     else zilDurdur();
   }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
-  // CANLI SÜRE SAYACI (kullanıcı: "arama yaparken kaç saniye konuştuğum görünmüyor") — konuşma başından beri geçen sn, her saniye.
-  useEffect(() => {
-    if (aramaDurum !== "konusuyor") { setAramaSaniye(0); return; }
-    const bas = aramaKonusBasRef.current || Date.now();
-    const gun = () => setAramaSaniye(Math.max(0, Math.floor((Date.now() - bas) / 1000)));
-    gun();
-    const iv = setInterval(gun, 1000);
-    return () => clearInterval(iv);
-  }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
-  const sureBicim = (s) => { const d = Math.floor(s / 60), sn = s % 60; return d + ":" + String(sn).padStart(2, "0"); };
   // ARKA PLANA GEÇİNCE (sekme gizlenince) Gloxoo konuşması + zil OTOMATİK sussun (arkada takılı kalmasın)
   useEffect(() => {
     const gizle = () => { if (document.hidden) { try { gloxSustur(); } catch (e) {} try { zilDurdur(); } catch (e) {} try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {} } };
     document.addEventListener("visibilitychange", gizle);
     return () => document.removeEventListener("visibilitychange", gizle);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // CEVAPSIZ ARAMA — ben ararken (ariyor) cevap gelmezse "ulaşılamadı" de, kapat. Süre 30→55 sn: karşı taraf BİLDİRİME basıp
-  //   uygulamayı açana kadar arama KAPANMASIN (uygulama kapalıyken tam ekran gelmediği için açması birkaç sn sürer).
+  // CEVAPSIZ ARAMA — ben ararken (ariyor) 35 saniye cevap gelmezse: sonsuza kadar ÇALMAYI DURDUR, "ulaşılamadı" de, aramayı kapat.
   useEffect(() => {
     if (aramaDurum !== "ariyor") return;
     const zmn = setTimeout(() => {
@@ -3900,7 +3798,7 @@ export default function Anasayfa({ pro = false }) {
         try { bilgiBalonu(t("aramaUlasilamadi", "Ulaşılamıyor — cevap yok")); } catch (e) {}
         try { aramaKapat(false); } catch (e) {}
       }
-    }, 40000);
+    }, 30000);
     return () => clearTimeout(zmn);
   }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
   // Küçük videoyu PARMAKLA TAŞI (istediğin yere) + DOKUN → büyük/küçük yer değiştir (swap)
@@ -4020,15 +3918,11 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     const uu = auth.currentUser; if (!uu) return;
     const iptal = gelenAramalariDinle(uu.uid, (liste) => {
-      // AKTİF konuşma yoksa (aktifAramaRef null) gelen aramayı GÖSTER — "aramaDurum" bir önceki aramadan takılı kalsa bile ekran gelsin
-      //   (kullanıcı: "artık hiç çıkmıyor" — sebep: aramaDurum takılıydı, gelen arama bloke oluyordu).
-      if (!aktifAramaRef.current && liste.length) {
+      if (!aramaDurumRef.current && liste.length) {
         const yeni = liste[0];
-        // 🔎 TEŞHİS: YENİ gelen arama algılandığında ekranda görünür işaret ver → kullanıcı listener'ın çalıştığını görür/bana söyler.
-        if (!gelenAramaRef.current || gelenAramaRef.current.id !== yeni.id) { try { bilgiBalonu("📞 " + (yeni.arayanAd || "Biri") + " arıyor…"); } catch (e) {} }
         // offer null→dolu geçişini YAKALA (aksi halde eski boş halini koruyup çağrı hiç görünmez → arama gelmez)
         setGelenArama((mv) => (mv && mv.id === yeni.id && !!(mv.offer && mv.offer.sdp) === !!(yeni.offer && yeni.offer.sdp)) ? mv : yeni);
-      } else if (!liste.length) setGelenArama((mv) => (aktifAramaRef.current ? mv : null));
+      } else if (!liste.length) setGelenArama((mv) => (aramaDurumRef.current ? mv : null));
     });
     return iptal;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -10057,8 +9951,8 @@ export default function Anasayfa({ pro = false }) {
       )}
 
       <AramaHataSiniri anahtar={(aktifArama && aktifArama.id) || (gelenArama && gelenArama.id) || ""} onHata={() => { try { aramaTemizle(); zilDurdur(); } catch (e) {} setAktifArama(null); setAramaDurum(""); setGelenArama(null); }}>
-      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). gelenArama VARSA MUTLAKA GÖSTER (takılı hiçbir duruma bakma → ekran kesin gelsin). */}
-      {gelenArama && (
+      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). SADECE teklif (offer) hazırken göster → kabul edince hata olmaz */}
+      {gelenArama && !aramaDurum && (
         <div className="arama-fon arama-geliyor">
           <div className="arama-kisi">
             <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>
@@ -10076,9 +9970,6 @@ export default function Anasayfa({ pro = false }) {
         </div>
       )}
 
-      {/* Uzak SES elementi — KALICI (arama açık olmasa da her zaman DOM'da). iOS Safari, sesi ancak kullanıcı JESTİ (Ara/Kabul Et)
-          anında açılan bir <audio>'da çalar; element koşullu olsaydı jest anında henüz mount olmaz, ses HİÇ gelmezdi. */}
-      <audio ref={uzakSesRef} autoPlay playsInline style={{ display: "none" }} />
       {/* AKTİF ARAMA — konuşma ekranı (sesli: avatar; görüntülü: video) */}
       {aramaDurum && aktifArama && (
         <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli") + (aramaKucuk ? " arama-mini" : "")}
@@ -10087,13 +9978,12 @@ export default function Anasayfa({ pro = false }) {
             ? <video ref={uzakVideoRef} className={"arama-video " + (videoBuyuk === "uzak" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline
                 style={videoBuyuk !== "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
                 onPointerDown={videoBuyuk !== "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk !== "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk !== "uzak" ? kucukVideoBitir : undefined} />
-            : null /* sesli aramada uzak ses artık YUKARIDAKİ kalıcı <audio> elementinden çalar */}
+            : <audio ref={uzakSesRef} autoPlay playsInline />}
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
               <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
               <b className="notranslate" translate="no">{aktifArama.karsiAd}</b>
-              <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : (aramaDurum === "konusuyor" ? sureBicim(aramaSaniye) : t("baglandi", "Bağlandı"))}</i>
-              {aramaTeshis && <span className="arama-teshis">{aramaTeshis}</span>}
+              <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : t("baglandi", "Bağlandı")}</i>
             </div>
           )}
           {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline muted
