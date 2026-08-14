@@ -3595,17 +3595,26 @@ export default function Anasayfa({ pro = false }) {
     { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
   ], iceCandidatePoolSize: 4 };
+  // ⛔ KUSURSUZ TEMİZLİK (kullanıcı: "ilk arama çalıştı, İKİNCİ bozuldu") — İKİNCİ arama bozulmasının KÖK SEBEBİ: ilk aramanın
+  //   bağlantısı/akışı/dinleyicileri tam kapanmayınca ikinci arama KİRLİ başlıyordu. Burada HER ŞEY sıfırlanır: dinleyiciler iptal,
+  //   pc olay-işleyicileri (ontrack/onicecandidate/onconnectionstate...) null (eski çağrı yeni aramayı ETKİLEMESİN), pc kapat, tüm
+  //   track'ler durdur, uzak/yerel akışlar ve srcObject'ler temiz, bekleyen ICE aday kuyruğu boş.
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
-    try { if (pcRef.current) pcRef.current.close(); } catch (e) {}
+    try {
+      const pc = pcRef.current;
+      if (pc) { try { pc.ontrack = pc.onicecandidate = pc.onconnectionstatechange = pc.oniceconnectionstatechange = pc.onnegotiationneeded = null; } catch (e) {} try { pc.getSenders && pc.getSenders().forEach((s) => { try { s.track && s.track.stop(); } catch (x) {} }); } catch (e) {} try { pc.close(); } catch (e) {} }
+    } catch (e) {}
     pcRef.current = null;
-    try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
+    bekleyenAdaylarRef.current = []; // biriken ICE adaylarını temizle (ikinci aramaya sızmasın)
+    try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch (x) {} }); } catch (e) {}
     yerelStreamRef.current = null;
+    try { if (uzakStreamRef.current) uzakStreamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch (x) {} }); } catch (e) {}
     uzakStreamRef.current = null;
-    try { if (uzakVideoRef.current) uzakVideoRef.current.srcObject = null; } catch (e) {}
-    try { if (uzakSesRef.current) uzakSesRef.current.srcObject = null; } catch (e) {}
-    try { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = null; } catch (e) {}
+    try { if (uzakVideoRef.current) { uzakVideoRef.current.srcObject = null; } } catch (e) {}
+    try { if (uzakSesRef.current) { uzakSesRef.current.srcObject = null; } } catch (e) {}
+    try { if (yerelVideoRef.current) { yerelVideoRef.current.srcObject = null; } } catch (e) {}
   };
   // "Seni arıyor" bildirimini KAPAT — arama açılınca/bitince/reddedilince. Kullanıcı: "aramayı açıp konuştuğum halde
   // 'seni aradılar, cevap ver' bildirimi ekranda kalıyor". Aramayı ele aldığımız cihazda o bildirimi (tag grox-arama) kapatırız.
@@ -3713,7 +3722,7 @@ export default function Anasayfa({ pro = false }) {
     const uu = auth.currentUser; if (!uu) return;
     if (kisi.uid === uu.uid) { bilgiBalonu(t("kendiniArama", "Kendini arayamazsın 🙂 Aramak için başka bir GLOXORG hesabı gerekir.")); return; }
     if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın
-    bekleyenAdaylarRef.current = []; // yeni arama → aday kuyruğunu sıfırla
+    try { aramaTemizle(); } catch (e) {} // ⛔ GARANTİ: önceki aramanın pc/stream/aday artıklarını TAMAMEN sil → ikinci arama TEMİZ başlar (bozulmaz)
     sesKilidiAc(); // iOS: kullanıcı JESTİ anında uzak ses elementini "aç" (yoksa gelen ses çalınamaz)
     // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
     benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0;
@@ -3746,7 +3755,7 @@ export default function Anasayfa({ pro = false }) {
   };
   const aramaKabulEt = async () => {
     let g = gelenArama; if (!g) return;
-    bekleyenAdaylarRef.current = []; // yeni arama → aday kuyruğunu sıfırla
+    try { aramaTemizle(); } catch (e) {} // ⛔ GARANTİ: önceki aramanın artıklarını TAMAMEN sil → kabul edilen arama TEMİZ başlar
     sesKilidiAc(); // iOS: KABUL ET jesti anında uzak ses elementini "aç" (gelen ses çalınabilsin)
     // TEKLİF (offer) henüz gelmediyse aramayı DÜŞÜRME — arayanın teklifi birkaç saniyede gelir; KISA SÜRE BEKLE, sonra bağla.
     if (!g.offer || !g.offer.sdp) {
