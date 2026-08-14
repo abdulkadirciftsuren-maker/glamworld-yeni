@@ -3805,38 +3805,44 @@ export default function Anasayfa({ pro = false }) {
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       if (!sesCtxRef.current) sesCtxRef.current = new AC();
-      const ctx = sesCtxRef.current; try { ctx.resume(); } catch (e) {}
-      // 📞 GÜÇLÜ, NET TELEFON ZİLİ (kullanıcı: "zil çok az ve kötü") — belirgin, dolgun, klasik "çin-çin" darbeler.
-      //   Her darbe: iki nota (üçlü akor hissi) + kısa parlak vuruş; SES YÜKSEK ama kulak tırmalamaz (limiter'lı gain).
-      const master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
-      const vur = (freq, gecikme, sure, tepe) => {
-        try {
-          const t0 = ctx.currentTime + gecikme;
-          const o = ctx.createOscillator(), g = ctx.createGain();
-          o.type = "triangle"; o.frequency.value = freq;         // triangle: dolu ama yumuşak (bip değil)
-          o.connect(g); g.connect(master);
-          g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(tepe, t0 + 0.02);   // hızlı, belirgin giriş (net duyulur)
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
-          o.start(t0); o.stop(t0 + sure + 0.03);
-        } catch (e) {}
+      const ctx = sesCtxRef.current;
+      // 📞 KLASİK TELEFON ZİLİ (kullanıcı: "yavaş çınlayarak normal telefon sesi") — 440+480 Hz çift ton (tanıdık telefon zili),
+      //   compressor ile YÜKSEK ve dolgun (kısılmadan). Aynı ses hem gelen çağrıda hem çalıyor tonunda.
+      const comp = ctx.createDynamicsCompressor();
+      const master = ctx.createGain(); master.gain.value = 1.0;
+      master.connect(comp); comp.connect(ctx.destination);
+      const zilCal = (t0, sure) => {
+        [440, 480].forEach((f) => { // klasik telefon zili çift tonu
+          try {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = "sine"; o.frequency.value = f; o.connect(g); g.connect(master);
+            g.gain.setValueAtTime(0.0001, t0);
+            g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.05);
+            g.gain.setValueAtTime(0.5, t0 + Math.max(0.1, sure - 0.06));
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
+            o.start(t0); o.stop(t0 + sure + 0.03);
+          } catch (e) {}
+        });
       };
       let dongu, aralik;
       if (mod === "aranan") {
-        // GELEN ÇAĞRI — klasik çift darbe "DRING-DRING" (yüksek, tanıdık, dikkat çeker): iki ton üst üste, iki kez.
-        const darbe = (g) => { vur(1046.5, g, 0.42, 0.55); vur(1318.5, g, 0.42, 0.34); }; // C6+E6 birlikte
-        dongu = () => { darbe(0.0); darbe(0.55); }; // çin-çin
-        aralik = 2400;
+        // GELEN ÇAĞRI — klasik çift "rrring-rrring" (tanıdık telefon zili), sonra ara.
+        dongu = () => { const t = ctx.currentTime; zilCal(t + 0.0, 0.45); zilCal(t + 0.62, 0.45); };
+        aralik = 2600;
       } else {
-        // ARAYAN (giden) — karşı taraf çalıyor tonu: alçak, sakin tek darbe (klasik "çalıyor" tonu gibi).
-        dongu = () => { vur(440, 0.0, 1.0, 0.30); };
-        aralik = 3600;
+        // ARAYAN — "çalıyor" tonu: tek uzun çınlama, karşı taraf açana kadar (klasik telefon çalıyor sesi).
+        dongu = () => { const t = ctx.currentTime; zilCal(t + 0.0, 1.0); };
+        aralik = 3800;
       }
-      dongu();
-      const iv = setInterval(dongu, aralik);
-      // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar çalma olmasın)
-      const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
-      zilRef.current = { ctx, iv, kapatZmn };
+      // Ses bağlamı "duraklamış"sa ÖNCE aç, SONRA çal (yoksa zil sessiz başlar).
+      const basla = () => {
+        try { dongu(); } catch (e) {}
+        const iv = setInterval(dongu, aralik);
+        const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 40000);
+        zilRef.current = { iv, kapatZmn };
+      };
+      if (ctx.state === "suspended") { ctx.resume().then(basla).catch(basla); } else { basla(); }
+      return;
     } catch (e) {}
   };
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
