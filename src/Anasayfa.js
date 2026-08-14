@@ -3721,8 +3721,8 @@ export default function Anasayfa({ pro = false }) {
     if (!kisi || !kisi.uid) return;
     const uu = auth.currentUser; if (!uu) return;
     if (kisi.uid === uu.uid) { bilgiBalonu(t("kendiniArama", "Kendini arayamazsın 🙂 Aramak için başka bir GLOXORG hesabı gerekir.")); return; }
-    if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın
-    try { aramaTemizle(); } catch (e) {} // ⛔ GARANTİ: önceki aramanın pc/stream/aday artıklarını TAMAMEN sil → ikinci arama TEMİZ başlar (bozulmaz)
+    if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın (aramaKapat → aramaTemizle: pc/stream/dinleyici artıkları temizlenir)
+    bekleyenAdaylarRef.current = []; // yeni arama → ICE aday kuyruğunu sıfırla
     sesKilidiAc(); // iOS: kullanıcı JESTİ anında uzak ses elementini "aç" (yoksa gelen ses çalınamaz)
     // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
     benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0;
@@ -3755,7 +3755,7 @@ export default function Anasayfa({ pro = false }) {
   };
   const aramaKabulEt = async () => {
     let g = gelenArama; if (!g) return;
-    try { aramaTemizle(); } catch (e) {} // ⛔ GARANTİ: önceki aramanın artıklarını TAMAMEN sil → kabul edilen arama TEMİZ başlar
+    bekleyenAdaylarRef.current = []; // yeni arama → ICE aday kuyruğunu sıfırla
     sesKilidiAc(); // iOS: KABUL ET jesti anında uzak ses elementini "aç" (gelen ses çalınabilsin)
     // TEKLİF (offer) henüz gelmediyse aramayı DÜŞÜRME — arayanın teklifi birkaç saniyede gelir; KISA SÜRE BEKLE, sonra bağla.
     if (!g.offer || !g.offer.sdp) {
