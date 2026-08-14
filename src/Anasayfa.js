@@ -1522,6 +1522,7 @@ export default function Anasayfa({ pro = false }) {
   // İNTERNET ARAMASI (WebRTC)
   const [aramaDurum, setAramaDurum] = useState("");    // "" | "ariyor" (ben aradım, bekliyor) | "geliyor" (bana çağrı) | "konusuyor"
   const [aktifArama, setAktifArama] = useState(null);  // { id, karsiAd, karsiFoto, tip } — açık arama
+  const [aramaSaniye, setAramaSaniye] = useState(0);   // konuşma süresi (sn) — arama ekranında canlı sayaç için
   const [gelenArama, setGelenArama] = useState(null);  // { id, arayanAd, arayanFoto, tip, offer } — bana gelen çağrı
   const [mikKapali, setMikKapali] = useState(false);   // mikrofon sessiz mi
   const [kamKapali, setKamKapali] = useState(false);   // kamera kapalı mı
@@ -3782,12 +3783,29 @@ export default function Anasayfa({ pro = false }) {
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
   // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
   const zilRef = useRef(null);
-  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
+  // 🔓 GLOBAL SES BAĞLAMI — kullanıcı sayfada her dokunduğunda "açılır" (resume). Tarayıcı, kullanıcı dokunmadan ses ÇIKARAMAZ;
+  //   gelen arama zili kullanıcı dokunmadan çalmaya çalışıp SESSİZ kalıyordu. Bu bağlam önceden açıldığı için zil ARTIK ÇALAR.
+  const sesCtxRef = useRef(null);
+  useEffect(() => {
+    const ac = () => {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        if (!sesCtxRef.current) sesCtxRef.current = new AC();
+        if (sesCtxRef.current.state === "suspended") sesCtxRef.current.resume().catch(() => {});
+      } catch (e) {}
+    };
+    document.addEventListener("pointerdown", ac, true);
+    document.addEventListener("touchstart", ac, true);
+    document.addEventListener("click", ac, true);
+    return () => { document.removeEventListener("pointerdown", ac, true); document.removeEventListener("touchstart", ac, true); document.removeEventListener("click", ac, true); };
+  }, []);
+  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} } zilRef.current = null; }; // GLOBAL bağlam KAPATILMAZ (tekrar kullanılır)
   const zilBaslat = (mod) => {
     zilDurdur();
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      const ctx = new AC(); try { ctx.resume(); } catch (e) {}
+      if (!sesCtxRef.current) sesCtxRef.current = new AC();
+      const ctx = sesCtxRef.current; try { ctx.resume(); } catch (e) {}
       // 📞 GÜÇLÜ, NET TELEFON ZİLİ (kullanıcı: "zil çok az ve kötü") — belirgin, dolgun, klasik "çin-çin" darbeler.
       //   Her darbe: iki nota (üçlü akor hissi) + kısa parlak vuruş; SES YÜKSEK ama kulak tırmalamaz (limiter'lı gain).
       const master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
@@ -3827,6 +3845,16 @@ export default function Anasayfa({ pro = false }) {
     else if (gelenArama && !aramaDurum) zilBaslat("aranan");
     else zilDurdur();
   }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
+  // CANLI SÜRE SAYACI (kullanıcı: "arama yaparken kaç saniye konuştuğum görünmüyor") — konuşma başından beri geçen sn, her saniye.
+  useEffect(() => {
+    if (aramaDurum !== "konusuyor") { setAramaSaniye(0); return; }
+    const bas = aramaKonusBasRef.current || Date.now();
+    const gun = () => setAramaSaniye(Math.max(0, Math.floor((Date.now() - bas) / 1000)));
+    gun();
+    const iv = setInterval(gun, 1000);
+    return () => clearInterval(iv);
+  }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
+  const sureBicim = (s) => { const d = Math.floor(s / 60), sn = s % 60; return d + ":" + String(sn).padStart(2, "0"); };
   // ARKA PLANA GEÇİNCE (sekme gizlenince) Gloxoo konuşması + zil OTOMATİK sussun (arkada takılı kalmasın)
   useEffect(() => {
     const gizle = () => { if (document.hidden) { try { gloxSustur(); } catch (e) {} try { zilDurdur(); } catch (e) {} try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {} } };
@@ -10029,7 +10057,7 @@ export default function Anasayfa({ pro = false }) {
             <div className="arama-kisi arama-kisi-orta">
               <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
               <b className="notranslate" translate="no">{aktifArama.karsiAd}</b>
-              <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : t("baglandi", "Bağlandı")}</i>
+              <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : (aramaDurum === "konusuyor" ? sureBicim(aramaSaniye) : t("baglandi", "Bağlandı"))}</i>
             </div>
           )}
           {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline muted
