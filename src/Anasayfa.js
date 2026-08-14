@@ -3844,7 +3844,7 @@ export default function Anasayfa({ pro = false }) {
       const basla = () => {
         try { dongu(); } catch (e) {}
         const iv = setInterval(dongu, aralik);
-        const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 40000);
+        const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 55000); // zil de 55 sn çalsın (arama süresiyle uyumlu)
         zilRef.current = { iv, kapatZmn };
       };
       if (ctx.state === "suspended") { ctx.resume().then(basla).catch(basla); } else { basla(); }
@@ -3873,7 +3873,8 @@ export default function Anasayfa({ pro = false }) {
     document.addEventListener("visibilitychange", gizle);
     return () => document.removeEventListener("visibilitychange", gizle);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // CEVAPSIZ ARAMA — ben ararken (ariyor) 35 saniye cevap gelmezse: sonsuza kadar ÇALMAYI DURDUR, "ulaşılamadı" de, aramayı kapat.
+  // CEVAPSIZ ARAMA — ben ararken (ariyor) cevap gelmezse "ulaşılamadı" de, kapat. Süre 30→55 sn: karşı taraf BİLDİRİME basıp
+  //   uygulamayı açana kadar arama KAPANMASIN (uygulama kapalıyken tam ekran gelmediği için açması birkaç sn sürer).
   useEffect(() => {
     if (aramaDurum !== "ariyor") return;
     const zmn = setTimeout(() => {
@@ -3881,7 +3882,7 @@ export default function Anasayfa({ pro = false }) {
         try { bilgiBalonu(t("aramaUlasilamadi", "Ulaşılamıyor — cevap yok")); } catch (e) {}
         try { aramaKapat(false); } catch (e) {}
       }
-    }, 30000);
+    }, 55000);
     return () => clearTimeout(zmn);
   }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
   // Küçük videoyu PARMAKLA TAŞI (istediğin yere) + DOKUN → büyük/küçük yer değiştir (swap)
