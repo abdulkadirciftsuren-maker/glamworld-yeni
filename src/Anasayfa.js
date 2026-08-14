@@ -3586,18 +3586,15 @@ export default function Anasayfa({ pro = false }) {
   // ICE sunucuları: STUN + TURN. SADECE STUN varken iPhone (özellikle hücresel veri/operatör ağı) arkasında iki taraf
   // birbirine DOĞRUDAN bağlanamıyor → arama "bağlandı" görünüp SES/GÖRÜNTÜ HİÇ GELMİYORDU. TURN (röle) sunucusu bu durumda
   // medyayı aktarır. Aşağıdaki açık/ücretsiz TURN (Open Relay) eklendi; önce STUN denenir, gerekince TURN devreye girer.
+  // NOT: 'turns:' (TLS) satırı bazı tarayıcılarda RTCPeerConnection'ı kurarken hata verip aramayı AÇILIR-AÇILMAZ kapatabiliyordu
+  //   (kullanıcı: "arama açılıp kayboluyor") → KALDIRILDI. Sade, kesin çalışan STUN + Open Relay TURN (80/443 + tcp) bırakıldı.
   const ICE_SUNUCULAR = { iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    // TURN (röle) — farklı ağlardaki iki cihaz (ör. iPhone hücresel ↔ Android Wi-Fi) doğrudan bağlanamaz; medyayı röle aktarır.
-    // Open Relay'in TÜM kapıları (80/443 + TCP + TLS 'turns') → biri kapalıysa diğeri denenir, bağlantı/ses şansı artar.
     { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-    { urls: "turn:openrelay.metered.ca:80?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-    { urls: "turns:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-  ], iceCandidatePoolSize: 6 };
+  ], iceCandidatePoolSize: 4 };
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
@@ -3794,10 +3791,10 @@ export default function Anasayfa({ pro = false }) {
         if (sesCtxRef.current.state === "suspended") sesCtxRef.current.resume().catch(() => {});
       } catch (e) {}
     };
-    document.addEventListener("pointerdown", ac, true);
-    document.addEventListener("touchstart", ac, true);
-    document.addEventListener("click", ac, true);
-    return () => { document.removeEventListener("pointerdown", ac, true); document.removeEventListener("touchstart", ac, true); document.removeEventListener("click", ac, true); };
+    document.addEventListener("pointerdown", ac);
+    document.addEventListener("touchstart", ac);
+    document.addEventListener("click", ac);
+    return () => { document.removeEventListener("pointerdown", ac); document.removeEventListener("touchstart", ac); document.removeEventListener("click", ac); };
   }, []);
   const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} } zilRef.current = null; }; // GLOBAL bağlam KAPATILMAZ (tekrar kullanılır)
   const zilBaslat = (mod) => {
