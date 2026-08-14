@@ -3854,7 +3854,7 @@ export default function Anasayfa({ pro = false }) {
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
   useEffect(() => {
     if (aramaDurum === "ariyor") zilBaslat("arayan");
-    else if (gelenArama && !aramaDurum) zilBaslat("aranan");
+    else if (gelenArama && !aktifArama) zilBaslat("aranan");
     else zilDurdur();
   }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
   // CANLI SÜRE SAYACI (kullanıcı: "arama yaparken kaç saniye konuştuğum görünmüyor") — konuşma başından beri geçen sn, her saniye.
@@ -4001,11 +4001,13 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     const uu = auth.currentUser; if (!uu) return;
     const iptal = gelenAramalariDinle(uu.uid, (liste) => {
-      if (!aramaDurumRef.current && liste.length) {
+      // AKTİF konuşma yoksa (aktifAramaRef null) gelen aramayı GÖSTER — "aramaDurum" bir önceki aramadan takılı kalsa bile ekran gelsin
+      //   (kullanıcı: "artık hiç çıkmıyor" — sebep: aramaDurum takılıydı, gelen arama bloke oluyordu).
+      if (!aktifAramaRef.current && liste.length) {
         const yeni = liste[0];
         // offer null→dolu geçişini YAKALA (aksi halde eski boş halini koruyup çağrı hiç görünmez → arama gelmez)
         setGelenArama((mv) => (mv && mv.id === yeni.id && !!(mv.offer && mv.offer.sdp) === !!(yeni.offer && yeni.offer.sdp)) ? mv : yeni);
-      } else if (!liste.length) setGelenArama((mv) => (aramaDurumRef.current ? mv : null));
+      } else if (!liste.length) setGelenArama((mv) => (aktifAramaRef.current ? mv : null));
     });
     return iptal;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -10034,8 +10036,8 @@ export default function Anasayfa({ pro = false }) {
       )}
 
       <AramaHataSiniri anahtar={(aktifArama && aktifArama.id) || (gelenArama && gelenArama.id) || ""} onHata={() => { try { aramaTemizle(); zilDurdur(); } catch (e) {} setAktifArama(null); setAramaDurum(""); setGelenArama(null); }}>
-      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). SADECE teklif (offer) hazırken göster → kabul edince hata olmaz */}
-      {gelenArama && !aramaDurum && (
+      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). AKTİF arama yoksa GÖSTER (aramaDurum takılı olsa bile ekran gelsin). */}
+      {gelenArama && !aktifArama && (
         <div className="arama-fon arama-geliyor">
           <div className="arama-kisi">
             <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>
