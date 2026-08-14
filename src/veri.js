@@ -417,7 +417,8 @@ export function gelenAramalariDinle(uid, cb) {
       // durum "calliyor" (aktif çağrı) + son ~2 dk. MUTLAK fark: iki telefonun SAATİ farklıysa (simdi-zamanMs) eksi/çok büyük
       //   çıkıp çağrıyı GİZLİYORDU (kullanıcı: "hiçbir arama göstermiyor") → Math.abs + 120 sn ile saat kaymasına dayanıklı.
       const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-        .filter((a) => a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) < 120000);
+        .filter((a) => a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) < 120000)
+        .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // EN YENİ arama İLK → ikinci/yeni çağrı ekrana gelir (eski kayıt önüne geçmez)
       cb(liste);
     }, () => cb([]));
   } catch (e) { return () => {}; }
