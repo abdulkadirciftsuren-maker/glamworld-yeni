@@ -4024,6 +4024,8 @@ export default function Anasayfa({ pro = false }) {
       //   (kullanıcı: "artık hiç çıkmıyor" — sebep: aramaDurum takılıydı, gelen arama bloke oluyordu).
       if (!aktifAramaRef.current && liste.length) {
         const yeni = liste[0];
+        // 🔎 TEŞHİS: YENİ gelen arama algılandığında ekranda görünür işaret ver → kullanıcı listener'ın çalıştığını görür/bana söyler.
+        if (!gelenAramaRef.current || gelenAramaRef.current.id !== yeni.id) { try { bilgiBalonu("📞 " + (yeni.arayanAd || "Biri") + " arıyor…"); } catch (e) {} }
         // offer null→dolu geçişini YAKALA (aksi halde eski boş halini koruyup çağrı hiç görünmez → arama gelmez)
         setGelenArama((mv) => (mv && mv.id === yeni.id && !!(mv.offer && mv.offer.sdp) === !!(yeni.offer && yeni.offer.sdp)) ? mv : yeni);
       } else if (!liste.length) setGelenArama((mv) => (aktifAramaRef.current ? mv : null));
@@ -10055,8 +10057,8 @@ export default function Anasayfa({ pro = false }) {
       )}
 
       <AramaHataSiniri anahtar={(aktifArama && aktifArama.id) || (gelenArama && gelenArama.id) || ""} onHata={() => { try { aramaTemizle(); zilDurdur(); } catch (e) {} setAktifArama(null); setAramaDurum(""); setGelenArama(null); }}>
-      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). AKTİF arama yoksa GÖSTER (aramaDurum takılı olsa bile ekran gelsin). */}
-      {gelenArama && !aktifArama && (
+      {/* GELEN ÇAĞRI — biri seni arıyor (kabul / reddet). gelenArama VARSA MUTLAKA GÖSTER (takılı hiçbir duruma bakma → ekran kesin gelsin). */}
+      {gelenArama && (
         <div className="arama-fon arama-geliyor">
           <div className="arama-kisi">
             <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>
