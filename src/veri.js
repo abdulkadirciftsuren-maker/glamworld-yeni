@@ -415,7 +415,8 @@ export function gelenAramalariDinle(uid, cb) {
     return onSnapshot(q, (snap) => {
       const simdi = Date.now();
       const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-        .filter((a) => a.durum === "calliyor" && (simdi - (a.zamanMs || 0)) < 60000); // son 60 sn içinde çalan
+        .filter((a) => a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) < 90000) // aktif çağrı, son ~1.5 dk (saat kaymasına dayanıklı: Math.abs)
+        .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // ⛔ EN YENİ arama İLK → 3./4. arama da ekrana gelir (eski "calliyor" kayıtlar yeni çağrının ÖNÜNE geçemez — kullanıcı: "ilk 2 çıktı, 3.'de çıkmıyor")
       cb(liste);
     }, () => cb([]));
   } catch (e) { return () => {}; }
