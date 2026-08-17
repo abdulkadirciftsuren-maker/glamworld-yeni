@@ -13,11 +13,14 @@
   TEMİZLİK: her snapshot'ta `bitti`/`red` ve 90 sn'den eski takılı `calliyor` dokümanları `deleteDoc` ile silinir — **AKTİF çağrıya
   dokunulmaz** (taze `calliyor` ve `kabul`=konuşulan ASLA silinmez). (3) yeni `aramaSil(id)` + `Anasayfa.aramaKapat` arama bitince
   dokümanı anında siler. Firestore kuralı zaten izin veriyor (arananUid siler — `firestore.rules` satır ~174).
-- **AÇIK KALAN (SIRADA, TEK TEK, çalışanı bozmadan):**
-  1. **Kapatınca karşı taraf DONUYOR:** Bir taraf kapatınca öbür tarafın arama ekranı kapanmıyor, donuk kalıyor; elle kapatınca
-     düzeliyor. Muhtemelen B'nin per-call `aramaDinle` dinleyicisi "bitti"/silme sinyalini işlemiyor ya da B'nin UI'ı sıfırlanmıyor.
-     **Bu B171'den ÖNCE de vardı (aramalar hiç bağlanmadığı için görülmemişti); B171'i BOZMADAN düzelt.**
-  2. **Zil sesi:** Kullanıcı eski/güzel telefon zilini geri istiyor (şu an B151 kısık zili). Arama oturdu → zili güzelleştir.
+- **B172'DE YAPILDI (kullanıcı testi bekleniyor) — DOKUNMA:**
+  1. **Kapatınca karşı taraf DONMASI:** `Anasayfa.js pcOlustur` içine WebRTC bağlantı-durumu yedek yolu eklendi — `onconnectionstatechange`/
+     `oniceconnectionstatechange` "failed" → `aramaKapat(false)`; "disconnected" → 5 sn bekle, hâlâ kopuksa kapat (geçici titremede
+     erken kapatma yok). `pcRef.current===pc` guard → eski aramanın timer'ı yeni aramayı kapatmaz. Sağlıklı aramada "failed" olmaz →
+     çalışan akış bozulmaz. **B171 sinyal yolu (Firestore "bitti"/silme) AYNEN duruyor; bu sadece YEDEK.**
+  2. **Zil sesi:** `Anasayfa.js zilBaslat` klasik telefon ziline çevrildi — 440+480 Hz çift ton, DynamicsCompressor + master gain 0.95
+     (yüksek/dolgun); gelen çağrı "rrring-rrring", arayan tek uzun ringback. **Not:** tarayıcı autoplay kısıtı → gelen tarafta zil,
+     kullanıcı sayfada dokunmuşsa (AudioContext resume) duyulur; hiç dokunulmadıysa sessiz olabilir (bilinen web sınırı).
 - **NOT:** Kullanıcı yarın **iPhone** ile karşılıklı arama testi yapacak. Giriş-içi arama ekranını Code buradan göremez → ekran görüntüsü iste.
 
 ## ✅ SESLİ OKUMA + İMLEÇ — ÇALIŞIYOR (12 Ağu 2026, B143). ⛔⛔ BU BÖLÜMÜ OKU, BURAYA DOKUNMA — bozarsan kullanıcı yıkılır (günlerce acı çekti, sonunda düzeldi).
