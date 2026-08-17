@@ -3678,7 +3678,28 @@ export default function Anasayfa({ pro = false }) {
       setTimeout(baglaUzakMedya, 30);
     };
     pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
-    pc.onconnectionstatechange = () => { try { if (pc.connectionState === "connected") setAramaDurum("konusuyor"); } catch (x) {} };
+    pc.onconnectionstatechange = () => {
+      try {
+        const s = pc.connectionState;
+        if (s === "connected") setAramaDurum("konusuyor");
+        // ⛔ DONMA COZUMU: karsi taraf kapatinca (pc kopar) baglanti "failed" olur → EKRANI KENDIN KAPAT
+        //   (Firestore "bitti" sinyali kacsa bile arama ekrani takili/donuk kalmasin). SAGLIKLI aramada "failed" olmaz.
+        else if (s === "failed") { if (pcRef.current === pc) aramaKapat(false); }
+      } catch (x) {}
+    };
+    // ⛔ DONMA COZUMU (yedek yol): ICE baglantisi koparsa da ekrani kapat. "disconnected" GECICI olabilir (ag titremesi) →
+    //   5 sn bekle, HALA kopuksa kapat (saglikli arama bu surede "connected"e doner, kapanmaz). "failed" terminal → hemen kapat.
+    pc.oniceconnectionstatechange = () => {
+      try {
+        const s = pc.iceConnectionState;
+        if (s === "failed") { if (pcRef.current === pc) aramaKapat(false); }
+        else if (s === "disconnected") {
+          setTimeout(() => {
+            try { if (pcRef.current === pc && (pc.iceConnectionState === "disconnected" || pc.iceConnectionState === "failed")) aramaKapat(false); } catch (e) {}
+          }, 5000);
+        }
+      } catch (x) {}
+    };
     return pc;
   };
   const aramaBaslat = async (kisi, tip) => {
@@ -3750,31 +3771,35 @@ export default function Anasayfa({ pro = false }) {
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       const ctx = new AC(); try { ctx.resume(); } catch (e) {}
-      // ZARİF ÇAN — yumuşak, sıcak, YAVAŞ (kaba "brrr"/bip değil): nazik giriş, uzun doğal sönüm (çan gibi çınlar).
-      // Hafif ikinci harmonik (oktav) eklenir → sıcak çan tınısı. Ses düşük tutulur (zarif, bağırmaz).
-      const cingir = (freq, gecikme, ses, sonum) => {
+      // KLASİK TELEFON ZİLİ — 440 + 480 Hz çift ton (tanıdık "rrring"), YÜKSEK ve dolgun: compressor + master gain ile bağırmadan gür.
+      const comp = ctx.createDynamicsCompressor();
+      const master = ctx.createGain(); master.gain.value = 0.95;
+      comp.connect(master); master.connect(ctx.destination);
+      // Bir "rrring" çal: 440+480 Hz aynı anda, "sure" saniye düz, sonra kapan (klasik telefon ahengi).
+      const cal = (basla, sure, ses) => {
         try {
-          const t0 = ctx.currentTime + gecikme;
-          [[freq, ses], [freq * 2, ses * 0.28]].forEach(([f, v]) => { // temel + yumuşak oktav
+          const t0 = ctx.currentTime + basla;
+          [440, 480].forEach((f) => {
             const o = ctx.createOscillator(), g = ctx.createGain();
             o.type = "sine"; o.frequency.value = f;
-            o.connect(g); g.connect(ctx.destination);
+            o.connect(g); g.connect(comp);
             g.gain.setValueAtTime(0.0001, t0);
-            g.gain.exponentialRampToValueAtTime(v, t0 + 0.07);     // yumuşak giriş
-            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sonum); // uzun, zarif sönüm
-            o.start(t0); o.stop(t0 + sonum + 0.05);
+            g.gain.exponentialRampToValueAtTime(ses, t0 + 0.03);          // hızlı giriş
+            g.gain.setValueAtTime(ses, t0 + Math.max(0.06, sure - 0.05)); // düz "rrring"
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);       // net kapanış
+            o.start(t0); o.stop(t0 + sure + 0.03);
           });
         } catch (e) {}
       };
       let dongu, aralik;
       if (mod === "aranan") {
-        // GELEN ÇAĞRI — yumuşak "çiin … çiin" iki nazik çan notası (tatlı yükseliş), YAVAŞ ve zarif.
-        dongu = () => { cingir(783.99, 0.0, 0.17, 1.2); cingir(1046.5, 0.5, 0.15, 1.4); }; // G5 → C6, uzun çınlar
-        aralik = 3200; // yavaş
+        // GELEN ÇAĞRI — klasik ÇİFT zil: "rrring-rrring" (0.4 sn çal · 0.2 sn sus · 0.4 sn çal), sonra sessizlik → tanıdık telefon.
+        dongu = () => { cal(0.0, 0.4, 0.5); cal(0.6, 0.4, 0.5); };
+        aralik = 3000; // her 3 sn'de bir çift zil (klasik ritim)
       } else {
-        // ARAYAN (giden) — tek yumuşak nota, karşı taraf çalıyor hissi (nazik, alçak).
-        dongu = () => { cingir(587.33, 0.0, 0.11, 1.3); }; // D5, yumuşak
-        aralik = 3400;
+        // ARAYAN (giden) — ringback: tek uzun ton (karşı taraf çalıyor hissi), biraz alçak.
+        dongu = () => { cal(0.0, 1.0, 0.32); };
+        aralik = 3000;
       }
       dongu();
       const iv = setInterval(dongu, aralik);
