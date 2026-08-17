@@ -65,7 +65,7 @@ async function pushGonder(uid, baslik, govde, veri) {
   } catch (e) { console.error("push hata:", e); }
 }
 
-// 1) GENEL BİLDİRİM — mesaj / beğeni / yorum / tepki / takip (hepsi "bildirimler" koleksiyonuna düşer)
+// 1) GENEL BİLDİRİM — mesaj / beğeni / yorum / tepki / takip + CEVAPSIZ ARAMA (hepsi "bildirimler" koleksiyonuna düşer)
 exports.genelBildirim = onDocumentCreated("bildirimler/{id}", async (event) => {
   const b = event.data && event.data.data();
   console.log(`[genelBildirim] yeni bildirim: tip=${b && b.tip} | aliciUid=${b && b.aliciUid} | gonderenAd=${b && b.gonderenAd}`);
@@ -78,17 +78,14 @@ exports.genelBildirim = onDocumentCreated("bildirimler/{id}", async (event) => {
     case "yorum": govde = "gönderine yorum yaptı 💬"; break;
     case "takip": govde = "seni takip etmeye başladı ➕"; break;
     case "mesaj-tepki": govde = (b.metin || "mesajına tepki verdi"); break;
+    // ⛔ CEVAPSIZ ARAMA (kullanıcı isteği): arama ANINDA DEĞİL, karşı taraf CEVAP VERMEYİNCE gönderilir → "X seni aradı, geri ara".
+    case "arama-cevapsiz": govde = (b.metin || "seni aradı 📞 — geri aramak için dokun"); break;
     default: govde = b.metin || "yeni bir bildirimin var"; break;
   }
   await pushGonder(b.aliciUid, baslik, String(govde).slice(0, 140), { tip: b.tip || "bildirim", gonderenUid: b.gonderenUid || "", foto: b.gonderenFoto || "" });
 });
 
-// 2) ARAMA — biri seni arayınca ÇALAN bildirim (site kapalı olsa da)
-exports.aramaBildirim = onDocumentCreated("aramalar/{id}", async (event) => {
-  const a = event.data && event.data.data();
-  console.log(`[aramaBildirim] yeni arama: tip=${a && a.tip} | arananUid=${a && a.arananUid} | arayanAd=${a && a.arayanAd} | durum=${a && a.durum}`);
-  if (!a || !a.arananUid) { console.log("[aramaBildirim] arananUid yok -> atlandi"); return; }
-  const ad = a.arayanAd || "Biri";
-  const tip = a.tip === "goruntulu" ? "📹 Görüntülü arama" : "📞 Sesli arama";
-  await pushGonder(a.arananUid, ad + " seni arıyor", tip, { tip: "arama", aramaId: event.params.id, arayanUid: a.arayanUid || "", foto: a.arayanFoto || "" });
-});
+// 2) ⛔ ARAMA ANINDA PUSH KALDIRILDI (kullanıcı: "aramadan ÖNCE bildirim geliyor 'cevap ver' diyor — bu yanlış; zaten arama ekranı
+//    geliyor, kime cevap vereyim? Bildirim sadece CEVAP VERİLMEZSE gelsin, 'seni aradı geri ara' diye").
+//    Artık arama gelince SADECE uygulama-içi arama EKRANI gelir (Firestore listener); telefon push'u yalnızca CEVAPSIZ kalınca
+//    "arama-cevapsiz" bildirimiyle (yukarıdaki genelBildirim) gider. Eski onDocumentCreated("aramalar/{id}") push'u KALDIRILDI.

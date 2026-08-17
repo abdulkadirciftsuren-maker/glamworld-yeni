@@ -3638,6 +3638,9 @@ export default function Anasayfa({ pro = false }) {
         if (uu) {
           const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
           mesajGonder({ aliciUid: karsi.uid, aliciAd: karsi.ad || "", arama, gonderen: { uid: uu.uid, ad: benimAd, foto: bildirimFotoUrl || foto || isFoto || "" } }).catch(() => {});
+          // ⛔ CEVAPSIZ kalınca (karşı taraf açmadı) → "seni aradı, geri ara" PUSH bildirimi (kullanıcı isteği: bildirim arama anında DEĞİL,
+          //   sadece cevapsızda gelsin). Cevaplandıysa (konusBas var) bildirim GÖNDERME.
+          if (!konusBas) { try { bildirimEkle({ aliciUid: karsi.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: bildirimFotoUrl || "", tip: "arama-cevapsiz", metin: (arama.tip === "goruntulu" ? "📹 Görüntülü aradı — geri aramak için dokun" : "📞 Seni aradı — geri aramak için dokun") }).catch(() => {}); } catch (e) {} }
         }
       }
     } catch (e) {}
