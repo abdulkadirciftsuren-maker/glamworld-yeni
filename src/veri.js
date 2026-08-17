@@ -411,15 +411,30 @@ export async function aramaGuncelle(aramaId, veri) {
 export function gelenAramalariDinle(uid, cb) {
   if (!uid) return () => {};
   try {
-    const q = query(collection(db, "aramalar"), where("arananUid", "==", uid), fsLimit(20));
+    // ⛔ ESKİ HATA (kullanıcı: "ilk arama çalıştı sonra tıkandı / 3. arama gelmiyor"): fsLimit(20) vardı ve ZAMAN sıralaması YOKTU.
+    //    Günlerce arama birikince Firestore rastgele 20 kaydı getiriyor, YENİ çağrı çoğu zaman o 20'nin DIŞINDA kalıyor → telefon
+    //    yeni aramayı HİÇ görmüyor. ÇÖZÜM: sınırı çok geniş tut (300 — iki kişilik uygulamada asla dolmaz, en yeni GARANTİ gelir)
+    //    + BİTMİŞ (bitti/red) ve 90 sn'den ESKİ takılı çağrıları otomatik SİL → liste hep küçük kalır, bir daha ASLA tıkanmaz.
+    const q = query(collection(db, "aramalar"), where("arananUid", "==", uid), fsLimit(300));
     return onSnapshot(q, (snap) => {
       const simdi = Date.now();
-      const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      const hepsi = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // OTOMATİK TEMİZLİK: aktif olmayan/eski kayıtları sil. AKTİF çağrıya DOKUNMA (taze "calliyor" ve "kabul"=konuşulan asla silinmez).
+      hepsi.forEach((a) => {
+        const eskiCalliyor = a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) >= 90000;
+        if (a.durum === "bitti" || a.durum === "red" || eskiCalliyor) { try { deleteDoc(doc(db, "aramalar", a.id)); } catch (e) {} }
+      });
+      const liste = hepsi
         .filter((a) => a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) < 90000) // aktif çağrı, son ~1.5 dk (saat kaymasına dayanıklı: Math.abs)
-        .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // ⛔ EN YENİ arama İLK → 3./4. arama da ekrana gelir (eski "calliyor" kayıtlar yeni çağrının ÖNÜNE geçemez — kullanıcı: "ilk 2 çıktı, 3.'de çıkmıyor")
+        .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // EN YENİ arama İLK
       cb(liste);
     }, () => cb([]));
   } catch (e) { return () => {}; }
+}
+// Bir arama dokümanını SİL (arama bitince çağrılır — koleksiyon şişmesin, en yeni çağrı hep görünsün).
+export async function aramaSil(aramaId) {
+  if (!aramaId) return;
+  try { await deleteDoc(doc(db, "aramalar", aramaId)); } catch (e) {}
 }
 // ICE adayı ekle (kim: "arayan" | "aranan")
 export async function iceAdayEkle(aramaId, kim, cand) {
