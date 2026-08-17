@@ -3,6 +3,23 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
+## ✅ ARAMA (GLOME sesli/görüntülü) — TIKANMA ÇÖZÜLDÜ, ÇALIŞIYOR (17 Ağu 2026, B171). ⛔ BOZMA.
+> **KULLANICI KANITI (B171):** Üst üste bağlanan aramalar — Sesli 8 sn, Görüntülü 9 sn, Sesli 6 sn, Görüntülü 46 sn. İki taraftan da arayabildi.
+- **KÖK SEBEP (bulundu):** `src/veri.js` `gelenAramalariDinle` sorgusu `fsLimit(20)` idi ve ZAMAN sıralaması yoktu. Günlerce biriken
+  "aramalar" dokümanları 20'yi geçince, Firestore rastgele 20 kaydı getiriyor, YENİ "calliyor" çağrı o 20'nin DIŞINDA kalıyordu →
+  aranan taraf çağrıyı HİÇ görmüyor (arayan yazabildiği için cevapsız push yine gidiyor → "arıyorum ama beni arayamıyorlar"). İlk
+  arama azken çalışıyor, sonra tıkanıyordu. (Eski "3. arama gelmiyor" şikâyetinin de gerçek sebebi buydu — B168 istemci-sort ÇÖZMEDİ.)
+- **ÇÖZÜM (B171) — DOKUNMA:** (1) `fsLimit(20)→fsLimit(300)` (iki kişilik uygulamada dolmaz, en yeni GARANTİ gelir). (2) OTOMATİK
+  TEMİZLİK: her snapshot'ta `bitti`/`red` ve 90 sn'den eski takılı `calliyor` dokümanları `deleteDoc` ile silinir — **AKTİF çağrıya
+  dokunulmaz** (taze `calliyor` ve `kabul`=konuşulan ASLA silinmez). (3) yeni `aramaSil(id)` + `Anasayfa.aramaKapat` arama bitince
+  dokümanı anında siler. Firestore kuralı zaten izin veriyor (arananUid siler — `firestore.rules` satır ~174).
+- **AÇIK KALAN (SIRADA, TEK TEK, çalışanı bozmadan):**
+  1. **Kapatınca karşı taraf DONUYOR:** Bir taraf kapatınca öbür tarafın arama ekranı kapanmıyor, donuk kalıyor; elle kapatınca
+     düzeliyor. Muhtemelen B'nin per-call `aramaDinle` dinleyicisi "bitti"/silme sinyalini işlemiyor ya da B'nin UI'ı sıfırlanmıyor.
+     **Bu B171'den ÖNCE de vardı (aramalar hiç bağlanmadığı için görülmemişti); B171'i BOZMADAN düzelt.**
+  2. **Zil sesi:** Kullanıcı eski/güzel telefon zilini geri istiyor (şu an B151 kısık zili). Arama oturdu → zili güzelleştir.
+- **NOT:** Kullanıcı yarın **iPhone** ile karşılıklı arama testi yapacak. Giriş-içi arama ekranını Code buradan göremez → ekran görüntüsü iste.
+
 ## ✅ SESLİ OKUMA + İMLEÇ — ÇALIŞIYOR (12 Ağu 2026, B143). ⛔⛔ BU BÖLÜMÜ OKU, BURAYA DOKUNMA — bozarsan kullanıcı yıkılır (günlerce acı çekti, sonunda düzeldi).
 > **KULLANICI SÖZÜ (ders):** "Eskiyi sildiğin zaman her şey düzeliyor." → **KURAL: TEK uygulama, eskiyi SİL (yorumla/yedekte bırakma), üstüne yama yapma. Yeni bir "iyileştirme" EKLEME — çalışıyor.**
 - **NEREDE:** `src/Anasayfa.js` → `sesliOkuTarayici` (okuma) + `renkliCumleler` (ekranda cümle vurgusu/imleç) + `okunanCumle`/`teleCumle`/`maskotKaydirCumle`.
