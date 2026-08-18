@@ -3,6 +3,21 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
+## 🔴 AKTİF İŞ — ARAMA "POSTACISI" (TURN relay) KURULUMU (18 Ağu 2026, devam ediyor)
+> **DURUM (kullanıcı doğruladı):** Aynı WiFi'de arama ÇALIŞIYOR (sesli+görüntülü, iPhone dahil). Ama biri **farklı ağa** (mobil
+> veri) geçince ses/görüntü GELMİYOR → arama bağlanıyor ama medya akmıyor. **Sebep:** kullandığımız bedava TURN (openrelay.metered.ca)
+> artık güvenilir değil/çalışmıyor. Farklı ağlar arası medya için ÇALIŞAN bir TURN (postacı) ŞART. (ICE ayarı: `Anasayfa.js:~3621`
+> `ICE_SUNUCULAR`; B176'da `turns:` TLS eklendi ama openrelay yine iş görmüyor.)
+> **PLAN:**
+> 1. **ŞİMDİ:** Kullanıcıyla birlikte **metered.ca ÜCRETSİZ** hesabı aç → bize özel TURN URL + username + credential al → `ICE_SUNUCULAR`
+>    içindeki openrelay satırlarını bununla DEĞİŞTİR (kullanıcı kimlik bilgisini verecek; koda koy, deploy). Adım adım (firebase-deploy gibi).
+> 2. **BÜYÜYÜNCE:** metered ücretli plan VEYA kendi `coturn` sunucumuz (~$5-10/ay VPS) — çok kullanıcıda en ucuz. Aramaların çoğu TURN
+>    kullanmaz (sadece zor ağlar), maliyet uzun süre düşük.
+> 3. **NATIVE/Play Store MİSKONSEPSİYON:** Native uygulama da AYNI TURN'e muhtaç (WhatsApp bile kendi TURN'ünü çalıştırır); Play Store
+>    postacı ihtiyacını KALDIRMAZ. Şimdi kurulan postacı native'de de AYNEN çalışır (boşa gitmez). Native'in çözdüğü AYRI şeyler:
+>    kilit ekranında tam ekran çalan arama + daha iyi bildirim/arka plan.
+> **KULLANICIYA VERİLEN SÖZ:** Ücretsiz postacı kurulunca iPhone dahil HER ağda arama çalışacak.
+
 ## ✅ ARAMA (GLOME sesli/görüntülü) — TIKANMA ÇÖZÜLDÜ, ÇALIŞIYOR (17 Ağu 2026, B171). ⛔ BOZMA.
 > **KULLANICI KANITI (B171):** Üst üste bağlanan aramalar — Sesli 8 sn, Görüntülü 9 sn, Sesli 6 sn, Görüntülü 46 sn. İki taraftan da arayabildi.
 - **KÖK SEBEP (bulundu):** `src/veri.js` `gelenAramalariDinle` sorgusu `fsLimit(20)` idi ve ZAMAN sıralaması yoktu. Günlerce biriken
