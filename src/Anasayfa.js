@@ -3807,14 +3807,49 @@ export default function Anasayfa({ pro = false }) {
     aramaAbonelikRef.current.push(ab1, ab2);
   };
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
-  // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
+  // ⛔ iPHONE SES KİLİDİ (kullanıcı: "iPhone'da gelen aramada ZİL sesi ve Gloxoo KONUŞMASI çıkmıyor; sadece iPhone'da"). iOS, kullanıcı
+  //    ekrana DOKUNMADAN ses/konuşma çaldırmaz. ÇÖZÜM: ilk dokunuşta TEK paylaşımlı AudioContext'i aç (zil bunu kullanır) + speechSynthesis'i
+  //    sessiz kısa bir sözle "aç" (Gloxoo sonra konuşur). Android'i ETKİLEMEZ (orada zaten çalışır; resume/prime zararsız, idempotent).
+  const sesCtxRef = useRef(null);
+  const sesKilidiAc = () => {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC && !sesCtxRef.current) sesCtxRef.current = new AC();
+      if (sesCtxRef.current && sesCtxRef.current.state === "suspended") { sesCtxRef.current.resume().catch(() => {}); }
+    } catch (e) {}
+    try {
+      if (window.speechSynthesis && !window.__groxSesAcildi) {
+        const u = new SpeechSynthesisUtterance(" "); u.volume = 0; // sessiz — sadece iOS konuşma kilidini aç
+        window.speechSynthesis.speak(u); window.__groxSesAcildi = true;
+      }
+    } catch (e) {}
+  };
+  useEffect(() => {
+    const ac = () => { try { sesKilidiAc(); } catch (e) {} };
+    window.addEventListener("pointerdown", ac, { passive: true });
+    window.addEventListener("touchstart", ac, { passive: true });
+    window.addEventListener("click", ac, { passive: true });
+    return () => { window.removeEventListener("pointerdown", ac); window.removeEventListener("touchstart", ac); window.removeEventListener("click", ac); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez. Paylaşımlı ses bağlamını (sesCtxRef) kullanır → iPhone'da da çalar.
   const zilRef = useRef(null);
-  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
+  const zilDurdur = () => {
+    const z = zilRef.current;
+    if (z) {
+      try { clearInterval(z.iv); } catch (e) {}
+      try { clearTimeout(z.kapatZmn); } catch (e) {}
+      try { if (z.master) z.master.gain.value = 0; } catch (e) {}   // paylaşımlı ctx: sesi ANINDA kes
+      try { if (z.ctx) z.ctx.close(); } catch (e) {}                // sadece kendi açtığımız (paylaşımsız) ctx'i kapat
+    }
+    zilRef.current = null;
+  };
   const zilBaslat = (mod) => {
     zilDurdur();
     try {
-      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      const ctx = new AC(); try { ctx.resume(); } catch (e) {}
+      // Paylaşımlı (ilk dokunuşta açılan) ses bağlamını kullan → iPhone'da çalar. Yoksa (henüz dokunulmadıysa) yeni aç (Android/masaüstü).
+      let ctx = sesCtxRef.current, paylasimli = true;
+      if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ctx = new AC(); paylasimli = false; }
+      try { if (ctx.state === "suspended") ctx.resume(); } catch (e) {}
       // KLASİK TELEFON ZİLİ — 440 + 480 Hz çift ton (tanıdık "rrring"), YÜKSEK ve dolgun: compressor + master gain ile bağırmadan gür.
       const comp = ctx.createDynamicsCompressor();
       const master = ctx.createGain(); master.gain.value = 0.95;
@@ -3849,7 +3884,7 @@ export default function Anasayfa({ pro = false }) {
       const iv = setInterval(dongu, aralik);
       // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar "bildirim sesi gibi" çalma olmasın)
       const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
-      zilRef.current = { ctx, iv, kapatZmn };
+      zilRef.current = { ctx: paylasimli ? null : ctx, master, iv, kapatZmn }; // paylaşımlıysa ctx'i kapatma; sesi master.gain=0 ile keseriz
     } catch (e) {}
   };
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
