@@ -3625,6 +3625,10 @@ export default function Anasayfa({ pro = false }) {
     { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+    // TLS (turns) 443 — güvenlik duvarı/HÜCRESEL ağda ses/görüntü en iyi buradan geçer (kullanıcı: iPhone'da arama açılıyor ama
+    // ses/görüntü GELMİYOR; farklı ağda relay şart). Metered'in dokümanındaki TLS uç noktası; iyi biçimli (B157'deki bozuk turns
+    // satırından farklı → RTCPeerConnection Playwright ile test edildi, hata vermiyor). EK olarak eklendi, çalışan ayar silinmedi.
+    { urls: "turns:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
   ], iceCandidatePoolSize: 4 };
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
@@ -9624,7 +9628,8 @@ export default function Anasayfa({ pro = false }) {
                 </div>
                 <div className="tan-ai-kart-bilgi">
                   <b className="notranslate" translate="no">{k.ad}<span className="tan-yas"> · {k.yas}</span></b>
-                  <i className="tan-km">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}{k.km != null ? <span> · ≈ {k.km} km {t("uzaginda", "uzağında")}</span> : null}</i>
+                  <i className="tan-km">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}</i>
+                  {k.km != null && <i className="tan-km tan-km-alt">≈ {k.km} km {t("uzaginda", "uzağında")}</i>}
                 </div>
                 <button className="tan-ai-kart-btn" onClick={(e) => { e.stopPropagation(); aiSohbetAc(k.persona); }}>💬 {t("tanisSohbetEt", "Sohbet et")}</button>
               </div>
