@@ -5785,13 +5785,22 @@ export default function Anasayfa({ pro = false }) {
       return { role: "user", content: m.metin };
     });
     try {
-      const r = await fetch(AI_KOPRU, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sistem, mesajlar }),
-      });
-      const veri = await r.json();
-      let metin = (veri && veri.metin) ? veri.metin : (veri && veri.hata) ? veri.hata : t("yardimciHata", "Şu an yanıt veremedim, birazdan tekrar dene.");
+      // ⛔ GEÇİCİ HATA OTOMATİK TEKRAR (kullanıcı: fotoğraf sorunca "yazı beyni yoğun/kredisi bitmiş" hatası çıktı). Fotoğraf gibi AĞIR
+      //   (görme/vision) isteklerde beyin ANLIK aşırı yük/hız-limiti döndürebilir; bu "kredisi bitmiş" gibi GÖRÜNSE de aslında geçicidir.
+      //   ÇÖZÜM: sessizce 3 kez dene (artan bekleme). Gerçek yanıt gelince çık; KALICI hata (ör. gerçek kredi bitişi) olursa çık, mesaj gösterilir.
+      let veri = null, metin = "";
+      for (let deneme = 0; deneme < 3; deneme++) {
+        try {
+          const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sistem, mesajlar }) });
+          veri = await r.json();
+        } catch (e) { veri = null; }
+        metin = (veri && veri.metin) ? veri.metin : (veri && veri.hata) ? veri.hata : "";
+        if (veri && veri.metin) break; // gerçek yanıt geldi → çık
+        const gecici = !metin || /overloaded|rate.?limit|too many requests|timeout|zaman|try again|\b5\d\d\b|\b429\b/i.test(String(metin));
+        if (!gecici) break; // kalıcı hata (ör. kredi) → çık, aşağıda anlaşılır mesaj gösterilir
+        if (deneme < 2) await new Promise((res) => setTimeout(res, 1600 * (deneme + 1)));
+      }
+      if (!metin) metin = t("yardimciHata", "Şu an yanıt veremedim, birazdan tekrar dene.");
       // YAZI BEYNİ (Claude/Anthropic) KREDİSİ BİTTİ hatası İNGİLİZCE geliyordu ("Your credit balance is too low...
       // Anthropic API ... purchase credits") → kullanıcı anlamıyor. Bunu ANLAŞILIR TÜRKÇE mesaja çevir (resim
       // kredisinden AYRI bir hesap olduğunu da belirt). Böylece ne olduğu ve ne yapılacağı net olur.
