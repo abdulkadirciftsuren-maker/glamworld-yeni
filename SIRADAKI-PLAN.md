@@ -3,6 +3,20 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
+## 🔴 YARIN İLK İŞ — GLOXOO BEYNİ KREDİSİ + MASRAF KONTROLÜ (18 Ağu 2026 gecesi kaldı, kullanıcı yoruldu "yarın devam")
+> **DURUM:** Gloxoo HİÇBİR ŞEYE cevap vermiyor (yazı + fotoğraf, HER cihazda) → "yazı beyni yoğun/kredisi bitmiş" hatası. B182'de
+> otomatik-tekrar eklendi ama hata SÜRÜYOR → demek KALICI: **Gloxoo beyninin Anthropic API hesabının KREDİSİ BİTMİŞ** (bu KOD sorunu
+> DEĞİL; `AI_KOPRU` Cloudflare Worker → Anthropic API; hata satırı `Anasayfa.js:~5798` sadece gösteriyor). NOT: kullanıcının "Max"i
+> claude.ai değil, GLOXORG'un kendi üyelik seviyesi (yeşil Max/mavi Pro/kırmızı ücretsiz).
+> **YARIN YAP (kullanıcıyla, adım adım — metered gibi):**
+> 1. **İki hesabı bul:** (a) Gloxoo yazı/görme beyni = **Anthropic** (console.anthropic.com, API key Cloudflare worker'da). (b) Kullanıcı
+>    "bir de başka hesap açtık galiba, canlı konuşma/ses için" dedi → muhtemelen gerçek-ses TTS içindi (şu an gercekSesKapaliRef=true, kapalı).
+> 2. **Az test kredisi ekle** (console.anthropic.com → Billing, ~5-10$) → Gloxoo yazı+fotoğraf yine çalışır (deploy GEREKMEZ, anında).
+> 3. **⚠️ MASRAF KONTROLÜ (kullanıcının BÜYÜK endişesi: "faaliyete geçince altından kalkamayız"):** (a) Anthropic hesabına **aylık harcama
+>    TAVANI** koy (asla aşmaz). (b) Gloxoo için **daha UCUZ model** (Haiku) — mesaj başı maliyet kat kat düşer (worker'da model değişir). (c)
+>    **Kullanıcı başına Gloxoo mesaj SINIRI** (ücretsiz=az, Pro/Max=çok → hem maliyet hem satış teşviki). Bunları söz verdim.
+> **NOT:** Arama (farklı ağ/metered TURN) ve iPhone Gloxoo KONUŞMASI (B181/B182) ÇALIŞIYOR — dokunma.
+
 ## ✅ ARAMA "POSTACISI" (TURN relay) ÇALIŞIYOR — metered.ca (18 Ağu 2026, B178 — KULLANICI DOĞRULADI "şimdi çalıştı"). ⛔ DOKUNMA.
 > **DURUM:** Farklı ağda (biri WiFi biri mobil veri, iPhone dahil) arama ARTIK BAĞLANIYOR. Uzun TURN sağası bitti.
 > **AÇIK KALAN (SIRADA — ses/gesture, iPhone):** (1) iPhone'da GELEN aramada ZİL SESİ çıkmıyor. (2) Gloxoo balon yazısı çıkıyor ama
