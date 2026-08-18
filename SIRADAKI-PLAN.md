@@ -41,8 +41,12 @@
   (base64 değil), o iyi. **GÜVENLİ HIZLI ÇÖZÜM (kullanıcı onaylayınca):** Profilim ilk açılışta 60 yerine ~12 çek, gerisi kaydırınca.
   Kullanıcı "şimdilik dokunma" dedi → ERTELENDİ; sonra istediğinde yap. **NOT:** Arama (aynı WiFi'de) ÇALIŞIYOR (kullanıcı doğruladı).
 
-## ⏳ SIRADA: iPhone'da REKLAM ŞERİDİ YÜRÜMÜYOR (Android'de yürüyor). `Reklam` bileşeni lazy (`src/Reklam.js`); iOS Safari CSS animasyon
-> uyumu (marquee/keyframes) bak — muhtemelen `-webkit-`/`translate3d`/`will-change` ya da iOS'un animasyonu duraklatması. Kullanıcı öncelik verdiğinde yap.
+## ✅ iPhone REKLAM ŞERİDİ ARTIK YÜRÜYOR (18 Ağu 2026, B174 — kullanıcı testi bekleniyor). ⛔ DOKUNMA.
+- **KÖK SEBEP:** Şerit CSS animasyonu DEĞİL, JS ile `el.scrollLeft += 0.65` (Reklam.js `adim()` RAF döngüsü). iOS Safari scrollLeft'i
+  HER OKUYUŞTA tam sayıya yuvarlıyor → 0.65'ler birikmiyor, şerit ilerlemiyordu (Android kesri koruyor → orada yürüyordu).
+- **ÇÖZÜM (B174):** (1) `Reklam.js`: konum artık FLOAT `poz` değişkeninde tutulur; her kare `poz += 0.65` → `el.scrollLeft = poz`
+  (poz büyüdüğü için iOS floor gösterse de yürür). Parmakla kaydırınca `poz = el.scrollLeft` senkron. Sonsuz döngü sarması korundu.
+  (2) `Anasayfa.css .reklam-akis`: `-webkit-overflow-scrolling:touch` KALDIRILDI (iOS programlı kaydırmayı bozuyordu). Android etkilenmez.
 
 ## ✅ SESLİ OKUMA + İMLEÇ — ÇALIŞIYOR (12 Ağu 2026, B143). ⛔⛔ BU BÖLÜMÜ OKU, BURAYA DOKUNMA — bozarsan kullanıcı yıkılır (günlerce acı çekti, sonunda düzeldi).
 > **KULLANICI SÖZÜ (ders):** "Eskiyi sildiğin zaman her şey düzeliyor." → **KURAL: TEK uygulama, eskiyi SİL (yorumla/yedekte bırakma), üstüne yama yapma. Yeni bir "iyileştirme" EKLEME — çalışıyor.**
