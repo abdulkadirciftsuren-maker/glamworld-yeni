@@ -2657,7 +2657,27 @@ export default function Anasayfa({ pro = false }) {
       }
       window.__groxYenilendi = true;
       try { sessionStorage.setItem("groxSonYenileMs", String(simdi)); } catch (e) {}
-      window.location.reload();
+      // ⛔ EKSİK/PARÇA PARÇA YÜKLEME ÇÖZÜMÜ (kullanıcı: "sayfa parça parça yükleniyor, bölümler eksik kalıyor, güncelleme yarım
+      //   geliyor; arama ilk denemede tutmuyor"). SEBEP: ana paket (main.<hash>.js ~6.8MB) BÜYÜK; yeni sürümde HEMEN reload edilince
+      //   tarayıcı o 6.8MB'ı yeniden indirirken sayfa parça parça açılıyor, bölümler eksik kalıyordu. ÇÖZÜM: reload'dan ÖNCE yeni
+      //   ana paketi + CSS'i ARKA PLANDA tam indir (SW /static önbelleğini doldurur); İNDİKTEN SONRA reload → yenileme ANINDA + TAM,
+      //   hiçbir bölüm eksik kalmaz. İndirme başarısız/uzarsa (en fazla 15 sn) yine de reload → takılma OLMAZ.
+      (async () => {
+        try {
+          const r = await fetch((process.env.PUBLIC_URL || "") + "/index.html?_p=" + Date.now(), { cache: "no-store" });
+          if (r && r.ok) {
+            const h = await r.text();
+            const js = (h.match(/src="([^"]*main\.[a-z0-9]+\.js)"/) || [])[1];
+            const css = (h.match(/href="([^"]*main\.[a-z0-9]+\.css)"/) || [])[1];
+            const indir = [js, css].filter(Boolean).map((p) => {
+              try { return fetch(new URL(p, window.location.href).href).then(() => {}).catch(() => {}); }
+              catch (e) { return Promise.resolve(); }
+            });
+            if (indir.length) await Promise.race([Promise.all(indir), new Promise((res) => setTimeout(res, 15000))]);
+          }
+        } catch (e) {}
+        try { window.location.reload(); } catch (e) {}
+      })();
     } catch (e) {}
   };
   // ⛔ ÖNLEM DİNLEYİCİSİ: Sayfa her görünür olduğunda (arka plandan dönüş / sekmeye geçiş) SADECE zamanı kaydet.
