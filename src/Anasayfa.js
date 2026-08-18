@@ -1899,7 +1899,7 @@ export default function Anasayfa({ pro = false }) {
       if (acildi) return;
       try {
         const ss = window.speechSynthesis; if (!ss) { acildi = true; return; }
-        const u = new window.SpeechSynthesisUtterance(" "); u.volume = 0;
+        const u = new window.SpeechSynthesisUtterance("."); u.volume = 0.05; u.rate = 1; /* iPHONE: sifir-sesli/bosluk yerine gercek karakter + sifir-olmayan ses -> iOS TTS kilidini acar, Gloxoo konusur */
         ss.cancel(); ss.speak(u); ss.resume();
         acildi = true;
         try { document.removeEventListener("pointerdown", ac, true); document.removeEventListener("touchend", ac, true); } catch (e) {}
