@@ -3,20 +3,17 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
-## 🔴 AKTİF İŞ — ARAMA "POSTACISI" (TURN relay) KURULUMU (18 Ağu 2026, devam ediyor)
-> **DURUM (kullanıcı doğruladı):** Aynı WiFi'de arama ÇALIŞIYOR (sesli+görüntülü, iPhone dahil). Ama biri **farklı ağa** (mobil
-> veri) geçince ses/görüntü GELMİYOR → arama bağlanıyor ama medya akmıyor. **Sebep:** kullandığımız bedava TURN (openrelay.metered.ca)
-> artık güvenilir değil/çalışmıyor. Farklı ağlar arası medya için ÇALIŞAN bir TURN (postacı) ŞART. (ICE ayarı: `Anasayfa.js:~3621`
-> `ICE_SUNUCULAR`; B176'da `turns:` TLS eklendi ama openrelay yine iş görmüyor.)
-> **PLAN:**
-> 1. **ŞİMDİ:** Kullanıcıyla birlikte **metered.ca ÜCRETSİZ** hesabı aç → bize özel TURN URL + username + credential al → `ICE_SUNUCULAR`
->    içindeki openrelay satırlarını bununla DEĞİŞTİR (kullanıcı kimlik bilgisini verecek; koda koy, deploy). Adım adım (firebase-deploy gibi).
-> 2. **BÜYÜYÜNCE:** metered ücretli plan VEYA kendi `coturn` sunucumuz (~$5-10/ay VPS) — çok kullanıcıda en ucuz. Aramaların çoğu TURN
->    kullanmaz (sadece zor ağlar), maliyet uzun süre düşük.
-> 3. **NATIVE/Play Store MİSKONSEPSİYON:** Native uygulama da AYNI TURN'e muhtaç (WhatsApp bile kendi TURN'ünü çalıştırır); Play Store
->    postacı ihtiyacını KALDIRMAZ. Şimdi kurulan postacı native'de de AYNEN çalışır (boşa gitmez). Native'in çözdüğü AYRI şeyler:
->    kilit ekranında tam ekran çalan arama + daha iyi bildirim/arka plan.
-> **KULLANICIYA VERİLEN SÖZ:** Ücretsiz postacı kurulunca iPhone dahil HER ağda arama çalışacak.
+## ✅ ARAMA "POSTACISI" (TURN relay) KURULDU — metered.ca (18 Ağu 2026, B178 — kullanıcı testi bekleniyor). ⛔ DOKUNMA.
+> **DURUM:** Aynı WiFi'de arama zaten çalışıyordu; farklı ağda (iPhone mobil veri) medya akmıyordu (relay yoktu; eski openrelay ölü).
+> Kullanıcıyla birlikte **metered.ca ÜCRETSİZ** hesabı açıldı (`gloxorg` app, 500MB/ay ücretsiz plan, KART YOK).
+> **KURULUM DERSİ (ÖNEMLİ — tekrar gerekirse):** TURN kimlik endpoint'i `gloxorg.metered.live/...?apiKey=SECRET` DEĞİL (o "Invalid API
+> Key" verir). DOĞRUSU: metered dashboard → TURN Server → "Kimlik Bilgisi Ekle" → oluşan satırda **"Share ICE Servers Array"** → hazır
+> `iceServers` bloğu (KALICI username/password) → doğrudan koda. TURN sunucuları `global.relay.metered.ca` (80/443, turns:443=TLS).
+> **KOD (`Anasayfa.js` `ICE_SUNUCULAR` ~3625):** Google STUN + `stun.relay.metered.ca` + `turn/turns:global.relay.metered.ca` (username
+> `de30a9edca0d3007045ca1b9`). `turns:443` TLS → iPhone mobil veri/katı güvenlik duvarı geçer. Çalışma-anındaki fetch YOK (statik, CORS
+> derdi yok). Güvenlik: TURN user/pass client'ta görünür (WebRTC'de NORMAL, gizli anahtar değil).
+> **KOTA/BÜYÜME:** 500MB/ay ücretsiz. Dolunca → metered ücretli VEYA kendi `coturn` (~$5-10/ay VPS). Aramaların çoğu TURN kullanmaz.
+> **NATIVE/Play Store:** TURN ihtiyacını KALDIRMAZ (WhatsApp bile kendi TURN'ünü çalıştırır); bu postacı native'de de aynen çalışır.
 
 ## ✅ ARAMA (GLOME sesli/görüntülü) — TIKANMA ÇÖZÜLDÜ, ÇALIŞIYOR (17 Ağu 2026, B171). ⛔ BOZMA.
 > **KULLANICI KANITI (B171):** Üst üste bağlanan aramalar — Sesli 8 sn, Görüntülü 9 sn, Sesli 6 sn, Görüntülü 46 sn. İki taraftan da arayabildi.
