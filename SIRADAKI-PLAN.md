@@ -21,7 +21,23 @@
   2. **Zil sesi:** `Anasayfa.js zilBaslat` klasik telefon ziline çevrildi — 440+480 Hz çift ton, DynamicsCompressor + master gain 0.95
      (yüksek/dolgun); gelen çağrı "rrring-rrring", arayan tek uzun ringback. **Not:** tarayıcı autoplay kısıtı → gelen tarafta zil,
      kullanıcı sayfada dokunmuşsa (AudioContext resume) duyulur; hiç dokunulmadıysa sessiz olabilir (bilinen web sınırı).
-- **NOT:** Kullanıcı yarın **iPhone** ile karşılıklı arama testi yapacak. Giriş-içi arama ekranını Code buradan göremez → ekran görüntüsü iste.
+- **NOT:** Kullanıcı **iPhone** ile karşılıklı arama testi yapacak. Giriş-içi arama ekranını Code buradan göremez → ekran görüntüsü iste.
+
+## ✅ SAYFA TAM YÜKLENSİN — YENİ SÜRÜM ÖNCE İNDİRİLİR SONRA YENİLENİR (18 Ağu 2026, B173). ⛔ DOKUNMA.
+> **KULLANICI TESPİTİ (çok değerli):** "Sayfa parça parça yükleniyor, bölümler eksik kalıyor, Profilim yarım dk sonra yüklüyor,
+> güncelleme yarım geliyor → arama İLK denemede tutmuyor, ikincide (yenileyip bekleyince) çalışıyor." Yani arama kodu (B171/B172)
+> sağlam; sorun sayfanın TAM güncellenmemesiydi.
+- **KÖK SEBEP:** `build/static/js/main.<hash>.js` **~6.8MB** (çok büyük). Yeni sürüm bulununca `guvenliYenile` HEMEN
+  `window.location.reload()` yapıyordu → tarayıcı 6.8MB'ı yeniden indirirken sayfa parça parça açılıyor, bölümler eksik kalıyordu.
+- **ÇÖZÜM (B173, `Anasayfa.js` guvenliYenile) — DOKUNMA:** reload'dan ÖNCE sunucu `index.html`'inden yeni `main.<hash>.js` +
+  `main.<hash>.css` yolları okunur, arka planda `fetch` ile TAM indirilir (SW `/static` önbelleği dolar); ancak indikten SONRA
+  reload → yenileme ANINDA + TAM. İndirme başarısız/uzarsa en fazla 15 sn bekleyip yine reload (takılma yok). Tüm reload yolları
+  (25 sn sürüm kontrolü, SW mesajı, SW updatefound) aynı `guvenliYenile`'den geçtiği için hepsi bu korumayı alır.
+- **DAHA DERİN (sonra, isterse):** 6.8MB `main.js`'i code-splitting ile küçültmek İLK açılışı da hızlandırır ama BÜYÜK/riskli refactor —
+  kullanıcı net isterse, tek tek, çalışanı bozmadan. Şimdilik B173 (önce-indir-sonra-yenile) güncellemeyi zaten TAM yapıyor.
+
+## ⏳ SIRADA: iPhone'da REKLAM ŞERİDİ YÜRÜMÜYOR (Android'de yürüyor). `Reklam` bileşeni lazy (`src/Reklam.js`); iOS Safari CSS animasyon
+> uyumu (marquee/keyframes) bak — muhtemelen `-webkit-`/`translate3d`/`will-change` ya da iOS'un animasyonu duraklatması. Kullanıcı öncelik verdiğinde yap.
 
 ## ✅ SESLİ OKUMA + İMLEÇ — ÇALIŞIYOR (12 Ağu 2026, B143). ⛔⛔ BU BÖLÜMÜ OKU, BURAYA DOKUNMA — bozarsan kullanıcı yıkılır (günlerce acı çekti, sonunda düzeldi).
 > **KULLANICI SÖZÜ (ders):** "Eskiyi sildiğin zaman her şey düzeliyor." → **KURAL: TEK uygulama, eskiyi SİL (yorumla/yedekte bırakma), üstüne yama yapma. Yeni bir "iyileştirme" EKLEME — çalışıyor.**
