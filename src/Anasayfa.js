@@ -242,19 +242,8 @@ function _aiKmGercek(sehir, benLat, benLon) {
   if (!c || benLat == null || benLon == null) return null;
   return _kmUzaklik(benLat, benLon, c.lat, c.lon);
 }
-// ARAMA POSTACISI (metered.ca TURN) — bize özel iceServers'ı ÇALIŞMA ANINDA al → farklı ağlarda (iPhone hücresel dahil) ses/görüntü
-// relay ile taşınır. Anahtar client'ta görünür (metered'in çalışma şekli); ÜCRETSİZ plan + kart YOK → risk yok (en fazla 500MB kota
-// tükenir, para çıkmaz). İleride büyüyünce arka-plan proxy'ye/kendi coturn'a taşınır (SIRADAKI-PLAN.md). 30 dk önbellek (sık istek atma).
-const METERED_TURN_URL = "https://gloxorg.metered.live/api/v1/turn/credentials?apiKey=c_OlQDmBnb7MEl4JDQD6XSVgDvrEzn1QBJyHvHyRLAO3owWP";
-let _meteredIce = null, _meteredIceMs = 0;
-async function meteredIceServerlar() {
-  if (_meteredIce && (Date.now() - _meteredIceMs) < 1800000) return _meteredIce;
-  try {
-    const r = await fetch(METERED_TURN_URL);
-    if (r.ok) { const l = await r.json(); if (Array.isArray(l) && l.length) { _meteredIce = l; _meteredIceMs = Date.now(); return l; } }
-  } catch (e) {}
-  return null;
-}
+// NOT: Eski "çalışma anında metered fetch" (METERED_TURN_URL + meteredIceServerlar) KALDIRILDI — yanlış adres/anahtar yüzünden
+// "Invalid API Key" veriyordu. Artık metered postacısı KALICI kullanıcı adı/şifreyle doğrudan ICE_SUNUCULAR içinde (fetch YOK).
 // Uygulama sürümü (Gloxoo SADECE yeni sürümde/güncelleme sonrası ilk açılışta selamlar)
 const AKTIF_SURUM = (buildGecmisi && buildGecmisi[0]) ? (buildGecmisi[0].surum + ".B" + buildGecmisi[0].build) : "";
 // SAYFA AÇILIŞ ZAMANI (modül yüklenince = sayfa açılınca sabitlenir). Otomatik güncelleme YENİLEMESİ, sayfa
@@ -3630,28 +3619,21 @@ export default function Anasayfa({ pro = false }) {
   // ---- İNTERNET ARAMASI (WebRTC — sesli/görüntülü) ----
   // ICE sunucuları: STUN + TURN. SADECE STUN varken iPhone (özellikle hücresel veri/operatör ağı) arkasında iki taraf
   // birbirine DOĞRUDAN bağlanamıyor → arama "bağlandı" görünüp SES/GÖRÜNTÜ HİÇ GELMİYORDU. TURN (röle) sunucusu bu durumda
-  // medyayı aktarır. Aşağıdaki açık/ücretsiz TURN (Open Relay) eklendi; önce STUN denenir, gerekince TURN devreye girer.
+  // medyayı aktarır. Önce STUN (hızlı P2P) denenir; farklı ağda/hücresel/güvenlik duvarında gerekince TURN (metered postacısı) devreye girer.
+  // ⛔ ESKİ openrelay (ücretsiz/herkese açık) ÇALIŞMIYORDU → farklı ağda ses/görüntü gelmiyordu (kullanıcı: "aynı WiFi'de çalışıyor ama
+  //    başka hatta çalışmıyor"). KALDIRILDI. Yerine kullanıcının KENDİ metered.ca (global.relay) postacısı — KALICI kullanıcı adı/şifre
+  //    (dashboard'dan "Share ICE Servers Array"). turns:443 (TLS) → iPhone MOBİL VERİ + katı güvenlik duvarı bile geçer. Ücretsiz 500MB plan.
   const ICE_SUNUCULAR = { iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-    { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
-    { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-    // TLS (turns) 443 — güvenlik duvarı/HÜCRESEL ağda ses/görüntü en iyi buradan geçer (kullanıcı: iPhone'da arama açılıyor ama
-    // ses/görüntü GELMİYOR; farklı ağda relay şart). Metered'in dokümanındaki TLS uç noktası; iyi biçimli (B157'deki bozuk turns
-    // satırından farklı → RTCPeerConnection Playwright ile test edildi, hata vermiyor). EK olarak eklendi, çalışan ayar silinmedi.
-    { urls: "turns:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "stun:stun.relay.metered.ca:80" },
+    { urls: "turn:global.relay.metered.ca:80", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
+    { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
+    { urls: "turn:global.relay.metered.ca:443", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
+    { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
   ], iceCandidatePoolSize: 4 };
-  // Arama için ICE ayarını getir: bize özel metered postacısını (TURN) çalışma anında al → farklı ağda ses/görüntü taşınır.
-  // Metered gelirse: Google STUN (hızlı P2P) + metered (relay). Gelmezse mevcut ayara (STUN + openrelay) DÜŞ → arama takılmaz.
-  const iceKonfigGetir = async () => {
-    try {
-      const m = await meteredIceServerlar();
-      if (m && m.length) return { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, ...m], iceCandidatePoolSize: 4 };
-    } catch (e) {}
-    return ICE_SUNUCULAR;
-  };
+  // Arama ICE ayarı. Artık kalıcı statik ayar (metered postacısı doğrudan ICE_SUNUCULAR içinde) → çalışma anında fetch YOK
+  // (fetch/CORS/"Invalid API Key" derdi bitti). Fonksiyon, çağrı yerlerini değiştirmemek için duruyor; anında ayarı döner.
+  const iceKonfigGetir = async () => ICE_SUNUCULAR;
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
