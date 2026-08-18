@@ -242,6 +242,19 @@ function _aiKmGercek(sehir, benLat, benLon) {
   if (!c || benLat == null || benLon == null) return null;
   return _kmUzaklik(benLat, benLon, c.lat, c.lon);
 }
+// ARAMA POSTACISI (metered.ca TURN) — bize özel iceServers'ı ÇALIŞMA ANINDA al → farklı ağlarda (iPhone hücresel dahil) ses/görüntü
+// relay ile taşınır. Anahtar client'ta görünür (metered'in çalışma şekli); ÜCRETSİZ plan + kart YOK → risk yok (en fazla 500MB kota
+// tükenir, para çıkmaz). İleride büyüyünce arka-plan proxy'ye/kendi coturn'a taşınır (SIRADAKI-PLAN.md). 30 dk önbellek (sık istek atma).
+const METERED_TURN_URL = "https://gloxorg.metered.live/api/v1/turn/credentials?apiKey=c_OlQDmBnb7MEl4JDQD6XSVgDvrEzn1QBJyHvHyRLAO3owWP";
+let _meteredIce = null, _meteredIceMs = 0;
+async function meteredIceServerlar() {
+  if (_meteredIce && (Date.now() - _meteredIceMs) < 1800000) return _meteredIce;
+  try {
+    const r = await fetch(METERED_TURN_URL);
+    if (r.ok) { const l = await r.json(); if (Array.isArray(l) && l.length) { _meteredIce = l; _meteredIceMs = Date.now(); return l; } }
+  } catch (e) {}
+  return null;
+}
 // Uygulama sürümü (Gloxoo SADECE yeni sürümde/güncelleme sonrası ilk açılışta selamlar)
 const AKTIF_SURUM = (buildGecmisi && buildGecmisi[0]) ? (buildGecmisi[0].surum + ".B" + buildGecmisi[0].build) : "";
 // SAYFA AÇILIŞ ZAMANI (modül yüklenince = sayfa açılınca sabitlenir). Otomatik güncelleme YENİLEMESİ, sayfa
@@ -3630,6 +3643,15 @@ export default function Anasayfa({ pro = false }) {
     // satırından farklı → RTCPeerConnection Playwright ile test edildi, hata vermiyor). EK olarak eklendi, çalışan ayar silinmedi.
     { urls: "turns:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
   ], iceCandidatePoolSize: 4 };
+  // Arama için ICE ayarını getir: bize özel metered postacısını (TURN) çalışma anında al → farklı ağda ses/görüntü taşınır.
+  // Metered gelirse: Google STUN (hızlı P2P) + metered (relay). Gelmezse mevcut ayara (STUN + openrelay) DÜŞ → arama takılmaz.
+  const iceKonfigGetir = async () => {
+    try {
+      const m = await meteredIceServerlar();
+      if (m && m.length) return { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, ...m], iceCandidatePoolSize: 4 };
+    } catch (e) {}
+    return ICE_SUNUCULAR;
+  };
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
@@ -3705,8 +3727,8 @@ export default function Anasayfa({ pro = false }) {
     if (el && el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
     if (el) { try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
   };
-  const pcOlustur = (aramaId, kim) => {
-    const pc = new RTCPeerConnection(ICE_SUNUCULAR);
+  const pcOlustur = (aramaId, kim, konfig) => {
+    const pc = new RTCPeerConnection(konfig || ICE_SUNUCULAR);
     pcRef.current = pc;
     (yerelStreamRef.current ? yerelStreamRef.current.getTracks() : []).forEach((t) => { try { pc.addTrack(t, yerelStreamRef.current); } catch (e) {} });
     pc.ontrack = (e) => {
@@ -3755,7 +3777,8 @@ export default function Anasayfa({ pro = false }) {
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
-    const pc = pcOlustur(id, "arayan");
+    const konfig = await iceKonfigGetir(); // bize özel postacı (TURN) — farklı ağda ses/görüntü taşınsın
+    const pc = pcOlustur(id, "arayan", konfig);
     try {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -3789,7 +3812,8 @@ export default function Anasayfa({ pro = false }) {
     try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("konusuyor");
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
-    const pc = pcOlustur(g.id, "aranan");
+    const konfig = await iceKonfigGetir(); // bize özel postacı (TURN) — farklı ağda ses/görüntü taşınsın
+    const pc = pcOlustur(g.id, "aranan", konfig);
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(g.offer));
       const answer = await pc.createAnswer();
