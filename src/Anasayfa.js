@@ -226,8 +226,22 @@ function _kmUzaklik(lat1, lon1, lat2, lon2) {
   const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return km < 1 ? Math.max(1, Math.round(km * 10) / 10) : Math.round(km);
 }
-// Yapay zekâ karakteri için sabit (deterministik) yaklaşık km — id'den türetilir (her seferinde aynı, rastgele değil)
-function _aiKm(id) { let h = 0; for (let i = 0; i < (id || "").length; i++) h = (h * 31 + id.charCodeAt(i)) % 100000; return 2 + (h % 94); }
+// Yapay zekâ karakterlerinin ŞEHİRLERİ → koordinat. GERÇEK mesafe (kullanıcının konumundan karakterin şehrine) için.
+// (Eski _aiKm SAHTE km'yi id'den türetiyordu → herkesi ~35 km gösteriyordu; kullanıcı: "İzmir'deki biri bana 35 km olamaz". KALDIRILDI.)
+const _SEHIR_KOORD = {
+  "İstanbul": { lat: 41.0082, lon: 28.9784 }, "Ankara": { lat: 39.9334, lon: 32.8597 },
+  "İzmir": { lat: 38.4237, lon: 27.1428 }, "Bursa": { lat: 40.1826, lon: 29.0665 },
+  "Antalya": { lat: 36.8969, lon: 30.7133 }, "Kyiv": { lat: 50.4501, lon: 30.5234 },
+  "Odesa": { lat: 46.4825, lon: 30.7233 }, "Lviv": { lat: 49.8397, lon: 24.0297 },
+  "Berlin": { lat: 52.5200, lon: 13.4050 }, "Münih": { lat: 48.1351, lon: 11.5820 },
+};
+// Karakterin GERÇEK yaklaşık km'si: kullanıcının konumundan karakterin ŞEHRİNE kuş uçuşu. Konum/şehir yoksa null
+// → kartta km yazılmaz, sadece şehir/ülke gösterilir (sahte mesafe YOK; İzmir'deki karakter senin ülkende değilse km'si büyük çıkar).
+function _aiKmGercek(sehir, benLat, benLon) {
+  const c = _SEHIR_KOORD[sehir];
+  if (!c || benLat == null || benLon == null) return null;
+  return _kmUzaklik(benLat, benLon, c.lat, c.lon);
+}
 // Uygulama sürümü (Gloxoo SADECE yeni sürümde/güncelleme sonrası ilk açılışta selamlar)
 const AKTIF_SURUM = (buildGecmisi && buildGecmisi[0]) ? (buildGecmisi[0].surum + ".B" + buildGecmisi[0].build) : "";
 // SAYFA AÇILIŞ ZAMANI (modül yüklenince = sayfa açılınca sabitlenir). Otomatik güncelleme YENİLEMESİ, sayfa
@@ -4390,11 +4404,15 @@ export default function Anasayfa({ pro = false }) {
   // YAPAY ZEKÂ tanışma arkadaşları (açıkça etiketli) — cinsiyet filtresi + arama
   const aiTanisanlar = useMemo(() => {
     const q = topAra.trim().toLowerCase();
-    let l = TANISMA_AI.map((k) => ({ uid: k.id, ad: k.ad, yas: k.yas, sehir: k.sehir, ulke: k.ulke, arayis: k.arayis, bio: k.bio, km: _aiKm(k.id), foto: aiFoto[k.id] || "", persona: k }));
+    // Kullanıcının GERÇEK konumu (canlı GPS ya da profil konumu) — karakterin şehrine gerçek mesafe için (tanismacilar ile AYNI mantık)
+    const pk = (profilBilgi && profilBilgi.konum) || {};
+    const benLat = konumLat != null ? konumLat : (typeof pk.lat === "number" ? pk.lat : null);
+    const benLon = konumLon != null ? konumLon : (typeof pk.lon === "number" ? pk.lon : null);
+    let l = TANISMA_AI.map((k) => ({ uid: k.id, ad: k.ad, yas: k.yas, sehir: k.sehir, ulke: k.ulke, arayis: k.arayis, bio: k.bio, km: _aiKmGercek(k.sehir, benLat, benLon), foto: aiFoto[k.id] || "", persona: k }));
     if (aiAramaSonuc) { const s = new Set(aiAramaSonuc); l = l.filter((k) => s.has(k.uid)); } // AKILLI ARAMA
     else { if (aiCins !== "hepsi") l = l.filter((k) => k.persona.c === aiCins); if (q) l = l.filter((k) => (k.ad + " " + k.bio + " " + k.sehir + " " + k.ulke).toLowerCase().indexOf(q) !== -1); }
     return l;
-  }, [aiFoto, aiCins, topAra, aiAramaSonuc]);
+  }, [aiFoto, aiCins, topAra, aiAramaSonuc, konumLat, konumLon, profilBilgi]);
   // İş İlanları: tur === "is" olan paylaşımlar
   const ilanlar = useMemo(() => gercekAkis.filter((p) => p.tur === "is").slice(0, 12), [gercekAkis]);
   // Trend: paylaşım metinlerindeki #etiketler (en çok geçenler)
@@ -9606,7 +9624,7 @@ export default function Anasayfa({ pro = false }) {
                 </div>
                 <div className="tan-ai-kart-bilgi">
                   <b className="notranslate" translate="no">{k.ad}<span className="tan-yas"> · {k.yas}</span></b>
-                  <i className="tan-km">📍 ≈ {k.km} km {t("uzaginda", "uzağında")}</i>
+                  <i className="tan-km">📍 {[k.sehir, k.ulke].filter(Boolean).join(", ")}{k.km != null ? <span> · ≈ {k.km} km {t("uzaginda", "uzağında")}</span> : null}</i>
                 </div>
                 <button className="tan-ai-kart-btn" onClick={(e) => { e.stopPropagation(); aiSohbetAc(k.persona); }}>💬 {t("tanisSohbetEt", "Sohbet et")}</button>
               </div>
