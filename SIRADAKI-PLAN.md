@@ -3,7 +3,12 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
-## ✅ ARAMA "POSTACISI" (TURN relay) KURULDU — metered.ca (18 Ağu 2026, B178 — kullanıcı testi bekleniyor). ⛔ DOKUNMA.
+## ✅ ARAMA "POSTACISI" (TURN relay) ÇALIŞIYOR — metered.ca (18 Ağu 2026, B178 — KULLANICI DOĞRULADI "şimdi çalıştı"). ⛔ DOKUNMA.
+> **DURUM:** Farklı ağda (biri WiFi biri mobil veri, iPhone dahil) arama ARTIK BAĞLANIYOR. Uzun TURN sağası bitti.
+> **AÇIK KALAN (SIRADA — ses/gesture, iPhone):** (1) iPhone'da GELEN aramada ZİL SESİ çıkmıyor. (2) Gloxoo balon yazısı çıkıyor ama
+> KONUŞMUYOR. İkisi de büyük ihtimalle iOS'un "kullanıcı ekrana dokunmadan ses/TTS çalmaz" (autoplay/gesture) kısıtı → çözüm: ilk
+> dokunuşta global AudioContext + speechSynthesis'i "aç" (B155'te benzeri vardı, B167 revert'inde gitti). ÖNCE kullanıcıyla cihaz/Android
+> karşılaştırması netleştir, çalışan aramayı/okumayı bozmadan yap.
 > **DURUM:** Aynı WiFi'de arama zaten çalışıyordu; farklı ağda (iPhone mobil veri) medya akmıyordu (relay yoktu; eski openrelay ölü).
 > Kullanıcıyla birlikte **metered.ca ÜCRETSİZ** hesabı açıldı (`gloxorg` app, 500MB/ay ücretsiz plan, KART YOK).
 > **KURULUM DERSİ (ÖNEMLİ — tekrar gerekirse):** TURN kimlik endpoint'i `gloxorg.metered.live/...?apiKey=SECRET` DEĞİL (o "Invalid API
