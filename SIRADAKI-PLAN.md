@@ -35,6 +35,11 @@
   (25 sn sürüm kontrolü, SW mesajı, SW updatefound) aynı `guvenliYenile`'den geçtiği için hepsi bu korumayı alır.
 - **DAHA DERİN (sonra, isterse):** 6.8MB `main.js`'i code-splitting ile küçültmek İLK açılışı da hızlandırır ama BÜYÜK/riskli refactor —
   kullanıcı net isterse, tek tek, çalışanı bozmadan. Şimdilik B173 (önce-indir-sonra-yenile) güncellemeyi zaten TAM yapıyor.
+- **⏸️ GÜNLÜK YAVAŞLIK — KULLANICI ŞİMDİLİK ERTELEDİ (18 Ağu 2026):** Kullanıcı asıl "sayfa teker teker/geç yükleniyor, Profilim'i
+  açınca paylaştıklarım 5-10 sn sonra geliyor" diyor. SEBEP (teşhis edildi): (a) 6.8MB `main.js` (ilk açılış), (b) `gonderilerimOku`
+  Profilim açılınca **60 gönderiyi birden** çekiyor (`Anasayfa.js:~4436`, `veri.js:664` `adet=60`) → 5-10 sn. Medya Storage'da URL
+  (base64 değil), o iyi. **GÜVENLİ HIZLI ÇÖZÜM (kullanıcı onaylayınca):** Profilim ilk açılışta 60 yerine ~12 çek, gerisi kaydırınca.
+  Kullanıcı "şimdilik dokunma" dedi → ERTELENDİ; sonra istediğinde yap. **NOT:** Arama (aynı WiFi'de) ÇALIŞIYOR (kullanıcı doğruladı).
 
 ## ⏳ SIRADA: iPhone'da REKLAM ŞERİDİ YÜRÜMÜYOR (Android'de yürüyor). `Reklam` bileşeni lazy (`src/Reklam.js`); iOS Safari CSS animasyon
 > uyumu (marquee/keyframes) bak — muhtemelen `-webkit-`/`translate3d`/`will-change` ya da iOS'un animasyonu duraklatması. Kullanıcı öncelik verdiğinde yap.
