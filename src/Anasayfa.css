@@ -5571,7 +5571,9 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-ver-mini{ background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:10px; padding:7px 12px; font-weight:900; font-size:13px; cursor:pointer; font-family:inherit; }
 .reklam-bos{ display:block; width:calc(100% - 24px); margin:0 12px 6px; padding:20px 12px; border:2px dashed #a07800; border-radius:12px; background:#fffbe9; color:#7a5a00; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit; }
 /* SERBEST KAYAN ŞERİT — parmakla sağa-sola çekilir (overflow-x). Sayfa değiştirmesin diye swipe-muaf listede. */
-.reklam-akis{ overflow-x:auto; overflow-y:hidden; width:100%; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-behavior:auto; overscroll-behavior-x:contain; cursor:grab; }
+/* NOT: -webkit-overflow-scrolling:touch KALDIRILDI — iOS'ta programlı (JS) el.scrollLeft akışını bozuyordu (şerit yürümüyordu).
+   Modern iPhone'da parmakla kaydırma zaten akıcı; kaldırınca hem otomatik akış hem elle kaydırma çalışır. Android etkilenmez. */
+.reklam-akis{ overflow-x:auto; overflow-y:hidden; width:100%; scrollbar-width:none; scroll-behavior:auto; overscroll-behavior-x:contain; cursor:grab; }
 .reklam-akis:active{ cursor:grabbing; }
 .reklam-akis::-webkit-scrollbar{ display:none; }
 .reklam-track{ display:flex; gap:10px; padding:0 12px 8px; width:max-content; }

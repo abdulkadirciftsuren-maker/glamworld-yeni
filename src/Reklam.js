@@ -76,6 +76,11 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     // Şerit görünürlüğü: ekranda değilse (kaydırıldı) veya sekme arka planda ise AKIŞI DURDUR → gereksiz ekran boyama olmaz.
     let gozlemci = null;
     try { gozlemci = new IntersectionObserver((g) => { gorunur.current = !!(g[0] && g[0].isIntersecting); }, { threshold: 0.01 }); gozlemci.observe(el); } catch (e) {}
+    // ⛔ iPHONE DÜZELTMESİ (kullanıcı: "iPhone'da reklam şeridi yürümüyor, Android'de yürüyor"): iOS Safari scrollLeft'i TAM SAYIYA
+    //   yuvarlar → "el.scrollLeft += 0.65" her karede 0'a yuvarlanıp şerit HİÇ İLERLEMİYORDU. Android'de kesir korunduğu için orada
+    //   yürüyordu. ÇÖZÜM: konumu FLOAT olarak BİZ tutarız (poz) ve her kare el.scrollLeft = poz yazarız → poz sürekli büyüdüğü için
+    //   iOS floor(poz) görüntülese bile şerit yürür. Kullanıcı parmakla kaydırınca poz gerçek konuma senkronlanır (oradan devam eder).
+    let poz = el.scrollLeft || 0;
     const adim = () => {
       if (iptal) return;
       const d = durRef.current;
@@ -85,10 +90,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
         const yari = el.scrollWidth / 2; // tek set genişliği (liste iki kez basıldı)
         if (yari > 0) {
           const bosVakit = Date.now() - oto.current.sonEtkilesim > 1600; // bırakınca ~1.6 sn sonra devam
-          if (!oto.current.dokunuyor && bosVakit) el.scrollLeft += 0.65; // yavaşça sola akış
-          if (!oto.current.dokunuyor) { // sonsuz döngü: sınırı geçince bir set kadar sar (görsel fark yok)
-            if (el.scrollLeft >= yari) el.scrollLeft -= yari;
-            else if (el.scrollLeft < 0) el.scrollLeft += yari;
+          if (!oto.current.dokunuyor && bosVakit) {
+            poz += 0.65;                          // yavaşça sola akış (FLOAT — iOS'ta da birikir, yürür)
+            if (poz >= yari) poz -= yari;         // sonsuz döngü: sınırı geçince bir set kadar sar (görsel fark yok)
+            else if (poz < 0) poz += yari;
+            el.scrollLeft = poz;
+          } else {
+            poz = el.scrollLeft;                  // kullanıcı dokunuyor / yeni bıraktı → gerçek konumu takip et
+            if (!oto.current.dokunuyor) {          // elle kaydırınca da sonsuz döngü sarması
+              if (poz >= yari) { poz -= yari; el.scrollLeft = poz; }
+              else if (poz < 0) { poz += yari; el.scrollLeft = poz; }
+            }
           }
         }
       }
