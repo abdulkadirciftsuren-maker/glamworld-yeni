@@ -3,6 +3,15 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
+## 🎨 YAPILACAK — ÜYELİK SEVİYESİNE GÖRE RENK (kullanıcı 19 Ağu B189'da hatırlattı, UNUTMA)
+> Renk kullanıcının üyelik seviyesine göre değişmeli — **GLOXORG marka yazısı + üst şerit (theme-color) + Gloxoo konuşma
+> sayfası zemini + Glome zemini** HEPSİ aynı seviye rengini kullanacak. Mantık `Anasayfa.js:2879` `uyeTasAd`:
+> **altın üyelik → yeşil (Max)**, **pro → mavi (Pro)**, **diğer → kırmızı (ücretsiz)**.
+> ŞU AN: theme-color sabit **mavi (#294a7d)** yapıldı (B189, kullanıcı parlak sarıyı reddetti). Sabit mavi = "Pro" rengi.
+> YAPILACAK (ayrı, dikkatli, TEK task — Gloxoo/Glome'yi BOZMADAN): giriş yapan kullanıcının seviyesine göre `<meta name="theme-color">`'ı
+> ÇALIŞMA ANINDA JS ile güncelle (kırmızı/mavi/yeşil) + Gloxoo ve Glome zemin rengini de aynı seviyeye bağla. Önce tier hex renklerini
+> CSS'ten bul (c-kirmizi/kart-kirmizi vb.), her seviyeyi tek tek test et, sonra yayınla. Play Store işi bitince ya da kullanıcı isteyince yap.
+
 ## 🟡 GLOXOO MASRAF KONTROLÜ — İLERLİYOR (19 Ağu 2026, B183). Kullanıcı: "her sefer 20$ ekliyorum bir ay yetmiyor, akıllı yapı lazım".
 > **YAPILDI:**
 > 1. ✅ **Kredi eklendi** — kullanıcı $20 yatırdı, Gloxoo yazı+fotoğraf yine çalışıyor (DOĞRULANDI, fotoğraf değerlendirdi).
