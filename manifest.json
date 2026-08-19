@@ -1,6 +1,7 @@
 {
-  "short_name": "Gloxorg",
-  "name": "Gloxorg",
+  "short_name": "GLOXORG",
+  "name": "GLOXORG",
+  "description": "GLOXORG — dünyanın en lüks profesyonel sosyal platformu. Yüzlerce meslekten seçkin profesyoneller, işletmeler ve müşteriler tek çatı altında.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +11,22 @@
     {
       "src": "logo192-b109.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "logo512-b109.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
   "start_url": ".",
+  "scope": ".",
   "display": "standalone",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["social", "business", "lifestyle"],
   "theme_color": "#FFD700",
   "background_color": "#FFD700"
 }
