@@ -3,6 +3,20 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
+## 📱 PLAY STORE (Android uygulaması) — DEVAM EDİYOR (19 Ağu 2026, kullanıcıyla adım adım)
+> Kullanıcı sayfayı Google Play'e uygulama olarak koymak istedi. PWABuilder (TWA) yolu seçildi. **BUGÜN YAPILANLAR:**
+> - ✅ **Manifest/hazırlık** (B185-B189): manifest link eklendi, .ico çıkarıldı, description İngilizce, açılış/şerit rengi mavi (#294a7d).
+> - ✅ **PWABuilder** → gloxorg.com paketlendi → **`Gloxorg.aab` + imza anahtarı (signing.keystore) + assetlinks İNDİ** (kullanıcının bilgisayarında, Downloads). Package ID: **com.gloxorg.twa**.
+> - ✅ **assetlinks.json** siteye eklendi (`public/.well-known/assetlinks.json`, sha256 parmak izi 34:29:6F...C6:98) → uygulama tam ekran açılır. (deploy --dotfiles ile gider.)
+> - ✅ **Google Play geliştirici hesabı AÇILDI** — 25$ ödendi. Hesap adı "GLOXORG", Kişisel hesap, Hesap Kimliği 6524637860521605101, e-posta abdulkadirciftsuren@gmail.com. Geliştirici adı: GLOXORG.
+> - ✅ **Kimlik doğrulama GÖNDERİLDİ** (Türk pasaportu; TR pasaport+UA adres önce takıldı sonra kabul etti). Google birkaç gün inceleyecek.
+> **SIRADA (kullanıcı yapacak/rehberlik):**
+> 1. Kalan 2 doğrulama: (a) **Android cihaz** (telefona Play Console uygulaması kurup giriş), (b) **telefon numarası** — kullanıcı "eve giderken" yapacak, hızlı.
+> 2. Kimlik onayı gelince: Play Console'da **uygulama oluştur** → mağaza bilgileri (isim, açıklama-çok dilli, ekran görüntüleri, **temiz logo**) → **`.aab` yükle**.
+> 3. **KAPALI TEST**: yeni kişisel hesapta yayından önce **≥20 testçi 14 gün** şart (kullanıcının tanıdıkları/kullanıcıları). Sonra production başvurusu.
+> 4. **Play App Signing** sonrası assetlinks.json'a **Google'ın 2. parmak izini** ekle (Play Console → Uygulama imzalama sertifikası SHA-256) yoksa TWA tam ekran açılmaz.
+> **NOT:** İmza dosyaları (signing.keystore + signing-key-info) kullanıcıda; kaybederse güncelleme zorlaşır (kendine e-posta atmasını söyledim). LOGO temizleme (tüm harfler içeride, altın) yayından önce yapılacak — SÖZ verildi. Bu oturumda yerel repo birkaç kez b70fbc6'ya düştü (konteyner); origin sağlam, her seferinde `git reset --hard origin` ile geri alındı, iş kaybı YOK.
+
 ## 🎨 YAPILACAK — ÜYELİK SEVİYESİNE GÖRE RENK (kullanıcı 19 Ağu B189'da hatırlattı, UNUTMA)
 > Renk kullanıcının üyelik seviyesine göre değişmeli — **GLOXORG marka yazısı + üst şerit (theme-color) + Gloxoo konuşma
 > sayfası zemini + Glome zemini** HEPSİ aynı seviye rengini kullanacak. Mantık `Anasayfa.js:2879` `uyeTasAd`:
