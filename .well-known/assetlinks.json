@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.gloxorg.twa",
+      "sha256_cert_fingerprints": [
+        "34:29:6F:16:86:0F:52:F0:23:5D:45:AE:9A:AA:DD:84:D3:17:D7:F0:2B:34:C7:75:39:4F:DE:64:59:2C:C6:98"
+      ]
+    }
+  }
+]
