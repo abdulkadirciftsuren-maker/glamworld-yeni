@@ -5748,11 +5748,23 @@ export default function Anasayfa({ pro = false }) {
     if (haberY.length) sistem += ` KULLANICININ HABER/İLGİ KONUMLARI (adresinden ayrı, takip etmek istediği yerler): ${haberY.join("; ")}. "Şehrimde bugün ne haber var", "takımım ne yaptı", oradaki gündem/spor gibi sorularda BU YERLERİ baz al.`;
     sistem += ` ASLA kuru "bilmiyorum" deme, saçma/alakasız konuşma — bildiğini net söyle, yardımcı ol; canlı/anlık veri (bugünkü haber/skor) gerekiyorsa elindeki bilgiyle yardım et ve nasıl güncel bakılacağını göster, ama yanlış/uydurma bilgi verme.`;
     const sonIdx = yeniListe.length - 1;
+    // === MALİYET AZALTMA (para tasarrufu) ===
+    // Eskiden Gloxoo'ya HER mesajda TÜM konuşma geçmişi + TÜM eski fotoğraflar yeniden gönderiliyordu → çok token, çok para.
+    // Artık yapay zekâya SADECE son 16 mesaj gider (yeterli bağlam; ekranda tüm konuşma yine durur) ve
+    // yalnız EN SON fotoğraf gerçek "resim" olarak yollanır; daha eski fotoğraflar kısa yazı notuna döner
+    // (aynı fotoğrafı her mesajda tekrar tekrar resim olarak göndermek en büyük para israfıydı).
+    const AI_GECMIS = 16;
+    const aiListe = yeniListe.length > AI_GECMIS ? yeniListe.slice(yeniListe.length - AI_GECMIS) : yeniListe;
+    const aiSonIdx = aiListe.length - 1;
+    let aiSonFotoIdx = -1;
+    for (let _i = aiListe.length - 1; _i >= 0; _i--) { if (aiListe[_i] && aiListe[_i].foto) { aiSonFotoIdx = _i; break; } }
     // GÖRÜNTÜLÜ SOHBET: kamera açıksa (sesli ya da yazılı fark etmez) O ANKİ kareyi al — kullanıcının son mesajına eklenir
     const kk = (opt && opt.kameraKare) ? opt.kameraKare : (kameraModRef.current ? kameraKare() : null);
-    const mesajlar = yeniListe.map((m, mi) => {
+    const mesajlar = aiListe.map((m, mi) => {
       // SADECE en son (şu anki) kullanıcı mesajına kamera karesini ekle — geçmişte biriktirme (maliyet/karışıklık olmasın)
-      if (mi === sonIdx && kk && kk.base64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: kk.mediaType || "image/jpeg", data: kk.base64 } }, { type: "text", text: m.metin || "Kameradan beni görüyorsun; buna göre konuş." } ] };
+      if (mi === aiSonIdx && kk && kk.base64) return { role: "user", content: [ { type: "image", source: { type: "base64", media_type: kk.mediaType || "image/jpeg", data: kk.base64 } }, { type: "text", text: m.metin || "Kameradan beni görüyorsun; buna göre konuş." } ] };
+      // ESKİ FOTOĞRAF (en son fotoğraf DEĞİL): aynı resmi her turda tekrar YOLLAMA (pahalı) → yalnız kısa yazı notu bırak.
+      if (m.foto && mi !== aiSonFotoIdx) return { role: (m.rol === "user" ? "user" : "assistant"), content: ((m.metin || "") + (m.rol === "user" ? "\n(Kullanıcı daha önce bir fotoğraf paylaşmıştı.)" : "")) || "(bir fotoğraf paylaşıldı)" };
       // FOTO HAFIZASI: base64 yoksa (yenileme/güncelleme sonrası kayıttan gelen foto sadece dataURL tutar) → base64'ü dataURL'den TÜRET.
       // Böylece Gloxoo yenilendikten sonra da eklenen fotoğrafı GÖRÜR/HATIRLAR (yalnız ekranda görünüp AI'nın körleşmesi biter).
       if (m.foto && (m.foto.base64 || m.foto.dataURL || m.foto.url)) {
