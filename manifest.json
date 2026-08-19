@@ -1,13 +1,9 @@
 {
+  "id": "/",
   "short_name": "Gloxorg",
   "name": "GLOXORG",
-  "description": "GLOXORG — dünyanın en lüks profesyonel sosyal platformu. Yüzlerce meslekten seçkin profesyoneller, işletmeler ve müşteriler tek çatı altında.",
+  "description": "GLOXORG — the world's luxury professional social platform. Elite professionals, businesses and customers across hundreds of professions, under one luxury roof.",
   "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
     {
       "src": "logo192-b109.png",
       "type": "image/png",
@@ -24,7 +20,7 @@
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "lang": "tr",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["social", "business", "lifestyle"],
   "theme_color": "#FFD700",
