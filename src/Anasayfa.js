@@ -6207,6 +6207,25 @@ export default function Anasayfa({ pro = false }) {
         let kaTimer = null;
         try { kaTimer = setInterval(() => { try { if (ttsTarayiciIptalRef.current || bitti) { clearInterval(kaTimer); return; } if (window.speechSynthesis.speaking) window.speechSynthesis.resume(); } catch (e) {} }, 7000); } catch (e) {}
         const bit = () => { if (bitti) return; bitti = true; if (kaTimer) { try { clearInterval(kaTimer); } catch (e) {} } try { if (typeof onIlerleme === "function") onIlerleme(1); } catch (e) {} try { if (typeof onBitti === "function") onBitti(); } catch (e) {} };
+        // ⛔ UZUN CÜMLE KESİLMESİN (kullanıcı: "uzun yazıyı yarıda kesiyor, 'aklınla geliştirmiş'te durdu"). KÖK: tek çok uzun cümle
+        //   (virgüllerle uzayan, hiç noktası olmayan) TEK utterance olarak okunuyordu → telefon ~15 sn'de o tek utterance'ı kesiyordu.
+        //   ÇÖZÜM: cümleyi İÇERİDE virgül/noktalı virgül/tire, olmazsa boşluktan ~160 harflik küçük parçalara böl; parçaları arka arkaya
+        //   okut. İMLEÇ hep BU cümlede (idx) kalır (onCumle idx başta 1 kez çağrılır) → ekrandaki renkliCumleler eşlemesi BOZULMAZ.
+        const parcala = (str, max) => {
+          const s = String(str || "").trim();
+          if (s.length <= max) return s ? [s] : [];
+          const par = []; let kalan = s;
+          while (kalan.length > max) {
+            const pen = kalan.slice(0, max);
+            let kes = Math.max(pen.lastIndexOf(", "), pen.lastIndexOf("; "), pen.lastIndexOf(" — "), pen.lastIndexOf(" - "), pen.lastIndexOf(": "));
+            if (kes < max * 0.5) kes = pen.lastIndexOf(" ");        // uygun virgül yoksa boşlukta böl
+            if (kes <= 0) kes = max - 1;                            // hiç boşluk yoksa zorla kes
+            par.push(kalan.slice(0, kes + 1).trim());
+            kalan = kalan.slice(kes + 1).trim();
+          }
+          if (kalan) par.push(kalan);
+          return par.filter(Boolean);
+        };
         const oku = (idx) => {
           if (ttsTarayiciIptalRef.current) return;                 // susturuldu → dur (sıradakine geçme)
           if (idx >= hamCumleler.length) { bit(); return; }        // hepsi okundu → bitti
@@ -6216,21 +6235,27 @@ export default function Anasayfa({ pro = false }) {
           if (typeof onIlerleme === "function") { try { onIlerleme(idx / hamCumleler.length); } catch (e) {} }
           const dk = metinDili(c);                                 // 🌍 BU cümlenin dili (yazı karakterine göre) — Rusça metin→ru, Türkçe→tr...
           const ses = sesAl(dk);                                   // o dilin (seçili Kadın/Erkek) sesi; yoksa sistem o dilin motoruyla okur
-          const u = new SpeechSynthesisUtterance(c);
-          u.lang = dk; u.rate = _rate; u.pitch = _pitch; if (ses) u.voice = ses; // 🎭 seçili sesin perdesi (İnce↔Kalın şeridi/baz) → erkek kalın, kadın ince
-          let gecti = false, fb = null;
-          const sonra = () => {                                     // TEK sefer: bu cümle bitti → sıradaki
-            if (gecti) return; gecti = true;
-            if (fb) { try { clearTimeout(fb); } catch (e) {} }
+          const parcalar = parcala(c, 160);                        // uzun cümle → ~160 harflik parçalar (tek utterance 15 sn'yi aşmasın → kesilmez)
+          const parcaOku = (pi) => {
             if (ttsTarayiciIptalRef.current) return;
-            oku(idx + 1);
+            if (pi >= parcalar.length) { oku(idx + 1); return; }   // bu cümlenin TÜM parçaları bitti → sıradaki cümle
+            const u = new SpeechSynthesisUtterance(parcalar[pi]);
+            u.lang = dk; u.rate = _rate; u.pitch = _pitch; if (ses) u.voice = ses; // 🎭 seçili sesin perdesi (İnce↔Kalın şeridi/baz) → erkek kalın, kadın ince
+            let gecti = false, fb = null;
+            const sonra = () => {                                   // TEK sefer: bu parça bitti → aynı cümlenin sıradaki parçası
+              if (gecti) return; gecti = true;
+              if (fb) { try { clearTimeout(fb); } catch (e) {} }
+              if (ttsTarayiciIptalRef.current) return;
+              parcaOku(pi + 1);
+            };
+            u.onend = sonra; u.onerror = sonra;                     // telefon "bittim" der demez sıradaki parça
+            konusIlerRef.current = Date.now();
+            // EMNİYET: onend HİÇ gelmezse (nadir) cömert süre sonra sıradakine geç → asılı kalmaz
+            fb = setTimeout(sonra, Math.max(5000, parcalar[pi].length * 120 + 3500));
+            try { window.speechSynthesis.resume(); } catch (e) {}   // istemsiz duraklamayı uyandır
+            try { window.speechSynthesis.speak(u); } catch (e) { sonra(); return; }
           };
-          u.onend = sonra; u.onerror = sonra;                       // telefon "bittim" der demez sıradaki cümle
-          konusIlerRef.current = Date.now();
-          // EMNİYET: onend HİÇ gelmezse (nadir) cömert süre sonra sıradakine geç → asılı kalmaz
-          fb = setTimeout(sonra, Math.max(5000, c.length * 120 + 3500));
-          try { window.speechSynthesis.resume(); } catch (e) {}     // istemsiz duraklamayı uyandır
-          try { window.speechSynthesis.speak(u); } catch (e) { sonra(); return; }
+          parcaOku(0);
         };
         oku(0);
       };
