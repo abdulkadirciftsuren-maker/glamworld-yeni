@@ -3,18 +3,23 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
-## 🔴 YARIN İLK İŞ — GLOXOO BEYNİ KREDİSİ + MASRAF KONTROLÜ (18 Ağu 2026 gecesi kaldı, kullanıcı yoruldu "yarın devam")
-> **DURUM:** Gloxoo HİÇBİR ŞEYE cevap vermiyor (yazı + fotoğraf, HER cihazda) → "yazı beyni yoğun/kredisi bitmiş" hatası. B182'de
-> otomatik-tekrar eklendi ama hata SÜRÜYOR → demek KALICI: **Gloxoo beyninin Anthropic API hesabının KREDİSİ BİTMİŞ** (bu KOD sorunu
-> DEĞİL; `AI_KOPRU` Cloudflare Worker → Anthropic API; hata satırı `Anasayfa.js:~5798` sadece gösteriyor). NOT: kullanıcının "Max"i
-> claude.ai değil, GLOXORG'un kendi üyelik seviyesi (yeşil Max/mavi Pro/kırmızı ücretsiz).
-> **YARIN YAP (kullanıcıyla, adım adım — metered gibi):**
-> 1. **İki hesabı bul:** (a) Gloxoo yazı/görme beyni = **Anthropic** (console.anthropic.com, API key Cloudflare worker'da). (b) Kullanıcı
->    "bir de başka hesap açtık galiba, canlı konuşma/ses için" dedi → muhtemelen gerçek-ses TTS içindi (şu an gercekSesKapaliRef=true, kapalı).
-> 2. **Az test kredisi ekle** (console.anthropic.com → Billing, ~5-10$) → Gloxoo yazı+fotoğraf yine çalışır (deploy GEREKMEZ, anında).
-> 3. **⚠️ MASRAF KONTROLÜ (kullanıcının BÜYÜK endişesi: "faaliyete geçince altından kalkamayız"):** (a) Anthropic hesabına **aylık harcama
->    TAVANI** koy (asla aşmaz). (b) Gloxoo için **daha UCUZ model** (Haiku) — mesaj başı maliyet kat kat düşer (worker'da model değişir). (c)
->    **Kullanıcı başına Gloxoo mesaj SINIRI** (ücretsiz=az, Pro/Max=çok → hem maliyet hem satış teşviki). Bunları söz verdim.
+## 🟡 GLOXOO MASRAF KONTROLÜ — İLERLİYOR (19 Ağu 2026, B183). Kullanıcı: "her sefer 20$ ekliyorum bir ay yetmiyor, akıllı yapı lazım".
+> **YAPILDI:**
+> 1. ✅ **Kredi eklendi** — kullanıcı $20 yatırdı, Gloxoo yazı+fotoğraf yine çalışıyor (DOĞRULANDI, fotoğraf değerlendirdi).
+> 2. ✅ **UCUZ MODEL (Haiku)** — Cloudflare `gloxorg-ai` worker → `SOHBET_MODELLERI[0] = "claude-haiku-4-5-20251001"` (kullanıcı panelden
+>    "Kodu düzenle"→18. satır→Dağıt ile yaptı, DOĞRULANDI). Sonnet'e göre ~10x, Opus'a göre ~30x ucuz. (Worker'daki 19/20. satır yedekleri
+>    hâlâ opus-4-8/3-5-sonnet — ANLIK Haiku hatasında pahalıya düşebilir; SIRADA onları da Haiku yedeğine çekmek var.)
+> 3. ✅ **KOD İSRAFI KESİLDİ (B183, Anasayfa.js yardimciGonder):** eskiden her mesajda TÜM geçmiş + TÜM eski fotoğraflar base64 yeniden
+>    gidiyordu. Artık yapay zekâya SADECE son 16 mesaj (`AI_GECMIS=16`, `aiListe`) + yalnız EN SON fotoğraf (`aiSonFotoIdx`) resim olarak
+>    gider; eski fotoğraflar yazı notuna döner. Ekranda konuşma tam durur, hafıza bozulmaz. (Kişi-başı günlük limit ZATEN vardı: ücretsiz 20/gün,
+>    üye sınırsız — `Anasayfa.js:~5608`.)
+> **SIRADA (kullanıcıyla, adım adım):**
+> - **(a) Anthropic aylık harcama TAVANI** (console.anthropic.com → Settings/Limits) → sürpriz fatura olmasın. ⚠️ **AUTO-RELOAD (otomatik
+>   yükleme) AÇMA** — kullanıcı elle sabit miktar eklesin. NOT: ön-ödemeli kredi zaten doğal tavan; auto-reload kapalıyken bitince durur.
+> - **(b) Worker'da PROMPT ÖNBELLEK (cache_control)** — ~4000 tokenlik dev sistem metni her mesajda tam ücretleniyor; Anthropic prompt
+>   caching ile tekrar-ücreti ~%90 düşer (en büyük kalan kazanç). Ama worker düzeni + sistem metnini statik-önek/dinamik-son diye ayırmak
+>   gerekir; DİKKATLİ yap, tek seferde.
+> - **(c) Worker yedek modelleri** (SOHBET_MODELLERI 19/20) da Haiku/ucuz yap.
 > **NOT:** Arama (farklı ağ/metered TURN) ve iPhone Gloxoo KONUŞMASI (B181/B182) ÇALIŞIYOR — dokunma.
 
 ## ✅ ARAMA "POSTACISI" (TURN relay) ÇALIŞIYOR — metered.ca (18 Ağu 2026, B178 — KULLANICI DOĞRULADI "şimdi çalıştı"). ⛔ DOKUNMA.
