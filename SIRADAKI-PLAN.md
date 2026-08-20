@@ -9,7 +9,7 @@
 > - ✅ **PWABuilder** → gloxorg.com paketlendi → **`Gloxorg.aab` + imza anahtarı (signing.keystore) + assetlinks İNDİ** (kullanıcının bilgisayarında, Downloads). Package ID: **com.gloxorg.twa**.
 > - ✅ **assetlinks.json** siteye eklendi (`public/.well-known/assetlinks.json`, sha256 parmak izi 34:29:6F...C6:98) → uygulama tam ekran açılır. (deploy --dotfiles ile gider.)
 > - ✅ **Google Play geliştirici hesabı AÇILDI** — 25$ ödendi. Hesap adı "GLOXORG", Kişisel hesap, Hesap Kimliği 6524637860521605101, e-posta abdulkadirciftsuren@gmail.com. Geliştirici adı: GLOXORG.
-> - ✅ **Kimlik doğrulama GÖNDERİLDİ** (Türk pasaportu; TR pasaport+UA adres önce takıldı sonra kabul etti). Google birkaç gün inceleyecek.
+> - ✅ **KİMLİK + ADRES DOĞRULAMASI ONAYLANDI** (20 Ağu, aynı gün "Kimliğiniz doğrulandı"). Kimlik = Türk pasaportu. Adres = ÖNCE oturum kartı reddedildi ("belge türü desteklenmiyor") → SONRA **PrivatBank hesap özeti (Виписка по картці, Privat24 → Довідки → Виписка)** kabul edildi: üzerinde adı + kayıtlı adresi (вул. Ігоря Бедзая 215Г кв.14, Миколаїв, 54003) + tarih var. NOT gelecekte: yurt dışı Türk vatandaşı + Ukrayna adresi → adres belgesi olarak **PrivatBank Виписка** çalışıyor (oturum kartı/реквізити ÇALIŞMIYOR — реквізити'de adres yok).
 > **SIRADA (kullanıcı yapacak/rehberlik):**
 > 1. Kalan 2 doğrulama: (a) **Android cihaz** (telefona Play Console uygulaması kurup giriş), (b) **telefon numarası** — kullanıcı "eve giderken" yapacak, hızlı.
 > 2. Kimlik onayı gelince: Play Console'da **uygulama oluştur** → mağaza bilgileri (isim, açıklama-çok dilli, ekran görüntüleri, **temiz logo**) → **`.aab` yükle**.
