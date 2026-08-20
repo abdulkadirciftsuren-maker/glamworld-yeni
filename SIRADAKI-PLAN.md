@@ -10,12 +10,16 @@
 > - ✅ **assetlinks.json** siteye eklendi (`public/.well-known/assetlinks.json`, sha256 parmak izi 34:29:6F...C6:98) → uygulama tam ekran açılır. (deploy --dotfiles ile gider.)
 > - ✅ **Google Play geliştirici hesabı AÇILDI** — 25$ ödendi. Hesap adı "GLOXORG", Kişisel hesap, Hesap Kimliği 6524637860521605101, e-posta abdulkadirciftsuren@gmail.com. Geliştirici adı: GLOXORG.
 > - ✅ **KİMLİK + ADRES DOĞRULAMASI ONAYLANDI** (20 Ağu, aynı gün "Kimliğiniz doğrulandı"). Kimlik = Türk pasaportu. Adres = ÖNCE oturum kartı reddedildi ("belge türü desteklenmiyor") → SONRA **PrivatBank hesap özeti (Виписка по картці, Privat24 → Довідки → Виписка)** kabul edildi: üzerinde adı + kayıtlı adresi (вул. Ігоря Бедзая 215Г кв.14, Миколаїв, 54003) + tarih var. NOT gelecekte: yurt dışı Türk vatandaşı + Ukrayna adresi → adres belgesi olarak **PrivatBank Виписка** çalışıyor (oturum kartı/реквізити ÇALIŞMIYOR — реквізити'de adres yok).
-> **SIRADA (kullanıcı yapacak/rehberlik):**
-> 1. Kalan 2 doğrulama: (a) **Android cihaz** (telefona Play Console uygulaması kurup giriş), (b) **telefon numarası** — kullanıcı "eve giderken" yapacak, hızlı.
-> 2. Kimlik onayı gelince: Play Console'da **uygulama oluştur** → mağaza bilgileri (isim, açıklama-çok dilli, ekran görüntüleri, **temiz logo**) → **`.aab` yükle**.
-> 3. **KAPALI TEST**: yeni kişisel hesapta yayından önce **≥20 testçi 14 gün** şart (kullanıcının tanıdıkları/kullanıcıları). Sonra production başvurusu.
-> 4. **Play App Signing** sonrası assetlinks.json'a **Google'ın 2. parmak izini** ekle (Play Console → Uygulama imzalama sertifikası SHA-256) yoksa TWA tam ekran açılmaz.
-> **NOT:** İmza dosyaları (signing.keystore + signing-key-info) kullanıcıda; kaybederse güncelleme zorlaşır (kendine e-posta atmasını söyledim). LOGO temizleme (tüm harfler içeride, altın) yayından önce yapılacak — SÖZ verildi. Bu oturumda yerel repo birkaç kez b70fbc6'ya düştü (konteyner); origin sağlam, her seferinde `git reset --hard origin` ile geri alındı, iş kaybı YOK.
+> **UYGULAMA OLUŞTURULDU (20 Ağu):** Play Console'da app yaratıldı. **Package ID `com.gloxorg.twa`** (.aab ile aynı, DEĞİŞMEZ). Uygulama/Ücretsiz. TÜM doğrulamalar (kimlik + Android cihaz + telefon) BİTTİ, hesap kurulumu tamam.
+> **KURULUM GÖREVLERİ (11 tane) — 4/11 BİTTİ (20 Ağu gece):**
+> - ✅ **Gizlilik politikası** → `https://gloxorg.com/gizlilik.html` (`public/gizlilik.html`, B190'da deploy edildi, CANLI — TR+EN).
+> - ✅ **Oturum açma bilgileri (App access)** → Google denetçisine TEST HESABI verildi: **`gloxtest2026@gloxorg.com` / `Gloxorg2026test`** (uygulamada Üye Ol ile açıldı; "tam erişim" kutusu işaretli).
+> - ✅ **Reklam** → Hayır. ✅ **İçerik derecelendirme** → IARC anketi tamam (Sosyal/İletişim, hepsi Hayır, sonuç 12+/13+/USK16+). engelle/şikayet YOK dedik.
+> - ⏳ **KALAN 7:** Hedef kitle (**18+ seç**), **Veri güvenliği (anket — dikkat ister)**, Resmi kurum→Hayır, Finans→Hayır, Sağlık→Hayır, Kategori+iletişim, **Mağaza girişi (logo+açıklama+ekran görüntüleri)**.
+> **⚠️ ENGELLE + ŞİKAYET (UGC politikası — ÖNEMLİ):** Sosyal uygulama olduğu için Google kullanıcı "**engelle (block)**" + "**şikayet et (report)**" düğmesi İSTER; GLOXORG'da YOK (sadece sahip yönetim paneli var, o kullanıcı-block değil). **Yayından ÖNCE Code bunları KODA EKLEYECEK** → sonra içerik derecelendirmede Evet yapılır. SÖZ verildi.
+> **HAZIRLANACAK (Code, mağaza girişi için):** kısa+uzun açıklama (TR/EN + çok dil), **TEMİZ LOGO/simge** (kullanıcı yeni mavi-elmas "G" logo verdi — tüm harfler içeride, siyah köşe yok, 512x512; eskisi ana ekranda kesiliyordu). Ekran görüntülerini kullanıcı verecek.
+> **SONRA:** setup bitince **KAPALI TEST** açılır → **≥12 testçi 14 gün** → production başvuru. **Play App Signing** sonrası assetlinks.json'a **Google'ın 2. parmak izini** ekle (Play Console → Uygulama imzalama sertifikası SHA-256) yoksa TWA tam ekran açılmaz.
+> **NOT:** İmza dosyaları (signing.keystore + signing-key-info) kullanıcıda; kaybederse güncelleme zorlaşır. Bu oturumda yerel repo birkaç kez b70fbc6'ya düştü (konteyner); origin SAĞLAM, her seferinde `git reset --hard origin` ile geri alındı, iş kaybı YOK.
 
 ## 🎨 YAPILACAK — ÜYELİK SEVİYESİNE GÖRE RENK (kullanıcı 19 Ağu B189'da hatırlattı, UNUTMA)
 > Renk kullanıcının üyelik seviyesine göre değişmeli — **GLOXORG marka yazısı + üst şerit (theme-color) + Gloxoo konuşma
