@@ -15,7 +15,16 @@
 > - ✅ **Gizlilik politikası** → `https://gloxorg.com/gizlilik.html` (`public/gizlilik.html`, B190'da deploy edildi, CANLI — TR+EN).
 > - ✅ **Oturum açma bilgileri (App access)** → Google denetçisine TEST HESABI verildi: **`gloxtest2026@gloxorg.com` / `Gloxorg2026test`** (uygulamada Üye Ol ile açıldı; "tam erişim" kutusu işaretli).
 > - ✅ **Reklam** → Hayır. ✅ **İçerik derecelendirme** → IARC anketi tamam (Sosyal/İletişim, hepsi Hayır, sonuç 12+/13+/USK16+). engelle/şikayet YOK dedik.
-> - ⏳ **KALAN 7:** Hedef kitle (**18+ seç**), **Veri güvenliği (anket — dikkat ister)**, Resmi kurum→Hayır, Finans→Hayır, Sağlık→Hayır, Kategori+iletişim, **Mağaza girişi (logo+açıklama+ekran görüntüleri)**.
+> - ✅ **Hedef kitle** → 18+ seçildi (21 Ağu). ✅ **Hesap silme sayfası** yayında (`gloxorg.com/hesap-sil.html`, B191).
+> - ⏳ **VERİ GÜVENLİĞİ (Data Safety) — DEVAM EDİYOR, yarıda kaldı** (kullanıcı çok yoruldu + Claude mesaj limiti doldu 21:20 reset). Adım 3 (Veri türleri) SEÇİLDİ; Adım 4 (Veri kullanımı) yarım. **TAM CEVAP ANAHTARI aşağıda ⬇️**
+> - ⏳ **KALAN:** Veri güvenliği'ni bitir + Resmi kurum→Hayır, Finans→Hayır, Sağlık→Hayır, Kategori+iletişim, **Mağaza girişi (logo+açıklama+ekran görüntüleri)**.
+>
+> **🔑 VERİ GÜVENLİĞİ TAM CEVAP ANAHTARI (yarım kaldı, buradan devam):**
+> - **Adım 2:** Veri topluyor→Evet · Şifreleniyor→Evet · Hesap oluşturma→"Kullanıcı adı ve şifre"+"OAuth" · Hesap silme URL→`https://gloxorg.com/hesap-sil.html` · Kısmi silme→Hayır · Ek rozetler→boş.
+> - **Adım 3 (Veri türleri SEÇ):** Konum(Yaklaşık+Tam) · Kişisel(Ad,E-posta,Kullanıcı kimlikleri,Adres,Telefon,Diğer bilgiler=6/9) · Mesajlar(Uygulama içi=1/3) · Fotoğraf+Video(2/2) · Uygulama etkinliği(Kullanıcı içeriği=1/5) · Cihaz kimlikleri. DİĞER HEPSİ BOŞ (Finansal, Sağlık, Ses, Dosya, Takvim, Kişiler, Web, Uyg.bilgi/performans).
+> - **Adım 4 (Veri kullanımı — HER tür):** Toplandı✅ · Paylaşıldı❌ · Kısa süreli→**Hayır** · Amaç→**Uygulama işlevselliği**. ZORUNLU olanlar: Ad/E-posta/Kullanıcı kimlikleri (+bunlarda **Hesap yönetimi** de) ve Cihaz kimlikleri (Hesap yönetimi YOK). İSTEĞE BAĞLI ("Kullanıcılar seçebilir"): Adres,Telefon,Diğer bilgiler,Konum(2),Mesajlar,Fotoğraf,Video,Kullanıcı içeriği.
+> - **NOT:** Adım 4'te bir türde "Uygulama işlevselliği" işaretli ama Kaydet gri kaldıysa = UI takılması; sayfa yenileyince (F5) taslak seçimler KALIR ama Adım 4 usage sıfırlanabilir — dikkatli. Diğer amaç kutularını (Analiz/Reklam/Hesap yönetimi hariç gereken) ASLA ekleme.
+> - **HÂLÂ EKSİK (Code yapacak, yayından önce):** kullanıcı **engelle+şikayet** düğmeleri (UGC), in-app **hesabımı sil** düğmesi (şimdilik e-posta ile), **temiz logo**, **mağaza açıklaması** (TR/EN çok dilli).
 > **⚠️ ENGELLE + ŞİKAYET (UGC politikası — ÖNEMLİ):** Sosyal uygulama olduğu için Google kullanıcı "**engelle (block)**" + "**şikayet et (report)**" düğmesi İSTER; GLOXORG'da YOK (sadece sahip yönetim paneli var, o kullanıcı-block değil). **Yayından ÖNCE Code bunları KODA EKLEYECEK** → sonra içerik derecelendirmede Evet yapılır. SÖZ verildi.
 > **HAZIRLANACAK (Code, mağaza girişi için):** kısa+uzun açıklama (TR/EN + çok dil), **TEMİZ LOGO/simge** (kullanıcı yeni mavi-elmas "G" logo verdi — tüm harfler içeride, siyah köşe yok, 512x512; eskisi ana ekranda kesiliyordu). Ekran görüntülerini kullanıcı verecek.
 > **SONRA:** setup bitince **KAPALI TEST** açılır → **≥12 testçi 14 gün** → production başvuru. **Play App Signing** sonrası assetlinks.json'a **Google'ın 2. parmak izini** ekle (Play Console → Uygulama imzalama sertifikası SHA-256) yoksa TWA tam ekran açılmaz.
