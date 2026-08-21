@@ -11,13 +11,15 @@
 > - ✅ **Google Play geliştirici hesabı AÇILDI** — 25$ ödendi. Hesap adı "GLOXORG", Kişisel hesap, Hesap Kimliği 6524637860521605101, e-posta abdulkadirciftsuren@gmail.com. Geliştirici adı: GLOXORG.
 > - ✅ **KİMLİK + ADRES DOĞRULAMASI ONAYLANDI** (20 Ağu, aynı gün "Kimliğiniz doğrulandı"). Kimlik = Türk pasaportu. Adres = ÖNCE oturum kartı reddedildi ("belge türü desteklenmiyor") → SONRA **PrivatBank hesap özeti (Виписка по картці, Privat24 → Довідки → Виписка)** kabul edildi: üzerinde adı + kayıtlı adresi (вул. Ігоря Бедзая 215Г кв.14, Миколаїв, 54003) + tarih var. NOT gelecekte: yurt dışı Türk vatandaşı + Ukrayna adresi → adres belgesi olarak **PrivatBank Виписка** çalışıyor (oturum kartı/реквізити ÇALIŞMIYOR — реквізити'de adres yok).
 > **UYGULAMA OLUŞTURULDU (20 Ağu):** Play Console'da app yaratıldı. **Package ID `com.gloxorg.twa`** (.aab ile aynı, DEĞİŞMEZ). Uygulama/Ücretsiz. TÜM doğrulamalar (kimlik + Android cihaz + telefon) BİTTİ, hesap kurulumu tamam.
-> **KURULUM GÖREVLERİ (11 tane) — 4/11 BİTTİ (20 Ağu gece):**
+> **KURULUM GÖREVLERİ (11 tane) — 10/11 BİTTİ (21 Ağu gece):** SADECE "Mağaza girişi" kaldı.
 > - ✅ **Gizlilik politikası** → `https://gloxorg.com/gizlilik.html` (`public/gizlilik.html`, B190'da deploy edildi, CANLI — TR+EN).
 > - ✅ **Oturum açma bilgileri (App access)** → Google denetçisine TEST HESABI verildi: **`gloxtest2026@gloxorg.com` / `Gloxorg2026test`** (uygulamada Üye Ol ile açıldı; "tam erişim" kutusu işaretli).
 > - ✅ **Reklam** → Hayır. ✅ **İçerik derecelendirme** → IARC anketi tamam (Sosyal/İletişim, hepsi Hayır, sonuç 12+/13+/USK16+). engelle/şikayet YOK dedik.
 > - ✅ **Hedef kitle** → 18+ seçildi (21 Ağu). ✅ **Hesap silme sayfası** yayında (`gloxorg.com/hesap-sil.html`, B191).
-> - ⏳ **VERİ GÜVENLİĞİ (Data Safety) — DEVAM EDİYOR, yarıda kaldı** (kullanıcı çok yoruldu + Claude mesaj limiti doldu 21:20 reset). Adım 3 (Veri türleri) SEÇİLDİ; Adım 4 (Veri kullanımı) yarım. **TAM CEVAP ANAHTARI aşağıda ⬇️**
-> - ⏳ **KALAN:** Veri güvenliği'ni bitir + Resmi kurum→Hayır, Finans→Hayır, Sağlık→Hayır, Kategori+iletişim, **Mağaza girişi (logo+açıklama+ekran görüntüleri)**.
+> - ✅ **VERİ GÜVENLİĞİ (Data Safety) — TAMAMEN BİTTİ (21 Ağu gece).** Adım 3 + Adım 4 hepsi yeşil, önizleme "üçüncü tarafla paylaşım yok" + hesap-sil.html linki, Kaydet'e basıldı. (Cevap anahtarı aşağıda arşiv olarak duruyor.)
+> - ✅ **Resmi kurum→Hayır · Finans→"finans özelliği sağlanmıyor" · Sağlık→Hayır** (21 Ağu, hepsi yeşil).
+> - ✅ **Kategori + iletişim (Mağaza ayarları)** → Kategori=**Sosyal**, Uygulama/oyun=**Uygulama**, E-posta=abdulkadirciftsuren@gmail.com, Web sitesi=**https://gloxorg.com**, Harici pazarlama=açık. Kaydedildi.
+> - ⏳ **KALAN — SADECE "Mağaza girişinizi oluşturun" (11. görev):** Uygulama adı (GLOXORG) + Kısa açıklama (≤80) + Tam açıklama + **512x512 logo (temiz mavi-elmas G)** + öne çıkan görsel (1024x500) + **ekran görüntüleri (≥2, kullanıcıdan)**. Açıklama yazılarını Code hazırlayacak (kullanıcı yarın devam istedi). Store listing açılınca varsayılan dile bak (TR mi EN mi) → çeviriler sonra.
 >
 > **🔑 VERİ GÜVENLİĞİ TAM CEVAP ANAHTARI (yarım kaldı, buradan devam):**
 > - **Adım 2:** Veri topluyor→Evet · Şifreleniyor→Evet · Hesap oluşturma→"Kullanıcı adı ve şifre"+"OAuth" · Hesap silme URL→`https://gloxorg.com/hesap-sil.html` · Kısmi silme→Hayır · Ek rozetler→boş.
