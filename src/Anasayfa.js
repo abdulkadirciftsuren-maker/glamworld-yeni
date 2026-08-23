@@ -3809,9 +3809,11 @@ export default function Anasayfa({ pro = false }) {
     aramaBildirimKapat(); // açtık → "seni aradılar" bildirimi ekranda kalmasın
     // ARAMA GÜNLÜĞÜ: BEN aramadım (gelen aramayı kabul ettim) → günlüğü ARAYAN yazar, ben yazmam (mükerrer olmasın)
     benAradimRef.current = false; aramaKarsiRef.current = { uid: g.arayanUid, ad: g.arayanAd || "", foto: g.arayanFoto || "" }; aramaKonusBasRef.current = 0;
-    try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
-    setAramaDurum("konusuyor");
+    // ⚡ ANA SAYFA FLASH ÖNLEME (kullanıcı: "kabul edince arama ekranı kayboluyor, ana sayfa açılıyor, 3-4 sn sonra bağlanıyor"):
+    //    Kabul eder etmez arama ekranını HEMEN göster; kamera/mikrofon (medyaAl) açılana kadar arada ana sayfa GÖRÜNMESİN.
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
+    setAramaDurum("konusuyor");
+    try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(false); return; }
     const konfig = await iceKonfigGetir(); // bize özel postacı (TURN) — farklı ağda ses/görüntü taşınsın
     const pc = pcOlustur(g.id, "aranan", konfig);
     try {
@@ -4118,7 +4120,7 @@ export default function Anasayfa({ pro = false }) {
       if (!g) { g = { uid: karsiUid, ad: karsiAd || "—", foto: karsiFoto, son: m, okunmamis: 0 }; harita.set(karsiUid, g); }
       if ((m.zamanMs || 0) >= (g.son.zamanMs || 0)) { g.son = m; if (karsiAd) g.ad = karsiAd; }
       if (karsiFoto) g.foto = karsiFoto;
-      if (m.aliciUid === benUid && !m.okundu) g.okunmamis++;
+      if (m.aliciUid === benUid && !m.okundu && !m.arama) g.okunmamis++; // ARAMA kayıtları (m.arama) okunmamış SAYILMAZ (kullanıcı: "aramalar Glome'de mesaj gibi 3 diye sayılıyor") — sadece gerçek mesajlar sayılır
     });
     return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
   }, [mesajlarimTum, benUid]);
