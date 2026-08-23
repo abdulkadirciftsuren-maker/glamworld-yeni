@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -3828,7 +3828,7 @@ export default function Anasayfa({ pro = false }) {
     //    Kabul eder etmez arama ekranını HEMEN göster; kamera/mikrofon (medyaAl) açılana kadar arada ana sayfa GÖRÜNMESİN.
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
     setAramaDurum("konusuyor");
-    try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(false); return; }
+    try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(false); return; }
     const konfig = await iceKonfigGetir(); // bize özel postacı (TURN) — farklı ağda ses/görüntü taşınsın
     const pc = pcOlustur(g.id, "aranan", konfig);
     try {
@@ -3841,7 +3841,7 @@ export default function Anasayfa({ pro = false }) {
     const ab2 = iceAdaylariDinle(g.id, "arayan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
     aramaAbonelikRef.current.push(ab1, ab2);
   };
-  const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red" }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
+  const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
   // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
   const zilRef = useRef(null);
   const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
@@ -10026,7 +10026,7 @@ export default function Anasayfa({ pro = false }) {
                           {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
                           {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
                         </>)}
-                        <span className="sohbet-balon-alt">{m.duzenlendi && !m.silindi && <span className="sohbet-duzenlendi">{t("duzenlendi", "düzenlendi")} · </span>}{m.arama ? saatTarih : saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
+                        <span className="sohbet-balon-alt">{m.duzenlendi && !m.silindi && <span className="sohbet-duzenlendi">{t("duzenlendi", "düzenlendi")} · </span>}{saatTarih || saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
                         {tepkiler.length > 0 && <span className="sohbet-tepkiler">{tepkiler.slice(0, 3).map((e2, k) => <span key={k}>{e2}</span>)}{tepkiler.length > 3 ? <b>{tepkiler.length}</b> : null}</span>}
                       </div>
                       {tepkiSimge !== "yok" && <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); if (tepkiMesaj === m.id) { setTepkiMesaj(null); } else { tepkiAc(m.id, e.clientX, e.clientY); } }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>{tepkiSimge}</button>}
@@ -12654,6 +12654,10 @@ export default function Anasayfa({ pro = false }) {
           <div className="ana-bildirim-menu">
             <div className="abm-bas">
               <span className="abm-baslik">{t("bildirimBaslik")}</span>
+              {/* TÜMÜNÜ TEMİZLE — kullanıcı: "bildirimler uzayıp gidiyor, silinmiyecek mi" */}
+              {bildirimListe.length > 0 && (
+                <button className="abm-temizle" onClick={() => { if (u && u.uid) bildirimleriTemizle(u.uid); setBildirimListe([]); }}>{t("tumunuTemizle", "Tümünü temizle")}</button>
+              )}
               <button className="abm-kapat" onClick={() => setBildirimAcik(false)} aria-label="Kapat">✕</button>
             </div>
             {bildirimListe.length === 0 ? (
@@ -12667,13 +12671,20 @@ export default function Anasayfa({ pro = false }) {
                   const bb = (String(b.gonderenAd || "?").trim()[0] || "?").toUpperCase();
                   const ne = b.zamanMs ? new Date(b.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
                   const gp = b.gonderiId ? (gercekAkis.find((g) => g.id === b.gonderiId) || gonderilerim.find((g) => g.id === b.gonderiId)) : null;
-                  const bildirimAc = () => { if (gp) { setBildirimAcik(false); setTamFoto(gp); } };
+                  // MESAJ/ARAMA/TEPKİ/TAKİP bildirimi → gönderenle sohbeti aç; gönderi bildirimi → gönderiyi tam ekran aç
+                  const sohbetTipi = (b.tip === "mesaj" || b.tip === "mesaj-tepki" || b.tip === "hikaye-tepki" || b.tip === "arama-cevapsiz" || b.tip === "takip") && b.gonderenUid;
+                  const tiklanabilir = !!(sohbetTipi || gp);
+                  const bildirimAc = () => {
+                    if (sohbetTipi) { setBildirimAcik(false); sohbetAc({ uid: b.gonderenUid, ad: b.gonderenAd, foto: b.gonderenFoto }); return; }
+                    if (gp) { setBildirimAcik(false); setTamFoto(gp); }
+                  };
+                  const bildirimiSil = (e) => { e.stopPropagation(); bildirimSil(b.id); setBildirimListe((l) => l.filter((x) => x.id !== b.id)); };
                   const onResim = b.gonderiResim || (gp && gp.gorsel) || "";
                   const onVideo = b.gonderiVideo || (gp && gp.video) || "";
                   const onZemin = b.gonderiZemin || (gp && gp.zemin) || "";
                   const onMetin = b.metin || (gp && gp.yazi) || "";
                   return (
-                    <div className={"abm-oge" + (gp ? " tikla" : "")} key={b.id} onClick={bildirimAc}>
+                    <div className={"abm-oge" + (tiklanabilir ? " tikla" : "")} key={b.id} onClick={bildirimAc}>
                       <span className="abm-foto">{b.gonderenFoto ? <img src={b.gonderenFoto} alt="" referrerPolicy="no-referrer" /> : bb}</span>
                       <div className="abm-icerik">
                         <div className="abm-metin">{bildirimMetni(b)}</div>
@@ -12692,6 +12703,8 @@ export default function Anasayfa({ pro = false }) {
                             : <span className="abm-gonderi-yazi">{(onMetin || "").slice(0, 24)}</span>}
                         </span>
                       )}
+                      {/* ÇÖP KUTUSU — bu bildirimi tek tek sil (kullanıcı: "çöp kutusuyla sile bileyim") */}
+                      <button className="abm-sil" onClick={bildirimiSil} aria-label={t("sil", "Sil")}>🗑️</button>
                     </div>
                   );
                 })}

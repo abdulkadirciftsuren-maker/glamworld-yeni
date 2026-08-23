@@ -3115,6 +3115,12 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .abm-gonderi{ flex:none; width:48px; height:auto; max-height:62px; min-height:34px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); }
 .abm-gonderi img{ width:100%; height:auto; max-height:62px; object-fit:contain; display:block; }
 .abm-gonderi-yazi{ font-size:8px; line-height:1.12; color:#f0e8d0; padding:3px; text-align:center; overflow:hidden; max-height:100%; }
+/* ÇÖP KUTUSU — her bildirimi tek tek sil (kullanıcı: "çöp kutusuyla sile bileyim") */
+.abm-sil{ flex:none; background:rgba(209,18,30,.12); border:1px solid rgba(209,18,30,.3); color:#ff8080; width:34px; height:34px; border-radius:9px; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; padding:0; }
+.abm-sil:hover{ background:rgba(209,18,30,.25); }
+/* TÜMÜNÜ TEMİZLE — başlıkta, tüm bildirimleri sil */
+.abm-temizle{ background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.35); color:#FFD700; font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:8px; cursor:pointer; margin-left:auto; }
+.abm-temizle:hover{ background:rgba(255,215,0,.2); }
 /* PROFİLİM video küçük resmi (poster) + ortada oynat pırlantası */
 .apf-pay-vid{ position:relative; overflow:hidden; background:#000; }
 .apf-pay-vid video{ width:100%; height:100%; object-fit:contain; }
@@ -4385,7 +4391,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-arama-gunluk .sag-metin{ display:flex; flex-direction:column; gap:1px; }
 .sohbet-arama-gunluk .sag-metin b{ font-size:14px; font-weight:800; }
 .sohbet-arama-gunluk .sag-metin i{ font-size:12.5px; font-style:normal; opacity:.85; }
-.sohbet-arama-gunluk.cevapsiz .sag-metin i{ color:#ffb0b0; opacity:1; }
+/* Cevaplanmadı/Reddedildi yazısı KOYU KIRMIZI — altın/mavi baloncukta net okunur (eski açık pembe #ffb0b0 sarı üstünde kayboluyordu) */
+.sohbet-arama-gunluk.cevapsiz .sag-metin i{ color:#c0141d; opacity:1; font-weight:700; }
 /* MESAJ TEPKİLERİ (uzun bas → emoji) */
 .sohbet-balon-cev{ position:relative; display:flex; flex-direction:column; }
 .sohbet-balon-sar.benim .sohbet-balon-cev{ align-items:flex-end; }

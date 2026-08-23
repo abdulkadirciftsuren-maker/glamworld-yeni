@@ -422,7 +422,10 @@ export function gelenAramalariDinle(uid, cb) {
       // OTOMATİK TEMİZLİK: aktif olmayan/eski kayıtları sil. AKTİF çağrıya DOKUNMA (taze "calliyor" ve "kabul"=konuşulan asla silinmez).
       hepsi.forEach((a) => {
         const eskiCalliyor = a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) >= 90000;
-        if (a.durum === "bitti" || a.durum === "red" || eskiCalliyor) { try { deleteDoc(doc(db, "aramalar", a.id)); } catch (e) {} }
+        // RED kaydını HEMEN silme: arayan taraf "reddedildi" bilgisini görüp arama günlüğüne yazsın diye 10 sn bekle
+        // (aksi halde yarış oluyor: kayıt silinince arayan "cevapsız" sanıyor, "Reddedildi" yazamıyor).
+        const eskiRed = a.durum === "red" && (!a.redZaman || Math.abs(simdi - a.redZaman) >= 10000);
+        if (a.durum === "bitti" || eskiRed || eskiCalliyor) { try { deleteDoc(doc(db, "aramalar", a.id)); } catch (e) {} }
       });
       const liste = hepsi
         .filter((a) => a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) < 90000) // aktif çağrı, son ~1.5 dk (saat kaymasına dayanıklı: Math.abs)
@@ -484,6 +487,20 @@ export async function bildirimleriOkunduYap(liste) {
   try {
     await Promise.all((liste || []).filter((b) => !b.okundu).map((b) =>
       setDoc(doc(db, "bildirimler", b.id), { okundu: true }, { merge: true })));
+  } catch (e) {}
+}
+// TEK bildirimi sil (çöp kutusuna basınca)
+export async function bildirimSil(id) {
+  if (!id) return;
+  try { await deleteDoc(doc(db, "bildirimler", id)); } catch (e) {}
+}
+// BANA gelen TÜM bildirimleri sil (Tümünü temizle düğmesi)
+export async function bildirimleriTemizle(uid) {
+  if (!uid) return;
+  try {
+    const q = query(collection(db, "bildirimler"), where("aliciUid", "==", uid), fsLimit(300));
+    const snap = await getDocs(q);
+    await Promise.all(snap.docs.map((d) => deleteDoc(doc(db, "bildirimler", d.id))));
   } catch (e) {}
 }
 // Gelen mesajlar (bana gelenler) — index gerekmesin diye where-only, istemcide sıralanır.
