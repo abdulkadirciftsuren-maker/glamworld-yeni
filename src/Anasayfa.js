@@ -4140,6 +4140,22 @@ export default function Anasayfa({ pro = false }) {
     return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
   }, [mesajlarimTum, benUid]);
   const okunmamisMesaj = useMemo(() => sohbetListesi.reduce((s, g) => s + g.okunmamis, 0), [sohbetListesi]);
+  // ARAMA GEÇMİŞİ (Glome "Aramalar" sekmesi, WhatsApp gibi) — tüm sohbetlerdeki arama kayıtlarını (m.arama) toplar.
+  // Her kayıt: karşı kişi + tür (görüntülü/sesli) + yön (gelen/giden) + durum (süre/Reddedildi/Cevapsız) + tarih. En yeni üstte.
+  const aramaGecmisi = useMemo(() => {
+    return mesajlarimTum
+      .filter((m) => m.arama)
+      .map((m) => {
+        const giden = m.gonderenUid === benUid;                       // BEN aradıysam giden, değilse gelen
+        const karsiUid = giden ? m.aliciUid : m.gonderenUid;
+        const bilgi = kisiBilgiHarita[karsiUid] || {};
+        const ad = (giden ? (m.aliciAd || bilgi.ad) : (m.gonderenAd || bilgi.ad)) || "—";
+        const foto = (giden ? "" : (m.gonderenFoto || "")) || bilgi.foto || "";
+        return { id: m.id, karsiUid, ad, foto, giden, tip: m.arama.tip || "sesli", durum: m.arama.durum || "cevapsiz", sureSn: m.arama.sureSn || 0, zamanMs: m.zamanMs || 0 };
+      })
+      .filter((x) => x.karsiUid && x.karsiUid !== benUid)
+      .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+  }, [mesajlarimTum, benUid, kisiBilgiHarita]);
   // KONUM HARİTASI İÇİN ARKADAŞLAR — takip ettiklerimden KONUMU olanlar → haritada fotoğraflarıyla görünecekler.
   // (Sadece profilinde konum girmiş olanlar çıkar; konum girmemiş arkadaş haritada görünmez.)
   const haritaArkadaslar = useMemo(() => {
@@ -9913,14 +9929,40 @@ export default function Anasayfa({ pro = false }) {
                   <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
                 </div>
               )}
-              {/* ARAMALAR SEKMESİ — arama geçmişi kaydı henüz yok; dürüst, şık altın bilgi */}
+              {/* ARAMALAR SEKMESİ — GERÇEK arama geçmişi (WhatsApp gibi). Dokun → o kişiyle sohbeti aç; sağdaki düğme → tekrar ara. */}
               {glomeSekme === "aramalar" && (
-                <div className="mm-bos-sik">
-                  <div className="mm-bos-ik">{Ikon.video}</div>
-                  <b>{t("mmAramalarBaslik", "Arama geçmişin burada")}</b>
-                  <span>{t("mmAramalarAlt", "Yaptığın sesli/görüntülü aramalar burada listelenecek. Aramak için bir sohbeti aç, sağ alttaki arama düğmesine bas.")}</span>
-                  <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
-                </div>
+                aramaGecmisi.length === 0 ? (
+                  <div className="mm-bos-sik">
+                    <div className="mm-bos-ik">{Ikon.video}</div>
+                    <b>{t("mmAramalarBaslik", "Arama geçmişin burada")}</b>
+                    <span>{t("mmAramalarAlt", "Yaptığın sesli/görüntülü aramalar burada listelenecek. Aramak için bir sohbeti aç, sağ alttaki arama düğmesine bas.")}</span>
+                    <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
+                  </div>
+                ) : aramaGecmisi.map((a) => {
+                  const bas = ((a.ad || "?").trim()[0] || "?").toUpperCase();
+                  const ne = a.zamanMs ? new Date(a.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+                  const cevapsizMi = a.durum !== "cevaplandi";
+                  const durumYazi = a.durum === "cevaplandi" ? aramaSure(a.sureSn) : a.durum === "reddedildi" ? t("aramaReddedildi", "Reddedildi") : (a.giden ? t("cevaplanmadi", "Cevaplanmadı") : t("cevapsizArama", "Cevapsız arama"));
+                  return (
+                    <button className="msj-kart arama-kart" key={a.id} onClick={() => sohbetAc({ uid: a.karsiUid, ad: a.ad, foto: a.foto })}>
+                      <span className="msj-foto">{a.foto ? <img src={a.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
+                      <div className="msj-icerik">
+                        <div className="msj-ust"><b className="notranslate" translate="no">{a.ad}</b><i>{ne}</i></div>
+                        <div className={"arama-kart-alt" + (cevapsizMi ? " cevapsiz" : "")}>
+                          {/* Yön oku: giden ↗ / gelen ↙ */}
+                          <span className="arama-yon">{a.giden ? "↗" : "↙"}</span>
+                          <span className="arama-kart-durum">{durumYazi}</span>
+                        </div>
+                      </div>
+                      {/* TEKRAR ARA — sohbeti açmadan aynı türde yeniden ara */}
+                      <span className="arama-kart-btn" onClick={(e) => { e.stopPropagation(); setMesajAcik(false); aramaBaslat({ uid: a.karsiUid, ad: a.ad, foto: a.foto }, a.tip); }} aria-label={t("navAra", "Ara")}>
+                        {a.tip === "goruntulu"
+                          ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>
+                          : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>}
+                      </span>
+                    </button>
+                  );
+                })
               )}
             </div>
             {/* ALT İKON ÇUBUĞU — WhatsApp gibi 4 bölme (Sohbetler / Durum / Gruplar / Aramalar) */}
@@ -10079,6 +10121,8 @@ export default function Anasayfa({ pro = false }) {
                   ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                   : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>}
               </button>
+              {/* Düğmenin altına "Ara" yazısı (kullanıcı: yazısız düğmenin ne işe yaradığı görünsün) */}
+              {!aramaFabAcik && <span className="sohbet-fab-et">{t("navAra", "Ara")}</span>}
             </div>
             <div className="sohbet-yazar">
               {/* gizli dosya seçiciler: galeri foto/video, dosya, canlı foto/video (kamera) */}

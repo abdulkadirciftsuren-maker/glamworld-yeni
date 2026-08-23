@@ -4331,6 +4331,18 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-fab-oge svg{ width:22px; height:22px; }
 .sohbet-fab-oge.fab-gor{ background:linear-gradient(135deg,#bcd8f7,#7fb0e6); color:#12304e; }
 .sohbet-fab-oge.fab-sesli{ background:linear-gradient(135deg,#a8e6b8,#4fbf6f); color:#0d3b1c; }
+/* Arama düğmesinin altındaki "Ara" yazısı — altın rozet, net okunur */
+.sohbet-fab-et{ margin-top:-4px; font-family:'Cinzel',serif; font-weight:800; font-size:12px; color:#3a2c00; background:rgba(255,240,190,.92); padding:2px 10px; border-radius:8px; box-shadow:0 2px 6px rgba(90,60,10,.35); }
+
+/* GLOME "ARAMALAR" SEKMESİ — arama geçmişi kartları */
+.arama-kart{ align-items:center !important; }
+.arama-kart-alt{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:#6b5417; margin-top:2px; }
+.arama-kart-alt.cevapsiz .arama-kart-durum, .arama-kart-alt.cevapsiz .arama-yon{ color:#c0141d; font-weight:700; }
+.arama-yon{ font-size:14px; font-weight:800; line-height:1; }
+.arama-kart-durum{ font-style:normal; }
+.arama-kart-btn{ flex:none; width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#1f7a3d; background:rgba(79,191,111,.16); border:1px solid rgba(79,191,111,.4); cursor:pointer; }
+.arama-kart-btn svg{ width:21px; height:21px; }
+.arama-kart-btn:active{ transform:scale(.9); }
 
 /* GLOME ALT İKON ÇUBUĞU (WhatsApp gibi 4 bölme) — altın, kare düğmeler */
 .mm-alt-bar{ flex:0 0 auto; display:flex; background:linear-gradient(135deg,#e8d49a,#d9b64a); border-top:1px solid #c9a13f; box-shadow:0 -2px 10px rgba(90,60,10,.2); padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px)); }
