@@ -3714,7 +3714,7 @@ export default function Anasayfa({ pro = false }) {
   const medyaAl = async (tip) => {
     // Ses: yankı(echo)/gürültü engelleme AÇIK → ses kesilmesin, tekrar etmesin (kullanıcı: ses kesiliyor, 2-3 kez tekrarlıyor)
     const ses = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
-    const kisit = tip === "goruntulu" ? { audio: ses, video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } } : { audio: ses, video: false };
+    const kisit = tip === "goruntulu" ? { audio: ses, video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24, max: 30 } } } : { audio: ses, video: false };
     const stream = await navigator.mediaDevices.getUserMedia(kisit);
     yerelStreamRef.current = stream;
     if (tip === "goruntulu") { setTimeout(() => { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = stream; }, 50); }
@@ -3731,6 +3731,20 @@ export default function Anasayfa({ pro = false }) {
     const pc = new RTCPeerConnection(konfig || ICE_SUNUCULAR);
     pcRef.current = pc;
     (yerelStreamRef.current ? yerelStreamRef.current.getTracks() : []).forEach((t) => { try { pc.addTrack(t, yerelStreamRef.current); } catch (e) {} });
+    // ⛔ DONMA/KESİK GİTME AZALTMA (kullanıcı: "kamera araması kesik kesik, salladığımda donuyor"): video gönderimine BİT HIZI + KARE sınırı koy.
+    //   Sınır YOKKEN hareket edince ani veri patlaması (özellikle ücretsiz TURN'ün sınırlı bandında) bandı tıkar → donma. maxBitrate ile akış dengelenir → akıcı kalır.
+    //   degradationPreference "balanced": bant düşünce görüntüyü DONDURMAK yerine çözünürlük/kareyi kibarca düşürür. Hepsi try/catch — desteklemeyen tarayıcıda aramayı BOZMAZ.
+    try {
+      const vGon = pc.getSenders().find((s) => s.track && s.track.kind === "video");
+      if (vGon && vGon.getParameters) {
+        const p = vGon.getParameters();
+        if (!p.encodings || !p.encodings.length) p.encodings = [{}];
+        p.encodings[0].maxBitrate = 450000;   // ~450 kbps → 640x480 için yeterli kalite, hareket patlamasını sınırlar
+        p.encodings[0].maxFramerate = 24;
+        try { p.degradationPreference = "balanced"; } catch (e) {}
+        if (vGon.setParameters) { const r = vGon.setParameters(p); if (r && r.catch) r.catch(() => {}); }
+      }
+    } catch (e) {}
     pc.ontrack = (e) => {
       // Karşının akışını DOĞRUDAN kullan (yeni MediaStream'e track kopyalama YOK → aynı ses iki kez eklenmez, tekrar/echo olmaz)
       if (e.streams && e.streams[0]) uzakStreamRef.current = e.streams[0];
