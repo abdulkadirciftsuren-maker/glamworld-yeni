@@ -4140,22 +4140,6 @@ export default function Anasayfa({ pro = false }) {
     return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
   }, [mesajlarimTum, benUid]);
   const okunmamisMesaj = useMemo(() => sohbetListesi.reduce((s, g) => s + g.okunmamis, 0), [sohbetListesi]);
-  // ARAMA GEÇMİŞİ (Glome "Aramalar" sekmesi, WhatsApp gibi) — tüm sohbetlerdeki arama kayıtlarını (m.arama) toplar.
-  // Her kayıt: karşı kişi + tür (görüntülü/sesli) + yön (gelen/giden) + durum (süre/Reddedildi/Cevapsız) + tarih. En yeni üstte.
-  const aramaGecmisi = useMemo(() => {
-    return mesajlarimTum
-      .filter((m) => m.arama)
-      .map((m) => {
-        const giden = m.gonderenUid === benUid;                       // BEN aradıysam giden, değilse gelen
-        const karsiUid = giden ? m.aliciUid : m.gonderenUid;
-        const bilgi = kisiBilgiHarita[karsiUid] || {};
-        const ad = (giden ? (m.aliciAd || bilgi.ad) : (m.gonderenAd || bilgi.ad)) || "—";
-        const foto = (giden ? "" : (m.gonderenFoto || "")) || bilgi.foto || "";
-        return { id: m.id, karsiUid, ad, foto, giden, tip: m.arama.tip || "sesli", durum: m.arama.durum || "cevapsiz", sureSn: m.arama.sureSn || 0, zamanMs: m.zamanMs || 0 };
-      })
-      .filter((x) => x.karsiUid && x.karsiUid !== benUid)
-      .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
-  }, [mesajlarimTum, benUid, kisiBilgiHarita]);
   // KONUM HARİTASI İÇİN ARKADAŞLAR — takip ettiklerimden KONUMU olanlar → haritada fotoğraflarıyla görünecekler.
   // (Sadece profilinde konum girmiş olanlar çıkar; konum girmemiş arkadaş haritada görünmez.)
   const haritaArkadaslar = useMemo(() => {
@@ -4275,6 +4259,23 @@ export default function Anasayfa({ pro = false }) {
     });
     return h;
   }, [mmKisiler]);
+  // ARAMA GEÇMİŞİ (Glome "Aramalar" sekmesi, WhatsApp gibi) — tüm sohbetlerdeki arama kayıtlarını (m.arama) toplar.
+  // Her kayıt: karşı kişi + tür (görüntülü/sesli) + yön (gelen/giden) + durum (süre/Reddedildi/Cevapsız) + tarih. En yeni üstte.
+  // NOT: kisiBilgiHarita'YA bağlı olduğu için ondan SONRA tanımlanır (yoksa "tanımlanmadan kullanım" hatası → boş ekran).
+  const aramaGecmisi = useMemo(() => {
+    return mesajlarimTum
+      .filter((m) => m.arama)
+      .map((m) => {
+        const giden = m.gonderenUid === benUid;                       // BEN aradıysam giden, değilse gelen
+        const karsiUid = giden ? m.aliciUid : m.gonderenUid;
+        const bilgi = kisiBilgiHarita[karsiUid] || {};
+        const ad = (giden ? (m.aliciAd || bilgi.ad) : (m.gonderenAd || bilgi.ad)) || "—";
+        const foto = (giden ? "" : (m.gonderenFoto || "")) || bilgi.foto || "";
+        return { id: m.id, karsiUid, ad, foto, giden, tip: m.arama.tip || "sesli", durum: m.arama.durum || "cevapsiz", sureSn: m.arama.sureSn || 0, zamanMs: m.zamanMs || 0 };
+      })
+      .filter((x) => x.karsiUid && x.karsiUid !== benUid)
+      .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+  }, [mesajlarimTum, benUid, kisiBilgiHarita]);
   // Kişi arama sonucu (isimle) — yeni sohbet başlatmak için
   const mmSonuc = useMemo(() => {
     const q = mmAra.trim().toLowerCase(); if (q.length < 2) return [];
