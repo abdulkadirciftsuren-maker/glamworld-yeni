@@ -1548,6 +1548,24 @@ export default function Anasayfa({ pro = false }) {
   const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
   const [aramaKucuk, setAramaKucuk] = useState(false); // arama penceresi KÜÇÜLTÜLDÜ mü → köşede durur, konuşurken uygulamada GEZİNİLİR (kullanıcı: "küçülüp başka yerde gezinme")
   const aramaKucukRef = useRef(false); useEffect(() => { aramaKucukRef.current = aramaKucuk; }, [aramaKucuk]); // geri tuşu: arama açıkken ÖNCE küçültür, kapatmaz
+  // GÖRÜŞME EKRANI DÜĞMELERİNİ GİZLE/GÖSTER (kullanıcı: "görüşmede ekran temiz olsun, dokununca düğmeler gelsin, ufak tutamak olsun; Kapat görünsün").
+  const [aramaKontrol, setAramaKontrol] = useState(true); // görüntülü aramada alt düğmeler + zoom görünür mü (Kapat HEP görünür)
+  const aramaKontrolZamanRef = useRef(null);
+  const aramaKontrolGoster = () => { setAramaKontrol(true); try { clearTimeout(aramaKontrolZamanRef.current); } catch (e) {} aramaKontrolZamanRef.current = setTimeout(() => setAramaKontrol(false), 4500); };
+  const aramaEkranDokun = (e) => {
+    if (aramaKucukRef.current) { setAramaKucuk(false); return; }               // küçükken: büyüt
+    try { if (e && e.target && e.target.closest && e.target.closest(".arama-alt-dugmeler,.arama-sag,.arama-tutamak,.arama-video.arama-kucuk")) return; } catch (x) {} // düğme/küçük videoya dokunma → gizle-göster YAPMA
+    setAramaKontrol((v) => { const yeni = !v; try { clearTimeout(aramaKontrolZamanRef.current); } catch (e2) {} if (yeni) aramaKontrolZamanRef.current = setTimeout(() => setAramaKontrol(false), 4500); return yeni; });
+  };
+  // Görüntülü arama konuşmaya geçince düğmeler kısa süre görünür, sonra kendiliğinden gizlenir (temiz ekran).
+  useEffect(() => {
+    try { clearTimeout(aramaKontrolZamanRef.current); } catch (e) {}
+    if (aktifArama && aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor") {
+      setAramaKontrol(true);
+      aramaKontrolZamanRef.current = setTimeout(() => setAramaKontrol(false), 4500);
+    } else { setAramaKontrol(true); }
+    return () => { try { clearTimeout(aramaKontrolZamanRef.current); } catch (e) {} };
+  }, [aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const pcRef = useRef(null);                          // RTCPeerConnection
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
@@ -10099,8 +10117,8 @@ export default function Anasayfa({ pro = false }) {
 
       {/* AKTİF ARAMA — konuşma ekranı (sesli: avatar; görüntülü: video) */}
       {aramaDurum && aktifArama && (
-        <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli") + (aramaKucuk ? " arama-mini" : "")}
-          onClick={aramaKucuk ? () => setAramaKucuk(false) : undefined} title={aramaKucuk ? t("aramaBuyut", "Aramayı büyüt") : undefined}>
+        <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli") + (aramaKucuk ? " arama-mini" : "") + ((aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && !aramaKontrol && !aramaKucuk) ? " kontrol-gizli" : "")}
+          onClick={aramaEkranDokun} title={aramaKucuk ? t("aramaBuyut", "Aramayı büyüt") : undefined}>
           {aktifArama.tip === "goruntulu"
             ? <video ref={uzakVideoRef} className={"arama-video " + (videoBuyuk === "uzak" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline
                 style={videoBuyuk !== "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
@@ -10116,7 +10134,6 @@ export default function Anasayfa({ pro = false }) {
           {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk") + (onKamera ? " ayna" : "")} autoPlay playsInline muted
             style={videoBuyuk === "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
             onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
-          {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && <span className="arama-kucuk-ipucu">{t("videoIpucu", "Küçük ekrana dokun: büyüt · sürükle: taşı")}</span>}
           {/* SAĞ SÜTUN (havada, ayrı) — kullanıcı: "artı eksi düğmeleri havada dursun; Kapat'ı da sıradan al, artı eksinin ALTINA havada koy".
               ZOOM: görüntülüde +/− (BASILI TUTUNCA sürekli yakınlaşır, tık-tık değil). KAPAT: hep en altta, kırmızı, ayrı durur. */}
           <div className="arama-sag">
@@ -10127,9 +10144,12 @@ export default function Anasayfa({ pro = false }) {
                 <button className="arama-zoom-btn" onPointerDown={() => zoomBasla(-1)} onPointerUp={zoomBirak} onPointerLeave={zoomBirak} onPointerCancel={zoomBirak} aria-label={t("uzaklastir", "Uzaklaştır")} title={t("uzaklastir", "Basılı tut → uzaklaştır")}>−</button>
               </div>
             )}
-            <button className="arama-kk-btn arama-kapat arama-kapat-sag" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")} title={t("aramaKapat", "Kapat")}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
-            </button>
+            <span className="arama-kk arama-kapat-kk">
+              <button className="arama-kk-btn arama-kapat arama-kapat-sag" onClick={() => aramaKapat()} aria-label={t("aramaKapat", "Kapat")} title={t("aramaKapat", "Kapat")}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+              </button>
+              <em className="arama-kk-yazi">{t("aramaKapat", "Kapat")}</em>
+            </span>
           </div>
           {/* HER DÜĞMENİN ALTINDA TEK KISA TÜRKÇE KELİME (kullanıcı: "uzun saçma yazılar yazmışsın, Rusça'ya çevrilince uzar sığmaz").
               Açık/kapalı RENK ile belli (yeşil/mavi/mor açık, kırmızı kapalı) + ikonda eğik çizgi. Çarpı (×) yok. Yazı tek satır, kısa → her dile sığar. */}
@@ -10185,6 +10205,11 @@ export default function Anasayfa({ pro = false }) {
               </span>
             )}
           </div>
+          {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && !aramaKucuk && (
+            <button className="arama-tutamak" onClick={aramaKontrolGoster} aria-label={t("dugmeleriGoster", "Düğmeleri göster")} title={t("dugmeleriGoster", "Düğmeleri göster")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 15l6-6 6 6" /></svg>
+            </button>
+          )}
         </div>
       )}
       </AramaHataSiniri>

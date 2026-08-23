@@ -4564,6 +4564,15 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-zoom-deger{ font-size:12px; font-weight:800; color:#fff; background:rgba(0,0,0,.4); border-radius:8px; padding:2px 6px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
 .arama-kapat-sag{ width:56px !important; height:56px !important; border-radius:50% !important; margin-top:4px; }  /* Kapat: sağ sütun altında, havada, yuvarlak-kırmızı */
 @media (min-width:560px){ .arama-avatar{ width:140px; height:140px; } .arama-kisi b{ font-size:27px; } .arama-kk{ min-width:64px; } .arama-kk-btn{ width:58px; height:58px; } .arama-kk-yazi{ font-size:12px; } .arama-kapat-sag{ width:62px !important; height:62px !important; } }
+/* GÖRÜŞME EKRANI TEMİZ MOD (kullanıcı: "görüşmede ekran temiz olsun, dokununca düğmeler gelsin"). Düğmeler gizlenince AŞAĞI kayar; ekrana ya da tutamağa dokununca geri gelir. KAPAT düğmesi HEP görünür kalır. */
+.arama-alt-dugmeler{ transition:transform .28s ease, opacity .28s ease; }
+.arama-zoom{ transition:opacity .24s ease; }
+.arama-fon.kontrol-gizli .arama-alt-dugmeler{ transform:translateY(170%); opacity:0; pointer-events:none; }
+.arama-fon.kontrol-gizli .arama-zoom{ opacity:0; pointer-events:none; }
+.arama-tutamak{ display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:16px; z-index:8; width:72px; height:34px; border-radius:17px; border:none; cursor:pointer; align-items:center; justify-content:center; color:#FFD700; background:rgba(41,74,125,.78); box-shadow:0 3px 10px rgba(0,0,0,.4); }
+.arama-tutamak svg{ width:26px; height:26px; }
+.arama-fon.kontrol-gizli .arama-tutamak{ display:flex; }
+.arama-kapat-kk{ min-width:0; }
 
 
 /* ============================================================
