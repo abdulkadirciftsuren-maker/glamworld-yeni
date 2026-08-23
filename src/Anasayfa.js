@@ -1578,6 +1578,7 @@ export default function Anasayfa({ pro = false }) {
   const benAradimRef = useRef(false);                  // bu aramayı BEN mi başlattım (günlüğü arayan yazar → tek kayıt, mükerrer olmaz)
   const aramaKarsiRef = useRef(null);                  // {uid, ad, foto} — günlük mesajı bu kişiyle aramda
   const aramaKonusBasRef = useRef(0);                  // konuşmaya geçtiği an (ms); 0 ise hiç cevaplanmadı
+  const aramaReddedildiRef = useRef(false);            // karşı taraf aramayı REDDETTİ mi (günlükte "Reddedildi" yazsın; "Cevaplanmadı"dan ayrı)
   const aramaDurumRef = useRef(""); useEffect(() => { aramaDurumRef.current = aramaDurum; if (aramaDurum === "konusuyor" && !aramaKonusBasRef.current) aramaKonusBasRef.current = Date.now(); }, [aramaDurum]);
   const aktifAramaRef = useRef(null); useEffect(() => { aktifAramaRef.current = aktifArama; if (!aktifArama) setAramaKucuk(false); }, [aktifArama]);
   const gelenAramaRef = useRef(null); useEffect(() => { gelenAramaRef.current = gelenArama; }, [gelenArama]);
@@ -3694,7 +3695,7 @@ export default function Anasayfa({ pro = false }) {
         const uu = auth.currentUser;
         const konusBas = aramaKonusBasRef.current;
         const sureSn = konusBas ? Math.round((Date.now() - konusBas) / 1000) : 0;
-        const arama = { tip: (a && a.tip) || "sesli", durum: konusBas ? "cevaplandi" : "cevapsiz", sureSn };
+        const arama = { tip: (a && a.tip) || "sesli", durum: konusBas ? "cevaplandi" : (aramaReddedildiRef.current ? "reddedildi" : "cevapsiz"), sureSn };
         if (uu) {
           const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
           mesajGonder({ aliciUid: karsi.uid, aliciAd: karsi.ad || "", arama, gonderen: { uid: uu.uid, ad: benimAd, foto: bildirimFotoUrl || foto || isFoto || "" } }).catch(() => {});
@@ -3704,7 +3705,7 @@ export default function Anasayfa({ pro = false }) {
         }
       }
     } catch (e) {}
-    benAradimRef.current = false; aramaKarsiRef.current = null; aramaKonusBasRef.current = 0;
+    benAradimRef.current = false; aramaKarsiRef.current = null; aramaKonusBasRef.current = 0; aramaReddedildiRef.current = false;
     // Arama bitti → dokümanı SİL (koleksiyon şişmesin; birikince "en yeni çağrı görünmüyor" tıkanması bir daha olmasın).
     if (a && a.id) { try { aramaSil(a.id); } catch (e) {} }
     aramaTemizle();
@@ -3782,7 +3783,7 @@ export default function Anasayfa({ pro = false }) {
     if (kisi.uid === uu.uid) { bilgiBalonu(t("kendiniArama", "Kendini arayamazsın 🙂 Aramak için başka bir GLOXORG hesabı gerekir.")); return; }
     if (aramaDurumRef.current || aktifAramaRef.current) { try { aramaKapat(false); } catch (e) {} } // takılı arama varsa temizle, yeni arama başlasın
     // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
-    benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0;
+    benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0; aramaReddedildiRef.current = false;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
     setAramaDurum("ariyor");
@@ -3801,7 +3802,7 @@ export default function Anasayfa({ pro = false }) {
     const ab1 = aramaDinle(id, async (a) => {
       if (!a) { aramaKapat(false); return; }
       if (a.answer && !pc.currentRemoteDescription) { try { await pc.setRemoteDescription(new RTCSessionDescription(a.answer)); setAramaDurum("konusuyor"); } catch (e) {} }
-      if (a.durum === "red") { bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); }
+      if (a.durum === "red") { aramaReddedildiRef.current = true; bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); }
       else if (a.durum === "bitti") { aramaKapat(false); }
     });
     const ab2 = iceAdaylariDinle(id, "aranan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
@@ -4134,7 +4135,7 @@ export default function Anasayfa({ pro = false }) {
       if (!g) { g = { uid: karsiUid, ad: karsiAd || "—", foto: karsiFoto, son: m, okunmamis: 0 }; harita.set(karsiUid, g); }
       if ((m.zamanMs || 0) >= (g.son.zamanMs || 0)) { g.son = m; if (karsiAd) g.ad = karsiAd; }
       if (karsiFoto) g.foto = karsiFoto;
-      if (m.aliciUid === benUid && !m.okundu && (!m.arama || m.arama.durum !== "cevaplandi")) g.okunmamis++; // Gerçek mesajlar + CEVAPSIZ aramalar (kaçan) rozette sayılır; CEVAPLANAN aramalar sayılmaz (takılmasın). Kullanıcı: "kapalıyken biri aradıysa rakam çıksın" ama "cevaplanan aramalar 3 diye takılmasın".
+      if (m.aliciUid === benUid && !m.okundu && (!m.arama || m.arama.durum === "cevapsiz")) g.okunmamis++; // Gerçek mesajlar + SADECE CEVAPSIZ (kaçan) aramalar rozette sayılır; CEVAPLANAN ve REDDEDİLEN aramalar sayılmaz (takılmasın).
     });
     return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
   }, [mesajlarimTum, benUid]);
@@ -9950,7 +9951,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="sohbet-fon">
           <div className="sohbet-pencere">
             <div className="sohbet-bas">
-              <button className="sohbet-geri" onClick={() => setSohbetKisi(null)} aria-label={t("geri", "Geri")}>‹</button>
+              {/* Çıkış/Geri SOL ÜSTTEN kaldırıldı → SAĞ tarafa alındı (kullanıcı: "sol üstteki çıkış zor bir yerde, sağa al") */}
               {(() => { const sf = sohbetKisi.foto || (kisiBilgiHarita[sohbetKisi.uid] && kisiBilgiHarita[sohbetKisi.uid].foto) || ""; return (
               <span className="sohbet-avatar">{sf ? <img src={sf} alt="" referrerPolicy="no-referrer" /> : ((sohbetKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>
               ); })()}
@@ -9963,6 +9964,7 @@ export default function Anasayfa({ pro = false }) {
               <button className="sohbet-ara sohbet-simge-btn" onClick={(e) => { e.stopPropagation(); setTepkiSimgeAcik((v) => !v); }} aria-label={t("tepkiSimgeSec", "Tepki simgesi seç")} title={t("tepkiSimgeSec", "Mesaj yanı simgesini seç")}>
                 <span className="sohbet-simge-goster" aria-hidden="true">{tepkiSimge === "yok" ? "🚫" : tepkiSimge}</span>
               </button>
+              <button className="sohbet-kapat-sag" onClick={() => setSohbetKisi(null)} aria-label={t("kapat", "Kapat")} title={t("kapat", "Kapat")}>✕</button>
             </div>
             {tepkiSimgeAcik && (
               <div className="sohbet-simge-panel" onClick={(e) => e.stopPropagation()}>
@@ -9981,6 +9983,7 @@ export default function Anasayfa({ pro = false }) {
               ) : aktifSohbetMesajlari.map((m, i) => {
                 const benim = m.gonderenUid === benUid;
                 const saat = m.zamanMs ? new Date(m.zamanMs).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" }) : "";
+                const saatTarih = m.zamanMs ? new Date(m.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""; // ARAMA kayıtlarında gün de görünsün (kullanıcı: "arama tarihi belli olsun, saat var ama gün yok")
                 const tepkiler = m.tepkiler ? Object.values(m.tepkiler).filter(Boolean) : [];
                 return (
                   <div className={"sohbet-balon-sar " + (benim ? "benim" : "karsi")} key={m.id || i}>
@@ -10000,7 +10003,7 @@ export default function Anasayfa({ pro = false }) {
                             </span>
                             <span className="sag-metin">
                               <b>{m.arama.tip === "goruntulu" ? t("goruntuluArama", "Görüntülü arama") : t("sesliArama", "Sesli arama")}</b>
-                              <i>{m.arama.durum === "cevaplandi" ? aramaSure(m.arama.sureSn) : (benim ? t("cevaplanmadi", "Cevaplanmadı") : t("cevapsizArama", "Cevapsız arama"))}</i>
+                              <i>{m.arama.durum === "cevaplandi" ? aramaSure(m.arama.sureSn) : m.arama.durum === "reddedildi" ? t("aramaReddedildi", "Reddedildi") : (benim ? t("cevaplanmadi", "Cevaplanmadı") : t("cevapsizArama", "Cevapsız arama"))}</i>
                             </span>
                           </span>
                         ) : (<>
@@ -10023,7 +10026,7 @@ export default function Anasayfa({ pro = false }) {
                           {m.dosya && m.dosya.url && <a className="sohbet-balon-dosya" href={m.dosya.url} download target="_blank" rel="noreferrer"><span className="sbd-ik">📎</span><span className="sbd-ad notranslate" translate="no">{m.dosya.ad || t("dosya", "Dosya")}</span></a>}
                           {m.metin && <span className="sohbet-balon-metin">{m.metin}</span>}
                         </>)}
-                        <span className="sohbet-balon-alt">{m.duzenlendi && !m.silindi && <span className="sohbet-duzenlendi">{t("duzenlendi", "düzenlendi")} · </span>}{saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
+                        <span className="sohbet-balon-alt">{m.duzenlendi && !m.silindi && <span className="sohbet-duzenlendi">{t("duzenlendi", "düzenlendi")} · </span>}{m.arama ? saatTarih : saat}{benim && <span className="sohbet-tik">{m.okundu ? "✓✓" : "✓"}</span>}</span>
                         {tepkiler.length > 0 && <span className="sohbet-tepkiler">{tepkiler.slice(0, 3).map((e2, k) => <span key={k}>{e2}</span>)}{tepkiler.length > 3 ? <b>{tepkiler.length}</b> : null}</span>}
                       </div>
                       {tepkiSimge !== "yok" && <button className="sohbet-tepki-ac" onClick={(e) => { e.stopPropagation(); if (tepkiMesaj === m.id) { setTepkiMesaj(null); } else { tepkiAc(m.id, e.clientX, e.clientY); } }} aria-label={t("tepkiVer", "Tepki ver")} title={t("tepkiVer", "Tepki ver")}>{tepkiSimge}</button>}

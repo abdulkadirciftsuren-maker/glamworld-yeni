@@ -4359,6 +4359,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-kim i{ color:#6b5417; font-size:11px; font-style:normal; }
 .sohbet-ara{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; background:#2f9e44; color:#fff; display:flex; align-items:center; justify-content:center; text-decoration:none; }
 .sohbet-ara svg{ width:20px; height:20px; }
+/* SOHBET ÇIKIŞ (✕) — SAĞ tarafta, düzgün kare düğme (kullanıcı: "çıkışı sağa al, güzel olsun"). Tam daire YASAK → köşeli. */
+.sohbet-kapat-sag{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; border:none; cursor:pointer; background:rgba(120,70,10,.30); color:#fff; font-size:22px; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; }
+.sohbet-kapat-sag:active{ transform:scale(.92); }
 /* ALT BOŞLUK — asılı ARAMA DÜĞMESİ mesajların/fotoğrafların üstüne binmesin (kullanıcı: "ikon altı boş olsun, mesajlar biraz yukarıda gelsin"). */
 /* KAYDIRMA PARLAMASI ÇÖZÜMÜ: overscroll-behavior:contain (sınırda sıçrama yok) + KARARLI GPU KATMANI
    (transform:translateZ(0)+backface-visibility) → kaydırınca alan yeniden ÇİZİLMEZ, sadece kayar → parlama/titreme biter.
