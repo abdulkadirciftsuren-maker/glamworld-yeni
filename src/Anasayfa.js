@@ -4120,7 +4120,7 @@ export default function Anasayfa({ pro = false }) {
       if (!g) { g = { uid: karsiUid, ad: karsiAd || "—", foto: karsiFoto, son: m, okunmamis: 0 }; harita.set(karsiUid, g); }
       if ((m.zamanMs || 0) >= (g.son.zamanMs || 0)) { g.son = m; if (karsiAd) g.ad = karsiAd; }
       if (karsiFoto) g.foto = karsiFoto;
-      if (m.aliciUid === benUid && !m.okundu && !m.arama) g.okunmamis++; // ARAMA kayıtları (m.arama) okunmamış SAYILMAZ (kullanıcı: "aramalar Glome'de mesaj gibi 3 diye sayılıyor") — sadece gerçek mesajlar sayılır
+      if (m.aliciUid === benUid && !m.okundu && (!m.arama || m.arama.durum !== "cevaplandi")) g.okunmamis++; // Gerçek mesajlar + CEVAPSIZ aramalar (kaçan) rozette sayılır; CEVAPLANAN aramalar sayılmaz (takılmasın). Kullanıcı: "kapalıyken biri aradıysa rakam çıksın" ama "cevaplanan aramalar 3 diye takılmasın".
     });
     return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
   }, [mesajlarimTum, benUid]);
