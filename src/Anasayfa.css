@@ -4534,6 +4534,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-video.arama-kucuk:active{ cursor:grabbing; }
 .arama-kucuk-ipucu{ position:absolute; bottom:196px; left:0; right:0; text-align:center; color:#fff; font-size:11px; z-index:4; text-shadow:0 1px 3px rgba(0,0,0,.7); opacity:.85; }
 @media (min-width:560px){ .arama-video.arama-kucuk{ width:150px; height:210px; } }
+/* KENDİ arama görüntüm ÖN kamerayken AYNA (selfie gibi tanıdık görüneyim); karşı taraf (uzakVideoRef) AYNASIZ kalır → onu normal görürüm. Sadece görüntü aynası, gönderilen video değişmez. */
+.arama-video.ayna{ transform:scaleX(-1); }
 .arama-kisi-orta{ position:relative; z-index:2; }
 /* ALT DÜĞMELER — TEK SIRA (kullanıcı: "alttaki ikonları ufalt tek sıraya al"). Kapat bu sıradan ÇIKTI (sağa, havaya alındı).
    Sığmazsa yatay kayar (dar telefonda taşma/kesme olmasın). */

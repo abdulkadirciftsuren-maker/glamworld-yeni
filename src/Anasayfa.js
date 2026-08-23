@@ -10113,7 +10113,7 @@ export default function Anasayfa({ pro = false }) {
               <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : t("baglandi", "Bağlandı")}</i>
             </div>
           )}
-          {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline muted
+          {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk") + (onKamera ? " ayna" : "")} autoPlay playsInline muted
             style={videoBuyuk === "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
             onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
           {aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && <span className="arama-kucuk-ipucu">{t("videoIpucu", "Küçük ekrana dokun: büyüt · sürükle: taşı")}</span>}
