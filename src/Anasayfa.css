@@ -2010,11 +2010,11 @@
 /* PROFİLİM penceresi — foto yükleme + bilgiler (kendi penceresinde) */
 .apf-pencere{ position:relative; display:flex; flex-direction:column; align-items:center; gap:10px; padding:6px 12px 90px; text-align:center; }
 /* GOOGLE PROFİLİ — profil sayfasının SAĞ ÜST köşesi (kare, altın çerçeveli; dokununca hesap penceresi açılır) */
-.apf-google-kose{ position:absolute; top:8px; right:10px; z-index:6; width:44px; height:44px; border-radius:11px; overflow:hidden; padding:0; border:2px solid #FFD700; background:radial-gradient(circle at 38% 30%,#fff,#cfe0ff 60%,#8fb0e8); box-shadow:0 3px 10px rgba(90,60,10,.4); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-.apf-google-kose img{ width:100%; height:100%; object-fit:cover; display:block; }
-.apf-google-harf{ font-family:'Cinzel',serif; font-weight:800; font-size:20px; color:#0c1530; }
-.apf-google-kose:active{ transform:scale(.92); }
-@media (min-width:560px){ .apf-google-kose{ width:52px; height:52px; top:10px; right:14px; } .apf-google-harf{ font-size:24px; } }
+/* SAĞ ÜST KÖŞE — KARE Google profili (profil sayfasında header'da). Yuvarlak DEĞİL, altın çerçeveli kare. */
+.ana-google-kare{ overflow:hidden; border:2px solid #FFD700 !important; background:radial-gradient(circle at 38% 30%,#fff,#cfe0ff 60%,#8fb0e8); box-shadow:0 2px 8px rgba(90,60,10,.4); }
+.ana-google-kare-foto{ width:100%; height:100%; object-fit:cover; display:block; }
+.ana-google-kare-harf{ font-family:'Cinzel',serif; font-weight:800; font-size:18px; color:#0c1530; }
+.ana-google-kare:active{ transform:scale(.92); }
 .apf-foto-sar{ display:flex; flex-direction:column; align-items:center; gap:12px; }
 .apf-foto{ width:120px; height:120px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center;
   font-family:'Cinzel',serif; font-size:46px; font-weight:800; color:#0c1530;
