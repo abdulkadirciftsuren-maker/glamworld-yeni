@@ -1573,6 +1573,12 @@ export default function Anasayfa({ pro = false }) {
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
   const uzakSesRef = useRef(null);                     // karşının SESİ (sesli aramada — ses buradan çalar)
   const uzakStreamRef = useRef(null);                  // karşıdan gelen medya akışı (ses+görüntü)
+  // ARAMA SESİ YÜKSELTME (kullanıcı: "aramada/Gloxoo'da ses çok kısık, duyulmuyor"): <audio>/<video> sesi en fazla 1'dir → kısık kalıyor.
+  // WebAudio GainNode ile karşı tarafın sesini ~1.9 KAT güçlendiriyoruz. Element sessize alınır (çift ses olmasın), ses buradan çıkar.
+  const sesCtxRef = useRef(null);                      // WebAudio bağlamı (bir kez kurulur, aramalar arası yeniden kullanılır)
+  const sesGainRef = useRef(null);                     // { source, gain } — karşı sesin geçtiği güçlendirici
+  const hoparlorAcikRef = useRef(true);                // hoparlör açık mı (setTimeout/async içinde güncel değer için)
+  const SES_KAT = 1.9;                                 // ses kaç kat güçlensin (1.9 ≈ belirgin daha yüksek, bozulmadan)
   const aramaAbonelikRef = useRef([]);                 // arama dinleyicileri (temizlemek için)
   // ARAMA GÜNLÜĞÜ (WhatsApp gibi sohbete kayıt) için: ben mi aradım, karşı kim, ne zaman konuşmaya geçti
   const benAradimRef = useRef(false);                  // bu aramayı BEN mi başlattım (günlüğü arayan yazar → tek kayıt, mükerrer olmaz)
@@ -3661,8 +3667,12 @@ export default function Anasayfa({ pro = false }) {
     try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
     yerelStreamRef.current = null;
     uzakStreamRef.current = null;
-    try { if (uzakVideoRef.current) uzakVideoRef.current.srcObject = null; } catch (e) {}
-    try { if (uzakSesRef.current) uzakSesRef.current.srcObject = null; } catch (e) {}
+    // Ses güçlendiriciyi (WebAudio) çöz — bağlam AÇIK kalır (sonraki aramada tekrar kullanılır; kapatmak iOS'ta yeni bağlam sorunları çıkarır)
+    try { if (sesGainRef.current && sesGainRef.current.source) sesGainRef.current.source.disconnect(); } catch (e) {}
+    try { if (sesGainRef.current && sesGainRef.current.gain) sesGainRef.current.gain.disconnect(); } catch (e) {}
+    sesGainRef.current = null;
+    try { if (uzakVideoRef.current) { uzakVideoRef.current.srcObject = null; uzakVideoRef.current.muted = false; } } catch (e) {}
+    try { if (uzakSesRef.current) { uzakSesRef.current.srcObject = null; uzakSesRef.current.muted = false; } } catch (e) {}
     try { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = null; } catch (e) {}
   };
   // "Seni arıyor" bildirimini KAPAT — arama açılınca/bitince/reddedilince. Kullanıcı: "aramayı açıp konuştuğum halde
@@ -3727,6 +3737,29 @@ export default function Anasayfa({ pro = false }) {
     const el = uzakVideoRef.current || uzakSesRef.current; // görüntülüde video, seslide audio
     if (el && el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
     if (el) { try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+    sesYukseltBagla(st, el); // karşı sesi güçlendir (kısık duyulma şikâyeti)
+  };
+  // Karşı tarafın sesini WebAudio ile GÜÇLENDİR (element en fazla 1; kısıktı). Element sessize alınır, ses gain'den güçlü çıkar.
+  // iOS için "kickstart": sessiz element akışı canlı tutar, gerçek ses WebAudio'dan gelir. HER ŞEY try/catch — olmazsa elemente düşer, ses ASLA tümden kaybolmaz.
+  const sesYukseltBagla = (stream, el) => {
+    if (!stream || !el) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { el.muted = !hoparlorAcikRef.current; el.volume = 1; return; } // WebAudio yoksa eski yol
+      if (!sesCtxRef.current) sesCtxRef.current = new AC();
+      const ctx = sesCtxRef.current;
+      if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
+      try { if (sesGainRef.current && sesGainRef.current.source) sesGainRef.current.source.disconnect(); } catch (e) {}
+      try { if (sesGainRef.current && sesGainRef.current.gain) sesGainRef.current.gain.disconnect(); } catch (e) {}
+      const source = ctx.createMediaStreamSource(stream);
+      const gain = ctx.createGain();
+      gain.gain.value = hoparlorAcikRef.current ? SES_KAT : 0;
+      source.connect(gain); gain.connect(ctx.destination);
+      sesGainRef.current = { source, gain };
+      el.muted = true; // element sessiz (çift ses olmasın); ses WebAudio'dan
+      // GÜVENLİK: 1.5 sn sonra bağlam çalışmıyorsa (ses gelmiyorsa) elementi geri aç → ses tümden kaybolmasın
+      setTimeout(() => { try { if (!sesCtxRef.current || sesCtxRef.current.state !== "running") { el.muted = !hoparlorAcikRef.current; el.volume = 1; } } catch (e) {} }, 1500);
+    } catch (e) { try { el.muted = !hoparlorAcikRef.current; el.volume = 1; } catch (x) {} }
   };
   const pcOlustur = (aramaId, kim, konfig) => {
     const pc = new RTCPeerConnection(konfig || ICE_SUNUCULAR);
@@ -3932,7 +3965,17 @@ export default function Anasayfa({ pro = false }) {
   // Kullanıcı: "ses düğmesi sona kadar sesi kesmiyor" → KAPALI artık 0 (tam sessiz), hem volume=0 hem muted=true.
   // NOT: web sitesi telefonun GERÇEK kulaklık/ahize çıkışına erişemez (sadece kurulu uygulamalar yapar) — bu düğme sesi açar/tam keser.
   const hoparlorToggle = () => setHoparlorAcik((v) => !v);
-  useEffect(() => { try { [uzakSesRef.current, uzakVideoRef.current].forEach((el) => { if (el) { el.volume = hoparlorAcik ? 1 : 0; el.muted = !hoparlorAcik; } }); } catch (e) {} }, [hoparlorAcik, aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    hoparlorAcikRef.current = hoparlorAcik;
+    try {
+      const g = sesGainRef.current;
+      [uzakSesRef.current, uzakVideoRef.current].forEach((el) => {
+        if (!el) return;
+        if (g && g.gain) { el.muted = true; try { g.gain.gain.value = hoparlorAcik ? SES_KAT : 0; } catch (e) {} } // güçlendirme aktif → sesi gain kontrol eder
+        else { el.volume = hoparlorAcik ? 1 : 0; el.muted = !hoparlorAcik; }                                       // güçlendirme yoksa (fallback) eski yol
+      });
+    } catch (e) {}
+  }, [hoparlorAcik, aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   // ÖN ↔ ARKA kamera değiştir (görüntülü aramada). Yeni kamerayı alıp bağlantıdaki video track'i değiştirir (yeniden arama gerekmez).
   // ⚠️ ÖNEMLİ (Samsung vb.): çoğu Android telefon AYNI ANDA iki kamera açamaz → önceki kamera hâlâ açıkken yenisini
   // istersen "cihaz meşgul" hatası verir ("Bu cihazda kamera değiştirilemedi"). ÇÖZÜM: önce ESKİ video track'ini DURDUR,
@@ -6109,7 +6152,7 @@ export default function Anasayfa({ pro = false }) {
           if (durduruldu || !("speechSynthesis" in window) || !txt) { bit(); return; }
           const utter = new SpeechSynthesisUtterance(String(txt).replace(/Gloxoo/gi, "Gloksu").replace(/GLOXORG/gi, "Gloksorg"));
           try { utter.lang = aiSesKodu(aiDilRef.current); } catch (e) {}
-          utter.rate = 1; utter.pitch = 1;
+          utter.rate = 1; utter.pitch = 1; utter.volume = 1; // ses EN YÜKSEK (kısık duyulma şikâyeti)
           try { const vs = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || []; const lk = (utter.lang || "tr").toLowerCase(), kok = lk.split("-")[0]; const dl = vs.filter((v) => v.lang && (v.lang.toLowerCase() === lk || v.lang.toLowerCase().startsWith(kok))); const v = dl.find((vv) => /natural|neural|online|google/i.test(vv.name || "")) || dl.find((vv) => vv.localService === false) || dl[0]; if (v) utter.voice = v; } catch (e) {}
           aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now();
           const sure = Math.max(1200, cLen * 90), t0 = Date.now();
@@ -6139,6 +6182,7 @@ export default function Anasayfa({ pro = false }) {
         }
         sesGetir(idx + 1); sesGetir(idx + 2);                         // SONRAKİ 2 parçayı şimdiden hazırla (3->2: aynı anda az istek → API takılıp cümle DÜŞÜRMESİN)
         const audio = new Audio(url);
+        try { audio.volume = 1; } catch (e) {} // ses EN YÜKSEK (kısık duyulma şikâyeti)
         // DAHA YAVAŞ + DOĞAL KONUŞ (kullanıcı: "çok hızlı konuşuyor"). preservesPitch → ses inceltmeden yavaşlar.
         try { audio.preservesPitch = true; audio.mozPreservesPitch = true; audio.webkitPreservesPitch = true; audio.playbackRate = gloxHizRef.current || 0.9; } catch (e) {}
         aiSesElemRef.current = audio;

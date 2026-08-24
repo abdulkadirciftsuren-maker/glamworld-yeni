@@ -31,6 +31,12 @@ function kareYol(ctx, x, y, g, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.a
 function kodUret() { return "GLX-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase(); }
 // Dil koduna göre AI'ya "hangi dilde yaz" talimatı
 const DIL_AD = { tr: "Türkçe", en: "English", de: "Almanca (Deutsch)", fr: "Fransızca", es: "İspanyolca", it: "İtalyanca", pt: "Portekizce", ru: "Rusça", uk: "Ukraynaca", ar: "Arapça", zh: "Çince", ja: "Japonca", hi: "Hintçe" };
+// Dilin İNGİLİZCE adı — yapay zekâ modeli İngilizce dil adına ("Ukrainian") Türkçe adından ("Ukraynaca") çok daha güçlü uyar.
+const DIL_ING = { tr: "Turkish", en: "English", de: "German", fr: "French", es: "Spanish", it: "Italian", pt: "Portuguese", ru: "Russian", uk: "Ukrainian", ar: "Arabic", zh: "Chinese", ja: "Japanese", hi: "Hindi" };
+// GÜÇLÜ DİL KİLİDİ — komut Türkçe olduğu için model bazen Türkçe cevap veriyordu (kullanıcı: "yer yer Türkçe kelimeler var").
+// Sona konan İngilizce, net bir kilit modeli hedef dile bağlar. Türkçe hedefte gerek yok (boş döner).
+const dilKilidi = (d) => (d === "tr" ? "" : ` [LANGUAGE LOCK] Write the ENTIRE answer ONLY in ${DIL_ING[d] || "English"}. Every single word must be in ${DIL_ING[d] || "English"}. Do NOT use Turkish or any other language — not one word. This instruction overrides the language of these instructions.`);
+
 
 // AI ders başlıkları (SÖZLÜK, MALZEME VE ÖLÇÜLER…) eskiden Türkçe komuta gömülü olduğu için Türkçe/yarı-çeviri kalıyordu.
 // Artık başlığı AI'ye BIRAKMIYORUZ — 13 dile hazır çevirisini KENDİMİZ ekliyoruz; AI sadece gövdeyi kendi dilinde yazıyor.
@@ -425,10 +431,10 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
   async function egitimAl() {
     if (dersYuk || !meslek) return; setDersYuk(true); setDers(""); setDersAsama(0);
     // ÖNBELLEK: bu ders daha önce (bu dilde) üretildiyse ANINDA getir (yapay zekâ ücreti tekrar gitmez, hızlı gelir).
-    const mAnahtar = "ders|" + meslek.ad + "|" + dil;
+    const mAnahtar = "ders2|" + meslek.ad + "|" + dil;   // v2: dil kilidi eklendi → eski karışık-dilli önbellek geçersiz
     try { const hazir = await akademiMetinOku(mAnahtar); if (hazir) { setDers(hazir); setDersYuk(false); return; } } catch (e) {}
     // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
-    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. DETAYLI, DOLU ve ÖĞRETİCİ yaz; yüzeysel geçme, örnek ve somut bilgi ver. ~320 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin USTA eğitmeni (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. DETAYLI, DOLU ve ÖĞRETİCİ yaz; yüzeysel geçme, örnek ve somut bilgi ver. ~320 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.${dilKilidi(dil)}`;
     const on = `"${meslek.ad}" mesleğine yeni başlayan birine, SADECE şu konunun İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)`;
     const bolumler = [
       { bas: "nedir", p: `${on} — ne iş yapılır, neyin nesidir, kimler yapar, neyi bilmek şart.` },
@@ -454,9 +460,9 @@ export default function AkademiSayfa({ uid, benAd, benFoto, dil, aiKopru, ulke, 
     if (fizibiliteYuk || !meslek) return; setFizibiliteYuk(true); setFizibilite(""); setFizibiliteAsama(0);
     const bolge = [sehir, ulke].filter(Boolean).join(", ");
     // ÖNBELLEK: fizibilite daha önce (bu bölge+dilde) üretildiyse ANINDA getir (ücret tekrar gitmez).
-    const fAnahtar = "fiz|" + meslek.ad + "|" + (bolge || "-") + "|" + dil;
+    const fAnahtar = "fiz2|" + meslek.ad + "|" + (bolge || "-") + "|" + dil;   // v2: dil kilidi → eski karışık-dilli önbellek geçersiz
     try { const hazir = await akademiMetinOku(fAnahtar); if (hazir) { setFizibilite(hazir); setFizibiliteYuk(false); return; } } catch (e) {}
-    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin sanayi/işletme kuruluş danışmanı. CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. GERÇEKÇİ, DETAYLI ve UYGULANABİLİR ol; SOMUT rakam ver (adet, kapasite, kW, m², para birimi, süre). Yüzeysel geçme. ~340 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const sistem = `Sen Gloxoo'sun — GLOXORG Akademi'nin sanayi/işletme kuruluş danışmanı. CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. GERÇEKÇİ, DETAYLI ve UYGULANABİLİR ol; SOMUT rakam ver (adet, kapasite, kW, m², para birimi, süre). Yüzeysel geçme. ~340 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.${dilKilidi(dil)}`;
     const on = `"${meslek.ad}" işini/ürününü ÜRETECEK bir imalathane/fabrika KURMAK isteyen birine, SADECE şu bölümün İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)${bolge ? `. Bölge: ${bolge} (yerel koşulları dikkate al)` : ""}`;
     const bolumler = [
       { bas: "fizGenel", p: `${on} — FİZİBİLİTE: bu üretim kârlı mı, pazar/talep durumu, hedef müşteri, küçük atölyeden büyük fabrikaya ölçek seçenekleri, yaklaşık başlangıç sermayesi aralığı ve geri dönüş mantığı.` },
@@ -523,12 +529,12 @@ ${dilAd} dilinde SADECE isimleri yaz. SADECE şu JSON: {"konular":["Somut Çeşi
       })();
     }
     // ÖNBELLEK: bu çeşit tarifi daha önce (bu dilde) üretildiyse ANINDA getir (ücret tekrar gitmez, hızlı gelir).
-    const kAnahtar = "konu|" + meslek.ad + "|" + ad + "|" + dil;
+    const kAnahtar = "konu2|" + meslek.ad + "|" + ad + "|" + dil;   // v2: dil kilidi → eski karışık-dilli önbellek geçersiz
     try { const hazir = await akademiMetinOku(kAnahtar); if (hazir) { if (istekNoRef.current === no) { setKonuDers(hazir); setKonuYuk(false); } return; } } catch (e) {}
     // METİN — KESİLMEMESİ için KÜÇÜK BAŞLIKLARA bölünür: her başlık KISA (~180 kelime) ve kendi içinde TAM biter,
     // hepsi birleşince UZUN ve EKSİKSİZ olur. Böylece uzunluk sınırına takılıp yarıda kesilmez.
     // ÖNEMLİ: Başlığı AI YAZMAZ (Türkçe/yarı-çeviri kalıyordu). AI SADECE gövdeyi ${dilAd} dilinde yazar; başlığı biz çevrili ekleriz.
-    const sistem = `Sen Gloxoo'sun — usta eğitmen (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. DETAYLI, DOLU ve ÖĞRETİCİ yaz; ölçü/rakam/sıcaklık/süre gibi somut bilgileri EKSİKSİZ ver, yüzeysel geçme. ~320 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.`;
+    const sistem = `Sen Gloxoo'sun — usta eğitmen (HER meslek için). CEVABIN TAMAMI ${dilAd} DİLİNDE olacak. BAŞLIK YAZMA — sadece içerik/maddeler yaz. DETAYLI, DOLU ve ÖĞRETİCİ yaz; ölçü/rakam/sıcaklık/süre gibi somut bilgileri EKSİKSİZ ver, yüzeysel geçme. ~320 KELİMEYE kadar yaz ama SON CÜMLEYİ MUTLAKA TAMAMLA, noktayla bitir; ASLA yarıda kesme. Doğru ve net bilgi ver. Markdown/yıldız (**) KULLANMA; maddeleri • ile yaz.${dilKilidi(dil)}`;
     const on = `"${meslek.ad}" mesleğinde "${ad}" için, SADECE şu konunun İÇERİĞİNİ ${dilAd} dilinde yaz (başlık yazma)`;
     const bolumler = [
       { bas: "tanim", p: `${on} — nedir, neyin nesidir, hangi ülke/kültüre ait, özellikleri, nerede kullanılır.` },
