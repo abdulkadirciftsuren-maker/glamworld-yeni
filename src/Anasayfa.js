@@ -8538,13 +8538,10 @@ export default function Anasayfa({ pro = false }) {
           {Ikon.gloxi}
           {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
         </button>
-        {/* PROFİL (ana sayfada) / diğer sayfalarda o sayfanın ikonu */}
-        {aktifKod === "home" ? (
-          <div className="ana-profil ana-profil-yuvarlak ana-ince-profil" onClick={() => setProfilAcik((a) => !a)}
-            style={{ backgroundImage: `url(${uyeProfilCerceve})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-            {googleFoto ? <img className="ana-profil-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-profil-harf">{harf}</span>}
-          </div>
-        ) : (
+        {/* PROFİL: yuvarlak Google avatarı ÜST ŞERİTTEN KALDIRILDI (kullanıcı: kalabalık). Google profili artık
+            PROFİL SAYFASININ sağ üst köşesinde duruyor (aşağıda .apf-google-kose). Ana sayfada bu köşe boş kalır,
+            diğer sayfalarda o sayfanın bilgi ikonu durur. */}
+        {aktifKod !== "home" && (
           <button className="ana-ara-btn ana-sayfa-ikon ana-ince-btn" aria-label={aktifEt} title={aktifEt} onClick={() => setSayfaBilgiAcik(true)}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
         )}
       </header>
@@ -9248,6 +9245,13 @@ export default function Anasayfa({ pro = false }) {
         /* PROFİLİM penceresi — kendi sayfasında açılır/kapanır, profilde kalınır (ANAYASA 6.15).
            Foto SADECE buradan yüklenir (Google fotosu değil) */
         <div className="ana-pencere apf-pencere" key="profil">
+          {/* GOOGLE PROFİLİ — profil sayfasının SAĞ ÜST köşesinde (kullanıcı: üstteki yuvarlağı kaldır, buraya koy;
+              dokununca Google/hesap penceresi açılır — istersen Google'ı açarsın, istemezsen sadece durur). Düzenleyicide gizli. */}
+          {!duzenAcik && (
+            <button className="apf-google-kose" onClick={() => setProfilAcik(true)} aria-label={t("profGoogleHesap", "Google hesabım")} title={t("profGoogleHesap", "Google hesabım")}>
+              {googleFoto ? <img src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="apf-google-harf">{harf}</span>}
+            </button>
+          )}
           {/* Dosya girişleri HER ZAMAN bağlı (unmount olmaz). accept KALDIRILDI — bilgisayarda
               "image/*" filtresi bazı dosyalarda "Aç" düğmesini kilitliyordu; tür JS'te kontrol edilir. */}
           <input ref={fotoInputRef} type="file" accept="image/*" onChange={fotoSec} style={{ display: "none" }} />
