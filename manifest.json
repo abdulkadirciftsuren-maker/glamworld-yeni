@@ -1,28 +1,25 @@
 {
-  "id": "/",
   "short_name": "Gloxorg",
-  "name": "GLOXORG",
-  "description": "GLOXORG — the world's luxury professional social platform. Elite professionals, businesses and customers across hundreds of professions, under one luxury roof.",
+  "name": "Gloxorg",
   "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
     {
       "src": "logo192-b109.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any"
+      "sizes": "192x192"
     },
     {
       "src": "logo512-b109.png",
       "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any"
+      "sizes": "512x512"
     }
   ],
   "start_url": ".",
-  "scope": ".",
   "display": "standalone",
-  "lang": "en",
-  "dir": "ltr",
-  "categories": ["social", "business", "lifestyle"],
-  "theme_color": "#294a7d",
-  "background_color": "#294a7d"
+  "theme_color": "#0a0a0f",
+  "background_color": "#0a0a0f"
 }
