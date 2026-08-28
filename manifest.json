@@ -19,10 +19,19 @@
   ],
   "start_url": ".",
   "scope": ".",
-  "display": "standalone",
+  "display": "fullscreen",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["social", "business", "lifestyle"],
+  "categories": [
+    "social",
+    "business",
+    "lifestyle"
+  ],
   "theme_color": "#294a7d",
-  "background_color": "#294a7d"
+  "background_color": "#294a7d",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ]
 }
