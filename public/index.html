@@ -61,6 +61,39 @@
       @keyframes gwDon{to{transform:rotate(360deg);}}
       #gw-yuk .gw-m{font-family:Georgia,'Times New Roman',serif;color:#cfe0ff;font-size:17px;font-weight:700;
         letter-spacing:.04em;text-align:center;max-width:80vw;}
+      /* ===== ÜST/ALT CAM-ALTIN TOZU ŞERİT =====
+         VARSAYILAN: GİZLİ (normal tarayıcı sekmesinde hiç görünmez → hiçbir şeyi bozmaz). */
+      .gw-cam-serit{ display:none; }
+      /* SADECE kurulu uygulama modunda (TWA tam ekran / PWA) görünür. */
+      @media (display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui){
+        .gw-cam-serit{
+          display:block; position:fixed; left:0; right:0; z-index:1400; pointer-events:none;
+          -webkit-backdrop-filter:blur(11px) saturate(1.35); backdrop-filter:blur(11px) saturate(1.35);
+        }
+        /* ÜST şerit — telefon durum çubuğu bölgesi (çentik/kamera). Yüksekliği güvenli-alan kadar;
+           çubuk gizliyken 0 → görünmez (tam ekran), göründüğünde cam-altın tozu belirir. */
+        .gw-cam-ust{
+          top:0; height:env(safe-area-inset-top, 0px);
+          background:
+            radial-gradient(circle at 22% 62%, rgba(255,246,207,.85) 0, rgba(255,220,120,.42) 32%, rgba(255,205,70,0) 60%),
+            radial-gradient(circle at 41% 34%, rgba(255,248,214,.72) 0, rgba(255,205,70,0) 50%),
+            radial-gradient(circle at 60% 64%, rgba(255,240,180,.60) 0, rgba(255,205,70,0) 52%),
+            radial-gradient(circle at 79% 40%, rgba(255,246,207,.70) 0, rgba(255,205,70,0) 48%),
+            linear-gradient(180deg, rgba(255,216,120,.46), rgba(238,186,80,.26));
+          box-shadow:0 1px 12px rgba(255,205,90,.22), inset 0 -1px 0 rgba(255,232,155,.55);
+        }
+        /* ALT şerit — telefon gezinme (Android) tuşları bölgesi. */
+        .gw-cam-alt{
+          bottom:0; height:env(safe-area-inset-bottom, 0px);
+          background:
+            radial-gradient(circle at 26% 40%, rgba(255,246,207,.85) 0, rgba(255,220,120,.42) 32%, rgba(255,205,70,0) 60%),
+            radial-gradient(circle at 45% 66%, rgba(255,248,214,.72) 0, rgba(255,205,70,0) 50%),
+            radial-gradient(circle at 63% 38%, rgba(255,240,180,.60) 0, rgba(255,205,70,0) 52%),
+            radial-gradient(circle at 80% 62%, rgba(255,246,207,.70) 0, rgba(255,205,70,0) 48%),
+            linear-gradient(0deg, rgba(255,216,120,.48), rgba(238,186,80,.26));
+          box-shadow:0 -1px 12px rgba(255,205,90,.22), inset 0 1px 0 rgba(255,232,155,.58);
+        }
+      }
     </style>
   </head>
   <body>
@@ -68,6 +101,11 @@
     <!-- Sosyal giriş yükleme ekranı (varsayılan gizli) -->
     <div id="gw-yuk"><div class="gw-k"><div class="gw-h"></div><div class="gw-m" id="gw-yuk-m"></div></div></div>
     <div id="root"></div>
+    <!-- ÜST & ALT CAM-ALTIN ŞERİT (SADECE kurulu uygulama modunda görünür; normal tarayıcıda gizli).
+         Telefonun durum/tuş çubuğu bölgesini (güvenli-alan) şeffaf cam + hafif altın tozuyla kaplar.
+         pointer-events:none → dokunmayı ASLA engellemez. z-index:1400 → hikâye/reels/medya pencereleri (1500+) ÜSTÜNE biner (tam ekran medyada altın çıkmaz). -->
+    <div class="gw-cam-serit gw-cam-ust"></div>
+    <div class="gw-cam-serit gw-cam-alt"></div>
     <script>
       /* Sosyal giriş sürerken (bayrak varsa) yükleme ekranını HEMEN göster —
          sayfa yeniden yüklense bile beyaz flash görünmez. React hazır olunca gizler. */
