@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#294a7d" />
+    <!-- Durum çubuğu (üstte saat/bildirim alanı) rengi = uygulamanın SICAK KREM zemini (#f4ecda), koyu lacivert DEĞİL.
+         Kullanıcı: "yukarda siyah şerit var, tam ekrana girmiyor sadece kararıyor" → artık durum çubuğu uygulamayla kaynaşır (siyah değil).
+         Açık zeminde OS saat/pil ikonlarını KOYU gösterir → okunur. (Anayasa: hiçbir yerde siyah/koyu zemin.) -->
+    <meta name="theme-color" content="#f4ecda" />
     <script>
       /* SAYFA DİLİNİ ZİYARETÇİNİN TARAYICI DİLİNE HEMEN AYARLA (React'ten ÖNCE).
          Sabit lang yüzünden tarayıcı "bu sayfa yabancı dilde, çevrilsin mi?" bandını gösteriyordu
