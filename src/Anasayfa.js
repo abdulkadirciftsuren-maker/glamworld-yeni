@@ -8309,12 +8309,16 @@ export default function Anasayfa({ pro = false }) {
       const y = el.scrollTop;
       const fark = y - son; son = y;
       birikim = (birikim > 0) === (fark > 0) ? birikim + fark : fark; // yön değişince sıfırdan say
-      // BAŞA DÖN OKU: aşağıdayken kaydırma sırasında beliren, durunca kaybolan ok
-      if (y > 500) {
+      // BAŞA DÖN OKU (kullanıcı: "aşağı inerken çıkmasın, SADECE yukarı çıkmak istediğimde çıksın; rahatsız ediyor"):
+      // aşağıdayken (y>500) VE YUKARI kaydırıyorken (fark<0 = başa dönmek istiyor) göster; AŞAĞI kaydırıyorken ya da
+      // üstteyken (y<=500) gizle; kaydırma durunca kısa süre sonra kendiliğinden kaybol.
+      if (y > 500 && fark < -3) {
         setYukariOk(true);
         clearTimeout(yukariOkZmnRef.current);
-        yukariOkZmnRef.current = setTimeout(() => setYukariOk(false), 2200);
-      } else setYukariOk(false);
+        yukariOkZmnRef.current = setTimeout(() => setYukariOk(false), 2600);
+      } else if (fark > 3 || y <= 500) {
+        setYukariOk(false); clearTimeout(yukariOkZmnRef.current);
+      }
       if (y < 50) { setTabGizli(false); birikim = 0; return; }        // en üstteyken hep görünür
       if (birikim > 26) setTabGizli(true);
       else if (birikim < -26) setTabGizli(false);
