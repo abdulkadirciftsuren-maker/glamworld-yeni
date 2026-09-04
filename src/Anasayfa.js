@@ -718,6 +718,17 @@ function SeritSaat({ tz }) {
   useEffect(() => saatAbone(setNow), []);
   return <span className="serit-saat notranslate" translate="no">{seritSaat(tz, now)}</span>;
 }
+// ⚡ PARLAMA ÖNLEME (B216): Çevrimiçi sayacı KENDİ küçük bileşeninde — 6 sn'de bir SADECE bu rakam
+// yenilenir, ana sayfa (12.000 satır) çizilmez. Eskiden ana `cevrim` state'i 6 sn'de bir tüm sayfayı
+// çizip titremeye/kesilmeye katkı yapıyordu.
+function SeritCevrim({ dil }) {
+  const [c, setC] = useState(823450);
+  useEffect(() => {
+    const id = setInterval(() => setC((x) => Math.max(700000, x + Math.round((Math.random() - 0.45) * 900))), 6000);
+    return () => clearInterval(id);
+  }, []);
+  return <b translate="no" className="notranslate"><u className="ist-nokta" />{c.toLocaleString(dil || "tr")}</b>;
+}
 
 // HARİTA DÖNDÜRME: leaflet-rotate artık import ile GÖMÜLÜ (her zaman yüklü) → anında hazır.
 function leafletRotateYukle() { return Promise.resolve(); }
@@ -2555,12 +2566,9 @@ export default function Anasayfa({ pro = false }) {
     window.addEventListener("touchmove", dokunHar, { passive: true });
     return () => { if (el) el.removeEventListener("scroll", scr); window.removeEventListener("wheel", wheel); window.removeEventListener("touchstart", dokunBas); window.removeEventListener("touchmove", dokunHar); };
   }, [araAcik]);
-  // Çevrimiçi sayacı — canlı nefes alır (hafifçe oynar)
-  const [cevrim, setCevrim] = useState(823450); // yüz binlerde çevrimiçi (kullanıcı isteği)
-  useEffect(() => {
-    const id = setInterval(() => setCevrim((c) => Math.max(700000, c + Math.round((Math.random() - 0.45) * 900))), 6000);
-    return () => clearInterval(id);
-  }, []);
+  // Çevrimiçi sayacı — canlı nefes alır (hafifçe oynar). B216: state + interval ANA bileşenden ALINDI ->
+  // ayri <SeritCevrim/> bilesenine tasindi (izole saat kalibi). Boylece 6 sn'lik guncelleme TUM sayfayi
+  // degil sadece o kucuk rakami yeniden cizer -> titreme/kesilme azalir (kullanici: mesajlarda parlayinca kesiyor).
   const [aktifKod, setAktifKod] = useState("home");
 
   // Kullanıcı CANLI takip edilir — giriş çözülünce/foto gelince ekran güncellenir (yoksa foto boş kalıyordu).
@@ -8721,7 +8729,7 @@ export default function Anasayfa({ pro = false }) {
                 <button className="ara-mini" onClick={() => setAraAcik(true)} aria-label={t("anaAraPh")}>{Ikon.ara}<span>{t("tabAra", "Ara")}</span></button>
                 <span className="ist-grup">
                   <span className="ist i3"><b translate="no" className="notranslate"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" /></svg>4.9</b><i>{t("istPuan", "Puan")}</i></span>
-                  <span className="ist i4"><b translate="no" className="notranslate"><u className="ist-nokta" />{cevrim.toLocaleString(dil || "tr")}</b><i>{t("istCevrim", "Çevrimiçi")}</i></span>
+                  <span className="ist i4"><SeritCevrim dil={dil} /><i>{t("istCevrim", "Çevrimiçi")}</i></span>
                 </span>
               </div>
             ) : (
