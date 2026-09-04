@@ -490,7 +490,7 @@ const CIP_RENK = ["linear-gradient(135deg,#4a86d8,#2c5aa8)", "linear-gradient(13
 // Trend etiketine YAZIYA GÖRE ikon (kullanıcı: "doğa ikonu, huzur ikonu yanına"). Bilinmeyende 🔥.
 const TREND_IK = { doğa:"🌿", doga:"🌿", huzur:"🕊️", göl:"🏞️", gol:"🏞️", deniz:"🌊", orman:"🌲", ağaç:"🌳", çiçek:"🌸", kuş:"🐦", güneş:"☀️", gökyüzü:"☁️", bulut:"☁️", kahve:"☕", yemek:"🍽️", spor:"⚽", müzik:"🎵", dans:"💃", seyahat:"✈️", moda:"👗", saç:"💇", makyaj:"💄", tırnak:"💅", araba:"🚗", ev:"🏠", köpek:"🐕", kedi:"🐈", aşk:"❤️", kalp:"❤️", para:"💰", iş:"💼", yazılım:"💻", yazılımcı:"💻", kod:"💻", almanya:"🇩🇪", bavyera:"🏰", bayern:"🏰", bavaria:"🏰", istanbul:"🕌", tatil:"🏖️", ilham:"✨", gloxorg:"💎", glox:"💎", kutlama:"🎉", açılış:"🎉", berber:"💈", kuaför:"✂️" };
 function trendIk(h) { const k = String(h || "").replace(/^#/, "").toLowerCase(); for (const key in TREND_IK) { if (k.indexOf(key) !== -1) return TREND_IK[key]; } return "🔥"; }
-const DERINLIK_PARCALAR = Array.from({ length: 30 }, (_, i) => {
+const DERINLIK_PARCALAR = Array.from({ length: 12 }, (_, i) => { // B215: 30->12 (arka plan tanecikleri; surekli animasyon telefonda titremeyi/repaint yukunu artiriyordu; 12 yeterince canli, cok daha hafif)
   const sure = 18 + Math.random() * 16;            // YAVAŞ (18-34sn)
   return {
     sol: Math.round(Math.random() * 100),

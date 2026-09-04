@@ -32,7 +32,7 @@
 /* Bir pencere/panel AÇIKKEN arka plandaki HAREKETLİ öğeleri (kayan piyasa şeridi, başlık parıltısı, arka foto) DONDUR
    → altta oynayan/kayan şey bulanık pencereye "parıltı gibi vurmaz" (kullanıcı: "pencere açıksa altından parıltılı üste vuruyor"). */
 .ana-kok.pencere-acik .ana-serit-sar *, .ana-kok.pencere-acik .ana-header, .ana-kok.pencere-acik .ana-header *, .ana-kok.pencere-acik .ana-arka-foto,
-.ana-kok.pencere-acik .ana-nav, .ana-kok.pencere-acik .ana-nav *{ animation-play-state:paused !important; } /* nav ikonları da DONAR (canlı animasyon arkadan parlamasın) */
+.ana-kok.pencere-acik .ana-nav, .ana-kok.pencere-acik .ana-nav *, .ana-kok.pencere-acik .prc{ animation-play-state:paused !important; } /* nav ikonları da DONAR (canlı animasyon arkadan parlamasın). B215: TANECIKLER (.prc) de DURSUN — pencere/sohbet açıkken opak pencerenin arkasında boşuna dönüp VIDEO katmanını titretiyorlardı (kullanıcı: Glome mesajlarda video varken parlama). */
 /* PARLAMA KESİN ÇÖZÜM (GÜÇLENDİRİLMİŞ): Bir pencere AÇIKKEN arka plandaki TÜM feed'i (akış + hikâye/Makara şeridi) KOMPLE gizle.
    Neden: yalnız videoyu gizlemek yetmiyordu — pencere fade ile açılırken veya yarı saydam zeminlerde arkadaki içerik (video karesi
    dahil) hâlâ vuruyordu (parlama). Artık arka feed KAPSAYICISI tamamen visibility:hidden → arkada gösterecek HİÇBİR ŞEY kalmaz,
