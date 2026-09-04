@@ -1606,7 +1606,10 @@
 .ana-nav-kutu{
   position:relative; width:37px; height:37px; border-radius:10px;
   display:flex; align-items:center; justify-content:center;
-  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+  /* backdrop-filter:blur(12px) KALDIRILDI (B214): kutularin rengi zaten alttaki nth-child OPAK gradyanlardan
+     geliyor -> blur GORUNMUYOR (opak rengin arkasinda) ama telefon HER KARE bosuna yeniden bulaniklastiriyordu.
+     Bu, sayfanin surekli yeniden cizilip TITREMESININ (kullanici: "sayfa kesilip gidip geliyor") en buyuk sebebiydi.
+     Kaldirilinca gorunum AYNEN kaldi (renk/cerceve/parlaklik/hareket ayni), sadece bosa giden GPU yuku gitti. */
   border:1.5px solid rgba(184,134,11,.5); transition:all .2s;
   box-shadow:0 5px 14px rgba(120,95,30,.22);
 }
