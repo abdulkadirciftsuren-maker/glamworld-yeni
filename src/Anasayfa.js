@@ -11219,8 +11219,9 @@ export default function Anasayfa({ pro = false }) {
         </button>
       )}
 
-      {/* GLOXORG YARDIMCISI — sağ-alt yapay zeka sohbet balonu (gerçek Claude) */}
-      {!uyeSayfa && !paylasAcik && !duzenAcik && !yardimciAcik && !maskotTanit && (
+      {/* GLOXORG YARDIMCISI — sağ-alt yapay zeka sohbet balonu (gerçek Claude).
+          B218: Sanal Ayna (aktifKod==="ayna") sayfasında GİZLİ — kullanıcı: "aynada Gloxoo çıkmasın, butonların üstünü kapatıyor". */}
+      {!uyeSayfa && !paylasAcik && !duzenAcik && !yardimciAcik && !maskotTanit && aktifKod !== "ayna" && (
         <div ref={balonRef} className={"ai-balon-sar" + (tamFoto ? " ust" : "") + (maskotMini ? " mini-aktif" : "")} style={balonYer ? { left: balonYer.x, top: balonYer.y, right: "auto", bottom: "auto" } : undefined}
           onPointerDown={balonBas} onPointerMove={balonGit} onPointerUp={balonBitir} onPointerCancel={balonBitir}>
           {/* KÜÇÜKKEN KONUŞURKEN: üstte küçük konuşma balonu (istek: ufakken de konuşunca balon çıksın) */}
