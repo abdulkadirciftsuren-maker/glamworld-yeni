@@ -27,7 +27,7 @@ const SAC_RENK = ["Siyah", "Koyu Kahve", "Kahve", "Kumral", "Sarı", "Bal Köpü
 const GENEL_RENK = ["Siyah", "Beyaz", "Kırmızı", "Mavi", "Lacivert", "Yeşil", "Pembe", "Mor", "Sarı", "Turuncu", "Kahve", "Bej", "Gri", "Altın", "Gümüş"];
 // Renk çipini İSİM yerine GERÇEK RENK göstermek için (kullanıcı: "renk isimlerini kaldır, renk yap"). Kare kutu (yuvarlak YOK).
 const RENK_HEX = { "Siyah": "#141414", "Koyu Kahve": "#3b2416", "Kahve": "#6b4423", "Kumral": "#a86a3d", "Sarı": "#e6c15a", "Bal Köpüğü": "#e2b878", "Kızıl": "#b5462a", "Bakır": "#b87333", "Platin Sarı": "#ece2c0", "Gri / Gümüş": "#bcc0c4", "Mavi": "#3a6fd0", "Pembe": "#e58bb0", "Beyaz": "#fafafa", "Kırmızı": "#d63333", "Lacivert": "#1f2a55", "Yeşil": "#2e9e5b", "Mor": "#7a4fd0", "Turuncu": "#e8792a", "Bej": "#e3d1a8", "Gri": "#9aa0a6", "Altın": "#d4af37", "Gümüş": "#c8ccd0" };
-function renkGetir(kategori) { if (kategori === "sac") return SAC_RENK; if (kategori === "makyaj") return []; return GENEL_RENK; }
+function renkGetir(kategori) { if (kategori === "sac") return SAC_RENK; if (kategori === "makyaj" || kategori === "kirpik") return []; return GENEL_RENK; }
 // ⛔ ESKİ DAMGAYI KAPAT (kullanıcı: "yüklediğim fotoğrafta eski GLOXORG varsa silmiyor, ikincisini yapıştırıyor → çift"):
 // Yapay zekâya VERMEDEN önce fotoğrafın SAĞ-ALT köşesini arka plan rengiyle kapatırız → AI kopyalayacak eski damga GÖRMEZ → sonuç temiz çıkar.
 function kosevKapat(dataUrl) {
@@ -64,8 +64,12 @@ const ELBISE_KISI = {
 const ONERILER = {
   makyaj: ["Doğal Makyaj", "Smokey Göz", "Gündüz Makyajı", "Gece Makyajı", "Gelin Makyajı", "Işıltılı Ten"],
   tirnak: ["Fransız Tırnak", "Ombre Tırnak", "Kırmızı Oje", "Nude Ton", "Gliter", "Kedi Gözü", "Mat Siyah", "Çiçek Desen"],
+  kirpik: ["Doğal Kirpik", "Hacimli Kirpik", "Uzun Kirpik", "İpek Kirpik", "Kedi Gözü Kirpik", "Manga Kirpik"],
   ayakkabi: ["Spor Ayakkabı", "Klasik Ayakkabı", "Topuklu", "Bot", "Sandalet", "Loafer"],
   canta: ["El Çantası", "Sırt Çantası", "Omuz Çantası", "Cüzdan", "Spor Çanta"],
+  taki: ["Kolye", "Küpe", "Yüzük", "Bilezik", "Halhal", "Set Takı"],
+  gozluk: ["Güneş Gözlüğü", "Optik Gözlük", "Kedi Gözü Çerçeve", "Aviator", "Yuvarlak Çerçeve", "Şeffaf Çerçeve"],
+  saat: ["Klasik Saat", "Spor Saat", "Akıllı Saat", "Altın Saat", "Deri Kordon", "Metal Kordon"],
   aksesuar: ["Kolye", "Küpe", "Kol Saati", "Güneş Gözlüğü", "Şapka", "Kravat"],
 };
 function oneriGetir(kategori, kisi) {
@@ -78,16 +82,21 @@ const KATEGORI_ISTEM = {
   sac: { ne: "hairstyle", koru: "Keep the SAME person, SAME face and identity; change ONLY the hairstyle/beard. Do not change the face." },
   makyaj: { ne: "makeup look", koru: "Keep the SAME person and face; change ONLY the makeup." },
   tirnak: { ne: "nail design", koru: "Keep the SAME person and hands; change ONLY the nails." },
+  kirpik: { ne: "eyelash look", koru: "Keep the SAME person and face; change ONLY the eyelashes (fuller/longer lashes). Do not change the face." },
   elbise: { ne: "outfit / clothing", koru: "Dress the SAME person in this outfit; keep their face and identity; show them fully wearing it." },
   ayakkabi: { ne: "pair of shoes", koru: "Show the SAME person wearing these shoes; keep their face and body." },
   canta: { ne: "bag", koru: "Show the SAME person holding/carrying this bag; keep their face and body." },
+  taki: { ne: "jewelry", koru: "Add this jewelry (necklace/earrings/ring/bracelet) to the SAME person; keep their face and identity." },
+  gozluk: { ne: "glasses / eyewear", koru: "Put these glasses on the SAME person's face; keep their face and identity." },
+  saat: { ne: "wristwatch", koru: "Show the SAME person wearing this wristwatch on the wrist; keep their face and body." },
   aksesuar: { ne: "accessory", koru: "Add this accessory to the SAME person; keep their face and identity." },
 };
 const KATEGORILER = [
-  { k: "sac", ik: "💇", ck: "saSac", ad: "Saç" }, { k: "makyaj", ik: "💄", ck: "saMakyaj", ad: "Makyaj" },
-  { k: "tirnak", ik: "💅", ck: "saTirnak", ad: "Tırnak" }, { k: "elbise", ik: "👕", ck: "saElbise", ad: "Kıyafet" },
+  { k: "elbise", ik: "👗", ck: "saElbise", ad: "Kıyafet" }, { k: "sac", ik: "💇", ck: "saSac", ad: "Saç" },
+  { k: "makyaj", ik: "💄", ck: "saMakyaj", ad: "Makyaj" }, { k: "tirnak", ik: "💅", ck: "saTirnak", ad: "Tırnak" },
+  { k: "kirpik", ik: "👁️", ck: "saKirpik", ad: "Kirpik" }, { k: "taki", ik: "💍", ck: "saTaki", ad: "Takı" },
   { k: "ayakkabi", ik: "👟", ck: "saAyakkabi", ad: "Ayakkabı" }, { k: "canta", ik: "👜", ck: "saCanta", ad: "Çanta" },
-  { k: "aksesuar", ik: "⌚", ck: "saAksesuar", ad: "Aksesuar" },
+  { k: "gozluk", ik: "🕶️", ck: "saGozluk", ad: "Gözlük" }, { k: "saat", ik: "⌚", ck: "saSaat", ad: "Saat" },
 ];
 
 // KAYAN ŞERİT — tek satırlık yatay şerit: HEM kendiliğinden yavaşça yürür HEM parmakla sağa-sola çekilir.
@@ -426,7 +435,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
           </div>
         )}
         <div className="sa-kaydir">
-          <div className="sa-alt">{t("saAlt", "Kendi fotoğrafında saç, tırnak veya makyaj modeli dene. Fotoğrafını yükle, modeli yaz ya da seç; Gloxoo senin üstünde göstersin.")}</div>
+          <div className="sa-alt">{t("saAlt", "Kendi fotoğrafında dene: saç, makyaj, tırnak, kirpik, kıyafet, takı, ayakkabı, çanta, gözlük, saat. Fotoğrafını ekle, ne denemek istediğini seç; Gloxoo senin üstünde göstersin.")}</div>
 
           {/* Reklamdan gelindiyse: DENENEN ÜRÜN önizlemesi */}
           {baslangic && baslangic.refFotoUrl && (
@@ -497,13 +506,16 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                 ))}
               </KayanSerit>
 
-              {/* 2) KATEGORİ — TEK ŞERİT */}
+              {/* 2) KATEGORİ — temiz GRID (kart düzeni): ikon üstte, ad altta; seçili kartın çerçevesi belirgin */}
               <div className="sa-kim-bas" style={{ marginTop: 8 }}>{t("saNeDenensin", "Ne denensin?")}</div>
-              <KayanSerit className="sa-kat-serit">
+              <div className="sa-kat-grid">
                 {KATEGORILER.map((kt) => (
-                  <button key={kt.k} className={"sa-kat" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>{kt.ik} {t(kt.ck, kt.ad)}</button>
+                  <button key={kt.k} className={"sa-kat-kart" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>
+                    <span className="sa-kat-ik">{kt.ik}</span>
+                    <span className="sa-kat-ad">{t(kt.ck, kt.ad)}</span>
+                  </button>
                 ))}
-              </KayanSerit>
+              </div>
 
               {/* 3) MODEL — öneri çipleri TEK ŞERİT + yaz */}
               {oneri.length > 0 && (
