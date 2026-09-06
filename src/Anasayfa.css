@@ -5236,14 +5236,33 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-kat-satir{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 10px; }
 .sa-kat{ flex:1 1 28%; min-width:92px; padding:11px 6px; border-radius:12px; border:2px solid rgba(160,120,0,.5); background:#fffbe9; color:#7a5a00; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit; }
 .sa-kat.sec{ background:linear-gradient(120deg,#FFD86B,#F2B705); border-color:#7a5a00; color:#4a3500; box-shadow:0 3px 10px rgba(120,90,0,.3); }
-/* KATEGORİ — temiz GRID (kart düzeni), 5 sütun. Krem kart; SEÇİLİ kartın çerçevesi koyu (premium). Yazı KESİLMEZ, satıra kayar. */
-.sa-kat-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin:8px 0 14px; }
-.sa-kat-kart{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:10px 3px 8px; border-radius:14px; border:1.5px solid #ecdcb0; background:#fffdf6; cursor:pointer; font-family:inherit; box-shadow:0 2px 7px rgba(120,95,30,.08); transition:border-color .12s, box-shadow .12s, background .12s; }
-.sa-kat-ik{ font-size:22px; line-height:1; }
-.sa-kat-ad{ font-size:11px; font-weight:800; color:#3a3320; text-align:center; line-height:1.15; white-space:normal; word-break:keep-all; }
-.sa-kat-kart.sec{ border:2px solid #1a1a1a; background:linear-gradient(150deg,#fff7df,#ffe9a8); box-shadow:0 4px 12px rgba(0,0,0,.18); }
-.sa-kat-kart.sec .sa-kat-ad{ color:#1a1a1a; font-weight:900; }
-@media (min-width:560px){ .sa-kat-ik{ font-size:28px; } .sa-kat-ad{ font-size:14px; } .sa-kat-kart{ padding:14px 4px 11px; } }
+/* SİHİRBAZ ADIM ÇUBUĞU (Photta gibi): "Adım 1/3" + koyu ilerleme çizgisi */
+.sa-adim-bar{ display:flex; align-items:center; gap:9px; margin:2px 0 14px; }
+.sa-adim-no{ font-size:12.5px; font-weight:900; color:#1a1a1a; white-space:nowrap; }
+.sa-adim-cizgi{ flex:1; height:6px; border-radius:4px; background:#e6d6ac; overflow:hidden; }
+.sa-adim-cizgi i{ display:block; height:100%; background:#1a1a1a; border-radius:4px; transition:width .25s ease; }
+/* Adım geç/geri düğmeleri */
+.sa-adim-cta{ display:flex; gap:9px; margin-top:16px; }
+.sa-geri{ width:54px; flex:0 0 auto; border-radius:14px; border:1.5px solid #cbb262; background:#fffdf6; color:#6a4e10; font-size:20px; font-weight:900; cursor:pointer; font-family:inherit; }
+.sa-geri:active{ transform:scale(.97); }
+.sa-ileri{ flex:1; border:none; border-radius:14px; background:#1a1a1a; color:#ffe4a0; font-size:16.5px; font-weight:900; padding:15px; cursor:pointer; font-family:inherit; box-shadow:0 7px 18px rgba(0,0,0,.28); }
+.sa-ileri:disabled{ opacity:.55; box-shadow:none; }
+.sa-ileri:active{ transform:scale(.98); }
+.sa-dene-adim{ flex:1; margin-top:0; }
+/* KATEGORİ — resimli KART GRID (3 sütun). Üstte görsel (gerçek foto hazır olunca oraya img gelir), altta ad. SEÇİLİ = koyu çerçeve + koyu ad şeridi (Photta). */
+.sa-kat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin:8px 0 4px; }
+.sa-kat-kart{ display:flex; flex-direction:column; padding:0; border-radius:15px; overflow:hidden; border:1.5px solid #ecdcb0; background:#fffdf6; cursor:pointer; font-family:inherit; box-shadow:0 2px 7px rgba(120,95,30,.1); transition:border-color .12s, box-shadow .12s; }
+.sa-kat-gorsel{ height:80px; display:flex; align-items:center; justify-content:center; font-size:36px; }
+.sa-kat-ad{ padding:8px 4px; font-size:12.5px; font-weight:800; color:#2a2410; text-align:center; background:#fffdf6; line-height:1.15; white-space:normal; word-break:keep-all; }
+.sa-kat-kart.sec{ border:2.5px solid #1a1a1a; box-shadow:0 5px 13px rgba(0,0,0,.2); }
+.sa-kat-kart.sec .sa-kat-ad{ background:#1a1a1a; color:#ffe9a8; font-weight:900; }
+/* ÖNCE / SONRA karşılaştırma (sonuç ekranı) */
+.sa-os{ display:flex; gap:8px; margin:2px 0 4px; }
+.sa-os-k{ flex:1; position:relative; border-radius:16px; overflow:hidden; border:1.5px solid #e6cf87; background:#f3e8c8; cursor:zoom-in; }
+.sa-os-k img{ display:block; width:100%; height:100%; object-fit:cover; }
+.sa-os-et{ position:absolute; left:0; right:0; bottom:0; text-align:center; font-size:11.5px; font-weight:900; color:#fff; background:rgba(26,26,26,.72); padding:5px 4px; letter-spacing:.5px; }
+.sa-os-sonra{ background:rgba(180,130,10,.85); }
+@media (min-width:560px){ .sa-kat-gorsel{ height:104px; font-size:44px; } .sa-kat-ad{ font-size:15px; } .sa-adim-no{ font-size:15px; } .sa-ileri{ font-size:19px; } }
 .sa-oneri{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
 .sa-cip{ padding:8px 12px; border-radius:20px; border:1.5px solid rgba(160,120,0,.5); background:#fffbe9; color:#6a4e10; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
 .sa-cip.sec{ background:#7a5a00; color:#ffe9a8; border-color:#7a5a00; }
