@@ -104,10 +104,12 @@
     <!-- Sosyal giriş yükleme ekranı (varsayılan gizli) -->
     <div id="gw-yuk"><div class="gw-k"><div class="gw-h"></div><div class="gw-m" id="gw-yuk-m"></div></div></div>
     <div id="root"></div>
-    <!-- ÜST & ALT CAM-ALTIN ŞERİT (SADECE kurulu uygulama modunda görünür; normal tarayıcıda gizli).
-         Telefonun durum/tuş çubuğu bölgesini (güvenli-alan) şeffaf cam + hafif altın tozuyla kaplar.
-         pointer-events:none → dokunmayı ASLA engellemez. z-index:1400 → hikâye/reels/medya pencereleri (1500+) ÜSTÜNE biner (tam ekran medyada altın çıkmaz). -->
-    <div class="gw-cam-serit gw-cam-ust"></div>
+    <!-- ALT CAM-ALTIN ŞERİT (SADECE kurulu uygulama modunda görünür; normal tarayıcıda gizli).
+         Telefonun ALT tuş çubuğu bölgesini (güvenli-alan) şeffaf cam + hafif altın tozuyla kaplar.
+         pointer-events:none → dokunmayı ASLA engellemez. z-index:1400 → hikâye/reels/medya pencereleri (1500+) ÜSTÜNE biner.
+         NOT (B217): ÜST şerit (.gw-cam-ust) KALDIRILDI — kullanıcı "para değerler şeridinin üstünde sarı şeffaf bir perde
+         kalıyor, kaldır" dedi. Üst durum çubuğu rengi zaten theme-color (#ecd9a0 altın) ile veriliyor; ekstra üst şerit
+         gereksizdi ve şeridin üstüne biniyordu. Siyah OLMAZ (üst OS durum çubuğu altın kalır). -->
     <div class="gw-cam-serit gw-cam-alt"></div>
     <script>
       /* Sosyal giriş sürerken (bayrak varsa) yükleme ekranını HEMEN göster —
