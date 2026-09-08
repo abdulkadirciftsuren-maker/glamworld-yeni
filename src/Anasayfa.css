@@ -882,9 +882,20 @@
    ⛔ ARKA PLAN ALTIN (şeffaf DEĞİL): video ilk kare boyanana kadar boş kutu LACİVERT değil ALTIN görünsün (anayasa: siyah/lacivert boş zemin YOK). */
 .apr-medya.video{ aspect-ratio:3/4; padding:0; background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); }
 .apr-medya.video video{ width:100%; height:100%; object-fit:cover; display:block; }
-/* ⛔ VİDEO KAYDIRIRKEN/YÜKLENİRKEN KESİLMESİN (kullanıcı: "video yüklenince kesikmeler, alttaki Glome görünüyor"):
-   videoyu KENDİ GPU KATMANINA al → kaydırma/yükleme sırasında yeniden çizilmez, arkadaki sayfa sızmaz/parlamaz. */
-.apr-medya.video video, .ai-msj-video, .apf-pay-vid, .apf-pay-vid video{ transform:translateZ(0); backface-visibility:hidden; }
+/* ⛔ DONANIM VİDEO OVERLAY PARLAMASI — KESİN TEŞHİS (kullanıcı: "EKRAN KAYDI alırken parlama/kesilme YOK,
+   kaydı durdurunca gene başlıyor"). Bu, klasik Android "hardware video overlay" sorunudur: video ayrı bir
+   DONANIM katmanında oynar; sayfa güncellenince üstteki/yanındaki arayüz (profil şeridi) ile senkron kaybedip
+   TİTRER/kesilir, bazen içerik düşüp altın zemin ("sarı pencere") görünür. Ekran kaydı overlay'i kapattığı için
+   kayıtta parlama durur. ÇÖZÜM: TÜM videoları overlay yerine KENDİ GPU DOKU (texture) katmanına ZORLA →
+   senkron kopmaz, titreme/kesilme biter, profil şeridi sabitlenir, "sarı pencere" düşmesi olmaz.
+   translate3d + will-change + backface + perspective birlikte overlay'i kesin devre dışı bırakır. */
+video{
+  transform:translate3d(0,0,0) !important; -webkit-transform:translate3d(0,0,0) !important;
+  will-change:transform; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  -webkit-perspective:1000; perspective:1000;
+}
+/* Videoyu saran kutular da kendi katmanında dursun → overlay üsttekini titretmez */
+.apr-medya.video, .ai-msj-video, .apf-pay-vid, .ana-post-medya{ transform:translateZ(0); }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
 .apr-medya.video .apr-yazan{ background:transparent; }
 .apr-medya.video .apr-alt{ background:transparent; }
