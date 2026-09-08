@@ -862,7 +862,7 @@
    Her cihaz AYRI en-boy: telefon dikey=16/10, telefon yatay=2/1, iPad=16/9, notebook/geniş=16/9. */
 /* ENLİ (yatay) foto: üst/alt ALTIN şerit → profil+isim ÜSTTE, açıklama+amblem ALTTA (fotoğrafın DIŞINDA); foto ortada */
 .apr-medya{ position:relative; box-sizing:border-box; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; border-radius:0; min-height:230px; padding:0;
-  background:radial-gradient(circle at 50% 44%, #a4863c, #6f5a2b); } /* foto ORTALI (kullanıcı: enli fotoğrafı ortala) */
+  background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); } /* foto ORTALI + arka PARLAK ALTIN (koyu kahve kaldırıldı → kaydırırken medya bir an çizilirken koyu parlama yapmaz) */
 .apr-medya img{ width:100%; height:auto; display:block; }
 /* FOTO/VIDEO RENGİ TÜM CİHAZLARDA BİREBİR AYNI — hiçbir filtre/ton/karışım yok (telefon=iPad=notebook=bilgisayar) */
 .apr-medya img, .apr-medya video, .tamfoto-img, .tf-vid-sar video{ filter:none !important; -webkit-filter:none !important; mix-blend-mode:normal !important; image-rendering:auto; opacity:1 !important; }
@@ -880,7 +880,7 @@
 .apr-medya:not(.uzun):not(.video) img{ width:100%; height:auto; display:block; }
 /* TELEFON: video NORMAL (3/4) — telefona dokunma; doğal/yatay sadece bilgisayarda.
    ⛔ ARKA PLAN ALTIN (şeffaf DEĞİL): video ilk kare boyanana kadar boş kutu LACİVERT değil ALTIN görünsün (anayasa: siyah/lacivert boş zemin YOK). */
-.apr-medya.video{ aspect-ratio:3/4; padding:0; background:radial-gradient(circle at 50% 44%, #a4863c, #6f5a2b); }
+.apr-medya.video{ aspect-ratio:3/4; padding:0; background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); }
 .apr-medya.video video{ width:100%; height:100%; object-fit:cover; display:block; }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
 .apr-medya.video .apr-yazan{ background:transparent; }
@@ -3131,7 +3131,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .abm-temizle{ background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.35); color:#FFD700; font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:8px; cursor:pointer; margin-left:auto; }
 .abm-temizle:hover{ background:rgba(255,215,0,.2); }
 /* PROFİLİM video küçük resmi (poster) + ortada oynat pırlantası */
-.apf-pay-vid{ position:relative; overflow:hidden; background:#000; }
+.apf-pay-vid{ position:relative; overflow:hidden; background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); }
 .apf-pay-vid video{ width:100%; height:100%; object-fit:contain; }
 .apf-pay-oynat{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
 .apf-pay-oynat .gercek-pir{ width:26px; height:26px; filter:drop-shadow(0 1px 4px rgba(0,0,0,.8)); }
@@ -3654,7 +3654,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-foto-onizle img{ width:100%; height:100%; object-fit:cover; border-radius:11px; border:1.5px solid rgba(255,215,0,.55); }
 .ai-foto-onizle button{ position:absolute; top:-7px; right:-7px; width:21px; height:21px; border-radius:50%; border:1.5px solid #1a1206; background:#c0303d; color:#fff; font-size:11px; line-height:1; cursor:pointer; padding:0; }
 .ai-msj-foto{ display:block; max-width:190px; max-height:230px; width:auto; border-radius:11px; margin-bottom:6px; object-fit:cover; }
-.ai-msj-video{ display:block; max-width:240px; max-height:280px; width:100%; border-radius:11px; margin-bottom:6px; background:#000; }
+.ai-msj-video{ display:block; max-width:240px; max-height:280px; width:100%; border-radius:11px; margin-bottom:6px; background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); }
 .ai-msj-dosya{ display:inline-flex; align-items:center; gap:6px; margin-bottom:6px; padding:7px 11px; border-radius:10px; background:rgba(255,255,255,.12); border:1px solid rgba(255,215,0,.4); font-size:13px; }
 /* EKLE menüsü (tek düğme içinde foto/video/dosya) */
 .ai-ekle-sar{ position:relative; flex:none; }
@@ -3671,7 +3671,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .ai-ekle-oge:active{ transform:scale(.97); }
 /* EK önizleme (gönderilmeden önce video/dosya) */
 .ai-ek-onizle{ position:relative; align-self:flex-start; display:flex; align-items:center; gap:9px; margin:0 12px 6px; padding:8px 12px 8px 8px; max-width:80%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,215,0,.45); border-radius:12px; }
-.ai-ek-vid{ width:46px; height:46px; border-radius:9px; object-fit:cover; background:#000; flex:none; }
+.ai-ek-vid{ width:46px; height:46px; border-radius:9px; object-fit:cover; background:#e3c469; flex:none; }
 .ai-ek-ik{ font-size:26px; line-height:1; flex:none; }
 .ai-ek-ad{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:62vw; }
 .ai-ek-kaldir{ position:absolute; top:-7px; right:-7px; width:21px; height:21px; border-radius:50%; border:1.5px solid #1a1206; background:#c0303d; color:#fff; font-size:11px; line-height:1; cursor:pointer; padding:0; flex:none; }
