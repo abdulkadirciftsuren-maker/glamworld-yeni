@@ -3,6 +3,36 @@
 > Bu bölüm, oturumlar arası **süreklilik** için. Yeni gelen Code, sayfayı buradan TANIYARAK başlar; kullanıcıya
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
+---
+## 🔴🔴 EN ACİL — 8 Eyl 2026, KULLANICI ÇOK YORULDU/ÖFKELİ, ÖNCE BUNU YAP (onay: "yarın yaparız" dedi)
+
+### 1) PARLAMA / "SAYFA PARÇA PARÇA / YERİNDE DURMUYOR" — HÂLÂ ÇÖZÜLMEDİ (kullanıcının EN BÜYÜK derdi, diğer işleri aksatıyor)
+Kullanıcı 2 gün buna harcadı, "500 kez denediniz olmadı" diyor. **Kullanıcının KESİN 2 teşhisine GÜVEN (kendi buldu):**
+- **(A) EKRAN KAYDI alırken parlama/kesilme YOK; kaydı durdurunca gene başlıyor.** → Bu klasik **Android donanım video overlay / GPU compositing** sorunudur (video ayrı donanım katmanında; sayfa oynayınca üstteki arayüzle senkron kaybedip titriyor, bazen içerik düşüp koyu/boş ekran görünüyor). Ekran kaydı overlay'i kapattığı için kayıtta parlama durur.
+- **(B) 🔑 KÖK SORUN (kullanıcı birebir söyledi): "alt zemine bir SÜRÜ zemin rengi koydunuz, ESKİYİ SİLMEDEN — hangisi geleceği belli değil."** → Yani B221–B225'te YENİ altın zeminler EKLENDİ ama ESKİ koyu/mavi/siyah zeminler SİLİNMEDİ. Alt alta çakışan katmanlar var → telefon çizerken bazen biri bazen öteki görünüyor = "parça parça, bir mavi bir siyah bir altın." **ANAYASA KURALI ihlal edildi: "eskiyi SİL, yedekte bırakma."**
+
+**YARIN YAPILACAK — TEK TEMİZ GEÇİŞ (YENİ ZEMİN EKLEME! ESKİYİ SİL/ALTINA ÇEVİR):**
+- Uygulamadaki **TÜM koyu/mavi/siyah zeminleri tara ve altına çevir**, çakışan katman bırakma. Aranacak: `#000`, `#0…`, `#1[0-3]…`, `rgba(0,0,0`, koyu mavi (`#294a7d`,`#37455d`,`#1c2842`,`#0a1020`,`#0a1430`,`#0c1020`,`#12151d`), eski koyu kahve (`#6f5a2b`,`#a4863c`).
+- **HÂLÂ SİYAH KALAN dosyalar (bunlar 4. ekran görüntüsündeki siyahın kaynağı olabilir):** `src/Acilis.css` (açılış splash `#000` — logo animasyonu koyu üstünde, dikkatli: zemini altın yapınca logo görünürlüğü için yazı/çizgi renklerini de ayarla), `src/Giris.css`, `src/GirisYap.css`, `src/UyeOl.css` (giriş/üye ekranları koyu). ⚠️ Bu ekranlarda yazılar açık renk; zemini altın yapınca **yazıları koyuya çevir** yoksa okunmaz (giriş bozulmasın — test edilemez, dikkat).
+- `grep -nE "background[^;]*(#0|#1[0-3]|rgba\(0,0,0|294a7d|37455d)" src/*.css` ile tara, TEK TEK karar ver.
+- **B221–B225 özeti (yapıldı ama yetmedi çünkü eskiler silinmedi):** index.html html/body/#root + #gw-yuk mavi→altın; .ana-kok bg #37455d→#ecd39a; manifest bg mavi→altın; medya kutu arkası koyu kahve→altın; global `video{translate3d+will-change+backface+perspective}` (overlay→texture); pull-to-refresh kapatıldı (`html,body{overscroll-behavior:none}`); üst AI kartı 2sn animasyonu (aiTanitPop/Kay) kaldırıldı. Kullanıcı yine de "değişmedi" dedi → çakışan eski katmanlar yüzünden.
+- ⚠️ Kullanıcı **tarayıcıda (gloxorg.com)** deniyor (ekran görüntülerinde adres çubuğu var). Kurulu uygulamada (Play Store ikonu) davranış farklı/daha iyi olabilir — sor.
+- ⚠️ Her `gh-pages` deploy'da kullanıcının uygulaması **1 kez kendi kendine yenileniyor** (guvenliYenile) → o da parlama gibi görünüyor. **Gereksiz sık deploy YAPMA;** tek temiz geçişi hazırla, bir kere yayınla.
+
+### 2) SANAL AYNA ("Üstümde Dene") DÜZENİ — kullanıcının ÇİZDİĞİ (parlama bitince yap)
+Kullanıcı net tarif etti (1. adım):
+- **Fotoğraf satırı:** üç düğmeyi (**Modellerim + Fotoğraf çek + Galeriden seç**) fotoğrafın **SOLUNA, alt alta, İNCE** koy; Modellerim'i küçült (yukarıdan aşağı ince). Fotoğraf sağda büyük. Alttaki yer kaplayan "Fotoğraf çek/Galeriden seç" satırını kaldır (o üçe taşındı).
+- **"Kim için?"** (Bayan/Erkek/Kız/Erkek Çocuk/Bebek) düğmeleri **SABİT** yap (KayanSerit değil, kaymayan düzgün ızgara).
+- **Kategoriler (resimli kartlar) 1. SAYFADA** görünsün (müşteri ne seçtiğini görsün) → sonra "Devam". (Yani şu anki 3 adımlı sihirbaz: adım1'de foto+kim+kategori birlikte, adım2 model.)
+- Durum: B219 kategori grid + B220 sihirbaz (adım1 foto/kim, adım2 kategori, adım3 model) + önce/sonra yapıldı. Kullanıcı bu sihirbazı **beğenmedi** ("çok basit, Photta'dan bir şey koymadın"). Photta notları: adım adım sihirbaz + **resimli kartlar (gerçek fotoğraf)** + önce/sonra + ferah/siyah vurgu. Kullanıcı "sihirbaz + GERÇEK örnek resimler üret" dedi ama Code fotorealistik görsel üretemiyor → kartlar "resim yuvalı" yapıldı (gerçek foto gelince damlar).
+- Sonra: **sonuç ekranı** (satın al + paylaş + canlı manken) ve **PAYLAŞ sayfası** sadeleştirme (kullanıcı: "o tek sayfa karmaşasından çıkar, kolay yükleme").
+
+### 3) DAHA SONRA (kullanıcının eski istekleri, sıradaki)
+- Para kazanma: dene→beğen→SATIN AL (komisyon)→PAYLAŞ (viral) + kredi sistemi + satıcı B2B.
+- Play Store: 12 Gmail testçi + mağaza girişi (aşağıda detay).
+- Kamera ayna (selfie ters) düzeltmesi (aşağıda detay).
+---
+
 ## 📱 PLAY STORE (Android uygulaması) — DEVAM EDİYOR (19 Ağu 2026, kullanıcıyla adım adım)
 > Kullanıcı sayfayı Google Play'e uygulama olarak koymak istedi. PWABuilder (TWA) yolu seçildi. **BUGÜN YAPILANLAR:**
 > - ✅ **Manifest/hazırlık** (B185-B189): manifest link eklendi, .ico çıkarıldı, description İngilizce, açılış/şerit rengi mavi (#294a7d).
