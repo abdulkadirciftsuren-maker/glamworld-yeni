@@ -6,9 +6,9 @@
 .ana-arka-foto{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:-2; background-size:cover; background-position:center; pointer-events:none; }
 .ana-kok{
   position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; /* en üst/altta SIÇRAMA-parlama YOK */
-  /* Zemin ŞEFFAF — arka plan fotoğrafı ayrı SABİT katmanda (.ana-arka-foto).
-     Yedek renk AÇIK GECE MAVİSİ (derin) — kullanıcı seçti (sarıdan çıktı). */
-  background-color:#37455d;
+  /* ⛔ EN ALT YEDEK RENK ALTIN (kullanıcı: koyu/mavi istemiyorum; kaydırırken boşlukta bir an bu renk
+     görünüyor → koyu olunca "parlama/parça parça" gibi duruyordu). Altın olunca göze batmaz. */
+  background-color:#ecd39a;
   font-family:'Cormorant Garamond',serif; color:#2c2418;
   -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-tap-highlight-color:transparent;
   padding-bottom:96px;

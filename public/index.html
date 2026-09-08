@@ -48,21 +48,23 @@
     <title>GLOXORG</title>
     <style>
       /* Sayfa parmakla zoomlanmaz, fotograflar serbest.
-         İLK ZEMİN AÇIK GECE MAVİSİ (derin) — kullanıcı seçti; ortası aydınlık kenarı derin, düz boya değil. */
-      html, body, #root { touch-action: pan-x pan-y; background:radial-gradient(ellipse at 50% 22%, #3d63a0 0%, #294a7d 42%, #1a3560 72%, #142b4f 100%); }
+         ⛔ EN ALT ZEMİN ALTIN (kullanıcı: hiçbir yerde koyu/mavi istemiyorum). ÖNEMLİ: bu en arka katman,
+         telefon kaydırırken sayfanın boş bıraktığı yeri BİR AN bunu gösterir; koyu olunca "parlama/parça parça"
+         gibi görünüyordu. Altın olunca boşluk da altın → parlama/kesilme göze batmaz. */
+      html, body, #root { touch-action: pan-x pan-y; background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%); }
       img { touch-action: auto; }
       /* SOSYAL GİRİŞ YÜKLEME EKRANI — index.html'de (React'ten ÖNCE de görünür).
          Google/sosyal girişte sayfa bir an yeniden yüklenince BEYAZ flash olmasın diye,
          baştan sona TEK koyu ekran kalır. SADECE sosyal giriş bayrağı varsa gösterilir. */
-      /* AÇIK GECE MAVİSİ (derin) — sayfa zemini ile aynı, sıçrama olmasın. Yazı SABİT (yanıp sönme yok). */
+      /* ALTIN zemin — sayfa zemini ile aynı, sıçrama olmasın. Yazı SABİT (yanıp sönme yok). */
       #gw-yuk{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;
-        background:radial-gradient(ellipse at 50% 22%, #3d63a0 0%, #294a7d 42%, #1a3560 72%, #142b4f 100%);}
+        background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%);}
       #gw-yuk .gw-k{display:flex;flex-direction:column;align-items:center;gap:22px;}
       #gw-yuk .gw-h{width:54px;height:54px;border-radius:50%;
-        border:3px solid rgba(255,233,168,.28);border-top-color:#ffd700;border-right-color:#ffe9a8;
+        border:3px solid rgba(90,63,0,.22);border-top-color:#7a5a00;border-right-color:#b58a1e;
         animation:gwDon .8s linear infinite;}
       @keyframes gwDon{to{transform:rotate(360deg);}}
-      #gw-yuk .gw-m{font-family:Georgia,'Times New Roman',serif;color:#cfe0ff;font-size:17px;font-weight:700;
+      #gw-yuk .gw-m{font-family:Georgia,'Times New Roman',serif;color:#5a3f00;font-size:17px;font-weight:700;
         letter-spacing:.04em;text-align:center;max-width:80vw;}
       /* ===== ÜST/ALT CAM-ALTIN TOZU ŞERİT =====
          VARSAYILAN: GİZLİ (normal tarayıcı sekmesinde hiç görünmez → hiçbir şeyi bozmaz). */
