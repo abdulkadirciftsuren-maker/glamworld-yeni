@@ -1,4 +1,8 @@
 /* Scrollbar tum sayfada gizli (beyaz cizgi yok, mobil temiz) */
+/* ⛔ SAYFAYI SONUNA KADAR CEKINCE TARAYICI KENDI KENDINE YENILEMESIN (pull-to-refresh KAPALI):
+   kullanici "asagidan yukariya tam cekince ust taraf yukleme yapip patliyor, gidip geliyor" dedi.
+   overscroll-behavior:none -> tarayicinin ust/alt kenardaki YENILEME/zibirti hareketi TAMAMEN iptal. */
+html, body { overscroll-behavior: none; overscroll-behavior-y: none; }
 html {
   scrollbar-width: none;
   -ms-overflow-style: none;
