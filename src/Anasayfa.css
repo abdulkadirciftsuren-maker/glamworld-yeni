@@ -613,7 +613,8 @@
 /* Kaç hikâye var — sağ üst köşede UFAK ALTIN rozet (resim ikonu + sayı) */
 .hik-kart-sayac{ position:absolute; top:6px; right:6px; z-index:3; background:linear-gradient(180deg,#ffe680,#f0c419); color:#3a2c00; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:7px; box-shadow:0 1px 4px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); }
 /* GÖRÜNTÜLEYİCİ */
-.hik-fon{ position:fixed; inset:0; z-index:100050; background:radial-gradient(circle at 50% 50%, #6f5824, #3a2c10); display:flex; align-items:center; justify-content:center; animation:adFon .2s ease; }
+/* Story zemini/letterbox ALTIN (eski koyu kahve #6f5824/#3a2c10 SİLİNDİ — video letterbox'ı artık altın, koyu parlama yok) */
+.hik-fon{ position:fixed; inset:0; z-index:100050; background:radial-gradient(circle at 50% 42%, #f2e0a4, #ccaa52); display:flex; align-items:center; justify-content:center; animation:adFon .2s ease; }
 .hik-pencere{ position:relative; width:100%; height:100%; max-width:520px; display:flex; align-items:center; justify-content:center; overflow:hidden;
   background:
     radial-gradient(circle at 30% 22%, rgba(255,231,168,.6), transparent 60%),
@@ -631,8 +632,9 @@
 .hik-ilerle-satir{ position:absolute; top:max(8px,env(safe-area-inset-top)); left:8px; right:8px; z-index:5; display:flex; gap:4px; }
 .hik-ilerle{ flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,.35); overflow:hidden; }
 .hik-ilerle i{ display:block; height:100%; background:#fff; border-radius:3px; width:0; }
-.hik-ust{ position:absolute; top:calc(max(8px,env(safe-area-inset-top)) + 12px); left:12px; right:12px; z-index:6; display:flex; align-items:center; gap:9px; color:#fff; }
-.hik-ust-av{ width:36px; height:36px; border-radius:9px; overflow:hidden; background:#0d1b3a; display:flex; align-items:center; justify-content:center; font-weight:800; border:1.5px solid rgba(255,255,255,.75); flex:none; }
+/* Üst şerit (paylaşan avatarı+adı) KENDİ GPU KATMANINA sabitlendi → medya/video üstünde TİTREMEZ (kullanıcı: "paylaşanın fotoğrafı ve alttaki şerit çok titriyor") */
+.hik-ust{ position:absolute; top:calc(max(8px,env(safe-area-inset-top)) + 12px); left:12px; right:12px; z-index:6; display:flex; align-items:center; gap:9px; color:#fff; transform:translateZ(0); will-change:transform; }
+.hik-ust-av{ width:36px; height:36px; border-radius:9px; overflow:hidden; background:#caa64e; display:flex; align-items:center; justify-content:center; font-weight:800; border:1.5px solid rgba(255,255,255,.75); flex:none; }
 .hik-ust-av img{ width:100%; height:100%; object-fit:cover; } .hik-ust-av.amblem img{ object-fit:contain; }
 .hik-ust b{ font-size:14.5px; text-shadow:0 1px 3px rgba(0,0,0,.85); }
 .hik-ust i{ font-size:11px; opacity:.85; font-style:normal; text-shadow:0 1px 3px rgba(0,0,0,.85); }

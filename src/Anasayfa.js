@@ -12381,10 +12381,12 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {hikBildiri ? <div className="hik-toast">{hikBildiri}</div> : null}
             {oge.tip === "video"
-              ? <><video className="hik-medya-bg" src={videoSade(oge.url)} muted loop autoPlay playsInline aria-hidden="true" tabIndex={-1} />
-                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
+              /* ⛔ VIDEO'DA BULANIK ARKA KOPYA (ikinci <video>) KALDIRILDI: aynı video iki kez açılınca (biri blur'lu arka)
+                 telefon iki donanım video katmanı + ağır blur ile zorlanıp video yüklenince TİTRİYOR/parlıyor, alttaki
+                 görünüyordu (kullanıcı: "video yüklenince parlama, üstteki şerit titriyor"). Artık TEK video; letterbox ALTIN. */
+              ? <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
-                    onEnded={() => hikayeGec(1)} /></>
+                    onEnded={() => hikayeGec(1)} />
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
             {/* HİKÂYENİN ÜSTÜNDEKİ YAZILAR (paylaşırken konmuş yer/renk ile) */}
             {Array.isArray(oge.yazilar) && oge.yazilar.map((y, i) => (
@@ -12564,7 +12566,8 @@ export default function Anasayfa({ pro = false }) {
             {/* Medya önizleme + ÜSTÜNE SÜRÜKLENEBİLİR YAZILAR (istediğin yere koy) */}
             <div className="hik-duzen-medya" ref={hikMedyaRef} onPointerMove={hikYaziSurukleHareket} onPointerUp={hikYaziSurukleBit} onPointerLeave={hikYaziSurukleBit}>
               {hikTaslak.tip === "video"
-                ? <><video className="hik-medya-bg" src={hikTaslak.url} muted loop autoPlay playsInline aria-hidden="true" tabIndex={-1} /><video ref={hikOnizVidRef} className="hik-medya" src={hikTaslak.url} muted loop autoPlay playsInline crossOrigin="anonymous" /></>
+                /* Önizlemede de bulanık ARKA video kopyası KALDIRILDI (çift video = titreme); tek video, altın letterbox */
+                ? <video ref={hikOnizVidRef} className="hik-medya" src={hikTaslak.url} muted loop autoPlay playsInline crossOrigin="anonymous" />
                 : hikTaslak.tip === "yazi"
                 ? <div className="hik-yazi-zemin" style={{ background: "linear-gradient(160deg," + (hikTaslak.bg1 || "#7b3ff2") + "," + (hikTaslak.bg2 || "#b14bd8") + ")" }} />
                 : <><img className="hik-medya-bg" src={hikTaslak.url} alt="" aria-hidden="true" /><img className="hik-medya" src={hikTaslak.url} alt="" /></>}
