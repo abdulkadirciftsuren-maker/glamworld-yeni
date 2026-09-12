@@ -891,12 +891,9 @@
    kayıtta parlama durur. ÇÖZÜM: TÜM videoları overlay yerine KENDİ GPU DOKU (texture) katmanına ZORLA →
    senkron kopmaz, titreme/kesilme biter, profil şeridi sabitlenir, "sarı pencere" düşmesi olmaz.
    translate3d + will-change + backface + perspective birlikte overlay'i kesin devre dışı bırakır. */
-video{
-  transform:translate3d(0,0,0) !important; -webkit-transform:translate3d(0,0,0) !important;
-  will-change:transform; backface-visibility:hidden; -webkit-backface-visibility:hidden;
-  -webkit-perspective:1000; perspective:1000;
-  background:#e3c469; /* ⛔ video kenar boşluğu (letterbox) SİYAH değil ALTIN olsun (tam ekranda üst/alt siyah bant gitsin) */
-}
+/* NOT: Videoya zorla uygulanan GPU/overlay ayarlari (transform:translate3d + perspective + will-change + arka renk)
+   KALDIRILDI — bazi telefonlarda video GORUNTUSUNU bozuyordu (video sari/bos gorunup sadece ses geliyordu).
+   Video artik tarayicinin NORMAL sekilde ciziliyor (eski calisan hali). */
 /* Videoyu saran kutular da kendi katmanında dursun → overlay üsttekini titretmez */
 .apr-medya.video, .ai-msj-video, .apf-pay-vid, .ana-post-medya{ transform:translateZ(0); }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
@@ -1092,7 +1089,7 @@ video{
 /* TAM EKRAN VİDEO — orijinal en-boy (kırpma yok); NATIVE kontrol YOK, BİZE ÖZGÜ oynatıcı */
 .tf-vid-sar{ position:absolute; inset:0; z-index:1; display:flex; align-items:center; justify-content:center; }
 /* tam ekran VİDEO: TAMAMI görünür (contain) — kullanıcı: "yatayda video cover olunca ortası çıkıyor, hepsi çıkmıyor; videonun tümü görünsün" */
-.tamfoto-video{ width:100%; height:100%; object-fit:contain; background:#e3c469; } /* letterbox ALTIN (siyah bant yok) */
+.tamfoto-video{ width:100%; height:100%; object-fit:contain; background:transparent; }
 /* ortadaki büyük PIRLANTA oynat (duraklatınca görünür) */
 .tf-vid-buyuk{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:3; width:62px; height:62px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;
   background:transparent; box-shadow:inset 0 0 0 2px rgba(255,215,0,.7); }

@@ -8013,8 +8013,7 @@ export default function Anasayfa({ pro = false }) {
     if (ustPencereVar) { [...feedVids, ...seritVids].forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
     // PENCERE KAPANDI → hikâye şeridi videoları TEKRAR CANLI oynasın (küçük kapak, hep görünür).
     // Kullanıcı: "menü/sayfa açıp kapatınca ana sayfaya dönünce hikâye ve videolar duruyor, canlı değil" — burada yeniden başlatılır.
-    // Story şeridi (.hik-serit) artık DURAĞAN (kapak resmi) → otomatik oynatMA (parlamasın). Sadece Makara (reels) şeridi oynar.
-    Array.from(document.querySelectorAll(".reels-serit video")).forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
+    seritVids.forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
     if (!feedVids.length) return;
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
@@ -8867,11 +8866,7 @@ export default function Anasayfa({ pro = false }) {
                   <button className="hik-kart" key={g.uid} onClick={() => hikayeAc(gi)}>
                     <span className="hik-kart-medyasar">
                       {kapak.tip === "video"
-                        /* ŞERİT ÖNİZLEMESİ DURAĞAN (Instagram gibi): otomatik oynayan video YERİNE kapak RESMİ → şerit ekrana gelince
-                           birçok video aynı anda yüklenip parlamıyor. Kapak yoksa video ilk karesi (oynatMA — sadece duran kare). */
-                        ? (kapak.poster
-                            ? <img className="hik-kart-medya" src={kapak.poster} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />
-                            : <video className="hik-kart-medya" src={videoSade(kapak.url)} muted playsInline preload="metadata" tabIndex={-1} onLoadedMetadata={hikKapakYon} />)
+                        ? (<video className="hik-kart-medya" src={videoSade(kapak.url)} muted loop autoPlay playsInline preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} onLoadedMetadata={hikKapakYon} />)
                         : (<img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />)}
                     </span>
                     {g.ogeler.length > 1 && <span className="hik-kart-sayac" aria-label={g.ogeler.length + " hikâye"}>🖼 {g.ogeler.length}</span>}
@@ -12390,12 +12385,9 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {hikBildiri ? <div className="hik-toast">{hikBildiri}</div> : null}
             {oge.tip === "video"
-              /* PARLAMA ÇÖZÜMÜ: video gelene kadar arkada kapak resminin (poster) BULANIK durağan RESMİ durur (İKİNCİ VİDEO DEĞİL — o B226'da
-                 kaldırıldı çünkü çift video titretiyordu; bu sadece hafif bir resim). + video'ya poster eklendi → boşluk/siyah/parlama olmaz. */
-              ? <>{oge.poster ? <img className="hik-medya-bg" src={oge.poster} alt="" referrerPolicy="no-referrer" aria-hidden="true" /> : null}
-                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} poster={oge.poster || undefined} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
+              ? <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration && hikIlerleBarRef.current) hikIlerleBarRef.current.style.width = Math.min(100, (v.currentTime / v.duration) * 100) + "%"; }}
-                    onEnded={() => hikayeGec(1)} /></>
+                    onEnded={() => hikayeGec(1)} />
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
             {/* HİKÂYENİN ÜSTÜNDEKİ YAZILAR (paylaşırken konmuş yer/renk ile) */}
             {Array.isArray(oge.yazilar) && oge.yazilar.map((y, i) => (
