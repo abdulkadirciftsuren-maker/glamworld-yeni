@@ -455,30 +455,26 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
           {/* SİHİRBAZ ADIM ÇUBUĞU (Photta gibi) — reklamdan gelinmediyse ve henüz sonuç yoksa */}
           {!reklamdan && !sonuc && (
             <div className="sa-adim-bar">
-              <span className="sa-adim-no">{t("saAdim", "Adım")} {adim}/3</span>
-              <div className="sa-adim-cizgi"><i style={{ width: (adim / 3 * 100) + "%" }} /></div>
+              <span className="sa-adim-no">{t("saAdim", "Adım")} {adim}/2</span>
+              <div className="sa-adim-cizgi"><i style={{ width: (adim / 2 * 100) + "%" }} /></div>
             </div>
           )}
 
           {/* FOTOĞRAF ALANI — reklamdan ya da 1. adımda; sonuç varken gizle */}
           {!sonuc && (reklamdan || adim === 1) && (<>
-          {/* ÜST İKİLİ — SOLDA fotoğraf, SAĞDA Modellerim yan yana (sayfa kısa dursun) */}
-          <div className="sa-ust-ikili">
+          {/* FOTOĞRAF SATIRI — SOLDA üç ince düğme alt alta (Modellerim/Çek/Galeri), SAĞDA büyük fotoğraf (kullanıcı çizdi) */}
+          <div className="sa-foto-satir">
+            <div className="sa-foto-sol">
+              <button className={"sa-mini sa-mini-modellerim" + (galeriAcik ? " acik" : "")} onClick={() => setGaleriAcik((a) => !a)}>
+                <span className="sa-mini-ik">🖼️</span><span className="sa-mini-ad">{t("saModellerim", "Modellerim")}</span>{modeller.length ? <span className="sa-mini-say">{modeller.length}</span> : null}
+              </button>
+              <button className="sa-mini" onClick={() => kamRef.current && kamRef.current.click()}><span className="sa-mini-ik">📷</span><span className="sa-mini-ad">{t("saCek", "Fotoğraf çek")}</span></button>
+              <button className="sa-mini" onClick={() => inpRef.current && inpRef.current.click()}><span className="sa-mini-ik">🖼️</span><span className="sa-mini-ad">{t("saGaleri", "Galeriden seç")}</span></button>
+            </div>
             <div className="sa-foto-kutu" onClick={() => inpRef.current && inpRef.current.click()}>
               {foto ? <img src={foto} alt="" /> : <span className="sa-foto-bos">📷<br />{t("saFotoEkle", "Fotoğrafını ekle")}</span>}
               {foto && <span className="sa-foto-degis">🔄 {t("saFotoDegis", "Değiştir")}</span>}
             </div>
-            <button className={"sa-modellerim-yan" + (galeriAcik ? " acik" : "")} onClick={() => setGaleriAcik((a) => !a)}>
-              <span className="sa-my-ik">🖼️</span>
-              <span className="sa-my-ad">{t("saModellerim", "Modellerim")}</span>
-              {modeller.length ? <span className="sa-my-say">{modeller.length}</span> : null}
-              <span className="sa-my-ok">{galeriAcik ? "▲" : "▼"}</span>
-            </button>
-          </div>
-          {/* YÜZÜNÜ ORACIKTA ÇEK ya da GALERİDEN seç */}
-          <div className="sa-foto-dugmeler">
-            <button className="sa-foto-btn" onClick={() => kamRef.current && kamRef.current.click()}>📷 {t("saCek", "Fotoğraf çek")}</button>
-            <button className="sa-foto-btn" onClick={() => inpRef.current && inpRef.current.click()}>🖼️ {t("saGaleri", "Galeriden seç")}</button>
           </div>
           <input ref={inpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={fotoSec} />
           <input ref={kamRef} type="file" accept="image/*" capture="user" style={{ display: "none" }} onChange={fotoSec} />
@@ -516,24 +512,15 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
             <button className="sa-dene sa-dene-buyuk" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>
           )}
 
-          {/* SİHİRBAZ — ADIM 1: Kim için? + Devam */}
+          {/* SİHİRBAZ — ADIM 1: Kim için? (SABİT ızgara) + Ne denensin? (kategori kartları) + Devam */}
           {!sonuc && !reklamdan && adim === 1 && (<>
             <div className="sa-kim-bas">{t("saKimIcin", "Kim için?")}</div>
-            <KayanSerit className="sa-kisi-serit">
+            <div className="sa-kisi-grid">
               {KISILER.map((ks) => (
                 <button key={ks.k} className={"sa-kisi" + (kisi === ks.k ? " sec" : "")} onClick={() => { setKisi(ks.k); setModel(""); }}>{ks.ik} {t(ks.ck, ks.ad)}</button>
               ))}
-            </KayanSerit>
-            <div className="sa-adim-cta">
-              <button className="sa-ileri" disabled={!foto} onClick={() => { if (!foto) { setHata(t("saFotoOnce", "Önce fotoğrafını ekle.")); return; } setHata(""); setAdim(2); }}>
-                {foto ? t("saDevam", "Devam") + " →" : "📷 " + t("saFotoOnceKisa", "Önce fotoğraf ekle")}
-              </button>
             </div>
-          </>)}
-
-          {/* SİHİRBAZ — ADIM 2: Ne denensin? (resimli kartlar) + Geri/Devam */}
-          {!sonuc && !reklamdan && adim === 2 && (<>
-            <div className="sa-kim-bas">{t("saNeDenensin", "Ne denensin?")}</div>
+            <div className="sa-kim-bas" style={{ marginTop: 10 }}>{t("saNeDenensin", "Ne denensin?")}</div>
             <div className="sa-kat-grid">
               {KATEGORILER.map((kt) => (
                 <button key={kt.k} className={"sa-kat-kart" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>
@@ -543,13 +530,14 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
               ))}
             </div>
             <div className="sa-adim-cta">
-              <button className="sa-geri" onClick={() => setAdim(1)} aria-label={t("saGeri", "Geri")}>←</button>
-              <button className="sa-ileri" onClick={() => setAdim(3)}>{t("saDevam", "Devam")} →</button>
+              <button className="sa-ileri" disabled={!foto} onClick={() => { if (!foto) { setHata(t("saFotoOnce", "Önce fotoğrafını ekle.")); return; } setHata(""); setAdim(2); }}>
+                {foto ? t("saDevam", "Devam") + " →" : "📷 " + t("saFotoOnceKisa", "Önce fotoğraf ekle")}
+              </button>
             </div>
           </>)}
 
-          {/* SİHİRBAZ — ADIM 3: Model + Renk + Dene */}
-          {!sonuc && !reklamdan && adim === 3 && (<>
+          {/* SİHİRBAZ — ADIM 2: Model + Renk + Dene */}
+          {!sonuc && !reklamdan && adim === 2 && (<>
             <div className="sa-kim-bas">{t("saModelBas", "Hangi model?")}</div>
             {oneri.length > 0 && (
               <KayanSerit className="sa-oneri-serit">
@@ -573,7 +561,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
               </>
             )}
             <div className="sa-adim-cta">
-              <button className="sa-geri" onClick={() => setAdim(2)} aria-label={t("saGeri", "Geri")}>←</button>
+              <button className="sa-geri" onClick={() => setAdim(1)} aria-label={t("saGeri", "Geri")}>←</button>
               <button className="sa-dene sa-dene-adim" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saUstumdeGoster", "Üstümde göster")}</button>
             </div>
           </>)}

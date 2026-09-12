@@ -5230,6 +5230,21 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-foto-kutu img{ width:100%; height:100%; object-fit:cover; }
 .sa-foto-bos{ color:#a07800; font-weight:800; font-size:18px; text-align:center; line-height:1.6; }
 .sa-foto-degis{ position:absolute; bottom:10px; right:10px; background:rgba(255,253,240,.94); border:1.5px solid #a07800; border-radius:10px; padding:6px 10px; font-weight:800; color:#7a5a00; font-size:13px; }
+/* AYNA FOTOĞRAF SATIRI — SOLDA üç İNCE düğme alt alta (Modellerim/Çek/Galeri), SAĞDA büyük fotoğraf (kullanıcı çizdi) */
+.sa-foto-satir{ display:flex; gap:9px; height:236px; margin-bottom:12px; }
+.sa-foto-sol{ flex:0 0 40%; display:flex; flex-direction:column; gap:8px; min-width:0; }
+.sa-mini{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border-radius:13px; border:1.5px solid #d9b84a; background:#fffdf6; color:#6a4e10; font-family:inherit; cursor:pointer; padding:6px 5px; box-shadow:0 2px 6px rgba(150,110,10,.1); position:relative; min-width:0; }
+.sa-mini:active{ transform:scale(.97); }
+.sa-mini-ik{ font-size:23px; line-height:1; }
+.sa-mini-ad{ font-size:12px; font-weight:800; text-align:center; line-height:1.15; white-space:normal; }
+.sa-mini-modellerim{ background:linear-gradient(160deg,#fff1c4,#ffe08a); border-color:#cf9a1e; }
+.sa-mini-modellerim.acik{ background:linear-gradient(160deg,#FFD700,#f2a900); }
+.sa-mini-say{ position:absolute; top:4px; right:6px; background:#7a5a00; color:#ffe9a8; font-size:11px; font-weight:900; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+.sa-foto-satir .sa-foto-kutu{ flex:1; aspect-ratio:auto; height:100%; max-height:none; margin:0; }
+/* KİM İÇİN — SABİT ızgara (kaymaz, hepsi görünür) */
+.sa-kisi-grid{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:4px; }
+.sa-kisi-grid .sa-kisi{ flex:1 1 30%; min-width:92px; text-align:center; }
+@media (min-width:560px){ .sa-foto-satir{ height:300px; } .sa-mini-ik{ font-size:28px; } .sa-mini-ad{ font-size:14px; } }
 /* ===== YENİDEN DÜZEN (kısa sayfa) — üst ikili (fotoğraf + Modellerim yan yana) + tek şeritler ===== */
 .sa-ust-ikili{ display:flex; gap:10px; align-items:stretch; margin-bottom:8px; }
 .sa-ust-ikili .sa-foto-kutu{ flex:1 1 58%; max-height:250px; margin:0; }
