@@ -172,6 +172,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   const [model, setModel] = useState((baslangic && baslangic.model) || "");          // denenecek model adı
   const [renk, setRenk] = useState("");            // isteğe bağlı renk
   const [adim, setAdim] = useState(1);             // SİHİRBAZ adımı: 1=Fotoğraf+Kim, 2=Kategori, 3=Model+Renk+Dene (Photta gibi adım adım)
+  const [arkaKoru, setArkaKoru] = useState(false); // AÇIK ise: yapay zekâ kişinin KENDİ (doğadaki) arka planını korur, stüdyo yapmaz (kullanıcı isteği)
   // REKLAMDAN gelen ÜRÜN referans fotoğrafı (o EXACT elbiseyi/ürünü üstünde göster) — varsa 2. görsel olarak verilir
   const [refFoto, setRefFoto] = useState("");
   const [refMime, setRefMime] = useState("image/jpeg");
@@ -276,8 +277,15 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
         ? "appropriate MEN'S shoes (dress shoes, loafers, boots or clean sneakers) — NEVER women's heels, sandals or women's shoes"
         : "elegant WOMEN'S shoes that suit the outfit (heels, flats or sandals) — NEVER men's shoes or boots";
       const cinsNot = ` VERY IMPORTANT: this person is a ${kisiIng}; the clothing, SHOES and styling MUST match this gender — never put women's shoes/heels on a man, never put men's shoes on a woman.`;
-      // PROFESYONEL STÜDYO KALİTESİ (kullanıcı: sonuç reklamlardaki gibi kaliteli olsun, sönük/dandik değil).
-      const KALITE = "Ultra photorealistic, professional studio photography, soft cinematic flattering lighting, sharp focus, ultra-high resolution, fashion-magazine quality, clean elegant background, natural skin texture. It must stay the SAME real person — do NOT beautify, slim, age or change the face. Exactly ONE person, no duplicate or extra face. No text, no watermark, no logo.";
+      // (2) YÜZ = 1. ÖNCELİK — yapay zekâ yüzü birebir korusun (kullanıcı: "yüz hiç benzememiş")
+      const yuzNot = " FACE = TOP PRIORITY: the result face MUST be the SAME REAL PERSON as the uploaded photo — identical eyes, eyebrows, nose, mouth, jawline, face shape, wrinkles, skin tone, hair and age. Copy the face EXACTLY; NEVER create a generic, model-like, beautified, younger, slimmer or different face. If the face does not clearly look like the same person, it is WRONG.";
+      // (1) ARKA PLAN — kullanıcı "arka planı koru" dediyse KENDİ (doğadaki) fonunu koru; yoksa temiz stüdyo fonu
+      const bgKalite = arkaKoru ? "KEEP THE EXACT SAME background/scene/location from the uploaded photo (do NOT replace it with a studio or plain background)" : "clean elegant background";
+      const sahne = arkaKoru
+        ? "standing in an elegant natural pose IN THE SAME PLACE and with the SAME BACKGROUND as the original photo (do NOT move the person to a studio)"
+        : "standing in an elegant natural pose like a professional fashion studio / runway photo";
+      // PROFESYONEL KALİTE (kullanıcı: sonuç reklamlardaki gibi kaliteli olsun). Arka plan + yüz notu değişkenlerle.
+      const KALITE = "Ultra photorealistic, professional photography, soft cinematic flattering lighting, sharp focus, ultra-high resolution, fashion-magazine quality, " + bgKalite + ", natural skin texture. It must stay the SAME real person — do NOT beautify, slim, age or change the face. Exactly ONE person, no duplicate or extra face. No text, no watermark, no logo." + yuzNot;
       const boyKategori = (kategori === "elbise" || kategori === "ayakkabi");
       let istem, ref2 = null;
       if (refFoto) {
@@ -294,10 +302,10 @@ ${KALITE}
 IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing the new product, NOT ${IYE} original clothes.`;
       } else if (boyKategori) {
         // KIYAFET / AYAKKABI → TAM BOY profesyonel moda çekimi (reklamdaki kırmızı elbise gibi)
-        istem = `The person in this photo is a ${kisiIng}. Show the SAME person wearing this ${cfg.ne}: "${model.trim()}".${renkKismi} ${cfg.koru} Show a FULL-BODY shot from head to feet, standing in an elegant natural pose like a professional fashion studio / runway photo, wearing ${ayakkabiIng}. Put the face near the TOP and extend downward to the feet — nothing cut off at waist or bottom, no empty space above the head.${cinsNot} ${KALITE}`;
+        istem = `The person in this photo is a ${kisiIng}. Show the SAME person wearing this ${cfg.ne}: "${model.trim()}".${renkKismi} ${cfg.koru} Show a FULL-BODY shot from head to feet, ${sahne}, wearing ${ayakkabiIng}. Put the face near the TOP and extend downward to the feet — nothing cut off at waist or bottom, no empty space above the head.${cinsNot} ${KALITE}`;
       } else {
         // SAÇ / MAKYAJ / TIRNAK / AKSESUAR → net, iyi ışıklı yakın çekim (o özellik iyi görünsün)
-        istem = `The person in this photo is a ${kisiIng}. Realistically apply this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} Clean, well-lit portrait so the new ${cfg.ne} is clearly and beautifully visible. ${KALITE}`;
+        istem = `The person in this photo is a ${kisiIng}. Realistically apply this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} ${arkaKoru ? "Keep the SAME background from the photo; a well-lit" : "A clean, well-lit"} portrait so the new ${cfg.ne} is clearly and beautifully visible. ${KALITE}`;
       }
       // TEK AŞAMA: gövde + elbise + yüzü koru (2 aşamalı yüz yerleştirme yüzü BULANIKLAŞTIRIYORDU → kaldırıldı)
       const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime2 }, ref2);
@@ -560,6 +568,11 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                 </div>
               </>
             )}
+            {/* ARKA PLANI KORU — açıksa yapay zekâ kişinin KENDİ (doğadaki) arka planını korur, stüdyo yapmaz */}
+            <button type="button" className={"sa-arka-koru" + (arkaKoru ? " sec" : "")} onClick={() => setArkaKoru((a) => !a)}>
+              <span className="sa-arka-kutu">{arkaKoru ? "✓" : ""}</span>
+              <span>🌄 {t("saArkaKoru", "Arka planımı koru (bulunduğum yer kalsın)")}</span>
+            </button>
             <div className="sa-adim-cta">
               <button className="sa-geri" onClick={() => setAdim(1)} aria-label={t("saGeri", "Geri")}>←</button>
               <button className="sa-dene sa-dene-adim" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saUstumdeGoster", "Üstümde göster")}</button>

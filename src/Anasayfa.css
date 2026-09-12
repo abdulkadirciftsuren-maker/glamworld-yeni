@@ -5247,6 +5247,11 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* MODEL çipleri + RENK kutuları da SABİT ızgara (kaymaz, gidip gelmez — kullanıcı: "buradaki şeritler de sabit olsun") */
 .sa-oneri-grid{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
 .sa-renk-grid{ display:flex; flex-wrap:wrap; gap:9px; margin-bottom:6px; }
+/* ARKA PLANI KORU düğmesi (onay kutulu) */
+.sa-arka-koru{ display:flex; align-items:center; gap:9px; width:100%; margin-top:12px; padding:11px 13px; border-radius:13px; border:2px solid #d9b84a; background:#fffdf6; color:#5a3f00; font-family:inherit; font-size:14.5px; font-weight:800; cursor:pointer; text-align:left; }
+.sa-arka-koru .sa-arka-kutu{ flex:0 0 auto; width:24px; height:24px; border-radius:7px; border:2px solid #a07800; background:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; color:#1a7a3a; }
+.sa-arka-koru.sec{ background:linear-gradient(120deg,#fff1c4,#ffe08a); border-color:#7a5a00; }
+.sa-arka-koru.sec .sa-arka-kutu{ background:#1a7a3a; border-color:#1a7a3a; color:#fff; }
 @media (min-width:560px){ .sa-foto-satir{ height:300px; } .sa-mini-ik{ font-size:28px; } .sa-mini-ad{ font-size:14px; } }
 /* ===== YENİDEN DÜZEN (kısa sayfa) — üst ikili (fotoğraf + Modellerim yan yana) + tek şeritler ===== */
 .sa-ust-ikili{ display:flex; gap:10px; align-items:stretch; margin-bottom:8px; }
