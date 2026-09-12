@@ -5252,6 +5252,19 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-arka-koru .sa-arka-kutu{ flex:0 0 auto; width:24px; height:24px; border-radius:7px; border:2px solid #a07800; background:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; color:#1a7a3a; }
 .sa-arka-koru.sec{ background:linear-gradient(120deg,#fff1c4,#ffe08a); border-color:#7a5a00; }
 .sa-arka-koru.sec .sa-arka-kutu{ background:#1a7a3a; border-color:#1a7a3a; color:#fff; }
+/* ÇOKLU KIYAFET — birkaç kıyafet + her birine ayrı renk (kullanıcı isteği) */
+.sa-parca-ekle{ display:flex; gap:8px; margin-bottom:10px; }
+.sa-parca-ekle .sa-model-input{ flex:1; min-width:0; }
+.sa-parca-ekle-btn{ flex:0 0 auto; border:none; border-radius:12px; background:#1a1a1a; color:#ffe4a0; font-weight:900; font-size:14px; padding:0 16px; cursor:pointer; font-family:inherit; }
+.sa-parca-liste{ display:flex; flex-direction:column; gap:9px; margin-bottom:6px; }
+.sa-parca{ border:1.5px solid #e0c97e; border-radius:14px; background:#fffdf6; padding:9px 11px; }
+.sa-parca-bas{ display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+.sa-parca-ad{ font-weight:900; color:#4a3500; font-size:14.5px; }
+.sa-parca-sil{ border:none; background:#f0d9a0; color:#7a5a00; width:26px; height:26px; border-radius:8px; font-weight:900; font-size:14px; cursor:pointer; font-family:inherit; }
+.sa-parca-renkler{ display:flex; flex-wrap:wrap; gap:6px; }
+.sa-renk-mini{ width:27px; height:27px; border-radius:7px; border:2px solid rgba(120,90,0,.3); cursor:pointer; padding:0; }
+.sa-renk-mini.sec{ outline:3px solid #7a5a00; outline-offset:2px; }
+.sa-parca-renk-ad{ display:block; margin-top:5px; font-size:12px; font-weight:700; color:#7a5a00; }
 @media (min-width:560px){ .sa-foto-satir{ height:300px; } .sa-mini-ik{ font-size:28px; } .sa-mini-ad{ font-size:14px; } }
 /* ===== YENİDEN DÜZEN (kısa sayfa) — üst ikili (fotoğraf + Modellerim yan yana) + tek şeritler ===== */
 .sa-ust-ikili{ display:flex; gap:10px; align-items:stretch; margin-bottom:8px; }

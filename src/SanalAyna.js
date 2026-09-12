@@ -173,6 +173,13 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   const [renk, setRenk] = useState("");            // isteğe bağlı renk
   const [adim, setAdim] = useState(1);             // SİHİRBAZ adımı: 1=Fotoğraf+Kim, 2=Kategori, 3=Model+Renk+Dene (Photta gibi adım adım)
   const [arkaKoru, setArkaKoru] = useState(false); // AÇIK ise: yapay zekâ kişinin KENDİ (doğadaki) arka planını korur, stüdyo yapmaz (kullanıcı isteği)
+  // ÇOKLU KIYAFET — kullanıcı: "birkaç kıyafet seçeyim, her birine AYRI renk vereyim". [{ad, renk}] (sadece Kıyafet kategorisinde)
+  const [parcalar, setParcalar] = useState([]);
+  const [parcaYaz, setParcaYaz] = useState(""); // elle kıyafet ekleme kutusu
+  const parcaVarMi = (ad) => parcalar.some((p) => p.ad === ad);
+  const parcaTogle = (ad) => setParcalar((L) => parcaVarMi(ad) ? L.filter((p) => p.ad !== ad) : [...L, { ad, renk: "" }]);
+  const parcaRenk = (ad, r) => setParcalar((L) => L.map((p) => p.ad === ad ? { ...p, renk: p.renk === r ? "" : r } : p));
+  const parcaSil = (ad) => setParcalar((L) => L.filter((p) => p.ad !== ad));
   // REKLAMDAN gelen ÜRÜN referans fotoğrafı (o EXACT elbiseyi/ürünü üstünde göster) — varsa 2. görsel olarak verilir
   const [refFoto, setRefFoto] = useState("");
   const [refMime, setRefMime] = useState("image/jpeg");
@@ -259,7 +266,8 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   async function dene() {
     if (yuk) return;
     if (!foto) { setHata(t("saFotoOnce", "Önce fotoğrafını ekle.")); return; }
-    if (!model.trim()) { setHata(t("saModelOnce", "Bir model yaz ya da yukarıdan seç.")); return; }
+    const elbiseCoklu = (kategori === "elbise" && parcalar.length > 0); // ÇOKLU kıyafet (her birine ayrı renk)
+    if (!elbiseCoklu && !model.trim()) { setHata(t("saModelOnce", "Bir model yaz ya da yukarıdan seç.")); return; }
     setYuk(true); setHata(""); setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0);
     try {
       const temizFoto = await kosevKapat(foto); // sağ-alt köşedeki eski GLOXORG'u KAPAT → AI kopyalamasın (çift damga bitsin)
@@ -267,7 +275,11 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
       const fotoMime2 = (temizFoto.match(/^data:([^;]+);/) || [])[1] || fotoMime || "image/png";
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
       const kisiIng = (KISILER.find((x) => x.k === kisi) || {}).ing || "person";
-      const renkKismi = renk ? ` Color: ${renk}.` : "";
+      // ÇOKLU kıyafet metni: "Siyah Ceket, Beyaz Gömlek, Mavi Kot Pantolon" (her parça kendi rengiyle)
+      const parcaMetin = parcalar.map((p) => (p.renk ? p.renk + " " : "") + p.ad).join(", ");
+      const denenecekMetin = elbiseCoklu ? parcaMetin : model.trim();
+      const giyNot = elbiseCoklu ? ` Dress the person in ALL of these garments TOGETHER as ONE complete outfit — each garment in its stated color: ${parcaMetin}. EVERY listed garment must be worn at once.` : "";
+      const renkKismi = (renk && !elbiseCoklu) ? ` Color: ${renk}.` : "";
       // CİNSİYETE GÖRE ayakkabı/stil (kullanıcı: bazen erkeğe bayan ayakkabısı giydiriyordu)
       const erkekMi = (kisi === "erkek" || kisi === "erkekcocuk");
       const O = erkekMi ? "him" : "her";      // nesne (him/her)
@@ -302,7 +314,7 @@ ${KALITE}
 IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing the new product, NOT ${IYE} original clothes.`;
       } else if (boyKategori) {
         // KIYAFET / AYAKKABI → TAM BOY profesyonel moda çekimi (reklamdaki kırmızı elbise gibi)
-        istem = `The person in this photo is a ${kisiIng}. Show the SAME person wearing this ${cfg.ne}: "${model.trim()}".${renkKismi} ${cfg.koru} Show a FULL-BODY shot from head to feet, ${sahne}, wearing ${ayakkabiIng}. Put the face near the TOP and extend downward to the feet — nothing cut off at waist or bottom, no empty space above the head.${cinsNot} ${KALITE}`;
+        istem = `The person in this photo is a ${kisiIng}. Show the SAME person wearing this ${cfg.ne}: "${denenecekMetin}".${renkKismi}${giyNot} ${cfg.koru} Show a FULL-BODY shot from head to feet, ${sahne}, wearing ${ayakkabiIng}. Put the face near the TOP and extend downward to the feet — nothing cut off at waist or bottom, no empty space above the head.${cinsNot} ${KALITE}`;
       } else {
         // SAÇ / MAKYAJ / TIRNAK / AKSESUAR → net, iyi ışıklı yakın çekim (o özellik iyi görünsün)
         istem = `The person in this photo is a ${kisiIng}. Realistically apply this ${cfg.ne} suitable for a ${kisiIng}: "${model.trim()}".${renkKismi} ${cfg.koru} ${arkaKoru ? "Keep the SAME background from the photo; a well-lit" : "A clean, well-lit"} portrait so the new ${cfg.ne} is clearly and beautifully visible. ${KALITE}`;
@@ -531,7 +543,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
             <div className="sa-kim-bas" style={{ marginTop: 10 }}>{t("saNeDenensin", "Ne denensin?")}</div>
             <div className="sa-kat-grid">
               {KATEGORILER.map((kt) => (
-                <button key={kt.k} className={"sa-kat-kart" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); }}>
+                <button key={kt.k} className={"sa-kat-kart" + (kategori === kt.k ? " sec" : "")} onClick={() => { setKategori(kt.k); setModel(""); setRenk(""); setParcalar([]); }}>
                   <span className="sa-kat-gorsel" style={{ background: kt.bg }}>{kt.ik}</span>
                   <span className="sa-kat-ad">{t(kt.ck, kt.ad)}</span>
                 </button>
@@ -544,28 +556,65 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
             </div>
           </>)}
 
-          {/* SİHİRBAZ — ADIM 2: Model + Renk + Dene */}
+          {/* SİHİRBAZ — ADIM 2: Model + Renk + Dene (Kıyafet'te ÇOKLU seçim + her birine ayrı renk) */}
           {!sonuc && !reklamdan && adim === 2 && (<>
-            <div className="sa-kim-bas">{t("saModelBas", "Hangi model?")}</div>
-            {oneri.length > 0 && (
-              <div className="sa-oneri-grid">
-                {oneri.map((o) => (
-                  <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{ac(o)}</button>
-                ))}
-              </div>
-            )}
-            <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
-              placeholder={t("saModelYaz", "Model yaz (örn. Ombre saç) ya da yukarıdan seç")} />
-            {renkler.length > 0 && (
+            {kategori === "elbise" ? (
               <>
-                <div className="sa-kim-bas" style={{ marginTop: 8 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")} — {t("saRenkDokun", "dokun ve seç")}</div>
-                <div className="sa-renk-grid">
-                  {renkler.map((r) => (
-                    <button key={r} className={"sa-renk-kutu2" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)} title={ac(r)} aria-label={ac(r)}>
-                      <span className="sa-renk-ornek2" style={{ background: RENK_HEX[r] || "#ccc" }} />
-                    </button>
-                  ))}
+                <div className="sa-kim-bas">{t("saKiyafetSec", "Hangi kıyafetler? (birkaç seç, her birine renk ver)")}</div>
+                {oneri.length > 0 && (
+                  <div className="sa-oneri-grid">
+                    {oneri.map((o) => (
+                      <button key={o} className={"sa-cip" + (parcaVarMi(o) ? " sec" : "")} onClick={() => parcaTogle(o)}>{parcaVarMi(o) ? "✓ " : "+ "}{ac(o)}</button>
+                    ))}
+                  </div>
+                )}
+                <div className="sa-parca-ekle">
+                  <input className="sa-model-input" type="text" value={parcaYaz} onChange={(e) => setParcaYaz(e.target.value)} placeholder={t("saKiyafetYaz", "Kıyafet yaz (örn. Deri ceket)")} />
+                  <button className="sa-parca-ekle-btn" onClick={() => { const a = parcaYaz.trim(); if (a && !parcaVarMi(a)) { setParcalar((L) => [...L, { ad: a, renk: "" }]); setParcaYaz(""); } }}>+ {t("ekle", "Ekle")}</button>
                 </div>
+                {parcalar.length > 0 && (
+                  <div className="sa-parca-liste">
+                    {parcalar.map((p) => (
+                      <div key={p.ad} className="sa-parca">
+                        <div className="sa-parca-bas">
+                          <span className="sa-parca-ad notranslate">{ac(p.ad)}</span>
+                          <button className="sa-parca-sil" onClick={() => parcaSil(p.ad)} aria-label={t("sil", "Sil")}>✕</button>
+                        </div>
+                        <div className="sa-parca-renkler">
+                          {GENEL_RENK.map((r) => (
+                            <button key={r} className={"sa-renk-mini" + (p.renk === r ? " sec" : "")} style={{ background: RENK_HEX[r] || "#ccc" }} onClick={() => parcaRenk(p.ad, r)} title={ac(r)} aria-label={ac(r)} />
+                          ))}
+                        </div>
+                        <span className="sa-parca-renk-ad notranslate">{p.renk ? ac(p.renk) : t("saRenkSerbest", "renk seçmezsen serbest")}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="sa-kim-bas">{t("saModelBas", "Hangi model?")}</div>
+                {oneri.length > 0 && (
+                  <div className="sa-oneri-grid">
+                    {oneri.map((o) => (
+                      <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{ac(o)}</button>
+                    ))}
+                  </div>
+                )}
+                <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
+                  placeholder={t("saModelYaz", "Model yaz (örn. Ombre saç) ya da yukarıdan seç")} />
+                {renkler.length > 0 && (
+                  <>
+                    <div className="sa-kim-bas" style={{ marginTop: 8 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")} — {t("saRenkDokun", "dokun ve seç")}</div>
+                    <div className="sa-renk-grid">
+                      {renkler.map((r) => (
+                        <button key={r} className={"sa-renk-kutu2" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)} title={ac(r)} aria-label={ac(r)}>
+                          <span className="sa-renk-ornek2" style={{ background: RENK_HEX[r] || "#ccc" }} />
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
             {/* ARKA PLANI KORU — açıksa yapay zekâ kişinin KENDİ (doğadaki) arka planını korur, stüdyo yapmaz */}
