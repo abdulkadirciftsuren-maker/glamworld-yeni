@@ -16,11 +16,11 @@ const KISILER = [
 ];
 // Kişiye göre SAÇ ve KIYAFET önerileri (çok model)
 const SAC_KISI = {
-  bayan: ["Ombre", "Balyaj", "Uzun Dalgalı", "Düz Uzun", "Kare Kesim (Bob)", "Katlı Kesim", "Topuz", "At Kuyruğu", "Röfle", "Perma", "Fönlü", "Küt Kesim", "Örgü"],
-  erkek: ["Fade", "Undercut", "Pompadour", "Uzun Saç", "Perma", "Ondüle", "Topuz (Man Bun)", "Klasik Kesim", "Yandan Ayrık", "Asker Tıraşı", "Sakal Şekli", "Uzun Sakal", "Kirli Sakal", "Keçi Sakal"],
-  kiz: ["Örgü", "At Kuyruğu", "Kısa Kesim", "Topuz", "Dalgalı", "Renkli Toka", "İki Örgü"],
-  erkekcocuk: ["Fade", "Kısa Kesim", "Kirpi Model", "Yandan Ayrık", "Uzun Saç"],
-  bebek: ["Yumuşak Kesim", "Kısa Bebek Kesimi", "İlk Tıraş"],
+  bayan: ["Ombre", "Balyaj", "Gölge Saç (Sombre)", "Uzun Dalgalı", "Düz Uzun", "Kare Kesim (Bob)", "Lob (Uzun Bob)", "Katlı Kesim", "Pixie (Kısa)", "Topuz", "Yarım Topuk", "At Kuyruğu", "Röfle", "Perma", "Fönlü", "Küt Kesim", "Örgü", "Fransız Örgü", "Su Dalgası", "Kâhküllü (Bang)"],
+  erkek: ["Fade", "Undercut", "Pompadour", "Quiff", "Uzun Saç", "Perma", "Ondüle", "Topuz (Man Bun)", "Klasik Kesim", "Yandan Ayrık", "Asker Tıraşı", "Buzz Cut", "Crop Kesim", "Sakal Şekli", "Uzun Sakal", "Kirli Sakal", "Keçi Sakal", "Bıyık"],
+  kiz: ["Örgü", "At Kuyruğu", "Kısa Kesim", "Topuz", "İki Topuz", "Dalgalı", "Renkli Toka", "İki Örgü", "Kâhküllü", "Yarım Topuk"],
+  erkekcocuk: ["Fade", "Kısa Kesim", "Kirpi Model", "Yandan Ayrık", "Uzun Saç", "Crop Kesim", "Buzz Cut"],
+  bebek: ["Yumuşak Kesim", "Kısa Bebek Kesimi", "İlk Tıraş", "Kâhküllü"],
 };
 // RENK seçenekleri (isteğe bağlı) — saç için saç renkleri, kıyafet/tırnak vb. için genel renkler
 const SAC_RENK = ["Siyah", "Koyu Kahve", "Kahve", "Kumral", "Sarı", "Bal Köpüğü", "Kızıl", "Bakır", "Platin Sarı", "Gri / Gümüş", "Mavi", "Pembe"];
@@ -54,23 +54,23 @@ function kosevKapat(dataUrl) {
   });
 }
 const ELBISE_KISI = {
-  bayan: ["Abiye Elbise", "Yazlık Elbise", "Takım", "Kot & Bluz", "Kışlık Mont"],
-  erkek: ["Takım Elbise", "Gömlek", "Ceket", "Kot Pantolon", "Spor Giyim"],
-  kiz: ["Prenses Elbise", "Etek & Bluz", "Tulum", "Kışlık Mont"],
-  erkekcocuk: ["Takım", "Gömlek", "Şort & Tişört", "Kışlık Mont"],
-  bebek: ["Bebek Tulumu", "Bebek Elbisesi", "Body Zıbın", "Kışlık Tulum"],
+  bayan: ["Gece Elbisesi", "Abiye Elbise", "Yazlık Elbise", "Kışlık Elbise", "Tişört", "Gömlek", "Bluz", "Kazak", "Hırka", "Ceket", "Blazer", "Mont", "Palto", "Kaban", "Trençkot", "Yelek", "Kot Pantolon", "Kumaş Pantolon", "Etek", "Şort", "Tayt", "Tulum", "Takım", "Eşofman", "Spor Giyim", "İç Giyim", "Pijama", "Mayo", "Bikini", "Atkı", "Şapka", "Bere", "Kemer", "Eşarp", "Çorap", "Eldiven"],
+  erkek: ["Takım Elbise", "Smokin", "Gömlek", "Tişört", "Polo Tişört", "Kazak", "Süveter", "Ceket", "Blazer", "Mont", "Palto", "Kaban", "Trençkot", "Yelek", "Kapşonlu (Hoodie)", "Sweatshirt", "Kot Pantolon", "Kumaş Pantolon", "Şort", "Eşofman", "Spor Giyim", "İç Giyim", "Pijama", "Mayo (Şort)", "Kravat", "Papyon", "Kemer", "Atkı", "Şapka", "Bere", "Çorap", "Eldiven"],
+  kiz: ["Prenses Elbise", "Yazlık Elbise", "Kışlık Elbise", "Tişört", "Bluz", "Kazak", "Hırka", "Etek", "Şort", "Tayt", "Tulum", "Kot Pantolon", "Mont", "Kaban", "Yağmurluk", "Eşofman", "Pijama", "Mayo", "Şapka", "Bere", "Atkı", "Çorap", "Eldiven"],
+  erkekcocuk: ["Takım", "Gömlek", "Tişört", "Kazak", "Süveter", "Kapşonlu (Hoodie)", "Sweatshirt", "Yelek", "Şort", "Kot Pantolon", "Eşofman", "Mont", "Kaban", "Yağmurluk", "Pijama", "Mayo (Şort)", "Şapka", "Bere", "Atkı", "Çorap", "Eldiven"],
+  bebek: ["Bebek Tulumu", "Bebek Elbisesi", "Body Zıbın", "Kışlık Tulum", "Kazak", "Şort & Tişört", "Yağmurluk", "Pijama", "Şapka", "Patik", "Çorap", "Eldiven", "Önlük"],
 };
 // Diğer kategoriler (kişiden bağımsız genel öneriler)
 const ONERILER = {
-  makyaj: ["Doğal Makyaj", "Smokey Göz", "Gündüz Makyajı", "Gece Makyajı", "Gelin Makyajı", "Işıltılı Ten"],
-  tirnak: ["Fransız Tırnak", "Ombre Tırnak", "Kırmızı Oje", "Nude Ton", "Gliter", "Kedi Gözü", "Mat Siyah", "Çiçek Desen"],
-  kirpik: ["Doğal Kirpik", "Hacimli Kirpik", "Uzun Kirpik", "İpek Kirpik", "Kedi Gözü Kirpik", "Manga Kirpik"],
-  ayakkabi: ["Spor Ayakkabı", "Klasik Ayakkabı", "Topuklu", "Bot", "Sandalet", "Loafer"],
-  canta: ["El Çantası", "Sırt Çantası", "Omuz Çantası", "Cüzdan", "Spor Çanta"],
-  taki: ["Kolye", "Küpe", "Yüzük", "Bilezik", "Halhal", "Set Takı"],
-  gozluk: ["Güneş Gözlüğü", "Optik Gözlük", "Kedi Gözü Çerçeve", "Aviator", "Yuvarlak Çerçeve", "Şeffaf Çerçeve"],
-  saat: ["Klasik Saat", "Spor Saat", "Akıllı Saat", "Altın Saat", "Deri Kordon", "Metal Kordon"],
-  aksesuar: ["Kolye", "Küpe", "Kol Saati", "Güneş Gözlüğü", "Şapka", "Kravat"],
+  makyaj: ["Doğal Makyaj", "Smokey Göz", "Gündüz Makyajı", "Gece Makyajı", "Gelin Makyajı", "Işıltılı Ten", "Kontür & Aydınlatıcı", "Kırmızı Ruj", "Nude Makyaj", "Pembe Ton", "Bronz Ten", "Eyeliner (Kalın)", "Kore Makyajı", "Glitter Göz", "Mat Ten"],
+  tirnak: ["Fransız Tırnak", "Ombre Tırnak", "Kırmızı Oje", "Nude Ton", "Gliter", "Kedi Gözü", "Mat Siyah", "Çiçek Desen", "Beyaz Uç", "Pembe Jel", "Mermer Desen", "Krom (Ayna)", "Uzun Stiletto", "Kısa Oval", "Renkli Uçlar"],
+  kirpik: ["Doğal Kirpik", "Hacimli Kirpik", "Uzun Kirpik", "İpek Kirpik", "Kedi Gözü Kirpik", "Manga Kirpik", "Volume (3D)", "Klasik Tek Tek", "Islak Görünüm", "Renkli Uçlar"],
+  ayakkabi: ["Spor Ayakkabı (Sneaker)", "Klasik Ayakkabı", "Topuklu (Stiletto)", "Platform Topuk", "Babet", "Bot", "Çizme", "Sandalet", "Loafer", "Makosen", "Terlik", "Espadril", "Bilekli Bot", "Yürüyüş Ayakkabısı"],
+  canta: ["El Çantası", "Omuz Çantası", "Sırt Çantası", "Çapraz Çanta", "Cüzdan", "Portföy (Clutch)", "Spor Çanta", "Bel Çantası", "Alışveriş (Tote)", "Makyaj Çantası"],
+  taki: ["Kolye", "Küpe", "Yüzük", "Bilezik", "Bileklik", "Halhal", "Set Takı", "Broş", "Piercing", "Kelepçe", "İnci Kolye", "Zincir"],
+  gozluk: ["Güneş Gözlüğü", "Optik Gözlük", "Kedi Gözü Çerçeve", "Aviator", "Yuvarlak Çerçeve", "Şeffaf Çerçeve", "Kare Çerçeve", "Sporcu Gözlüğü", "Retro", "Renkli Cam"],
+  saat: ["Klasik Saat", "Spor Saat", "Akıllı Saat", "Altın Saat", "Deri Kordon", "Metal Kordon", "Zincir Kordon", "Dijital Saat", "Kronograf", "İnce Zarif Saat"],
+  aksesuar: ["Kolye", "Küpe", "Kol Saati", "Güneş Gözlüğü", "Şapka", "Kravat", "Kemer", "Atkı", "Eldiven", "Fular"],
 };
 function oneriGetir(kategori, kisi) {
   if (kategori === "sac") return SAC_KISI[kisi] || SAC_KISI.bayan;
