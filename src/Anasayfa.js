@@ -7994,8 +7994,6 @@ export default function Anasayfa({ pro = false }) {
   const [pazarPencereAcik, setPazarPencereAcik] = useState(false);
   const pazarKapatRef = useRef(null); // ElitePazar açık pencereyi kapatan fonksiyonu buraya koyar; onPop çağırır
   const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!onizGaleri || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi || !!aramaDurum || !!gelenArama || pazarPencereAcik;
-  // FACEBOOK GİBİ TEK VİDEO: aynı anda ekranda EN ÇOK görünen TEK video oynar (aktif), diğer tüm videolar RESİM (kapak) durur.
-  const [aktifVideoId, setAktifVideoId] = useState(null);
   // MEŞGUL MÜ? — bir pencere/paylaşım/foto açık VEYA Gloxoo konuşuyor/duraklamış. Meşgulken güncelleme yenilemesi ERTELENİR
   // (foto ve konuşma kaybı olmasın). Boşalınca bekleyen yenileme yapılır → kullanıcı yine güncel sürüme geçer.
   useEffect(() => {
@@ -8008,24 +8006,21 @@ export default function Anasayfa({ pro = false }) {
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)
     const seritVids = Array.from(document.querySelectorAll(".hik-serit video, .reels-serit video"));
     const feedVids = Array.from(document.querySelectorAll(".ana-akis video")); // TÜM akış videoları (foto/kolaj/Makara şeridi dahil) — hiçbiri arkada oynayıp parlamasın
-    if (ustPencereVar) { [...feedVids, ...seritVids].forEach((v) => { try { v.pause(); } catch (e) {} }); setAktifVideoId(null); return; }
+    if (ustPencereVar) { [...feedVids, ...seritVids].forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
     // PENCERE KAPANDI → hikâye şeridi videoları TEKRAR CANLI oynasın (küçük kapak, hep görünür).
     // Kullanıcı: "menü/sayfa açıp kapatınca ana sayfaya dönünce hikâye ve videolar duruyor, canlı değil" — burada yeniden başlatılır.
     seritVids.forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
-    // FACEBOOK GİBİ TEK VİDEO: video KAPLARINI (.apr-medya.video) izle; ekranda EN ÇOK görünen TEK kabı "aktif" yap.
-    // Aktif kap gerçek <video> olur (oynar), diğer kaplar RESİM (kapak) kalır → aynı anda tek video katmanı → parlama en aza iner.
-    const kaplar = Array.from(document.querySelectorAll(".apr-medya.video"));
-    if (!kaplar.length) { setAktifVideoId(null); return; }
-    const oranlar = new Map();
+    if (!feedVids.length) return;
     const io = new IntersectionObserver((girisler) => {
-      girisler.forEach((g) => oranlar.set(g.target, g.intersectionRatio));
-      let enIyi = null, enOran = 0.5; // en az yarısı görünen kazanır
-      oranlar.forEach((oran, el) => { if (oran > enOran) { enOran = oran; enIyi = el; } });
-      setAktifVideoId(enIyi ? enIyi.getAttribute("data-pid") : null);
-    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
-    kaplar.forEach((k) => io.observe(k));
+      girisler.forEach((g) => {
+        const v = g.target;
+        if (g.isIntersecting && g.intersectionRatio >= 0.55) { v.play().catch(() => {}); }
+        else { try { v.pause(); } catch (e) {} }
+      });
+    }, { threshold: [0, 0.55, 1] });
+    feedVids.forEach((v) => io.observe(v));
     return () => io.disconnect();
-  }, [aktifKod, feedFiltre, gercekAkis, ustPencereVar, hikayeGruplar, feedGoster]);
+  }, [aktifKod, feedFiltre, gercekAkis, ustPencereVar, hikayeGruplar]);
   // EK GÜVENLİK — uygulamaya ARKA PLANDAN geri dönünce (odak/görünürlük), bir pencere AÇIKSA arka feed/şerit videoları
   // tekrar DURDUR (dönüşte kendiliğinden oynamaya başlayıp parlamasın). CSS zaten gizliyor; bu, ses/oynatmayı da keser.
   useEffect(() => {
@@ -9065,7 +9060,7 @@ export default function Anasayfa({ pro = false }) {
                         )}
                       </div>
                     )}
-                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "")} data-pid={p.id} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
+                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "")} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
                       {postMedyalar
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
@@ -9121,11 +9116,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? (String(p.id) === String(aktifVideoId)
-                            /* AKTİF video: ekranda en çok görünen TEK video → gerçek <video>, oynar */
-                            ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="auto" autoPlay muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
-                            /* PASİF video: RESİM (kapak) durur — video yüklenmez → parlama olmaz. Kapak yoksa altın kutu kalır (kap zaten altın). */
-                            : <>{p.videoPoster ? <img className="akis-video" src={p.videoPoster} alt="" referrerPolicy="no-referrer" /> : null}<span className="akis-video-oynat" aria-hidden="true">▶</span></>)
+                        ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
                         : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
