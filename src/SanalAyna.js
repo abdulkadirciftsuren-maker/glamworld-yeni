@@ -364,7 +364,8 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
     // ⛔ AYNA (GLOXORG) DAMGASI YOK (kullanıcı: "paylaşımda aynadan geleni sil; akışın küçük/şık GLOXORG'unu kullan, çift olmasın"):
     //   Kareler filigransiz üretilir → klip video olarak paylaşınca akışın KÜÇÜK rozeti tek başına kalır, büyük ayna damgası ÇİFT olmaz.
     //   sonuc'ta zaten gömülü ayna damgası olduğu için onu KARE0 yapmıyoruz; kare0'ı da ÖNDEN görünüşle filigransiz yeniden üretiyoruz.
-    const acilar = [
+    // Açılar: "Arka planı koru" AÇIKSA → aynı YERDE dönerek poz (pist YOK, doğadaki fon korunur); KAPALIYSA → pist/podyum yürüyüşü.
+    const acilarPist = [
       "standing and facing the camera in a relaxed natural FRONT pose, arrived at the front of the runway, FULL BODY head to feet",
       "starting to turn to walk away: turned about 45 degrees (three-quarter view), one foot stepping forward, mid-stride, FULL BODY on the runway",
       "turned to the SIDE profile (about 90 degrees), in a natural mid-stride WALKING pose, moving across the runway, FULL BODY head to feet",
@@ -372,12 +373,23 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       "seen from the BACK, now FARTHER AWAY, walking away into the distance on the runway (the person looks smaller, more floor/background visible), FULL BODY",
       "in the distance, now TURNING AROUND to face the camera again and beginning to WALK BACK TOWARD the camera, the front becoming visible, mid-stride, FULL BODY",
     ];
+    const acilarDoga = [
+      "standing and facing the camera in a relaxed natural FRONT pose, in the SAME place, FULL BODY head to feet",
+      "turned about 45 degrees (three-quarter view), one foot stepping forward, standing in the SAME place, FULL BODY",
+      "turned to the SIDE profile (about 90 degrees), a natural standing/step pose, in the SAME place, FULL BODY head to feet",
+      "seen from the BACK (about 180 degrees, turned away), clearly showing the BACK of the same outfit, in the SAME place, FULL BODY",
+      "turned about 135 degrees (three-quarter from behind), showing the side-back of the outfit, in the SAME place, FULL BODY",
+      "turned back to FACE the camera again in a slightly different natural pose, in the SAME place, FULL BODY",
+    ];
+    const acilar = arkaKoru ? acilarDoga : acilarPist;
+    const bgManken = arkaKoru ? "the EXACT SAME background/place/scene as in this image (do NOT move the person to a studio or runway)" : "the same clean background";
+    const sahneManken = arkaKoru ? "a natural pose in the SAME place" : "an elegant natural pose like a professional fashion studio / runway photo";
     const yeni = [];
     const temizSonuc = await kosevKapat(sonuc); // sonuç'taki (varsa) eski/mevcut damgayı KAPAT → manken kareleri temiz üretilsin
     const base64 = temizSonuc.split(",")[1] || "";
     setKareIlerleme(0);
     for (let i = 0; i < acilar.length; i++) {
-      const istem = `This image shows a person wearing an outfit. Generate the EXACT SAME real person wearing the EXACT SAME outfit as in this image — identical face, hair, body shape, garment, print, colors, fabric, shoes and the same clean background — but now ${acilar[i]}. Show the FULL BODY from head to feet. Elegant natural pose like a professional fashion studio / runway photo. Ultra photorealistic, soft cinematic flattering lighting, sharp focus, ultra-high resolution. It must stay the SAME real person — do NOT change, beautify, slim or age the face. Exactly ONE person, no duplicate. No text, no watermark, no logo.`;
+      const istem = `This image shows a person wearing an outfit. Generate the EXACT SAME real person wearing the EXACT SAME outfit as in this image — identical face, hair, body shape, garment, print, colors, fabric, shoes and ${bgManken} — but now ${acilar[i]}. Show the FULL BODY from head to feet. ${sahneManken}. Ultra photorealistic, soft cinematic flattering lighting, sharp focus, ultra-high resolution. FACE = TOP PRIORITY: keep the EXACT SAME real face as in the image (identical eyes, eyebrows, nose, mouth, jawline, face shape, wrinkles, skin, hair, age) — do NOT change, beautify, slim, age or replace the face; it must be the SAME recognizable person. Exactly ONE person, no duplicate. No text, no watermark, no logo.`;
       try {
         const r = await gloxooResimUret(istem, { base64, mediaType: "image/png" }, undefined, true); // filigransiz=true → AYNA damgası EKLENMEZ (klip temiz kalır)
         if (r && r.dataUrl) yeni.push(r.dataUrl);
