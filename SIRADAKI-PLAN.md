@@ -19,11 +19,10 @@ Kullanıcının KESİN teşhisi: EKRAN KAYDI açıkken parlama YOK → telefonun
 **KALAN (kullanıcı "şimdilik kalsın" dedi):** içerik İLK YÜKLENİRKEN/kaydırınca bir anlık parlama (üst şeritler/reklam/foto/video ekrana ilk gelirken = tarayıcı checkerboarding/paint). Tek efekt/hata değil; sayfanın çizim yükünü azaltmak (gölge/efekt/eleman) gerekir — büyük optimizasyon, yayından sonra. Not: kullanıcı KURULU uygulamada deniyor; her deploy 1 kez guvenliYenile ile yenileniyor (o da parlama gibi).
 
 ### 2) 🔵 ŞİMDİ AKTİF: SANAL AYNA ("Üstümde Dene") DÜZENİ — kullanıcının ÇİZDİĞİ
-- **Fotoğraf satırı:** üç düğmeyi (**Modellerim + Fotoğraf çek + Galeriden seç**) fotoğrafın **SOLUNA, alt alta, İNCE** koy; Modellerim küçül (yukarıdan aşağı ince). Fotoğraf sağda büyük. Alttaki yer kaplayan "Fotoğraf çek/Galeriden seç" satırını kaldır (o üçe taşındı).
-- **"Kim için?"** (Bayan/Erkek/Kız/Erkek Çocuk/Bebek) düğmeleri **SABİT** (KayanSerit değil, kaymayan düzgün ızgara).
-- **Kategoriler (resimli kartlar) 1. SAYFADA** görünsün (müşteri ne seçtiğini görsün) → sonra "Devam". (Şu an 3 adımlı sihirbaz: adım1 foto/kim, adım2 kategori, adım3 model → adım1'e foto+kim+kategori birlikte gelsin, adım2 model.)
-- Durum: B219 kategori grid + B220 sihirbaz + önce/sonra var; kullanıcı beğenmedi ("çok basit"). SanalAyna.js'te: KISILER(10), KATEGORILER(10, resimli bg), adim state(1/2/3), .apr yok — kendi CSS'i Anasayfa.css'te (.sa-*). KayanSerit bileşeni kişi/model şeritlerinde.
-- Sonra: **sonuç ekranı** (satın al + paylaş + canlı manken) ve **PAYLAŞ sayfası** sadeleştirme.
+> ✅ 12 Eyl AKŞAMI YAPILDI (B236–B241, kullanıcı adım adım onayladı): (B236) fotoğraf satırı = 3 ince düğme (Modellerim/Çek/Galeri) SOLDA alt alta + foto sağda büyük; "Kim için" SABİT ızgara; kategoriler 1. sayfada → sihirbaz 2 adım (adım1 foto+kim+kategori, adım2 model). (B237) 2. sayfa model+renk şeritleri de SABİT. (B238) "🌄 Arka planımı koru" düğmesi (arkaKoru state) + YÜZ koruma istemi güçlendirildi (yuzNot). (B239) ÇOKLU KIYAFET: Kıyafet kategorisinde birkaç parça seç + HER BİRİNE AYRI renk (parcalar state, sadece elbise). (B240) CANLI MANKEN de arkaKoru açıkken doğadaki fonu korur (acilarDoga). (B241) öneri listeleri çok zenginleşti (kıyafet ~36, saç ~20, hepsi arttı).
+> ⏳ KULLANICI YARIN DENEYECEK (çoklu kıyafet + tüm seçenekler) → geri bildirim bekle.
+> ⏳ KALAN KÜÇÜK EKSİKLER (kullanıcı "1-2'de küçük eksikler var sonra bakarız" dedi — arkaKoru + yüz benzerliği; yüz AI modeline bağlı). Sordukça netleşecek.
+> Sonra: **sonuç ekranı** (satın al + paylaş) + **PAYLAŞ sayfası** sadeleştirme.
 
 ### 3) DAHA SONRA
 - İlk-yükleme parlaması optimizasyonu (yukarıda). Para kazanma (dene→satın al komisyon→paylaş + kredi + satıcı B2B). Play Store: 12 Gmail testçi + mağaza girişi. Kamera ayna (selfie ters) düzeltmesi.
