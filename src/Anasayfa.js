@@ -8013,7 +8013,8 @@ export default function Anasayfa({ pro = false }) {
     if (ustPencereVar) { [...feedVids, ...seritVids].forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
     // PENCERE KAPANDI → hikâye şeridi videoları TEKRAR CANLI oynasın (küçük kapak, hep görünür).
     // Kullanıcı: "menü/sayfa açıp kapatınca ana sayfaya dönünce hikâye ve videolar duruyor, canlı değil" — burada yeniden başlatılır.
-    seritVids.forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
+    // Story şeridi (.hik-serit) artık DURAĞAN (kapak resmi) → otomatik oynatMA (parlamasın). Sadece Makara (reels) şeridi oynar.
+    Array.from(document.querySelectorAll(".reels-serit video")).forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
     if (!feedVids.length) return;
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
@@ -8866,7 +8867,11 @@ export default function Anasayfa({ pro = false }) {
                   <button className="hik-kart" key={g.uid} onClick={() => hikayeAc(gi)}>
                     <span className="hik-kart-medyasar">
                       {kapak.tip === "video"
-                        ? (<video className="hik-kart-medya" src={videoSade(kapak.url)} muted loop autoPlay playsInline preload="metadata" poster={kapak.poster || undefined} tabIndex={-1} onLoadedMetadata={hikKapakYon} />)
+                        /* ŞERİT ÖNİZLEMESİ DURAĞAN (Instagram gibi): otomatik oynayan video YERİNE kapak RESMİ → şerit ekrana gelince
+                           birçok video aynı anda yüklenip parlamıyor. Kapak yoksa video ilk karesi (oynatMA — sadece duran kare). */
+                        ? (kapak.poster
+                            ? <img className="hik-kart-medya" src={kapak.poster} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />
+                            : <video className="hik-kart-medya" src={videoSade(kapak.url)} muted playsInline preload="metadata" tabIndex={-1} onLoadedMetadata={hikKapakYon} />)
                         : (<img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />)}
                     </span>
                     {g.ogeler.length > 1 && <span className="hik-kart-sayac" aria-label={g.ogeler.length + " hikâye"}>🖼 {g.ogeler.length}</span>}
