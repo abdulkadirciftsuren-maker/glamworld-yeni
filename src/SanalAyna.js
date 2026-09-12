@@ -540,24 +540,24 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
           {!sonuc && !reklamdan && adim === 2 && (<>
             <div className="sa-kim-bas">{t("saModelBas", "Hangi model?")}</div>
             {oneri.length > 0 && (
-              <KayanSerit className="sa-oneri-serit">
+              <div className="sa-oneri-grid">
                 {oneri.map((o) => (
                   <button key={o} className={"sa-cip" + (model === o ? " sec" : "")} onClick={() => setModel(o)}>{ac(o)}</button>
                 ))}
-              </KayanSerit>
+              </div>
             )}
             <input className="sa-model-input" type="text" value={model} onChange={(e) => setModel(e.target.value)}
               placeholder={t("saModelYaz", "Model yaz (örn. Ombre saç) ya da yukarıdan seç")} />
             {renkler.length > 0 && (
               <>
                 <div className="sa-kim-bas" style={{ marginTop: 8 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")} — {t("saRenkDokun", "dokun ve seç")}</div>
-                <KayanSerit className="sa-renk-serit">
+                <div className="sa-renk-grid">
                   {renkler.map((r) => (
                     <button key={r} className={"sa-renk-kutu2" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)} title={ac(r)} aria-label={ac(r)}>
                       <span className="sa-renk-ornek2" style={{ background: RENK_HEX[r] || "#ccc" }} />
                     </button>
                   ))}
-                </KayanSerit>
+                </div>
               </>
             )}
             <div className="sa-adim-cta">

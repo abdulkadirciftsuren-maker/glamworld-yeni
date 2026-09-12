@@ -5244,6 +5244,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* KİM İÇİN — SABİT ızgara (kaymaz, hepsi görünür) */
 .sa-kisi-grid{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:4px; }
 .sa-kisi-grid .sa-kisi{ flex:1 1 30%; min-width:92px; text-align:center; }
+/* MODEL çipleri + RENK kutuları da SABİT ızgara (kaymaz, gidip gelmez — kullanıcı: "buradaki şeritler de sabit olsun") */
+.sa-oneri-grid{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
+.sa-renk-grid{ display:flex; flex-wrap:wrap; gap:9px; margin-bottom:6px; }
 @media (min-width:560px){ .sa-foto-satir{ height:300px; } .sa-mini-ik{ font-size:28px; } .sa-mini-ad{ font-size:14px; } }
 /* ===== YENİDEN DÜZEN (kısa sayfa) — üst ikili (fotoğraf + Modellerim yan yana) + tek şeritler ===== */
 .sa-ust-ikili{ display:flex; gap:10px; align-items:stretch; margin-bottom:8px; }
