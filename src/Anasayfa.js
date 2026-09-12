@@ -12381,12 +12381,12 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {hikBildiri ? <div className="hik-toast">{hikBildiri}</div> : null}
             {oge.tip === "video"
-              /* ⛔ VIDEO'DA BULANIK ARKA KOPYA (ikinci <video>) KALDIRILDI: aynı video iki kez açılınca (biri blur'lu arka)
-                 telefon iki donanım video katmanı + ağır blur ile zorlanıp video yüklenince TİTRİYOR/parlıyor, alttaki
-                 görünüyordu (kullanıcı: "video yüklenince parlama, üstteki şerit titriyor"). Artık TEK video; letterbox ALTIN. */
-              ? <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
+              /* PARLAMA ÇÖZÜMÜ: video gelene kadar arkada kapak resminin (poster) BULANIK durağan RESMİ durur (İKİNCİ VİDEO DEĞİL — o B226'da
+                 kaldırıldı çünkü çift video titretiyordu; bu sadece hafif bir resim). + video'ya poster eklendi → boşluk/siyah/parlama olmaz. */
+              ? <>{oge.poster ? <img className="hik-medya-bg" src={oge.poster} alt="" referrerPolicy="no-referrer" aria-hidden="true" /> : null}
+                  <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} poster={oge.poster || undefined} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
-                    onEnded={() => hikayeGec(1)} />
+                    onEnded={() => hikayeGec(1)} /></>
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
             {/* HİKÂYENİN ÜSTÜNDEKİ YAZILAR (paylaşırken konmuş yer/renk ile) */}
             {Array.isArray(oge.yazilar) && oge.yazilar.map((y, i) => (
