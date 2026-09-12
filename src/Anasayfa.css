@@ -867,7 +867,7 @@
   background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); } /* foto ORTALI + arka PARLAK ALTIN (koyu kahve kaldırıldı → kaydırırken medya bir an çizilirken koyu parlama yapmaz) */
 .apr-medya img{ width:100%; height:auto; display:block; }
 /* FOTO/VIDEO RENGİ TÜM CİHAZLARDA BİREBİR AYNI — hiçbir filtre/ton/karışım yok (telefon=iPad=notebook=bilgisayar) */
-.apr-medya img, .apr-medya video, .tamfoto-img, .tf-vid-sar video{ filter:none !important; -webkit-filter:none !important; mix-blend-mode:normal !important; image-rendering:auto; opacity:.99 !important; }
+.apr-medya img, .apr-medya video, .tamfoto-img, .tf-vid-sar video{ filter:none !important; -webkit-filter:none !important; mix-blend-mode:normal !important; image-rendering:auto; opacity:1 !important; }
 /* ENLİ (yatay) foto: ikonlar(rail) + üst isim + alt yazı SIĞSIN diye temel min-height (230/masaüstü 370-390)
    KORUNUR — min-height:0 pencereyi kısaltıp ikonları üst üste bindiriyordu (geri alındı). Foto ortada, isim üstte/yazı altta. */
 /* DİKEY (uzun) foto → DOLU pencere (4/5, az daha az uzun → yanlardan kesmez/zoom azalır); yazılar fotoğraf üstünde */
@@ -896,7 +896,6 @@ video{
   will-change:transform; backface-visibility:hidden; -webkit-backface-visibility:hidden;
   -webkit-perspective:1000; perspective:1000;
   background:#e3c469; /* ⛔ video kenar boşluğu (letterbox) SİYAH değil ALTIN olsun (tam ekranda üst/alt siyah bant gitsin) */
-  opacity:.99; /* ⛔ PARLAMA KESİN ÇÖZÜM: %99 saydamlık → telefon videoyu DONANIM overlay katmanı yerine NORMAL doku katmanında çizmek ZORUNDA kalır (ekran kaydı açıkken ne oluyorsa aynısı). Overlay olmayınca sayfa parlamaz/kesilmez. Göze fark etmez. */
 }
 /* Videoyu saran kutular da kendi katmanında dursun → overlay üsttekini titretmez */
 .apr-medya.video, .ai-msj-video, .apf-pay-vid, .ana-post-medya{ transform:translateZ(0); }
