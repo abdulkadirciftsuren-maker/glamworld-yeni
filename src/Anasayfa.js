@@ -1685,6 +1685,10 @@ export default function Anasayfa({ pro = false }) {
   const [hikayeAcik, setHikayeAcik] = useState(null);     // görüntüleyici: {gi:grupIndex, oi:ögeIndex}
   const [hikayeYuk, setHikayeYuk] = useState(false);      // hikaye yükleniyor mu (oluşturma)
   const [hikayeIlerle, setHikayeIlerle] = useState(0);    // 0..100 aktif hikayenin ilerleme yüzdesi
+  // ⛔ PARLAMA KÖK ÇÖZÜM (story): ilerleme çubuğu foto'da ~60/sn, video'da onlarca/sn state güncelliyordu → TÜM sayfa
+  //    yeniden çizilip video oynarken ekran titriyordu. Artık çubuğun genişliğini DOĞRUDAN bu ref ile (DOM) güncelleriz →
+  //    setState YOK → sayfa yeniden çizilmez → parlama biter. (Saat/çevrimiçi sayacındaki izole yöntemin aynısı.)
+  const hikIlerleBarRef = useRef(null);
   const [hikayeDurdu, setHikayeDurdu] = useState(false);  // parmakla basılı tutunca DURAKLA
   const hikayeInputRef = useRef(null);                    // hikaye foto/video seçici
   const hikayeGorulenRef = useRef(null);                  // localStorage görülen id kümesi
@@ -3220,7 +3224,7 @@ export default function Anasayfa({ pro = false }) {
         const simdi = Date.now();
         if (!hikDuraklaRef.current) gecen += simdi - sonT; // BASILI TUTULUNCA süre işlemez
         sonT = simdi;
-        const g = Math.min(100, (gecen / sure) * 100); setHikayeIlerle(g);
+        const g = Math.min(100, (gecen / sure) * 100); if (hikIlerleBarRef.current) hikIlerleBarRef.current.style.width = g + "%";
         if (g >= 100) { hikayeGec(1); return; }
         raf = requestAnimationFrame(tik);
       };
@@ -12370,7 +12374,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="hik-fon" onClick={hikayeKapat}>
           <div className={"hik-pencere" + (hikayeDurdu ? " hik-durdu" : "")} onClick={(e) => e.stopPropagation()}>
             <div className="hik-ilerle-satir">
-              {grup.ogeler.map((o, oi) => (<span className="hik-ilerle" key={o.id}><i style={{ width: oi < hikayeAcik.oi ? "100%" : (oi === hikayeAcik.oi ? hikayeIlerle + "%" : "0%") }} /></span>))}
+              {grup.ogeler.map((o, oi) => (<span className="hik-ilerle" key={o.id}><i ref={oi === hikayeAcik.oi ? hikIlerleBarRef : null} style={{ width: oi < hikayeAcik.oi ? "100%" : "0%" }} /></span>))}
             </div>
             <div className="hik-ust">
               <span className={"hik-ust-av" + (grup.amblem ? " amblem" : "")}>{grup.foto ? <img src={grup.foto} alt="" referrerPolicy="no-referrer" /> : ((grup.ad || "?")[0] || "?").toUpperCase()}</span>
@@ -12385,7 +12389,7 @@ export default function Anasayfa({ pro = false }) {
                  kaldırıldı çünkü çift video titretiyordu; bu sadece hafif bir resim). + video'ya poster eklendi → boşluk/siyah/parlama olmaz. */
               ? <>{oge.poster ? <img className="hik-medya-bg" src={oge.poster} alt="" referrerPolicy="no-referrer" aria-hidden="true" /> : null}
                   <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} poster={oge.poster || undefined} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
-                    onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration) setHikayeIlerle(Math.min(100, (v.currentTime / v.duration) * 100)); }}
+                    onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration && hikIlerleBarRef.current) hikIlerleBarRef.current.style.width = Math.min(100, (v.currentTime / v.duration) * 100) + "%"; }}
                     onEnded={() => hikayeGec(1)} /></>
               : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
             {/* HİKÂYENİN ÜSTÜNDEKİ YAZILAR (paylaşırken konmuş yer/renk ile) */}
