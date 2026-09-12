@@ -627,7 +627,10 @@
 .hik-medya{ position:relative; width:100%; height:100%; object-fit:contain; display:block; z-index:1; }
 /* CANLI FOTOĞRAF — yavaş sinema (yakınlaşma + hafif kayma) → fotoğraf "canlı" görünür (7 sn, ekranda daha uzun kalır) */
 @keyframes hikCanli { 0%{ transform:scale(1.04) translate(1.5%, 1.5%);} 100%{ transform:scale(1.18) translate(-2.5%, -3.5%);} }
-.hik-foto-canli{ animation:hikCanli 7.2s ease-out both; will-change:transform; }
+/* ⛔ FOTO YAKINLAŞTIRMA (Ken Burns) EFEKTİ KALDIRILDI (kullanıcı: "fotoğraflardaki yakınlaştırma efektine bak"):
+   sürekli transform (scale 1.04→1.18) + will-change, story fotoğrafında sayfayı durmadan yeniden çizdirip
+   PARLAMAYA yol açıyordu. Fotoğraf artık DURAĞAN durur → parlama olmaz. */
+.hik-foto-canli{ animation:none !important; will-change:auto; transform:none; }
 .hik-durdu .hik-foto-canli{ animation-play-state:paused; } /* durunca efekt de durur */
 .hik-ilerle-satir{ position:absolute; top:max(8px,env(safe-area-inset-top)); left:8px; right:8px; z-index:5; display:flex; gap:4px; }
 .hik-ilerle{ flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,.35); overflow:hidden; }
