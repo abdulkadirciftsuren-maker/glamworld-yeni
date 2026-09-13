@@ -5394,7 +5394,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-ton-bilgi{ display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:12.5px; font-weight:800; color:#5a3f00; }
 .sa-ton-bilgi b{ color:#4a3500; font-size:13.5px; }
 @media (min-width:560px){ .sa-ton-serit{ height:32px; } .sa-ton-bilgi{ font-size:14px; } .sa-ton-bilgi b{ font-size:15px; } }
-.sa-hata{ margin-top:12px; color:#8a1a1a; background:#ffe1e1; border:1.5px solid #c04a4a; border-radius:10px; padding:10px 12px; font-weight:700; font-size:14px; }
+.sa-hata{ margin-top:12px; color:#8a1a1a; background:#ffe1e1; border:1.5px solid #c04a4a; border-radius:10px; padding:10px 12px; font-weight:700; font-size:14px; word-break:break-word; overflow-wrap:anywhere; }
 .sa-sonuc{ margin-top:20px; border-top:2px dashed rgba(160,120,0,.5); padding-top:16px; }
 .sa-sonuc-bas{ font-weight:900; font-size:18px; color:#3a7a2a; margin-bottom:10px; }
 .sa-sonuc img{ width:100%; border-radius:14px; border:2px solid #a07800; display:block; }

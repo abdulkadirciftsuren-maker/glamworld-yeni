@@ -369,13 +369,19 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime2 }, ref2);
       if (res && res.dataUrl) setSonuc(res.dataUrl);
       else {
-        // Hata metnini oku → kullanıcıya ANLAŞILIR Türkçe mesaj (takılı kalmaz, ne olduğunu anlar).
-        const h = ((res && res.hata) || "").toString().toLowerCase();
-        if (h.indexOf("guvenlik") !== -1 || h.indexOf("safety") !== -1 || h.indexOf("block") !== -1 || h.indexOf("prohibit") !== -1)
+        // Hata metnini oku → kullanıcıya ANLAŞILIR Türkçe mesaj + KISA TEKNİK sebep (ekran görüntüsü alıp bize gösterebilsin).
+        const ham = ((res && res.hata) || "").toString();
+        const h = ham.toLowerCase();
+        const teknik = ham ? " (teknik: " + ham.slice(0, 150) + ")" : "";
+        if (h.indexOf("quota") !== -1 || h.indexOf("exhaust") !== -1 || h.indexOf("429") !== -1 || h.indexOf("exceeded") !== -1 || h.indexOf("kota") !== -1)
+          setHata(t("saKota", "Görsel üretimi için Google kredisi/kotası bitmiş olabilir. Sahibine haber ver.") + teknik);
+        else if (h.indexOf("billing") !== -1 || h.indexOf("permission") !== -1 || h.indexOf("403") !== -1 || h.indexOf("api key") !== -1 || h.indexOf("api_key") !== -1 || h.indexOf("precondition") !== -1 || h.indexOf("not valid") !== -1)
+          setHata(t("saHesap", "Hesap/anahtar ayarı gerekiyor (fatura veya API anahtarı). Sahibine haber ver.") + teknik);
+        else if (h.indexOf("guvenlik") !== -1 || h.indexOf("safety") !== -1 || h.indexOf("block") !== -1 || h.indexOf("prohibit") !== -1)
           setHata(t("saGuvenlik", "Bu görsel yapay zekâ tarafından kabul edilmedi. Daha kapalı bir model seç ya da başka bir parça dene."));
         else if (h.indexOf("timeout") !== -1 || h.indexOf("deadline") !== -1)
-          setHata(t("saZamanAsimi", "İnternet yavaş olabilir, hazırlanamadı. Lütfen tekrar dene."));
-        else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene."));
+          setHata(t("saZamanAsimi", "İnternet yavaş olabilir, hazırlanamadı. Lütfen tekrar dene.") + teknik);
+        else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene.") + teknik);
       }
     } catch (e) { setHata((e && e.message) ? String(e.message) : t("saOlmadi", "Şu an yapılamadı, tekrar dene.")); }
     setYuk(false);

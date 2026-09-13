@@ -133,7 +133,7 @@ async function _resimDene(backend, istem, girdiResim, girdiResim2) {
   // Not: alttaki istek arka planda bitebilir ama biz beklemeyiz → kullanıcı ekranda takılı kalmaz, "tekrar dene" görür.
   const sonuc = await Promise.race([
     model.generateContent(girisi),
-    new Promise((_, ret) => setTimeout(() => ret(new Error("timeout: cevap 60 sn icinde gelmedi")), 60000)),
+    new Promise((_, ret) => setTimeout(() => ret(new Error("timeout: cevap 55 sn icinde gelmedi")), 55000)),
   ]);
   const resp = sonuc && sonuc.response;
   let parcalar = [];
@@ -156,22 +156,23 @@ export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransi
   // son adımda (yüz yerleştirme) filigran eklenir → çift filigran olmaz.
   const yollar = [{ ad: "Gemini", yap: () => new GoogleAIBackend() }, { ad: "Vertex", yap: () => new VertexAIBackend() }];
   const hatalar = [];
-  // GEÇİCİ hata mı? (503/deadline/overloaded/500/timeout/fetch) → beklenmedik değil, sunucu meşgul → TEKRAR DENE.
-  const geciciMi = (e) => { const m = (_hataMetni(e) || "").toLowerCase(); return m.indexOf("503") !== -1 || m.indexOf("deadline") !== -1 || m.indexOf("overload") !== -1 || m.indexOf("unavailable") !== -1 || m.indexOf("500") !== -1 || m.indexOf("timeout") !== -1 || m.indexOf("fetch") !== -1 || m.indexOf("try again") !== -1; };
+  // GEÇİCİ hata mı? (503/overloaded/500) → sunucu meşgul → HIZLI 1 kez tekrar dener.
+  // NOT: "timeout" (bizim 55 sn sınırımız) ARTIK geçici sayılmaz → tekrar tekrar 55 sn beklemez, hemen diğer yola/hataya geçer (kullanıcı 5-6 dk bekliyordu).
+  const geciciMi = (e) => { const m = (_hataMetni(e) || "").toLowerCase(); return m.indexOf("503") !== -1 || m.indexOf("overload") !== -1 || m.indexOf("unavailable") !== -1 || m.indexOf("500") !== -1 || m.indexOf("try again") !== -1; };
   // ⛔ ÇİFT GLOXORG ÖNLE (kullanıcı: "foto zaten GLOXORG'luysa yapay zekâ bir tane daha koyuyor, üst üste biniyor"):
   //   Girdi fotoğrafında GLOXORG varsa model onu KOPYALIYOR, sonra biz (_filigranEkle) bir tane daha ekleyince ÇİFT oluyordu.
   //   Modele HER ZAMAN: hiç watermark/logo/GLOXORG EKLEME + girdideki MEVCUDU TEMİZLE. Damgayı hep BİZ ekleriz → tek GLOXORG kalır.
   const istemTemiz = String(istem || "") + " CRITICAL WATERMARK RULE: The output image MUST be completely CLEAN — NO watermark, NO logo, NO brand mark, NO caption, NO sticker and NO text of any kind, especially the word 'GLOXORG'. VERY IMPORTANT: the provided/source image very often ALREADY has a 'GLOXORG' watermark or logo in the BOTTOM-RIGHT corner (sometimes gold text, sometimes on a dark rounded box). You MUST completely ERASE and PAINT OVER that whole corner with the surrounding clean background so that absolutely NO trace of any watermark, box or 'GLOXORG' text remains. NEVER copy, keep or recreate any existing watermark or logo from the source image.";
   for (const y of yollar) {
     let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
-    // Her yol için EN FAZLA 3 deneme; geçici hatada bekleyip tekrar dener (503 "Deadline expired" çoğu zaman geçicidir).
-    for (let deneme = 0; deneme < 3; deneme++) {
+    // Her yol için EN FAZLA 2 deneme; SADECE gerçek geçici hatada (503/500/overload) 1 kez hızlı tekrar dener.
+    for (let deneme = 0; deneme < 2; deneme++) {
       try {
         const url = await _resimDene(bk, istemTemiz, girdiResim, girdiResim2);
         if (url) { if (filigransiz) return { dataUrl: url }; let fil; try { fil = await _filigranEkle(url); } catch (e) { fil = url; } return { dataUrl: fil || url }; }
         break; // resim gelmedi ama hata da yok → sonraki yola geç
       } catch (e) {
-        if (geciciMi(e) && deneme < 2) { await new Promise((r) => setTimeout(r, 1600 * (deneme + 1))); continue; } // 1.6s, 3.2s bekle, tekrar dene
+        if (geciciMi(e) && deneme < 1) { await new Promise((r) => setTimeout(r, 1500)); continue; } // 1.5s bekle, 1 kez tekrar
         hatalar.push(y.ad + ": " + _hataMetni(e)); break;
       }
     }
