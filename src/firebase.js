@@ -129,14 +129,26 @@ async function _resimDene(backend, istem, girdiResim, girdiResim2) {
   } else {
     girisi = metin;
   }
-  const sonuc = await model.generateContent(girisi);
+  // ⏱️ ZAMAN AŞIMI: yapay zekâ 60 sn içinde cevap vermezse BEKLEMEYİ BIRAK (yoksa internet takılınca "hazırlıyor" sonsuza kadar kalıyordu).
+  // Not: alttaki istek arka planda bitebilir ama biz beklemeyiz → kullanıcı ekranda takılı kalmaz, "tekrar dene" görür.
+  const sonuc = await Promise.race([
+    model.generateContent(girisi),
+    new Promise((_, ret) => setTimeout(() => ret(new Error("timeout: cevap 60 sn icinde gelmedi")), 60000)),
+  ]);
   const resp = sonuc && sonuc.response;
   let parcalar = [];
   try { parcalar = (resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content && resp.candidates[0].content.parts) || []; } catch (e) {}
   for (const p of parcalar) {
     if (p && p.inlineData && p.inlineData.data) return "data:" + (p.inlineData.mimeType || "image/png") + ";base64," + p.inlineData.data;
   }
-  throw new Error("Resim gelmedi (modelin cevabinda gorsel yok)");
+  // Resim yoksa NEDENİNİ oku (çoğu zaman içerik güvenlik filtresi = iç çamaşırı gibi görselleri reddeder) → kullanıcıya anlaşılır hata dön.
+  let neden = "";
+  try {
+    const c0 = resp && resp.candidates && resp.candidates[0];
+    const fr = (c0 && c0.finishReason) || (resp && resp.promptFeedback && resp.promptFeedback.blockReason) || "";
+    if (fr && String(fr).toUpperCase().indexOf("SAFETY") !== -1 || String(fr).toUpperCase().indexOf("BLOCK") !== -1 || String(fr).toUpperCase().indexOf("PROHIBIT") !== -1) neden = "guvenlik";
+  } catch (e) {}
+  throw new Error(neden === "guvenlik" ? "GUVENLIK: bu icerik yapay zeka tarafindan reddedildi" : "Resim gelmedi (modelin cevabinda gorsel yok)");
 }
 export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransiz) {
   // ÖNCE Gemini Developer API (kullanıcının kurduğu + kredi ekleyeceği yer), OLMAZSA Vertex AI.

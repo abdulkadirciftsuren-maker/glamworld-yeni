@@ -337,7 +337,15 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       // TEK AŞAMA: gövde + elbise + yüzü koru (2 aşamalı yüz yerleştirme yüzü BULANIKLAŞTIRIYORDU → kaldırıldı)
       const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime2 }, ref2);
       if (res && res.dataUrl) setSonuc(res.dataUrl);
-      else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene."));
+      else {
+        // Hata metnini oku → kullanıcıya ANLAŞILIR Türkçe mesaj (takılı kalmaz, ne olduğunu anlar).
+        const h = ((res && res.hata) || "").toString().toLowerCase();
+        if (h.indexOf("guvenlik") !== -1 || h.indexOf("safety") !== -1 || h.indexOf("block") !== -1 || h.indexOf("prohibit") !== -1)
+          setHata(t("saGuvenlik", "Bu görsel yapay zekâ tarafından kabul edilmedi. Daha kapalı bir model seç ya da başka bir parça dene."));
+        else if (h.indexOf("timeout") !== -1 || h.indexOf("deadline") !== -1)
+          setHata(t("saZamanAsimi", "İnternet yavaş olabilir, hazırlanamadı. Lütfen tekrar dene."));
+        else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene."));
+      }
     } catch (e) { setHata((e && e.message) ? String(e.message) : t("saOlmadi", "Şu an yapılamadı, tekrar dene.")); }
     setYuk(false);
   }
@@ -556,7 +564,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
 
           {/* Reklamdan gelindiyse ürün SABİT → DENE düğmesi hemen fotoğrafın altında */}
           {!sonuc && reklamdan && (
-            <button className="sa-dene sa-dene-buyuk" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saDene", "Fotoğrafımda dene")}</button>
+            <button className="sa-dene sa-dene-buyuk" disabled={yuk} onClick={dene}>{yuk ? (<><span className="sa-spin" />{t("saHazir", "Gloxoo hazırlıyor…")}</>) : ("✨ " + t("saDene", "Fotoğrafımda dene"))}</button>
           )}
 
           {/* SİHİRBAZ — ADIM 1: Kim için? (SABİT ızgara) + Ne denensin? (kategori kartları) + Devam */}
@@ -651,7 +659,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
             </button>
             <div className="sa-adim-cta">
               <button className="sa-geri" onClick={() => setAdim(1)} aria-label={t("saGeri", "Geri")}>←</button>
-              <button className="sa-dene sa-dene-adim" disabled={yuk} onClick={dene}>{yuk ? "⏳ " + t("saHazir", "Gloxoo hazırlıyor…") : "✨ " + t("saUstumdeGoster", "Üstümde göster")}</button>
+              <button className="sa-dene sa-dene-adim" disabled={yuk} onClick={dene}>{yuk ? (<><span className="sa-spin" />{t("saHazir", "Gloxoo hazırlıyor…")}</>) : ("✨ " + t("saUstumdeGoster", "Üstümde göster"))}</button>
             </div>
           </>)}
           {hata && <div className="sa-hata">⚠️ {hata}</div>}
