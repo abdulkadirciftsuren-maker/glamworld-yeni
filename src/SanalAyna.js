@@ -89,13 +89,14 @@ const ELBISE_KISI = {
   erkekcocuk: ["Takım", "Gömlek", "Tişört", "Kazak", "Süveter", "Kapşonlu (Hoodie)", "Sweatshirt", "Yelek", "Şort", "Kot Pantolon", "Eşofman", "Mont", "Kaban", "Yağmurluk", "Pijama", "Mayo (Şort)", "Şapka", "Bere", "Atkı", "Kısa Çorap", "Uzun Çorap", "Dizüstü Çorap", "Sportif Çorap", "Desenli Çorap", "Eldiven"],
   bebek: ["Bebek Tulumu", "Bebek Elbisesi", "Body Zıbın", "Kışlık Tulum", "Kazak", "Şort & Tişört", "Yağmurluk", "Pijama", "Şapka", "Patik", "Kısa Çorap", "Uzun Çorap", "Dizüstü Çorap", "Sportif Çorap", "Desenli Çorap", "Eldiven", "Önlük"],
 };
-// İÇ ÇAMAŞIRI — kişiye göre. BAYAN çok zengin/çeşitli (dantelli, saten, takım...); ÇOCUK/BEBEK SADECE sade içlik (asla fantezi değil).
+// İÇ ÇAMAŞIRI — SADECE KAPALI/EDEPLİ modeller (kullanıcı seçimi): yapay zekâ dantelli/seksi olanları reddediyor,
+// bu yüzden sadece çıkma ihtimali olan KAPALI modeller (spor sütyen, atlet, termal içlik, boxer...) bırakıldı.
 const ICGIYIM_KISI = {
-  bayan: ["Dantelli Takım", "Sütyen", "Push-up Sütyen", "Bralet", "Bralet Takım", "Büstiyer", "Korse", "Body", "Külot", "Hipster Külot", "Yüksek Bel Külot", "String Külot", "Saten Takım", "Jartiyerli Takım", "Fantezi Takım", "Dantelli Gecelik", "Gecelik", "Babydoll", "Sabahlık", "Spor Sütyen", "Kaşkorse (İçlik)", "Termal İçlik"],
-  erkek: ["Boxer", "Slip", "Atlet", "Fanila (İçlik)", "Boxer Takım", "Kısa Kollu İçlik", "Termal İçlik", "Spor Boxer"],
-  kiz: ["İçlik", "Atlet", "Body", "Külot"],
-  erkekcocuk: ["İçlik", "Atlet", "Boxer", "Külot"],
-  bebek: ["Body Zıbın", "İçlik", "Atlet", "Külot"],
+  bayan: ["Spor Sütyen", "Atlet (İçlik)", "Kaşkorse (İçlik)", "Termal İçlik", "Tank Atlet", "Sporcu Takımı (Atlet+Tayt)"],
+  erkek: ["Atlet (Fanila)", "Boxer", "Termal İçlik", "Kısa Kollu İçlik", "Spor Boxer"],
+  kiz: ["İçlik", "Atlet", "Body (Kapalı)"],
+  erkekcocuk: ["İçlik", "Atlet", "Boxer"],
+  bebek: ["Body Zıbın", "İçlik", "Atlet"],
 };
 // Diğer kategoriler (kişiden bağımsız genel öneriler)
 const ONERILER = {
@@ -123,7 +124,7 @@ const KATEGORI_ISTEM = {
   tirnak: { ne: "nail design", koru: "Keep the SAME person and hands; change ONLY the nails." },
   kirpik: { ne: "eyelash look", koru: "Keep the SAME person and face; change ONLY the eyelashes (fuller/longer lashes). Do not change the face." },
   elbise: { ne: "outfit / clothing", koru: "Dress the SAME person in this outfit; keep their face and identity; show them fully wearing it." },
-  icgiyim: { ne: "underwear / lingerie", koru: "Dress the SAME person in this underwear/lingerie in a TASTEFUL, non-explicit fashion-catalog style, exactly like a clothing-store product photo (e.g. a well-known underwear brand's website). Keep their face and identity. Elegant, modest framing." },
+  icgiyim: { ne: "modest sportswear / activewear base layer", koru: "Dress the SAME person in this CLOSED, MODEST activewear/base-layer top (like a sports tank top, athletic undershirt or thermal top over normal clothing style) — fully covered, decent, exactly like a sportswear catalog product photo. NOT revealing, NOT lingerie. Keep their face and identity." },
   sapka: { ne: "hat / headwear", koru: "Put this hat/headwear on the SAME person's head; keep their face, hair and identity; do not change the face." },
   ayakkabi: { ne: "pair of shoes", koru: "Show the SAME person wearing these shoes; keep their face and body." },
   canta: { ne: "bag", koru: "Show the SAME person holding/carrying this bag; keep their face and body." },
