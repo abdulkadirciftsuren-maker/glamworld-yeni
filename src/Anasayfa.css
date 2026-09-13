@@ -5385,6 +5385,15 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-spin{ display:inline-block; width:19px; height:19px; margin-right:9px; vertical-align:-4px; border-radius:50%;
   border:3px solid rgba(74,53,0,.28); border-top-color:#4a3500; animation:saDon .8s linear infinite; }
 @keyframes saDon{ to{ transform:rotate(360deg); } }
+/* TON ŞERİDİ — seçilen rengin AÇIK↔KOYU çizgisi + üstünde YÜRÜYEN imleç (kullanıcı: "yürüyen çizgi, açık-koyu") */
+.sa-ton{ margin-top:9px; }
+.sa-ton-serit{ position:relative; height:28px; border-radius:9px; border:1.5px solid rgba(120,90,0,.4); display:flex; overflow:visible; }
+.sa-ton-hucre{ flex:1; border:none; background:transparent; padding:0; cursor:pointer; }
+.sa-ton-hucre + .sa-ton-hucre{ border-left:1px solid rgba(255,255,255,.22); }
+.sa-ton-imlec{ position:absolute; top:-5px; bottom:-5px; width:6px; border-radius:5px; background:#1a1a1a; box-shadow:0 0 0 2.5px #fff, 0 2px 6px rgba(0,0,0,.3); transform:translateX(-50%); transition:left .28s ease; pointer-events:none; }
+.sa-ton-bilgi{ display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:12.5px; font-weight:800; color:#5a3f00; }
+.sa-ton-bilgi b{ color:#4a3500; font-size:13.5px; }
+@media (min-width:560px){ .sa-ton-serit{ height:32px; } .sa-ton-bilgi{ font-size:14px; } .sa-ton-bilgi b{ font-size:15px; } }
 .sa-hata{ margin-top:12px; color:#8a1a1a; background:#ffe1e1; border:1.5px solid #c04a4a; border-radius:10px; padding:10px 12px; font-weight:700; font-size:14px; }
 .sa-sonuc{ margin-top:20px; border-top:2px dashed rgba(160,120,0,.5); padding-top:16px; }
 .sa-sonuc-bas{ font-weight:900; font-size:18px; color:#3a7a2a; margin-bottom:10px; }

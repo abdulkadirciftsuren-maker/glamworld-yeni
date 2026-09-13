@@ -28,6 +28,35 @@ const GENEL_RENK = ["Siyah", "Beyaz", "Kırmızı", "Mavi", "Lacivert", "Yeşil"
 // Renk çipini İSİM yerine GERÇEK RENK göstermek için (kullanıcı: "renk isimlerini kaldır, renk yap"). Kare kutu (yuvarlak YOK).
 const RENK_HEX = { "Siyah": "#141414", "Koyu Kahve": "#3b2416", "Kahve": "#6b4423", "Kumral": "#a86a3d", "Sarı": "#e6c15a", "Bal Köpüğü": "#e2b878", "Kızıl": "#b5462a", "Bakır": "#b87333", "Platin Sarı": "#ece2c0", "Gri / Gümüş": "#bcc0c4", "Mavi": "#3a6fd0", "Pembe": "#e58bb0", "Beyaz": "#fafafa", "Kırmızı": "#d63333", "Lacivert": "#1f2a55", "Yeşil": "#2e9e5b", "Mor": "#7a4fd0", "Turuncu": "#e8792a", "Bej": "#e3d1a8", "Gri": "#9aa0a6", "Altın": "#d4af37", "Gümüş": "#c8ccd0" };
 function renkGetir(kategori) { if (kategori === "sac") return SAC_RENK; if (kategori === "makyaj" || kategori === "kirpik") return []; return GENEL_RENK; }
+// AÇIK/KOYU TON — kullanıcı: "renk bölümüne yürüyen çizgi koy, seçtiğim renge konsantre olayım açık-koyu".
+// ton 0..4: 0=Çok Açık, 1=Açık, 2=Normal, 3=Koyu, 4=Çok Koyu. tonHex ile seçilen rengin açık/koyu halini üretiriz.
+const TON_ADLARI = ["Çok Açık", "Açık", "Normal", "Koyu", "Çok Koyu"];
+function _hx(n) { n = Math.max(0, Math.min(255, Math.round(n))); return n.toString(16).padStart(2, "0"); }
+function tonHex(hex, ton) {
+  try {
+    const h = (hex || "#888888").replace("#", "");
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    const k = (ton == null ? 2 : ton) - 2; // -2..+2
+    if (k < 0) { const f = (-k) / 2 * 0.6; return "#" + _hx(r + (255 - r) * f) + _hx(g + (255 - g) * f) + _hx(b + (255 - b) * f); } // beyaza yaklaş (açık)
+    if (k > 0) { const f = 1 - (k / 2 * 0.55); return "#" + _hx(r * f) + _hx(g * f) + _hx(b * f); } // siyaha yaklaş (koyu)
+    return hex || "#888888";
+  } catch (e) { return hex || "#888888"; }
+}
+// Yapay zekâya gidecek renk adı: "Açık Mavi" / "Koyu Kırmızı" (Normal ise sade "Mavi").
+function tonluRenkAd(renk, ton) { if (!renk) return ""; const on = TON_ADLARI[ton == null ? 2 : ton]; return (on && on !== "Normal" ? on + " " : "") + renk; }
+// TON ŞERİDİ — seçilen rengin AÇIK↔KOYU çizgisi; üstünde YÜRÜYEN imleç (dokununca kayar). Renk seçilince görünür.
+function TonSerit({ hex, ton, onSec }) {
+  const t = (ton == null ? 2 : ton);
+  return (
+    <div className="sa-ton">
+      <div className="sa-ton-serit" style={{ background: "linear-gradient(to right," + tonHex(hex, 0) + "," + tonHex(hex, 2) + "," + tonHex(hex, 4) + ")" }}>
+        {[0, 1, 2, 3, 4].map((i) => (<button key={i} type="button" className="sa-ton-hucre" onClick={() => onSec(i)} aria-label={TON_ADLARI[i]} />))}
+        <span className="sa-ton-imlec" style={{ left: (t * 20 + 10) + "%" }} />
+      </div>
+      <div className="sa-ton-bilgi"><span>☀️ Açık</span><b className="notranslate">{TON_ADLARI[t]}</b><span>Koyu 🌙</span></div>
+    </div>
+  );
+}
 // ⛔ ESKİ DAMGAYI KAPAT (kullanıcı: "yüklediğim fotoğrafta eski GLOXORG varsa silmiyor, ikincisini yapıştırıyor → çift"):
 // Yapay zekâya VERMEDEN önce fotoğrafın SAĞ-ALT köşesini arka plan rengiyle kapatırız → AI kopyalayacak eski damga GÖRMEZ → sonuç temiz çıkar.
 function kosevKapat(dataUrl) {
@@ -185,14 +214,16 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   const [kategori, setKategori] = useState((baslangic && baslangic.kategori) || "sac"); // sac | makyaj | tirnak | elbise | ayakkabi | canta | aksesuar
   const [model, setModel] = useState((baslangic && baslangic.model) || "");          // denenecek model adı
   const [renk, setRenk] = useState("");            // isteğe bağlı renk
+  const [renkTon, setRenkTon] = useState(2);       // tek seçimde rengin AÇIK/KOYU tonu (0..4, 2=normal)
   const [adim, setAdim] = useState(1);             // SİHİRBAZ adımı: 1=Fotoğraf+Kim, 2=Kategori, 3=Model+Renk+Dene (Photta gibi adım adım)
   const [arkaKoru, setArkaKoru] = useState(false); // AÇIK ise: yapay zekâ kişinin KENDİ (doğadaki) arka planını korur, stüdyo yapmaz (kullanıcı isteği)
   // ÇOKLU KIYAFET — kullanıcı: "birkaç kıyafet seçeyim, her birine AYRI renk vereyim". [{ad, renk}] (sadece Kıyafet kategorisinde)
   const [parcalar, setParcalar] = useState([]);
   const [parcaYaz, setParcaYaz] = useState(""); // elle kıyafet ekleme kutusu
   const parcaVarMi = (ad) => parcalar.some((p) => p.ad === ad);
-  const parcaTogle = (ad) => setParcalar((L) => parcaVarMi(ad) ? L.filter((p) => p.ad !== ad) : [...L, { ad, renk: "" }]);
-  const parcaRenk = (ad, r) => setParcalar((L) => L.map((p) => p.ad === ad ? { ...p, renk: p.renk === r ? "" : r } : p));
+  const parcaTogle = (ad) => setParcalar((L) => parcaVarMi(ad) ? L.filter((p) => p.ad !== ad) : [...L, { ad, renk: "", ton: 2 }]);
+  const parcaRenk = (ad, r) => setParcalar((L) => L.map((p) => p.ad === ad ? { ...p, renk: p.renk === r ? "" : r, ton: p.renk === r ? 2 : p.ton } : p));
+  const parcaTon = (ad, ton) => setParcalar((L) => L.map((p) => p.ad === ad ? { ...p, ton } : p)); // parçanın açık/koyu tonu
   const parcaSil = (ad) => setParcalar((L) => L.filter((p) => p.ad !== ad));
   // REKLAMDAN gelen ÜRÜN referans fotoğrafı (o EXACT elbiseyi/ürünü üstünde göster) — varsa 2. görsel olarak verilir
   const [refFoto, setRefFoto] = useState("");
@@ -291,10 +322,10 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
       const cfg = KATEGORI_ISTEM[kategori] || KATEGORI_ISTEM.sac;
       const kisiIng = (KISILER.find((x) => x.k === kisi) || {}).ing || "person";
       // ÇOKLU kıyafet metni: "Siyah Ceket, Beyaz Gömlek, Mavi Kot Pantolon" (her parça kendi rengiyle)
-      const parcaMetin = parcalar.map((p) => (p.renk ? p.renk + " " : "") + p.ad).join(", ");
+      const parcaMetin = parcalar.map((p) => { const rc = tonluRenkAd(p.renk, p.ton); return (rc ? rc + " " : "") + p.ad; }).join(", ");
       const denenecekMetin = elbiseCoklu ? parcaMetin : model.trim();
       const giyNot = elbiseCoklu ? ` Dress the person in ALL of these garments TOGETHER as ONE complete outfit — each garment in its stated color: ${parcaMetin}. EVERY listed garment must be worn at once.` : "";
-      const renkKismi = (renk && !elbiseCoklu) ? ` Color: ${renk}.` : "";
+      const renkKismi = (renk && !elbiseCoklu) ? ` Color: ${tonluRenkAd(renk, renkTon)}.` : "";
       // CİNSİYETE GÖRE ayakkabı/stil (kullanıcı: bazen erkeğe bayan ayakkabısı giydiriyordu)
       const erkekMi = (kisi === "erkek" || kisi === "erkekcocuk");
       const O = erkekMi ? "him" : "her";      // nesne (him/her)
@@ -605,7 +636,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                 )}
                 <div className="sa-parca-ekle">
                   <input className="sa-model-input" type="text" value={parcaYaz} onChange={(e) => setParcaYaz(e.target.value)} placeholder={kategori === "icgiyim" ? t("saIcgiyimYaz", "İç çamaşırı yaz (örn. Dantelli takım)") : t("saKiyafetYaz", "Kıyafet yaz (örn. Deri ceket)")} />
-                  <button className="sa-parca-ekle-btn" onClick={() => { const a = parcaYaz.trim(); if (a && !parcaVarMi(a)) { setParcalar((L) => [...L, { ad: a, renk: "" }]); setParcaYaz(""); } }}>+ {t("ekle", "Ekle")}</button>
+                  <button className="sa-parca-ekle-btn" onClick={() => { const a = parcaYaz.trim(); if (a && !parcaVarMi(a)) { setParcalar((L) => [...L, { ad: a, renk: "", ton: 2 }]); setParcaYaz(""); } }}>+ {t("ekle", "Ekle")}</button>
                 </div>
                 {parcalar.length > 0 && (
                   <div className="sa-parca-liste">
@@ -620,7 +651,8 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                             <button key={r} className={"sa-renk-mini" + (p.renk === r ? " sec" : "")} style={{ background: RENK_HEX[r] || "#ccc" }} onClick={() => parcaRenk(p.ad, r)} title={ac(r)} aria-label={ac(r)} />
                           ))}
                         </div>
-                        <span className="sa-parca-renk-ad notranslate">{p.renk ? ac(p.renk) : t("saRenkSerbest", "renk seçmezsen serbest")}</span>
+                        <span className="sa-parca-renk-ad notranslate">{p.renk ? (TON_ADLARI[p.ton] !== "Normal" ? ac(TON_ADLARI[p.ton]) + " " : "") + ac(p.renk) : t("saRenkSerbest", "renk seçmezsen serbest")}</span>
+                        {p.renk && <TonSerit hex={RENK_HEX[p.renk]} ton={p.ton} onSec={(i) => parcaTon(p.ad, i)} />}
                       </div>
                     ))}
                   </div>
@@ -643,11 +675,12 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                     <div className="sa-kim-bas" style={{ marginTop: 8 }}>🎨 {t("saRenk", "Renk (isteğe bağlı)")} — {t("saRenkDokun", "dokun ve seç")}</div>
                     <div className="sa-renk-grid">
                       {renkler.map((r) => (
-                        <button key={r} className={"sa-renk-kutu2" + (renk === r ? " sec" : "")} onClick={() => setRenk(renk === r ? "" : r)} title={ac(r)} aria-label={ac(r)}>
+                        <button key={r} className={"sa-renk-kutu2" + (renk === r ? " sec" : "")} onClick={() => { setRenk(renk === r ? "" : r); setRenkTon(2); }} title={ac(r)} aria-label={ac(r)}>
                           <span className="sa-renk-ornek2" style={{ background: RENK_HEX[r] || "#ccc" }} />
                         </button>
                       ))}
                     </div>
+                    {renk && <TonSerit hex={RENK_HEX[renk]} ton={renkTon} onSec={setRenkTon} />}
                   </>
                 )}
               </>
