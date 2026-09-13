@@ -54,14 +54,23 @@ function kosevKapat(dataUrl) {
   });
 }
 const ELBISE_KISI = {
-  bayan: ["Gece Elbisesi", "Abiye Elbise", "Yazlık Elbise", "Kışlık Elbise", "Tişört", "Gömlek", "Bluz", "Kazak", "Hırka", "Ceket", "Blazer", "Mont", "Palto", "Kaban", "Trençkot", "Yelek", "Kot Pantolon", "Kumaş Pantolon", "Etek", "Şort", "Tayt", "Tulum", "Takım", "Eşofman", "Spor Giyim", "İç Giyim", "Pijama", "Mayo", "Bikini", "Atkı", "Şapka", "Bere", "Kemer", "Eşarp", "Çorap", "Eldiven"],
-  erkek: ["Takım Elbise", "Smokin", "Gömlek", "Tişört", "Polo Tişört", "Kazak", "Süveter", "Ceket", "Blazer", "Mont", "Palto", "Kaban", "Trençkot", "Yelek", "Kapşonlu (Hoodie)", "Sweatshirt", "Kot Pantolon", "Kumaş Pantolon", "Şort", "Eşofman", "Spor Giyim", "İç Giyim", "Pijama", "Mayo (Şort)", "Kravat", "Papyon", "Kemer", "Atkı", "Şapka", "Bere", "Çorap", "Eldiven"],
-  kiz: ["Prenses Elbise", "Yazlık Elbise", "Kışlık Elbise", "Tişört", "Bluz", "Kazak", "Hırka", "Etek", "Şort", "Tayt", "Tulum", "Kot Pantolon", "Mont", "Kaban", "Yağmurluk", "Eşofman", "Pijama", "Mayo", "Şapka", "Bere", "Atkı", "Çorap", "Eldiven"],
-  erkekcocuk: ["Takım", "Gömlek", "Tişört", "Kazak", "Süveter", "Kapşonlu (Hoodie)", "Sweatshirt", "Yelek", "Şort", "Kot Pantolon", "Eşofman", "Mont", "Kaban", "Yağmurluk", "Pijama", "Mayo (Şort)", "Şapka", "Bere", "Atkı", "Çorap", "Eldiven"],
-  bebek: ["Bebek Tulumu", "Bebek Elbisesi", "Body Zıbın", "Kışlık Tulum", "Kazak", "Şort & Tişört", "Yağmurluk", "Pijama", "Şapka", "Patik", "Çorap", "Eldiven", "Önlük"],
+  bayan: ["Gece Elbisesi", "Abiye Elbise", "Yazlık Elbise", "Kışlık Elbise", "Tişört", "Gömlek", "Bluz", "Kazak", "Hırka", "Ceket", "Blazer", "Mont", "Palto", "Kaban", "Trençkot", "Yelek", "Kot Pantolon", "Kumaş Pantolon", "Etek", "Şort", "Tayt", "Tulum", "Takım", "Eşofman", "Spor Giyim", "Pijama", "Mayo", "Bikini", "Atkı", "Şapka", "Bere", "Kemer", "Eşarp", "Kısa Çorap", "Uzun Çorap", "Dizüstü Çorap", "Sportif Çorap", "Desenli Çorap", "Eldiven"],
+  erkek: ["Takım Elbise", "Smokin", "Gömlek", "Tişört", "Polo Tişört", "Kazak", "Süveter", "Ceket", "Blazer", "Mont", "Palto", "Kaban", "Trençkot", "Yelek", "Kapşonlu (Hoodie)", "Sweatshirt", "Kot Pantolon", "Kumaş Pantolon", "Şort", "Eşofman", "Spor Giyim", "Pijama", "Mayo (Şort)", "Kravat", "Papyon", "Kemer", "Atkı", "Şapka", "Bere", "Kısa Çorap", "Uzun Çorap", "Dizüstü Çorap", "Sportif Çorap", "Desenli Çorap", "Eldiven"],
+  kiz: ["Prenses Elbise", "Yazlık Elbise", "Kışlık Elbise", "Tişört", "Bluz", "Kazak", "Hırka", "Etek", "Şort", "Tayt", "Tulum", "Kot Pantolon", "Mont", "Kaban", "Yağmurluk", "Eşofman", "Pijama", "Mayo", "Şapka", "Bere", "Atkı", "Kısa Çorap", "Uzun Çorap", "Dizüstü Çorap", "Sportif Çorap", "Desenli Çorap", "Eldiven"],
+  erkekcocuk: ["Takım", "Gömlek", "Tişört", "Kazak", "Süveter", "Kapşonlu (Hoodie)", "Sweatshirt", "Yelek", "Şort", "Kot Pantolon", "Eşofman", "Mont", "Kaban", "Yağmurluk", "Pijama", "Mayo (Şort)", "Şapka", "Bere", "Atkı", "Kısa Çorap", "Uzun Çorap", "Dizüstü Çorap", "Sportif Çorap", "Desenli Çorap", "Eldiven"],
+  bebek: ["Bebek Tulumu", "Bebek Elbisesi", "Body Zıbın", "Kışlık Tulum", "Kazak", "Şort & Tişört", "Yağmurluk", "Pijama", "Şapka", "Patik", "Kısa Çorap", "Uzun Çorap", "Dizüstü Çorap", "Sportif Çorap", "Desenli Çorap", "Eldiven", "Önlük"],
+};
+// İÇ ÇAMAŞIRI — kişiye göre. BAYAN çok zengin/çeşitli (dantelli, saten, takım...); ÇOCUK/BEBEK SADECE sade içlik (asla fantezi değil).
+const ICGIYIM_KISI = {
+  bayan: ["Dantelli Takım", "Sütyen", "Push-up Sütyen", "Bralet", "Bralet Takım", "Büstiyer", "Korse", "Body", "Külot", "Hipster Külot", "Yüksek Bel Külot", "String Külot", "Saten Takım", "Jartiyerli Takım", "Fantezi Takım", "Dantelli Gecelik", "Gecelik", "Babydoll", "Sabahlık", "Spor Sütyen", "Kaşkorse (İçlik)", "Termal İçlik"],
+  erkek: ["Boxer", "Slip", "Atlet", "Fanila (İçlik)", "Boxer Takım", "Kısa Kollu İçlik", "Termal İçlik", "Spor Boxer"],
+  kiz: ["İçlik", "Atlet", "Body", "Külot"],
+  erkekcocuk: ["İçlik", "Atlet", "Boxer", "Külot"],
+  bebek: ["Body Zıbın", "İçlik", "Atlet", "Külot"],
 };
 // Diğer kategoriler (kişiden bağımsız genel öneriler)
 const ONERILER = {
+  sapka: ["Fötr Şapka", "Fedora", "Panama", "Hasır Şapka", "Geniş Kenar Güneş Şapkası", "Kovboy Şapkası", "Kasket", "Beyzbol Şapkası", "Snapback", "Bucket Şapka (Balıkçı)", "Bere", "Yün Bere", "Ponpon Bere", "Kışlık Kulaklı Bere", "Bareli Şapka (Beret)", "Vizör (Siperlik)", "Türban", "Başörtüsü"],
   makyaj: ["Doğal Makyaj", "Smokey Göz", "Gündüz Makyajı", "Gece Makyajı", "Gelin Makyajı", "Işıltılı Ten", "Kontür & Aydınlatıcı", "Kırmızı Ruj", "Nude Makyaj", "Pembe Ton", "Bronz Ten", "Eyeliner (Kalın)", "Kore Makyajı", "Glitter Göz", "Mat Ten"],
   tirnak: ["Fransız Tırnak", "Ombre Tırnak", "Kırmızı Oje", "Nude Ton", "Gliter", "Kedi Gözü", "Mat Siyah", "Çiçek Desen", "Beyaz Uç", "Pembe Jel", "Mermer Desen", "Krom (Ayna)", "Uzun Stiletto", "Kısa Oval", "Renkli Uçlar"],
   kirpik: ["Doğal Kirpik", "Hacimli Kirpik", "Uzun Kirpik", "İpek Kirpik", "Kedi Gözü Kirpik", "Manga Kirpik", "Volume (3D)", "Klasik Tek Tek", "Islak Görünüm", "Renkli Uçlar"],
@@ -75,6 +84,7 @@ const ONERILER = {
 function oneriGetir(kategori, kisi) {
   if (kategori === "sac") return SAC_KISI[kisi] || SAC_KISI.bayan;
   if (kategori === "elbise") return ELBISE_KISI[kisi] || ELBISE_KISI.bayan;
+  if (kategori === "icgiyim") return ICGIYIM_KISI[kisi] || ICGIYIM_KISI.bayan;
   return ONERILER[kategori] || [];
 }
 // Her kategori için görsel yapay zekâsına verilecek İngilizce talimat (yüzü koru / üstüne giydir).
@@ -84,6 +94,8 @@ const KATEGORI_ISTEM = {
   tirnak: { ne: "nail design", koru: "Keep the SAME person and hands; change ONLY the nails." },
   kirpik: { ne: "eyelash look", koru: "Keep the SAME person and face; change ONLY the eyelashes (fuller/longer lashes). Do not change the face." },
   elbise: { ne: "outfit / clothing", koru: "Dress the SAME person in this outfit; keep their face and identity; show them fully wearing it." },
+  icgiyim: { ne: "underwear / lingerie", koru: "Dress the SAME person in this underwear/lingerie in a TASTEFUL, non-explicit fashion-catalog style, exactly like a clothing-store product photo (e.g. a well-known underwear brand's website). Keep their face and identity. Elegant, modest framing." },
+  sapka: { ne: "hat / headwear", koru: "Put this hat/headwear on the SAME person's head; keep their face, hair and identity; do not change the face." },
   ayakkabi: { ne: "pair of shoes", koru: "Show the SAME person wearing these shoes; keep their face and body." },
   canta: { ne: "bag", koru: "Show the SAME person holding/carrying this bag; keep their face and body." },
   taki: { ne: "jewelry", koru: "Add this jewelry (necklace/earrings/ring/bracelet) to the SAME person; keep their face and identity." },
@@ -94,6 +106,8 @@ const KATEGORI_ISTEM = {
 // Her kategori: k=anahtar, ik=simge, ck=çeviri, ad=Türkçe ad, bg=kart görsel zemini (gerçek fotoğraf hazır olunca 'resim' alanı eklenip img gösterilir → kod hazır bekler).
 const KATEGORILER = [
   { k: "elbise", ik: "👗", ck: "saElbise", ad: "Kıyafet", bg: "linear-gradient(160deg,#ffe0ec,#ffc0da)" },
+  { k: "icgiyim", ik: "🩲", ck: "saIcgiyim", ad: "İç Çamaşırı", bg: "linear-gradient(160deg,#ffe4f0,#ffbcd6)" },
+  { k: "sapka", ik: "👒", ck: "saSapka", ad: "Şapka", bg: "linear-gradient(160deg,#fff0d6,#ffdca0)" },
   { k: "sac", ik: "💇", ck: "saSac", ad: "Saç", bg: "linear-gradient(160deg,#efe3ff,#d9c2ff)" },
   { k: "makyaj", ik: "💄", ck: "saMakyaj", ad: "Makyaj", bg: "linear-gradient(160deg,#ffe6d6,#ffc9a8)" },
   { k: "tirnak", ik: "💅", ck: "saTirnak", ad: "Tırnak", bg: "linear-gradient(160deg,#ffe0e0,#ffb8b8)" },
@@ -266,7 +280,8 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   async function dene() {
     if (yuk) return;
     if (!foto) { setHata(t("saFotoOnce", "Önce fotoğrafını ekle.")); return; }
-    const elbiseCoklu = (kategori === "elbise" && parcalar.length > 0); // ÇOKLU kıyafet (her birine ayrı renk)
+    const cokluKat = (kategori === "elbise" || kategori === "icgiyim"); // ÇOKLU seçim (kıyafet + iç çamaşırı): birkaç parça, her birine ayrı renk
+    const elbiseCoklu = (cokluKat && parcalar.length > 0);
     if (!elbiseCoklu && !model.trim()) { setHata(t("saModelOnce", "Bir model yaz ya da yukarıdan seç.")); return; }
     setYuk(true); setHata(""); setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0);
     try {
@@ -298,7 +313,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
         : "standing in an elegant natural pose like a professional fashion studio / runway photo";
       // PROFESYONEL KALİTE (kullanıcı: sonuç reklamlardaki gibi kaliteli olsun). Arka plan + yüz notu değişkenlerle.
       const KALITE = "Ultra photorealistic, professional photography, soft cinematic flattering lighting, sharp focus, ultra-high resolution, fashion-magazine quality, " + bgKalite + ", natural skin texture. It must stay the SAME real person — do NOT beautify, slim, age or change the face. Exactly ONE person, no duplicate or extra face. No text, no watermark, no logo." + yuzNot;
-      const boyKategori = (kategori === "elbise" || kategori === "ayakkabi");
+      const boyKategori = (kategori === "elbise" || kategori === "icgiyim" || kategori === "ayakkabi");
       let istem, ref2 = null;
       if (refFoto) {
         // İKİ görsel: 1. kişi (müşteri), 2. ürün → o EXACT ÜRÜNÜ kişinin üstünde, BOYDAN göster (reklamdan "üstümde dene")
@@ -534,7 +549,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
           )}
 
           {/* İPUCU: kıyafet/ayakkabı denemede en iyi sonuç için BOYU görünen fotoğraf */}
-          {(kategori === "elbise" || kategori === "ayakkabi" || reklamdan) && (
+          {(kategori === "elbise" || kategori === "icgiyim" || kategori === "ayakkabi" || reklamdan) && (
             <div className="sa-boy-ipucu">{t("saBoyIpucu", "💡 En iyi sonuç için BOYUN görünen (dizden yukarı ya da tam boy) bir fotoğraf yükle. Sadece yüz/omuz olursa elbise tam oturmayabilir.")}</div>
           )}
           </>)}
@@ -570,9 +585,9 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
 
           {/* SİHİRBAZ — ADIM 2: Model + Renk + Dene (Kıyafet'te ÇOKLU seçim + her birine ayrı renk) */}
           {!sonuc && !reklamdan && adim === 2 && (<>
-            {kategori === "elbise" ? (
+            {(kategori === "elbise" || kategori === "icgiyim") ? (
               <>
-                <div className="sa-kim-bas">{t("saKiyafetSec", "Hangi kıyafetler? (birkaç seç, her birine renk ver)")}</div>
+                <div className="sa-kim-bas">{kategori === "icgiyim" ? t("saIcgiyimSec", "Hangi iç çamaşırı? (birkaç seç, her birine renk ver)") : t("saKiyafetSec", "Hangi kıyafetler? (birkaç seç, her birine renk ver)")}</div>
                 {oneri.length > 0 && (
                   <div className="sa-oneri-grid">
                     {oneri.map((o) => (
@@ -581,7 +596,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                   </div>
                 )}
                 <div className="sa-parca-ekle">
-                  <input className="sa-model-input" type="text" value={parcaYaz} onChange={(e) => setParcaYaz(e.target.value)} placeholder={t("saKiyafetYaz", "Kıyafet yaz (örn. Deri ceket)")} />
+                  <input className="sa-model-input" type="text" value={parcaYaz} onChange={(e) => setParcaYaz(e.target.value)} placeholder={kategori === "icgiyim" ? t("saIcgiyimYaz", "İç çamaşırı yaz (örn. Dantelli takım)") : t("saKiyafetYaz", "Kıyafet yaz (örn. Deri ceket)")} />
                   <button className="sa-parca-ekle-btn" onClick={() => { const a = parcaYaz.trim(); if (a && !parcaVarMi(a)) { setParcalar((L) => [...L, { ad: a, renk: "" }]); setParcaYaz(""); } }}>+ {t("ekle", "Ekle")}</button>
                 </div>
                 {parcalar.length > 0 && (
