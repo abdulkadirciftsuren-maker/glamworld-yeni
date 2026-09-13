@@ -373,12 +373,17 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
         const ham = ((res && res.hata) || "").toString();
         const h = ham.toLowerCase();
         const teknik = ham ? " (teknik: " + ham.slice(0, 150) + ")" : "";
+        // Yapay zekâ RESİM yerine yazı döndürdüyse ("görsel yok"/"gelmedi") ya da güvenlik → REDDETME sayılır.
+        const reddedildi = h.indexOf("gorsel yok") !== -1 || h.indexOf("gelmedi") !== -1 || h.indexOf("safety") !== -1 || h.indexOf("guvenlik") !== -1 || h.indexOf("block") !== -1 || h.indexOf("prohibit") !== -1;
+        const hassasKat = (kategori === "icgiyim"); // iç çamaşırı → yapay zekâ çoğu zaman reddeder
         if (h.indexOf("quota") !== -1 || h.indexOf("exhaust") !== -1 || h.indexOf("429") !== -1 || h.indexOf("exceeded") !== -1 || h.indexOf("kota") !== -1)
           setHata(t("saKota", "Görsel üretimi için Google kredisi/kotası bitmiş olabilir. Sahibine haber ver.") + teknik);
         else if (h.indexOf("billing") !== -1 || h.indexOf("permission") !== -1 || h.indexOf("403") !== -1 || h.indexOf("api key") !== -1 || h.indexOf("api_key") !== -1 || h.indexOf("precondition") !== -1 || h.indexOf("not valid") !== -1)
           setHata(t("saHesap", "Hesap/anahtar ayarı gerekiyor (fatura veya API anahtarı). Sahibine haber ver.") + teknik);
-        else if (h.indexOf("guvenlik") !== -1 || h.indexOf("safety") !== -1 || h.indexOf("block") !== -1 || h.indexOf("prohibit") !== -1)
-          setHata(t("saGuvenlik", "Bu görsel yapay zekâ tarafından kabul edilmedi. Daha kapalı bir model seç ya da başka bir parça dene."));
+        else if (hassasKat && reddedildi)
+          setHata(t("saIcReddi", "Yapay zekâ, gerçek fotoğraf üstünde iç çamaşırı görseli oluşturmuyor (bu yapay zekânın güvenlik kuralı, elimizde değil). Kıyafet, saç, makyaj, ayakkabı, çanta, takı denemeleri çalışır. İç çamaşırında en fazla spor sütyen/atlet gibi kapalı modeller bazen çıkabilir."));
+        else if (reddedildi)
+          setHata(t("saGuvenlik", "Yapay zekâ bu denemeyi kabul etmedi. Daha kapalı bir model seç ya da başka bir parça dene.") + teknik);
         else if (h.indexOf("timeout") !== -1 || h.indexOf("deadline") !== -1)
           setHata(t("saZamanAsimi", "İnternet yavaş olabilir, hazırlanamadı. Lütfen tekrar dene.") + teknik);
         else setHata(t("saOlmadi", "Şu an yapılamadı, tekrar dene.") + teknik);
