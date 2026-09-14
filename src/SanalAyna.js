@@ -246,6 +246,7 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   const [galeriAcik, setGaleriAcik] = useState(false);
   const [galeriResim, setGaleriResim] = useState({}); // id -> dataURL (IndexedDB'den yüklenir)
   const [kaydedildi, setKaydedildi] = useState(false);
+  const [kayitliUrl, setKayitliUrl] = useState(""); // OTOMATİK kaydedilen sonuç (çift kayıt olmasın + geri basınca kaybolmasın)
   // Galeri açılınca kayıtlı modellerin görsellerini IndexedDB'den yükle
   useEffect(() => {
     if (!galeriAcik) return; let iptal = false;
@@ -262,10 +263,23 @@ export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onG
   // sonra Sanal Ayna'yı kapatır; YÜKLENEN FOTO/SONUÇ KAYBOLMAZ (eskiden geri tuşu ana sayfaya sıfırlayıp her şeyi siliyordu).
   useEffect(() => {
     if (!onKatman) return;
-    const derinlik = buyuk ? 2 : 1; // 2: tam ekran foto açık, 1: Sanal Ayna açık
-    const geri = () => { if (buyuk) setBuyuk(""); else if (onKapat) onKapat(); };
+    // KATMANLAR (üstten alta): buyuk (tam ekran foto) > mankenTamEkran (tam ekran manken) > sonuc (sonuç ekranı) > adım2 > taban(adım1).
+    // Android geri tuşu: EN ÜSTTEKİNİ kapatır, AYNADA KALIR; SADECE ana sayfada (adım1) iken aynayı komple kapatır.
+    // (Kullanıcı: "geri düğmesi üst sayfayı kapatsın, komple aynayı değil; ana sayfadayken kapatabilir.")
+    let derinlik = 1;                 // taban: aynanın ana sayfası (adım1)
+    if (adim === 2) derinlik++;       // 2. adım (model/kıyafet seçimi)
+    if (sonuc) derinlik++;            // sonuç ekranı açık
+    if (mankenTamEkran) derinlik++;   // tam ekran canlı manken
+    if (buyuk) derinlik++;            // tam ekran fotoğraf (en üst)
+    const geri = () => {
+      if (buyuk) { setBuyuk(""); return; }                       // tam ekran fotoğrafı kapat
+      if (mankenTamEkran) { setMankenTamEkran(false); return; }  // tam ekran mankeni kapat
+      if (sonuc) { setSonuc(""); return; }                       // sonuç ekranını kapat → sihirbaza dön (foto/girdiler KALIR)
+      if (adim === 2) { setAdim(1); return; }                    // 2. adım → 1. adım
+      if (onKapat) onKapat();                                    // ana sayfadayken → aynayı kapat
+    };
     onKatman(derinlik, geri);
-  }, [buyuk]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [buyuk, mankenTamEkran, sonuc, adim]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (onKatman) onKatman(0, null); }, []); // kapanınca derinlik 0 // eslint-disable-line react-hooks/exhaustive-deps
   // Reklamdan açıldıysa ürün fotoğrafını (referans) al → "o EXACT elbiseyi üstünde" gösterebilelim.
   // Önce reklamla saklanan küçük refB64 (CORS derdi YOK); yoksa kapak URL'sini indirmeyi dener.
@@ -368,7 +382,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       }
       // TEK AŞAMA: gövde + elbise + yüzü koru (2 aşamalı yüz yerleştirme yüzü BULANIKLAŞTIRIYORDU → kaldırıldı)
       const res = await gloxooResimUret(istem, { base64, mediaType: fotoMime2 }, ref2);
-      if (res && res.dataUrl) setSonuc(res.dataUrl);
+      if (res && res.dataUrl) { setSonuc(res.dataUrl); otoKaydet(res.dataUrl); } // OTOMATİK Modellerim'e kaydet → geri/çıkışta kaybolmaz
       else {
         // Hata metnini oku → kullanıcıya ANLAŞILIR Türkçe mesaj + KISA TEKNİK sebep (ekran görüntüsü alıp bize gösterebilsin).
         const ham = ((res && res.hata) || "").toString();
@@ -508,14 +522,22 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
       return new Blob(chunks, { type: "video/webm" });
     } catch (e) { return null; }
   }
-  // MODELLERİME KAYDET — görseli IndexedDB'ye, kaydı listeye + localStorage'a
+  // OTOMATİK KAYDET — üretilen her sonucu Modellerim'e kaydeder (kullanıcı: "yüklü bir şeyim silinmesin, ben silmem lazım").
+  // Böylece geri tuşuna basınca ya da aynadan çıkınca sonuç KAYBOLMAZ; silme sadece onaylı çöp düğmesiyle olur.
+  async function otoKaydet(url) {
+    if (!url) return;
+    const id = "m" + Date.now().toString(36) + Math.floor(Math.random() * 1e5).toString(36);
+    try { await medyaYaz("ayna_" + id, url); } catch (e) {}
+    const oge = { id, ad: (model || (parcalar[0] && parcalar[0].ad) || kategori || "model"), kategori, ms: Date.now() };
+    setModeller((L) => { const y = [oge, ...L].slice(0, 80); try { localStorage.setItem("gw_ayna_modeller", JSON.stringify(y)); } catch (e) {} return y; });
+    setGaleriResim((m) => ({ ...m, [id]: url }));
+    setKayitliUrl(url); // bu sonuç artık kayıtlı → düğme "eklendi" gösterir, tekrar basınca ÇİFT eklemez
+  }
+  // MODELLERİME KAYDET — elle düğme (zaten otomatik kaydediliyor; bu sadece geri bildirim, çift eklemez)
   async function kaydetModel() {
     if (!sonuc) return;
-    const id = "m" + Date.now().toString(36) + Math.floor(Math.random() * 1e5).toString(36);
-    try { await medyaYaz("ayna_" + id, sonuc); } catch (e) {}
-    const oge = { id, ad: (model || kategori || "model"), kategori, ms: Date.now() };
-    setModeller((L) => { const y = [oge, ...L].slice(0, 80); try { localStorage.setItem("gw_ayna_modeller", JSON.stringify(y)); } catch (e) {} return y; });
-    setGaleriResim((m) => ({ ...m, [id]: sonuc }));
+    if (sonuc === kayitliUrl) { setKaydedildi(true); setTimeout(() => setKaydedildi(false), 2500); return; } // zaten kayıtlı → çift ekleme YOK
+    await otoKaydet(sonuc);
     setKaydedildi(true); setTimeout(() => setKaydedildi(false), 2500);
   }
   function modelSil(id) {
@@ -728,7 +750,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
               </div>
               <div className="sa-buyut-ipucu">🔍 {t("saBuyutIpucu", "Fotoğrafa dokun: tam ekran aç, iki parmakla yakınlaştır.")}</div>
               <div className="sa-sonuc-dugmeler">
-                <button className={"sa-kaydet-model" + (kaydedildi ? " indi" : "")} onClick={kaydetModel}>{kaydedildi ? "✓ " + t("saKaydedildi", "Modellerime eklendi") : "💾 " + t("saKaydet", "Modellerime kaydet")}</button>
+                <button className={"sa-kaydet-model" + ((kaydedildi || sonuc === kayitliUrl) ? " indi" : "")} onClick={kaydetModel}>{(kaydedildi || sonuc === kayitliUrl) ? "✓ " + t("saKaydedildi", "Modellerime eklendi") : "💾 " + t("saKaydet", "Modellerime kaydet")}</button>
                 <button className={"sa-indir" + (indirildi ? " indi" : "")} onClick={indir}>{indirildi ? "✓ " + t("saIndirildi", "İndirildi") : "⬇️ " + t("saIndir", "İndir")}</button>
                 <button className="sa-tekrar" onClick={() => { setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0); }}>🔁 {t("saTekrar", "Başka model dene")}</button>
               </div>

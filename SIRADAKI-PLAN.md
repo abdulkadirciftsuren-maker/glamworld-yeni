@@ -4,6 +4,13 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## ⏰ HATIRLATMA — 21 Eyl 2026'DAN SONRA BAK: TWA TAM EKRAN (üstteki tarayıcı çubuğu) — kullanıcı ricası "not al, bir hafta sonra bak"
+- **Sorun:** Play Store'dan kurulu uygulama (com.gloxorg.twa) ana ekran simgesinden açılınca ÜSTTE tarayıcı çubuğu (`✕ gloxorg.com ⤴ ⋮`) çıkıyor; üst saat + alt Android düğmeleri GİZLENMİYOR (tam ekran/immersive olmuyor). ~7-14 Eyl'de bozuldu; ÖNCEDEN çalışıyordu (kullanıcı: "saat ve Android düğmeleri kayboluyordu").
+- **KANITLANDI — site tarafı %100 DOĞRU:** Google Digital Asset Links API (`https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://gloxorg.com&relation=delegate_permission/common.handle_all_urls`) İKİ parmak izini de (`0D:B0:B7:22...` + `34:29:6F:16...`) com.gloxorg.twa için GEÇERLİ döndürüyor. assetlinks.json doğru, CNAME gloxorg.com, manifest display:fullscreen. Yeni sürüm YÜKLENMEDİ → imza anahtarı değişmedi. **Yani kod/dosya değil.**
+- **Kalan şüphe:** telefon/Chrome tarafı — Chrome/Android güncellemesi (~1 hafta önce) doğrulama ezberini bozmuş olabilir; ya da Android 15 / SDK 35 edge-to-edge (Play Console uyarısı vardı) ya da closed-test → production geçince düzelebilir. Denenenler: kaldır-kur, güçlü WiFi, Chrome güncelle/varsayılan yap, Chrome önbellek temizle → çözmedi.
+- **1 hafta sonra BAK:** (a) test → yayına (production) geçildi mi, geçtiyse düzeldi mi? (b) Play Console → App signing SHA-256 hâlâ bu 2 numara mı (değiştiyse 3.'yü ekle)? (c) Chrome/Android güncel mi? (d) gerekirse bubblewrap TWA'yı `fallbackType`/immersive için yeniden build (Android projesi bu repoda YOK). **Kullanıcıyı yorma — çoğu telefon tarafı; kendiliğinden düzelebilir.**
+
+---
 ## 🟢 GÜNCEL DURUM — 12 Eyl 2026 (parlama ADIM ADIM çözüldü; kullanıcı "parlama işi kalsın, AYNA'ya geç" dedi)
 
 ### 1) PARLAMA — ÇÖZÜLEN SEBEPLER (B221–B235) + KALAN (kullanıcı erteledi)
