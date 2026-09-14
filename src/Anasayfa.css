@@ -5343,6 +5343,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sa-galeri-ad{ font-size:11px; font-weight:800; color:#6a4e10; padding:4px 5px 0; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sa-galeri-dug{ display:flex; gap:4px; padding:5px; }
 .sa-galeri-dug button{ flex:1; padding:6px; border-radius:8px; border:1.3px solid rgba(160,120,0,.5); background:#fff7db; font-size:15px; cursor:pointer; }
+/* DÜZENLE (başka şey giydir) düğmesi belirgin altın olsun — kullanıcı fark etsin (yazısız düğme belli olmalı) */
+.sa-galeri-duzenle{ background:linear-gradient(90deg,#FFD700,#f2a900)!important; border-color:#c9962b!important; flex:1.4!important; }
 .sa-kaydet-model{ background:linear-gradient(90deg,#34c878,#0f9d54); color:#fff; border:none; border-radius:11px; padding:12px; font-weight:900; font-size:14.5px; cursor:pointer; font-family:inherit; }
 .sa-kaydet-model.indi{ background:linear-gradient(90deg,#1f8b4c,#0c7a3f); }
 /* CANLI YAPAY ZEKÂ TANITIM KARTI (ana sayfa akışı) — SAKİN/PREMIUM: sürekli parlayan kayan ışık YOK (dandik parlama olmasın). */

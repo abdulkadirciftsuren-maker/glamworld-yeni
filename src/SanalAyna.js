@@ -544,6 +544,18 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
     try { if (!window.confirm(t("saModelSilOnay", "Bu modeli silmek istiyor musun?"))) return; } catch (e) {}
     setModeller((L) => { const y = L.filter((x) => x.id !== id); try { localStorage.setItem("gw_ayna_modeller", JSON.stringify(y)); } catch (e) {} return y; });
   }
+  // MODELİ DÜZENLE — kayıtlı modeli GİRDİ fotoğrafı yapar → üstüne başka şey giydir / düzeltme yap (kullanıcı: "kayıtlı fotoğrafta ekleme yapayım, başka bir şey giydireyim").
+  async function modeliDuzenle(id) {
+    let url = galeriResim[id];
+    if (!url) { try { url = await medyaOku("ayna_" + id); } catch (e) {} } // galeride yüklü değilse IndexedDB'den al
+    if (!url) return;
+    const mime = (String(url).match(/^data:([^;]+);/) || [])[1] || "image/png";
+    setFoto(url); setFotoMime(mime);                 // kayıtlı model artık GİRDİ fotoğrafı
+    setSonuc(""); setKareler([]); setOynat(false); setKareIdx(0);
+    setModel(""); setRenk(""); setRenkTon(2); setParcalar([]); // yeni seçim için temizle
+    setKayitliUrl(""); setHata(""); setGaleriAcik(false); setAdim(1); // sihirbaza dön
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {}
+  }
 
   const oneri = oneriGetir(kategori, kisi);
   const renkler = renkGetir(kategori);
@@ -611,6 +623,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                       {galeriResim[o.id] ? <img src={galeriResim[o.id]} alt="" onClick={() => setBuyuk(galeriResim[o.id])} /> : <div className="sa-galeri-yuk">⏳</div>}
                       <div className="sa-galeri-ad notranslate">{ac(o.ad)}</div>
                       <div className="sa-galeri-dug">
+                        <button className="sa-galeri-duzenle" onClick={() => modeliDuzenle(o.id)} title={t("saDuzenle", "Bunu düzenle / başka şey giydir")}>✏️</button>
                         <button onClick={() => galeriResim[o.id] && paylasVer(galeriResim[o.id], o.ad)} title={t("saPaylas", "Paylaş")}>📤</button>
                         <button onClick={() => modelSil(o.id)} title={t("sil", "Sil")}>🗑️</button>
                       </div>
