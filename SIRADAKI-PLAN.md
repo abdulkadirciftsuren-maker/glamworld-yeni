@@ -4,6 +4,12 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🚀 ÜRETİM (PRODUCTION) BAŞVURUSU YAPILDI — 16 Eyl 2026, 13:04
+- Kapalı test bitti (14 gün + 12 testçi şartları TAMAM). Kullanıcı 16 Eyl'de **"Üretime başvur" formunu doldurup GÖNDERDİ** (hedef kitle, değer, testte öğrenilenler vb. — cevapları Code birlikte yazdı).
+- Google formu **inceliyor**; sonucu hesap sahibine **e-posta** ile bildirecek (abdulkadirciftsuren@gmail.com). Genelde **≤7 gün**, bazen daha uzun.
+- **SONRAKİ ADIM (onay gelince):** Üretim (production) sürümünü yayınla → uygulama herkese açık olur. Onay/ret e-postası gelince kullanıcıya sor.
+- 💡 Üretime geçince **TWA tam-ekran çubuğu da düzelebilir** (aşağıdaki nota bak).
+
 ## ⏰ HATIRLATMA — 21 Eyl 2026'DAN SONRA BAK: TWA TAM EKRAN (üstteki tarayıcı çubuğu) — kullanıcı ricası "not al, bir hafta sonra bak"
 - **Sorun:** Play Store'dan kurulu uygulama (com.gloxorg.twa) ana ekran simgesinden açılınca ÜSTTE tarayıcı çubuğu (`✕ gloxorg.com ⤴ ⋮`) çıkıyor; üst saat + alt Android düğmeleri GİZLENMİYOR (tam ekran/immersive olmuyor). ~7-14 Eyl'de bozuldu; ÖNCEDEN çalışıyordu (kullanıcı: "saat ve Android düğmeleri kayboluyordu").
 - **KANITLANDI — site tarafı %100 DOĞRU:** Google Digital Asset Links API (`https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://gloxorg.com&relation=delegate_permission/common.handle_all_urls`) İKİ parmak izini de (`0D:B0:B7:22...` + `34:29:6F:16...`) com.gloxorg.twa için GEÇERLİ döndürüyor. assetlinks.json doğru, CNAME gloxorg.com, manifest display:fullscreen. Yeni sürüm YÜKLENMEDİ → imza anahtarı değişmedi. **Yani kod/dosya değil.**
