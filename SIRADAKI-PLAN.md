@@ -4,6 +4,13 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🔴 SONRAKİ AKTİF İŞ (17 Eyl 2026): PARLAMA'yı BİTİR (kullanıcı: "parlama işini çözmemiz lazım, yarın bakarız")
+- Kullanıcı erteledigi PARLAMA sorununa geri dönmek istiyor. **AŞAĞIDAKİ "PARLAMA — ÇÖZÜLEN SEBEPLER (B221–B235) + KALAN" bölümünü OKU** — çözülenleri BOZMA.
+- **KALAN (asıl hedef):** içerik İLK YÜKLENİRKEN/kaydırınca bir anlık parlama/parça-parça (üst şeritler, reklam/vitrin, foto/video ekrana ilk gelirken = tarayıcı checkerboarding/paint yükü). Tek efekt değil; sayfanın çizim yükünü azaltmak gerek (gölge/blur/efekt/gereksiz re-render). 
+- **KULLANICININ KESİN TEŞHİSİ (unutma):** EKRAN KAYDI açıkken parlama YOK → telefonun GPU/çizim katmanı meselesi. Kurulu uygulamada deniyor; her deploy 1 kez guvenliYenile ile yeniler (o da parlama gibi görünebilir).
+- **⛔ Bir daha video'ya GPU hack'i (transform/translate3d/perspective/will-change) EKLEME** (B225 videoyu bozmuştu, B234'te geri alındı).
+- Yaklaşım: tek tek kök sebep bul (kullanıcı "hep yalan/tutarsa deneme yapıyorsun" dedi → rastgele deneme YOK). Deploy'dan önce Playwright ile kendin dene.
+
 ## 🚀 ÜRETİM (PRODUCTION) BAŞVURUSU YAPILDI — 16 Eyl 2026, 13:04
 - Kapalı test bitti (14 gün + 12 testçi şartları TAMAM). Kullanıcı 16 Eyl'de **"Üretime başvur" formunu doldurup GÖNDERDİ** (hedef kitle, değer, testte öğrenilenler vb. — cevapları Code birlikte yazdı).
 - Google formu **inceliyor**; sonucu hesap sahibine **e-posta** ile bildirecek (abdulkadirciftsuren@gmail.com). Genelde **≤7 gün**, bazen daha uzun.
