@@ -9420,7 +9420,7 @@ export default function Anasayfa({ pro = false }) {
                           {g.gorsel
                             ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" onClick={() => setTamFoto(g)} />
                             : g.video
-                              ? <span className="apf-pay-foto apf-pay-vid" onClick={() => setTamFoto(g)}><video src={videoSade(g.video)} poster={g.videoPoster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
+                              ? <span className="apf-pay-foto apf-pay-vid" onClick={() => setTamFoto(g)}>{g.videoPoster ? <img src={g.videoPoster} alt="" loading="lazy" decoding="async" /> : <video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} />}<span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
                           <div className="apf-pay-icerik">
                             {(g.tur || ga) && <span className="apf-pay-tur" style={{ background: gk }}>{ga && <span className="apf-pay-turik"><TurAmblem tip={ga.tip} /></span>}{g.tur ? turGoster(g.tur) : (g.video ? t("paylasVideoTur", "Video") : t("paylasFotoTur", "Fotoğraf"))}</span>}
@@ -11198,7 +11198,7 @@ export default function Anasayfa({ pro = false }) {
                           {g.gorsel
                             ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" onClick={ac} />
                             : g.video
-                              ? <span className="apf-pay-foto apf-pay-vid" onClick={ac}><video src={videoSade(g.video)} poster={g.videoPoster || undefined} preload="metadata" muted playsInline tabIndex={-1} /><span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
+                              ? <span className="apf-pay-foto apf-pay-vid" onClick={ac}>{g.videoPoster ? <img src={g.videoPoster} alt="" loading="lazy" decoding="async" /> : <video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} />}<span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
                           <div className="apf-pay-icerik" onClick={ac}>
                             {(g.tur || ga) && <span className="apf-pay-tur" style={{ background: gk }}>{ga && <span className="apf-pay-turik"><TurAmblem tip={ga.tip} /></span>}{g.tur ? turGoster(g.tur) : (g.video ? t("paylasVideoTur", "Video") : t("paylasFotoTur", "Fotoğraf"))}</span>}

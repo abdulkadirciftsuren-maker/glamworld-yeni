@@ -3149,7 +3149,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .abm-temizle:hover{ background:rgba(255,215,0,.2); }
 /* PROFİLİM video küçük resmi (poster) + ortada oynat pırlantası */
 .apf-pay-vid{ position:relative; overflow:hidden; background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); }
-.apf-pay-vid video{ width:100%; height:100%; object-fit:contain; }
+.apf-pay-vid video, .apf-pay-vid img{ width:100%; height:100%; object-fit:contain; display:block; }
 .apf-pay-oynat{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
 .apf-pay-oynat .gercek-pir{ width:26px; height:26px; filter:drop-shadow(0 1px 4px rgba(0,0,0,.8)); }
 /* SİL düğmesi Düzenle'den AYRI (yanlışlıkla silmeyi önler) — küçük çöp ikonu, aralık + onay sorar */
