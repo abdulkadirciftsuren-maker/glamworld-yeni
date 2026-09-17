@@ -4,7 +4,13 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
-## 🔴 SONRAKİ AKTİF İŞ (17 Eyl 2026): PARLAMA'yı BİTİR (kullanıcı: "parlama işini çözmemiz lazım, yarın bakarız")
+## 🟢 PARLAMA — 17 Eyl AKŞAMI BÜYÜK İLERLEME (kullanıcı: "çok az parlama kaldı, bu sefer çok fark etti; yarın gene kontrol edip söylerim")
+- **B252 ANA ÇÖZÜM:** Sohbet (`.sohbet-akis`) kaydırma alanındaki GPU zorlaması (translateZ/will-change) alanı saydam ayrı katman yapıp kaydırınca ALTINI (liste/siyah) gösteriyordu = "parça parça / üst üste binme". → GPU zorlaması SİLİNDİ + opak düz zemin (#d4e6b6) verildi. Kullanıcı "çok fark etti" dedi. ✅
+- Yan düzeltmeler: B251 tam ekran gösterici (.oniz-fon/.tamfoto-fon) backdrop-filter kaldırıldı (Android'de altını siyah gösteriyordu). B250 profil paylaşım video küçük resmi poster (img).
+- **⚠️ AKIŞTA (ana sayfa) VİDEO PARLAMIYOR — kullanıcı net söyledi, ORAYA DOKUNMA.**
+- **KALAN (kullanıcı yarın bakacak):** çok az parlama kaldı — yeri netleşince (kullanıcı gösterecek) oraya bak. Muhtemel yerler: video mesajı OYNARKEN donanım overlay (hole-punch) anlık siyah; ya da başka bir saydam+GPU-katmanlı kaydırma alanı (aynı .sohbet-akis kalıbı). Aynı çözüm: o alana opak düz zemin + gereksiz translateZ/will-change kaldır.
+
+## 🔴 (ESKİ NOT) PARLAMA — kök yaklaşım (kullanıcı: "hep yalan/tutarsa deneme yapma; sebebi bul")
 - Kullanıcı erteledigi PARLAMA sorununa geri dönmek istiyor. **AŞAĞIDAKİ "PARLAMA — ÇÖZÜLEN SEBEPLER (B221–B235) + KALAN" bölümünü OKU** — çözülenleri BOZMA.
 - **KALAN (asıl hedef):** içerik İLK YÜKLENİRKEN/kaydırınca bir anlık parlama/parça-parça (üst şeritler, reklam/vitrin, foto/video ekrana ilk gelirken = tarayıcı checkerboarding/paint yükü). Tek efekt değil; sayfanın çizim yükünü azaltmak gerek (gölge/blur/efekt/gereksiz re-render). 
 - **KULLANICININ KESİN TEŞHİSİ (unutma):** EKRAN KAYDI açıkken parlama YOK → telefonun GPU/çizim katmanı meselesi. Kurulu uygulamada deniyor; her deploy 1 kez guvenliYenile ile yeniler (o da parlama gibi görünebilir).
