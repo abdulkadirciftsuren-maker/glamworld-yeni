@@ -809,10 +809,12 @@
 .pyl-gk-yuk{ position:absolute; left:0; right:0; bottom:0; background:rgba(200,20,40,.85); color:#fff; font-size:10px; font-weight:800; text-align:center; padding:2px 0; pointer-events:none; }
 
 /* TAM EKRAN FOTO/VİDEO GEZİCİ (lightbox) */
-.oniz-fon{ position:fixed; inset:0; z-index:12000; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
+/* ⛔ backdrop-filter KALDIRILDI: bazı Android tarayıcılarında (son güncellemeden sonra) altın zemini SİYAH gösteriyordu.
+   Arka zaten OPAK ALTIN olduğu için blur zaten görünmüyordu → kaldırınca garantili ALTIN, siyah YOK. */
+.oniz-fon{ position:fixed; inset:0; z-index:12000; display:flex; align-items:center; justify-content:center;
   background:
-    radial-gradient(circle at 24% 18%, rgba(255,231,168,.55), transparent 52%),
-    radial-gradient(circle at 80% 82%, rgba(255,208,92,.45), transparent 56%),
+    radial-gradient(circle at 24% 18%, #ffe7a8, transparent 52%),
+    radial-gradient(circle at 80% 82%, #ffd05c, transparent 56%),
     radial-gradient(circle at 50% 50%, #b7902f, #7a5f22); } /* PARLAK ALTIN (opak; arka feed görünmez; ASLA siyah) */
 .oniz-govde{ max-width:100vw; max-height:100vh; display:flex; align-items:center; justify-content:center; }
 .oniz-medya{ max-width:100vw; max-height:88vh; object-fit:contain; display:block; }
@@ -1077,10 +1079,9 @@
 /* zemin OPAK AÇIK ALTIN (yarı saydam değil → arkadaki koyu sayfa görünüp siyahlaşmaz) */
 .tamfoto-fon{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:100010; overflow:hidden; display:flex; align-items:center; justify-content:center; animation:adFon .2s ease;
   background:
-    radial-gradient(circle at 24% 18%, rgba(255,231,168,.55), transparent 52%),
-    radial-gradient(circle at 80% 82%, rgba(255,208,92,.45), transparent 56%),
-    radial-gradient(circle at 50% 50%, #b7902f, #7a5f22);
-  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); } /* foto kenar boşluğu = PARLAK ALTIN (opak; arka feed görünmez; ASLA siyah) */
+    radial-gradient(circle at 24% 18%, #ffe7a8, transparent 52%),
+    radial-gradient(circle at 80% 82%, #ffd05c, transparent 56%),
+    radial-gradient(circle at 50% 50%, #b7902f, #7a5f22); } /* foto kenar boşluğu = PARLAK ALTIN (opak; arka feed görünmez; ASLA siyah). backdrop-filter KALDIRILDI (Android'de siyah gösteriyordu) */
 /* VİDEO tam ekran → ALTIN zemin YOK, SİYAH (kullanıcı: oynatmadan önceki sarıyı kaldır) — normal video oynatıcı gibi */
 .tamfoto-fon.tf-video-fon{ background:
     radial-gradient(circle at 24% 18%, rgba(255,231,168,.5), transparent 52%),
