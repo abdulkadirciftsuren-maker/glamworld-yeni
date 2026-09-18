@@ -571,7 +571,10 @@
 .apr-galeri-say{ position:absolute; top:10px; right:10px; background:rgba(0,0,0,.62); color:#fff; font-size:12px; font-weight:800; padding:3px 11px; border-radius:99px; z-index:2; pointer-events:none; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
 
 /* ================= HİKÂYELER (Stories) ================= */
-.hik-serit{ display:flex; gap:8px; overflow-x:auto; padding:10px 12px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+/* B263: sayfa aşağı-yukarı kayınca üst şerit (Işıltını Göster) bir an "silinip" yeniden çiziliyordu (Android WebView
+   ekran dışına çıkan bölgeyi çizmeyi bırakıp geri gelince yeniden boyuyor). transform:translateZ(0) + will-change ile
+   şerit KENDİ KALICI GPU katmanında tutulur → ekran dışına çıksa da çizili kalır, geri gelince yeniden boyanmaz (silinip-gelme biter). */
+.hik-serit{ display:flex; gap:8px; overflow-x:auto; padding:10px 12px 8px; scrollbar-width:none; -webkit-overflow-scrolling:touch; transform:translateZ(0); will-change:transform; }
 .hik-serit::-webkit-scrollbar{ display:none; }
 /* Facebook gibi DİKEY KART — içinde seçilen foto/video görünür */
 .hik-kart{ flex:0 0 auto; position:relative; width:104px; height:172px; border-radius:14px; overflow:hidden; cursor:pointer; background:#8a6b28; border:none; padding:0; box-shadow:0 0 6px rgba(90,60,10,.22); -webkit-tap-highlight-color:transparent; }
