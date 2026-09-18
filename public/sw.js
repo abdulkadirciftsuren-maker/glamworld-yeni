@@ -1,17 +1,25 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A13B261";
+const SW_SURUM = "A13B262";
 // ONBELLEK ADI SW_SURUM'e bağlı → her yeni yayında YENİ önbellek; eskisi activate'te silinir (eski sürümde takılma OLMAZ).
 const ONBELLEK = "glox-onbellek-" + SW_SURUM;
+// RESİM ÖNBELLEĞİ — SÜRÜMDEN BAĞIMSIZ (yeni yayında SİLİNMEZ) → indirilen fotoğraflar telefonda KALICI kalır,
+// kaydırıp geri gelince internetten YENİDEN İNMEZ, anında yerelden gelir (sarı flaş/parlama biter). B262.
+const RESIM_ONBELLEK = "glox-resim-v1";
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
   // SADECE ESKİ SÜRÜMLERİN önbelleğini sil; bu sürümünkini KORU (böylece hız için sakladıklarımız durur).
-  try { const anahtarlar = await caches.keys(); await Promise.all(anahtarlar.filter((k) => k !== ONBELLEK).map((k) => caches.delete(k))); } catch (x) {}
+  try { const anahtarlar = await caches.keys(); await Promise.all(anahtarlar.filter((k) => k !== ONBELLEK && k !== RESIM_ONBELLEK).map((k) => caches.delete(k))); } catch (x) {}
   await self.clients.claim();
   // Yeni surum devraldi → acik sayfalara "yenile" haberi gonder (kullanici hep guncel gorur, elle yenilemesi gerekmez)
   try { const cl = await self.clients.matchAll({ type: "window", includeUncontrolled: true }); cl.forEach((c) => { try { c.postMessage({ tip: "sw-guncellendi", surum: SW_SURUM }); } catch (x) {} }); } catch (x) {}
 })()); });
+
+// RESİM ÖNBELLEĞİ sınırsız büyümesin — 350'yi geçince en ESKİ 80 kaydı sil (basit LRU).
+async function resimBudama(c) {
+  try { const anahtarlar = await c.keys(); if (anahtarlar.length > 350) { for (let i = 0; i < 80; i++) { await c.delete(anahtarlar[i]); } } } catch (x) {}
+}
 
 // FETCH stratejisi:
 //  1) SAYFA GEZINMESI (index.html): ÖNCE AĞDAN (no-store) → her güncelleme ANINDA görünür; ağ yoksa önbelleğe düş.
@@ -26,6 +34,25 @@ self.addEventListener("fetch", (e) => {
     e.respondWith((async () => {
       try { return await fetch(istek, { cache: "no-store" }); }
       catch (x) { const c = await caches.match(istek); return c || Response.error(); }
+    })());
+    return;
+  }
+  // RESİMLER (Firebase/Cloudinary/bayrak + <img> destination): KALICI ÖNBELLEK, "önce göster sonra tazele"
+  // (stale-while-revalidate). Kaydırıp ekran dışına çıkan foto geri gelince AĞDAN yeniden İNMEZ → ANINDA yerelden
+  // gelir (sarı flaş/parlama BİTER). Arka planda sessizce tazeler (foto güncellenirse bir sonrakinde yeni gelir).
+  // ⛔ Range (video akışı) istekleri HARİÇ (onları bozmayalım) — sadece gerçek resimler.
+  const resimMi = (istek.destination === "image") || /\.(jpe?g|png|webp|gif|avif|bmp)(\?|$)/i.test(url.pathname);
+  if (resimMi && !istek.headers.has("range")) {
+    e.respondWith((async () => {
+      try {
+        const c = await caches.open(RESIM_ONBELLEK);
+        const bulunan = await c.match(istek);
+        const agdan = fetch(istek).then((cevap) => {
+          try { if (cevap && (cevap.ok || cevap.type === "opaque")) { c.put(istek, cevap.clone()).then(() => resimBudama(c)).catch(() => {}); } } catch (x) {}
+          return cevap;
+        }).catch(() => null);
+        return bulunan || (await agdan) || Response.error();       // önbellekte varsa ANINDA; yoksa ağdan (ilk sefer)
+      } catch (x) { const b = await caches.match(istek); return b || Response.error(); }
     })());
     return;
   }
