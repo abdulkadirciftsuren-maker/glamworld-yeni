@@ -4,6 +4,28 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🔴🔴 EN ÖNCELİKLİ — 19 Eyl 2026 YARIN YAPILACAK: SAYFA KAYDIRMASINI NATIVE'E ÇEVİR (parlama/silinip-gelme KÖK ÇÖZÜM)
+> Kullanıcı 18 Eyl gecesi ONAYLADI: "yarın halledelim, sen en son çare bu diyorsun, inşallah bu sefer olur." Yani AŞAĞIDAKİ büyük değişiklik yarın YAPILACAK. Kullanıcı çok yoruldu ve öfkeli — DİKKATLİ, TEK İŞ, adım adım göster, her adımda onay al.
+
+**KALAN TEK SORUN (18 Eyl gecesi netleşti):** Sayfayı biraz aşağı-yukarı kaydırınca **üst kısım (özellikle "Işıltını Göster" / hik-serit) bir an SİLİNİP yeniden çiziliyor** (boş/altın görünüp doluyor) = parlama. Kullanıcı net dedi: "yüklenmiş bir şey kaydırınca siliniyor sonra gene yükleniyor." → Bu **ağdan indirme DEĞİL** (B262 resim önbelleği işe yaramadı, kanıt), **yeniden ÇİZİM (repaint)**.
+
+**KÖK SEBEP:** `.ana-kok` şu an `position:fixed; inset:0; overflow-y:auto` = "SAHTE KAYDIRMA" (sabit çerçeve, içerik içeride kayıyor). Android WebView bu yöntemde ekran dışına çıkan bölgeyi çizmeyi bırakıp geri gelince yeniden boyuyor → silinip-gelme. Native uygulamalar (TikTok/FB) native/gövde kaydırma kullandığı için bu yok.
+
+**⛔ YAPMA (KANITLI — HEPSİ DAHA KÖTÜ YAPTI):** `.hik-serit`/medya vb.'ye `transform:translateZ(0)` / `will-change` / `perspective` / maske gibi GPU-katman/CSS repaint hack'leri. B253, B254, B263 — ÜÇÜ DE parlamayı ARTIRDI, geri alındı. Bir daha DENEME.
+
+**YARIN YAPILACAK İŞ (native scroll'a geçiş) — dikkatli, adım adım:**
+1. `Anasayfa.css` `.ana-kok`: `position:fixed; inset:0; overflow-y:auto` → normal akış (ör. `position:relative; min-height:100vh; overflow:visible`). `overscroll-behavior:none` KALSIN (çekince-yenile kapalı kalsın). `html, body`'nin normal kayması sağlanacak (gövde scroll).
+2. `Anasayfa.js` scroll koduna dokun: satır ~8317-8340 `onKaydir` `el.scrollTop` (kokRef) yerine `window.scrollY` / `document.scrollingElement`; `basaDon` (~8342) `window.scrollTo`; scroll dinleyici `window`'a taşınmalı. IntersectionObserver'lar (feed sonsuz kaydırma ~8064) root'suz (viewport) çalışacak şekilde kontrol et.
+3. Sabit üst öğeler: `.ana-serit-sar position:sticky top:0` gövde scroll'da DAHA İYİ çalışır (dokunma gerekmeyebilir). `.ana-header` kontrol et. `.ana-nav` üstte (kullanıcı fotosunda üstte, altta DEĞİL).
+4. `--gercek-vh` / `--gercek-ust` (`.ana-arka-foto`, `.tamfoto-fon`) fixed yükseklikleri gövde-scroll ile uyumlu mu kontrol et.
+5. `position:fixed` açılır pencereler (menü/profil/tam ekran gösterici) viewport'a göre → gövde scroll'da da doğru kalır ama TEST ET.
+6. **DEPLOY ÖNCESİ:** build + Playwright ile aç, konsol hatası + düzen bozulmadı doğrula. Riskli değişiklik → yanlış giderse HEMEN geri al.
+
+**Alternatif dürüst gerçek (kullanıcıya söylendi):** WebView kılıfı hiçbir zaman %100 native kadar pürüzsüz olmaz; en pürüzsüz hâl gerçek native uygulama. Ama önce native-scroll denenecek.
+
+**Güncel iyi durum:** **A13.B264** (B263 GPU denemesi geri alındı; B259 video-kapatma parlaması + B261 çekince-yenile kapatma + B260 alt cam şerit blur kaldırma DURUYOR ve iyi). Detay: `src/buildGecmisi.js` en üst (B259-B264).
+
+---
 ## 🟢 PARLAMA — 17 Eyl AKŞAMI BÜYÜK İLERLEME (kullanıcı: "çok az parlama kaldı, bu sefer çok fark etti; yarın gene kontrol edip söylerim")
 - **B252 ANA ÇÖZÜM:** Sohbet (`.sohbet-akis`) kaydırma alanındaki GPU zorlaması (translateZ/will-change) alanı saydam ayrı katman yapıp kaydırınca ALTINI (liste/siyah) gösteriyordu = "parça parça / üst üste binme". → GPU zorlaması SİLİNDİ + opak düz zemin (#d4e6b6) verildi. Kullanıcı "çok fark etti" dedi. ✅
 - Yan düzeltmeler: B251 tam ekran gösterici (.oniz-fon/.tamfoto-fon) backdrop-filter kaldırıldı (Android'de altını siyah gösteriyordu). B250 profil paylaşım video küçük resmi poster (img).
