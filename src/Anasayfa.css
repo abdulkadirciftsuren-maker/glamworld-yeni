@@ -48,16 +48,6 @@
 .ana-kok.pencere-acik .ana-akis video,
 .ana-kok.pencere-acik .hik-serit video,
 .ana-kok.pencere-acik .reels-serit video{ visibility:hidden !important; opacity:0 !important; }
-/* ⛔ VİDEO GÖSTERİCİSİ (tam ekran, OPAK) açıkken ana sayfayı GİZLEME — çünkü opak gösterici zaten üstünü örtüyor.
-   Gizleyip geri açınca (video kapanınca) tüm sayfa yeniden çiziliyordu = PARLAMA. Görünür bırakınca kapanışta
-   yeniden çizim OLMAZ → parlama biter. (Sadece tf-acik = tam ekran foto/video göstericisi için; diğer pencereler eskisi gibi gizler.) */
-.ana-kok.tf-acik.pencere-acik .ana-akis,
-.ana-kok.tf-acik.pencere-acik .hik-serit,
-.ana-kok.tf-acik.pencere-acik .ana-nav,
-.ana-kok.tf-acik.pencere-acik .ana-header,
-.ana-kok.tf-acik.pencere-acik .ana-serit-sar{ visibility:visible !important; }
-.ana-kok.tf-acik.pencere-acik .ana-akis video,
-.ana-kok.tf-acik.pencere-acik .hik-serit video{ visibility:visible !important; opacity:1 !important; }
 .ana-sehir-rozet{ display:none !important; }  /* alttaki şehir fotoğrafı düğmesi */
 /* NOT: Eski ".ana-kok > * { position:relative }" kuralı KALDIRILDI — açılır pencerelerin
    (sayaç, profil menüsü, menü) position:fixed ayarını eziyordu (sol-alta düşüp ikonları itiyordu).
