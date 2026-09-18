@@ -583,11 +583,7 @@
    YATAY foto ("GLOXORG" gibi geniş) → CONTAIN (yanlar KESİLMEZ, tam görünür); artan boşluk medyasar'ın ALTIN zeminidir.
    Yön JS'te ölçülür (hik-kart-medyasar'a .yatay eklenir). Bulanık arka (hik-kart-bg) KULLANILMAZ (yeşil dolgu yapıyordu). */
 .hik-kart-bg{ display:none; }
-.hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:1; display:block; transform:translateZ(0); border-radius:12px; -webkit-mask-image:-webkit-radial-gradient(white,black); }
-/* ⬆ PARLAMA ÇÖZÜMÜ (video DURDURULMADI): translateZ(0) + border-radius + -webkit-mask.
-   Küçük şerit videosu Android'de "delik açan overlay" (hole-punch) olarak çizilip parlıyordu (akıştaki BÜYÜK video
-   zaten katman olduğu için parlamıyor). Videoya köşe yuvarlaklığı + maske vermek, telefonu videoyu KATMAN (texture)
-   olarak çizmeye ZORLAR → hole-punch biter → parlama gider. Video yine autoPlay oynar. Görüntü bozulmaz (perspektif YOK). */
+.hik-kart-medya{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:1; display:block; }
 .hik-kart-medyasar.yatay .hik-kart-medya{ object-fit:contain; } /* YATAY → tam görünür, boşluk ALTIN */
 /* Küçük avatar KARE (profil karedir) — yuvarlak DEĞİL; UFAK, ince renkli çerçeve */
 .hik-kart-av{ position:absolute; top:6px; left:6px; width:30px; height:30px; border-radius:8px; overflow:hidden; background:#8a6b28; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px; border:2.5px solid #e3c14e; z-index:3; box-shadow:0 1px 4px rgba(90,60,10,.4); } /* profil çerçevesi ALTIN */
