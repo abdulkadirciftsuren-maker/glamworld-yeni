@@ -7,7 +7,8 @@
 .ana-kok{
   position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; /* en üst/altta SIÇRAMA-parlama YOK */
   /* ⛔ EN ALT YEDEK RENK ALTIN (kullanıcı: koyu/mavi istemiyorum; kaydırırken boşlukta bir an bu renk
-     görünüyor → koyu olunca "parlama/parça parça" gibi duruyordu). Altın olunca göze batmaz. */
+     görünüyor → koyu olunca "parlama/parça parça" gibi duruyordu). Altın olunca göze batmaz.
+     NOT: Kullanıcı "her yer altın olunca zemin de altın olması güzel durmaz" dedi → bu AÇIK ton kalır (radyal DEĞİL). */
   background-color:#ecd39a;
   font-family:'Cormorant Garamond',serif; color:#2c2418;
   -webkit-overflow-scrolling:touch; scrollbar-width:none; -webkit-tap-highlight-color:transparent;
