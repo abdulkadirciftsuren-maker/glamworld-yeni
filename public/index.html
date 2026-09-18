@@ -51,7 +51,11 @@
          ⛔ EN ALT ZEMİN ALTIN (kullanıcı: hiçbir yerde koyu/mavi istemiyorum). ÖNEMLİ: bu en arka katman,
          telefon kaydırırken sayfanın boş bıraktığı yeri BİR AN bunu gösterir; koyu olunca "parlama/parça parça"
          gibi görünüyordu. Altın olunca boşluk da altın → parlama/kesilme göze batmaz. */
-      html, body, #root { touch-action: pan-x pan-y; background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%); }
+      /* ⛔ "ÇEKİNCE YENİLE" (pull-to-refresh) KAPALI (B261): Android'de sayfa en yukarıdayken parmakla aşağı çekip
+         bırakınca tarayıcı sayfayı KOMPLE yeniden yüklüyordu = tam parlama/beyazlama + "her seferinde güncelleniyor"
+         hissi (kullanıcı: "aşağıdan yukarı aldığımda gene yeniden yükleme yapıyor"). overscroll-behavior:none bunu
+         KAPATIR (Facebook/TikTok gibi). Sayfa içi kaydırma normal çalışır; sadece en üstte çekince yenileme olmaz. */
+      html, body, #root { touch-action: pan-x pan-y; overscroll-behavior:none; background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%); }
       img { touch-action: auto; }
       /* SOSYAL GİRİŞ YÜKLEME EKRANI — index.html'de (React'ten ÖNCE de görünür).
          Google/sosyal girişte sayfa bir an yeniden yüklenince BEYAZ flash olmasın diye,

@@ -5,7 +5,7 @@
 /* ARKA PLAN FOTO katmanı — ekrana SABİT (gerçek görünen yükseklik), sayfa/adres çubuğu kayınca ZIPLAMAZ, alttan açıklık vermez */
 .ana-arka-foto{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:-2; background-size:cover; background-position:center; pointer-events:none; }
 .ana-kok{
-  position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; /* en üst/altta SIÇRAMA-parlama YOK */
+  position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior:none; /* en üst/altta SIÇRAMA-parlama YOK + "çekince yenile" KAPALI (B261): en üste çekince sayfa yeniden yüklenmez */
   /* ⛔ EN ALT YEDEK RENK ALTIN (kullanıcı: koyu/mavi istemiyorum; kaydırırken boşlukta bir an bu renk
      görünüyor → koyu olunca "parlama/parça parça" gibi duruyordu). Altın olunca göze batmaz.
      NOT: Kullanıcı "her yer altın olunca zemin de altın olması güzel durmaz" dedi → bu AÇIK ton kalır (radyal DEĞİL). */
