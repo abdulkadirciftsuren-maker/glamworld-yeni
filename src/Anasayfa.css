@@ -39,12 +39,15 @@
    dahil) hâlâ vuruyordu (parlama). Artık arka feed KAPSAYICISI tamamen visibility:hidden → arkada gösterecek HİÇBİR ŞEY kalmaz,
    fade/yarı saydam anında bile parlama olmaz. visibility:hidden düzeni bozmaz (reflow yok); pencere kapanınca feed geri gelir.
    Açık pencereler bu kapsayıcıların DIŞINDA (Glome/tam ekran/Makara=portal/sibling) → onlara DOKUNMAZ. */
+/* PARLAMA DÜZELTMESİ (video kapanınca üst kısmın parlaması):
+   ESKİDEN üst BAŞLIK + hikâye şeridi + değer şeridi + alt NAV da visibility:hidden ile gizleniyordu.
+   Video/pencere kapanınca bunların HEPSİ bir anda geri geliyordu → o ani geri geliş göze PARLAMA gibi çarpıyordu
+   (kullanıcı: "videoyu kapattığımda üst tarafta ne varsa parlıyor"). Bu opak öğeleri gizlemeye GEREK YOK; çünkü tam
+   ekran video/pencere zaten ARKASI HİÇ GÖRÜNMEYEN opak altın perde ile üstlerini kapatıyor. Gizleme kalkınca "ani geri
+   geliş" (parlama) da kalkar. SADECE gerçek sızıntı kaynağı olan VİDEOLAR (aşağıdaki kural) + akış/Makara kapsayıcısı gizli
+   kalır — çünkü telefonda donanım video katmanı opak perdeden bile sızabiliyor. */
 .ana-kok.pencere-acik .ana-akis,
-.ana-kok.pencere-acik .hik-serit,
-.ana-kok.pencere-acik .reels-serit,
-.ana-kok.pencere-acik .ana-nav,
-.ana-kok.pencere-acik .ana-header,
-.ana-kok.pencere-acik .ana-serit-sar{ visibility:hidden !important; } /* NAV ikonları + BAŞLIK + piyasa şeridi de GİZLE → pencere açıkken arkada gösterecek hiçbir şey kalmaz, sızma/parça parça biter */
+.ana-kok.pencere-acik .reels-serit{ visibility:hidden !important; } /* SADECE akış + Makara şeridi gizli (video sızıntısı); üst başlık/nav/şerit ARTIK gizlenmez → parlama biter */
 .ana-kok.pencere-acik .ana-akis video,
 .ana-kok.pencere-acik .hik-serit video,
 .ana-kok.pencere-acik .reels-serit video{ visibility:hidden !important; opacity:0 !important; }
