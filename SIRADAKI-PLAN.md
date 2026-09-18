@@ -17,6 +17,13 @@
 - **⛔ Bir daha video'ya GPU hack'i (transform/translate3d/perspective/will-change) EKLEME** (B225 videoyu bozmuştu, B234'te geri alındı).
 - Yaklaşım: tek tek kök sebep bul (kullanıcı "hep yalan/tutarsa deneme yapıyorsun" dedi → rastgele deneme YOK). Deploy'dan önce Playwright ile kendin dene.
 
+## 💳 YAPAY ZEKÂ (GLOXOO RESİM) MALİYETİ — 18 Eyl 2026 (ÖNEMLİ, tekrar sorulursa)
+- Gloxoo "Üstümde Dene" resimlerini **Google Gemini** (gemini-2.5-flash-image) üretiyor → GERÇEK para (resim başına ~birkaç sent; **canlı manken = 6 resim = 6 kat!**). Anthropic/Claude hesabıyla KARIŞTIRMA (o ayrı, kodlama asistanı tarafı).
+- Faturalandırma: **Google AI Studio → Gemini API → Faturalama** (aistudio.google.com/apikey → proje gen-lang-client-0534452347 → Firebase Ödemesi, **Cloud Prepay** 010D7B-8C323B-9C98CE). **ÖN ÖDEME (prepay)** modeli.
+- **Otomatik yükleme KAPALI** (böyle KALSIN) → bakiye bitince API durur, sürpriz fatura YOK. Bittiğinde "Guthaben erwerben / Kredi satın al" ile küçük (10-20€) yükle. 18 Eyl'de 20€ yüklendi, Gloxoo tekrar çalışıyor. ✅
+- Cloud'da **15€/ay bütçe uyarısı** var (glamworld2, %50/90/100).
+- **⏳ YAYINDAN ÖNCE ŞART:** uygulamaya **kullanım sınırı + para modeli** ekle (kullanıcı 18 Eyl'de "şimdilik sadece açıkla" dedi → sonra yapılacak): her üyeye günde 3-5 bedava deneme → sonrası jeton/reklam; ileride **satıcı-öder (B2B)**. Yoksa çok üye = büyük fatura. Kullanıcı "hadi o sınırı koy" deyince ekle.
+
 ## 🚀 ÜRETİM (PRODUCTION) BAŞVURUSU YAPILDI — 16 Eyl 2026, 13:04
 - Kapalı test bitti (14 gün + 12 testçi şartları TAMAM). Kullanıcı 16 Eyl'de **"Üretime başvur" formunu doldurup GÖNDERDİ** (hedef kitle, değer, testte öğrenilenler vb. — cevapları Code birlikte yazdı).
 - Google formu **inceliyor**; sonucu hesap sahibine **e-posta** ile bildirecek (abdulkadirciftsuren@gmail.com). Genelde **≤7 gün**, bazen daha uzun.
