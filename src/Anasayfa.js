@@ -3478,6 +3478,20 @@ export default function Anasayfa({ pro = false }) {
   const videoSade = (url) => {
     try { return (url || "").replace(/\/upload\/l_text:[^/]*\//, "/upload/"); } catch (e) { return url || ""; }
   };
+  // B270 — RESİM KÜÇÜLT/OPTİMİZE (kullanıcı: akış fotoğrafları kaydırınca "sarı perde sonra fotoğraf" = telefon büyük
+  // fotoğrafı yeniden ÇÖZÜYOR). SADECE Cloudinary (res.cloudinary.com /image/upload/) fotoğraflarına f_auto,q_auto,w_1000
+  // ekler → telefon KÜÇÜK/optimize dosyayı anında çözer, sarı perde küçülür. ⛔ data: (eski gömülü) ve Firebase/diğer
+  // URL'lere DOKUNMAZ (güvenli, hiçbir şeyi bozmaz). Tam ekran açılışta ORİJİNAL p.gorsel kullanılır (bu sadece küçük gösterim).
+  const resimKucult = (url, gen = 1000) => {
+    try {
+      const s = String(url || "");
+      if (s.indexOf("res.cloudinary.com") !== -1 && s.indexOf("/image/upload/") !== -1) {
+        if (/\/image\/upload\/(f_auto|q_auto|w_\d)/.test(s)) return s; // zaten optimize → tekrar ekleme
+        return s.replace("/image/upload/", "/image/upload/f_auto,q_auto,w_" + gen + "/");
+      }
+      return s;
+    } catch (e) { return url || ""; }
+  };
   // AI yazısına kısa MARKALI tanıtım imzası (ikonlu; içeriğe/rastgele göre) — kabul edilen yazının sonuna eklenir
   const markaImza = () => {
     const havuz = [
@@ -9123,7 +9137,7 @@ export default function Anasayfa({ pro = false }) {
                           })()
                         : p.video
                         ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
-                        : <img src={p.gorsel} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
+                        : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
                       {/* YAZI medyanın ÜZERİNDE — yalnız METİN VARSA ve kullanıcı öyle istediyse (p.yaziUstunde) */}
