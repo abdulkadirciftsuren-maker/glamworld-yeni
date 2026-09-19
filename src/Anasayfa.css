@@ -46,8 +46,12 @@
    ekran video/pencere zaten ARKASI HİÇ GÖRÜNMEYEN opak altın perde ile üstlerini kapatıyor. Gizleme kalkınca "ani geri
    geliş" (parlama) da kalkar. SADECE gerçek sızıntı kaynağı olan VİDEOLAR (aşağıdaki kural) + akış/Makara kapsayıcısı gizli
    kalır — çünkü telefonda donanım video katmanı opak perdeden bile sızabiliyor. */
-.ana-kok.pencere-acik .ana-akis,
-.ana-kok.pencere-acik .reels-serit{ visibility:hidden !important; } /* SADECE akış + Makara şeridi gizli (video sızıntısı); üst başlık/nav/şerit ARTIK gizlenmez → parlama biter */
+/* B271 (kullanıcı: "menü açılınca alttaki fotoğraf paylaşımı kapanıyor, menüyü parçalıyor/parlatıyor"):
+   ESKİDEN pencere/menü açılınca .ana-akis (TÜM akış) da visibility:hidden yapılıyordu → menü kapanınca fotoğraflar
+   bir anda geri gelip PARLIYORDU + fotoğraf "kapanıp yeniden açılıyordu". Artık .ana-akis KAPSAYICISI GİZLENMEZ →
+   fotoğraf paylaşımları pencere/menü açıkken de ÇİZİLİ KALIR (kapanmaz, sarı perde gelmez). SADECE gerçek sızıntı
+   kaynağı VİDEOLAR gizli kalır (aşağıdaki kural: .ana-akis video ...). .reels-serit (Makara=video şeridi) gizli kalır. */
+.ana-kok.pencere-acik .reels-serit{ visibility:hidden !important; }
 .ana-kok.pencere-acik .ana-akis video,
 .ana-kok.pencere-acik .hik-serit video,
 .ana-kok.pencere-acik .reels-serit video{ visibility:hidden !important; opacity:0 !important; }
