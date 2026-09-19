@@ -8311,35 +8311,44 @@ export default function Anasayfa({ pro = false }) {
   const dokunRef = useRef(null);
   // ALT DÜĞMELER ekranda SABİT DEĞİL: aşağı kaydırınca kaybolur, yukarı kaydırınca geri gelir.
   const kokRef = useRef(null);
-  const [tabGizli, setTabGizli] = useState(false);
-  const [yukariOk, setYukariOk] = useState(false); // "başa dön" oku — kaydırınca belirir, durunca kaybolur
+  // ⚡ B267 (B232 KALIBI — PARLAMANIN ASIL SEBEBİ): "başa dön" oku + alt sekme çubuğu eskiden React STATE ile kontrol
+  // ediliyordu; sayfayı kaydırınca her eşik geçişinde setState → 12 bin satırlık KOCA sayfa TAMAMEN yeniden çiziliyordu
+  // → üst kısım (özellikle "Işıltını Göster") bir an SİLİNİP yeniden geliyordu = PARLAMA. Çözüm: STATE YOK. Kaydırınca
+  // sadece bu iki küçük öğenin CSS sınıfını DOM'dan (ref ile) değiştir → React sayfayı yeniden çizmez → parlama biter.
+  const anaTabRef = useRef(null);        // alt sekme çubuğu (DOM)
+  const basaOkRef = useRef(null);        // "başa dön" oku (DOM)
+  const tabGizliRef = useRef(false);     // kaydırma kaynaklı gizleme durumu (menü ile birleşir)
   const yukariOkZmnRef = useRef(null);
+  // Alt sekme çubuğu görünürlüğü = kaydırma-gizle VEYA menü-açık → DOM sınıfı (state yok → re-render yok)
+  const tabGizliUygula = () => { const n = anaTabRef.current; if (n) n.classList.toggle("gizli", tabGizliRef.current || menuAcikRef.current); };
   useEffect(() => {
     const el = kokRef.current; if (!el) return;
     let son = el.scrollTop, birikim = 0;
+    const okGoster = (g) => { const b = basaOkRef.current; if (b) b.classList.toggle("gor", g); }; // DOM'dan (re-render yok)
     const onKaydir = () => {
       const y = el.scrollTop;
       const fark = y - son; son = y;
       birikim = (birikim > 0) === (fark > 0) ? birikim + fark : fark; // yön değişince sıfırdan say
-      // BAŞA DÖN OKU (kullanıcı: "aşağı inerken çıkmasın, SADECE yukarı çıkmak istediğimde çıksın; rahatsız ediyor"):
-      // aşağıdayken (y>500) VE YUKARI kaydırıyorken (fark<0 = başa dönmek istiyor) göster; AŞAĞI kaydırıyorken ya da
-      // üstteyken (y<=500) gizle; kaydırma durunca kısa süre sonra kendiliğinden kaybol.
+      // BAŞA DÖN OKU: aşağıdayken (y>500) VE YUKARI kaydırıyorken göster; aşağı kaydırıyorken/üstteyken gizle; durunca kaybol.
       if (y > 500 && fark < -3) {
-        setYukariOk(true);
+        okGoster(true);
         clearTimeout(yukariOkZmnRef.current);
-        yukariOkZmnRef.current = setTimeout(() => setYukariOk(false), 2600);
+        yukariOkZmnRef.current = setTimeout(() => okGoster(false), 2600);
       } else if (fark > 3 || y <= 500) {
-        setYukariOk(false); clearTimeout(yukariOkZmnRef.current);
+        okGoster(false); clearTimeout(yukariOkZmnRef.current);
       }
-      if (y < 50) { setTabGizli(false); birikim = 0; return; }        // en üstteyken hep görünür
-      if (birikim > 26) setTabGizli(true);
-      else if (birikim < -26) setTabGizli(false);
+      // ALT SEKME ÇUBUĞU: sadece DURUM DEĞİŞİNCE DOM sınıfını güncelle (state yok → sayfa yeniden çizilmez → parlama yok)
+      if (y < 50) { if (tabGizliRef.current) { tabGizliRef.current = false; tabGizliUygula(); } birikim = 0; return; } // en üstte hep görünür
+      if (birikim > 26) { if (!tabGizliRef.current) { tabGizliRef.current = true; tabGizliUygula(); } }
+      else if (birikim < -26) { if (tabGizliRef.current) { tabGizliRef.current = false; tabGizliUygula(); } }
     };
     el.addEventListener("scroll", onKaydir, { passive: true });
     return () => { el.removeEventListener("scroll", onKaydir); clearTimeout(yukariOkZmnRef.current); };
   }, []);
   // Başa (en üste) tam hızla dön
-  const basaDon = () => { const el = kokRef.current; if (el) el.scrollTo({ top: 0, behavior: "smooth" }); setYukariOk(false); };
+  const basaDon = () => { const el = kokRef.current; if (el) el.scrollTo({ top: 0, behavior: "smooth" }); const b = basaOkRef.current; if (b) b.classList.remove("gor"); };
+  // Menü açılıp/kapanınca alt sekme çubuğunu güncelle (kaydırma durumuyla birleşir) — state yok, re-render yok
+  useEffect(() => { const n = anaTabRef.current; if (n) n.classList.toggle("gizli", tabGizliRef.current || menuAcik); }, [menuAcik]);
 
   // Bulunduğum yerin piyasası (kendi para birimimde): USD, EUR, Altın, Gümüş, Bitcoin
   const piyasa = (() => {
@@ -11222,7 +11231,7 @@ export default function Anasayfa({ pro = false }) {
 
       {/* BAŞA DÖN OKU — ana sayfada aşağı inince ortada belirir, durunca kaybolur; basınca en üste tam hızla çıkar */}
       {aktifKod === "home" && !tamFoto && !uyeSayfa && (
-        <button className={"ana-basa-ok" + (yukariOk ? " gor" : "")} onClick={basaDon} aria-label={t("basaDon", "Başa dön")}>
+        <button ref={basaOkRef} className="ana-basa-ok" onClick={basaDon} aria-label={t("basaDon", "Başa dön")}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V6" /><path d="M6 12l6-6 6 6" /></svg>
         </button>
       )}
@@ -11747,7 +11756,7 @@ export default function Anasayfa({ pro = false }) {
       )}
 
       {/* Alt sabit sekme çubuğu */}
-      <nav className={"ana-tab" + ((tabGizli || menuAcik) ? " gizli" : "")}>
+      <nav ref={anaTabRef} className="ana-tab">
         <button className={"ana-tab-oge" + (aktifKod === "home" ? " aktif" : "")} onClick={() => setAktifKod("home")}>{Ikon.home}<span>{t("tabKesfet")}</span></button>
         <button className="ana-tab-oge" onClick={() => setAraAcik(true)}>{Ikon.ara}<span>{t("tabAra")}</span></button>
         <button className={"ana-tab-oge ana-tab-reels" + (reelsAcik ? " aktif" : "")} onClick={() => { setReelAktif(0); setReelsAcik(true); }}>
