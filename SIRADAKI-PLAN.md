@@ -4,6 +4,20 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 📌 GELECEK — KESİN YAPILACAK (kullanıcı 19 Eyl'de "bir yere yaz, sonra kesinlikle yapılacak" dedi)
+### 1) NATIVE UYGULAMA (Android/iOS) — parlama/akıcılık KÖK ÇÖZÜM
+- Şu an GLOXORG bir **web sitesi + Android kılıfı (TWA)**. Web kılıfı, fotoğrafları ekran dışına çıkınca hafızadan atıp geri gelince yeniden çiziyor → **fotoğraf paylaşımı parlaması** (video parlamıyor çünkü ayrı katmanda). Bu, web kılıfının **temel sınırı**; CSS/tahmin ile çözülmüyor (B253/254/263/265/267/270/272/273 hepsi denendi, çözmedi).
+- **Kusursuz akıcılık (TikTok/Instagram gibi) = gerçek NATIVE uygulama.** Sıfırdan ayrı yazılım (Ayna/Gloxoo/akış/mesaj/profil hepsi baştan). Büyük, uzun, maliyetli → profesyonel ekip. **NE ZAMAN:** uygulama büyüyünce/kullanıcı+gelir olunca. Kullanıcı: "kesinlikle yapılacak, unutma."
+- Ara adım: Code'un giriş sonrası ana sayfayı **test edebileceği bir düzenek** kurulursa, parlama GÖREREK azaltılabilir (native'e göre küçük iş).
+
+### 2) ARAMA (Glome) "POSTACISI" TURN — kendi sunucumuz (metered.ca'ya bağımlılık + kota)
+- **SORUN (19 Eyl):** Glome canlı arama, `global.relay.metered.ca` (Metered.ca, ÜCRETSİZ ~500MB/ay TURN) kullanıyor (Anasayfa.js ~3677 ICE_SUNUCULAR). Kota %100 dolunca "Tüm TURN oturumları sonlandırıldı" e-postası geldi → farklı ağdaki aramalar kesildi. Kullanıcı: "hep bir yere para/bağımlıyız, kendi postacımızı yapamaz mıyız?"
+- **GERÇEK:** TURN sadece iki kişi DOĞRUDAN bağlanamayınca (bazı mobil/güvenlik duvarı) gerekir; çoğu arama STUN (ÜCRETSİZ) ile doğrudan bağlanır. Canlı video relay = bant genişliği = her yerde para (bedava sınırsız yok).
+- **KENDİ POSTACIMIZ (önerilen):** **coturn** (ücretsiz, açık kaynak TURN yazılımı) bir **VPS'te** (Hetzner ~€4/ay, ~20TB bant dahil = bizim ölçekte pratikte sınırsız / DigitalOcean/Contabo). Metered kotası biter, sabit küçük ücret, kendi kontrolümüz. Kurulum: kullanıcı VPS kiralar → Code coturn config + TLS + domain verir → adresi ICE_SUNUCULAR'a koyar. Bakım: ara sıra güncelleme/güvenlik.
+- **Diğer seçenekler:** Cloudflare Calls (cömert/ucuz TURN), Twilio (ücretli), Metered ücretli plan.
+- **NOT:** Kendi coturn'umuz "kendi postacımız" demek — dış bağımlılığı ve sürpriz kotayı kaldırır; ama yine bir VPS (küçük aylık ücret) gerekir. Tamamen bedava sınırsız relay YOK (devler bile öder).
+
+---
 ## ⚠️⚠️ 19 Eyl 2026 — NATIVE SCROLL DENENDİ ve GERİ ALINDI (SAYFAYI KAYDIRTMADI). TEKRAR DENEMEDEN OKU!
 > **B265'te denendi → SAYFA HİÇ KAYMADI** (kullanıcı: "sayfa sabit, aşağı-yukarı gitmiyor"). B266'da GERİ ALINDI, sayfa yine kayıyor (fixed iç-scroll'a döndü). 
 > **NEDEN KAYMADI (çözülemedi):** `.ana-kok` `position:relative; min-height:100vh` yapılınca gövde uzamadı/kaymadı. App render ağacı: `#root → HashRouter → <Anasayfa> (.ana-kok)`; arada height/overflow kısıtlayan sarıcı GÖRÜNMÜYOR (App.js, AltinCerceve.css #root{min-height:100vh}, index.css'te dikey overflow kilidi yok). Yani blocker net BULUNAMADI.
