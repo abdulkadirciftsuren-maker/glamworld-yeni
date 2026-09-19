@@ -888,7 +888,11 @@
 /* DİKEY (uzun) foto → DOLU pencere (4/5, az daha az uzun → yanlardan kesmez/zoom azalır); yazılar fotoğraf üstünde */
 /* DİKEY FOTO → pencere kenarını doldurur (cover) ama çok hafif daha az uzun (5/6) → az uzaklaşır, kenar bozulmaz */
 /* TELEFON: dikey foto NORMAL (4/5) — telefona dokunma (kullanıcı). Doğal oran/yatay düzeni SADECE bilgisayarda (aşağıda @min-width:1000). */
-.apr-medya.uzun{ aspect-ratio:4/5; padding:0; }
+/* B272 (kullanıcı: "fotoğrafın üzerine sarı/altın çıkıyor, kaydırınca parlıyor"): DİKEY (uzun) fotoğrafın ARKASINDAKİ
+   kutu zemini PARLAK ALTIN (base .apr-medya #f6e6a8→#e3c469) idi; foto object-fit:cover ile kutuyu doldurur ama kaydırırken
+   foto bir an boyanmayınca o PARLAK ALTIN üstten görünüp göze "sarı perde/parlama" gibi çarpıyordu. Zemini sayfanın YUMUŞAK
+   AÇIK tonuna çevirdik → foto bir an boyanmasa da parlak sarı çarpmaz (yumuşak, fark edilmez). ⛔ SİYAH/KOYU DEĞİL (anayasa). Video zemini AYRI (dokunulmadı). */
+.apr-medya.uzun{ aspect-ratio:4/5; padding:0; background:#efe7d3; }
 .apr-medya.uzun img{ width:100%; height:100%; object-fit:cover; display:block; }
 /* YATAY (enli) foto: pencereyi DOĞAL doldurur — min-height/ortalama YOK → alt-üst altın/boş bant kalmaz
    (kullanıcı: yatay foto yatay gelsin, kısa kalıp ekleme/karartma olmasın). İkon şeridi (.apr-rail) medyanın
