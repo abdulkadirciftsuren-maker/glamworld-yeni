@@ -5,7 +5,14 @@
 /* ARKA PLAN FOTO katmanı — ekrana SABİT (gerçek görünen yükseklik), sayfa/adres çubuğu kayınca ZIPLAMAZ, alttan açıklık vermez */
 .ana-arka-foto{ position:fixed; left:0; right:0; top:var(--gercek-ust,0px); height:var(--gercek-vh,100vh); z-index:-2; background-size:cover; background-position:center; pointer-events:none; }
 .ana-kok{
-  position:fixed; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior:none; /* en üst/altta SIÇRAMA-parlama YOK + "çekince yenile" KAPALI (B261): en üste çekince sayfa yeniden yüklenmez */
+  /* B265: NATIVE (GÖVDE) KAYDIRMA — eskiden position:fixed + overflow-y:auto "SAHTE KAYDIRMA" idi; Android WebView bu
+     yöntemde ekran dışına çıkan bölgeyi çizmeyi bırakıp geri gelince YENİDEN boyuyordu = kaydırınca üst kısım "silinip
+     geliyor" / parlama. Artık .ana-kok NORMAL AKIŞTA (position:relative), sayfa GÖVDE ile kayar → WebView native
+     kaydırmayı düzgün çizer, silinme/parlama biter (TikTok/Facebook gibi). ⚠️ position:relative KALIR (içindeki
+     position:absolute öğeler buna göre konumlanıyor). inset:0 + overflow-y:auto KALDIRILDI. overscroll-behavior:none
+     KALIR (çekince-yenile kapalı). */
+  position:relative; z-index:1; min-height:100vh; /* ⚠️ overflow-x:hidden BURADA YOK (yoksa .ana-kok kaydırma-kabı olur ve
+     üstteki YAPIŞKAN değer şeridi .ana-serit-sar viewport'a yapışamaz, kayıp gider). Yatay taşma zaten html/body/#root'ta engelli. */
   /* ⛔ EN ALT YEDEK RENK ALTIN (kullanıcı: koyu/mavi istemiyorum; kaydırırken boşlukta bir an bu renk
      görünüyor → koyu olunca "parlama/parça parça" gibi duruyordu). Altın olunca göze batmaz.
      NOT: Kullanıcı "her yer altın olunca zemin de altın olması güzel durmaz" dedi → bu AÇIK ton kalır (radyal DEĞİL). */

@@ -2556,19 +2556,18 @@ export default function Anasayfa({ pro = false }) {
   // Arama açıkken sayfa aşağı/yukarı çekilince sonuçlar KENDİLİĞİNDEN KAPANIR (yazı olsa bile). Kullanıcı: sonuçlar ekranda kalmasın.
   useEffect(() => {
     if (!araAcik) return;
-    const el = kokRef.current;
     let basY = null;
     const kapat = () => { setAraAcik(false); setAraQ(""); };
     const sonucIcinde = (t) => !!(t && t.closest && t.closest(".ara-sonuc")); // sonuç listesinde gezinmeyi sayma
     const wheel = (e) => { if (!sonucIcinde(e.target)) kapat(); };
     const dokunBas = (e) => { basY = e.touches && e.touches[0] ? e.touches[0].clientY : null; };
     const dokunHar = (e) => { if (sonucIcinde(e.target)) return; const y = e.touches && e.touches[0] ? e.touches[0].clientY : null; if (basY != null && y != null && Math.abs(y - basY) > 28) kapat(); };
-    const scr = () => kapat(); // feed (kök) kaydırması = sayfayı geziyor → kapat
-    if (el) el.addEventListener("scroll", scr, { passive: true });
+    const scr = () => kapat(); // sayfa (gövde) kaydırması = sayfayı geziyor → kapat
+    window.addEventListener("scroll", scr, { passive: true }); // B265: native kaydırma → window'da dinle
     window.addEventListener("wheel", wheel, { passive: true });
     window.addEventListener("touchstart", dokunBas, { passive: true });
     window.addEventListener("touchmove", dokunHar, { passive: true });
-    return () => { if (el) el.removeEventListener("scroll", scr); window.removeEventListener("wheel", wheel); window.removeEventListener("touchstart", dokunBas); window.removeEventListener("touchmove", dokunHar); };
+    return () => { window.removeEventListener("scroll", scr); window.removeEventListener("wheel", wheel); window.removeEventListener("touchstart", dokunBas); window.removeEventListener("touchmove", dokunHar); };
   }, [araAcik]);
   // Çevrimiçi sayacı — canlı nefes alır (hafifçe oynar). B216: state + interval ANA bileşenden ALINDI ->
   // ayri <SeritCevrim/> bilesenine tasindi (izole saat kalibi). Boylece 6 sn'lik guncelleme TUM sayfayi
@@ -7985,9 +7984,11 @@ export default function Anasayfa({ pro = false }) {
     if (overlayAcik) {
       if (k) { k.style.overflow = "hidden"; k.style.touchAction = "none"; }
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden"; // B265: native kaydırmada asıl kilit gövde/html'de
     } else {
       if (k) { k.style.overflow = ""; k.style.touchAction = ""; }
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     }
     return () => { if (k) { k.style.overflow = ""; k.style.touchAction = ""; } document.body.style.overflow = ""; };
   }, [menuAcik, sehirAcik, arsivAcik]);
@@ -8315,10 +8316,11 @@ export default function Anasayfa({ pro = false }) {
   const [yukariOk, setYukariOk] = useState(false); // "başa dön" oku — kaydırınca belirir, durunca kaybolur
   const yukariOkZmnRef = useRef(null);
   useEffect(() => {
-    const el = kokRef.current; if (!el) return;
-    let son = el.scrollTop, birikim = 0;
+    // B265: NATIVE kaydırmaya geçildi → kaydırma artık GÖVDE'de (window), .ana-kok'ta değil.
+    const oku = () => window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    let son = oku(), birikim = 0;
     const onKaydir = () => {
-      const y = el.scrollTop;
+      const y = oku();
       const fark = y - son; son = y;
       birikim = (birikim > 0) === (fark > 0) ? birikim + fark : fark; // yön değişince sıfırdan say
       // BAŞA DÖN OKU (kullanıcı: "aşağı inerken çıkmasın, SADECE yukarı çıkmak istediğimde çıksın; rahatsız ediyor"):
@@ -8335,11 +8337,11 @@ export default function Anasayfa({ pro = false }) {
       if (birikim > 26) setTabGizli(true);
       else if (birikim < -26) setTabGizli(false);
     };
-    el.addEventListener("scroll", onKaydir, { passive: true });
-    return () => { el.removeEventListener("scroll", onKaydir); clearTimeout(yukariOkZmnRef.current); };
+    window.addEventListener("scroll", onKaydir, { passive: true });
+    return () => { window.removeEventListener("scroll", onKaydir); clearTimeout(yukariOkZmnRef.current); };
   }, []);
-  // Başa (en üste) tam hızla dön
-  const basaDon = () => { const el = kokRef.current; if (el) el.scrollTo({ top: 0, behavior: "smooth" }); setYukariOk(false); };
+  // Başa (en üste) tam hızla dön (B265: gövde kaydırması → window.scrollTo)
+  const basaDon = () => { try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { try { window.scrollTo(0, 0); } catch (x) {} } setYukariOk(false); };
 
   // Bulunduğum yerin piyasası (kendi para birimimde): USD, EUR, Altın, Gümüş, Bitcoin
   const piyasa = (() => {
