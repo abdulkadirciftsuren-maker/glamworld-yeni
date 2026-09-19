@@ -10,12 +10,19 @@
 - **Kusursuz akıcılık (TikTok/Instagram gibi) = gerçek NATIVE uygulama.** Sıfırdan ayrı yazılım (Ayna/Gloxoo/akış/mesaj/profil hepsi baştan). Büyük, uzun, maliyetli → profesyonel ekip. **NE ZAMAN:** uygulama büyüyünce/kullanıcı+gelir olunca. Kullanıcı: "kesinlikle yapılacak, unutma."
 - Ara adım: Code'un giriş sonrası ana sayfayı **test edebileceği bir düzenek** kurulursa, parlama GÖREREK azaltılabilir (native'e göre küçük iş).
 
-### 2) ARAMA (Glome) "POSTACISI" TURN — kendi sunucumuz (metered.ca'ya bağımlılık + kota)
-- **SORUN (19 Eyl):** Glome canlı arama, `global.relay.metered.ca` (Metered.ca, ÜCRETSİZ ~500MB/ay TURN) kullanıyor (Anasayfa.js ~3677 ICE_SUNUCULAR). Kota %100 dolunca "Tüm TURN oturumları sonlandırıldı" e-postası geldi → farklı ağdaki aramalar kesildi. Kullanıcı: "hep bir yere para/bağımlıyız, kendi postacımızı yapamaz mıyız?"
-- **GERÇEK:** TURN sadece iki kişi DOĞRUDAN bağlanamayınca (bazı mobil/güvenlik duvarı) gerekir; çoğu arama STUN (ÜCRETSİZ) ile doğrudan bağlanır. Canlı video relay = bant genişliği = her yerde para (bedava sınırsız yok).
-- **KENDİ POSTACIMIZ (önerilen):** **coturn** (ücretsiz, açık kaynak TURN yazılımı) bir **VPS'te** (Hetzner ~€4/ay, ~20TB bant dahil = bizim ölçekte pratikte sınırsız / DigitalOcean/Contabo). Metered kotası biter, sabit küçük ücret, kendi kontrolümüz. Kurulum: kullanıcı VPS kiralar → Code coturn config + TLS + domain verir → adresi ICE_SUNUCULAR'a koyar. Bakım: ara sıra güncelleme/güvenlik.
-- **Diğer seçenekler:** Cloudflare Calls (cömert/ucuz TURN), Twilio (ücretli), Metered ücretli plan.
-- **NOT:** Kendi coturn'umuz "kendi postacımız" demek — dış bağımlılığı ve sürpriz kotayı kaldırır; ama yine bir VPS (küçük aylık ücret) gerekir. Tamamen bedava sınırsız relay YOK (devler bile öder).
+### 2) 🟢🟢 YARIN (20 EYL) — İLK İŞ: KENDİ CANLI GÖRÜŞME SİSTEMİMİZ = LiveKit (1'e1 + 10 KİŞİLİK GRUP), KULLANICI ONAYLADI, BERABER KURULACAK
+- **KARAR (19 Eyl, kullanıcı):** Metered.ca (ücretsiz TURN, kota doldu → aramalar kesildi) BIRAKILACAK. Cloudflare de reddedildi ("büyüyünce yine kullanıma göre para"). Kullanıcı KENDİ sistemimizi istedi. + Müşteri **GRUP görüşmesi** istiyor → **en fazla 10 kişilik grup** (kullanıcı net söyledi).
+- **⚠️ KRİTİK KARAR — coturn DEĞİL, LiveKit:** coturn sadece 1'e1 relay yapar; GRUP görüşmesi YAPAMAZ (grup için SFU=medya sunucusu şart). Bu yüzden coturn kurup sonra atmak yerine DOĞRUDAN **LiveKit** (açık kaynak, self-host SFU) kuruyoruz → hem 1'e1 (Metered'i tamamen bırakır) hem 10 kişilik grubu yapar, KENDİ sunucumuzda, SABİT aylık ücret.
+- **GEREKENLER:** (a) VPS — Hetzner **CPX31 (4 vCPU/8GB, ~€15/ay)** öneri (10 kişilik grup + birkaç eşzamanlı oda için; başlangıçta CPX21 ~€8/ay da denenebilir), Ubuntu 24.04, ~20TB bant dahil. (b) Alt alan adı: **canli.gloxorg.com** (DNS Cloudflare'de → A kaydı VPS IP'sine; turน/wss için). (c) TLS (Let's Encrypt; LiveKit'in kendi generate + Caddy'si halleder). (d) LiveKit API key/secret (kurulumda üretilir).
+- **PORTLAR (VPS güvenlik duvarı):** 443 TCP (wss/signaling, Caddy), 7881 TCP, 50000-60000 UDP (medya) — veya LiveKit tek-port UDP modu. Kurulum dokümanına göre ayarla.
+- **TOKEN (ÖNEMLİ):** LiveKit odaya girişte JWT "access token" ister; secret SUNUCU tarafında olmalı (client'ta OLMAZ). Kullanıcının ZATEN Cloudflare Worker'ı var (`gloxorg-ai.abdulkadirciftsuren.workers.dev`) → token üretimini oraya (veya ayrı küçük uç) ekle.
+- **KOD TARAFI (Code'un işi, BÜYÜK):** Glome araması şu an HAM WebRTC 1'e1 (Anasayfa.js: ICE_SUNUCULAR ~3677, pcOlustur, aramaBaslat/KabulEt, gelenAramalariDinle vb.). Bunu **LiveKit JS SDK (livekit-client)** ile YENİDEN yazmak gerekir. ⚠️ ÇALIŞAN 1'e1 aramayı bozmadan, dikkatli, AŞAMALI: 
+  - **Faz 1:** VPS + LiveKit + TLS kur, LiveKit'in kendi demo/test sayfasıyla sunucu çalışıyor mu doğrula.
+  - **Faz 2:** Worker'a token uç noktası + `livekit-client` ile GLOXORG'da 1'e1 aramayı LiveKit'e taşı, iki cihazda (farklı ağ) test. Metered'i bırak.
+  - **Faz 3:** 10 kişilik GRUP görüşmesi UI'si (Glome'da) + test.
+- **MALİYET:** 1 VPS (~€8-15/ay sabit), domain zaten var, Worker zaten var (ücretsiz kota). Kullanıcı: "büyüyünce kullanıma göre para vermek istemiyorum" → sabit VPS bunu karşılar (büyürse daha güçlü VPS'e geçilir).
+- **KULLANICININ YARIN HAZIR EDECEĞİ:** ödeme kartı (VPS kiralamak için). Gerisini Code adım adım yönetecek (hangi VPS, hangi komutlar copy-paste, DNS kaydı, kod). Kullanıcı teknik değil → komutlar TEK TEK, sade, Türkçe açıklamayla verilecek; mümkünse VPS'in TARAYICI konsolu (SSH uygulaması gerekmesin) kullanılacak.
+- **DÜRÜST BEKLENTİ:** Bu 1 seansta bitmez, muhtemelen 1-2 gün/birkaç seans. Aceleye getirme; her fazı kullanıcı test edip onaylasın. Çalışan 1'e1 aramayı yeni sistem test edilene kadar BOZMA.
 
 ---
 ## ⚠️⚠️ 19 Eyl 2026 — NATIVE SCROLL DENENDİ ve GERİ ALINDI (SAYFAYI KAYDIRTMADI). TEKRAR DENEMEDEN OKU!
