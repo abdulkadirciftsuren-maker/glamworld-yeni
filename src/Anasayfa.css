@@ -46,11 +46,12 @@
    ekran video/pencere zaten ARKASI HİÇ GÖRÜNMEYEN opak altın perde ile üstlerini kapatıyor. Gizleme kalkınca "ani geri
    geliş" (parlama) da kalkar. SADECE gerçek sızıntı kaynağı olan VİDEOLAR (aşağıdaki kural) + akış/Makara kapsayıcısı gizli
    kalır — çünkü telefonda donanım video katmanı opak perdeden bile sızabiliyor. */
-/* B271 (kullanıcı: "menü açılınca alttaki fotoğraf paylaşımı kapanıyor, menüyü parçalıyor/parlatıyor"):
-   ESKİDEN pencere/menü açılınca .ana-akis (TÜM akış) da visibility:hidden yapılıyordu → menü kapanınca fotoğraflar
-   bir anda geri gelip PARLIYORDU + fotoğraf "kapanıp yeniden açılıyordu". Artık .ana-akis KAPSAYICISI GİZLENMEZ →
-   fotoğraf paylaşımları pencere/menü açıkken de ÇİZİLİ KALIR (kapanmaz, sarı perde gelmez). SADECE gerçek sızıntı
-   kaynağı VİDEOLAR gizli kalır (aşağıdaki kural: .ana-akis video ...). .reels-serit (Makara=video şeridi) gizli kalır. */
+/* B274 — GERİ ALMA: B271'de .ana-akis'i gizleme listesinden çıkarmıştım (menü foto sorunu için); AMA bu, GLOME'da
+   paylaşılan VİDEO açılışında arka akışın görünüp parlamasına yol açtı (kullanıcı: "Glome'da video açılışta parlıyor,
+   burayı düzeltmiştik, neden bozuldu?" = REGRESYON). .ana-akis TEKRAR gizleniyor (pencere/video açıkken) → Glome video
+   açılışı yeniden düzgün. Not: bu, menü açınca fotoğrafın kapanması sorununu geri getirir ama regresyon (bozduğum
+   çalışan şey) daha önceliklidir; menü sorununa test edebildiğimde ayrı bakılacak. */
+.ana-kok.pencere-acik .ana-akis,
 .ana-kok.pencere-acik .reels-serit{ visibility:hidden !important; }
 .ana-kok.pencere-acik .ana-akis video,
 .ana-kok.pencere-acik .hik-serit video,
