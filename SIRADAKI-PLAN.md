@@ -4,8 +4,16 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
-## 🔴🔴 EN ÖNCELİKLİ — 19 Eyl 2026 YARIN YAPILACAK: SAYFA KAYDIRMASINI NATIVE'E ÇEVİR (parlama/silinip-gelme KÖK ÇÖZÜM)
-> Kullanıcı 18 Eyl gecesi ONAYLADI: "yarın halledelim, sen en son çare bu diyorsun, inşallah bu sefer olur." Yani AŞAĞIDAKİ büyük değişiklik yarın YAPILACAK. Kullanıcı çok yoruldu ve öfkeli — DİKKATLİ, TEK İŞ, adım adım göster, her adımda onay al.
+## ⚠️⚠️ 19 Eyl 2026 — NATIVE SCROLL DENENDİ ve GERİ ALINDI (SAYFAYI KAYDIRTMADI). TEKRAR DENEMEDEN OKU!
+> **B265'te denendi → SAYFA HİÇ KAYMADI** (kullanıcı: "sayfa sabit, aşağı-yukarı gitmiyor"). B266'da GERİ ALINDI, sayfa yine kayıyor (fixed iç-scroll'a döndü). 
+> **NEDEN KAYMADI (çözülemedi):** `.ana-kok` `position:relative; min-height:100vh` yapılınca gövde uzamadı/kaymadı. App render ağacı: `#root → HashRouter → <Anasayfa> (.ana-kok)`; arada height/overflow kısıtlayan sarıcı GÖRÜNMÜYOR (App.js, AltinCerceve.css #root{min-height:100vh}, index.css'te dikey overflow kilidi yok). Yani blocker net BULUNAMADI.
+> **⛔ EN KRİTİK ENGEL:** Bu değişiklik BURADAN (Code tarafı) TEST EDİLEMİYOR — `.ana-kok` sadece GİRİŞ YAPILDIKTAN sonra (Anasayfa) render oluyor; giriş kartı (Giris) ayrı ve kısa (kaydırma yok). Yani native scroll'u kanıtlayamadan deploy = kullanıcının canlı sayfasında KUMAR. Bir kez bozdu.
+> **BİR DAHA DENEMEDEN ÖNCE ŞART:** (a) gövdenin gerçekten kaydığını kanıtlayacak bir yol kur (ör. geçici test rotası / giriş sonrası bir demo) VEYA (b) kullanıcı bilgisayarda/başka yolla doğrulayabilsin. Kanıtlanmadan DEPLOY ETME.
+> **DURUM (kullanıcıya söylendi):** Parlama fonksiyonu bozmuyor (sadece görsel). Native scroll doğru çözüm ama test edilemediği için riskli. Öneri: bu görsel flash'ı ŞİMDİLİK bırak, uygulamayı ileri taşıyan işlere (yayın/testçi/özellik) odaklan; kusursuz pürüzsüzlük en sonunda native uygulamayla gelir. Kullanıcı "yine de çöz" derse önce TEST YOLU kurulacak.
+
+--- (aşağısı 18 Eyl gecesi yazılan orijinal plan; artık yukarıdaki not geçerli) ---
+## 🔴🔴 (ESKİ/GÜNCELLENDİ) SAYFA KAYDIRMASINI NATIVE'E ÇEVİR
+> Kullanıcı 18 Eyl gecesi ONAYLADI ama 19 Eyl'de denendi ve geri alındı (yukarıdaki nota bak). Kullanıcı çok yoruldu — DİKKATLİ, TEK İŞ, adım adım göster.
 
 **KALAN TEK SORUN (18 Eyl gecesi netleşti):** Sayfayı biraz aşağı-yukarı kaydırınca **üst kısım (özellikle "Işıltını Göster" / hik-serit) bir an SİLİNİP yeniden çiziliyor** (boş/altın görünüp doluyor) = parlama. Kullanıcı net dedi: "yüklenmiş bir şey kaydırınca siliniyor sonra gene yükleniyor." → Bu **ağdan indirme DEĞİL** (B262 resim önbelleği işe yaramadı, kanıt), **yeniden ÇİZİM (repaint)**.
 
