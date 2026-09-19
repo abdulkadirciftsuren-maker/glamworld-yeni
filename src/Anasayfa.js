@@ -8011,9 +8011,9 @@ export default function Anasayfa({ pro = false }) {
     const seritVids = Array.from(document.querySelectorAll(".hik-serit video, .reels-serit video"));
     const feedVids = Array.from(document.querySelectorAll(".ana-akis video")); // TÜM akış videoları (foto/kolaj/Makara şeridi dahil) — hiçbiri arkada oynayıp parlamasın
     if (ustPencereVar) { [...feedVids, ...seritVids].forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
-    // PENCERE KAPANDI → SADECE Makara (reels) şeridi videoları tekrar oynasın.
-    // ⛔ HİKÂYE şeridi (.hik-serit) kapakları ARTIK OYNATILMAZ (Facebook gibi ilk kare durur → Android parlaması biter).
-    Array.from(document.querySelectorAll(".reels-serit video")).forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
+    // PENCERE KAPANDI → hikâye (Işıltını Göster) + Makara şeridi videoları tekrar oynasın.
+    // B269 (kullanıcı isteği): .hik-serit kapakları YİNE CANLI OYNAR (B255'te durdurmuştuk, kullanıcı geri istedi).
+    Array.from(document.querySelectorAll(".hik-serit video, .reels-serit video")).forEach((v) => { try { const o = v.play(); if (o && o.catch) o.catch(() => {}); } catch (e) {} });
     if (!feedVids.length) return;
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
@@ -8866,11 +8866,9 @@ export default function Anasayfa({ pro = false }) {
                   <button className="hik-kart" key={g.uid} onClick={() => hikayeAc(gi)}>
                     <span className="hik-kart-medyasar">
                       {kapak.tip === "video"
-                        /* FACEBOOK GİBİ: şerit kapağı OYNAMAZ (autoPlay YOK → Android hole-punch/parlama YOK).
-                           Posteri (ilk kare) varsa DURAĞAN RESİM göster; yoksa OYNATMAYAN video (ilk kare). Dokununca hikâye izleyicide tam ekran video oynar. */
-                        ? (kapak.poster
-                            ? (<img className="hik-kart-medya" src={kapak.poster} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />)
-                            : (<video className="hik-kart-medya" src={videoSade(kapak.url)} muted playsInline preload="metadata" tabIndex={-1} onLoadedMetadata={hikKapakYon} />))
+                        /* KULLANICI İSTEĞİ (B269): "Işıltını Göster"de CANLI video GERİ GELDİ (B255'te durağan yapmıştık,
+                           kullanıcı "parlama düzelmedi, eskiden video oynuyordu, geri getir" dedi). Kapak yine OYNAR (autoPlay+loop, sessiz). */
+                        ? (<video className="hik-kart-medya" src={videoSade(kapak.url)} autoPlay loop muted playsInline preload="metadata" tabIndex={-1} onLoadedMetadata={hikKapakYon} />)
                         : (<img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />)}
                     </span>
                     {g.ogeler.length > 1 && <span className="hik-kart-sayac" aria-label={g.ogeler.length + " hikâye"}>🖼 {g.ogeler.length}</span>}
