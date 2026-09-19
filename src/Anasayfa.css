@@ -914,7 +914,12 @@
    KALDIRILDI — bazi telefonlarda video GORUNTUSUNU bozuyordu (video sari/bos gorunup sadece ses geliyordu).
    Video artik tarayicinin NORMAL sekilde ciziliyor (eski calisan hali). */
 /* Videoyu saran kutular da kendi katmanında dursun → overlay üsttekini titretmez */
-.apr-medya.video, .ai-msj-video, .apf-pay-vid, .ana-post-medya{ transform:translateZ(0); }
+/* B273 — KULLANICININ İPUCU: "video neden parlamıyor?" → çünkü videoda translateZ(0) VAR (telefon onu kendi katmanında
+   tutar, kaydırırken yeniden çizmez). FOTOĞRAFTA bu ayar YOKTU → foto sürekli yeniden çizilip parlıyordu. Video bununla
+   parlamıyor (KANIT) → aynı ayarı akış FOTOĞRAFINA (.apr-medya img) da veriyoruz → foto da kendi katmanında kalır, parlamaz.
+   ⚠️ B263'ten FARKI: orası hikâye ŞERİDİ kapsayıcısıydı (yatay scroller + will-change, kötü olmuştu); burası akış <img>'i,
+   videoyla AYNI bağlam (video zaten böyle ve parlamıyor) → güvenli, kanıtlı. will-change YOK (sadece translateZ). */
+.apr-medya.video, .apr-medya img, .ai-msj-video, .apf-pay-vid, .ana-post-medya{ transform:translateZ(0); }
 /* VİDEO: üst/alt KARANLIK PERDE YOK — video net; isim/yazı sadece gölgeyle okunur */
 .apr-medya.video .apr-yazan{ background:transparent; }
 .apr-medya.video .apr-alt{ background:transparent; }
