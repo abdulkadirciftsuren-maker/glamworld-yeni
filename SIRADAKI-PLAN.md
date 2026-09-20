@@ -19,7 +19,18 @@
 - **Kusursuz akıcılık (TikTok/Instagram gibi) = gerçek NATIVE uygulama.** Sıfırdan ayrı yazılım (Ayna/Gloxoo/akış/mesaj/profil hepsi baştan). Büyük, uzun, maliyetli → profesyonel ekip. **NE ZAMAN:** uygulama büyüyünce/kullanıcı+gelir olunca. Kullanıcı: "kesinlikle yapılacak, unutma."
 - Ara adım: Code'un giriş sonrası ana sayfayı **test edebileceği bir düzenek** kurulursa, parlama GÖREREK azaltılabilir (native'e göre küçük iş).
 
-### 2) 🟢🟢 YARIN (20 EYL) — İLK İŞ: KENDİ CANLI GÖRÜŞME SİSTEMİMİZ = LiveKit (1'e1 + 10 KİŞİLİK GRUP), KULLANICI ONAYLADI, BERABER KURULACAK
+### 2) 🟢🟢 KENDİ CANLI GÖRÜŞME SİSTEMİMİZ = LiveKit (1'e1 + 10 KİŞİLİK GRUP)
+
+> ## ✅✅ FAZ 1 TAMAMLANDI — 20 EYL 2026: LiveKit SUNUCUSU KURULDU ve ÇALIŞIYOR (KANITLANDI)
+> - **Sunucu (Hetzner):** ubuntu-4gb-nbg1-1, CPX22 (2vCPU/4GB/80GB), Nürnberg, **IPv4: 2.28.231.103**, Ubuntu 24.04. Root şifresi DEĞİŞTİRİLDİ (yeni şifre kullanıcının notunda; depoya YAZILMADI).
+> - **Kurulum:** Docker + `docker compose` ile `~/canli.gloxorg.com/` klasöründe çalışıyor (3 kap: **livekit-server**, **caddy** [otomatik TLS], **redis**). `docker compose up -d` ile ayakta. Yeniden başlatma: aynı klasörde `docker compose up -d`; durum: `docker compose ps`.
+> - **Adresler:** signaling/wss = **`wss://canli.gloxorg.com`** ; TURN = **turn.gloxorg.com** (ikisi de A kaydı → 2.28.231.103, Namecheap Advanced DNS).
+> - **TLS:** Caddy Let's Encrypt sertifikasını OTOMATİK aldı. **Test KANITI:** sunucuda `curl https://canli.gloxorg.com` → **`OK`** döndü (DNS + sertifika + LiveKit üçü de çalışıyor).
+> - **API anahtarları:** Server URL `wss://canli.gloxorg.com`, **API Key `APIyVSD9mLtAPMv`**. ⚠️ **API SECRET depoya YAZILMADI** (GitHub public olabilir) — secret sunucuda `~/canli.gloxorg.com/livekit.yaml` içinde + kullanıcının notunda. Token üretiminde Cloudflare Worker'a **secret olarak** (koda gömmeden) eklenecek.
+> - **Portlar:** 443/80 TCP (wss+ACME, Caddy), 7881 TCP, 3478 UDP (TURN), 50000-60000 UDP (medya). Hetzner Cloud firewall varsayılan KAPALI (hepsi açık); ufw kurulu değil.
+> - **SIRADAKİ = FAZ 2** (aşağıda): Worker'a token uç noktası + `livekit-client` ile 1'e1 aramayı LiveKit'e taşı.
+
+#### (ARŞİV — Faz 1 planı, kullanıcı 19 Eyl'de "bir yere yaz, sonra kesinlikle yapılacak" dedi)
 - **KARAR (19 Eyl, kullanıcı):** Metered.ca (ücretsiz TURN, kota doldu → aramalar kesildi) BIRAKILACAK. Cloudflare de reddedildi ("büyüyünce yine kullanıma göre para"). Kullanıcı KENDİ sistemimizi istedi. + Müşteri **GRUP görüşmesi** istiyor → **en fazla 10 kişilik grup** (kullanıcı net söyledi).
 - **⚠️ KRİTİK KARAR — coturn DEĞİL, LiveKit:** coturn sadece 1'e1 relay yapar; GRUP görüşmesi YAPAMAZ (grup için SFU=medya sunucusu şart). Bu yüzden coturn kurup sonra atmak yerine DOĞRUDAN **LiveKit** (açık kaynak, self-host SFU) kuruyoruz → hem 1'e1 (Metered'i tamamen bırakır) hem 10 kişilik grubu yapar, KENDİ sunucumuzda, SABİT aylık ücret.
 - **GEREKENLER:** (a) VPS — Hetzner **CPX31 (4 vCPU/8GB, ~€15/ay)** öneri (10 kişilik grup + birkaç eşzamanlı oda için; başlangıçta CPX21 ~€8/ay da denenebilir), Ubuntu 24.04, ~20TB bant dahil. (b) Alt alan adı: **canli.gloxorg.com** (DNS Cloudflare'de → A kaydı VPS IP'sine; turน/wss için). (c) TLS (Let's Encrypt; LiveKit'in kendi generate + Caddy'si halleder). (d) LiveKit API key/secret (kurulumda üretilir).
