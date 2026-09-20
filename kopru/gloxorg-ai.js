@@ -5,6 +5,8 @@
 
 const IZIN_ORIGIN = [
   "https://abdulkadirciftsuren-maker.github.io",
+  "https://gloxorg.com",
+  "https://www.gloxorg.com",
 ];
 const MODEL = "claude-sonnet-4-6"; // talimatlari GUVENILIR tutar ([PAYLASIM]/oneri ayrimi); maliyet kucuk, $20 tavan korur. (ucuz icin claude-haiku-4-5, en akilli icin claude-opus-4-8)
 
@@ -25,6 +27,42 @@ function cevap(obj, durum, origin) {
   });
 }
 
+// ---- LiveKit KİMLİK BİLETİ (JWT token) ----
+// LiveKit odaya girerken imzalı bir "bilet" ister. Bileti SUNUCU tarafında (burada, Worker'da) üretiriz;
+// gizli anahtar (secret) ASLA siteye/telefona gitmez. Bilet HS256 ile secret kullanılarak imzalanır.
+function base64url(girdi) {
+  let ham;
+  if (typeof girdi === "string") { ham = btoa(unescape(encodeURIComponent(girdi))); }
+  else { let s = ""; for (let i = 0; i < girdi.length; i++) s += String.fromCharCode(girdi[i]); ham = btoa(s); }
+  return ham.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function livekitBilet(anahtar, gizli, oda, kimlik, ad) {
+  const simdi = Math.floor(Date.now() / 1000);
+  const baslik = { alg: "HS256", typ: "JWT" };
+  const govde = {
+    iss: anahtar,            // API Key (gizli değil; her bilette bulunur)
+    sub: kimlik,             // kullanıcının kimliği
+    nbf: simdi - 10,         // geçerlilik başlangıcı
+    exp: simdi + 6 * 60 * 60,// 6 saat geçerli
+    name: ad || kimlik,      // ekranda görünecek ad
+    video: {                 // LiveKit yetki bloğu
+      room: oda,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+    },
+  };
+  const veri = base64url(JSON.stringify(baslik)) + "." + base64url(JSON.stringify(govde));
+  const kripto = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(gizli),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const imza = await crypto.subtle.sign("HMAC", kripto, new TextEncoder().encode(veri));
+  return veri + "." + base64url(new Uint8Array(imza));
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -35,6 +73,23 @@ export default {
 
     let govde;
     try { govde = await request.json(); } catch (e) { return cevap({ hata: "Gecersiz istek" }, 400, origin); }
+
+    // LiveKit KİMLİK BİLETİ (token) — site {livekitOda, kimlik, ad} gönderir, biz imzalı bileti + sunucu adresini döneriz.
+    // Gizli anahtar (secret) Cloudflare "secret" kasasında (env.LIVEKIT_API_SECRET); koda/GitHub'a ASLA yazılmaz.
+    if (govde.livekitOda) {
+      const anahtar = env.LIVEKIT_API_KEY;
+      const gizli = env.LIVEKIT_API_SECRET;
+      const adres = env.LIVEKIT_URL || "wss://canli.gloxorg.com";
+      if (!anahtar || !gizli) return cevap({ hata: "LiveKit ayarlari eksik (Cloudflare secret ekli mi?)" }, 500, origin);
+      const oda = govde.livekitOda.toString().slice(0, 120).trim();
+      if (!oda) return cevap({ hata: "Oda adi bos" }, 400, origin);
+      const kimlik = (govde.kimlik || "").toString().slice(0, 120).trim() || ("kul-" + Math.random().toString(36).slice(2, 10));
+      const ad = (govde.ad || "").toString().slice(0, 80);
+      try {
+        const token = await livekitBilet(anahtar, gizli, oda, kimlik, ad);
+        return cevap({ token, url: adres, kimlik }, 200, origin);
+      } catch (e) { return cevap({ hata: "Token uretilemedi" }, 500, origin); }
+    }
 
     // SES → METİN (Cloudflare Workers AI / Whisper). Ön yüz {ses: base64} gönderir, biz metni döneriz.
     if (govde.ses) {
