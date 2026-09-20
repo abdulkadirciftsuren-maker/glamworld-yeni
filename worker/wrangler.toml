@@ -1,0 +1,12 @@
+# GLOXORG AI köprüsü (Cloudflare Worker) yükleme ayarı.
+# Yükleme: sunucuda (Hetzner) ->  npx wrangler deploy  (CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID env ile)
+# API Secret buraya YAZILMAZ; secret'lar (ANTHROPIC/OPENAI/LIVEKIT_API_SECRET) Cloudflare kasasinda kalir,
+# wrangler deploy onlara DOKUNMAZ. Buradaki [vars] gizli DEGIL (API Key ve URL her bilette gorunur).
+name = "gloxorg-ai"
+main = "gloxorg-ai.js"
+compatibility_date = "2026-01-01"
+workers_dev = true
+
+[vars]
+LIVEKIT_API_KEY = "APIyVSD9mLtAPMv"
+LIVEKIT_URL = "wss://canli.gloxorg.com"
