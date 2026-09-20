@@ -4,6 +4,15 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🗺️ ALTYAPI HARİTASI (nerede ne var — Code bunu bilsin, kullanıcıya sormasın; kullanıcı: "bunları bir yere kaydet")
+- **Domain: gloxorg.com** → **Namecheap**'te kayıtlı (registrar: NameCheap). DNS de Namecheap'te (İsim sunucuları: `dns1.registrar-servers.com` / `dns2.registrar-servers.com` = Namecheap BasicDNS). Oluşturuldu 4 Tem 2026, bitiş 4 Tem 2027. → **DNS kaydı eklenecek yer = Namecheap → Domain List → gloxorg.com → Manage → Advanced DNS.**
+- **Site (web):** GitHub Pages (gloxorg.com A kaydı 185.199.10x.153'e bakıyor; gh-pages ile deploy). ⛔ Namecheap'teki GitHub A kayıtlarına DOKUNMA.
+- **Cloudflare:** Hesap var ama SADECE **Workers** (gloxorg-ai = Gloxoo yapay zekâ köprüsü, `gloxorg-ai.abdulkadirciftsuren.workers.dev`; ayrıca gloxorg-adres, groxorg-ai vb.). Domain DNS'i Cloudflare'de DEĞİL. (LiveKit token uç noktası buraya, Workers'a eklenebilir.)
+- **Hetzner (canlı görüşme sunucusu):** Sunucu **ubuntu-4gb-nbg1-1**, tip **CPX22** (2 vCPU/4GB/80GB), Nürnberg, **IPv4: 2.28.231.103** (kullanıcı teyit edecek), Ubuntu 24.04. Hesap bakiyesi 25€ (~1 ay, ~€23,79/ay). Root şifresi kullanıcının Gmail'inde. LiveKit BURAYA kurulacak.
+- **LiveKit alt alan adı (planlanan):** **canli.gloxorg.com** → A kaydı **2.28.231.103** (Namecheap Advanced DNS'te, TTL Automatic). Namecheap'te "proxy" kavramı yok, düz A kaydı.
+- **Firebase:** proje glamworld2 / gen-lang-client-0534452347 (Gloxoo resim = Google Gemini, ön ödeme). Cloudinary: cloud `dqtclc035` (video/resim). (Detay buildGecmisi.)
+
+---
 ## 📌 GELECEK — KESİN YAPILACAK (kullanıcı 19 Eyl'de "bir yere yaz, sonra kesinlikle yapılacak" dedi)
 ### 1) NATIVE UYGULAMA (Android/iOS) — parlama/akıcılık KÖK ÇÖZÜM
 - Şu an GLOXORG bir **web sitesi + Android kılıfı (TWA)**. Web kılıfı, fotoğrafları ekran dışına çıkınca hafızadan atıp geri gelince yeniden çiziyor → **fotoğraf paylaşımı parlaması** (video parlamıyor çünkü ayrı katmanda). Bu, web kılıfının **temel sınırı**; CSS/tahmin ile çözülmüyor (B253/254/263/265/267/270/272/273 hepsi denendi, çözmedi).
