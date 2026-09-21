@@ -3830,10 +3830,14 @@ export default function Anasayfa({ pro = false }) {
     room.on(RoomEvent.ParticipantDisconnected, () => { if (roomRef.current === room) aramaKapat(false); });
     room.on(RoomEvent.Disconnected, () => { if (roomRef.current === room) aramaKapat(false); });
     await room.connect(url, token);
-    // Kendi kamera/mikrofonumu (medyaAl ile açtığım) sunucuya YAYINLA
-    const ys = yerelStreamRef.current;
-    if (ys) { for (const tr of ys.getTracks()) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} } }
+    // (Yayınlama ÇAĞRI YERİNDE yapılır — medya hazır olunca publishTrack. Böylece bağlanma + medya AYNI ANDA yürüyebilir → görüşme hızlı açılır.)
     return room;
+  };
+  // Kendi kamera/mikrofonumu (yerelStreamRef) odaya yayınla — medya hazır olunca çağrılır.
+  const livekitYayinla = async () => {
+    const room = roomRef.current, ys = yerelStreamRef.current;
+    if (!room || !ys) return;
+    for (const tr of ys.getTracks()) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} }
   };
   const aramaBaslat = async (kisi, tip) => {
     if (!kisi || !kisi.uid) return;
@@ -3862,8 +3866,7 @@ export default function Anasayfa({ pro = false }) {
       if (a.durum === "kabul" && !baglandi) {
         baglandi = true;
         try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(); return; }
-        const room = roomRef.current, ys = yerelStreamRef.current;
-        if (room && ys) { for (const tr of ys.getTracks()) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} } }
+        await livekitYayinla();
       }
     });
     aramaAbonelikRef.current.push(ab1);
@@ -3879,9 +3882,15 @@ export default function Anasayfa({ pro = false }) {
     //    Kabul eder etmez arama ekranını HEMEN göster; kamera/mikrofon (medyaAl) açılana kadar arada ana sayfa GÖRÜNMESİN.
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
     setAramaDurum("konusuyor");
-    try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(false); return; }
-    // KENDİ sunucumuza (LiveKit) bağlan — arayanla AYNI odaya (arama id) gir, ses/görüntü akmaya başlar
-    try { await livekitBaglan(g.id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
+    // ⚡ HIZLI AÇILMA: mikrofon/kamera açma (medyaAl) ile odaya bağlanmayı (livekitBaglan) AYNI ANDA yürüt (biri diğerini beklemesin).
+    let medyaErr = null;
+    const medyaP = medyaAl(g.tip).catch((e) => { medyaErr = e; return null; });
+    let odaErr = null;
+    try { await livekitBaglan(g.id); } catch (e) { odaErr = e; }
+    const stream = await medyaP;
+    if (medyaErr || !stream) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(false); return; }
+    if (odaErr || !roomRef.current) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
+    await livekitYayinla(); // medya + bağlantı hazır → şimdi yayınla
     try { await aramaGuncelle(g.id, { durum: "kabul" }); } catch (e) {}
     const ab1 = aramaDinle(g.id, (a) => { if (!a || a.durum === "bitti") aramaKapat(false); });
     aramaAbonelikRef.current.push(ab1);
