@@ -3717,6 +3717,7 @@ export default function Anasayfa({ pro = false }) {
   }, [aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   const aramaKapat = async (durumYaz) => {
     const a = aktifAramaRef.current;
+    try { zilDurdur(); } catch (e) {} // kapatınca/reddedince zili KESİN durdur (React state'e güvenme)
     if (a && a.id && durumYaz !== false) { try { await aramaGuncelle(a.id, { durum: "bitti" }); } catch (e) {} }
     // ARAMA GÜNLÜĞÜ — sohbete "Görüntülü/Sesli arama · süre / Cevaplanmadı" kaydı (WhatsApp gibi).
     // Sadece ARAYAN yazar (tek kayıt, mükerrer olmaz). Alıcı tarafta benAradimRef=false → yazmaz.
@@ -3756,8 +3757,8 @@ export default function Anasayfa({ pro = false }) {
   const baglaUzakMedya = () => {
     const st = uzakStreamRef.current; if (!st) return;
     const el = uzakVideoRef.current || uzakSesRef.current; // görüntülüde video, seslide audio
-    if (el && el.srcObject !== st) { try { el.srcObject = st; } catch (e) {} }
-    if (el) { try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+    // HER ZAMAN yeniden bağla (sonradan gelen VIDEO track'i de render olsun → "karşı beni görüyor ben görmüyorum/siyah perde" çözümü)
+    if (el) { try { el.srcObject = st; } catch (e) {} try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
     sesYukseltBagla(st, el); // karşı sesi güçlendir (kısık duyulma şikâyeti)
   };
   // Karşı tarafın sesini WebAudio ile GÜÇLENDİR (element en fazla 1; kısıktı). Element sessize alınır, ses gain'den güçlü çıkar.
@@ -3798,7 +3799,9 @@ export default function Anasayfa({ pro = false }) {
   };
   const livekitBaglan = async (aramaId) => {
     const { token, url } = await livekitTokenAl(aramaId);
-    const room = new Room({ adaptiveStream: true, dynacast: true });
+    // ⚠️ 1'e1 görüşmede adaptiveStream/dynacast KAPALI: açıkken video geç geliyor/donuyor/siyah perde oluyordu
+    //    (LiveKit elementi "görünür" saymıyordu çünkü track'i elle bağlıyoruz). Kapatınca video HEP tam gönderilir → hızlı ve net.
+    const room = new Room({ adaptiveStream: false, dynacast: false });
     roomRef.current = room;
     // Karşı tarafın ses/görüntüsü gelince: uzak akışa ekle + elemente bağla + "konuşuyor"a geç
     room.on(RoomEvent.TrackSubscribed, (track) => {
@@ -3830,15 +3833,17 @@ export default function Anasayfa({ pro = false }) {
     // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
     benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0; aramaReddedildiRef.current = false;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
-    // ⚠️ ZİL DÜZELTMESİ: mikrofonu/bağlantıyı KABULE KADAR AÇMA. Mikrofon erken açılınca Android sesi AHİZEYE (kulaklık) alıyor,
-    //    ringback (çalıyor tonu) kısık/derinden geliyordu. Karşı taraf KABUL edince kamera/mikrofonu aç + sunucuya bağlan → zil HOPARLÖRden GÜR çalar.
+    // Zil HOPARLÖRden çalsın diye MİKROFONU kabule kadar açmıyoruz; ama odaya ERKENDEN (mikrofonsuz) bağlanıyoruz →
+    // bağlantı hazır olur, karşı taraf açınca görüşme ANINDA başlar (geç açılma olmaz).
     setAramaDurum("ariyor");
     setAktifArama({ id: "", karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     // arayanFoto: telefon bildiriminde arayanın fotoğrafı görünsün diye KISA http URL (base64 FCM'e sığmaz, atılır → G kalırdı)
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
-    // Firebase = ZİL/DURUM sinyali: karşı taraf KABUL edince (kabul) mikrofonu aç + LiveKit'e bağlan; RED/BİTTİ ise kapat.
+    // Odaya mikrofonsuz bağlan (yerelStreamRef henüz boş → yayın yapmaz, sadece bağlanır). Karşı taraf açınca yayınlayacağız.
+    try { await livekitBaglan(id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
+    // Firebase = ZİL/DURUM sinyali: KABUL → mikrofonu aç + yayınla; RED/BİTTİ → kapat.
     let baglandi = false;
     const ab1 = aramaDinle(id, async (a) => {
       if (!a) { aramaKapat(false); return; }
@@ -3847,7 +3852,8 @@ export default function Anasayfa({ pro = false }) {
       if (a.durum === "kabul" && !baglandi) {
         baglandi = true;
         try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(); return; }
-        try { await livekitBaglan(id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
+        const room = roomRef.current, ys = yerelStreamRef.current;
+        if (room && ys) { for (const tr of ys.getTracks()) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} } }
       }
     });
     aramaAbonelikRef.current.push(ab1);
