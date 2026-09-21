@@ -20,7 +20,7 @@ import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // Gloxoo sohbetindeki ağır görselleri (üretilen resim + foto) IndexedDB'de KALICI sakla (localStorage'a sığmıyordu → kaybolmasın)
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
 import { Room, RoomEvent } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
-import { ZIL_SESI } from "./zilSesi"; // gerçek/parlak telefon zili sesi (gömülü WAV)
+import { ZIL_GELEN, ZIL_GIDEN } from "./zilSesi"; // gelen arama zili (melodik/gür) + giden arama ringback tonu (ahize) — gömülü WAV
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
@@ -3881,11 +3881,12 @@ export default function Anasayfa({ pro = false }) {
     if (z) { try { z.pause(); } catch (e) {} try { z.loop = false; } catch (e) {} try { z.currentTime = 0; } catch (e) {} try { z.src = ""; } catch (e) {} }
     zilRef.current = null;
   };
-  const zilBaslat = (mod) => { // mod: "arayan"/"aranan" — ses aynı (gerçek telefon zili)
+  const zilBaslat = (mod) => { // mod: "aranan" = beni arıyorlar (melodik/gür zil) · "arayan" = ben arıyorum (ahize ringback tonu)
     zilDurdur();
     try {
-      const a = new Audio(ZIL_SESI);
-      a.loop = true; a.volume = 1.0;
+      const gelen = (mod === "aranan");
+      const a = new Audio(gelen ? ZIL_GELEN : ZIL_GIDEN);
+      a.loop = true; a.volume = gelen ? 1.0 : 0.85; // gelen zil tam ses (dikkat çeksin); giden ringback biraz alçak (ahize hissi)
       try { a.setAttribute("playsinline", ""); } catch (e) {}
       zilRef.current = a;
       const p = a.play(); if (p && p.catch) p.catch(() => {});
