@@ -20,6 +20,7 @@ import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // Gloxoo sohbetindeki ağır görselleri (üretilen resim + foto) IndexedDB'de KALICI sakla (localStorage'a sığmıyordu → kaybolmasın)
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
 import { Room, RoomEvent } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
+import { ZIL_SESI } from "./zilSesi"; // gerçek/parlak telefon zili sesi (gömülü WAV)
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
@@ -3870,49 +3871,26 @@ export default function Anasayfa({ pro = false }) {
     aramaAbonelikRef.current.push(ab1);
   };
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
-  // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
+  // ZİL / ÇALMA SESİ — GERÇEK/PARLAK telefon çınlaması (gömülü WAV, ag gerektirmez). WebAudio "bip" değil → tanıdık, GÜR telefon zili.
+  // Kullanıcı: sentetik bip boğuk/uzaktan geliyordu → gerçek zil sesine geçildi. Arayan da aranan da aynı gür zili duyar.
   const zilRef = useRef(null);
-  const zilDurdur = () => { const z = zilRef.current; if (z) { try { clearInterval(z.iv); } catch (e) {} try { clearTimeout(z.kapatZmn); } catch (e) {} try { z.ctx.close(); } catch (e) {} } zilRef.current = null; };
-  const zilBaslat = (mod) => {
+  const zilKapatRef = useRef(null);
+  const zilDurdur = () => {
+    try { clearTimeout(zilKapatRef.current); } catch (e) {} zilKapatRef.current = null;
+    const z = zilRef.current;
+    if (z) { try { z.pause(); } catch (e) {} try { z.loop = false; } catch (e) {} try { z.currentTime = 0; } catch (e) {} try { z.src = ""; } catch (e) {} }
+    zilRef.current = null;
+  };
+  const zilBaslat = (mod) => { // mod: "arayan"/"aranan" — ses aynı (gerçek telefon zili)
     zilDurdur();
     try {
-      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      const ctx = new AC(); try { ctx.resume(); } catch (e) {}
-      // KLASİK TELEFON ZİLİ — 440 + 480 Hz çift ton (tanıdık "rrring"), YÜKSEK ve dolgun: compressor + master gain ile bağırmadan gür.
-      const comp = ctx.createDynamicsCompressor();
-      const master = ctx.createGain(); master.gain.value = 1.15; // daha gür (compressor tepe sesi zaten sınırlıyor → bağırmadan yüksek)
-      comp.connect(master); master.connect(ctx.destination);
-      // Bir "rrring" çal: 440+480 Hz aynı anda, "sure" saniye düz, sonra kapan (klasik telefon ahengi).
-      const cal = (basla, sure, ses) => {
-        try {
-          const t0 = ctx.currentTime + basla;
-          [440, 480].forEach((f) => {
-            const o = ctx.createOscillator(), g = ctx.createGain();
-            o.type = "sine"; o.frequency.value = f;
-            o.connect(g); g.connect(comp);
-            g.gain.setValueAtTime(0.0001, t0);
-            g.gain.exponentialRampToValueAtTime(ses, t0 + 0.03);          // hızlı giriş
-            g.gain.setValueAtTime(ses, t0 + Math.max(0.06, sure - 0.05)); // düz "rrring"
-            g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);       // net kapanış
-            o.start(t0); o.stop(t0 + sure + 0.03);
-          });
-        } catch (e) {}
-      };
-      let dongu, aralik;
-      if (mod === "aranan") {
-        // GELEN ÇAĞRI — UZUN çift zil "rrrring-rrrring" (kullanıcı: zil sesi kısa geliyor → uzattık): 1.0 sn çal · 0.3 sn sus · 1.0 sn çal, sonra sessizlik.
-        dongu = () => { cal(0.0, 1.0, 0.72); cal(1.3, 1.0, 0.72); };
-        aralik = 3600; // ~2.3 sn dolgun çift zil + ~1.3 sn sessizlik (klasik telefon, uzun çalar)
-      } else {
-        // ARAYAN (giden) — ringback: uzun ton (karşı taraf çalıyor hissi), GÜR (eskiden çok alçaktı).
-        dongu = () => { cal(0.0, 1.3, 0.6); };
-        aralik = 2800;
-      }
-      dongu();
-      const iv = setInterval(dongu, aralik);
-      // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar "bildirim sesi gibi" çalma olmasın)
-      const kapatZmn = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
-      zilRef.current = { ctx, iv, kapatZmn };
+      const a = new Audio(ZIL_SESI);
+      a.loop = true; a.volume = 1.0;
+      try { a.setAttribute("playsinline", ""); } catch (e) {}
+      zilRef.current = a;
+      const p = a.play(); if (p && p.catch) p.catch(() => {});
+      // GÜVENLİK: zil en fazla 35 sn çalar, sonra KENDİNİ keser (takılıp sonsuza kadar çalma olmasın)
+      zilKapatRef.current = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
     } catch (e) {}
   };
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
