@@ -1557,6 +1557,7 @@ export default function Anasayfa({ pro = false }) {
   const [hoparlorAcik, setHoparlorAcik] = useState(true); // aramada SES: açık=yüksek (hoparlör), kapalı=alçak (kulağa tut, kimse duymasın)
   const [onKamera, setOnKamera] = useState(true);      // true=ön kamera (yüz), false=arka kamera
   const [aramaZoom, setAramaZoom] = useState(1);       // görüntülü aramada kamera YAKINLAŞTIRMA (zoom) — arka kamerayla bir şey gösterirken yakınlaştır
+  const [aramaSaniye, setAramaSaniye] = useState(0);   // konuşma SÜRESİ (sn) — ekranda canlı sayaç (dk:sn) göster (kullanıcı: ne kadar konuştuğumu göreyim)
   const [videoBuyuk, setVideoBuyuk] = useState("uzak"); // görüntülü aramada BÜYÜK ekranda hangisi: "uzak" (karşı) | "yerel" (ben)
   const [kucukYer, setKucukYer] = useState(null);      // küçük videonun taşınmış konumu {x,y} (null=varsayılan köşe)
   const [aramaKucuk, setAramaKucuk] = useState(false); // arama penceresi KÜÇÜLTÜLDÜ mü → köşede durur, konuşurken uygulamada GEZİNİLİR (kullanıcı: "küçülüp başka yerde gezinme")
@@ -1600,6 +1601,15 @@ export default function Anasayfa({ pro = false }) {
   const aramaKonusBasRef = useRef(0);                  // konuşmaya geçtiği an (ms); 0 ise hiç cevaplanmadı
   const aramaReddedildiRef = useRef(false);            // karşı taraf aramayı REDDETTİ mi (günlükte "Reddedildi" yazsın; "Cevaplanmadı"dan ayrı)
   const aramaDurumRef = useRef(""); useEffect(() => { aramaDurumRef.current = aramaDurum; if (aramaDurum === "konusuyor" && !aramaKonusBasRef.current) aramaKonusBasRef.current = Date.now(); }, [aramaDurum]);
+  // KONUŞMA SÜRESİ SAYACI — konuşurken her saniye güncelle (ekranda dk:sn görünür); konuşma bitince sıfırla.
+  useEffect(() => {
+    if (aramaDurum !== "konusuyor") { setAramaSaniye(0); return; }
+    const bas = aramaKonusBasRef.current || Date.now();
+    const guncelle = () => setAramaSaniye(Math.max(0, Math.round((Date.now() - bas) / 1000)));
+    guncelle();
+    const iv = setInterval(guncelle, 1000);
+    return () => clearInterval(iv);
+  }, [aramaDurum]);
   const aktifAramaRef = useRef(null); useEffect(() => { aktifAramaRef.current = aktifArama; if (!aktifArama) setAramaKucuk(false); }, [aktifArama]);
   const gelenAramaRef = useRef(null); useEffect(() => { gelenAramaRef.current = gelenArama; }, [gelenArama]);
   const sohbetKisiRef = useRef(null); useEffect(() => { sohbetKisiRef.current = sohbetKisi; }, [sohbetKisi]);
@@ -4017,6 +4027,13 @@ export default function Anasayfa({ pro = false }) {
     if (sn < 60) return sn + " " + t("saniyeKisa", "sn.");
     const dk = Math.floor(sn / 60), kalan = sn % 60;
     return kalan ? (dk + " " + t("dakikaKisa", "dk.") + " " + kalan + " " + t("saniyeKisa", "sn.")) : (dk + " " + t("dakikaKisa", "dk."));
+  };
+  // CANLI SAYAÇ BİÇİM — konuşurken ekranda "dk:sn" (05:23) veya 1 saati geçince "sa:dk:sn" (1:02:03).
+  const aramaSayacBicim = (sn) => {
+    sn = Math.max(0, Math.round(sn || 0));
+    const sa = Math.floor(sn / 3600), dk = Math.floor((sn % 3600) / 60), s = sn % 60;
+    const iki = (n) => (n < 10 ? "0" + n : "" + n);
+    return sa > 0 ? (sa + ":" + iki(dk) + ":" + iki(s)) : (iki(dk) + ":" + iki(s));
   };
   // ZOOM BASILI TUT — kullanıcı: "parmağımı BASILI TUTTUĞUM sürece devam etsin; basıp kaldıracağım DEĞİL".
   // Basınca hemen bir adım; DESTEKLİYORSA basılı tuttukça her 90ms devam (akıcı); parmağı kaldırınca durur.
@@ -10221,11 +10238,15 @@ export default function Anasayfa({ pro = false }) {
                 style={videoBuyuk !== "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
                 onPointerDown={videoBuyuk !== "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk !== "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk !== "uzak" ? kucukVideoBitir : undefined} />
             : <audio ref={uzakSesRef} autoPlay playsInline />}
+          {/* GÖRÜNTÜLÜ konuşmada ÜST ORTADA canlı süre sayacı (dk:sn) — kullanıcı: ne kadar konuştuğumu göreyim */}
+          {aramaDurum === "konusuyor" && aktifArama.tip === "goruntulu" && !aramaKucuk && (
+            <div className="notranslate" translate="no" style={{ position: "absolute", top: "14px", left: "50%", transform: "translateX(-50%)", background: "rgba(255,215,0,0.92)", color: "#4a3600", fontWeight: 800, fontSize: "15px", padding: "4px 13px", borderRadius: "14px", zIndex: 6, letterSpacing: "0.5px", boxShadow: "0 2px 8px rgba(80,60,0,0.25)" }}>{aramaSayacBicim(aramaSaniye)}</div>
+          )}
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
               <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
               <b className="notranslate" translate="no">{aktifArama.karsiAd}</b>
-              <i>{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : t("baglandi", "Bağlandı")}</i>
+              <i className="notranslate" translate="no">{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : aramaSayacBicim(aramaSaniye)}</i>
             </div>
           )}
           {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk") + (onKamera ? " ayna" : "")} autoPlay playsInline muted
