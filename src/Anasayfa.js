@@ -3829,20 +3829,25 @@ export default function Anasayfa({ pro = false }) {
     // ARAMA GÜNLÜĞÜ takibi: BEN aradım → günlüğü ben yazacağım; karşı kişi + süre için başlangıç
     benAradimRef.current = true; aramaKarsiRef.current = { uid: kisi.uid, ad: kisi.ad || "", foto: kisi.foto || "" }; aramaKonusBasRef.current = 0; aramaReddedildiRef.current = false;
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
-    try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); return; }
+    // ⚠️ ZİL DÜZELTMESİ: mikrofonu/bağlantıyı KABULE KADAR AÇMA. Mikrofon erken açılınca Android sesi AHİZEYE (kulaklık) alıyor,
+    //    ringback (çalıyor tonu) kısık/derinden geliyordu. Karşı taraf KABUL edince kamera/mikrofonu aç + sunucuya bağlan → zil HOPARLÖRden GÜR çalar.
     setAramaDurum("ariyor");
     setAktifArama({ id: "", karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
     // arayanFoto: telefon bildiriminde arayanın fotoğrafı görünsün diye KISA http URL (base64 FCM'e sığmaz, atılır → G kalırdı)
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
-    // KENDİ sunucumuza (LiveKit) bağlan — oda adı = arama id. Karşı taraf kabul edip aynı odaya girince ses/görüntü akar.
-    try { await livekitBaglan(id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
-    // Firebase sadece ZİL/DURUM için: karşı taraf reddetti mi, bitirdi mi (ses/görüntü artık LiveKit'ten gelir)
+    // Firebase = ZİL/DURUM sinyali: karşı taraf KABUL edince (kabul) mikrofonu aç + LiveKit'e bağlan; RED/BİTTİ ise kapat.
+    let baglandi = false;
     const ab1 = aramaDinle(id, async (a) => {
       if (!a) { aramaKapat(false); return; }
-      if (a.durum === "red") { aramaReddedildiRef.current = true; bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); }
-      else if (a.durum === "bitti") { aramaKapat(false); }
+      if (a.durum === "red") { aramaReddedildiRef.current = true; bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); return; }
+      if (a.durum === "bitti") { aramaKapat(false); return; }
+      if (a.durum === "kabul" && !baglandi) {
+        baglandi = true;
+        try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(); return; }
+        try { await livekitBaglan(id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
+      }
     });
     aramaAbonelikRef.current.push(ab1);
   };
@@ -3875,7 +3880,7 @@ export default function Anasayfa({ pro = false }) {
       const ctx = new AC(); try { ctx.resume(); } catch (e) {}
       // KLASİK TELEFON ZİLİ — 440 + 480 Hz çift ton (tanıdık "rrring"), YÜKSEK ve dolgun: compressor + master gain ile bağırmadan gür.
       const comp = ctx.createDynamicsCompressor();
-      const master = ctx.createGain(); master.gain.value = 0.95;
+      const master = ctx.createGain(); master.gain.value = 1.15; // daha gür (compressor tepe sesi zaten sınırlıyor → bağırmadan yüksek)
       comp.connect(master); master.connect(ctx.destination);
       // Bir "rrring" çal: 440+480 Hz aynı anda, "sure" saniye düz, sonra kapan (klasik telefon ahengi).
       const cal = (basla, sure, ses) => {
@@ -3895,13 +3900,13 @@ export default function Anasayfa({ pro = false }) {
       };
       let dongu, aralik;
       if (mod === "aranan") {
-        // GELEN ÇAĞRI — klasik ÇİFT zil: "rrring-rrring" (0.4 sn çal · 0.2 sn sus · 0.4 sn çal), sonra sessizlik → tanıdık telefon.
-        dongu = () => { cal(0.0, 0.4, 0.5); cal(0.6, 0.4, 0.5); };
-        aralik = 3000; // her 3 sn'de bir çift zil (klasik ritim)
+        // GELEN ÇAĞRI — UZUN çift zil "rrrring-rrrring" (kullanıcı: zil sesi kısa geliyor → uzattık): 1.0 sn çal · 0.3 sn sus · 1.0 sn çal, sonra sessizlik.
+        dongu = () => { cal(0.0, 1.0, 0.72); cal(1.3, 1.0, 0.72); };
+        aralik = 3600; // ~2.3 sn dolgun çift zil + ~1.3 sn sessizlik (klasik telefon, uzun çalar)
       } else {
-        // ARAYAN (giden) — ringback: tek uzun ton (karşı taraf çalıyor hissi), biraz alçak.
-        dongu = () => { cal(0.0, 1.0, 0.32); };
-        aralik = 3000;
+        // ARAYAN (giden) — ringback: uzun ton (karşı taraf çalıyor hissi), GÜR (eskiden çok alçaktı).
+        dongu = () => { cal(0.0, 1.3, 0.6); };
+        aralik = 2800;
       }
       dongu();
       const iv = setInterval(dongu, aralik);
