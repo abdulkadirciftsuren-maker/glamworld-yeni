@@ -12,13 +12,14 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, iceAdayEkle, iceAdaylariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // Gloxoo sohbetindeki ağır görselleri (üretilen resim + foto) IndexedDB'de KALICI sakla (localStorage'a sığmıyordu → kaybolmasın)
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
+import { Room, RoomEvent } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
@@ -1578,7 +1579,8 @@ export default function Anasayfa({ pro = false }) {
     return () => { try { clearTimeout(aramaKontrolZamanRef.current); } catch (e) {} };
   }, [aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
-  const pcRef = useRef(null);                          // RTCPeerConnection
+  const pcRef = useRef(null);                          // (ESKİ WebRTC — artık kullanılmıyor, LiveKit'e geçildi)
+  const roomRef = useRef(null);                        // LiveKit odası (kendi görüşme sunucumuz)
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
   const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
@@ -3674,20 +3676,12 @@ export default function Anasayfa({ pro = false }) {
   // ⛔ ESKİ openrelay (ücretsiz/herkese açık) ÇALIŞMIYORDU → farklı ağda ses/görüntü gelmiyordu (kullanıcı: "aynı WiFi'de çalışıyor ama
   //    başka hatta çalışmıyor"). KALDIRILDI. Yerine kullanıcının KENDİ metered.ca (global.relay) postacısı — KALICI kullanıcı adı/şifre
   //    (dashboard'dan "Share ICE Servers Array"). turns:443 (TLS) → iPhone MOBİL VERİ + katı güvenlik duvarı bile geçer. Ücretsiz 500MB plan.
-  const ICE_SUNUCULAR = { iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun.relay.metered.ca:80" },
-    { urls: "turn:global.relay.metered.ca:80", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
-    { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
-    { urls: "turn:global.relay.metered.ca:443", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
-    { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "de30a9edca0d3007045ca1b9", credential: "L0I6KWKbGNTNf4A9" },
-  ], iceCandidatePoolSize: 4 };
-  // Arama ICE ayarı. Artık kalıcı statik ayar (metered postacısı doğrudan ICE_SUNUCULAR içinde) → çalışma anında fetch YOK
-  // (fetch/CORS/"Invalid API Key" derdi bitti). Fonksiyon, çağrı yerlerini değiştirmemek için duruyor; anında ayarı döner.
-  const iceKonfigGetir = async () => ICE_SUNUCULAR;
+  // (ESKİ Metered TURN ayarları KALDIRILDI — kotası dolmuştu. Arama artık KENDİ LiveKit sunucumuzdan akıyor; ICE/TURN'ü LiveKit yönetir.)
   const aramaTemizle = () => {
     try { (aramaAbonelikRef.current || []).forEach((f) => { try { f(); } catch (e) {} }); } catch (e) {}
     aramaAbonelikRef.current = [];
+    try { if (roomRef.current) roomRef.current.disconnect(); } catch (e) {}
+    roomRef.current = null;
     try { if (pcRef.current) pcRef.current.close(); } catch (e) {}
     pcRef.current = null;
     try { if (yerelStreamRef.current) yerelStreamRef.current.getTracks().forEach((t) => t.stop()); } catch (e) {}
@@ -3787,54 +3781,45 @@ export default function Anasayfa({ pro = false }) {
       setTimeout(() => { try { if (!sesCtxRef.current || sesCtxRef.current.state !== "running") { el.muted = !hoparlorAcikRef.current; el.volume = 1; } } catch (e) {} }, 1500);
     } catch (e) { try { el.muted = !hoparlorAcikRef.current; el.volume = 1; } catch (x) {} }
   };
-  const pcOlustur = (aramaId, kim, konfig) => {
-    const pc = new RTCPeerConnection(konfig || ICE_SUNUCULAR);
-    pcRef.current = pc;
-    (yerelStreamRef.current ? yerelStreamRef.current.getTracks() : []).forEach((t) => { try { pc.addTrack(t, yerelStreamRef.current); } catch (e) {} });
-    // ⛔ DONMA/KESİK GİTME AZALTMA (kullanıcı: "kamera araması kesik kesik, salladığımda donuyor"): video gönderimine BİT HIZI + KARE sınırı koy.
-    //   Sınır YOKKEN hareket edince ani veri patlaması (özellikle ücretsiz TURN'ün sınırlı bandında) bandı tıkar → donma. maxBitrate ile akış dengelenir → akıcı kalır.
-    //   degradationPreference "balanced": bant düşünce görüntüyü DONDURMAK yerine çözünürlük/kareyi kibarca düşürür. Hepsi try/catch — desteklemeyen tarayıcıda aramayı BOZMAZ.
-    try {
-      const vGon = pc.getSenders().find((s) => s.track && s.track.kind === "video");
-      if (vGon && vGon.getParameters) {
-        const p = vGon.getParameters();
-        if (!p.encodings || !p.encodings.length) p.encodings = [{}];
-        p.encodings[0].maxBitrate = 450000;   // ~450 kbps → 640x480 için yeterli kalite, hareket patlamasını sınırlar
-        p.encodings[0].maxFramerate = 24;
-        try { p.degradationPreference = "balanced"; } catch (e) {}
-        if (vGon.setParameters) { const r = vGon.setParameters(p); if (r && r.catch) r.catch(() => {}); }
-      }
-    } catch (e) {}
-    pc.ontrack = (e) => {
-      // Karşının akışını DOĞRUDAN kullan (yeni MediaStream'e track kopyalama YOK → aynı ses iki kez eklenmez, tekrar/echo olmaz)
-      if (e.streams && e.streams[0]) uzakStreamRef.current = e.streams[0];
-      else { if (!uzakStreamRef.current) uzakStreamRef.current = new MediaStream(); try { uzakStreamRef.current.addTrack(e.track); } catch (x) {} }
+  // ---- KENDİ CANLI GÖRÜŞME SUNUCUMUZ (LiveKit) ----
+  // Eski ham WebRTC (Metered — kotası doldu) yerine: köprüden (worker) imzalı bir "bilet" (token) alıp KENDİ sunucumuza bağlanırız.
+  // Oda adı = arama id'si → iki taraf da AYNI odaya girer. Kendi kamera/mikrofonumu yayınlarım, karşınınkini dinlerim.
+  const livekitTokenAl = async (oda) => {
+    const uu = auth.currentUser;
+    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    const r = await fetch(AI_KOPRU, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ livekitOda: oda, kimlik: (uu && uu.uid) || ("kul-" + Math.random().toString(36).slice(2, 10)), ad: benimAd }),
+    });
+    const d = await r.json().catch(() => null);
+    if (!d || !d.token || !d.url) throw new Error("token yok");
+    return d; // { token, url, kimlik }
+  };
+  const livekitBaglan = async (aramaId) => {
+    const { token, url } = await livekitTokenAl(aramaId);
+    const room = new Room({ adaptiveStream: true, dynacast: true });
+    roomRef.current = room;
+    // Karşı tarafın ses/görüntüsü gelince: uzak akışa ekle + elemente bağla + "konuşuyor"a geç
+    room.on(RoomEvent.TrackSubscribed, (track) => {
+      try {
+        if (!uzakStreamRef.current) uzakStreamRef.current = new MediaStream();
+        uzakStreamRef.current.getTracks().filter((tt) => tt.kind === track.kind).forEach((tt) => { try { uzakStreamRef.current.removeTrack(tt); } catch (e) {} });
+        try { uzakStreamRef.current.addTrack(track.mediaStreamTrack); } catch (e) {}
+      } catch (e) {}
+      setAramaDurum("konusuyor");
       setTimeout(baglaUzakMedya, 30);
-    };
-    pc.onicecandidate = (e) => { if (e.candidate) iceAdayEkle(aramaId, kim, e.candidate.toJSON()); };
-    pc.onconnectionstatechange = () => {
-      try {
-        const s = pc.connectionState;
-        if (s === "connected") setAramaDurum("konusuyor");
-        // ⛔ DONMA COZUMU: karsi taraf kapatinca (pc kopar) baglanti "failed" olur → EKRANI KENDIN KAPAT
-        //   (Firestore "bitti" sinyali kacsa bile arama ekrani takili/donuk kalmasin). SAGLIKLI aramada "failed" olmaz.
-        else if (s === "failed") { if (pcRef.current === pc) aramaKapat(false); }
-      } catch (x) {}
-    };
-    // ⛔ DONMA COZUMU (yedek yol): ICE baglantisi koparsa da ekrani kapat. "disconnected" GECICI olabilir (ag titremesi) →
-    //   5 sn bekle, HALA kopuksa kapat (saglikli arama bu surede "connected"e doner, kapanmaz). "failed" terminal → hemen kapat.
-    pc.oniceconnectionstatechange = () => {
-      try {
-        const s = pc.iceConnectionState;
-        if (s === "failed") { if (pcRef.current === pc) aramaKapat(false); }
-        else if (s === "disconnected") {
-          setTimeout(() => {
-            try { if (pcRef.current === pc && (pc.iceConnectionState === "disconnected" || pc.iceConnectionState === "failed")) aramaKapat(false); } catch (e) {}
-          }, 5000);
-        }
-      } catch (x) {}
-    };
-    return pc;
+    });
+    room.on(RoomEvent.TrackUnsubscribed, (track) => {
+      try { if (uzakStreamRef.current && track && track.mediaStreamTrack) uzakStreamRef.current.removeTrack(track.mediaStreamTrack); } catch (e) {}
+    });
+    // Karşı taraf odadan çıkarsa / bağlantı koparsa → arama ekranını kendin kapat (takılı/donuk kalmasın)
+    room.on(RoomEvent.ParticipantDisconnected, () => { if (roomRef.current === room) aramaKapat(false); });
+    room.on(RoomEvent.Disconnected, () => { if (roomRef.current === room) aramaKapat(false); });
+    await room.connect(url, token);
+    // Kendi kamera/mikrofonumu (medyaAl ile açtığım) sunucuya YAYINLA
+    const ys = yerelStreamRef.current;
+    if (ys) { for (const tr of ys.getTracks()) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} } }
+    return room;
   };
   const aramaBaslat = async (kisi, tip) => {
     if (!kisi || !kisi.uid) return;
@@ -3851,34 +3836,19 @@ export default function Anasayfa({ pro = false }) {
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
-    const konfig = await iceKonfigGetir(); // bize özel postacı (TURN) — farklı ağda ses/görüntü taşınsın
-    const pc = pcOlustur(id, "arayan", konfig);
-    try {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await aramaGuncelle(id, { offer: { type: offer.type, sdp: offer.sdp } });
-    } catch (e) { aramaKapat(); return; }
+    // KENDİ sunucumuza (LiveKit) bağlan — oda adı = arama id. Karşı taraf kabul edip aynı odaya girince ses/görüntü akar.
+    try { await livekitBaglan(id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
+    // Firebase sadece ZİL/DURUM için: karşı taraf reddetti mi, bitirdi mi (ses/görüntü artık LiveKit'ten gelir)
     const ab1 = aramaDinle(id, async (a) => {
       if (!a) { aramaKapat(false); return; }
-      if (a.answer && !pc.currentRemoteDescription) { try { await pc.setRemoteDescription(new RTCSessionDescription(a.answer)); setAramaDurum("konusuyor"); } catch (e) {} }
       if (a.durum === "red") { aramaReddedildiRef.current = true; bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); }
       else if (a.durum === "bitti") { aramaKapat(false); }
     });
-    const ab2 = iceAdaylariDinle(id, "aranan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
-    aramaAbonelikRef.current.push(ab1, ab2);
+    aramaAbonelikRef.current.push(ab1);
   };
   const aramaKabulEt = async () => {
-    let g = gelenArama; if (!g) return;
-    // TEKLİF (offer) henüz gelmediyse aramayı DÜŞÜRME — arayanın teklifi birkaç saniyede gelir; KISA SÜRE BEKLE, sonra bağla.
-    if (!g.offer || !g.offer.sdp) {
-      bilgiBalonu(t("aramaBaglaniyor", "Arama bağlanıyor, bir saniye…"));
-      g = await new Promise((res) => {
-        let bitti = false; let ab = null;
-        ab = aramaDinle(g.id, (a) => { if (!bitti && a && a.offer && a.offer.sdp) { bitti = true; try { ab && ab(); } catch (e) {} res(a); } });
-        setTimeout(() => { if (!bitti) { bitti = true; try { ab && ab(); } catch (e) {} res(null); } }, 12000);
-      });
-      if (!g || !g.offer || !g.offer.sdp) { bilgiBalonu(t("aramaBaglanamadi", "Arama bağlanamadı, tekrar deneyin.")); return; }
-    }
+    const g = gelenArama; if (!g) return;
+    // (LiveKit'te "offer" beklemeye gerek yok — iki taraf da aynı odaya girer, sunucu birbirine bağlar.)
     setGelenArama(null);
     aramaBildirimKapat(); // açtık → "seni aradılar" bildirimi ekranda kalmasın
     // ARAMA GÜNLÜĞÜ: BEN aramadım (gelen aramayı kabul ettim) → günlüğü ARAYAN yazar, ben yazmam (mükerrer olmasın)
@@ -3888,17 +3858,11 @@ export default function Anasayfa({ pro = false }) {
     setAktifArama({ id: g.id, karsiAd: g.arayanAd || "—", karsiFoto: g.arayanFoto || "", tip: g.tip });
     setAramaDurum("konusuyor");
     try { await medyaAl(g.tip); } catch (e) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (x) {} bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(false); return; }
-    const konfig = await iceKonfigGetir(); // bize özel postacı (TURN) — farklı ağda ses/görüntü taşınsın
-    const pc = pcOlustur(g.id, "aranan", konfig);
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(g.offer));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await aramaGuncelle(g.id, { answer: { type: answer.type, sdp: answer.sdp }, durum: "kabul" });
-    } catch (e) { aramaKapat(); return; }
+    // KENDİ sunucumuza (LiveKit) bağlan — arayanla AYNI odaya (arama id) gir, ses/görüntü akmaya başlar
+    try { await livekitBaglan(g.id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
+    try { await aramaGuncelle(g.id, { durum: "kabul" }); } catch (e) {}
     const ab1 = aramaDinle(g.id, (a) => { if (!a || a.durum === "bitti") aramaKapat(false); });
-    const ab2 = iceAdaylariDinle(g.id, "arayan", async (cand) => { try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) {} });
-    aramaAbonelikRef.current.push(ab1, ab2);
+    aramaAbonelikRef.current.push(ab1);
   };
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
   // ZİL / ÇALMA SESİ (WebAudio) — arayan: "çalıyor" tonu; aranan: zil. Ses dosyası gerektirmez.
@@ -4007,7 +3971,7 @@ export default function Anasayfa({ pro = false }) {
   // istersen "cihaz meşgul" hatası verir ("Bu cihazda kamera değiştirilemedi"). ÇÖZÜM: önce ESKİ video track'ini DURDUR,
   // sonra yeni kamerayı iste. Yeni yön açılmazsa (arka kamera yoksa) eski yöne geri dön → görüntü siyah kalmaz.
   const kameraCevir = async () => {
-    const pc = pcRef.current; const eski = yerelStreamRef.current; if (!pc || !eski) return;
+    const room = roomRef.current; const eski = yerelStreamRef.current; if (!room || !eski) return;
     const yeniMod = onKamera ? "environment" : "user";       // istenen yeni yön
     const eskiMod = onKamera ? "user" : "environment";        // geri dönülecek yön
     // 1) ÖNCE eski kamerayı DURDUR (kamera boşalsın, yenisi açılabilsin)
@@ -4026,9 +3990,12 @@ export default function Anasayfa({ pro = false }) {
     }
     const yeniVideo = yeniStream.getVideoTracks()[0];
     if (!yeniVideo) { bilgiBalonu(t("kameraAcilamadi", "Kamera açılamadı")); return; }
-    // 3) Bağlantıdaki gönderilen video'yu yenisiyle değiştir + kendi önizlememi güncelle
-    const gonderici = pc.getSenders().find((sn) => sn.track && sn.track.kind === "video");
-    if (gonderici) { try { await gonderici.replaceTrack(yeniVideo); } catch (e) {} }
+    // 3) LiveKit'te yayınlanan video track'ini yenisiyle değiştir + kendi önizlememi güncelle
+    try {
+      const vpub = Array.from(room.localParticipant.trackPublications.values()).find((p) => p.kind === "video" || (p.track && p.track.kind === "video"));
+      if (vpub && vpub.track && vpub.track.replaceTrack) { await vpub.track.replaceTrack(yeniVideo); }
+      else { if (vpub && vpub.track) { try { await room.localParticipant.unpublishTrack(vpub.track); } catch (e) {} } await room.localParticipant.publishTrack(yeniVideo); }
+    } catch (e) {}
     eskiVid.forEach((tr) => { try { eski.removeTrack(tr); } catch (e) {} });
     eski.addTrack(yeniVideo);
     if (yerelVideoRef.current) { try { yerelVideoRef.current.srcObject = eski; } catch (e) {} }
