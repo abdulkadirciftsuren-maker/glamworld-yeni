@@ -11,6 +11,11 @@
 - **SONRA:** Faz 3 = 10 kişilik GRUP görüşmesi UI (kullanıcı istedi). Bir de TWA tam ekran (production'a geçince) hatırlatması duruyor.
 - **⛔ NATIVE ZİL/HOPARLÖR:** Web uygulaması Android sistem zilini/hoparlör yönlendirmesini ZORLAYAMAZ (native'e özel). "Beni ararken ses ahizeden geliyor" = Android bir kez mikrofon kullanınca sesi ahizeye kilitliyor, web geri çeviremez → tam çözüm NATIVE uygulama (planda). Kullanıcıya dürüst söylendi.
 
+## 🔑🔑 PARLAMA SEBEBİ NİHAYET BULUNDU — 22 EYL 2026 (kullanıcının kendi tespiti!)
+- **PARLAMA = telefonun YÜKSEK EKRAN YENİLEME HIZI (90/120 Hz).** Kullanıcı net kanıt verdi: (a) PİL TASARRUFU (ekonomi) moduna geçince parlama DURUYOR, (b) EKRAN KAYDI yaparken parlama YOK, (c) BİLGİSAYARDA parlama YOK. Üçünün ortak noktası: hepsi ekranı **60 Hz'e** düşürür. Yani Android WebView yüksek Hz'de (90/120) kaydırırken tile'ları yeniden çizmeye yetişemiyor → içerik bir an silinip geliyor = parlama. 60 Hz'de motor yetişiyor → parlama biter.
+- **KULLANICIYA ÖNERİLEN HEMEN ÇÖZÜM:** Telefon Ayarlar → Ekran → Yenileme hızı / "Hareket akıcılığı" → **Standart / 60 Hz.** (Cihaz ayarı, kod değil; garanti.)
+- **KOD TARAFI:** Web'den ekran yenileme hızı kontrol EDİLEMEZ. Geçmişte kod denemeleri (translateZ/GPU katman B253/263, native scroll B265, DOM-ref B267) HEP DAHA KÖTÜ yaptı. → **Körlemesine tekrar DENEME.** Kalıcı kod çözümü = NATIVE uygulama (planda). Kullanıcı 60 Hz ile idare edebilir.
+
 ## 🗺️ ALTYAPI HARİTASI (nerede ne var — Code bunu bilsin, kullanıcıya sormasın; kullanıcı: "bunları bir yere kaydet")
 - **Domain: gloxorg.com** → **Namecheap**'te kayıtlı (registrar: NameCheap). DNS de Namecheap'te (İsim sunucuları: `dns1.registrar-servers.com` / `dns2.registrar-servers.com` = Namecheap BasicDNS). Oluşturuldu 4 Tem 2026, bitiş 4 Tem 2027. → **DNS kaydı eklenecek yer = Namecheap → Domain List → gloxorg.com → Manage → Advanced DNS.**
 - **Site (web):** GitHub Pages (gloxorg.com A kaydı 185.199.10x.153'e bakıyor; gh-pages ile deploy). ⛔ Namecheap'teki GitHub A kayıtlarına DOKUNMA.
