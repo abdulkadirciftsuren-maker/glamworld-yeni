@@ -3952,7 +3952,9 @@ export default function Anasayfa({ pro = false }) {
   };
   const grupLivekitBaglan = async (oda) => {
     const { token, url } = await livekitTokenAl(oda);
-    const room = new Room({ adaptiveStream: false, dynacast: false });
+    // GRUPTA adaptiveStream+dynacast AÇIK: çok kişide herkese tam video göndermek DONDURUR; açıkken LiveKit sadece
+    // GÖRÜNEN kareler için ve uygun kalitede gönderir → akıcı kalır. (1'e1'de kapalıydı; grupta AÇIK doğrusu.)
+    const room = new Room({ adaptiveStream: true, dynacast: true });
     grupRoomRef.current = room;
     const yenile = () => { try { const m = room.remoteParticipants || room.participants; setGrupKatilimcilar(m ? Array.from(m.values()) : []); } catch (e) {} };
     room.on(RoomEvent.ParticipantConnected, yenile);
@@ -3987,7 +3989,7 @@ export default function Anasayfa({ pro = false }) {
     const oda = "grup_" + uu.uid + "_" + Date.now();
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     setGrupSecAcik(false); setGrupSecim([]); setMesajAcik(false);
-    setGrupArama({ oda, olusturan: true });
+    setGrupArama({ oda, olusturan: true, davetliler: kisiler });
     try { await grupLivekitBaglan(oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
     // Seçilen herkese davet gönder (AYNI oda)
     for (const k of kisiler) {
@@ -4030,10 +4032,12 @@ export default function Anasayfa({ pro = false }) {
   };
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
   useEffect(() => {
-    if (aramaDurum === "ariyor") zilBaslat("arayan");
+    // GRUP: ben başlattım ve henüz kimse katılmadıysa "çalıyor" tonu (ringback) çalsın (aranıyor belli olsun).
+    if (grupArama && grupArama.olusturan && grupKatilimcilar.length === 0) zilBaslat("arayan");
+    else if (aramaDurum === "ariyor") zilBaslat("arayan");
     else if (gelenArama && !aramaDurum) zilBaslat("aranan");
     else zilDurdur();
-  }, [aramaDurum, gelenArama]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [aramaDurum, gelenArama, grupArama, grupKatilimcilar]); // eslint-disable-line react-hooks/exhaustive-deps
   // ARKA PLANA GEÇİNCE (sekme gizlenince) Gloxoo konuşması + zil OTOMATİK sussun (arkada takılı kalmasın)
   useEffect(() => {
     const gizle = () => { if (document.hidden) { try { gloxSustur(); } catch (e) {} try { zilDurdur(); } catch (e) {} try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {} } };
@@ -10392,7 +10396,14 @@ export default function Anasayfa({ pro = false }) {
             </div>
             {grupKatilimcilar.map((p) => <GrupKare key={p.identity || p.sid} p={p} />)}
           </div>
-          {grupKatilimcilar.length === 0 && <div className="grup-bekle">{grupBaglaniyor ? t("baglaniyor", "Bağlanıyor…") : t("grupBekleniyor", "Katılmaları bekleniyor…")}</div>}
+          {grupKatilimcilar.length === 0 && (
+            <div className="grup-bekle">
+              {grupBaglaniyor ? t("baglaniyor", "Bağlanıyor…")
+                : (grupArama.olusturan
+                    ? (t("araniyor", "Aranıyor…") + " " + ((grupArama.davetliler || []).map((d) => d.ad).filter(Boolean).join(", ")))
+                    : t("grupBekleniyor", "Katılmaları bekleniyor…"))}
+            </div>
+          )}
           <div className="grup-alt">
             <button className={"grup-dugme" + (grupMik ? " kapali" : "")} onClick={grupMikToggle} aria-label={t("mikrofon", "Mikrofon")} title={t("mikrofon", "Mikrofon")}>{grupMik ? "🔇" : "🎤"}</button>
             <button className={"grup-dugme" + (grupKam ? " kapali" : "")} onClick={grupKamToggle} aria-label={t("kamera", "Kamera")} title={t("kamera", "Kamera")}>{grupKam ? "🚫" : "📷"}</button>
