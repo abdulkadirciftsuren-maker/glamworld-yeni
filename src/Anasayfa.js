@@ -3095,15 +3095,17 @@ export default function Anasayfa({ pro = false }) {
       // MÜZİK/SES varsa yükle
       let sesUrl = "";
       if (hikSes && hikSes.file) { try { sesUrl = await dosyaYukle(hikSes.file, u.uid, () => {}).then((o) => (o && o.url) || "").catch(() => ""); } catch (x2) {} }
-      if (url) {
-        // Yazı hikâyesinde yazılar zaten görsele GÖMÜLDÜ → tekrar üste koyma
-        const yazilar = yaziTip ? [] : hikYazilar.map((y) => ({ metin: (y.metin || "").trim(), xr: y.xr, yr: y.yr, renk: y.renk, boyut: y.boyut || 1, font: y.font || "sade" })).filter((y) => y.metin);
-        await hikayeEkle(benimHikayeKisi, { tip: yaziTip ? "foto" : hikTaslak.tip, url, poster, yazilar, yer: (hikKonum && hikKonum.tam) || "", ses: sesUrl });
-        if (hikTaslak.tip === "video" && hikTaslak.url) { try { URL.revokeObjectURL(hikTaslak.url); } catch (x) {} }
-        setHikTaslak(null); setHikYazilar([]); setHikSeciliYazi(null); setHikAiOneriler([]); setHikAiIstek("");
-        await hikayeleriYukle();
-      }
-    } catch (x) {}
+      // ⚠️ HATA GÖRÜNÜR: yükleme başarısızsa (url boş) SESSİZ geçme → kullanıcıya söyle (eskiden sessizdi, "çıkmıyor" ama sebep belli değildi).
+      if (!url) { bilgiBalonu(t("hikYuklenemedi", "Medya yüklenemedi (internet/depolama sorunu). Lütfen tekrar dene.")); setHikPaylasYuk(false); setHikPaylasYuzde(0); return; }
+      // Yazı hikâyesinde yazılar zaten görsele GÖMÜLDÜ → tekrar üste koyma
+      const yazilar = yaziTip ? [] : hikYazilar.map((y) => ({ metin: (y.metin || "").trim(), xr: y.xr, yr: y.yr, renk: y.renk, boyut: y.boyut || 1, font: y.font || "sade" })).filter((y) => y.metin);
+      const yeniId = await hikayeEkle(benimHikayeKisi, { tip: yaziTip ? "foto" : hikTaslak.tip, url, poster, yazilar, yer: (hikKonum && hikKonum.tam) || "", ses: sesUrl });
+      if (!yeniId) { bilgiBalonu(t("hikKaydedilemedi", "Işıltın kaydedilemedi (bağlantı/izin sorunu). Lütfen tekrar dene.")); setHikPaylasYuk(false); setHikPaylasYuzde(0); return; }
+      if (hikTaslak.tip === "video" && hikTaslak.url) { try { URL.revokeObjectURL(hikTaslak.url); } catch (x) {} }
+      setHikTaslak(null); setHikYazilar([]); setHikSeciliYazi(null); setHikAiOneriler([]); setHikAiIstek("");
+      await hikayeleriYukle();
+      bilgiBalonu(t("hikPaylasildi", "Işıltın paylaşıldı ✨"));
+    } catch (x) { bilgiBalonu(t("hikHata", "Işıltı paylaşılamadı: ") + ((x && x.message) ? x.message : String(x || ""))); }
     setHikPaylasYuk(false); setHikPaylasYuzde(0);
   };
   // Gloxoo'ya SESLE söyle (konuşma → yazı) → hikAiIstek'e yazılır
