@@ -401,6 +401,7 @@ export async function aramaOlustur(veri) {
       arayanUid: veri.arayanUid, arayanAd: veri.arayanAd || "", arayanFoto: veri.arayanFoto || "",
       arananUid: veri.arananUid, arananAd: veri.arananAd || "",
       tip: veri.tip || "sesli", offer: veri.offer || null, answer: null,
+      oda: veri.oda || "", // GRUP araması: herkes aynı LiveKit odasına girer (boşsa 1'e1 = oda arama id'sidir)
       durum: "calliyor", zamanMs: Date.now(), olusturma: serverTimestamp(),
     });
     return ref.id;

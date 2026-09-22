@@ -5787,3 +5787,36 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .sa-urun-bil{ display:flex; flex-direction:column; gap:2px; min-width:0; }
 .sa-urun-bil b{ color:#5a3f00; font-size:15px; font-weight:900; }
 .sa-urun-bil span{ color:#7a5a12; font-size:12.5px; font-weight:600; line-height:1.35; }
+
+/* ===== GRUP GÖRÜŞMESİ (10 kişiye kadar) — altın zemin, KARE öğeler (anayasa) ===== */
+.grup-fon{ position:fixed; inset:0; z-index:9500; display:flex; flex-direction:column; background:linear-gradient(160deg,#f3d27a,#e6b84e 60%,#d9a63c); padding:10px; }
+.grup-ust{ display:flex; align-items:center; justify-content:space-between; padding:6px 10px 10px; color:#4a3600; }
+.grup-ust b{ font-size:18px; font-weight:900; }
+.grup-ust span{ font-size:13.5px; font-weight:800; background:rgba(255,255,255,0.6); padding:3px 10px; border-radius:12px; }
+.grup-izgara{ flex:1 1 auto; display:grid; gap:8px; align-content:center; overflow-y:auto; }
+.grup-kare{ position:relative; aspect-ratio:3/4; background:#c98b2a; border:2px solid #fff3cf; border-radius:14px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.grup-kare video{ width:100%; height:100%; object-fit:cover; background:#c98b2a; }
+.grup-kare-harf{ font-size:40px; font-weight:900; color:#fff3cf; }
+.grup-kare-ad{ position:absolute; left:6px; bottom:6px; max-width:88%; background:rgba(74,54,0,0.72); color:#ffe9a8; font-size:12px; font-weight:800; padding:2px 8px; border-radius:9px; white-space:normal; line-height:1.15; }
+.grup-kare-ben{ outline:2px solid #FFD700; }
+.grup-bekle{ text-align:center; color:#5a3f00; font-weight:800; font-size:15px; padding:10px; }
+.grup-alt{ display:flex; align-items:center; justify-content:center; gap:18px; padding:12px 0 6px; }
+.grup-dugme{ width:56px; height:56px; border-radius:16px; border:none; background:#fff7db; color:#5a3f00; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(80,60,0,0.28); cursor:pointer; }
+.grup-dugme.kapali{ background:#e6c14a; }
+.grup-kapat{ background:#e0202c; color:#fff; }
+@media (min-width:560px){ .grup-ust b{ font-size:22px; } .grup-dugme{ width:64px; height:64px; font-size:28px; } .grup-bekle{ font-size:17px; } }
+/* Grup kişi seçme (Glome "Gruplar" sekmesi) */
+.mm-grup-sekme{ display:flex; flex-direction:column; height:100%; }
+.mm-grup-baslik{ padding:12px 14px 8px; }
+.mm-grup-baslik b{ display:block; color:#5a3f00; font-size:17px; font-weight:900; }
+.mm-grup-baslik span{ color:#7a5a12; font-size:13px; font-weight:600; line-height:1.35; }
+.mm-grup-liste{ flex:1 1 auto; overflow-y:auto; padding:4px 8px; }
+.mm-grup-oge{ display:flex; align-items:center; gap:11px; width:100%; background:#fff7db; border:2px solid #f0dca0; border-radius:13px; padding:8px 11px; margin-bottom:8px; cursor:pointer; }
+.mm-grup-oge.secili{ border-color:#FFD700; background:#fff0bd; }
+.mm-grup-avatar{ width:44px; height:44px; border-radius:11px; overflow:hidden; flex:0 0 auto; background:#e6b84e; color:#fff3cf; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:19px; }
+.mm-grup-avatar img{ width:100%; height:100%; object-fit:cover; }
+.mm-grup-oge b{ flex:1 1 auto; text-align:left; color:#4a3600; font-size:15px; font-weight:800; min-width:0; white-space:normal; line-height:1.2; }
+.mm-grup-tik{ width:28px; height:28px; border-radius:9px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-weight:900; background:#efe3bf; color:#a07800; }
+.mm-grup-tik.on{ background:#FFD700; color:#4a3600; }
+.mm-grup-basla{ margin:8px 12px 14px; padding:14px; border:none; border-radius:14px; background:#e0202c; color:#fff; font-size:16px; font-weight:900; cursor:pointer; box-shadow:0 3px 10px rgba(80,60,0,0.25); }
+.mm-grup-basla:disabled{ background:#d9b96a; color:#7a5a12; }

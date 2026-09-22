@@ -19,7 +19,7 @@ import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KO
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // Gloxoo sohbetindeki ağır görselleri (üretilen resim + foto) IndexedDB'de KALICI sakla (localStorage'a sığmıyordu → kaybolmasın)
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
-import { Room, RoomEvent } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
+import { Room, RoomEvent, Track } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
 import { ZIL_GELEN, ZIL_GIDEN } from "./zilSesi"; // gelen arama zili (melodik/gür) + giden arama ringback tonu (ahize) — gömülü WAV
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
@@ -220,6 +220,39 @@ const GEM_RENK = ["#dfeaff", "#2f6fd6", "#9b4fd6", "#1ea64f", "#f2a900", "#ff7ab
 const POST_RENK = ["#2f7fd6", "#1fc2c2", "#9b59b6", "#1ea64f", "#f2a900", "#ff7ab0", "#e0707a", "#5aa6e0", "#46d37a", "#c98bff"];
 // GERÇEK CLAUDE yapay zeka köprüsü (Cloudflare Worker) — anahtar köprüde GİZLİ, siteye yazılmaz
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
+// GRUP GÖRÜŞMESİ — her uzak katılımcının bir "karesi" (video+ses). LiveKit track'lerini kendi <video>/<audio>'suna bağlar.
+function GrupKare({ p }) {
+  const vRef = useRef(null); const aRef = useRef(null);
+  const [ad, setAd] = useState((p && (p.name || p.identity)) || "");
+  const [kameraVar, setKameraVar] = useState(false);
+  useEffect(() => {
+    if (!p) return;
+    let iptal = false;
+    const bagla = () => {
+      if (iptal) return;
+      try {
+        const vp = p.getTrackPublication && p.getTrackPublication(Track.Source.Camera);
+        if (vp && vp.videoTrack && vRef.current) { try { vp.videoTrack.attach(vRef.current); } catch (e) {} setKameraVar(!vp.isMuted); }
+        else setKameraVar(false);
+        const apb = p.getTrackPublication && p.getTrackPublication(Track.Source.Microphone);
+        if (apb && apb.audioTrack && aRef.current) { try { apb.audioTrack.attach(aRef.current); } catch (e) {} }
+      } catch (e) {}
+    };
+    bagla();
+    const olay = () => bagla();
+    try { p.on("trackSubscribed", olay); p.on("trackUnsubscribed", olay); p.on("trackMuted", olay); p.on("trackUnmuted", olay); } catch (e) {}
+    try { const meta = p.metadata ? JSON.parse(p.metadata) : null; if (meta && meta.ad) setAd(meta.ad); else setAd(p.name || p.identity || ""); } catch (e) { setAd((p && (p.name || p.identity)) || ""); }
+    return () => { iptal = true; try { p.off("trackSubscribed", olay); p.off("trackUnsubscribed", olay); p.off("trackMuted", olay); p.off("trackUnmuted", olay); } catch (e) {} };
+  }, [p]);
+  return (
+    <div className="grup-kare">
+      <video ref={vRef} autoPlay playsInline style={{ display: kameraVar ? "block" : "none" }} />
+      {!kameraVar && <span className="grup-kare-harf">{(ad || "?").trim()[0] ? (ad || "?").trim()[0].toUpperCase() : "?"}</span>}
+      <audio ref={aRef} autoPlay playsInline />
+      <span className="grup-kare-ad notranslate" translate="no">{ad}</span>
+    </div>
+  );
+}
 // İki GPS noktası arası KUŞ UÇUŞU mesafe (km) — tanışma kartlarında "X km uzağında" için
 function _kmUzaklik(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some((v) => typeof v !== "number" || isNaN(v))) return null;
@@ -1583,6 +1616,17 @@ export default function Anasayfa({ pro = false }) {
   const kucukSurRef = useRef({ on: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
   const pcRef = useRef(null);                          // (ESKİ WebRTC — artık kullanılmıyor, LiveKit'e geçildi)
   const roomRef = useRef(null);                        // LiveKit odası (kendi görüşme sunucumuz)
+  // ---- GRUP GÖRÜŞMESİ (10 kişiye kadar) ----
+  const [grupArama, setGrupArama] = useState(null);    // { oda, olusturan } | null — açık grup görüşmesi
+  const [grupKatilimcilar, setGrupKatilimcilar] = useState([]); // uzak katılımcılar (LiveKit RemoteParticipant listesi)
+  const [grupSecAcik, setGrupSecAcik] = useState(false);// grup kişi seçme penceresi açık mı
+  const [grupSecim, setGrupSecim] = useState([]);      // seçilen kişi uid'leri
+  const [grupMik, setGrupMik] = useState(false);       // kendi mikrofonum kapalı mı (grupta)
+  const [grupKam, setGrupKam] = useState(false);       // kendi kameram kapalı mı (grupta)
+  const [grupBaglaniyor, setGrupBaglaniyor] = useState(false);
+  const grupRoomRef = useRef(null);                    // grup LiveKit odası
+  const grupYerelVideoRef = useRef(null);              // kendi video karem (grupta)
+  const grupAramaRef = useRef(null); useEffect(() => { grupAramaRef.current = grupArama; }, [grupArama]);
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
   const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
@@ -3875,6 +3919,7 @@ export default function Anasayfa({ pro = false }) {
   };
   const aramaKabulEt = async () => {
     const g = gelenArama; if (!g) return;
+    if (g.oda) { await grupKatil(g); return; } // GRUP araması → gruba katıl (1'e1 yolundan farklı)
     // (LiveKit'te "offer" beklemeye gerek yok — iki taraf da aynı odaya girer, sunucu birbirine bağlar.)
     setGelenArama(null);
     aramaBildirimKapat(); // açtık → "seni aradılar" bildirimi ekranda kalmasın
@@ -3898,6 +3943,68 @@ export default function Anasayfa({ pro = false }) {
     aramaAbonelikRef.current.push(ab1);
   };
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
+  // ================= GRUP GÖRÜŞMESİ (10 kişiye kadar) =================
+  // Herkes AYNI LiveKit odasına girer; ekran ızgaraya bölünür. 1'e1 aramayı BOZMAZ (ayrı yol/ayrı durum).
+  const grupAramaKapat = () => {
+    try { if (grupRoomRef.current) grupRoomRef.current.disconnect(); } catch (e) {}
+    grupRoomRef.current = null;
+    setGrupArama(null); setGrupKatilimcilar([]); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(false);
+  };
+  const grupLivekitBaglan = async (oda) => {
+    const { token, url } = await livekitTokenAl(oda);
+    const room = new Room({ adaptiveStream: false, dynacast: false });
+    grupRoomRef.current = room;
+    const yenile = () => { try { const m = room.remoteParticipants || room.participants; setGrupKatilimcilar(m ? Array.from(m.values()) : []); } catch (e) {} };
+    room.on(RoomEvent.ParticipantConnected, yenile);
+    room.on(RoomEvent.ParticipantDisconnected, yenile);
+    room.on(RoomEvent.TrackSubscribed, yenile);
+    room.on(RoomEvent.TrackUnsubscribed, yenile);
+    room.on(RoomEvent.TrackMuted, yenile);
+    room.on(RoomEvent.TrackUnmuted, yenile);
+    room.on(RoomEvent.Disconnected, () => { if (grupRoomRef.current === room) grupAramaKapat(); });
+    await room.connect(url, token);
+    try { await room.localParticipant.enableCameraAndMicrophone(); } catch (e) {}
+    // Kendi görüntümü kendi kareme bağla (element mount olana kadar birkaç kez dene)
+    let deneme = 0;
+    const kendiniBagla = () => {
+      deneme++;
+      try {
+        const vp = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (vp && vp.videoTrack && grupYerelVideoRef.current) { try { vp.videoTrack.attach(grupYerelVideoRef.current); } catch (e) {} return; }
+      } catch (e) {}
+      if (deneme < 25) setTimeout(kendiniBagla, 200);
+    };
+    kendiniBagla();
+    yenile();
+    return room;
+  };
+  const grupAramaBaslat = async (secilenKisiler) => {
+    const uu = auth.currentUser; if (!uu) return;
+    const kisiler = (secilenKisiler || []).filter((k) => k && k.uid && k.uid !== uu.uid);
+    if (!kisiler.length) { bilgiBalonu(t("grupKisiSec", "En az bir kişi seç.")); return; }
+    if (kisiler.length > 9) { bilgiBalonu(t("grupEnFazla", "En fazla 9 kişi (sen dahil 10) davet edebilirsin.")); return; }
+    setGrupBaglaniyor(true);
+    const oda = "grup_" + uu.uid + "_" + Date.now();
+    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    setGrupSecAcik(false); setGrupSecim([]); setMesajAcik(false);
+    setGrupArama({ oda, olusturan: true });
+    try { await grupLivekitBaglan(oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
+    // Seçilen herkese davet gönder (AYNI oda)
+    for (const k of kisiler) {
+      try { await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: k.uid, arananAd: k.ad || "", tip: "grup", oda }); } catch (e) {}
+      try { bildirimEkle({ aliciUid: k.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: bildirimFotoUrl || "", tip: "arama", metin: "📹 Grup görüşmesine çağırdı" }).catch(() => {}); } catch (e) {}
+    }
+    setGrupBaglaniyor(false);
+  };
+  const grupKatil = async (g) => {
+    if (!g || !g.oda) return;
+    setGelenArama(null); aramaBildirimKapat();
+    setGrupArama({ oda: g.oda, olusturan: false }); setGrupMik(false); setGrupKam(false);
+    try { await grupLivekitBaglan(g.oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
+    try { if (g.id) aramaSil(g.id); } catch (e) {} // davet kaydını temizle (zil sussun)
+  };
+  const grupMikToggle = async () => { const r = grupRoomRef.current; if (!r) return; const yeni = !grupMik; try { await r.localParticipant.setMicrophoneEnabled(!yeni); setGrupMik(yeni); } catch (e) {} };
+  const grupKamToggle = async () => { const r = grupRoomRef.current; if (!r) return; const yeni = !grupKam; try { await r.localParticipant.setCameraEnabled(!yeni); setGrupKam(yeni); } catch (e) {} };
   // ZİL / ÇALMA SESİ — GERÇEK/PARLAK telefon çınlaması (gömülü WAV, ag gerektirmez). WebAudio "bip" değil → tanıdık, GÜR telefon zili.
   // Kullanıcı: sentetik bip boğuk/uzaktan geliyordu → gerçek zil sesine geçildi. Arayan da aranan da aynı gür zili duyar.
   const zilRef = useRef(null);
@@ -9984,11 +10091,41 @@ export default function Anasayfa({ pro = false }) {
               )}
               {/* GRUPLAR SEKMESİ — henüz veri yok; dürüst, şık altın bilgi (dandik boşluk değil) */}
               {glomeSekme === "gruplar" && (
-                <div className="mm-bos-sik">
-                  <div className="mm-bos-ik">{Ikon.topluluk}</div>
-                  <b>{t("mmGruplarBaslik", "Gruplar yakında")}</b>
-                  <span>{t("mmGruplarAlt", "Yakın çevrenle grup sohbetleri burada olacak. Şimdilik kişilerle birebir sohbet edebilirsin.")}</span>
-                  <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
+                <div className="mm-grup-sekme">
+                  <div className="mm-grup-baslik">
+                    <b>{t("grupGorusme", "Grup görüşmesi")}</b>
+                    <span>{t("grupGorusmeAlt", "Birden çok kişiyi seç, hepsini birden görüntülü ara (sen dahil en fazla 10 kişi).")}</span>
+                  </div>
+                  {sohbetListesi.length === 0 ? (
+                    <div className="mm-bos-sik">
+                      <div className="mm-bos-ik">{Ikon.topluluk}</div>
+                      <b>{t("grupKisiYok", "Önce birileriyle sohbet et")}</b>
+                      <span>{t("grupKisiYokAlt", "Grup araması için kişilerin olmalı. Bir kişiyle sohbet başlatınca burada görünür.")}</span>
+                      <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mm-grup-liste">
+                        {sohbetListesi.map((s) => {
+                          const bilgi = kisiBilgiHarita[s.uid] || {};
+                          const secili = grupSecim.indexOf(s.uid) !== -1;
+                          const foto = bilgi.foto || s.foto || "";
+                          const ad = bilgi.ad || s.ad || "—";
+                          return (
+                            <button key={s.uid} className={"mm-grup-oge" + (secili ? " secili" : "")} onClick={() => setGrupSecim((a) => a.indexOf(s.uid) !== -1 ? a.filter((x) => x !== s.uid) : (a.length >= 9 ? (bilgiBalonu(t("grupEnFazla", "En fazla 9 kişi (sen dahil 10) davet edebilirsin.")), a) : [...a, s.uid]))}>
+                              <span className="mm-grup-avatar">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (ad.trim()[0] || "?").toUpperCase()}</span>
+                              <b className="notranslate" translate="no">{ad}</b>
+                              <span className={"mm-grup-tik" + (secili ? " on" : "")}>{secili ? "✓" : "＋"}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button className="mm-grup-basla" disabled={grupSecim.length === 0 || grupBaglaniyor} onClick={() => {
+                        const kisiler = grupSecim.map((uid) => { const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {}; return { uid, ad: b.ad || sx.ad || "" }; });
+                        grupAramaBaslat(kisiler);
+                      }}>{grupBaglaniyor ? t("baglaniyor", "Bağlanıyor…") : (t("grupBaslat", "Grup görüşmesini başlat") + (grupSecim.length ? " (" + grupSecim.length + ")" : ""))}</button>
+                    </>
+                  )}
                 </div>
               )}
               {/* ARAMALAR SEKMESİ — GERÇEK arama geçmişi (WhatsApp gibi). Dokun → o kişiyle sohbeti aç; sağdaki düğme → tekrar ara. */}
@@ -10227,7 +10364,7 @@ export default function Anasayfa({ pro = false }) {
           <div className="arama-kisi">
             <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>
             <b className="notranslate" translate="no">{gelenArama.arayanAd || "—"}</b>
-            <i>{gelenArama.tip === "goruntulu" ? t("goruntuluCagri", "📹 Görüntülü arıyor…") : t("sesliCagri", "📞 Sesli arıyor…")}</i>
+            <i>{gelenArama.oda ? t("grupCagri", "📹 Grup görüşmesine çağırıyor…") : (gelenArama.tip === "goruntulu" ? t("goruntuluCagri", "📹 Görüntülü arıyor…") : t("sesliCagri", "📞 Sesli arıyor…"))}</i>
           </div>
           <div className="arama-cagri-dugmeler">
             <button className="arama-btn arama-red" onClick={aramaReddet} aria-label={t("reddet", "Reddet")}>
@@ -10235,6 +10372,32 @@ export default function Anasayfa({ pro = false }) {
             </button>
             <button className="arama-btn arama-kabul" onClick={aramaKabulEt} aria-label={t("kabul", "Kabul et")}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* GRUP GÖRÜŞMESİ — ızgara (kendi karem + katılımcılar), 10 kişiye kadar */}
+      {grupArama && (
+        <div className="grup-fon">
+          <div className="grup-ust">
+            <b className="notranslate" translate="no">{t("grupGorusme", "Grup görüşmesi")}</b>
+            <span>{(grupKatilimcilar.length + 1)} {t("kisiKisa", "kişi")}</span>
+          </div>
+          <div className="grup-izgara" style={{ gridTemplateColumns: "repeat(" + ((grupKatilimcilar.length + 1) <= 1 ? 1 : (grupKatilimcilar.length + 1) <= 4 ? 2 : 3) + ", 1fr)" }}>
+            <div className="grup-kare grup-kare-ben">
+              <video ref={grupYerelVideoRef} autoPlay playsInline muted style={{ display: grupKam ? "none" : "block" }} />
+              {grupKam && <span className="grup-kare-harf">{((benimHikayeKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
+              <span className="grup-kare-ad notranslate" translate="no">{t("ben", "Ben")}</span>
+            </div>
+            {grupKatilimcilar.map((p) => <GrupKare key={p.identity || p.sid} p={p} />)}
+          </div>
+          {grupKatilimcilar.length === 0 && <div className="grup-bekle">{grupBaglaniyor ? t("baglaniyor", "Bağlanıyor…") : t("grupBekleniyor", "Katılmaları bekleniyor…")}</div>}
+          <div className="grup-alt">
+            <button className={"grup-dugme" + (grupMik ? " kapali" : "")} onClick={grupMikToggle} aria-label={t("mikrofon", "Mikrofon")} title={t("mikrofon", "Mikrofon")}>{grupMik ? "🔇" : "🎤"}</button>
+            <button className={"grup-dugme" + (grupKam ? " kapali" : "")} onClick={grupKamToggle} aria-label={t("kamera", "Kamera")} title={t("kamera", "Kamera")}>{grupKam ? "🚫" : "📷"}</button>
+            <button className="grup-dugme grup-kapat" onClick={grupAramaKapat} aria-label={t("kapat", "Kapat")} title={t("kapat", "Kapat")}>
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
             </button>
           </div>
         </div>
