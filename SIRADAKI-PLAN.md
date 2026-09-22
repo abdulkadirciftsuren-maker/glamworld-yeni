@@ -11,10 +11,13 @@
 - **SONRA:** Faz 3 = 10 kişilik GRUP görüşmesi UI (kullanıcı istedi). Bir de TWA tam ekran (production'a geçince) hatırlatması duruyor.
 - **⛔ NATIVE ZİL/HOPARLÖR:** Web uygulaması Android sistem zilini/hoparlör yönlendirmesini ZORLAYAMAZ (native'e özel). "Beni ararken ses ahizeden geliyor" = Android bir kez mikrofon kullanınca sesi ahizeye kilitliyor, web geri çeviremez → tam çözüm NATIVE uygulama (planda). Kullanıcıya dürüst söylendi.
 
-## 🔑🔑 PARLAMA SEBEBİ NİHAYET BULUNDU — 22 EYL 2026 (kullanıcının kendi tespiti!)
-- **PARLAMA = telefonun YÜKSEK EKRAN YENİLEME HIZI (90/120 Hz).** Kullanıcı net kanıt verdi: (a) PİL TASARRUFU (ekonomi) moduna geçince parlama DURUYOR, (b) EKRAN KAYDI yaparken parlama YOK, (c) BİLGİSAYARDA parlama YOK. Üçünün ortak noktası: hepsi ekranı **60 Hz'e** düşürür. Yani Android WebView yüksek Hz'de (90/120) kaydırırken tile'ları yeniden çizmeye yetişemiyor → içerik bir an silinip geliyor = parlama. 60 Hz'de motor yetişiyor → parlama biter.
-- **KULLANICIYA ÖNERİLEN HEMEN ÇÖZÜM:** Telefon Ayarlar → Ekran → Yenileme hızı / "Hareket akıcılığı" → **Standart / 60 Hz.** (Cihaz ayarı, kod değil; garanti.)
-- **KOD TARAFI:** Web'den ekran yenileme hızı kontrol EDİLEMEZ. Geçmişte kod denemeleri (translateZ/GPU katman B253/263, native scroll B265, DOM-ref B267) HEP DAHA KÖTÜ yaptı. → **Körlemesine tekrar DENEME.** Kalıcı kod çözümü = NATIVE uygulama (planda). Kullanıcı 60 Hz ile idare edebilir.
+## 🔑🔑 PARLAMA — 22 EYL 2026 DERİN TEŞHİS (kullanıcının kendi kanıtlarıyla)
+- **KANITLAR:** (a) PİL TASARRUFU modunda parlama DURUYOR, (b) EKRAN KAYDI yaparken YOK, (c) BİLGİSAYARDA YOK. Telefon = **Samsung S25 Ultra, ekran QHD+ (3120x1440), Pürüzsüz hareket=Adaptif (120Hz).**
+- **60 Hz TEK BAŞINA DÜZELTMEDİ** (kullanıcı elle "Standart/60Hz" yaptı, parlama sürdü) → sebep sadece yenileme hızı DEĞİL.
+- **GÜÇLÜ TEORİ = GPU YÜKÜ / ÇÖZÜNÜRLÜK:** QHD+ (3120x1440) devasa; WebView bu çözünürlükte kaydırırken fotoğrafları/tile'ları yeniden çizmeye yetişemiyor → bir an SARI zemin sonra foto = parlama; avatarlar titriyor. Pil tasarrufu SADECE Hz'i değil ÇÖZÜNÜRLÜĞÜ de (QHD+→FHD+) düşürdüğü için parlamayı durdurdu; ekran kaydı da düşük-res/farklı kompozisyon yolu kullanıyor. Bu yüzden 60Hz tek başına yetmedi (çözünürlük hâlâ QHD+).
+- **KULLANICIYA ÖNERİLEN (sıradaki test):** Ayarlar → Ekran → **Ekran çözünürlüğü → FHD+ (2340x1080)** (QHD+ yerine). Sonuç bekleniyor.
+- **BELİRTİ NETLEŞTİ (kullanıcı):** parlama özellikle GÖRSELLERDE — Işıltını Göster şerit kapakları (kaybolup gelince sarı→foto) + akış paylaşımlarında GÖNDEREN AVATARI titriyor. = mobil WebView'in belleği azınca ekran-dışı çözülmüş görselleri ATIP geri gelince yeniden çözmesi (image decode eviction). Bilgisayarda bol RAM → olmuyor.
+- **KOD TARAFI ⛔:** Geçmiş kod denemeleri (translateZ/GPU B253/263, native scroll B265, DOM-ref B267) HEP DAHA KÖTÜ yaptı; körlemesine DENEME. Tek "zararsız" yön = görselleri KÜÇÜK servis etmek (B270 resimKucult, Cloudinary) → avatar + şerit kapaklarına da uygulanabilir (bellek baskısını azaltır, riski yok) AMA kökten çözmez. Kalıcı çözüm = NATIVE uygulama.
 
 ## 🗺️ ALTYAPI HARİTASI (nerede ne var — Code bunu bilsin, kullanıcıya sormasın; kullanıcı: "bunları bir yere kaydet")
 - **Domain: gloxorg.com** → **Namecheap**'te kayıtlı (registrar: NameCheap). DNS de Namecheap'te (İsim sunucuları: `dns1.registrar-servers.com` / `dns2.registrar-servers.com` = Namecheap BasicDNS). Oluşturuldu 4 Tem 2026, bitiş 4 Tem 2027. → **DNS kaydı eklenecek yer = Namecheap → Domain List → gloxorg.com → Manage → Advanced DNS.**
