@@ -141,10 +141,19 @@ export async function hikayeEkle(k, medya) {
 // Son 24 saatin hikâyeleri (eskiler otomatik düşer), zamana göre eskiden yeniye sıralı.
 export async function hikayeleriOku(adet = 300) {
   try {
-    const snap = await getDocs(query(collection(db, HIKAYELER), fsLimit(adet)));
     const esik = Date.now() - 24 * 60 * 60 * 1000;
+    // TEMİZLİK: 24 saatten ESKİ hikâyeleri veritabanından TAMAMEN SİL (arşivlenmesin — kullanıcı: "24 saat sonra her yerden silinsin").
+    //  Ayrı sorgu SADECE eskileri çeker (where zamanMs<=eşik) → hepsi silinir; koleksiyon şişmez, bir daha tıkanma olmaz.
+    try {
+      const eskiSnap = await getDocs(query(collection(db, HIKAYELER), where("zamanMs", "<=", esik), fsLimit(150)));
+      eskiSnap.docs.forEach((d) => { try { deleteDoc(doc(db, HIKAYELER, d.id)); } catch (e) {} });
+    } catch (e) {}
+    // ⛔ ESKİ HATA (kullanıcı: "Işıltını Göster'de paylaştığım çıkmıyor"): sorguda SIRALAMA yoktu → fsLimit rastgele kayıt getiriyordu;
+    //    hikayeler birikince YENİ paylaşılan hikaye o limitin DIŞINDA kalıp şeritte GÖRÜNMÜYORDU.
+    //    ÇÖZÜM: EN YENİ önce sırala (orderBy zamanMs desc) → yeni hikaye GARANTİ gelir. (Aramadaki 300-limit çözümünün aynısı.)
+    const snap = await getDocs(query(collection(db, HIKAYELER), orderBy("zamanMs", "desc"), fsLimit(adet)));
     const l = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((h) => (h.zamanMs || 0) > esik);
-    l.sort((a, b) => (a.zamanMs || 0) - (b.zamanMs || 0));
+    l.sort((a, b) => (a.zamanMs || 0) - (b.zamanMs || 0)); // gösterim: eskiden yeniye (kapak = en yeni, açınca sırayla oynar)
     return l;
   } catch (e) { return []; }
 }
