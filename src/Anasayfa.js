@@ -3988,7 +3988,9 @@ export default function Anasayfa({ pro = false }) {
     room.on(RoomEvent.TrackUnmuted, yenile);
     room.on(RoomEvent.Disconnected, () => { if (grupRoomRef.current === room) grupAramaKapat(); });
     await room.connect(url, token);
-    try { await room.localParticipant.enableCameraAndMicrophone(); } catch (e) {}
+    // Kamera/mikrofonu ARKA PLANDA aç (BEKLEME): odaya HIZLI girilir; ana iş parçacığı ağır kamera açılışıyla kilitlenip
+    //    davet ağ isteklerini geciktirmez ve "geç bağlanma" olmaz. Görüntü hazır olunca aşağıdaki kendiniBagla ile gelir.
+    room.localParticipant.enableCameraAndMicrophone().catch(() => {});
     // Kendi görüntümü kendi kareme bağla (element mount olana kadar birkaç kez dene)
     let deneme = 0;
     const kendiniBagla = () => {
@@ -4013,13 +4015,15 @@ export default function Anasayfa({ pro = false }) {
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     setGrupSecAcik(false); setGrupSecim([]); setMesajAcik(false);
     setGrupArama({ oda, olusturan: true, davetliler: kisiler });
-    // ⚡ ÖNCE DAVETLERİ GÖNDER (karşı taraf HEMEN çalsın). Eskiden kendim bağlandıktan SONRA gönderiyordum;
-    //    kamera/bağlantı açılması sürdüğü için davet karşıya çok geç gidiyor / bağlantı takılırsa HİÇ gitmiyordu.
-    await Promise.all(kisiler.map(async (k) => {
-      try { await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: k.uid, arananAd: k.ad || "", tip: "grup", oda }); } catch (e) {}
+    // ⚡ DAVETLERİ HEMEN ATEŞLE + AYNI ANDA kendim bağlan (PARALEL). B287'de davetleri "await Promise.all" ile ÖNCE
+    //    bekleyip SONRA bağlanıyordum → yavaş ağda (telefon/4G) davetlerin sunucuya gitmesi birkaç sn sürünce KENDİM de
+    //    çok geç bağlanıyordum ("ben çok geç bağlanıyorum çok geç"). Çözüm: davetleri BEKLEMEDEN gönder (setDoc anında
+    //    sunucuya yola çıkar, karşı taraf HEMEN çalar), aynı anda grupLivekitBaglan ile ben de beklemeden bağlanırım.
+    //    Davet, bağlantı takılsa/başarısız olsa bile GİDER (artık bağlantıya bağlı değil).
+    kisiler.forEach((k) => {
+      try { aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: k.uid, arananAd: k.ad || "", tip: "grup", oda }).catch(() => {}); } catch (e) {}
       try { bildirimEkle({ aliciUid: k.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: bildirimFotoUrl || "", tip: "arama", metin: "📹 Grup görüşmesine çağırdı" }).catch(() => {}); } catch (e) {}
-    }));
-    // SONRA kendim odaya bağlan (davet zaten gitti; ben bağlanana kadar karşı taraf çalıyor olur)
+    });
     try { await grupLivekitBaglan(oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
     setGrupBaglaniyor(false);
   };
