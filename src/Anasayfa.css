@@ -5799,6 +5799,8 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .grup-kare-harf{ font-size:40px; font-weight:900; color:#fff3cf; }
 .grup-kare-ad{ position:absolute; left:6px; bottom:6px; max-width:88%; background:rgba(74,54,0,0.72); color:#ffe9a8; font-size:12px; font-weight:800; padding:2px 8px; border-radius:9px; white-space:normal; line-height:1.15; }
 .grup-kare-ben{ outline:2px solid #FFD700; }
+.grup-kare-ben video.ayna{ transform:scaleX(-1); } /* kendini AYNADA gibi gör (sağ el sağda); karşı taraf normal görür */
+.grup-kare-sure{ position:absolute; right:6px; top:6px; background:rgba(255,215,0,0.92); color:#4a3600; font-size:11.5px; font-weight:800; padding:1px 7px; border-radius:9px; letter-spacing:0.3px; }
 .grup-bekle{ text-align:center; color:#5a3f00; font-weight:800; font-size:15px; padding:10px; }
 .grup-alt{ display:flex; align-items:center; justify-content:center; gap:18px; padding:12px 0 6px; }
 .grup-dugme{ width:56px; height:56px; border-radius:16px; border:none; background:#fff7db; color:#5a3f00; font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(80,60,0,0.28); cursor:pointer; }

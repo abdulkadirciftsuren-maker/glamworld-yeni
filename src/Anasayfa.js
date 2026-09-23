@@ -220,11 +220,20 @@ const GEM_RENK = ["#dfeaff", "#2f6fd6", "#9b4fd6", "#1ea64f", "#f2a900", "#ff7ab
 const POST_RENK = ["#2f7fd6", "#1fc2c2", "#9b59b6", "#1ea64f", "#f2a900", "#ff7ab0", "#e0707a", "#5aa6e0", "#46d37a", "#c98bff"];
 // GERÇEK CLAUDE yapay zeka köprüsü (Cloudflare Worker) — anahtar köprüde GİZLİ, siteye yazılmaz
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev";
+// Süre biçimi (dk:sn) — grup karelerinde her katılımcının konuşma süresi için (modül seviyesi).
+function _sureBicim(sn) {
+  sn = Math.max(0, Math.round(sn || 0));
+  const sa = Math.floor(sn / 3600), dk = Math.floor((sn % 3600) / 60), s = sn % 60;
+  const iki = (n) => (n < 10 ? "0" + n : "" + n);
+  return sa > 0 ? (sa + ":" + iki(dk) + ":" + iki(s)) : (iki(dk) + ":" + iki(s));
+}
 // GRUP GÖRÜŞMESİ — her uzak katılımcının bir "karesi" (video+ses). LiveKit track'lerini kendi <video>/<audio>'suna bağlar.
 function GrupKare({ p }) {
   const vRef = useRef(null); const aRef = useRef(null);
   const [ad, setAd] = useState((p && (p.name || p.identity)) || "");
   const [kameraVar, setKameraVar] = useState(false);
+  const [sn, setSn] = useState(0);
+  useEffect(() => { const bas = Date.now(); const iv = setInterval(() => setSn(Math.round((Date.now() - bas) / 1000)), 1000); return () => clearInterval(iv); }, []);
   useEffect(() => {
     if (!p) return;
     let iptal = false;
@@ -250,6 +259,7 @@ function GrupKare({ p }) {
       {!kameraVar && <span className="grup-kare-harf">{(ad || "?").trim()[0] ? (ad || "?").trim()[0].toUpperCase() : "?"}</span>}
       <audio ref={aRef} autoPlay playsInline />
       <span className="grup-kare-ad notranslate" translate="no">{ad}</span>
+      <span className="grup-kare-sure notranslate" translate="no">{_sureBicim(sn)}</span>
     </div>
   );
 }
@@ -1624,9 +1634,17 @@ export default function Anasayfa({ pro = false }) {
   const [grupMik, setGrupMik] = useState(false);       // kendi mikrofonum kapalı mı (grupta)
   const [grupKam, setGrupKam] = useState(false);       // kendi kameram kapalı mı (grupta)
   const [grupBaglaniyor, setGrupBaglaniyor] = useState(false);
+  const [grupSaniye, setGrupSaniye] = useState(0); // kendi grup görüşme sürem (sn)
   const grupRoomRef = useRef(null);                    // grup LiveKit odası
   const grupYerelVideoRef = useRef(null);              // kendi video karem (grupta)
   const grupAramaRef = useRef(null); useEffect(() => { grupAramaRef.current = grupArama; }, [grupArama]);
+  // Kendi grup görüşme süre sayacım — grup açıkken her saniye artar, kapanınca sıfırlanır.
+  useEffect(() => {
+    if (!grupArama) { setGrupSaniye(0); return; }
+    const bas = Date.now();
+    const iv = setInterval(() => setGrupSaniye(Math.round((Date.now() - bas) / 1000)), 1000);
+    return () => clearInterval(iv);
+  }, [grupArama]);
   const yerelStreamRef = useRef(null);                 // kendi kamera/mikrofon akışım
   const yerelVideoRef = useRef(null);                  // kendi video elementim (küçük)
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
@@ -10390,9 +10408,10 @@ export default function Anasayfa({ pro = false }) {
           </div>
           <div className="grup-izgara" style={{ gridTemplateColumns: "repeat(" + ((grupKatilimcilar.length + 1) <= 1 ? 1 : (grupKatilimcilar.length + 1) <= 4 ? 2 : 3) + ", 1fr)" }}>
             <div className="grup-kare grup-kare-ben">
-              <video ref={grupYerelVideoRef} autoPlay playsInline muted style={{ display: grupKam ? "none" : "block" }} />
+              <video ref={grupYerelVideoRef} className="ayna" autoPlay playsInline muted style={{ display: grupKam ? "none" : "block" }} />
               {grupKam && <span className="grup-kare-harf">{((benimHikayeKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
               <span className="grup-kare-ad notranslate" translate="no">{t("ben", "Ben")}</span>
+              <span className="grup-kare-sure notranslate" translate="no">{_sureBicim(grupSaniye)}</span>
             </div>
             {grupKatilimcilar.map((p) => <GrupKare key={p.identity || p.sid} p={p} />)}
           </div>
