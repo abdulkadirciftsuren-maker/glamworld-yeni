@@ -3970,9 +3970,14 @@ export default function Anasayfa({ pro = false }) {
   };
   const grupLivekitBaglan = async (oda) => {
     const { token, url } = await livekitTokenAl(oda);
-    // GRUPTA adaptiveStream+dynacast AÇIK: çok kişide herkese tam video göndermek DONDURUR; açıkken LiveKit sadece
-    // GÖRÜNEN kareler için ve uygun kalitede gönderir → akıcı kalır. (1'e1'de kapalıydı; grupta AÇIK doğrusu.)
-    const room = new Room({ adaptiveStream: true, dynacast: true });
+    // GRUPTA adaptiveStream+dynacast AÇIK (herkese tam video DONDURUR; açıkken sadece görünen kare + uygun kalite).
+    // + DÜŞÜK çözünürlük yayınla (480x360@20): çok kişide telefon/bağlantı boğulmasın, donma/kesilme azalsın. simulcast ile
+    //   küçük karelere daha da düşük katman gider (adaptiveStream seçer) → akıcı.
+    const room = new Room({
+      adaptiveStream: true, dynacast: true,
+      videoCaptureDefaults: { resolution: { width: 480, height: 360, frameRate: 20 } },
+      publishDefaults: { simulcast: true },
+    });
     grupRoomRef.current = room;
     const yenile = () => { try { const m = room.remoteParticipants || room.participants; setGrupKatilimcilar(m ? Array.from(m.values()) : []); } catch (e) {} };
     room.on(RoomEvent.ParticipantConnected, yenile);

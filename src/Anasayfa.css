@@ -5793,8 +5793,11 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .grup-ust{ display:flex; align-items:center; justify-content:space-between; padding:6px 10px 10px; color:#4a3600; }
 .grup-ust b{ font-size:18px; font-weight:900; }
 .grup-ust span{ font-size:13.5px; font-weight:800; background:rgba(255,255,255,0.6); padding:3px 10px; border-radius:12px; }
-.grup-izgara{ flex:1 1 auto; display:grid; gap:8px; align-content:center; overflow-y:auto; }
-.grup-kare{ position:relative; aspect-ratio:3/4; background:#c98b2a; border:2px solid #fff3cf; border-radius:14px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+/* Izgara EKRANI DOLDURUR, KAYMAZ: satırlar (grid-auto-rows:1fr) yüksekliği paylaşır → tüm kareler ekrana sığar,
+   hiçbiri ekran dışına taşmaz. ÖNEMLİ: taşan/görünmeyen kareyi LiveKit otomatik DURDURUR (video kaybolur/geri gelir);
+   hepsi görünür kalınca bu "kaybolup gelme/parçalanma" biter. */
+.grup-izgara{ flex:1 1 auto; min-height:0; display:grid; gap:6px; grid-auto-rows:1fr; overflow:hidden; }
+.grup-kare{ position:relative; min-height:0; background:#c98b2a; border:2px solid #fff3cf; border-radius:14px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
 .grup-kare video{ width:100%; height:100%; object-fit:cover; background:#c98b2a; }
 .grup-kare-harf{ font-size:40px; font-weight:900; color:#fff3cf; }
 .grup-kare-ad{ position:absolute; left:6px; bottom:6px; max-width:88%; background:rgba(74,54,0,0.72); color:#ffe9a8; font-size:12px; font-weight:800; padding:2px 8px; border-radius:9px; white-space:normal; line-height:1.15; }
