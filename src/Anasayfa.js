@@ -4008,12 +4008,14 @@ export default function Anasayfa({ pro = false }) {
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     setGrupSecAcik(false); setGrupSecim([]); setMesajAcik(false);
     setGrupArama({ oda, olusturan: true, davetliler: kisiler });
-    try { await grupLivekitBaglan(oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
-    // Seçilen herkese davet gönder (AYNI oda)
-    for (const k of kisiler) {
+    // ⚡ ÖNCE DAVETLERİ GÖNDER (karşı taraf HEMEN çalsın). Eskiden kendim bağlandıktan SONRA gönderiyordum;
+    //    kamera/bağlantı açılması sürdüğü için davet karşıya çok geç gidiyor / bağlantı takılırsa HİÇ gitmiyordu.
+    await Promise.all(kisiler.map(async (k) => {
       try { await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: k.uid, arananAd: k.ad || "", tip: "grup", oda }); } catch (e) {}
       try { bildirimEkle({ aliciUid: k.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: bildirimFotoUrl || "", tip: "arama", metin: "📹 Grup görüşmesine çağırdı" }).catch(() => {}); } catch (e) {}
-    }
+    }));
+    // SONRA kendim odaya bağlan (davet zaten gitti; ben bağlanana kadar karşı taraf çalıyor olur)
+    try { await grupLivekitBaglan(oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
     setGrupBaglaniyor(false);
   };
   const grupKatil = async (g) => {
