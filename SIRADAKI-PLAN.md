@@ -11,10 +11,10 @@
 - **✅ FAZ 3 İLK SÜRÜM YAYINLANDI (22 Eyl, A13.B284):** 10 kişilik GRUP görüşmesi. Glome "Gruplar" sekmesi = grup arama başlatma (çok-seçim). Ortak oda + herkese davet (aramaOlustur oda alanı) + izgara UI (GrupKare modül bileşeni, LiveKit track attach). 1'e1 BOZULMADI. ⚠️ Henüz gerçek 3+ kişi ile test EDİLMEDİ — kullanıcı test edecek; aksaklık gelirse düzeltilecek. İlgili: grupAramaBaslat/grupKatil/grupLivekitBaglan/grupAramaKapat, GrupKare (Anasayfa.js), aramaOlustur oda (veri.js), .grup-* + .mm-grup-* (Anasayfa.css).
 - **B285 (22 Eyl akşam) düzeltmeler:** grup DONMA sebebi = adaptiveStream/dynacast grupta KAPALIYDI → AÇILDI (akıcı). "Aranıyor…" göstergesi + ringback + davetli isimleri eklendi. Kullanıcı henüz gerçek kişiyle test edemedi (akşam, yalnız).
 
-## 🔴 YARIN GRUP ARAMASI DÜZELTMELERİ (kullanıcı 22 Eyl gece, "unutma") — ÖNCE BUNLAR
-1. **AYNA (self-view mirror) GRUPTA YOK:** Kullanıcı kendi karesinde sağ elini kaldırınca solda görünüyor. Herkes KENDİNİ aynaya bakar gibi görmeli (kendi karesi `transform:scaleX(-1)` / `.ayna` gibi), KARŞI taraf NORMAL görür. 1'e1'de yapılmıştı (yerelVideoRef `ayna` class). Grup self karesine (grup-kare-ben video) ayna uygula. ⚠️ Sadece KENDİ görüntün aynalanır; uzak katılımcılar (GrupKare) AYNALANMAZ.
-2. **HER KATILIMCININ SÜRESİ:** Grup aramada her kişinin karesinde kaç dakikadır konuştuğu (dk:sn) görünsün (1'e1'deki sayaç gibi ama her kare için; katılımcının katıldığı andan itibaren).
-3. **🔴 ÇOK GECİKME (KRİTİK):** Grup videoda hareket karşıda 20-25 sn SONRA görünüyor + çok geç açılıyor. 20-25 sn ANORMAL (sağlıklı WebRTC <1 sn). MUHTEMEL SEBEP: kullanıcı bunu B285 ÖNCESİ test etti (adaptiveStream KAPALIYDI → yüksek bant → aşırı tamponlama/gecikme). **B285 (adaptiveStream açıldı) bu gecikmeyi büyük olasılıkla düzeltir → önce B285 ile TEKRAR test ettir.** Hâlâ 20-25 sn ise: LiveKit sunucu bölgesi/kaynak, publish kalitesi, veya kendi görüntümü uzak track yerine yerel publish'ten göstermek (self gecikmesi) araştırılacak. GERÇEK kişiyle/2 sekme ile ölç.
+## 🔴 GRUP ARAMASI DÜZELTMELERİ (kullanıcı 22 Eyl gece)
+1. **✅ AYNA (B286):** grup-kare-ben video `ayna` class + CSS scaleX(-1). Kendi karen aynalı, uzak kareler değil. YAPILDI.
+2. **✅ HER KATILIMCININ SÜRESİ (B286):** _sureBicim + GrupKare mount sayacı + grupSaniye (self) → her karede dk:sn rozet. YAPILDI.
+3. **🔴 ÇOK GECİKME (KRİTİK — test bekliyor):** Hareket karşıda 20-25 sn sonra. ANORMAL. Kullanıcı B285 ÖNCESİ (adaptiveStream KAPALI) test etti → B285/B286'da AÇIK → tekrar test edilecek. Hâlâ 20-25 sn ise: LiveKit sunucu bölgesi/kaynak (Nürnberg; kullanıcı Ukrayna — yakın, sorun olmamalı), publish kalite/simulcast, TURN zorlaması araştır. GERÇEK kişi/2 sekme ile ölç.
 
 ## 🟣🟣 SIRADAKI BÜYÜK İŞ — GERÇEK/KALICI GRUP (kullanıcı 22 Eyl net istedi: "dandik yapma")
 Kullanıcı sadece anlık grup ARAMASI değil, **WhatsApp gibi kalıcı GRUP** istiyor:
