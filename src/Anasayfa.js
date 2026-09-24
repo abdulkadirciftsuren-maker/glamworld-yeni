@@ -4825,6 +4825,29 @@ export default function Anasayfa({ pro = false }) {
     const zmn = setTimeout(() => { if (!iptal) gonderileriOku({}, 150).then(yaz).catch(() => {}); }, 3000); // arkada tümü (150)
     return () => { iptal = true; clearTimeout(zmn); };
   }, []);
+  // AKIŞ OTOMATİK TAZELEME (kullanıcı: "başkası paylaşınca/beğenince/yorum yapınca ben yenilemeden görmüyorum, saçma").
+  // ⚠️ MASRAF DENGESİ: sürekli canlı dinleme (onSnapshot) çok para yakıyordu (senin en büyük derdin) → onun yerine:
+  //   uygulamaya DÖNÜNCE/AÇILINCA + sen BAKARKEN 60 sn'de bir en üstteki 40 gönderiyi tazele. Yeni paylaşım/beğeni/yorum
+  //   sayısı kendiliğinden gelir (elle yenilemeye gerek yok), ama sürekli okuma yapmaz (ekonomik). Eskiler korunur (birleştirme).
+  useEffect(() => {
+    const tazele = () => {
+      gonderileriOku({}, 40).then((arr) => {
+        if (!arr || !arr.length) return;
+        setGercekAkis((eski) => {
+          const harita = new Map();
+          arr.forEach((p) => { if (p && p.id) harita.set(p.id, p); });                          // en yeni veriler (güncel beğeni/yorum sayısı + yeni gönderiler)
+          (eski || []).forEach((p) => { if (p && p.id && !harita.has(p.id)) harita.set(p.id, p); }); // alttaki eski gönderiler korunur
+          return Array.from(harita.values());
+        });
+        try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {}
+      }).catch(() => {});
+    };
+    const gorunurTazele = () => { if (!document.hidden) tazele(); };
+    document.addEventListener("visibilitychange", gorunurTazele); // uygulamaya geri dönünce hemen tazele
+    window.addEventListener("focus", tazele);
+    const iv = setInterval(gorunurTazele, 60000);                 // bakarken 60 sn'de bir
+    return () => { document.removeEventListener("visibilitychange", gorunurTazele); window.removeEventListener("focus", tazele); clearInterval(iv); };
+  }, []);
   // TAKİP ETTİKLERİM — giriş yapınca yükle (akış filtresi + düğme durumu için)
   useEffect(() => {
     if (!u || !u.uid) { setTakipSet(new Set()); return; }
