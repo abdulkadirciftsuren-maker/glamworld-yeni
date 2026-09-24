@@ -1650,6 +1650,7 @@ export default function Anasayfa({ pro = false }) {
   const [grupAraSecAcik, setGrupAraSecAcik] = useState(false);   // "kimleri arayalım" seçme penceresi
   const [grupYukleniyor, setGrupYukleniyor] = useState(false);   // grup sohbetine foto/video yükleniyor
   const [grupFotoBuyut, setGrupFotoBuyut] = useState("");        // grup sohbetinde foto'ya dokununca TAM EKRAN
+  const [grupBiriKatildi, setGrupBiriKatildi] = useState(false); // grup aramasına EN AZ BİR kişi katıldı mı (herkes çıkınca TEKRAR "aranıyor"a dönüp çalmasın diye)
   const aktifGrupRef = useRef(null);
   const grupMesajKaydirRef = useRef(null); // grup sohbetini en alta kaydırmak için
   const grupDosyaRef = useRef(null);       // grup sohbeti foto/video seçici (gizli input)
@@ -4008,7 +4009,7 @@ export default function Anasayfa({ pro = false }) {
   const grupAramaKapat = () => {
     try { if (grupRoomRef.current) grupRoomRef.current.disconnect(); } catch (e) {}
     grupRoomRef.current = null;
-    setGrupArama(null); setGrupKatilimcilar([]); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(false);
+    setGrupArama(null); setGrupKatilimcilar([]); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(false); setGrupBiriKatildi(false);
   };
   const grupLivekitBaglan = async (oda) => {
     // 📷 KAMERA/MİKROFONU DOKUNMA ANINDA İSTE ama BEKLEME → bağlanmayla PARALEL yürüsün (çok daha HIZLI açılır).
@@ -4027,7 +4028,7 @@ export default function Anasayfa({ pro = false }) {
     grupRoomRef.current = room;
     const yenile = () => { try { const m = room.remoteParticipants || room.participants; setGrupKatilimcilar(m ? Array.from(m.values()) : []); } catch (e) {} };
     // Katılan/ayrılan olunca listeyi yenile + ekranda kısa bilgi göster ("X katıldı" / "X ayrıldı")
-    room.on(RoomEvent.ParticipantConnected, (p) => { yenile(); try { grupToastGoster(((p && p.name) || t("biri", "Biri")) + " " + t("grupKatildi", "katıldı")); } catch (e) {} });
+    room.on(RoomEvent.ParticipantConnected, (p) => { yenile(); setGrupBiriKatildi(true); try { grupToastGoster(((p && p.name) || t("biri", "Biri")) + " " + t("grupKatildi", "katıldı")); } catch (e) {} });
     room.on(RoomEvent.ParticipantDisconnected, (p) => { yenile(); try { grupToastGoster(((p && p.name) || t("biri", "Biri")) + " " + t("grupAyrildi", "ayrıldı")); } catch (e) {} });
     room.on(RoomEvent.TrackSubscribed, yenile);
     room.on(RoomEvent.TrackUnsubscribed, yenile);
@@ -4183,12 +4184,13 @@ export default function Anasayfa({ pro = false }) {
   };
   // Duruma göre zil: ararken çalıyor tonu; gelen çağrıda zil; konuşurken/boşta sus.
   useEffect(() => {
-    // GRUP: ben başlattım ve henüz kimse katılmadıysa "çalıyor" tonu (ringback) çalsın (aranıyor belli olsun).
-    if (grupArama && grupArama.olusturan && grupKatilimcilar.length === 0) zilBaslat("arayan");
+    // GRUP: ben başlattım, HENÜZ KİMSE KATILMADIYSA "çalıyor" tonu (ringback) çalsın (aranıyor belli olsun).
+    // ⚠️ EN AZ BİR kişi katıldıysa (grupBiriKatildi) ve sonra herkes ayrıldıysa TEKRAR ÇALMASIN — tek kaldım, ben kapatırım.
+    if (grupArama && grupArama.olusturan && grupKatilimcilar.length === 0 && !grupBiriKatildi) zilBaslat("arayan");
     else if (aramaDurum === "ariyor") zilBaslat("arayan");
     else if (gelenArama && !aramaDurum) zilBaslat("aranan");
     else zilDurdur();
-  }, [aramaDurum, gelenArama, grupArama, grupKatilimcilar]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [aramaDurum, gelenArama, grupArama, grupKatilimcilar, grupBiriKatildi]); // eslint-disable-line react-hooks/exhaustive-deps
   // ARKA PLANA GEÇİNCE (sekme gizlenince) Gloxoo konuşması + zil OTOMATİK sussun (arkada takılı kalmasın)
   useEffect(() => {
     const gizle = () => { if (document.hidden) { try { gloxSustur(); } catch (e) {} try { zilDurdur(); } catch (e) {} try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {} } };
@@ -10542,9 +10544,11 @@ export default function Anasayfa({ pro = false }) {
           {grupKatilimcilar.length === 0 && (
             <div className="grup-bekle">
               {grupBaglaniyor ? t("baglaniyor", "Bağlanıyor…")
-                : (grupArama.olusturan
-                    ? (t("araniyor", "Aranıyor…") + " " + ((grupArama.davetliler || []).map((d) => d.ad).filter(Boolean).join(", ")))
-                    : t("grupBekleniyor", "Katılmaları bekleniyor…"))}
+                : (grupBiriKatildi
+                    ? t("grupHerkesAyrildi", "Herkes ayrıldı — kapatabilirsin.")
+                    : (grupArama.olusturan
+                        ? (t("araniyor", "Aranıyor…") + " " + ((grupArama.davetliler || []).map((d) => d.ad).filter(Boolean).join(", ")))
+                        : t("grupBekleniyor", "Katılmaları bekleniyor…")))}
             </div>
           )}
           <div className="grup-alt">
