@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, begeniSay, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -476,8 +476,11 @@ function BegenenlerSerit({ postId, sayi, dil, onAc, onSayi }) {
   useEffect(() => {
     let iptal = false;
     if (!postId || !sayi) { setListe([]); return; }
-    // GERÇEK beğenenleri oku (100'e kadar) → hem avatarlar hem DOĞRU SAYI (sayaç yanlışsa bunu kullanırız: 2 kişi beğendiyse 2 gösterir)
-    begenenleriOku(postId, 100).then((l) => { if (!iptal) { const arr = l || []; setListe(arr); if (onSayi) onSayi(postId, arr.length); } }).catch(() => { if (!iptal) setListe([]); });
+    // ⚡ MASRAF DÜŞÜRÜLDÜ: Avatarlar için SADECE 6 beğeni oku (eskiden 100 okuyordu — akışta her gönderi için!).
+    //    DOĞRU SAYIYI ise ucuz "sayım sorgusu" (begeniSay/getCountFromServer, ~1 okuma) ile al → sayaç yanlışsa bile
+    //    2 kişi beğendiyse 2 yazar. Sayım başarısızsa (çevrimdışı) sayaç değerine (sayi) düşülür.
+    begenenleriOku(postId, 6).then((l) => { if (!iptal) setListe(l || []); }).catch(() => { if (!iptal) setListe([]); });
+    begeniSay(postId).then((n) => { if (!iptal && onSayi && n != null) onSayi(postId, n); }).catch(() => {});
     return () => { iptal = true; };
   }, [postId, sayi]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!liste || !liste.length) return null;
@@ -502,7 +505,9 @@ function YorumcuSerit({ postId, sayi, onAc }) {
   useEffect(() => {
     let iptal = false;
     if (!postId || !sayi) { setListe([]); return; }
-    yorumlariOku(postId).then((yl) => {
+    // ⚡ MASRAF DÜŞÜRÜLDÜ: Avatarlar için SADECE 6 yorum oku (eskiden 80 okuyordu — akışta her gönderi için!).
+    //    Yorum SAYISI zaten gönderideki sayaçtan (p.yorumSayisi) geliyor; bu şerit sadece ufak avatarlar için.
+    yorumlariOku(postId, 6).then((yl) => {
       if (iptal) return;
       const g = new Set(); const out = [];
       (yl || []).forEach((y) => { const k = y.uid || y.ad; if (k && !g.has(k)) { g.add(k); out.push(y); } });
