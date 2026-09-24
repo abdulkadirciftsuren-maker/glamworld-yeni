@@ -1646,8 +1646,12 @@ export default function Anasayfa({ pro = false }) {
   const [grupKurAcik, setGrupKurAcik] = useState(false); // "yeni grup" penceresi
   const [grupKurAd, setGrupKurAd] = useState("");
   const [grupUyeEkleAcik, setGrupUyeEkleAcik] = useState(false); // "üye ekle" penceresi
+  const [grupUyelerAcik, setGrupUyelerAcik] = useState(false);   // "grup üyeleri" penceresi (kim var)
+  const [grupAraSecAcik, setGrupAraSecAcik] = useState(false);   // "kimleri arayalım" seçme penceresi
+  const [grupYukleniyor, setGrupYukleniyor] = useState(false);   // grup sohbetine foto/video yükleniyor
   const aktifGrupRef = useRef(null);
   const grupMesajKaydirRef = useRef(null); // grup sohbetini en alta kaydırmak için
+  const grupDosyaRef = useRef(null);       // grup sohbeti foto/video seçici (gizli input)
   const [grupMik, setGrupMik] = useState(false);       // kendi mikrofonum kapalı mı (grupta)
   const [grupKam, setGrupKam] = useState(false);       // kendi kameram kapalı mı (grupta)
   const [grupBaglaniyor, setGrupBaglaniyor] = useState(false);
@@ -4116,17 +4120,41 @@ export default function Anasayfa({ pro = false }) {
     setAktifGrup(null);
     bilgiBalonu(t("gruptanAyrildin", "Gruptan ayrıldın."));
   };
-  // Gruptan GÖRÜNTÜLÜ ARA — grup üyelerini (ben hariç) alıp çalışan grup-arama sistemini başlatır
-  const grupBuGruptanAra = () => {
+  // Gruptan ARA — önce KİMLERİ arayacağını SEÇ (hepsi seçili başlar; istemediğini çıkar), sonra ara.
+  const grupAramaAc = () => {
     const uu = auth.currentUser; const g = aktifGrupRef.current || aktifGrup;
     if (!uu || !g) return;
-    const digerler = (g.uyeler || []).filter((x) => x && x !== uu.uid).map((uid) => {
-      const b = kisiBilgiHarita[uid] || {}; const sx = (sohbetListesi.find((s) => s.uid === uid) || {});
-      return { uid, ad: b.ad || sx.ad || "" };
-    });
+    const digerler = (g.uyeler || []).filter((x) => x && x !== uu.uid);
     if (!digerler.length) { bilgiBalonu(t("grupUyeYokArama", "Önce gruba üye ekle, sonra ara.")); return; }
-    setAktifGrup(null);
-    grupAramaBaslat(digerler);
+    setGrupSecim(digerler); // varsayılan: HERKES seçili
+    setGrupAraSecAcik(true);
+  };
+  const grupSecilenleriAra = () => {
+    const kisiler = grupSecim.map((uid) => { const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {}; return { uid, ad: b.ad || sx.ad || "" }; });
+    if (!kisiler.length) return;
+    setGrupAraSecAcik(false); setAktifGrup(null);
+    grupAramaBaslat(kisiler);
+  };
+  // Grup sohbetine FOTO/VİDEO ekle (dosyaYukle gerçek türü korur → foto görünür, video oynar)
+  const grupMedyaSec = () => { try { if (grupDosyaRef.current) grupDosyaRef.current.click(); } catch (e) {} };
+  const grupMedyaSecildi = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    try { e.target.value = ""; } catch (x) {}
+    const uu = auth.currentUser; const g = aktifGrupRef.current || aktifGrup;
+    if (!f || !uu || !g || !g.id) return;
+    const video = ((f.type || "").indexOf("video") === 0);
+    setGrupYukleniyor(true);
+    try {
+      const r = await dosyaYukle(f, uu.uid, () => {});
+      if (r && r.url) await grupMesajGonder(g.id, { [video ? "video" : "gorsel"]: r.url, gonderen: { uid: uu.uid, ad: benimAdGetir(), foto: benimFotoGetir() } });
+      else bilgiBalonu(t("grupMedyaHata", "Yüklenemedi, tekrar dene."));
+    } catch (x) { bilgiBalonu(t("grupMedyaHata", "Yüklenemedi, tekrar dene.")); }
+    setGrupYukleniyor(false);
+  };
+  // Kurucu bir üyeyi gruptan çıkarır
+  const grupUyeCikarEt = async (uid) => {
+    const g = aktifGrupRef.current || aktifGrup; if (!g || !g.id || !uid) return;
+    try { await grupUyeCikar(g.id, uid); bilgiBalonu(t("grupUyeCikarildi", "Kişi gruptan çıkarıldı.")); } catch (e) {}
   };
   // ZİL / ÇALMA SESİ — GERÇEK/PARLAK telefon çınlaması (gömülü WAV, ag gerektirmez). WebAudio "bip" değil → tanıdık, GÜR telefon zili.
   // Kullanıcı: sentetik bip boğuk/uzaktan geliyordu → gerçek zil sesine geçildi. Arayan da aranan da aynı gür zili duyar.
@@ -10579,13 +10607,13 @@ export default function Anasayfa({ pro = false }) {
         <div className="grp-ekran">
           <div className="grp-ekran-ust">
             <button className="grp-ust-geri" onClick={() => setAktifGrup(null)} aria-label={t("geri", "Geri")} title={t("geri", "Geri")}>‹</button>
-            <div className="grp-ust-orta">
+            {/* İSME/SAYIYA DOKUN → üyeleri gör (kim var) */}
+            <button className="grp-ust-orta" onClick={() => setGrupUyelerAcik(true)} title={t("grupUyeleriGor", "Üyeleri gör")}>
               <b className="notranslate" translate="no">{aktifGrup.ad || "—"}</b>
-              <i className="notranslate" translate="no">{(aktifGrup.uyeler ? aktifGrup.uyeler.length : 1) + " " + t("kisiKisa", "kişi")}</i>
-            </div>
-            <button className="grp-ust-btn" onClick={grupBuGruptanAra} aria-label={t("grupAra", "Görüntülü ara")} title={t("grupAra", "Görüntülü ara")}>📹</button>
+              <i className="notranslate" translate="no">{(aktifGrup.uyeler ? aktifGrup.uyeler.length : 1) + " " + t("kisiKisa", "kişi") + " · " + t("uyeleriGor", "üyeleri gör")}</i>
+            </button>
+            <button className="grp-ust-btn" onClick={grupAramaAc} aria-label={t("grupAra", "Görüntülü ara")} title={t("grupAra", "Görüntülü ara")}>📹</button>
             <button className="grp-ust-btn" onClick={() => { setGrupSecim([]); setGrupUyeEkleAcik(true); }} aria-label={t("grupUyeEkleBaslik", "Üye ekle")} title={t("grupUyeEkleBaslik", "Üye ekle")}>＋</button>
-            <button className="grp-ust-btn" onClick={() => { if (window.confirm(t("gruptanAyrilSor", "Gruptan ayrılmak istiyor musun?"))) gruptanAyrilEt(); }} aria-label={t("gruptanAyril", "Gruptan ayrıl")} title={t("gruptanAyril", "Gruptan ayrıl")}>🚪</button>
           </div>
           <div className="grp-ekran-mesajlar" ref={grupMesajKaydirRef}>
             {grupMesajlari.length === 0 ? (
@@ -10603,9 +10631,68 @@ export default function Anasayfa({ pro = false }) {
             })}
           </div>
           <div className="grp-ekran-yaz">
+            <input ref={grupDosyaRef} type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={grupMedyaSecildi} />
+            <button className="grp-yaz-medya" onClick={grupMedyaSec} disabled={grupYukleniyor} aria-label={t("fotoVideo", "Foto/Video")} title={t("fotoVideo", "Foto/Video")}>{grupYukleniyor ? "⏳" : "📷"}</button>
             <input className="grp-yaz-input notranslate" translate="no" value={grupYaziInput} onChange={(e) => setGrupYaziInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") grupYaziGonderEt(); }} placeholder={t("grupMesajYaz", "Mesaj yaz…")} />
             <button className="grp-yaz-gonder" onClick={grupYaziGonderEt} aria-label={t("gonder", "Gönder")} title={t("gonder", "Gönder")}>➤</button>
+          </div>
+        </div>
+      )}
+
+      {/* GRUP ÜYELERİ — kim var (isme/sayıya dokununca) + kurucu çıkarabilir + Gruptan ayrıl */}
+      {grupUyelerAcik && aktifGrup && (
+        <div className="grp-modal-fon" onClick={(e) => { if (e.target === e.currentTarget) setGrupUyelerAcik(false); }}>
+          <div className="grp-modal grp-modal-genis">
+            <b className="grp-modal-baslik notranslate" translate="no">{t("grupUyeleri", "Grup üyeleri") + " (" + (aktifGrup.uyeler ? aktifGrup.uyeler.length : 1) + ")"}</b>
+            <div className="grp-uye-liste">
+              {(aktifGrup.uyeler || []).map((uid) => {
+                const benim = uid === benUid;
+                const b = kisiBilgiHarita[uid] || {};
+                const sx = sohbetListesi.find((x) => x.uid === uid) || {};
+                const ad = benim ? t("ben", "Ben") : (b.ad || sx.ad || "—");
+                const foto = benim ? (benimFotoGetir() || "") : (b.foto || sx.foto || "");
+                const kurucu = aktifGrup.olusturan === uid;
+                return (
+                  <div key={uid} className="grp-uye-satir">
+                    <span className="mm-grup-avatar">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (ad.trim()[0] || "?").toUpperCase()}</span>
+                    <b className="notranslate" translate="no">{ad}{kurucu ? " · " + t("kurucu", "kurucu") : ""}</b>
+                    {(aktifGrup.olusturan === benUid && !benim) ? <button className="grp-uye-cikar" onClick={() => grupUyeCikarEt(uid)}>{t("cikar", "Çıkar")}</button> : null}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="grp-modal-alt">
+              <button className="grp-modal-vaz" onClick={() => setGrupUyelerAcik(false)}>{t("kapat", "Kapat")}</button>
+              <button className="grp-uye-ayril" onClick={() => { if (window.confirm(t("gruptanAyrilSor", "Gruptan ayrılmak istiyor musun?"))) { setGrupUyelerAcik(false); gruptanAyrilEt(); } }}>🚪 {t("gruptanAyril", "Gruptan ayrıl")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KİMLERİ ARAYALIM — arama öncesi kişi seçimi (hepsi seçili başlar) */}
+      {grupAraSecAcik && aktifGrup && (
+        <div className="grp-modal-fon" onClick={(e) => { if (e.target === e.currentTarget) setGrupAraSecAcik(false); }}>
+          <div className="grp-modal grp-modal-genis">
+            <b className="grp-modal-baslik notranslate" translate="no">{t("grupKimleriAra", "Kimleri arayalım?")}</b>
+            <div className="grp-uye-liste">
+              {(aktifGrup.uyeler || []).filter((x) => x !== benUid).map((uid) => {
+                const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {};
+                const ad = b.ad || sx.ad || "—"; const foto = b.foto || sx.foto || "";
+                const secili = grupSecim.indexOf(uid) !== -1;
+                return (
+                  <button key={uid} className={"mm-grup-oge" + (secili ? " secili" : "")} onClick={() => setGrupSecim((a) => a.indexOf(uid) !== -1 ? a.filter((x) => x !== uid) : [...a, uid])}>
+                    <span className="mm-grup-avatar">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (ad.trim()[0] || "?").toUpperCase()}</span>
+                    <b className="notranslate" translate="no">{ad}</b>
+                    <span className={"mm-grup-tik" + (secili ? " on" : "")}>{secili ? "✓" : "＋"}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="grp-modal-alt">
+              <button className="grp-modal-vaz" onClick={() => setGrupAraSecAcik(false)}>{t("vazgec", "Vazgeç")}</button>
+              <button className="grp-modal-tamam" disabled={grupSecim.length === 0} onClick={grupSecilenleriAra}>📹 {t("ara", "Ara") + (grupSecim.length ? " (" + grupSecim.length + ")" : "")}</button>
+            </div>
           </div>
         </div>
       )}
