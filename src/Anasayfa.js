@@ -263,6 +263,47 @@ function GrupKare({ p }) {
     </div>
   );
 }
+// CUMA/TEBRİK POSTERİNE DOĞRU TÜRKÇE YAZIYI CANVAS İLE BAS (resim üreticisi Türkçe'yi yanlış yazıyor — "Cumalar" yerine
+// "Cumular" gibi). Bu yüzden arka planı YAZISIZ üretip başlığı BURADA doğru harflerle, şık altın yazıyla üstüne basıyoruz.
+function _cumaYaziBas(dataUrl, baslik, altYazi) {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image(); img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const W = img.naturalWidth || 1024, H = img.naturalHeight || 1024;
+          const c = document.createElement("canvas"); c.width = W; c.height = H;
+          const x = c.getContext("2d");
+          x.drawImage(img, 0, 0, W, H);
+          // Alt-orta bölgeye okunurluk için yumuşak KOYU KAHVE bant (siyah DEĞİL — anayasa)
+          const bandY = H * 0.58;
+          const g = x.createLinearGradient(0, bandY, 0, H);
+          g.addColorStop(0, "rgba(24,14,0,0)"); g.addColorStop(1, "rgba(24,14,0,0.66)");
+          x.fillStyle = g; x.fillRect(0, bandY, W, H - bandY);
+          x.textAlign = "center"; x.textBaseline = "middle";
+          const bY = H * 0.80;
+          // BAŞLIK — büyük şık altın; sığmıyorsa font küçülür (yazı KESİLMEZ)
+          let f = Math.round(W * 0.088);
+          x.font = "700 " + f + "px Georgia,'Times New Roman',serif";
+          while (x.measureText(baslik).width > W * 0.9 && f > 20) { f -= 2; x.font = "700 " + f + "px Georgia,serif"; }
+          const yg = x.createLinearGradient(0, bY - f, 0, bY + f);
+          yg.addColorStop(0, "#fff3c4"); yg.addColorStop(0.5, "#ffd700"); yg.addColorStop(1, "#e6b422");
+          x.shadowColor = "rgba(0,0,0,0.55)"; x.shadowBlur = Math.round(W * 0.02); x.shadowOffsetY = 2;
+          x.fillStyle = yg; x.fillText(baslik, W / 2, bY);
+          // ALT SATIR (dua dileği)
+          if (altYazi) {
+            const f2 = Math.max(16, Math.round(f * 0.5));
+            x.font = "600 " + f2 + "px Georgia,serif"; x.shadowBlur = Math.round(W * 0.012);
+            x.fillStyle = "#ffe9a8"; x.fillText(altYazi, W / 2, bY + f * 0.92);
+          }
+          resolve(c.toDataURL("image/jpeg", 0.92));
+        } catch (e) { resolve(dataUrl); }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    } catch (e) { resolve(dataUrl); }
+  });
+}
 // İki GPS noktası arası KUŞ UÇUŞU mesafe (km) — tanışma kartlarında "X km uzağında" için
 function _kmUzaklik(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some((v) => typeof v !== "number" || isNaN(v))) return null;
@@ -6239,6 +6280,7 @@ export default function Anasayfa({ pro = false }) {
       if (!metin && cizim) metin = t("cizimHazir", "İşte çizdim 🎨");
       // GERÇEK RESİM — AI [RESIM: ingilizce betim] koyduysa: Firebase AI (Gemini) ile GERÇEK resim üret (async, aşağıda)
       let resimIstem = "";
+      let resimUstuYazi = ""; // CUMA/tebrik: doğru Türkçe başlık — resim gelince canvas ile ÜSTÜNE basılır (üretici Türkçe'yi yanlış yazıyor)
       const rm = metin.match(/\[RESIM:\s*([^\]]+)\]/i);
       if (rm) { resimIstem = (rm[1] || "").trim(); metin = metin.replace(/\[RESIM:[^\]]*\]/gi, "").trim(); }
       // GÜVENLİK AĞI (İLK İSTEK DÜZELTMESİ): Gloxoo bazen İLK istekte [RESIM:] etiketini KOYMADAN
@@ -6283,17 +6325,23 @@ export default function Anasayfa({ pro = false }) {
           // Resmin ÜSTÜNDEKİ kısa başlık (her seferinde farklı)
           const basliklar = ["Hayırlı Cumalar", "Cumanız Mübarek Olsun", "Hayırlı ve Bereketli Cumalar", "Mübarek Cumalar", "Cuma Bereketi Üzerinize Olsun", "Hayırlı Cumalar Diliyorum"];
           const baslik = sec(basliklar);
-          // Resmin SAHNESİ (her seferinde farklı — hep aynı yeşil poster olmasın)
+          resimUstuYazi = baslik; // ✍️ doğru Türkçe başlık RESİM GELİNCE canvas ile basılacak (üreticiye yazdırmıyoruz → "Cumular" hatası biter)
+          // Resmin SAHNESİ — HER SEFERİNDE FARKLI + CANLI/RENKLİ (kullanıcı: "hep aynı, canlı güzel değil"). Daha çeşitli.
           const sahneler = [
-            "a majestic grand mosque silhouette at golden sunrise, warm glowing sky, soft light rays, elegant Islamic geometric ornaments framing the scene",
-            "an ornate glowing golden Islamic lantern (fanous), intricate arabesque patterns, soft warm bokeh light, luxurious gold and amber tones",
-            "graceful mosque minarets against a warm golden dawn sky with a delicate crescent moon and gentle stars, glowing soft clouds",
-            "an open Holy Quran with soft golden light rays, pink and cream roses beside it, warm serene glowing atmosphere",
-            "elegant prayer beads (tesbih) resting on delicate roses, warm golden light, soft luxurious background, ornate golden arabesque border",
-            "a beautiful mosque dome with a golden crescent glowing at magic hour, warm amber sky, ornate golden Islamic pattern border",
+            "a majestic grand mosque silhouette at a vivid golden sunrise, glowing orange and pink sky, radiant light rays, elegant Islamic geometric ornaments",
+            "an ornate glowing golden Islamic lantern (fanous), intricate arabesque patterns, warm bokeh lights, luxurious gold, emerald and amber tones",
+            "graceful mosque minarets against a colorful dawn sky with a delicate crescent moon and shimmering stars, glowing pastel clouds",
+            "an open Holy Quran with soft heavenly golden light rays, fresh pink and cream roses beside it, serene glowing atmosphere",
+            "elegant prayer beads (tesbih) resting on vibrant colorful roses, warm golden light, luxurious ornate golden arabesque border",
+            "a beautiful mosque dome with a golden crescent glowing at magic hour, vivid turquoise and amber sky, ornate golden pattern border",
+            "a lush blooming garden with tulips and roses at golden hour, a distant elegant mosque, soft dreamy warm light, rich vibrant colors",
+            "intricate turquoise, emerald and gold Islamic geometric art with a glowing central medallion, luxurious festive, highly detailed",
+            "a serene lake mirroring a grand illuminated mosque at twilight, warm golden reflections, colorful glowing sky, peaceful",
+            "elegant golden Islamic calligraphy ornamentation on a rich deep emerald and royal blue background with delicate floral gold filigree",
           ];
           const sahne = sec(sahneler);
-          resimIstem = `A stunning full-bleed vertical greeting poster that FILLS THE ENTIRE FRAME edge to edge. Do NOT show a photo of a poster on a shelf or wall, no frame, no mockup, no white borders, no empty margins — the artwork itself covers the whole image. Scene: ${sahne}. Large elegant ornate golden calligraphy-style text, centered, reading "${baslik}" in Turkish, with a smaller graceful line "Dualarınız kabul olsun" beneath it. Rich warm gold and colorful festive tones, luxurious, highly detailed, serene, photorealistic, high quality, 4k, vertical composition.`;
+          // ⛔ ÜRETİCİYE YAZI YAZDIRMIYORUZ (Türkçe'yi bozuyor). Sadece güzel, YAZISIZ arka plan iste; başlık sonra canvas ile basılır.
+          resimIstem = `A stunning full-bleed vertical Islamic Friday greeting BACKGROUND artwork that FILLS THE ENTIRE FRAME edge to edge — no frame, no mockup, no shelf, no white borders. Scene: ${sahne}. IMPORTANT: absolutely NO text, NO letters, NO words, NO calligraphy writing anywhere in the image — text-free artwork only. Keep the lower-center area calm and softly shaded so a greeting can be placed there later. Rich warm gold and vivid festive colors, luxurious, highly detailed, serene, photorealistic, high quality, 4k, vertical composition.`;
           // Gerçek DUA (paylaşım kartı) — havuzdan rastgele, her seferinde FARKLI. UZUN ve GÜZEL (kullanıcı: "yazı kısa,
           // biraz daha uzun ve düzgün söylesin"). Her biri 4-5 satır, dolu dolu, akıcı bir dua.
           const dualar = [
@@ -6374,7 +6422,10 @@ export default function Anasayfa({ pro = false }) {
           const zamanAsimi = new Promise((cz) => setTimeout(() => cz({ hata: t("resimZamanAsimi", "Resim zamanında gelmedi, tekrar dener misin?") }), 75000));
           let sonuc; try { sonuc = await Promise.race([gloxooResimUret(resimIstem, girdiFoto), zamanAsimi]); } catch (e) { sonuc = { hata: (e && (e.message || e.name)) || "hata" }; }
           // ESKİ ÇALIŞAN HAL: resim doğrudan base64 (data:) olarak durur → indire basınca NORMAL iner (galeriye).
-          setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimYuk: false, resimData: (sonuc && sonuc.dataUrl) || "", resimHata: (sonuc && sonuc.hata) || "" } : m)));
+          let ciktiUrl = (sonuc && sonuc.dataUrl) || "";
+          // CUMA/tebrik: doğru Türkçe başlığı canvas ile resmin ÜSTÜNE bas (üreticinin yanlış yazısı yerine bizim doğru yazımız)
+          if (ciktiUrl && resimUstuYazi) { try { ciktiUrl = await _cumaYaziBas(ciktiUrl, resimUstuYazi, "Dualarınız kabul olsun"); } catch (e) {} }
+          setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimYuk: false, resimData: ciktiUrl, resimHata: (sonuc && sonuc.hata) || "" } : m)));
         })();
       }
       // HAZIRLANAN İÇERİK (paylaşım metni vb.): kullanıcı SÖZLÜ istediyse ve panel KAPALIYSA, yazı panelini
