@@ -4011,11 +4011,14 @@ export default function Anasayfa({ pro = false }) {
     grupRoomRef.current = null;
     setGrupArama(null); setGrupKatilimcilar([]); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(false); setGrupBiriKatildi(false);
   };
-  const grupLivekitBaglan = async (oda) => {
-    // 📷 KAMERA/MİKROFONU DOKUNMA ANINDA İSTE ama BEKLEME → bağlanmayla PARALEL yürüsün (çok daha HIZLI açılır).
-    //    Mobil tarayıcı getUserMedia için KULLANICI DOKUNUŞU ister; bu yüzden createLocalTracks'i EN BAŞTA (dokunma anında)
-    //    çağırıyoruz. Ama await etmiyoruz — kamera hazırlanırken aynı anda token alınıp odaya bağlanılır (seri değil, paralel).
+  const grupLivekitBaglan = async (oda, olusturan) => {
+    // 📷 KAMERA/MİKROFONU DOKUNMA ANINDA İSTE (mobil getUserMedia için KULLANICI DOKUNUŞU şart; en başta çağır).
     const yerelTracksSozu = createLocalTracks({ audio: true, video: { resolution: { width: 480, height: 360, frameRate: 20 } } }).catch(() => []);
+    let yerelTracks = [];
+    // ⚡ KURUCU (boş oda): kamera bağlanmayla PARALEL → hızlı açılır.
+    // 🧩 KATILAN (İÇİNDE ZATEN YAYIN YAPAN KİŞİLER OLAN DOLU ODA): kamerayı ÖNCE bitir, SONRA bağlan → kamera açılışı
+    //    bağlanmanın ICE'iyle YARIŞMASIN (dolu odaya bağlanma zaten ağır; yarışınca telefonda bağlantı takılıp "bağlanamadı" oluyordu).
+    if (!olusturan) { try { yerelTracks = (await yerelTracksSozu) || []; } catch (e) { yerelTracks = []; } }
     const { token, url } = await livekitTokenAl(oda);
     // GRUPTA adaptiveStream+dynacast AÇIK (herkese tam video DONDURUR; açıkken sadece görünen kare + uygun kalite).
     // + DÜŞÜK çözünürlük yayınla (480x360@20): çok kişide telefon/bağlantı boğulmasın, donma/kesilme azalsın. simulcast ile
@@ -4036,10 +4039,9 @@ export default function Anasayfa({ pro = false }) {
     room.on(RoomEvent.TrackUnmuted, yenile);
     room.on(RoomEvent.Disconnected, () => { if (grupRoomRef.current === room) grupAramaKapat(); });
     await room.connect(url, token);
-    // Bağlantı hazır → paralel yürüyen kamera/mikrofon track'lerini al ve yayınla (mobilde de kamera KESİN gider;
+    // Kamera/mikrofon track'lerini al (kurucuda paralel yürüyordu, şimdi hazır) ve yayınla (mobilde de kamera KESİN gider;
     //    alınamadıysa/izin yoksa sessizce geçilir, en azından karşıyı görmeye devam edilir).
-    let yerelTracks = [];
-    try { yerelTracks = (await yerelTracksSozu) || []; } catch (e) { yerelTracks = []; }
+    if (olusturan) { try { yerelTracks = (await yerelTracksSozu) || []; } catch (e) { yerelTracks = []; } }
     for (const tr of yerelTracks) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} }
     // Kendi görüntümü kendi kareme bağla (element mount olana kadar birkaç kez dene)
     const yerelVid = yerelTracks.find((t) => t && t.kind === "video");
@@ -4075,14 +4077,15 @@ export default function Anasayfa({ pro = false }) {
       try { aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: k.uid, arananAd: k.ad || "", tip: "grup", oda }).catch(() => {}); } catch (e) {}
       try { bildirimEkle({ aliciUid: k.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: bildirimFotoUrl || "", tip: "arama", metin: "📹 Grup görüşmesine çağırdı" }).catch(() => {}); } catch (e) {}
     });
-    try { await grupLivekitBaglan(oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
+    try { await grupLivekitBaglan(oda, true); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
     setGrupBaglaniyor(false);
   };
   const grupKatil = async (g) => {
     if (!g || !g.oda) return;
     setGelenArama(null); aramaBildirimKapat();
-    setGrupArama({ oda: g.oda, olusturan: false }); setGrupMik(false); setGrupKam(false);
-    try { await grupLivekitBaglan(g.oda); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
+    setGrupArama({ oda: g.oda, olusturan: false }); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(true);
+    try { await grupLivekitBaglan(g.oda, false); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); grupAramaKapat(); return; }
+    setGrupBaglaniyor(false);
     try { if (g.id) aramaSil(g.id); } catch (e) {} // davet kaydını temizle (zil sussun)
   };
   const grupMikToggle = async () => { const r = grupRoomRef.current; if (!r) return; const yeni = !grupMik; try { await r.localParticipant.setMicrophoneEnabled(!yeni); setGrupMik(yeni); } catch (e) {} };
