@@ -5789,7 +5789,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .sa-urun-bil span{ color:#7a5a12; font-size:12.5px; font-weight:600; line-height:1.35; }
 
 /* ===== GRUP GÖRÜŞMESİ (10 kişiye kadar) — altın zemin, KARE öğeler (anayasa) ===== */
-.grup-fon{ position:fixed; inset:0; z-index:9500; display:flex; flex-direction:column; background:linear-gradient(160deg,#f3d27a,#e6b84e 60%,#d9a63c); padding:10px; }
+.grup-fon{ position:fixed; inset:0; z-index:100035; display:flex; flex-direction:column; background:linear-gradient(160deg,#f3d27a,#e6b84e 60%,#d9a63c); padding:10px; }
 .grup-ust{ display:flex; align-items:center; justify-content:space-between; padding:6px 10px 10px; color:#4a3600; }
 .grup-ust b{ font-size:18px; font-weight:900; }
 .grup-ust span{ font-size:13.5px; font-weight:800; background:rgba(255,255,255,0.6); padding:3px 10px; border-radius:12px; }
@@ -5840,7 +5840,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .grup-toast{ align-self:center; margin:0 auto 8px; background:rgba(74,54,0,0.82); color:#ffe9a8; font-size:13px; font-weight:800; padding:5px 14px; border-radius:12px; }
 
 /* Ortak modal (yeni grup / üye ekle) */
-.grp-modal-fon{ position:fixed; inset:0; z-index:9700; display:flex; align-items:center; justify-content:center; background:rgba(74,54,0,0.35); padding:16px; }
+.grp-modal-fon{ position:fixed; inset:0; z-index:100042; display:flex; align-items:center; justify-content:center; background:rgba(74,54,0,0.35); padding:16px; }
 .grp-modal{ width:100%; max-width:440px; background:linear-gradient(180deg,#fff8e3,#fbe7b6); border:2px solid #ffd700; border-radius:18px; padding:16px; box-shadow:0 10px 30px rgba(80,60,0,0.3); }
 .grp-modal-genis{ max-width:520px; }
 .grp-modal-baslik{ display:block; font-size:18px; font-weight:900; color:#4a3600; margin-bottom:12px; }
@@ -5854,7 +5854,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .grp-uye-bos{ text-align:center; color:#7a5a12; font-weight:700; padding:20px 8px; }
 
 /* Grup sohbet ekranı (tam ekran) */
-.grp-ekran{ position:fixed; inset:0; z-index:9600; display:flex; flex-direction:column; background:linear-gradient(160deg,#f6e6b0,#f0d68a); }
+.grp-ekran{ position:fixed; inset:0; z-index:100022; display:flex; flex-direction:column; background:linear-gradient(160deg,#f6e6b0,#f0d68a); }
 .grp-ekran-ust{ display:flex; align-items:center; gap:8px; padding:10px 12px; background:linear-gradient(180deg,#ffe9a8,#f2c94c); border-bottom:2px solid rgba(120,90,0,0.2); }
 .grp-ust-geri{ font-size:30px; line-height:1; border:none; background:transparent; color:#4a3600; font-weight:900; cursor:pointer; padding:0 6px; }
 .grp-ust-orta{ display:flex; flex-direction:column; flex:1 1 auto; min-width:0; }
