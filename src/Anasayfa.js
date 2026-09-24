@@ -19,7 +19,7 @@ import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KO
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // Gloxoo sohbetindeki ağır görselleri (üretilen resim + foto) IndexedDB'de KALICI sakla (localStorage'a sığmıyordu → kaybolmasın)
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
-import { Room, RoomEvent, Track } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
+import { Room, RoomEvent, Track, createLocalTracks } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
 import { ZIL_GELEN, ZIL_GIDEN } from "./zilSesi"; // gelen arama zili (melodik/gür) + giden arama ringback tonu (ahize) — gömülü WAV
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
@@ -3971,6 +3971,11 @@ export default function Anasayfa({ pro = false }) {
     setGrupArama(null); setGrupKatilimcilar([]); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(false);
   };
   const grupLivekitBaglan = async (oda) => {
+    // 📷 KAMERA/MİKROFONU DOKUNMA ANINDA AL (room.connect'ten ÖNCE). Mobil tarayıcı getUserMedia için KULLANICI
+    //    DOKUNUŞU ister; kamerayı bağlantıdan SONRA açınca mobilde (bağlanma birkaç sn sürer) dokunuş hakkı biter,
+    //    kamera AÇILMAZ → "kendimi göremiyorum, karşı taraf beni görmüyor". Bu yüzden track'leri ÖNCE (dokunma anında) al.
+    let yerelTracks = [];
+    try { yerelTracks = await createLocalTracks({ audio: true, video: { resolution: { width: 480, height: 360, frameRate: 20 } } }); } catch (e) { yerelTracks = []; }
     const { token, url } = await livekitTokenAl(oda);
     // GRUPTA adaptiveStream+dynacast AÇIK (herkese tam video DONDURUR; açıkken sadece görünen kare + uygun kalite).
     // + DÜŞÜK çözünürlük yayınla (480x360@20): çok kişide telefon/bağlantı boğulmasın, donma/kesilme azalsın. simulcast ile
@@ -3990,16 +3995,17 @@ export default function Anasayfa({ pro = false }) {
     room.on(RoomEvent.TrackUnmuted, yenile);
     room.on(RoomEvent.Disconnected, () => { if (grupRoomRef.current === room) grupAramaKapat(); });
     await room.connect(url, token);
-    // Kamera/mikrofonu ARKA PLANDA aç (BEKLEME): odaya HIZLI girilir; ana iş parçacığı ağır kamera açılışıyla kilitlenip
-    //    davet ağ isteklerini geciktirmez ve "geç bağlanma" olmaz. Görüntü hazır olunca aşağıdaki kendiniBagla ile gelir.
-    room.localParticipant.enableCameraAndMicrophone().catch(() => {});
+    // Dokunma anında alınan kamera+mikrofon track'lerini yayınla → mobilde de kamera KESİN gider. (Alınamadıysa/izin
+    //    yoksa sessizce geçilir; en azından karşıyı görmeye devam edilir.)
+    for (const tr of yerelTracks) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} }
     // Kendi görüntümü kendi kareme bağla (element mount olana kadar birkaç kez dene)
+    const yerelVid = yerelTracks.find((t) => t && t.kind === "video");
     let deneme = 0;
     const kendiniBagla = () => {
       deneme++;
       try {
-        const vp = room.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (vp && vp.videoTrack && grupYerelVideoRef.current) { try { vp.videoTrack.attach(grupYerelVideoRef.current); } catch (e) {} return; }
+        const vt = (yerelVid && yerelVid.attach) ? yerelVid : ((room.localParticipant.getTrackPublication(Track.Source.Camera) || {}).videoTrack);
+        if (vt && grupYerelVideoRef.current) { try { vt.attach(grupYerelVideoRef.current); } catch (e) {} return; }
       } catch (e) {}
       if (deneme < 25) setTimeout(kendiniBagla, 200);
     };
