@@ -166,6 +166,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // KALICI/GERÇEK GRUPLAR — SADECE ÜYELER görür ve yazar. Üye olan yeni üye ekleyebilir / gruptan ayrılabilir; sahibi veya yönetici siler.
+    match /gruplar/{id} {
+      allow read: if girisli() && request.auth.uid in resource.data.uyeler;
+      allow create: if girisli() && request.resource.data.olusturan == request.auth.uid && request.auth.uid in request.resource.data.uyeler;
+      allow update: if girisli() && request.auth.uid in resource.data.uyeler;
+      allow delete: if girisli() && (resource.data.olusturan == request.auth.uid || yonetici());
+      // Grup sohbeti — sadece grubun üyeleri okur/yazar (üyelik grup dokümanından kontrol edilir)
+      match /mesajlar/{mid} {
+        allow read: if girisli() && request.auth.uid in get(/databases/$(database)/documents/gruplar/$(id)).data.uyeler;
+        allow create: if girisli() && request.resource.data.gonderenUid == request.auth.uid
+                      && request.auth.uid in get(/databases/$(database)/documents/gruplar/$(id)).data.uyeler;
+        allow update, delete: if false;
+      }
+    }
+
     // İNTERNET ARAMASI (WebRTC sinyalleşme) — sadece arayan/aranan erişir
     match /aramalar/{id} {
       allow read: if girisli() && (resource.data.arayanUid == request.auth.uid || resource.data.arananUid == request.auth.uid);

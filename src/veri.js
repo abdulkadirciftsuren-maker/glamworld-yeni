@@ -525,6 +525,68 @@ export async function mesajlariOku(uid, adet = 60) {
   } catch (e) { return []; }
 }
 
+// ---------- KALICI/GERÇEK GRUPLAR (WhatsApp gibi) ----------
+// gruplar/{id}: { ad, foto, olusturan, uyeler[], olusturmaMs, sonMesaj, sonMesajMs }
+// gruplar/{id}/mesajlar/{mid}: grup sohbeti (sadece üyeler okur/yazar — firestore.rules).
+export async function grupOlustur({ ad, foto, olusturanUid, uyeler } = {}) {
+  if (!olusturanUid || !ad) return null;
+  try {
+    const uy = Array.from(new Set([olusturanUid, ...(uyeler || [])])).filter(Boolean);
+    const ref = doc(collection(db, "gruplar"));
+    await setDoc(ref, {
+      ad: String(ad).slice(0, 60), foto: foto || "",
+      olusturan: olusturanUid, uyeler: uy,
+      olusturmaMs: Date.now(), olusturma: serverTimestamp(),
+      sonMesaj: "", sonMesajMs: Date.now(),
+    });
+    return ref.id;
+  } catch (e) { return null; }
+}
+// Üyesi olduğum grupları CANLI dinle (en son mesajı olan üstte). array-contains → index gerekmez.
+export function gruplarimiDinle(uid, cb) {
+  if (!uid) return () => {};
+  try {
+    const q = query(collection(db, "gruplar"), where("uyeler", "array-contains", uid), fsLimit(100));
+    return onSnapshot(q, (snap) => {
+      const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.sonMesajMs || 0) - (a.sonMesajMs || 0));
+      cb(liste);
+    }, () => cb([]));
+  } catch (e) { return () => {}; }
+}
+export async function grupGuncelle(grupId, veri) {
+  if (!grupId) return false;
+  try { await setDoc(doc(db, "gruplar", grupId), veri, { merge: true }); return true; } catch (e) { return false; }
+}
+export async function grupUyeEkle(grupId, yeniUidler) {
+  if (!grupId || !yeniUidler || !yeniUidler.length) return false;
+  try { await updateDoc(doc(db, "gruplar", grupId), { uyeler: arrayUnion(...yeniUidler) }); return true; } catch (e) { return false; }
+}
+export async function grupUyeCikar(grupId, uid) {
+  if (!grupId || !uid) return false;
+  try { await updateDoc(doc(db, "gruplar", grupId), { uyeler: arrayRemove(uid) }); return true; } catch (e) { return false; }
+}
+export async function grupMesajGonder(grupId, { metin, gorsel, video, dosya, gonderen } = {}) {
+  if (!grupId || !gonderen || !gonderen.uid) return null;
+  try {
+    const ref = doc(collection(db, "gruplar", grupId, "mesajlar"));
+    await setDoc(ref, {
+      gonderenUid: gonderen.uid, gonderenAd: gonderen.ad || "", gonderenFoto: gonderen.foto || "",
+      metin: metin || "", gorsel: gorsel || "", video: video || "", dosya: dosya || null,
+      zamanMs: Date.now(), olusturma: serverTimestamp(),
+    });
+    const ozet = metin ? metin : (gorsel ? "📷 Fotoğraf" : (video ? "🎥 Video" : (dosya ? "📎 Dosya" : "")));
+    try { await setDoc(doc(db, "gruplar", grupId), { sonMesaj: String(ozet).slice(0, 60), sonMesajMs: Date.now() }, { merge: true }); } catch (e) {}
+    return ref.id;
+  } catch (e) { return null; }
+}
+export function grupMesajlariDinle(grupId, cb, adet = 200) {
+  if (!grupId) return () => {};
+  try {
+    const q = query(collection(db, "gruplar", grupId, "mesajlar"), orderBy("zamanMs", "asc"), fsLimit(adet));
+    return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), () => cb([]));
+  } catch (e) { return () => {}; }
+}
+
 // ---------- GERİ BİLDİRİM (Gloxoo öneri beğen/beğenme + yorum → yönetici sayfası) ----------
 export async function geriBildirimEkle(b) {
   if (!b) return null;

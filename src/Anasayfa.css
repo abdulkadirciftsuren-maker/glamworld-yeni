@@ -5825,3 +5825,55 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .mm-grup-tik.on{ background:#FFD700; color:#4a3600; }
 .mm-grup-basla{ margin:8px 12px 14px; padding:14px; border:none; border-radius:14px; background:#e0202c; color:#fff; font-size:16px; font-weight:900; cursor:pointer; box-shadow:0 3px 10px rgba(80,60,0,0.25); }
 .mm-grup-basla:disabled{ background:#d9b96a; color:#7a5a12; }
+
+/* ===== KALICI/GERÇEK GRUPLAR (WhatsApp gibi) — altın/canlı tema, KARE öğeler, siyah zemin YOK ===== */
+.grp-yeni-btn{ display:block; width:100%; margin:0 0 10px; padding:12px; border:none; border-radius:14px; background:linear-gradient(180deg,#ffe9a8,#ffd700); color:#4a3600; font-size:16px; font-weight:900; cursor:pointer; box-shadow:0 3px 10px rgba(120,90,0,0.22); }
+.grp-liste{ display:flex; flex-direction:column; gap:8px; }
+.grp-oge{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:10px; border:1px solid rgba(255,215,0,0.4); border-radius:14px; background:linear-gradient(180deg,#fff8e3,#fdeec0); cursor:pointer; }
+.grp-oge-avatar{ width:48px; height:48px; flex:0 0 auto; border-radius:12px; overflow:hidden; background:linear-gradient(160deg,#f3d27a,#d9a63c); color:#4a3600; font-size:20px; font-weight:900; display:flex; align-items:center; justify-content:center; }
+.grp-oge-avatar img{ width:100%; height:100%; object-fit:cover; }
+.grp-oge-orta{ display:flex; flex-direction:column; min-width:0; }
+.grp-oge-orta b{ font-size:16px; font-weight:900; color:#4a3600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.grp-oge-orta i{ font-size:12.5px; font-style:normal; color:#7a5a12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Grup arama ekranında "X katıldı / ayrıldı" bilgisi */
+.grup-toast{ align-self:center; margin:0 auto 8px; background:rgba(74,54,0,0.82); color:#ffe9a8; font-size:13px; font-weight:800; padding:5px 14px; border-radius:12px; }
+
+/* Ortak modal (yeni grup / üye ekle) */
+.grp-modal-fon{ position:fixed; inset:0; z-index:9700; display:flex; align-items:center; justify-content:center; background:rgba(74,54,0,0.35); padding:16px; }
+.grp-modal{ width:100%; max-width:440px; background:linear-gradient(180deg,#fff8e3,#fbe7b6); border:2px solid #ffd700; border-radius:18px; padding:16px; box-shadow:0 10px 30px rgba(80,60,0,0.3); }
+.grp-modal-genis{ max-width:520px; }
+.grp-modal-baslik{ display:block; font-size:18px; font-weight:900; color:#4a3600; margin-bottom:12px; }
+.grp-modal-input{ width:100%; box-sizing:border-box; padding:12px 14px; border:1.5px solid rgba(255,180,0,0.6); border-radius:12px; background:#fffdf5; color:#4a3600; font-size:16px; font-weight:700; outline:none; }
+.grp-modal-input::placeholder{ color:#b48a2a; font-weight:600; }
+.grp-modal-alt{ display:flex; gap:10px; justify-content:flex-end; margin-top:14px; }
+.grp-modal-vaz{ padding:10px 18px; border:1.5px solid rgba(120,90,0,0.35); border-radius:12px; background:#fff7db; color:#5a3f00; font-size:15px; font-weight:800; cursor:pointer; }
+.grp-modal-tamam{ padding:10px 22px; border:none; border-radius:12px; background:linear-gradient(180deg,#ffe9a8,#ffd700); color:#4a3600; font-size:15px; font-weight:900; cursor:pointer; }
+.grp-modal-tamam:disabled{ opacity:0.5; cursor:default; }
+.grp-uye-liste{ max-height:56vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.grp-uye-bos{ text-align:center; color:#7a5a12; font-weight:700; padding:20px 8px; }
+
+/* Grup sohbet ekranı (tam ekran) */
+.grp-ekran{ position:fixed; inset:0; z-index:9600; display:flex; flex-direction:column; background:linear-gradient(160deg,#f6e6b0,#f0d68a); }
+.grp-ekran-ust{ display:flex; align-items:center; gap:8px; padding:10px 12px; background:linear-gradient(180deg,#ffe9a8,#f2c94c); border-bottom:2px solid rgba(120,90,0,0.2); }
+.grp-ust-geri{ font-size:30px; line-height:1; border:none; background:transparent; color:#4a3600; font-weight:900; cursor:pointer; padding:0 6px; }
+.grp-ust-orta{ display:flex; flex-direction:column; flex:1 1 auto; min-width:0; }
+.grp-ust-orta b{ font-size:17px; font-weight:900; color:#4a3600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.grp-ust-orta i{ font-size:12px; font-style:normal; color:#7a5a12; }
+.grp-ust-btn{ width:42px; height:42px; flex:0 0 auto; border:none; border-radius:12px; background:#fff7db; color:#5a3f00; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(80,60,0,0.2); }
+.grp-ekran-mesajlar{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:7px; }
+.grp-mesaj-bos{ text-align:center; color:#7a5a12; font-weight:700; margin:auto; padding:20px; }
+.grp-msj{ max-width:82%; align-self:flex-start; display:flex; flex-direction:column; gap:3px; background:#fffdf5; border:1px solid rgba(255,180,0,0.4); border-radius:14px; padding:7px 11px; box-shadow:0 1px 3px rgba(80,60,0,0.12); }
+.grp-msj.benim{ align-self:flex-end; background:linear-gradient(180deg,#ffe9a8,#ffdd66); border-color:rgba(255,180,0,0.6); }
+.grp-msj-ad{ font-size:12px; font-weight:800; color:#b47500; }
+.grp-msj-metin{ font-size:15.5px; color:#3a2a00; font-weight:600; white-space:pre-wrap; word-break:break-word; }
+.grp-msj-foto{ max-width:220px; max-height:280px; border-radius:10px; object-fit:cover; }
+.grp-msj-video{ max-width:240px; max-height:300px; border-radius:10px; background:#c98b2a; }
+.grp-ekran-yaz{ display:flex; align-items:center; gap:8px; padding:10px 12px; background:linear-gradient(180deg,#ffefc0,#f2c94c); border-top:2px solid rgba(120,90,0,0.2); }
+.grp-yaz-input{ flex:1 1 auto; min-width:0; padding:12px 14px; border:1.5px solid rgba(255,180,0,0.6); border-radius:22px; background:#fffdf5; color:#3a2a00; font-size:16px; font-weight:600; outline:none; }
+.grp-yaz-input::placeholder{ color:#b48a2a; font-weight:600; }
+.grp-yaz-gonder{ width:48px; height:48px; flex:0 0 auto; border:none; border-radius:14px; background:linear-gradient(180deg,#ffe9a8,#ffd700); color:#4a3600; font-size:20px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 9px rgba(120,90,0,0.28); }
+/* Bilgisayarda küçülmesin (anayasa) */
+@media (min-width:560px){
+  .grp-oge-orta b{ font-size:17px; } .grp-msj-metin{ font-size:16.5px; } .grp-yaz-input{ font-size:17px; }
+}

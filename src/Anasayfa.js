@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupGuncelle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -1635,6 +1635,19 @@ export default function Anasayfa({ pro = false }) {
   const [grupKatilimcilar, setGrupKatilimcilar] = useState([]); // uzak katılımcılar (LiveKit RemoteParticipant listesi)
   const [grupSecAcik, setGrupSecAcik] = useState(false);// grup kişi seçme penceresi açık mı
   const [grupSecim, setGrupSecim] = useState([]);      // seçilen kişi uid'leri
+  const [grupToast, setGrupToast] = useState("");      // grup arama ekranında kısa bilgi ("X katıldı" / "X ayrıldı")
+  const grupToastZmnRef = useRef(null);
+  const grupToastGoster = (m) => { setGrupToast(m); try { clearTimeout(grupToastZmnRef.current); } catch (e) {} grupToastZmnRef.current = setTimeout(() => setGrupToast(""), 3500); };
+  // ---- KALICI/GERÇEK GRUPLAR (WhatsApp gibi: isim + üyeler + grup sohbeti + grup araması) ----
+  const [gruplarim, setGruplarim] = useState([]);      // üyesi olduğum kalıcı gruplar
+  const [aktifGrup, setAktifGrup] = useState(null);    // açık grup {id, ad, uyeler, ...}
+  const [grupMesajlari, setGrupMesajlari] = useState([]);
+  const [grupYaziInput, setGrupYaziInput] = useState("");
+  const [grupKurAcik, setGrupKurAcik] = useState(false); // "yeni grup" penceresi
+  const [grupKurAd, setGrupKurAd] = useState("");
+  const [grupUyeEkleAcik, setGrupUyeEkleAcik] = useState(false); // "üye ekle" penceresi
+  const aktifGrupRef = useRef(null);
+  const grupMesajKaydirRef = useRef(null); // grup sohbetini en alta kaydırmak için
   const [grupMik, setGrupMik] = useState(false);       // kendi mikrofonum kapalı mı (grupta)
   const [grupKam, setGrupKam] = useState(false);       // kendi kameram kapalı mı (grupta)
   const [grupBaglaniyor, setGrupBaglaniyor] = useState(false);
@@ -3710,6 +3723,28 @@ export default function Anasayfa({ pro = false }) {
     const iptal = mesajlarimiDinle(uu.uid, (liste) => setMesajlarimTum(liste || []));
     return iptal;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Üyesi olduğum KALICI GRUPLARI canlı dinle (en son mesajı olan üstte)
+  useEffect(() => {
+    const uu = auth.currentUser;
+    if (!uu) { setGruplarim([]); return; }
+    const iptal = gruplarimiDinle(uu.uid, (liste) => setGruplarim(liste || []));
+    return iptal;
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { aktifGrupRef.current = aktifGrup; }, [aktifGrup]);
+  // Açık grubun MESAJLARINI canlı dinle
+  useEffect(() => {
+    if (!aktifGrup || !aktifGrup.id) { setGrupMesajlari([]); return; }
+    const iptal = grupMesajlariDinle(aktifGrup.id, (liste) => setGrupMesajlari(liste || []));
+    return iptal;
+  }, [aktifGrup && aktifGrup.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Açık grubun ÜYE listesi (biri eklenince/çıkınca) canlı tazelensin
+  useEffect(() => {
+    if (!aktifGrup || !aktifGrup.id) return;
+    const g = gruplarim.find((x) => x.id === aktifGrup.id);
+    if (g && JSON.stringify(g.uyeler || []) !== JSON.stringify(aktifGrup.uyeler || [])) setAktifGrup(g);
+  }, [gruplarim]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Grup sohbeti yeni mesajda EN ALTA kaysın
+  useEffect(() => { const el = grupMesajKaydirRef.current; if (el) { try { el.scrollTop = el.scrollHeight; } catch (e) {} } }, [grupMesajlari.length, aktifGrup]);
   // Bir kişiyle SOHBETİ AÇ — her "mesaj at" düğmesi buraya gelir (tek merkez). Karşı taraf {uid, ad, foto}.
   const sohbetAc = (kisi) => {
     if (!kisi || !kisi.uid) return;
@@ -3987,8 +4022,9 @@ export default function Anasayfa({ pro = false }) {
     });
     grupRoomRef.current = room;
     const yenile = () => { try { const m = room.remoteParticipants || room.participants; setGrupKatilimcilar(m ? Array.from(m.values()) : []); } catch (e) {} };
-    room.on(RoomEvent.ParticipantConnected, yenile);
-    room.on(RoomEvent.ParticipantDisconnected, yenile);
+    // Katılan/ayrılan olunca listeyi yenile + ekranda kısa bilgi göster ("X katıldı" / "X ayrıldı")
+    room.on(RoomEvent.ParticipantConnected, (p) => { yenile(); try { grupToastGoster(((p && p.name) || t("biri", "Biri")) + " " + t("grupKatildi", "katıldı")); } catch (e) {} });
+    room.on(RoomEvent.ParticipantDisconnected, (p) => { yenile(); try { grupToastGoster(((p && p.name) || t("biri", "Biri")) + " " + t("grupAyrildi", "ayrıldı")); } catch (e) {} });
     room.on(RoomEvent.TrackSubscribed, yenile);
     room.on(RoomEvent.TrackUnsubscribed, yenile);
     room.on(RoomEvent.TrackMuted, yenile);
@@ -4044,6 +4080,54 @@ export default function Anasayfa({ pro = false }) {
   };
   const grupMikToggle = async () => { const r = grupRoomRef.current; if (!r) return; const yeni = !grupMik; try { await r.localParticipant.setMicrophoneEnabled(!yeni); setGrupMik(yeni); } catch (e) {} };
   const grupKamToggle = async () => { const r = grupRoomRef.current; if (!r) return; const yeni = !grupKam; try { await r.localParticipant.setCameraEnabled(!yeni); setGrupKam(yeni); } catch (e) {} };
+  // ---- KALICI GRUP İŞLEMLERİ (oluştur / aç / mesaj / üye ekle / ayrıl / gruptan ara) ----
+  const yeniGrupOlustur = async () => {
+    const uu = auth.currentUser; if (!uu) return;
+    const ad = (grupKurAd || "").trim();
+    if (!ad) { bilgiBalonu(t("grupAdGir", "Gruba bir isim yaz.")); return; }
+    const id = await grupOlustur({ ad, olusturanUid: uu.uid, uyeler: [] });
+    if (!id) { bilgiBalonu(t("grupKurulamadi", "Grup kurulamadı, tekrar dene (Firestore kuralları güncel mi?).")); return; }
+    setGrupKurAcik(false); setGrupKurAd("");
+    setAktifGrup({ id, ad, olusturan: uu.uid, uyeler: [uu.uid] });
+    bilgiBalonu(t("grupKuruldu", "Grup kuruldu ✨ Şimdi 'Üye ekle' ile kişileri ekle."));
+  };
+  const grupAc = (g) => { if (!g || !g.id) return; setAktifGrup(g); setGrupYaziInput(""); };
+  const grupYaziGonderEt = async () => {
+    const uu = auth.currentUser; const g = aktifGrupRef.current || aktifGrup;
+    if (!uu || !g || !g.id) return;
+    const metin = (grupYaziInput || "").trim();
+    if (!metin) return;
+    setGrupYaziInput("");
+    const ok = await grupMesajGonder(g.id, { metin, gonderen: { uid: uu.uid, ad: benimAdGetir(), foto: benimFotoGetir() } });
+    if (!ok) { setGrupYaziInput(metin); bilgiBalonu(t("grupMesajGitmedi", "Mesaj gönderilemedi, tekrar dene.")); }
+  };
+  const grupUyeleriEkle = async (secilenKisiler) => {
+    const g = aktifGrupRef.current || aktifGrup; if (!g || !g.id) return;
+    const uidler = (secilenKisiler || []).map((k) => k.uid).filter(Boolean);
+    if (!uidler.length) { setGrupUyeEkleAcik(false); return; }
+    const ok = await grupUyeEkle(g.id, uidler);
+    setGrupUyeEkleAcik(false); setGrupSecim([]);
+    bilgiBalonu(ok ? t("grupUyeEklendi", "Kişiler gruba eklendi.") : t("grupUyeEklenemedi", "Eklenemedi (Firestore kuralları güncel mi?)."));
+  };
+  const gruptanAyrilEt = async () => {
+    const uu = auth.currentUser; const g = aktifGrupRef.current || aktifGrup;
+    if (!uu || !g || !g.id) return;
+    try { await grupUyeCikar(g.id, uu.uid); } catch (e) {}
+    setAktifGrup(null);
+    bilgiBalonu(t("gruptanAyrildin", "Gruptan ayrıldın."));
+  };
+  // Gruptan GÖRÜNTÜLÜ ARA — grup üyelerini (ben hariç) alıp çalışan grup-arama sistemini başlatır
+  const grupBuGruptanAra = () => {
+    const uu = auth.currentUser; const g = aktifGrupRef.current || aktifGrup;
+    if (!uu || !g) return;
+    const digerler = (g.uyeler || []).filter((x) => x && x !== uu.uid).map((uid) => {
+      const b = kisiBilgiHarita[uid] || {}; const sx = (sohbetListesi.find((s) => s.uid === uid) || {});
+      return { uid, ad: b.ad || sx.ad || "" };
+    });
+    if (!digerler.length) { bilgiBalonu(t("grupUyeYokArama", "Önce gruba üye ekle, sonra ara.")); return; }
+    setAktifGrup(null);
+    grupAramaBaslat(digerler);
+  };
   // ZİL / ÇALMA SESİ — GERÇEK/PARLAK telefon çınlaması (gömülü WAV, ag gerektirmez). WebAudio "bip" değil → tanıdık, GÜR telefon zili.
   // Kullanıcı: sentetik bip boğuk/uzaktan geliyordu → gerçek zil sesine geçildi. Arayan da aranan da aynı gür zili duyar.
   const zilRef = useRef(null);
@@ -10134,38 +10218,28 @@ export default function Anasayfa({ pro = false }) {
               {glomeSekme === "gruplar" && (
                 <div className="mm-grup-sekme">
                   <div className="mm-grup-baslik">
-                    <b>{t("grupGorusme", "Grup görüşmesi")}</b>
-                    <span>{t("grupGorusmeAlt", "Birden çok kişiyi seç, hepsini birden görüntülü ara (sen dahil en fazla 10 kişi).")}</span>
+                    <b>{t("gruplarBaslik", "Gruplar")}</b>
+                    <span>{t("gruplarAlt", "Kalıcı grup kur; içinde yazış, foto/video paylaş, görüntülü/sesli grup araması yap.")}</span>
                   </div>
-                  {sohbetListesi.length === 0 ? (
+                  <button className="grp-yeni-btn" onClick={() => { setGrupKurAd(""); setGrupKurAcik(true); }}>＋ {t("grupYeni", "Yeni grup")}</button>
+                  {gruplarim.length === 0 ? (
                     <div className="mm-bos-sik">
                       <div className="mm-bos-ik">{Ikon.topluluk}</div>
-                      <b>{t("grupKisiYok", "Önce birileriyle sohbet et")}</b>
-                      <span>{t("grupKisiYokAlt", "Grup araması için kişilerin olmalı. Bir kişiyle sohbet başlatınca burada görünür.")}</span>
-                      <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
+                      <b>{t("grupYokBaslik", "Henüz grubun yok")}</b>
+                      <span>{t("grupYokAlt", "‘Yeni grup’a bas, bir isim ver; sonra üye ekleyip yazışmaya/aramaya başla.")}</span>
                     </div>
                   ) : (
-                    <>
-                      <div className="mm-grup-liste">
-                        {sohbetListesi.map((s) => {
-                          const bilgi = kisiBilgiHarita[s.uid] || {};
-                          const secili = grupSecim.indexOf(s.uid) !== -1;
-                          const foto = bilgi.foto || s.foto || "";
-                          const ad = bilgi.ad || s.ad || "—";
-                          return (
-                            <button key={s.uid} className={"mm-grup-oge" + (secili ? " secili" : "")} onClick={() => setGrupSecim((a) => a.indexOf(s.uid) !== -1 ? a.filter((x) => x !== s.uid) : (a.length >= 9 ? (bilgiBalonu(t("grupEnFazla", "En fazla 9 kişi (sen dahil 10) davet edebilirsin.")), a) : [...a, s.uid]))}>
-                              <span className="mm-grup-avatar">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (ad.trim()[0] || "?").toUpperCase()}</span>
-                              <b className="notranslate" translate="no">{ad}</b>
-                              <span className={"mm-grup-tik" + (secili ? " on" : "")}>{secili ? "✓" : "＋"}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <button className="mm-grup-basla" disabled={grupSecim.length === 0 || grupBaglaniyor} onClick={() => {
-                        const kisiler = grupSecim.map((uid) => { const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {}; return { uid, ad: b.ad || sx.ad || "" }; });
-                        grupAramaBaslat(kisiler);
-                      }}>{grupBaglaniyor ? t("baglaniyor", "Bağlanıyor…") : (t("grupBaslat", "Grup görüşmesini başlat") + (grupSecim.length ? " (" + grupSecim.length + ")" : ""))}</button>
-                    </>
+                    <div className="grp-liste">
+                      {gruplarim.map((g) => (
+                        <button key={g.id} className="grp-oge" onClick={() => grupAc(g)}>
+                          <span className="grp-oge-avatar notranslate" translate="no">{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?").trim()[0] || "?").toUpperCase()}</span>
+                          <span className="grp-oge-orta">
+                            <b className="notranslate" translate="no">{g.ad || "—"}</b>
+                            <i className="notranslate" translate="no">{(g.uyeler ? g.uyeler.length : 1) + " " + t("kisiKisa", "kişi") + (g.sonMesaj ? " · " + g.sonMesaj : "")}</i>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
@@ -10425,6 +10499,7 @@ export default function Anasayfa({ pro = false }) {
             <b className="notranslate" translate="no">{t("grupGorusme", "Grup görüşmesi")}</b>
             <span>{(grupKatilimcilar.length + 1)} {t("kisiKisa", "kişi")}</span>
           </div>
+          {grupToast && <div className="grup-toast notranslate" translate="no">{grupToast}</div>}
           <div className="grup-izgara" style={{ gridTemplateColumns: "repeat(" + ((grupKatilimcilar.length + 1) <= 1 ? 1 : (grupKatilimcilar.length + 1) <= 4 ? 2 : 3) + ", 1fr)" }}>
             <div className="grup-kare grup-kare-ben">
               <video ref={grupYerelVideoRef} className="ayna" autoPlay playsInline muted style={{ display: grupKam ? "none" : "block" }} />
@@ -10448,6 +10523,89 @@ export default function Anasayfa({ pro = false }) {
             <button className="grup-dugme grup-kapat" onClick={grupAramaKapat} aria-label={t("kapat", "Kapat")} title={t("kapat", "Kapat")}>
               <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* YENİ GRUP OLUŞTUR — isim ver */}
+      {grupKurAcik && (
+        <div className="grp-modal-fon" onClick={(e) => { if (e.target === e.currentTarget) setGrupKurAcik(false); }}>
+          <div className="grp-modal">
+            <b className="grp-modal-baslik notranslate" translate="no">{t("grupYeni", "Yeni grup")}</b>
+            <input className="grp-modal-input notranslate" translate="no" value={grupKurAd} onChange={(e) => setGrupKurAd(e.target.value)} maxLength={60}
+              placeholder={t("grupAdiYaz", "Grup adı (örn. Aile, İş, Arkadaşlar)")} onKeyDown={(e) => { if (e.key === "Enter") yeniGrupOlustur(); }} autoFocus />
+            <div className="grp-modal-alt">
+              <button className="grp-modal-vaz" onClick={() => setGrupKurAcik(false)}>{t("vazgec", "Vazgeç")}</button>
+              <button className="grp-modal-tamam" onClick={yeniGrupOlustur}>{t("grupKur", "Kur")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ÜYE EKLE — sohbet ettiğin kişilerden seç */}
+      {grupUyeEkleAcik && aktifGrup && (
+        <div className="grp-modal-fon" onClick={(e) => { if (e.target === e.currentTarget) { setGrupUyeEkleAcik(false); setGrupSecim([]); } }}>
+          <div className="grp-modal grp-modal-genis">
+            <b className="grp-modal-baslik notranslate" translate="no">{t("grupUyeEkleBaslik", "Üye ekle")}</b>
+            <div className="grp-uye-liste">
+              {sohbetListesi.filter((s) => (aktifGrup.uyeler || []).indexOf(s.uid) === -1).length === 0 ? (
+                <div className="grp-uye-bos">{t("grupEklenecekYok", "Eklenecek kişi yok — önce biriyle sohbet et.")}</div>
+              ) : sohbetListesi.filter((s) => (aktifGrup.uyeler || []).indexOf(s.uid) === -1).map((s) => {
+                const bilgi = kisiBilgiHarita[s.uid] || {};
+                const secili = grupSecim.indexOf(s.uid) !== -1;
+                const foto = bilgi.foto || s.foto || ""; const ad = bilgi.ad || s.ad || "—";
+                return (
+                  <button key={s.uid} className={"mm-grup-oge" + (secili ? " secili" : "")} onClick={() => setGrupSecim((a) => a.indexOf(s.uid) !== -1 ? a.filter((x) => x !== s.uid) : [...a, s.uid])}>
+                    <span className="mm-grup-avatar">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (ad.trim()[0] || "?").toUpperCase()}</span>
+                    <b className="notranslate" translate="no">{ad}</b>
+                    <span className={"mm-grup-tik" + (secili ? " on" : "")}>{secili ? "✓" : "＋"}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="grp-modal-alt">
+              <button className="grp-modal-vaz" onClick={() => { setGrupUyeEkleAcik(false); setGrupSecim([]); }}>{t("vazgec", "Vazgeç")}</button>
+              <button className="grp-modal-tamam" disabled={grupSecim.length === 0} onClick={() => {
+                const kisiler = grupSecim.map((uid) => { const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {}; return { uid, ad: b.ad || sx.ad || "" }; });
+                grupUyeleriEkle(kisiler);
+              }}>{t("ekle", "Ekle") + (grupSecim.length ? " (" + grupSecim.length + ")" : "")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GRUP EKRANI — grup sohbeti (üst bar: geri / ad / ara / üye ekle / ayrıl) */}
+      {aktifGrup && (
+        <div className="grp-ekran">
+          <div className="grp-ekran-ust">
+            <button className="grp-ust-geri" onClick={() => setAktifGrup(null)} aria-label={t("geri", "Geri")} title={t("geri", "Geri")}>‹</button>
+            <div className="grp-ust-orta">
+              <b className="notranslate" translate="no">{aktifGrup.ad || "—"}</b>
+              <i className="notranslate" translate="no">{(aktifGrup.uyeler ? aktifGrup.uyeler.length : 1) + " " + t("kisiKisa", "kişi")}</i>
+            </div>
+            <button className="grp-ust-btn" onClick={grupBuGruptanAra} aria-label={t("grupAra", "Görüntülü ara")} title={t("grupAra", "Görüntülü ara")}>📹</button>
+            <button className="grp-ust-btn" onClick={() => { setGrupSecim([]); setGrupUyeEkleAcik(true); }} aria-label={t("grupUyeEkleBaslik", "Üye ekle")} title={t("grupUyeEkleBaslik", "Üye ekle")}>＋</button>
+            <button className="grp-ust-btn" onClick={() => { if (window.confirm(t("gruptanAyrilSor", "Gruptan ayrılmak istiyor musun?"))) gruptanAyrilEt(); }} aria-label={t("gruptanAyril", "Gruptan ayrıl")} title={t("gruptanAyril", "Gruptan ayrıl")}>🚪</button>
+          </div>
+          <div className="grp-ekran-mesajlar" ref={grupMesajKaydirRef}>
+            {grupMesajlari.length === 0 ? (
+              <div className="grp-mesaj-bos">{t("grupIlkMesaj", "Henüz mesaj yok. İlk mesajı sen yaz 👋")}</div>
+            ) : grupMesajlari.map((m) => {
+              const benim = m.gonderenUid === benUid;
+              return (
+                <div key={m.id} className={"grp-msj" + (benim ? " benim" : "")}>
+                  {!benim && <span className="grp-msj-ad notranslate" translate="no">{m.gonderenAd || "—"}</span>}
+                  {m.gorsel ? <img className="grp-msj-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" /> : null}
+                  {m.video ? <video className="grp-msj-video" src={m.video} controls playsInline /> : null}
+                  {m.metin ? <span className="grp-msj-metin notranslate" translate="no">{m.metin}</span> : null}
+                </div>
+              );
+            })}
+          </div>
+          <div className="grp-ekran-yaz">
+            <input className="grp-yaz-input notranslate" translate="no" value={grupYaziInput} onChange={(e) => setGrupYaziInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") grupYaziGonderEt(); }} placeholder={t("grupMesajYaz", "Mesaj yaz…")} />
+            <button className="grp-yaz-gonder" onClick={grupYaziGonderEt} aria-label={t("gonder", "Gönder")} title={t("gonder", "Gönder")}>➤</button>
           </div>
         </div>
       )}
