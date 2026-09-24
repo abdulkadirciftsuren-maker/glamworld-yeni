@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A13B300";
+const SW_SURUM = "A13B301";
 // ONBELLEK ADI SW_SURUM'e bağlı → her yeni yayında YENİ önbellek; eskisi activate'te silinir (eski sürümde takılma OLMAZ).
 const ONBELLEK = "glox-onbellek-" + SW_SURUM;
 // RESİM ÖNBELLEĞİ — SÜRÜMDEN BAĞIMSIZ (yeni yayında SİLİNMEZ) → indirilen fotoğraflar telefonda KALICI kalır,

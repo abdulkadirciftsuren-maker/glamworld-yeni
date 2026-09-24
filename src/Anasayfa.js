@@ -263,9 +263,10 @@ function GrupKare({ p }) {
     </div>
   );
 }
-// CUMA/TEBRİK POSTERİNE DOĞRU TÜRKÇE YAZIYI CANVAS İLE BAS (resim üreticisi Türkçe'yi yanlış yazıyor — "Cumalar" yerine
-// "Cumular" gibi). Bu yüzden arka planı YAZISIZ üretip başlığı BURADA doğru harflerle, şık altın yazıyla üstüne basıyoruz.
-function _cumaYaziBas(dataUrl, baslik, altYazi) {
+// TEBRİK POSTERİNE (Cuma/Bayram/Doğum günü/Geçmiş olsun/Yeni yıl) DOĞRU YAZIYI CANVAS İLE BAS. Resim üreticisi yazıyı
+// (özellikle Türkçe'yi) bozuyor ("Cumalar"->"Cumular"). Bu yüzden arka planı YAZISIZ üretip BAŞLIK + (biraz uzun) DUA/dileği
+// BURADA doğru harflerle, şık altın yazıyla üstüne basıyoruz. Alt yazı uzunsa SATIRLARA sarılır (kesilmez).
+function _tebrikYaziBas(dataUrl, baslik, altYazi) {
   return new Promise((resolve) => {
     try {
       const img = new Image(); img.crossOrigin = "anonymous";
@@ -275,26 +276,36 @@ function _cumaYaziBas(dataUrl, baslik, altYazi) {
           const c = document.createElement("canvas"); c.width = W; c.height = H;
           const x = c.getContext("2d");
           x.drawImage(img, 0, 0, W, H);
-          // Alt-orta bölgeye okunurluk için yumuşak KOYU KAHVE bant (siyah DEĞİL — anayasa)
-          const bandY = H * 0.58;
-          const g = x.createLinearGradient(0, bandY, 0, H);
-          g.addColorStop(0, "rgba(24,14,0,0)"); g.addColorStop(1, "rgba(24,14,0,0.66)");
-          x.fillStyle = g; x.fillRect(0, bandY, W, H - bandY);
           x.textAlign = "center"; x.textBaseline = "middle";
-          const bY = H * 0.80;
-          // BAŞLIK — büyük şık altın; sığmıyorsa font küçülür (yazı KESİLMEZ)
-          let f = Math.round(W * 0.088);
+          // ALT YAZIYI (dua/dilek) kelime kelime SATIRLARA sar
+          const f2 = Math.max(16, Math.round(W * 0.044));
+          x.font = "600 " + f2 + "px Georgia,serif";
+          const satirlar = [];
+          (altYazi ? altYazi.split(/\s+/).filter(Boolean) : []).forEach((w) => {
+            const dene = satirlar.length ? satirlar[satirlar.length - 1] + " " + w : w;
+            if (satirlar.length && x.measureText(dene).width > W * 0.86) satirlar.push(w);
+            else if (satirlar.length) satirlar[satirlar.length - 1] = dene; else satirlar.push(w);
+          });
+          const altN = Math.min(satirlar.length, 4);
+          // Okunurluk için alt bölgeye yumuşak KOYU KAHVE bant (siyah DEĞİL — anayasa); yazı yüksekliğine göre büyür
+          const bandY = H * (altN >= 3 ? 0.48 : altN >= 1 ? 0.55 : 0.62);
+          const g = x.createLinearGradient(0, bandY, 0, H);
+          g.addColorStop(0, "rgba(24,14,0,0)"); g.addColorStop(1, "rgba(24,14,0,0.72)");
+          x.fillStyle = g; x.fillRect(0, bandY, W, H - bandY);
+          // BAŞLIK — büyük şık altın; sığmıyorsa font küçülür (KESİLMEZ)
+          let f = Math.round(W * 0.086);
           x.font = "700 " + f + "px Georgia,'Times New Roman',serif";
           while (x.measureText(baslik).width > W * 0.9 && f > 20) { f -= 2; x.font = "700 " + f + "px Georgia,serif"; }
+          const bY = H * (altN >= 2 ? 0.66 : altN === 1 ? 0.72 : 0.80);
           const yg = x.createLinearGradient(0, bY - f, 0, bY + f);
           yg.addColorStop(0, "#fff3c4"); yg.addColorStop(0.5, "#ffd700"); yg.addColorStop(1, "#e6b422");
-          x.shadowColor = "rgba(0,0,0,0.55)"; x.shadowBlur = Math.round(W * 0.02); x.shadowOffsetY = 2;
+          x.shadowColor = "rgba(0,0,0,0.6)"; x.shadowBlur = Math.round(W * 0.02); x.shadowOffsetY = 2;
           x.fillStyle = yg; x.fillText(baslik, W / 2, bY);
-          // ALT SATIR (dua dileği)
-          if (altYazi) {
-            const f2 = Math.max(16, Math.round(f * 0.5));
-            x.font = "600 " + f2 + "px Georgia,serif"; x.shadowBlur = Math.round(W * 0.012);
-            x.fillStyle = "#ffe9a8"; x.fillText(altYazi, W / 2, bY + f * 0.92);
+          // ALT SATIRLAR (biraz uzun dua/dilek)
+          if (altN) {
+            x.font = "600 " + f2 + "px Georgia,serif"; x.fillStyle = "#ffe9a8"; x.shadowBlur = Math.round(W * 0.012);
+            let ay = bY + f * 0.78;
+            for (let i = 0; i < altN; i++) { x.fillText(satirlar[i], W / 2, ay); ay += f2 * 1.38; }
           }
           resolve(c.toDataURL("image/jpeg", 0.92));
         } catch (e) { resolve(dataUrl); }
@@ -304,6 +315,146 @@ function _cumaYaziBas(dataUrl, baslik, altYazi) {
     } catch (e) { resolve(dataUrl); }
   });
 }
+// TEBRİK KARTLARI — tür (Cuma/Bayram/Doğum günü/Geçmiş olsun/Yeni yıl) × DİL (tr/en/de, yoksa en'e düşer). Her türde birden çok
+// {b:başlık, a:biraz uzun dua/dilek} → RASTGELE seçilir (hep aynı olmasın). sahneler = YAZISIZ güzel arka plan betimleri (İngilizce).
+const TEBRIK = {
+  cuma: {
+    test: /cuma(?!rtesi)|jumu|friday|freitag|جمعة/i,
+    sahneler: [
+      "a majestic grand mosque silhouette at a vivid golden sunrise, glowing orange and pink sky, radiant light rays, elegant Islamic geometric ornaments",
+      "an ornate glowing golden Islamic lantern, intricate arabesque patterns, warm bokeh lights, luxurious gold, emerald and amber tones",
+      "graceful mosque minarets against a colorful dawn sky with a delicate crescent moon and shimmering stars, glowing pastel clouds",
+      "an open Holy Quran with soft heavenly golden light rays, fresh pink and cream roses beside it, serene glowing atmosphere",
+      "elegant prayer beads on vibrant colorful roses, warm golden light, luxurious ornate golden arabesque border",
+      "a lush blooming garden with tulips and roses at golden hour, a distant elegant mosque, dreamy warm light, rich vibrant colors",
+      "a serene lake mirroring a grand illuminated mosque at twilight, warm golden reflections, colorful glowing sky",
+      "intricate turquoise, emerald and gold Islamic geometric art with a glowing central medallion, luxurious festive",
+    ],
+    metin: {
+      tr: [
+        { b: "Hayırlı Cumalar", a: "Rabbim dualarınızı kabul etsin, gönlünüzü huzur ve bereketle doldursun; yolunuz hep aydınlık olsun." },
+        { b: "Cumanız Mübarek Olsun", a: "Bu mübarek günde kalbiniz huzurla, eviniz bereketle dolsun; dertlerinize derman, dualarınıza kabul olsun." },
+        { b: "Hayırlı ve Bereketli Cumalar", a: "Allah tüm sevdiklerinizle sağlık ve mutluluk versin; gönlünüzden geçen güzel dilekleri hayırlısıyla nasip etsin." },
+        { b: "Mübarek Cumalar", a: "Bu güzel günün hürmetine evinize huzur, sofranıza bereket, ömrünüze hayır dolsun. Âmin." },
+      ],
+      en: [
+        { b: "Blessed Friday", a: "May God accept your prayers and fill your heart with peace and blessings; may your path always be bright." },
+        { b: "Have a Blessed Jumu'ah", a: "May this holy day bring peace to your heart, abundance to your home, and light to your soul." },
+        { b: "A Peaceful, Blessed Friday", a: "May all your prayers be answered, your loved ones stay healthy, and your heart find true serenity." },
+      ],
+      de: [
+        { b: "Gesegneten Freitag", a: "Möge Gott eure Gebete annehmen und euer Herz mit Frieden und Segen erfüllen; euer Weg sei stets hell." },
+        { b: "Einen gesegneten Freitag", a: "Möge dieser heilige Tag Frieden ins Herz, Fülle ins Haus und Licht in die Seele bringen." },
+        { b: "Frohen, gesegneten Freitag", a: "Mögen all eure Gebete erhört werden und eure Liebsten gesund und glücklich bleiben." },
+      ],
+    },
+  },
+  bayram: {
+    test: /bayram|ramazan|ramadan|kurban|eid|عيد/i,
+    sahneler: [
+      "a festive night sky with a glowing golden crescent moon and stars over elegant mosque domes, warm colorful lights, luxurious",
+      "ornate glowing golden Islamic lanterns with vibrant bokeh, rich emerald and gold festive tones, intricate arabesque",
+      "a beautiful table of colorful traditional sweets and roses at golden hour, warm festive glow, elegant ornaments",
+      "a grand illuminated mosque at magic hour with vivid amber and turquoise sky, golden crescent, festive sparkle",
+      "intricate gold and jewel-toned Islamic geometric art with a radiant central medallion, festive luxurious",
+    ],
+    metin: {
+      tr: [
+        { b: "Bayramınız Mübarek Olsun", a: "Nice bayramlara; sevdiklerinizle sağlık, huzur ve bolluk içinde nice mutlu günler geçirin." },
+        { b: "Hayırlı Bayramlar", a: "Bu bayram gönlünüze neşe, sofranıza bereket, ömrünüze mutluluk ve sevdiklerinize kavuşmak getirsin." },
+        { b: "Mutlu Bayramlar", a: "Bayramın coşkusu evinizden, sevgi ve huzur kalbinizden hiç eksik olmasın. Âmin." },
+      ],
+      en: [
+        { b: "Eid Mubarak", a: "Wishing you health, peace and joy with your loved ones on this blessed feast. May your days be bright." },
+        { b: "Blessed Eid", a: "May this feast bring happiness to your heart, abundance to your home and love to your family." },
+        { b: "Happy Eid", a: "May joy and blessings fill your days and never leave your home. Eid Mubarak to you and yours." },
+      ],
+      de: [
+        { b: "Eid Mubarak", a: "Gesundheit, Frieden und Freude mit euren Liebsten zu diesem gesegneten Fest. Mögen eure Tage hell sein." },
+        { b: "Gesegnetes Fest", a: "Möge dieses Fest Freude ins Herz, Fülle ins Haus und Liebe in die Familie bringen." },
+        { b: "Frohes Fest", a: "Mögen Freude und Segen eure Tage erfüllen und euer Zuhause nie verlassen." },
+      ],
+    },
+  },
+  dogum: {
+    test: /doğum ?günü|dogum ?gunu|yaş ?günü|yas ?gunu|birthday|geburtstag/i,
+    sahneler: [
+      "a joyful birthday scene with a beautiful cake, glowing candles, colorful balloons and golden confetti, festive bokeh, vibrant",
+      "colorful balloons and shimmering golden confetti on a warm festive gradient, elegant sparkle, joyful and vivid",
+      "an elegant gift box with ribbons, fresh colorful flowers and warm golden fairy lights, festive luxurious glow",
+      "a festive golden celebration with sparklers, streamers and vivid colorful lights, warm joyful atmosphere",
+    ],
+    metin: {
+      tr: [
+        { b: "İyi ki Doğdun", a: "Nice mutlu, sağlıklı yıllara; yüzün hep gülsün, tüm dileklerin bir bir gerçek olsun." },
+        { b: "Doğum Günün Kutlu Olsun", a: "Kalbin sevgiyle, ömrün mutlulukla dolsun; bu yeni yaşın sana güzellikler getirsin." },
+        { b: "Mutlu Yıllar", a: "Bu özel günde en güzel sürprizler, kahkahalar ve sevgi hep seninle olsun." },
+      ],
+      en: [
+        { b: "Happy Birthday", a: "Wishing you many happy, healthy years; may your smile never fade and all your dreams come true." },
+        { b: "Happy Birthday to You", a: "May your day be filled with love, laughter and wonderful surprises. Have a beautiful year!" },
+        { b: "Best Wishes", a: "May this new year of your life shine with joy, health and success. Enjoy your special day!" },
+      ],
+      de: [
+        { b: "Alles Gute zum Geburtstag", a: "Viele glückliche, gesunde Jahre; möge dein Lächeln bleiben und all deine Wünsche wahr werden." },
+        { b: "Herzlichen Glückwunsch", a: "Möge dein Tag voller Liebe, Lachen und schöner Überraschungen sein. Ein wundervolles Jahr!" },
+        { b: "Alles Liebe zum Geburtstag", a: "Möge dieses neue Lebensjahr voller Freude, Gesundheit und Erfolg strahlen." },
+      ],
+    },
+  },
+  sifa: {
+    test: /geçmiş olsun|gecmis olsun|acil şifa|acil sifa|get well|gute besserung/i,
+    sahneler: [
+      "a calm serene scene with soft fresh flowers and gentle warm morning light, peaceful pastel colors, hopeful",
+      "delicate roses and a warm glowing candle on a soft light background, peaceful comforting atmosphere",
+      "a tranquil sunrise over calm nature, gentle warm light, soft hopeful pastel sky, serene",
+      "soft white and pink flowers with warm golden light, gentle bokeh, comforting peaceful mood",
+    ],
+    metin: {
+      tr: [
+        { b: "Geçmiş Olsun", a: "Acil şifalar dilerim; en kısa zamanda sağlığına kavuşman, güçlü ve mutlu olman dileğiyle." },
+        { b: "Acil Şifalar", a: "Allah sana sabır ve şifa versin; yakında sapasağlam, güler yüzle ayakta ol. Yanındayız." },
+        { b: "Geçmiş Olsun", a: "Sağlık en büyük hazine; bir an önce iyileşmen ve eski neşene kavuşman dileğiyle." },
+      ],
+      en: [
+        { b: "Get Well Soon", a: "Wishing you a quick recovery and brighter, healthier days ahead. Stay strong — we're with you." },
+        { b: "Feel Better Soon", a: "May strength and healing find you fast, and may your smile return very soon." },
+        { b: "Speedy Recovery", a: "Your health matters most; wishing you comfort, peace and a full, quick recovery." },
+      ],
+      de: [
+        { b: "Gute Besserung", a: "Wir wünschen dir schnelle Genesung und bald wieder gesunde, frohe Tage. Bleib stark!" },
+        { b: "Werde bald gesund", a: "Mögen Kraft und Heilung schnell zu dir finden und dein Lächeln bald zurückkehren." },
+        { b: "Baldige Genesung", a: "Deine Gesundheit ist das Wichtigste; wir wünschen dir Trost, Ruhe und volle Genesung." },
+      ],
+    },
+  },
+  yeniyil: {
+    test: /yeni ?yıl|yeni ?yil|mutlu yıllar|mutlu yillar|new year|neujahr|frohes neues|nice yıllara/i,
+    sahneler: [
+      "a dazzling golden fireworks display over a festive night sky, sparkling lights, vivid celebratory colors, luxurious",
+      "elegant golden champagne sparkle with confetti and warm festive bokeh lights, celebratory vibrant",
+      "a glowing festive city skyline at midnight with colorful fireworks and shimmering gold, joyful",
+      "warm golden sparklers and shimmering confetti on a rich festive gradient, elegant celebratory glow",
+    ],
+    metin: {
+      tr: [
+        { b: "Mutlu Yıllar", a: "Yeni yıl sağlık, huzur, bol kazanç ve gerçekleşen dileklerle gelsin; nice mutlu senelere." },
+        { b: "Yeni Yılın Kutlu Olsun", a: "Umutların büyüsün, yüzün hep gülsün; bu yıl kalbine sevgi, yoluna aydınlık getirsin." },
+        { b: "Nice Yıllara", a: "Bu yıl evine bereket, gönlüne huzur, ömrüne mutluluk dolsun. Sağlıcakla kal." },
+      ],
+      en: [
+        { b: "Happy New Year", a: "May the new year bring health, peace, success and all your dreams come true. Cheers to a great year!" },
+        { b: "Happy New Year", a: "May your hopes grow and your smile never fade; may this year bring love and light your way." },
+        { b: "Best Wishes for the New Year", a: "May this year fill your heart with joy, your home with warmth and your path with light." },
+      ],
+      de: [
+        { b: "Frohes neues Jahr", a: "Möge das neue Jahr Gesundheit, Frieden und Erfolg bringen und all deine Wünsche erfüllen." },
+        { b: "Guten Rutsch", a: "Mögen deine Hoffnungen wachsen und dein Lächeln bleiben; ein Jahr voller Liebe und Licht!" },
+        { b: "Alles Gute im neuen Jahr", a: "Möge dieses Jahr dein Herz mit Freude, dein Zuhause mit Wärme und deinen Weg mit Licht füllen." },
+      ],
+    },
+  },
+};
 // İki GPS noktası arası KUŞ UÇUŞU mesafe (km) — tanışma kartlarında "X km uzağında" için
 function _kmUzaklik(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some((v) => typeof v !== "number" || isNaN(v))) return null;
@@ -6280,7 +6431,8 @@ export default function Anasayfa({ pro = false }) {
       if (!metin && cizim) metin = t("cizimHazir", "İşte çizdim 🎨");
       // GERÇEK RESİM — AI [RESIM: ingilizce betim] koyduysa: Firebase AI (Gemini) ile GERÇEK resim üret (async, aşağıda)
       let resimIstem = "";
-      let resimUstuYazi = ""; // CUMA/tebrik: doğru Türkçe başlık — resim gelince canvas ile ÜSTÜNE basılır (üretici Türkçe'yi yanlış yazıyor)
+      let resimUstuYazi = ""; // TEBRİK: doğru başlık — resim gelince canvas ile ÜSTÜNE basılır (üretici yazıyı yanlış yazıyor)
+      let resimUstuAlt = "";  // TEBRİK: başlığın altına biraz uzun dua/dilek (canvas ile basılır)
       const rm = metin.match(/\[RESIM:\s*([^\]]+)\]/i);
       if (rm) { resimIstem = (rm[1] || "").trim(); metin = metin.replace(/\[RESIM:[^\]]*\]/gi, "").trim(); }
       // GÜVENLİK AĞI (İLK İSTEK DÜZELTMESİ): Gloxoo bazen İLK istekte [RESIM:] etiketini KOYMADAN
@@ -6309,51 +6461,29 @@ export default function Anasayfa({ pro = false }) {
           resimIstem = (kisaTakip && oncekiResim && oncekiResim.resimIstem) ? oncekiResim.resimIstem : sonKul.slice(0, 300);
         }
       }
-      // CUMA / DUA PAYLAŞIMI — kullanıcı "cuma paylaşımı / cuma resmi / dua / hayırlı cumalar" isteyince:
-      // yapay zekâ hep AYNI küçük "rafta duran poster" resmini + aynı 2-3 kelimeyi veriyordu (kullanıcı: "dandik,
-      // ufak, hep aynı, dua yok"). Bu yüzden içeriği BİZ üretiyoruz → HER SEFERİNDE FARKLI: (1) resim betimi TAM KARE
-      // dolduran (rafta poster/çerçeve/boşluk YOK), büyük ve şık; sahne rastgele değişir; (2) gerçek bir DUA paylaşım
-      // kartına konur (havuzdan rastgele, hep farklı). Böylece küçük/dandik/tekrar sorunu biter.
+      // TEBRİK KARTLARI (Cuma / Bayram / Doğum günü / Geçmiş olsun / Yeni yıl) — kullanıcı "... paylaşımı/kartı/resmi ver" deyince
+      // içeriği BİZ üretiyoruz: (1) YAZISIZ güzel/canlı arka plan (sahne rastgele), (2) doğru yazıyı canvas ile üste basarız,
+      // (3) başlık + biraz UZUN dua/dilek HER SEFERİNDE FARKLI ve KULLANICININ DİLİNDE (tr/en/de → yoksa en). Böylece "yanlış
+      // yazı / hep aynı / sadece Türkçe" sorunları biter.
       {
         const sonKulC = (yeniListe[sonIdx] && yeniListe[sonIdx].rol === "user") ? (yeniListe[sonIdx].metin || "") : "";
         const kulDusC = sonKulC.toLowerCase();
-        // "cuma" var (ama "cumartesi" DEĞİL) + bir üretme/paylaşma/görsel isteği → Cuma paylaşımı
-        const cumaIstek = /cuma(?!rtesi)/.test(kulDusC)
-          && /(payla|mesaj|resim|resm|görsel|gorsel|foto|kart|dua|gönderi|gonderi|hazırla|hazirla|yaz|ver|iste|göster|goster|namaz|mübarek|mubarek)/.test(kulDusC);
-        if (cumaIstek) {
+        const paylasNiyet = /(payla|mesaj|resim|resm|görsel|gorsel|foto|kart|dua|gönderi|gonderi|hazırla|hazirla|yaz|ver|iste|göster|goster|mübarek|mubarek|card|image|picture|photo|send|make|create|bild|karte)/.test(kulDusC);
+        let tebrikTur = "";
+        for (const k of Object.keys(TEBRIK)) { if (TEBRIK[k].test.test(kulDusC)) { tebrikTur = k; break; } }
+        if (tebrikTur && paylasNiyet) {
           const sec = (a) => a[Math.floor(Math.random() * a.length)];
-          // Resmin ÜSTÜNDEKİ kısa başlık (her seferinde farklı)
-          const basliklar = ["Hayırlı Cumalar", "Cumanız Mübarek Olsun", "Hayırlı ve Bereketli Cumalar", "Mübarek Cumalar", "Cuma Bereketi Üzerinize Olsun", "Hayırlı Cumalar Diliyorum"];
-          const baslik = sec(basliklar);
-          resimUstuYazi = baslik; // ✍️ doğru Türkçe başlık RESİM GELİNCE canvas ile basılacak (üreticiye yazdırmıyoruz → "Cumular" hatası biter)
-          // Resmin SAHNESİ — HER SEFERİNDE FARKLI + CANLI/RENKLİ (kullanıcı: "hep aynı, canlı güzel değil"). Daha çeşitli.
-          const sahneler = [
-            "a majestic grand mosque silhouette at a vivid golden sunrise, glowing orange and pink sky, radiant light rays, elegant Islamic geometric ornaments",
-            "an ornate glowing golden Islamic lantern (fanous), intricate arabesque patterns, warm bokeh lights, luxurious gold, emerald and amber tones",
-            "graceful mosque minarets against a colorful dawn sky with a delicate crescent moon and shimmering stars, glowing pastel clouds",
-            "an open Holy Quran with soft heavenly golden light rays, fresh pink and cream roses beside it, serene glowing atmosphere",
-            "elegant prayer beads (tesbih) resting on vibrant colorful roses, warm golden light, luxurious ornate golden arabesque border",
-            "a beautiful mosque dome with a golden crescent glowing at magic hour, vivid turquoise and amber sky, ornate golden pattern border",
-            "a lush blooming garden with tulips and roses at golden hour, a distant elegant mosque, soft dreamy warm light, rich vibrant colors",
-            "intricate turquoise, emerald and gold Islamic geometric art with a glowing central medallion, luxurious festive, highly detailed",
-            "a serene lake mirroring a grand illuminated mosque at twilight, warm golden reflections, colorful glowing sky, peaceful",
-            "elegant golden Islamic calligraphy ornamentation on a rich deep emerald and royal blue background with delicate floral gold filigree",
-          ];
-          const sahne = sec(sahneler);
-          // ⛔ ÜRETİCİYE YAZI YAZDIRMIYORUZ (Türkçe'yi bozuyor). Sadece güzel, YAZISIZ arka plan iste; başlık sonra canvas ile basılır.
-          resimIstem = `A stunning full-bleed vertical Islamic Friday greeting BACKGROUND artwork that FILLS THE ENTIRE FRAME edge to edge — no frame, no mockup, no shelf, no white borders. Scene: ${sahne}. IMPORTANT: absolutely NO text, NO letters, NO words, NO calligraphy writing anywhere in the image — text-free artwork only. Keep the lower-center area calm and softly shaded so a greeting can be placed there later. Rich warm gold and vivid festive colors, luxurious, highly detailed, serene, photorealistic, high quality, 4k, vertical composition.`;
-          // Gerçek DUA (paylaşım kartı) — havuzdan rastgele, her seferinde FARKLI. UZUN ve GÜZEL (kullanıcı: "yazı kısa,
-          // biraz daha uzun ve düzgün söylesin"). Her biri 4-5 satır, dolu dolu, akıcı bir dua.
-          const dualar = [
-            "🌸 Hayırlı Cumalar 🌸\n\nRabbim, bu mübarek Cuma gününün hürmetine kalbimizi huzurla, evimizi bereketle, yolumuzu nurla doldur. Dualarımızı kabul, günahlarımızı af eyle. Bizi sevdiklerimizle birlikte sağlık, huzur ve mutluluk içinde yaşat. Gönlümüzden geçen tüm güzel dilekleri hayırlısıyla nasip eyle.\n\nHayırlı, bereketli, huzurlu bir Cuma diliyorum. Âmin. 🤲✨",
-            "🕌 Cumanız Mübarek Olsun 🕌\n\nAllah'ım, gönüllerimizi iman ile, sofralarımızı bereket ile, ömrümüzü sağlık ile şenlendir. Bu güzel günün hürmetine dertlerimize derman, hastalarımıza şifa, dualarımıza kabul nasip eyle. Ailemizi, dostlarımızı ve tüm sevdiklerimizi kötülüklerden koru; yüzümüzü ve gönlümüzü hep güldür.\n\nHayırlı Cumalar, kalbiniz huzurla dolsun. Âmin. 🌙💛",
-            "✨ Hayırlı ve Bereketli Cumalar ✨\n\nYa Rabbi, bu mübarek Cuma'da dua eden herkesi rahmetinle kuşat. Kalplerimize huzur, evlerimize saadet, ömrümüze bereket ihsan eyle. Hastalara şifa, dertlilere ferahlık, yolda olanlara selâmet ver. Bizi doğru yoldan ayırma, sevdiklerimizle mutlu bir ömür nasip eyle.\n\nCumanız mübarek, gönlünüz ferah olsun. Âmin. 🤲🌷",
-            "🌙 Mübarek Cumalar 🌙\n\nAllah'ım, bizi doğru yoldan ayırma; sabrımızı, şükrümüzü ve imanımızı artır. Bu güzel günün hürmetine ailemize huzur, işlerimize kolaylık, ömrümüze bereket nasip eyle. Tüm hastalara şifa, dertlilere derman, dualarımıza kabul ver. Sevdiklerimizi başımızdan eksik etme.\n\nHayırlı, huzurlu, bereketli bir Cuma olsun. Âmin. 💫🕌",
-            "🤲 Hayırlı Cumalar 🤲\n\nRabbim, bu Cuma bize ve tüm sevdiklerimize hayır kapıları açsın; kalbimizi ferah, rızkımızı bol, ömrümüzü hayırlı eylesin. Bizi iyi insanlarla, güzel günlerle, temiz bir gönülle yaşat. Gönlünden geçen tüm güzel dualar kabul olsun, üzerinden dertler kalksın.\n\nCumanız mübarek, yüzünüz hep gülsün. Âmin. 🌸💛",
-            "🌷 Cumanız Mübarek Olsun 🌷\n\nYa Rabbi, evlerimizden huzuru, sofralarımızdan bereketi, kalplerimizden sevgiyi eksik etme. Bu mübarek günün yüzü suyu hürmetine dualarımızı kabul, işlerimizi rast, gönlümüzü hoş eyle. Bizi ve sevdiklerimizi her türlü kötülükten, dertten ve kederden koru.\n\nHayırlı, bereketli, sağlıklı bir Cuma diliyorum. Âmin. ✨🕌",
-          ];
-          paylasim = sec(dualar);
-          metin = t("cumaHazir", "İşte sana özel bir Cuma paylaşımı hazırladım 🤲🌸");
+          const cfg = TEBRIK[tebrikTur];
+          const d0 = (aiDilRef.current || dil || "tr").slice(0, 2).toLowerCase();     // kullanıcının konuştuğu/seçtiği dil
+          const L = cfg.metin[d0] ? d0 : (cfg.metin.en ? "en" : "tr");                // desteklenmeyen dilde İngilizce'ye düş
+          const kart = sec(cfg.metin[L]);
+          const sahne = sec(cfg.sahneler);
+          resimUstuYazi = kart.b;   // ✍️ doğru başlık — canvas ile basılır
+          resimUstuAlt = kart.a;    // ✍️ biraz uzun dua/dilek (her seferinde farklı) — canvas ile basılır
+          // ⛔ ÜRETİCİYE YAZI YAZDIRMIYORUZ (yazıyı bozuyor). Sadece güzel, YAZISIZ, canlı arka plan iste.
+          resimIstem = `A stunning full-bleed vertical greeting BACKGROUND artwork that FILLS THE ENTIRE FRAME edge to edge — no frame, no mockup, no shelf, no borders. Scene: ${sahne}. IMPORTANT: absolutely NO text, NO letters, NO words, NO writing anywhere in the image — text-free artwork only. Keep the lower-center area calm and softly shaded so a greeting can be placed there later. Rich vivid festive colors, luxurious, highly detailed, beautiful, photorealistic, high quality, 4k, vertical composition.`;
+          paylasim = `${kart.b}\n\n${kart.a}`; // paylaşım metni (yazı paneli) — aynı dilde, başlık + dua
+          metin = t("tebrikHazir", "İşte sana özel bir tebrik paylaşımı hazırladım 🎉");
         }
       }
       if (!metin && resimIstem) metin = t("resimUretiliyor", "Resmi hazırlıyorum 🎨");
@@ -6423,8 +6553,8 @@ export default function Anasayfa({ pro = false }) {
           let sonuc; try { sonuc = await Promise.race([gloxooResimUret(resimIstem, girdiFoto), zamanAsimi]); } catch (e) { sonuc = { hata: (e && (e.message || e.name)) || "hata" }; }
           // ESKİ ÇALIŞAN HAL: resim doğrudan base64 (data:) olarak durur → indire basınca NORMAL iner (galeriye).
           let ciktiUrl = (sonuc && sonuc.dataUrl) || "";
-          // CUMA/tebrik: doğru Türkçe başlığı canvas ile resmin ÜSTÜNE bas (üreticinin yanlış yazısı yerine bizim doğru yazımız)
-          if (ciktiUrl && resimUstuYazi) { try { ciktiUrl = await _cumaYaziBas(ciktiUrl, resimUstuYazi, "Dualarınız kabul olsun"); } catch (e) {} }
+          // TEBRİK: doğru başlık + biraz uzun dua/dileği canvas ile resmin ÜSTÜNE bas (üreticinin yanlış yazısı yerine bizim doğru yazımız)
+          if (ciktiUrl && resimUstuYazi) { try { ciktiUrl = await _tebrikYaziBas(ciktiUrl, resimUstuYazi, resimUstuAlt); } catch (e) {} }
           setListe((s) => s.map((m) => (m.resimId === resimId ? { ...m, resimYuk: false, resimData: ciktiUrl, resimHata: (sonuc && sonuc.hata) || "" } : m)));
         })();
       }
