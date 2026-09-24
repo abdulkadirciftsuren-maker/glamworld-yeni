@@ -5868,8 +5868,12 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .grp-msj.benim{ align-self:flex-end; background:linear-gradient(180deg,#ffe9a8,#ffdd66); border-color:rgba(255,180,0,0.6); }
 .grp-msj-ad{ font-size:12px; font-weight:800; color:#b47500; }
 .grp-msj-metin{ font-size:15.5px; color:#3a2a00; font-weight:600; white-space:pre-wrap; word-break:break-word; }
-.grp-msj-foto{ max-width:220px; max-height:280px; border-radius:10px; object-fit:cover; }
-.grp-msj-video{ max-width:240px; max-height:300px; border-radius:10px; background:#c98b2a; }
+.grp-msj-foto{ max-width:240px; max-height:300px; border-radius:10px; object-fit:cover; cursor:pointer; }
+.grp-msj-video{ max-width:260px; max-height:320px; border-radius:10px; background:#c98b2a; }
+/* Grup foto TAM EKRAN (dokununca) — koyu ALTIN/kahve zemin (siyah DEĞİL, anayasa) */
+.grp-foto-buyut{ position:fixed; inset:0; z-index:100100; background:rgba(58,42,0,0.95); display:flex; align-items:center; justify-content:center; padding:16px; }
+.grp-foto-buyut img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:10px; box-shadow:0 10px 40px rgba(0,0,0,0.4); }
+.grp-foto-kapat{ position:absolute; top:calc(12px + env(safe-area-inset-top)); right:14px; width:44px; height:44px; border:none; border-radius:12px; background:rgba(255,215,0,0.92); color:#4a3600; font-size:22px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .grp-ekran-yaz{ display:flex; align-items:center; gap:8px; padding:10px 12px; background:linear-gradient(180deg,#ffefc0,#f2c94c); border-top:2px solid rgba(120,90,0,0.2); }
 .grp-yaz-input{ flex:1 1 auto; min-width:0; padding:12px 14px; border:1.5px solid rgba(255,180,0,0.6); border-radius:22px; background:#fffdf5; color:#3a2a00; font-size:16px; font-weight:600; outline:none; }
 .grp-yaz-input::placeholder{ color:#b48a2a; font-weight:600; }
@@ -5877,6 +5881,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 /* Bilgisayarda küçülmesin (anayasa) */
 @media (min-width:560px){
   .grp-oge-orta b{ font-size:17px; } .grp-msj-metin{ font-size:16.5px; } .grp-yaz-input{ font-size:17px; }
+  .grp-msj-foto{ max-width:340px; max-height:420px; } .grp-msj-video{ max-width:360px; max-height:440px; }
 }
 
 /* Grup sohbeti — foto/video ekle düğmesi (composer) */

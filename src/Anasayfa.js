@@ -1649,6 +1649,7 @@ export default function Anasayfa({ pro = false }) {
   const [grupUyelerAcik, setGrupUyelerAcik] = useState(false);   // "grup üyeleri" penceresi (kim var)
   const [grupAraSecAcik, setGrupAraSecAcik] = useState(false);   // "kimleri arayalım" seçme penceresi
   const [grupYukleniyor, setGrupYukleniyor] = useState(false);   // grup sohbetine foto/video yükleniyor
+  const [grupFotoBuyut, setGrupFotoBuyut] = useState("");        // grup sohbetinde foto'ya dokununca TAM EKRAN
   const aktifGrupRef = useRef(null);
   const grupMesajKaydirRef = useRef(null); // grup sohbetini en alta kaydırmak için
   const grupDosyaRef = useRef(null);       // grup sohbeti foto/video seçici (gizli input)
@@ -4010,11 +4011,10 @@ export default function Anasayfa({ pro = false }) {
     setGrupArama(null); setGrupKatilimcilar([]); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(false);
   };
   const grupLivekitBaglan = async (oda) => {
-    // 📷 KAMERA/MİKROFONU DOKUNMA ANINDA AL (room.connect'ten ÖNCE). Mobil tarayıcı getUserMedia için KULLANICI
-    //    DOKUNUŞU ister; kamerayı bağlantıdan SONRA açınca mobilde (bağlanma birkaç sn sürer) dokunuş hakkı biter,
-    //    kamera AÇILMAZ → "kendimi göremiyorum, karşı taraf beni görmüyor". Bu yüzden track'leri ÖNCE (dokunma anında) al.
-    let yerelTracks = [];
-    try { yerelTracks = await createLocalTracks({ audio: true, video: { resolution: { width: 480, height: 360, frameRate: 20 } } }); } catch (e) { yerelTracks = []; }
+    // 📷 KAMERA/MİKROFONU DOKUNMA ANINDA İSTE ama BEKLEME → bağlanmayla PARALEL yürüsün (çok daha HIZLI açılır).
+    //    Mobil tarayıcı getUserMedia için KULLANICI DOKUNUŞU ister; bu yüzden createLocalTracks'i EN BAŞTA (dokunma anında)
+    //    çağırıyoruz. Ama await etmiyoruz — kamera hazırlanırken aynı anda token alınıp odaya bağlanılır (seri değil, paralel).
+    const yerelTracksSozu = createLocalTracks({ audio: true, video: { resolution: { width: 480, height: 360, frameRate: 20 } } }).catch(() => []);
     const { token, url } = await livekitTokenAl(oda);
     // GRUPTA adaptiveStream+dynacast AÇIK (herkese tam video DONDURUR; açıkken sadece görünen kare + uygun kalite).
     // + DÜŞÜK çözünürlük yayınla (480x360@20): çok kişide telefon/bağlantı boğulmasın, donma/kesilme azalsın. simulcast ile
@@ -4035,8 +4035,10 @@ export default function Anasayfa({ pro = false }) {
     room.on(RoomEvent.TrackUnmuted, yenile);
     room.on(RoomEvent.Disconnected, () => { if (grupRoomRef.current === room) grupAramaKapat(); });
     await room.connect(url, token);
-    // Dokunma anında alınan kamera+mikrofon track'lerini yayınla → mobilde de kamera KESİN gider. (Alınamadıysa/izin
-    //    yoksa sessizce geçilir; en azından karşıyı görmeye devam edilir.)
+    // Bağlantı hazır → paralel yürüyen kamera/mikrofon track'lerini al ve yayınla (mobilde de kamera KESİN gider;
+    //    alınamadıysa/izin yoksa sessizce geçilir, en azından karşıyı görmeye devam edilir).
+    let yerelTracks = [];
+    try { yerelTracks = (await yerelTracksSozu) || []; } catch (e) { yerelTracks = []; }
     for (const tr of yerelTracks) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} }
     // Kendi görüntümü kendi kareme bağla (element mount olana kadar birkaç kez dene)
     const yerelVid = yerelTracks.find((t) => t && t.kind === "video");
@@ -10623,7 +10625,7 @@ export default function Anasayfa({ pro = false }) {
               return (
                 <div key={m.id} className={"grp-msj" + (benim ? " benim" : "")}>
                   {!benim && <span className="grp-msj-ad notranslate" translate="no">{m.gonderenAd || "—"}</span>}
-                  {m.gorsel ? <img className="grp-msj-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" /> : null}
+                  {m.gorsel ? <img className="grp-msj-foto" src={m.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setGrupFotoBuyut(m.gorsel)} /> : null}
                   {m.video ? <video className="grp-msj-video" src={m.video} controls playsInline /> : null}
                   {m.metin ? <span className="grp-msj-metin notranslate" translate="no">{m.metin}</span> : null}
                 </div>
@@ -10637,6 +10639,14 @@ export default function Anasayfa({ pro = false }) {
               onKeyDown={(e) => { if (e.key === "Enter") grupYaziGonderEt(); }} placeholder={t("grupMesajYaz", "Mesaj yaz…")} />
             <button className="grp-yaz-gonder" onClick={grupYaziGonderEt} aria-label={t("gonder", "Gönder")} title={t("gonder", "Gönder")}>➤</button>
           </div>
+        </div>
+      )}
+
+      {/* GRUP SOHBETİ FOTOĞRAFI — TAM EKRAN (dokununca büyür, tekrar dokun → kapanır) */}
+      {grupFotoBuyut && (
+        <div className="grp-foto-buyut" onClick={() => setGrupFotoBuyut("")}>
+          <img src={grupFotoBuyut} alt="" referrerPolicy="no-referrer" />
+          <button className="grp-foto-kapat" onClick={() => setGrupFotoBuyut("")} aria-label={t("kapat", "Kapat")}>✕</button>
         </div>
       )}
 
