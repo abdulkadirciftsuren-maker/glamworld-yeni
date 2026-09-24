@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, begeniSay, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -471,16 +471,15 @@ function latinYap(s) {
 }
 // BEĞENEN AVATAR ŞERİDİ — gönderiyi beğenenlerin ufak profil resimleri, İSTİFLENMİŞ (öne doğru küçülerek).
 // Gerçek beğeni verisi Firestore'dan (begenenleriOku) çekilir; beğeni yoksa hiç görünmez.
-function BegenenlerSerit({ postId, sayi, dil, onAc, onSayi }) {
+function BegenenlerSerit({ postId, sayi, dil, onAc }) {
   const [liste, setListe] = useState(null);
   useEffect(() => {
     let iptal = false;
     if (!postId || !sayi) { setListe([]); return; }
-    // ⚡ MASRAF DÜŞÜRÜLDÜ: Avatarlar için SADECE 6 beğeni oku (eskiden 100 okuyordu — akışta her gönderi için!).
-    //    DOĞRU SAYIYI ise ucuz "sayım sorgusu" (begeniSay/getCountFromServer, ~1 okuma) ile al → sayaç yanlışsa bile
-    //    2 kişi beğendiyse 2 yazar. Sayım başarısızsa (çevrimdışı) sayaç değerine (sayi) düşülür.
+    // ⚡ MASRAF: Avatarlar için SADECE 6 beğeni oku (eskiden 100 okuyordu — akışta her gönderi için!).
+    //    SAYI için okuma YOK: gönderideki atomik "begeni" sayacı (p.begeni) kullanılır → anlık, doğru, ÜCRETSİZ.
+    //    (getCountFromServer denendi ama gecikmeli/eski değer verip anlık beğeni-silmeyi yansıtmıyordu → yanlış sayı; kaldırıldı.)
     begenenleriOku(postId, 6).then((l) => { if (!iptal) setListe(l || []); }).catch(() => { if (!iptal) setListe([]); });
-    begeniSay(postId).then((n) => { if (!iptal && onSayi && n != null) onSayi(postId, n); }).catch(() => {});
     return () => { iptal = true; };
   }, [postId, sayi]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!liste || !liste.length) return null;
@@ -1824,8 +1823,6 @@ export default function Anasayfa({ pro = false }) {
   const [paylasAvatar, setPaylasAvatar] = useState("profil"); // gönderi avatarı: "profil" (profil fotoğrafım) | "amblem" (şirket amblemi)
   const [paylasYazi, setPaylasYazi] = useState("");
   const paylasYaziRef = useRef(null);                       // metin kutusu — "gloxorg.com ekle" imlecin olduğu yere koyabilsin
-  const [gercekBegeni, setGercekBegeni] = useState({});     // postId -> GERÇEK beğenen sayısı (sayaç yanlış kalırsa: 2 kişi beğendiyse 2 gösterir, 1 değil)
-  const begeniSayiBildir = (id, n) => setGercekBegeni((m) => (m[id] === n ? m : { ...m, [id]: n }));
   const [paylasBaslik, setPaylasBaslik] = useState("");     // gönderi BAŞLIĞI (profil şeridinin altında görünür)
   const [baslikAcikSet, setBaslikAcikSet] = useState(() => new Set()); // akışta başlığı "devamını oku" ile açılan gönderiler
   const [yaziAcikSet, setYaziAcikSet] = useState(() => new Set()); // akışta YAZIYI (alt yazı/gönderi metni) "devamını oku" ile YERİNDE açan gönderiler (fotoğrafın altında; tam ekran AÇMAZ)
@@ -9297,14 +9294,14 @@ export default function Anasayfa({ pro = false }) {
                     )}
                     {/* İKON ŞERİDİ — fotoğrafın/videonun ALTINDA, AYRI şerit (medyanın üzerinde DEĞİL) */}
                     <div className={"apr-rail" + (p.video ? " video" : "")} onClick={(e) => e.stopPropagation()}>
-                      <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{((gercekBegeni[p.id] != null ? gercekBegeni[p.id] : (p.begeni || 0))).toLocaleString()}</span></button>
+                      <button className={"apr-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="apr-sayi">{((p.begeni || 0)).toLocaleString()}</span></button>
                       <button className="apr-ic ape-yorum" onClick={() => yorumAc(p)}>{Ikon.yorum}<span>{p.yorumSayisi ? p.yorumSayisi : ""}</span></button>
                       <button className="apr-ic ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}</button>
                       <button className={"apr-ic apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                       <button className="apr-ic ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
-                    <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} onSayi={begeniSayiBildir} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
+                    <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                     {/* MARKA ŞERİDİ TAMAMEN KALDIRILDI (kullanıcı istedi): gloxorg.com artık paylaşımların altında HİÇ çıkmaz (eski gönderilerde de). Kullanıcı Ayarlar'dan kopyalayıp istediği yere koyacak. */}
                   </article>
                 );
@@ -9385,7 +9382,7 @@ export default function Anasayfa({ pro = false }) {
                     <button className="ana-post-btn ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
                   </div>
                   {/* BEĞENENLER — ufak istiflenmiş profil resimleri (gerçek beğeni varsa) */}
-                  <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} onSayi={begeniSayiBildir} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
+                  <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
                   {/* MARKA ŞERİDİ TAMAMEN KALDIRILDI (kullanıcı istedi): gloxorg.com paylaşımların altında hiç çıkmaz. Ayarlar'dan kopyalanır. */}
                 </article>
               );
@@ -11331,8 +11328,8 @@ export default function Anasayfa({ pro = false }) {
                 <div className="tf-rail" onClick={(e) => e.stopPropagation()}>
                   {/* BEĞENİ ikonu + hemen YANINDA beğenenlerin fotoğrafları (kullanıcı: geniş ekranda yer var) */}
                   <span className="tf-ic-cift">
-                    <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{((gercekBegeni[p.id] != null ? gercekBegeni[p.id] : (p.begeni || 0))).toLocaleString()}</span></button>
-                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} onSayi={begeniSayiBildir} />
+                    <button className={"tf-ic ape-kalp" + (begeniSet.has(p.id) ? " dolu" : "") + (kalpPatla === p.id ? " patla" : "")} onClick={() => begeniTik(p)} onPointerDown={() => begeniBas(p)} onPointerUp={begeniBirak} onPointerLeave={begeniBirak} onPointerCancel={begeniBirak}>{begeniIkon(p)}{tepkiCubugu(p)}{kalpPatla === p.id && <span className="kalp-patla" aria-hidden="true"><i/><i/><i/><i/><i/></span>}<span className="tf-sayi">{((p.begeni || 0)).toLocaleString()}</span></button>
+                    <BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} />
                   </span>
                   {/* YORUM ikonu + hemen YANINDA yorum yapanların fotoğrafları */}
                   <span className="tf-ic-cift">

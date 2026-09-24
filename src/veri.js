@@ -5,7 +5,7 @@ import { db, storage } from "./firebase";
 import {
   doc, getDoc, setDoc, deleteDoc, updateDoc,
   collection, collectionGroup, query, where, limit as fsLimit, orderBy, getDocs, onSnapshot,
-  serverTimestamp, increment, deleteField, arrayUnion, arrayRemove, getCountFromServer,
+  serverTimestamp, increment, deleteField, arrayUnion, arrayRemove,
 } from "firebase/firestore";
 import { ref as depoRef, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 
@@ -41,17 +41,6 @@ export async function begenenleriOku(postId, adet = 100) {
     l.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
     return l;
   } catch (e) { return []; }
-}
-// ⚡ MASRAF: Bir gönderinin GERÇEK beğeni SAYISINI ucuz "sayım sorgusuyla" al (getCountFromServer):
-// belgeleri TEK TEK OKUMAZ → ~1 okuma ile doğru sayıyı verir. (Eskiden akışta her gönderi için 100 beğeni belgesi
-// okunuyordu; 30 gönderi = ~3000 okuma. Artık ~30.) Hata/çevrimdışı olursa null döner (arayan sayaca düşer).
-export async function begeniSay(postId) {
-  if (!postId) return null;
-  try {
-    const q = query(collection(db, "begeniler"), where("postId", "==", postId));
-    const snap = await getCountFromServer(q);
-    return snap.data().count;
-  } catch (e) { return null; }
 }
 
 // ---------- ANKET OYLARI ----------
