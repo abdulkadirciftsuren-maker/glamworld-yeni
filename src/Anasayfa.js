@@ -9800,14 +9800,6 @@ export default function Anasayfa({ pro = false }) {
                         : p.video
                         ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
                         : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
-                      {/* SES aç/kapat — sesi olan paylaşımın SAĞ ÜST köşesinde. GLOXORG yazısı gibi TEMİZ (backdrop-filter/translateZ YOK) → videoda da görünür. */}
-                      {sesliMi && (
-                        <button className={"apr-ses-ik" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
-                          {akisSesAcik
-                            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
-                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
-                        </button>
-                      )}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
                       {/* YAZI medyanın ÜZERİNDE — yalnız METİN VARSA ve kullanıcı öyle istediyse (p.yaziUstunde) */}
@@ -9842,6 +9834,14 @@ export default function Anasayfa({ pro = false }) {
                       <button className="apr-ic ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}</button>
                       <button className={"apr-ic apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                       <button className="apr-ic ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
+                      {/* SES aç/kapat — SADECE sesi olan paylaşımda; işlem çubuğunda (her zaman EKRAN İÇİNDE, video örtemez/kesemez). Açıkken YEŞİL. */}
+                      {sesliMi && (
+                        <button className={"apr-ic apr-ses" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
+                          {akisSesAcik
+                            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
+                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
+                        </button>
+                      )}
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
                     <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>
