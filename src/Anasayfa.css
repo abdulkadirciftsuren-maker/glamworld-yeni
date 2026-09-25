@@ -258,14 +258,15 @@
 .yrm-begharf{ font-size:10px; font-weight:800; color:#FFD700; }
 
 /* SES aç/kapat — sesi olan PAYLAŞIMIN sağ üst köşesinde. GLOXORG yazısı gibi TEMİZ: backdrop-filter/transform YOK → Android videoda da görünür. */
+/* Zemin KREM/BEYAZ + hoparlör ALTIN → altın letterbox üstünde de, video üstünde de NET görünür (altın-üstüne-altın kaybolmaz). */
 .apr-ses-ik{ position:absolute; top:10px; right:10px; z-index:5;
   width:38px; height:38px; border-radius:11px; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  border:2px solid #B8860B; color:#1a1206;
-  background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#E0B000);
-  box-shadow:0 2px 8px rgba(0,0,0,.4); }
+  border:2px solid #B8860B; color:#B8860B;
+  background:rgba(255,252,244,.94);
+  box-shadow:0 2px 8px rgba(90,60,0,.45); }
 .apr-ses-ik svg{ width:21px; height:21px; }
-.apr-ses-ik.acik{ border-color:#1e9e46; } /* açıkken YEŞİL çerçeve (ses var) */
+.apr-ses-ik.acik{ border-color:#1e9e46; color:#1e9e46; } /* açıkken YEŞİL (ses var) */
 .apr-ses-ik:active{ opacity:.7; } /* basış efekti opacity (transform YOK → katman oluşup videoyu üste atmasin) */
 @media (min-width:560px){ .apr-ses-ik{ width:44px; height:44px; } .apr-ses-ik svg{ width:24px; height:24px; } }
 .yrm-sil{ color:#ff9aa2; border-color:rgba(255,120,130,.4); }
