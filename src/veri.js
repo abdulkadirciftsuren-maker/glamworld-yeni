@@ -845,11 +845,17 @@ export async function gonderiGeriGetir(id) {
 
 // ---------- YORUMLAR (gönderiye yorum) ----------
 // y.cevapId verilirse bu yorum BAŞKA bir yoruma CEVAP olur (yorumun içinde kalır, Glome'ye GİTMEZ).
+// y.gorsel (foto/GIF) veya y.video verilebilir → yorumda medya paylaşılır (metin boş olabilir).
 export async function yorumEkle(postId, y) {
-  if (!postId || !y || !y.uid || !y.metin || !y.metin.trim()) return null;
+  if (!postId || !y || !y.uid) return null;
+  const metin = (y.metin || "").trim();
+  const medyaVar = !!(y.gorsel || y.video);
+  if (!metin && !medyaVar) return null; // ne yazı ne medya → boş yorum yok
   try {
     const ref = doc(collection(db, "gonderiler", postId, "yorumlar"));
-    const kayit = { uid: y.uid, ad: y.ad || "", foto: y.foto || "", metin: y.metin.trim().slice(0, 500), zamanMs: Date.now(), olusturma: serverTimestamp() };
+    const kayit = { uid: y.uid, ad: y.ad || "", foto: y.foto || "", metin: metin.slice(0, 500), zamanMs: Date.now(), olusturma: serverTimestamp() };
+    if (y.gorsel) kayit.gorsel = y.gorsel;  // foto veya hareketli GIF
+    if (y.video) kayit.video = y.video;    // kısa video
     if (y.cevapId) { kayit.cevapId = y.cevapId; kayit.cevapAd = y.cevapAd || ""; } // hangi yoruma cevap
     await setDoc(ref, kayit);
     return ref.id;
@@ -886,10 +892,14 @@ export async function yorumDuzelt(postId, yorumId, yeniMetin) {
     return true;
   } catch (e) { return false; }
 }
-// YORUMU SİL — sadece yazan kişi (kural korur). Yorumu tamamen kaldırır.
+// YORUMU SİL — sadece yazan kişi (kural korur). Yorumu tamamen kaldırır + varsa videosunu depodan siler (boşuna yer/masraf kalmasın).
 export async function yorumSil(postId, yorumId) {
   if (!postId || !yorumId) return false;
-  try { await deleteDoc(doc(db, "gonderiler", postId, "yorumlar", yorumId)); return true; } catch (e) { return false; }
+  try {
+    try { const s = await getDoc(doc(db, "gonderiler", postId, "yorumlar", yorumId)); if (s.exists()) { const y = s.data() || {}; if (y.video) await medyaSil(y.video); } } catch (e) {}
+    await deleteDoc(doc(db, "gonderiler", postId, "yorumlar", yorumId));
+    return true;
+  } catch (e) { return false; }
 }
 
 // ---------- TAKİP ET (kişileri takip et — akış kişiselleşir) ----------

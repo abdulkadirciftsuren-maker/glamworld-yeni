@@ -1939,6 +1939,10 @@ export default function Anasayfa({ pro = false }) {
   const [yorumCevap, setYorumCevap] = useState(null);   // hangi yoruma cevap yazıyoruz (null=normal yorum)
   const [yorumDuzenId, setYorumDuzenId] = useState(null); // düzeltilen yorumun id'si
   const [yorumDuzenMetin, setYorumDuzenMetin] = useState(""); // düzeltme kutusundaki yeni metin
+  const [yorumMedya, setYorumMedya] = useState(null);   // yoruma eklenecek foto/GIF/video: {tur:'foto'|'video', url}
+  const [yorumMedyaYukleniyor, setYorumMedyaYukleniyor] = useState(false);
+  const [yorumFotoBuyut, setYorumFotoBuyut] = useState(""); // yorumdaki fotoya basınca tam ekran (URL)
+  const yorumDosyaRef = useRef(null);                   // yorum foto/video seçici (gizli input)
   const [takipSet, setTakipSet] = useState(new Set());  // takip ettiğim uid'ler
   const [takipBalon, setTakipBalon] = useState(null);   // takip düğmesi yanında kısa etiket (uid; 1.6sn sonra kaybolur)
   const takipBalonZmnRef = useRef(null);
@@ -5870,32 +5874,40 @@ export default function Anasayfa({ pro = false }) {
   function yorumAc(p) {
     if (!p || !p.id) return;
     setYorumAcik(p); setYorumlar(null); setYorumYazi(""); setYorumDurum("");
-    setYorumCevap(null); setYorumDuzenId(null); setYorumDuzenMetin(""); // temiz aç
+    setYorumCevap(null); setYorumDuzenId(null); setYorumDuzenMetin(""); setYorumMedya(null); // temiz aç
     yorumlariOku(p.id).then(setYorumlar);
   }
   function yorumGonderEt() {
-    const uu = auth.currentUser; if (!uu || !yorumAcik || !yorumYazi.trim()) return;
+    const uu = auth.currentUser; if (!uu || !yorumAcik) return;
+    if (!yorumYazi.trim() && !yorumMedya) return; // ne yazı ne medya → gönderme
+    if (yorumMedyaYukleniyor) return;             // medya hâlâ yükleniyorsa bekle
     setYorumDurum("gonderiliyor");
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     const benimFoto = foto || isFoto || "";
     const cevap = yorumCevap; // hangi yoruma cevap (varsa) — yorumun İÇİNDE kalır, Glome'ye GİTMEZ
+    const medya = yorumMedya; // eklenen foto/GIF/video (varsa)
     const kayit = { uid: uu.uid, ad: benimAd, foto: benimFoto, metin: yorumYazi };
+    if (medya && medya.tur === "video") kayit.video = medya.url;
+    else if (medya) kayit.gorsel = medya.url; // foto veya GIF
     if (cevap) { kayit.cevapId = cevap.id; kayit.cevapAd = cevap.ad || ""; }
     yorumEkle(yorumAcik.id, kayit).then((id) => {
       if (id) {
         const yk = { id, uid: uu.uid, ad: benimAd, foto: benimFoto, metin: yorumYazi.trim(), zamanMs: Date.now(), begenenler: [] };
+        if (medya && medya.tur === "video") yk.video = medya.url; else if (medya) yk.gorsel = medya.url;
         if (cevap) { yk.cevapId = cevap.id; yk.cevapAd = cevap.ad || ""; }
-        setYorumlar((l) => [...(l || []), yk]); setYorumYazi(""); setYorumDurum("ok"); setYorumCevap(null);
+        setYorumlar((l) => [...(l || []), yk]); setYorumYazi(""); setYorumDurum("ok"); setYorumCevap(null); setYorumMedya(null);
         const guncel = (g) => g.id === yorumAcik.id ? { ...g, yorumSayisi: (g.yorumSayisi || 0) + 1 } : g;
         setGercekAkis((a) => a.map(guncel)); setGonderilerim((a) => a.map(guncel));
         // Yorum sayısını gönderiye KALICI yaz (yenileyince sıfırlanmasın)
         sayacDegistir(yorumAcik.id, "yorumSayisi", 1).catch(() => {}); // ATOMİK +1 (yorum sayısı doğru toplanır)
+        // Bildirim metni: yazı varsa yazı, yoksa medya etiketi (boş bildirim olmasın)
+        const metinOzet = yorumYazi.trim().slice(0, 60) || (medya && medya.tur === "video" ? t("videoEtiket", "📹 Video") : (medya ? t("fotoEtiket", "📷 Fotoğraf") : ""));
         // BİLDİRİM: cevapsa cevaplanan kişiye, normal yorumsa gönderi sahibine (kendine değil)
         if (cevap && cevap.uid && cevap.uid !== uu.uid) {
-          bildirimEkle({ aliciUid: cevap.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: benimFoto, tip: "yorum", gonderiId: yorumAcik.id, metin: yorumYazi.trim().slice(0, 60), gonderiResim: yorumAcik.gorsel || "", gonderiZemin: yorumAcik.zemin || "", gonderiVideo: yorumAcik.video || "" }).catch(() => {});
+          bildirimEkle({ aliciUid: cevap.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: benimFoto, tip: "yorum", gonderiId: yorumAcik.id, metin: metinOzet, gonderiResim: yorumAcik.gorsel || "", gonderiZemin: yorumAcik.zemin || "", gonderiVideo: yorumAcik.video || "" }).catch(() => {});
         } else {
           const sahip = yorumAcik.sahipUid || yorumAcik.uid;
-          if (sahip && sahip !== uu.uid) bildirimEkle({ aliciUid: sahip, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: benimFoto, tip: "yorum", gonderiId: yorumAcik.id, metin: yorumYazi.trim().slice(0, 60), gonderiResim: yorumAcik.gorsel || "", gonderiZemin: yorumAcik.zemin || "", gonderiVideo: yorumAcik.video || "" }).catch(() => {});
+          if (sahip && sahip !== uu.uid) bildirimEkle({ aliciUid: sahip, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: benimFoto, tip: "yorum", gonderiId: yorumAcik.id, metin: metinOzet, gonderiResim: yorumAcik.gorsel || "", gonderiZemin: yorumAcik.zemin || "", gonderiVideo: yorumAcik.video || "" }).catch(() => {});
         }
         // Cevap değilse pencere kendiliğinden kapanır (kullanıcı isteği); cevapsa açık kalır ki dizi görünsün
         if (!cevap) setTimeout(() => { setYorumAcik(null); setYorumDurum(""); }, 900);
@@ -5939,6 +5951,24 @@ export default function Anasayfa({ pro = false }) {
   }
   // CEVAP YAZ — girişi cevap moduna al (input'a "X'e cevap" etiketi çıkar)
   function yorumCevapBaslat(y) { setYorumCevap(y); setYorumDuzenId(null); }
+  // YORUMA FOTO / GIF / VIDEO EKLE — 📷 düğmesi gizli input'u açar; seçilince yükler, önizleme çıkar
+  const yorumMedyaSec = () => { try { if (yorumDosyaRef.current) yorumDosyaRef.current.click(); } catch (e) {} };
+  const yorumMedyaSecildi = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    try { e.target.value = ""; } catch (x) {}
+    const uu = auth.currentUser; if (!f || !uu) return;
+    const video = ((f.type || "").indexOf("video") === 0);
+    // Çok büyük dosya masraf/yavaşlık yapmasın: video ~30MB, foto/GIF ~12MB üstü uyar
+    if (video && f.size > 30 * 1024 * 1024) { bilgiBalonu(t("yorumVideoBuyuk", "Video çok büyük (en fazla ~30 MB). Daha kısa bir video seç.")); return; }
+    if (!video && f.size > 12 * 1024 * 1024) { bilgiBalonu(t("yorumFotoBuyuk", "Dosya çok büyük (en fazla ~12 MB).")); return; }
+    setYorumMedyaYukleniyor(true); setYorumDurum("");
+    try {
+      const r = await dosyaYukle(f, uu.uid, () => {});
+      if (r && r.url) setYorumMedya({ tur: video ? "video" : "foto", url: r.url });
+      else bilgiBalonu(t("yorumMedyaHata", "Yüklenemedi, tekrar dene."));
+    } catch (x) { bilgiBalonu(t("yorumMedyaHata", "Yüklenemedi, tekrar dene.")); }
+    setYorumMedyaYukleniyor(false);
+  };
   // PAYLAŞ — yeni gönderi oluştur
   // ✨ YAPAY ZEKA YAZI ÖNERİSİ — GERÇEK CLAUDE (güvenli köprü; anahtar köprüde gizli); olmazsa yerel öneri
   // Gloxoo'ya KONUŞARAK "ne yazsın" söyle → aiIstek kutusuna yazar (tarayıcı ses tanıma)
@@ -11576,7 +11606,11 @@ export default function Anasayfa({ pro = false }) {
                             </div>
                           </div>
                         ) : (
-                          <div className="msj-metin">{y.metin}</div>
+                          <>
+                            {y.metin ? <div className="msj-metin">{y.metin}</div> : null}
+                            {y.gorsel ? <img className="yrm-medya" src={y.gorsel} alt="" referrerPolicy="no-referrer" onClick={() => setYorumFotoBuyut(y.gorsel)} /> : null}
+                            {y.video ? <video className="yrm-medya" src={y.video} controls playsInline preload="metadata" /> : null}
+                          </>
                         )}
                         {!duzenlemeModu && (
                           <div className="yrm-eylem">
@@ -11619,13 +11653,35 @@ export default function Anasayfa({ pro = false }) {
                   <button className="yrm-cevap-iptal" onClick={() => setYorumCevap(null)} aria-label={t("vazgec", "Vazgeç")} title={t("vazgec", "Vazgeç")}>✕</button>
                 </div>
               )}
-              <textarea className="adm-yaz" value={yorumYazi} onChange={(e) => { setYorumYazi(e.target.value); setYorumDurum(""); }} placeholder={yorumCevap ? t("cevapYaz", "Cevabını yaz…") : t("yorumYaz", "Yorum yaz…")} maxLength={500} />
-              <button className="adm-gonder" onClick={yorumGonderEt} disabled={yorumDurum === "gonderiliyor" || !yorumYazi.trim()}>
+              {/* Seçilen foto/video ÖNİZLEME (göndermeden önce) — ✕ ile kaldır */}
+              {yorumMedya && (
+                <div className="yrm-onizle">
+                  {yorumMedya.tur === "video"
+                    ? <video className="yrm-onizle-medya" src={yorumMedya.url} muted playsInline preload="metadata" />
+                    : <img className="yrm-onizle-medya" src={yorumMedya.url} alt="" referrerPolicy="no-referrer" />}
+                  <button className="yrm-onizle-sil" onClick={() => setYorumMedya(null)} aria-label={t("kaldir", "Kaldır")} title={t("kaldir", "Kaldır")}>✕</button>
+                </div>
+              )}
+              {yorumMedyaYukleniyor && <div className="yrm-yukleniyor">{t("yorumMedyaYukleniyor", "Medya yükleniyor…")}</div>}
+              <div className="yrm-giris-satir">
+                <input ref={yorumDosyaRef} type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={yorumMedyaSecildi} />
+                <button className="yrm-medya-btn" onClick={yorumMedyaSec} disabled={yorumMedyaYukleniyor} aria-label={t("fotoVideoEkle", "Foto / video / GIF ekle")} title={t("fotoVideoEkle", "Foto / video / GIF ekle")}>{yorumMedyaYukleniyor ? "⏳" : "📷"}</button>
+                <textarea className="adm-yaz" value={yorumYazi} onChange={(e) => { setYorumYazi(e.target.value); setYorumDurum(""); }} placeholder={yorumCevap ? t("cevapYaz", "Cevabını yaz…") : t("yorumYaz", "Yorum yaz…")} maxLength={500} />
+              </div>
+              <button className="adm-gonder" onClick={yorumGonderEt} disabled={yorumDurum === "gonderiliyor" || yorumMedyaYukleniyor || (!yorumYazi.trim() && !yorumMedya)}>
                 {yorumDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (yorumCevap ? t("cevapGonder", "Cevap Gönder") : t("yorumGonder", "Yorum Gönder"))}
               </button>
               {yorumDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}</div>}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* YORUMDAKİ FOTOYA basınca TAM EKRAN (altın zemin, ✕ ile kapat) */}
+      {yorumFotoBuyut && (
+        <div className="yrm-foto-buyut" onClick={() => setYorumFotoBuyut("")}>
+          <button className="yrm-foto-kapat" onClick={() => setYorumFotoBuyut("")} aria-label={t("kapat", "Kapat")}>✕</button>
+          <img src={yorumFotoBuyut} alt="" referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
 
