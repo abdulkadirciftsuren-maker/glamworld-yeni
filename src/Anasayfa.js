@@ -5941,18 +5941,36 @@ export default function Anasayfa({ pro = false }) {
       } else setYorumDurum("hata");
     }).catch(() => setYorumDurum("hata"));
   }
-  // YORUMA BEĞENİ — kalbe bas: kendi uid'ni ekler/çıkarır (aynı kişi tek sayılır). Anında görünür, arka planda yazılır.
+  // Yorum beğenenleri HARİTA olarak oku ({uid:{ad,foto}}). Eski DİZİ biçimini de destekler (geriye dönük).
+  const yorumBegenHarita = (y) => {
+    const b = y && y.begenenler;
+    if (!b) return {};
+    if (Array.isArray(b)) { const m = {}; b.forEach((uid) => { if (uid) m[uid] = { ad: "", foto: "" }; }); return m; } // eski dizi → harita
+    return b;
+  };
+  // YORUMA BEĞENİ — kalbe bas: kendi bilgini (ad+foto) ekler/çıkarır (aynı kişi tek sayılır). Anında görünür, arka planda yazılır.
   function yorumBegenEt(y) {
     const uu = auth.currentUser; if (!uu || !yorumAcik || !y || !y.id) return;
-    const begenenler = Array.isArray(y.begenenler) ? y.begenenler : [];
-    const begendim = begenenler.includes(uu.uid);
-    const yeni = begendim ? begenenler.filter((x) => x !== uu.uid) : [...begenenler, uu.uid];
+    const harita = yorumBegenHarita(y);
+    const begendim = !!harita[uu.uid];
+    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    const benimFoto = foto || isFoto || "";
+    const yeni = { ...harita };
+    if (begendim) delete yeni[uu.uid]; else yeni[uu.uid] = { ad: benimAd, foto: benimFoto };
     setYorumlar((l) => (l || []).map((it) => it.id === y.id ? { ...it, begenenler: yeni } : it)); // anında
-    yorumBegen(yorumAcik.id, y.id, uu.uid, !begendim).catch(() => {
+    yorumBegen(yorumAcik.id, y.id, uu.uid, !begendim, { ad: benimAd, foto: benimFoto }).catch(() => {
       // yazılamazsa geri al (iyimser güncellemeyi bozma)
-      setYorumlar((l) => (l || []).map((it) => it.id === y.id ? { ...it, begenenler } : it));
+      setYorumlar((l) => (l || []).map((it) => it.id === y.id ? { ...it, begenenler: harita } : it));
     });
   }
+  // YORUMU BEĞENENLERİ GÖSTER — kalp sayısına dokununca ad+fotoğrafla liste (ekstra okuma yok, bilgi beğeniyle saklı)
+  const [yorumBegenenModal, setYorumBegenenModal] = useState(null); // {liste:[{ad,foto}]}
+  const yorumBegenenleriAc = (y) => {
+    const harita = yorumBegenHarita(y);
+    const liste = Object.values(harita);
+    if (!liste.length) return;
+    setYorumBegenenModal({ liste });
+  };
   // YORUMU DÜZELT — kutuyu aç (mevcut metinle dolu), kaydet, veya vazgeç
   function yorumDuzeltBaslat(y) { setYorumDuzenId(y.id); setYorumDuzenMetin(y.metin || ""); }
   function yorumDuzeltVazgec() { setYorumDuzenId(null); setYorumDuzenMetin(""); }
@@ -11621,8 +11639,9 @@ export default function Anasayfa({ pro = false }) {
                 const kartYap = (y, cevapMi) => {
                   const yb = (String(y.ad || "?").trim()[0] || "?").toUpperCase();
                   const ne = y.zamanMs ? new Date(y.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
-                  const begenenler = Array.isArray(y.begenenler) ? y.begenenler : [];
-                  const begendim = !!(uu && begenenler.includes(uu.uid));
+                  const begenHarita = yorumBegenHarita(y);          // {uid:{ad,foto}}
+                  const begenSay = Object.keys(begenHarita).length;
+                  const begendim = !!(uu && begenHarita[uu.uid]);
                   const benim = !!(uu && y.uid === uu.uid);
                   const duzenlemeModu = yorumDuzenId === y.id;
                   return (
@@ -11650,8 +11669,20 @@ export default function Anasayfa({ pro = false }) {
                           <div className="yrm-eylem">
                             <button className={"yrm-btn yrm-begen" + (begendim ? " dolu" : "")} onClick={() => yorumBegenEt(y)} aria-label={t("yorumBegen", "Beğen")} title={t("yorumBegen", "Beğen")}>
                               <svg viewBox="0 0 24 24" fill={begendim ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
-                              {begenenler.length > 0 && <span className="yrm-say">{begenenler.length}</span>}
                             </button>
+                            {begenSay > 0 && (
+                              <button className="yrm-btn yrm-begensay" onClick={() => yorumBegenenleriAc(y)} aria-label={t("kimBegendi", "Kimler beğendi")} title={t("kimBegendi", "Kimler beğendi")}>
+                                {/* Beğenenlerin küçük fotoğrafları + sayı → dokununca liste */}
+                                <span className="yrm-begfoto-grup">
+                                  {Object.values(begenHarita).slice(0, 3).map((k, i) => (
+                                    <span className="yrm-begfoto" key={i} style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 3 - i }}>
+                                      {k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : <span className="yrm-begharf">{((k.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
+                                    </span>
+                                  ))}
+                                </span>
+                                <span className="yrm-say">{begenSay}</span>
+                              </button>
+                            )}
                             <button className="yrm-btn yrm-cevapla" onClick={() => yorumCevapBaslat(y)} aria-label={t("cevapla", "Cevapla")} title={t("cevapla", "Cevapla")}>
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17l-5-4 5-4" /><path d="M4 13h11a5 5 0 0 1 5 5v1" /></svg>
                               <span className="yrm-etiket">{t("cevapla", "Cevapla")}</span>
@@ -11716,6 +11747,29 @@ export default function Anasayfa({ pro = false }) {
         <div className="yrm-foto-buyut" onClick={() => setYorumFotoBuyut("")}>
           <button className="yrm-foto-kapat" onClick={() => setYorumFotoBuyut("")} aria-label={t("kapat", "Kapat")}>✕</button>
           <img src={yorumFotoBuyut} alt="" referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
+      {/* YORUMU KİMLER BEĞENDİ — ad + fotoğrafla liste (beğeniyle birlikte saklandığı için ekstra okuma yok) */}
+      {yorumBegenenModal && (
+        <div className="msj-fon bgm-fon" style={{ zIndex: 100050 }} onClick={(e) => { if (e.target === e.currentTarget) setYorumBegenenModal(null); }}>
+          <div className="msj-pencere" onClick={(e) => e.stopPropagation()}>
+            <div className="msj-bas">
+              <span className="msj-baslik">❤ {t("yorumuBegenenler", "Yorumu beğenenler")} ({yorumBegenenModal.liste.length})</span>
+              <button className="msj-kapat" onClick={() => setYorumBegenenModal(null)} aria-label="Kapat">✕</button>
+            </div>
+            <div className="msj-liste">
+              {yorumBegenenModal.liste.map((k, i) => {
+                const h = ((k.ad || "?").trim()[0] || "?").toUpperCase();
+                return (
+                  <div className="msj-kart" key={i} style={{ cursor: "default" }}>
+                    <span className="msj-foto">{k.foto ? <img src={k.foto} alt="" referrerPolicy="no-referrer" /> : h}</span>
+                    <div className="msj-icerik"><div className="msj-ust"><b className="notranslate" translate="no">{k.ad || "—"}</b></div></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 

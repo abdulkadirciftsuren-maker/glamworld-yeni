@@ -903,13 +903,14 @@ export async function yorumlariOku(postId, adet = 80) {
     return liste;
   } catch (e) { return []; }
 }
-// YORUMA BEĞENİ — kim beğendiyse uid'si "begenenler" dizisinde tutulur (aynı kişi iki kez sayılmaz).
-// begen=true ekler, false çıkarır. Sayıyı diziden okuruz (ayrı sayaç tutmaya gerek yok).
-export async function yorumBegen(postId, yorumId, uid, begen) {
+// YORUMA BEĞENİ — kim beğendiyse "begenenler" HARİTASINDA {uid:{ad,foto}} tutulur.
+// Neden harita (dizi değil): kim beğendiğini AD+FOTOĞRAF ile GÖSTEREBİLELİM (ekstra okuma yok) + aynı kişi tek sayılır.
+// TEK alan (begenenler) değiştiği için kural aynı kalır. begen=true ekler, false çıkarır.
+export async function yorumBegen(postId, yorumId, uid, begen, bilgi = {}) {
   if (!postId || !yorumId || !uid) return false;
   try {
     await updateDoc(doc(db, "gonderiler", postId, "yorumlar", yorumId), {
-      begenenler: begen ? arrayUnion(uid) : arrayRemove(uid),
+      ["begenenler." + uid]: begen ? { ad: bilgi.ad || "", foto: bilgi.foto || "" } : deleteField(),
     });
     return true;
   } catch (e) { return false; }
