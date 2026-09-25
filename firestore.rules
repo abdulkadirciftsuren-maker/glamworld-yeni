@@ -38,7 +38,13 @@ service cloud.firestore {
       match /yorumlar/{yid} {
         allow read: if true;
         allow create: if girisli() && request.resource.data.uid == request.auth.uid;
-        allow update, delete: if girisli() && resource.data.uid == request.auth.uid;
+        // SİLME: sadece yorumu yazan kişi
+        allow delete: if girisli() && resource.data.uid == request.auth.uid;
+        // GÜNCELLEME: yazan kişi düzeltebilir; HERKES ise SADECE beğeni (begenenler) alanını değiştirebilir
+        allow update: if girisli() && (
+          resource.data.uid == request.auth.uid
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['begenenler'])
+        );
       }
     }
 

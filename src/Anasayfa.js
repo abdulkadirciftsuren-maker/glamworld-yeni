@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupGuncelle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, yorumBegen, yorumDuzelt, yorumSil, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupGuncelle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -1936,6 +1936,9 @@ export default function Anasayfa({ pro = false }) {
   const [yorumlar, setYorumlar] = useState(null);      // null=yükleniyor
   const [yorumYazi, setYorumYazi] = useState("");
   const [yorumDurum, setYorumDurum] = useState("");
+  const [yorumCevap, setYorumCevap] = useState(null);   // hangi yoruma cevap yazıyoruz (null=normal yorum)
+  const [yorumDuzenId, setYorumDuzenId] = useState(null); // düzeltilen yorumun id'si
+  const [yorumDuzenMetin, setYorumDuzenMetin] = useState(""); // düzeltme kutusundaki yeni metin
   const [takipSet, setTakipSet] = useState(new Set());  // takip ettiğim uid'ler
   const [takipBalon, setTakipBalon] = useState(null);   // takip düğmesi yanında kısa etiket (uid; 1.6sn sonra kaybolur)
   const takipBalonZmnRef = useRef(null);
@@ -5867,6 +5870,7 @@ export default function Anasayfa({ pro = false }) {
   function yorumAc(p) {
     if (!p || !p.id) return;
     setYorumAcik(p); setYorumlar(null); setYorumYazi(""); setYorumDurum("");
+    setYorumCevap(null); setYorumDuzenId(null); setYorumDuzenMetin(""); // temiz aç
     yorumlariOku(p.id).then(setYorumlar);
   }
   function yorumGonderEt() {
@@ -5874,22 +5878,67 @@ export default function Anasayfa({ pro = false }) {
     setYorumDurum("gonderiliyor");
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     const benimFoto = foto || isFoto || "";
-    yorumEkle(yorumAcik.id, { uid: uu.uid, ad: benimAd, foto: benimFoto, metin: yorumYazi }).then((id) => {
+    const cevap = yorumCevap; // hangi yoruma cevap (varsa) — yorumun İÇİNDE kalır, Glome'ye GİTMEZ
+    const kayit = { uid: uu.uid, ad: benimAd, foto: benimFoto, metin: yorumYazi };
+    if (cevap) { kayit.cevapId = cevap.id; kayit.cevapAd = cevap.ad || ""; }
+    yorumEkle(yorumAcik.id, kayit).then((id) => {
       if (id) {
-        const yk = { id, uid: uu.uid, ad: benimAd, foto: benimFoto, metin: yorumYazi.trim(), zamanMs: Date.now() };
-        setYorumlar((l) => [...(l || []), yk]); setYorumYazi(""); setYorumDurum("ok");
+        const yk = { id, uid: uu.uid, ad: benimAd, foto: benimFoto, metin: yorumYazi.trim(), zamanMs: Date.now(), begenenler: [] };
+        if (cevap) { yk.cevapId = cevap.id; yk.cevapAd = cevap.ad || ""; }
+        setYorumlar((l) => [...(l || []), yk]); setYorumYazi(""); setYorumDurum("ok"); setYorumCevap(null);
         const guncel = (g) => g.id === yorumAcik.id ? { ...g, yorumSayisi: (g.yorumSayisi || 0) + 1 } : g;
         setGercekAkis((a) => a.map(guncel)); setGonderilerim((a) => a.map(guncel));
         // Yorum sayısını gönderiye KALICI yaz (yenileyince sıfırlanmasın)
         sayacDegistir(yorumAcik.id, "yorumSayisi", 1).catch(() => {}); // ATOMİK +1 (yorum sayısı doğru toplanır)
-        // Gönderi sahibine BİLDİRİM (kendine değil)
-        const sahip = yorumAcik.sahipUid || yorumAcik.uid;
-        if (sahip && sahip !== uu.uid) bildirimEkle({ aliciUid: sahip, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: benimFoto, tip: "yorum", gonderiId: yorumAcik.id, metin: yorumYazi.trim().slice(0, 60), gonderiResim: yorumAcik.gorsel || "", gonderiZemin: yorumAcik.zemin || "", gonderiVideo: yorumAcik.video || "" }).catch(() => {});
-        // Yorum gönderilince pencere kendiliğinden kapanır (kullanıcı isteği)
-        setTimeout(() => { setYorumAcik(null); setYorumDurum(""); }, 900);
+        // BİLDİRİM: cevapsa cevaplanan kişiye, normal yorumsa gönderi sahibine (kendine değil)
+        if (cevap && cevap.uid && cevap.uid !== uu.uid) {
+          bildirimEkle({ aliciUid: cevap.uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: benimFoto, tip: "yorum", gonderiId: yorumAcik.id, metin: yorumYazi.trim().slice(0, 60), gonderiResim: yorumAcik.gorsel || "", gonderiZemin: yorumAcik.zemin || "", gonderiVideo: yorumAcik.video || "" }).catch(() => {});
+        } else {
+          const sahip = yorumAcik.sahipUid || yorumAcik.uid;
+          if (sahip && sahip !== uu.uid) bildirimEkle({ aliciUid: sahip, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: benimFoto, tip: "yorum", gonderiId: yorumAcik.id, metin: yorumYazi.trim().slice(0, 60), gonderiResim: yorumAcik.gorsel || "", gonderiZemin: yorumAcik.zemin || "", gonderiVideo: yorumAcik.video || "" }).catch(() => {});
+        }
+        // Cevap değilse pencere kendiliğinden kapanır (kullanıcı isteği); cevapsa açık kalır ki dizi görünsün
+        if (!cevap) setTimeout(() => { setYorumAcik(null); setYorumDurum(""); }, 900);
+        else setTimeout(() => setYorumDurum(""), 900);
       } else setYorumDurum("hata");
     }).catch(() => setYorumDurum("hata"));
   }
+  // YORUMA BEĞENİ — kalbe bas: kendi uid'ni ekler/çıkarır (aynı kişi tek sayılır). Anında görünür, arka planda yazılır.
+  function yorumBegenEt(y) {
+    const uu = auth.currentUser; if (!uu || !yorumAcik || !y || !y.id) return;
+    const begenenler = Array.isArray(y.begenenler) ? y.begenenler : [];
+    const begendim = begenenler.includes(uu.uid);
+    const yeni = begendim ? begenenler.filter((x) => x !== uu.uid) : [...begenenler, uu.uid];
+    setYorumlar((l) => (l || []).map((it) => it.id === y.id ? { ...it, begenenler: yeni } : it)); // anında
+    yorumBegen(yorumAcik.id, y.id, uu.uid, !begendim).catch(() => {
+      // yazılamazsa geri al (iyimser güncellemeyi bozma)
+      setYorumlar((l) => (l || []).map((it) => it.id === y.id ? { ...it, begenenler } : it));
+    });
+  }
+  // YORUMU DÜZELT — kutuyu aç (mevcut metinle dolu), kaydet, veya vazgeç
+  function yorumDuzeltBaslat(y) { setYorumDuzenId(y.id); setYorumDuzenMetin(y.metin || ""); }
+  function yorumDuzeltVazgec() { setYorumDuzenId(null); setYorumDuzenMetin(""); }
+  function yorumDuzeltKaydet(y) {
+    const yeni = (yorumDuzenMetin || "").trim(); if (!yeni) return;
+    setYorumlar((l) => (l || []).map((it) => it.id === y.id ? { ...it, metin: yeni, duzenlendi: true } : it)); // anında
+    setYorumDuzenId(null); setYorumDuzenMetin("");
+    yorumDuzelt(yorumAcik.id, y.id, yeni).catch(() => {});
+  }
+  // YORUMU SİL — sadece kendi yorumun; onay sorulur, sonra listeden kalkar + sayaç -1
+  function yorumSilEt(y) {
+    if (!yorumAcik || !y || !y.id) return;
+    if (!window.confirm(t("yorumSilOnay", "Bu yorumu silmek istiyor musun?"))) return;
+    setYorumlar((l) => (l || []).filter((it) => it.id !== y.id && it.cevapId !== y.id)); // yorumu + cevaplarını kaldır
+    yorumSil(yorumAcik.id, y.id).then((ok) => {
+      if (ok) {
+        const guncel = (g) => g.id === yorumAcik.id ? { ...g, yorumSayisi: Math.max(0, (g.yorumSayisi || 1) - 1) } : g;
+        setGercekAkis((a) => a.map(guncel)); setGonderilerim((a) => a.map(guncel));
+        sayacDegistir(yorumAcik.id, "yorumSayisi", -1).catch(() => {});
+      }
+    }).catch(() => {});
+  }
+  // CEVAP YAZ — girişi cevap moduna al (input'a "X'e cevap" etiketi çıkar)
+  function yorumCevapBaslat(y) { setYorumCevap(y); setYorumDuzenId(null); }
   // PAYLAŞ — yeni gönderi oluştur
   // ✨ YAPAY ZEKA YAZI ÖNERİSİ — GERÇEK CLAUDE (güvenli köprü; anahtar köprüde gizli); olmazsa yerel öneri
   // Gloxoo'ya KONUŞARAK "ne yazsın" söyle → aiIstek kutusuna yazar (tarayıcı ses tanıma)
@@ -11500,25 +11549,79 @@ export default function Anasayfa({ pro = false }) {
                 <div className="msj-bos">{t("araYukleniyor", "Yükleniyor…")}</div>
               ) : yorumlar.length === 0 ? (
                 <div className="msj-bos">{t("yorumYok", "Henüz yorum yok. İlk yorumu sen yaz.")}</div>
-              ) : yorumlar.map((y) => {
-                const yb = (String(y.ad || "?").trim()[0] || "?").toUpperCase();
-                const ne = y.zamanMs ? new Date(y.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
-                return (
-                  <div className="msj-kart" key={y.id} style={{ cursor: "default" }}>
-                    <span className="msj-foto">{y.foto ? <img src={y.foto} alt="" referrerPolicy="no-referrer" /> : yb}</span>
-                    <div className="msj-icerik">
-                      <div className="msj-ust"><b className="notranslate" translate="no">{y.ad || "—"}</b><i>{ne}</i></div>
-                      <div className="msj-metin">{y.metin}</div>
+              ) : (() => {
+                const uu = auth.currentUser;
+                const ustler = yorumlar.filter((y) => !y.cevapId);        // ana yorumlar
+                const cevaplariBul = (pid) => yorumlar.filter((y) => y.cevapId === pid); // o yoruma gelen cevaplar
+                // TEK yorum kartı (hem ana yorum hem cevap için) — TÜM eylemler yorumun İÇİNDE kalır
+                const kartYap = (y, cevapMi) => {
+                  const yb = (String(y.ad || "?").trim()[0] || "?").toUpperCase();
+                  const ne = y.zamanMs ? new Date(y.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+                  const begenenler = Array.isArray(y.begenenler) ? y.begenenler : [];
+                  const begendim = !!(uu && begenenler.includes(uu.uid));
+                  const benim = !!(uu && y.uid === uu.uid);
+                  const duzenlemeModu = yorumDuzenId === y.id;
+                  return (
+                    <div className={"msj-kart yrm-kart" + (cevapMi ? " yrm-cevap" : "")} key={y.id} style={{ cursor: "default" }}>
+                      <span className="msj-foto">{y.foto ? <img src={y.foto} alt="" referrerPolicy="no-referrer" /> : yb}</span>
+                      <div className="msj-icerik">
+                        <div className="msj-ust"><b className="notranslate" translate="no">{y.ad || "—"}</b><i>{ne}{y.duzenlendi ? " · " + t("duzenlendi", "düzenlendi") : ""}</i></div>
+                        {y.cevapAd ? <div className="yrm-cevapbilgi notranslate" translate="no">↳ {y.cevapAd}</div> : null}
+                        {duzenlemeModu ? (
+                          <div className="yrm-duzen">
+                            <textarea className="yrm-duzen-yaz" value={yorumDuzenMetin} onChange={(e) => setYorumDuzenMetin(e.target.value)} maxLength={500} autoFocus />
+                            <div className="yrm-duzen-dugme">
+                              <button className="yrm-kaydet" onClick={() => yorumDuzeltKaydet(y)} disabled={!yorumDuzenMetin.trim()}>{t("kaydet", "Kaydet")}</button>
+                              <button className="yrm-vazgec" onClick={yorumDuzeltVazgec}>{t("vazgec", "Vazgeç")}</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="msj-metin">{y.metin}</div>
+                        )}
+                        {!duzenlemeModu && (
+                          <div className="yrm-eylem">
+                            <button className={"yrm-btn yrm-begen" + (begendim ? " dolu" : "")} onClick={() => yorumBegenEt(y)} aria-label={t("yorumBegen", "Beğen")} title={t("yorumBegen", "Beğen")}>
+                              <svg viewBox="0 0 24 24" fill={begendim ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
+                              {begenenler.length > 0 && <span className="yrm-say">{begenenler.length}</span>}
+                            </button>
+                            <button className="yrm-btn yrm-cevapla" onClick={() => yorumCevapBaslat(y)} aria-label={t("cevapla", "Cevapla")} title={t("cevapla", "Cevapla")}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17l-5-4 5-4" /><path d="M4 13h11a5 5 0 0 1 5 5v1" /></svg>
+                              <span className="yrm-etiket">{t("cevapla", "Cevapla")}</span>
+                            </button>
+                            {benim && (
+                              <button className="yrm-btn yrm-duzelt" onClick={() => yorumDuzeltBaslat(y)} aria-label={t("duzelt", "Düzelt")} title={t("duzelt", "Düzelt")}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+                              </button>
+                            )}
+                            {benim && (
+                              <button className="yrm-btn yrm-sil" onClick={() => yorumSilEt(y)} aria-label={t("sil", "Sil")} title={t("sil", "Sil")}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6" /></svg>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    {y.uid && u && y.uid !== u.uid && <span className="bgm-karsilik msj-karsilik">{kisiKarsilik(y)}</span>}
-                  </div>
-                );
-              })}
+                  );
+                };
+                return ustler.map((y) => (
+                  <Fragment key={y.id}>
+                    {kartYap(y, false)}
+                    {cevaplariBul(y.id).map((c) => kartYap(c, true))}
+                  </Fragment>
+                ));
+              })()}
             </div>
             <div className="ara-detay-mesaj">
-              <textarea className="adm-yaz" value={yorumYazi} onChange={(e) => { setYorumYazi(e.target.value); setYorumDurum(""); }} placeholder={t("yorumYaz", "Yorum yaz…")} maxLength={500} />
+              {yorumCevap && (
+                <div className="yrm-cevap-serit">
+                  <span className="notranslate" translate="no">↳ {(yorumCevap.ad || "—")} {t("kisiyeCevap", "kişisine cevap")}</span>
+                  <button className="yrm-cevap-iptal" onClick={() => setYorumCevap(null)} aria-label={t("vazgec", "Vazgeç")} title={t("vazgec", "Vazgeç")}>✕</button>
+                </div>
+              )}
+              <textarea className="adm-yaz" value={yorumYazi} onChange={(e) => { setYorumYazi(e.target.value); setYorumDurum(""); }} placeholder={yorumCevap ? t("cevapYaz", "Cevabını yaz…") : t("yorumYaz", "Yorum yaz…")} maxLength={500} />
               <button className="adm-gonder" onClick={yorumGonderEt} disabled={yorumDurum === "gonderiliyor" || !yorumYazi.trim()}>
-                {yorumDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : t("yorumGonder", "Yorum Gönder")}
+                {yorumDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (yorumCevap ? t("cevapGonder", "Cevap Gönder") : t("yorumGonder", "Yorum Gönder"))}
               </button>
               {yorumDurum === "hata" && <div className="adm-durum hata">{t("araMesajHata", "Gönderilemedi, tekrar dene")}</div>}
             </div>

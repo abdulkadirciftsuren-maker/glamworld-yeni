@@ -844,11 +844,14 @@ export async function gonderiGeriGetir(id) {
 }
 
 // ---------- YORUMLAR (gönderiye yorum) ----------
+// y.cevapId verilirse bu yorum BAŞKA bir yoruma CEVAP olur (yorumun içinde kalır, Glome'ye GİTMEZ).
 export async function yorumEkle(postId, y) {
   if (!postId || !y || !y.uid || !y.metin || !y.metin.trim()) return null;
   try {
     const ref = doc(collection(db, "gonderiler", postId, "yorumlar"));
-    await setDoc(ref, { uid: y.uid, ad: y.ad || "", foto: y.foto || "", metin: y.metin.trim().slice(0, 500), zamanMs: Date.now(), olusturma: serverTimestamp() });
+    const kayit = { uid: y.uid, ad: y.ad || "", foto: y.foto || "", metin: y.metin.trim().slice(0, 500), zamanMs: Date.now(), olusturma: serverTimestamp() };
+    if (y.cevapId) { kayit.cevapId = y.cevapId; kayit.cevapAd = y.cevapAd || ""; } // hangi yoruma cevap
+    await setDoc(ref, kayit);
     return ref.id;
   } catch (e) { return null; }
 }
@@ -861,6 +864,32 @@ export async function yorumlariOku(postId, adet = 80) {
     liste.sort((a, b) => (a.zamanMs || 0) - (b.zamanMs || 0)); // eski → yeni
     return liste;
   } catch (e) { return []; }
+}
+// YORUMA BEĞENİ — kim beğendiyse uid'si "begenenler" dizisinde tutulur (aynı kişi iki kez sayılmaz).
+// begen=true ekler, false çıkarır. Sayıyı diziden okuruz (ayrı sayaç tutmaya gerek yok).
+export async function yorumBegen(postId, yorumId, uid, begen) {
+  if (!postId || !yorumId || !uid) return false;
+  try {
+    await updateDoc(doc(db, "gonderiler", postId, "yorumlar", yorumId), {
+      begenenler: begen ? arrayUnion(uid) : arrayRemove(uid),
+    });
+    return true;
+  } catch (e) { return false; }
+}
+// YORUMU DÜZELT — sadece yazan kişi (kural korur). Yanlış yazılan düzeltilir, "düzenlendi" işareti konur.
+export async function yorumDuzelt(postId, yorumId, yeniMetin) {
+  if (!postId || !yorumId || !yeniMetin || !yeniMetin.trim()) return false;
+  try {
+    await updateDoc(doc(db, "gonderiler", postId, "yorumlar", yorumId), {
+      metin: yeniMetin.trim().slice(0, 500), duzenlendi: true, duzenlemeMs: Date.now(),
+    });
+    return true;
+  } catch (e) { return false; }
+}
+// YORUMU SİL — sadece yazan kişi (kural korur). Yorumu tamamen kaldırır.
+export async function yorumSil(postId, yorumId) {
+  if (!postId || !yorumId) return false;
+  try { await deleteDoc(doc(db, "gonderiler", postId, "yorumlar", yorumId)); return true; } catch (e) { return false; }
 }
 
 // ---------- TAKİP ET (kişileri takip et — akış kişiselleşir) ----------
