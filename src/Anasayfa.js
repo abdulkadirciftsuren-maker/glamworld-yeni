@@ -11634,7 +11634,7 @@ export default function Anasayfa({ pro = false }) {
               ) : (() => {
                 const uu = auth.currentUser;
                 const ustler = yorumlar.filter((y) => !y.cevapId);        // ana yorumlar
-                const cevaplariBul = (pid) => yorumlar.filter((y) => y.cevapId === pid); // o yoruma gelen cevaplar
+                const cevaplariBul = (pid) => yorumlar.filter((y) => y.cevapId === pid); // o yoruma gelen cevaplar (DOĞRUDAN)
                 // TEK yorum kartı (hem ana yorum hem cevap için) — TÜM eylemler yorumun İÇİNDE kalır
                 const kartYap = (y, cevapMi) => {
                   const yb = (String(y.ad || "?").trim()[0] || "?").toUpperCase();
@@ -11703,12 +11703,20 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                   );
                 };
-                return ustler.map((y) => (
-                  <Fragment key={y.id}>
-                    {kartYap(y, false)}
-                    {cevaplariBul(y.id).map((c) => kartYap(c, true))}
-                  </Fragment>
-                ));
+                // SIRALAMA: her yorumun ALTINDA ona gelen cevaplar (HER DERİNLİKTE — cevabın cevabı da görünür).
+                // Cevap her seviyede olsa da görsel girinti TEK kat (telefonda taşmasın); kime cevap olduğu "↳ isim" ile belli.
+                const gorulen = new Set();
+                const sirali = [];
+                const gez = (y, cevapMi) => {
+                  if (!y || gorulen.has(y.id)) return;   // döngü/çift koruması
+                  gorulen.add(y.id);
+                  sirali.push({ y, cevapMi });
+                  cevaplariBul(y.id).forEach((c) => gez(c, true));  // bu yorumun cevapları (onların cevapları da)
+                };
+                ustler.forEach((y) => gez(y, false));
+                // ÖKSÜZ cevaplar (üst yorumu silinmiş/bulunamıyor) yine de KAYBOLMASIN → sona ekle
+                yorumlar.forEach((y) => { if (!gorulen.has(y.id)) { gorulen.add(y.id); sirali.push({ y, cevapMi: !!y.cevapId }); } });
+                return sirali.map(({ y, cevapMi }) => <Fragment key={y.id}>{kartYap(y, cevapMi)}</Fragment>);
               })()}
             </div>
             <div className="ara-detay-mesaj">
