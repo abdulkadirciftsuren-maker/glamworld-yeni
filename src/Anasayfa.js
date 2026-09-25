@@ -195,6 +195,18 @@ function videoIlkKareBoya(e) {
       v.currentTime = hedef;
     }
   } catch (x) {}
+  // AKIŞ TEK VİDEOSU: kutuyu videonun GERÇEK EN-BOY oranına göre ayarla → YATAY video YATAY gelsin, kenarlardan ağır
+  // kırpılmasın (kullanıcı: "yatay video dik/kırpık geliyor; tam ekrandaki gibi gelsin"). Aşırıya kaçmasın diye sınırlı.
+  try {
+    const w = v.videoWidth || 0, h = v.videoHeight || 0;
+    const kutu = v.closest && v.closest(".apr-medya.video");
+    if (kutu && w && h) {
+      let oran = w / h;
+      if (oran > 1.9) oran = 1.9; if (oran < 0.62) oran = 0.62; // çok geniş/çok uzun sınırla (düzen bozulmasın)
+      kutu.style.aspectRatio = oran.toFixed(4);
+      kutu.classList.toggle("yatay", (w / h) >= 1.05); // yatay video → contain (kırpma yok, altın letterbox)
+    }
+  } catch (x) {}
 }
 function AyarBolum({ ad, ikon, renk, acik, onTik, children, bilgi, onAcBilgi }) {
   return (
