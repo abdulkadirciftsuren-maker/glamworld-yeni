@@ -1927,6 +1927,10 @@ export default function Anasayfa({ pro = false }) {
   // REELS — tam ekran, yukarı-aşağı kayan kısa video akışı (TikTok/Instagram Reels gibi)
   const [reelsAcik, setReelsAcik] = useState(false);            // reels tam ekran açık mı
   const [reelSesAcik, setReelSesAcik] = useState(true);         // reels sesi AÇIK başlar (kullanıcı istedi); tarayıcı engellerse sessize düşer, kullanıcı alttaki düğmeyle açar
+  // ANA SAYFA AKIŞ SESİ — varsayılan KAPALI (tarayıcı sessiz olmayan videoyu kendiliğinden oynatmaz; kullanıcı düğmeye basınca AÇILIR).
+  const [akisSesAcik, setAkisSesAcik] = useState(() => { try { return localStorage.getItem("gw_akisSes") === "1"; } catch (e) { return false; } });
+  const akisSesAcikRef = useRef(akisSesAcik); useEffect(() => { akisSesAcikRef.current = akisSesAcik; }, [akisSesAcik]);
+  const akisSesUygulaRef = useRef(null);                        // gözlemci "sesi uygula" fonksiyonunu buraya koyar (düğme çağırır)
   const [reelAktif, setReelAktif] = useState(0);                // o an ekranda olan reel index
   const reelsAcikRef = useRef(reelsAcik); useEffect(() => { reelsAcikRef.current = reelsAcik; }, [reelsAcik]);
   const [canliYayinBilgi, setCanliYayinBilgi] = useState(false); // "Canlı yayın başlat" bilgi kutusu (gerçek canlı yayın yakında)
@@ -8686,17 +8690,34 @@ export default function Anasayfa({ pro = false }) {
     const vids = Array.from(document.querySelectorAll(".reels-serit-vid, .akis-video"));
     if (!vids.length) return;
     if (ustPencereVar) { vids.forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
+    const oranlar = new Map();
+    // SES UYGULA: ses açıksa EN ÇOK görünen (≥%50) videoya ses ver, DİĞERLERİNİ sustur (aynı anda tek ses). Ses kapalıysa hepsi sessiz.
+    const sesUygula = () => {
+      let enIyi = null, enOran = 0.5;
+      vids.forEach((v) => { const r = oranlar.get(v) || 0; if (r >= enOran) { enOran = r; enIyi = v; } });
+      vids.forEach((v) => { try { v.muted = !(akisSesAcikRef.current && v === enIyi); if (!v.muted && v.paused) v.play().catch(() => {}); } catch (e) {} });
+    };
+    akisSesUygulaRef.current = sesUygula;
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
         const v = g.target;
+        oranlar.set(v, g.intersectionRatio);
         const kutu = v.closest && v.closest(".apr-medya");
-        if (g.isIntersecting && g.intersectionRatio >= 0.5) { try { v.muted = true; const o = v.play(); if (o && o.then) o.then(() => { if (kutu) kutu.classList.add("oynuyor"); }).catch(() => {}); } catch (e) {} }
+        if (g.isIntersecting && g.intersectionRatio >= 0.5) { try { const o = v.play(); if (o && o.then) o.then(() => { if (kutu) kutu.classList.add("oynuyor"); }).catch(() => {}); } catch (e) {} }
         else { try { v.pause(); if (kutu) kutu.classList.remove("oynuyor"); } catch (e) {} }
       });
-    }, { threshold: [0, 0.5, 1] });
+      sesUygula();
+    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
     vids.forEach((v) => io.observe(v));
-    return () => io.disconnect();
+    return () => { io.disconnect(); akisSesUygulaRef.current = null; };
   }, [aktifKod, gercekAkis, ustPencereVar, feedGoster, feedFiltre]);
+  // AKIŞ SES aç/kapat düğmesi → hemen uygula (basış bir "kullanıcı hareketi"dir → tarayıcı sesli oynatmaya izin verir)
+  function akisSesToggle() {
+    const yeni = !akisSesAcik;
+    setAkisSesAcik(yeni); akisSesAcikRef.current = yeni;
+    try { localStorage.setItem("gw_akisSes", yeni ? "1" : "0"); } catch (e) {}
+    if (akisSesUygulaRef.current) akisSesUygulaRef.current();
+  }
   // REELS açılınca, seçilen reele (karuselden dokunulan) KAYDIR (baştan değil, o videodan başlasın)
   useEffect(() => {
     if (!reelsAcik) return;
@@ -12272,6 +12293,15 @@ export default function Anasayfa({ pro = false }) {
             {renkliCumleler(t("maskotSelamGovde", " Ben Gloxoo, Gloxorg dünyasının akıllı kalbi 💎 — paylaşım yazar, yol tarifi veririm, her sayfada yanındayım ve bulunduğun sayfanın uzmanıyım. Bana dokun, konuşalım!"), RC_KOYU)}
           </div>
         </div>
+      )}
+      {/* ANA SAYFA SES aç/kapat — akışta gezerken en görünür videonun sesi (açıkken). Sağ altta, gezinme çubuğunun üstünde. */}
+      {aktifKod === "home" && !ustPencereVar && (
+        <button className={"akis-ses-dugme" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
+          {akisSesAcik
+            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
+            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
+          <span className="akis-ses-et">{akisSesAcik ? t("sesAcik", "Ses") : t("sesKapali", "Sessiz")}</span>
+        </button>
       )}
       {/* GÖRÜNTÜLÜ SOHBET — KENDİ GÖRÜNTÜN (self-view): SÜRÜKLENEBİLİR küçük pencere; Gloxoo seni buradan görür. Ön/arka kamera değiştirilebilir. */}
       {kameraAcik && (

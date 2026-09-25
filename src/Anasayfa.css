@@ -256,6 +256,19 @@
 .yrm-begfoto{ width:20px; height:20px; border-radius:6px; overflow:hidden; border:1.5px solid #1a2b52; background:#0d1b3a; display:inline-flex; align-items:center; justify-content:center; }
 .yrm-begfoto img{ width:100%; height:100%; object-fit:cover; }
 .yrm-begharf{ font-size:10px; font-weight:800; color:#FFD700; }
+
+/* ANA SAYFA AKIŞ SESİ aç/kapat — sağ altta, gezinme çubuğunun ÜSTÜnde yüzen kare düğme (altın) */
+.akis-ses-dugme{ position:fixed; right:14px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:9000;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  width:52px; height:52px; border-radius:14px; cursor:pointer;
+  border:1.5px solid #B8860B; color:#1a1206;
+  background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#E0B000);
+  box-shadow:0 6px 16px rgba(90,60,0,.4); }
+.akis-ses-dugme svg{ width:22px; height:22px; }
+.akis-ses-dugme.acik{ border-color:#1e7d3a; box-shadow:0 0 0 2px rgba(46,160,80,.5),0 6px 16px rgba(90,60,0,.4); } /* açıkken yeşil çerçeve */
+.akis-ses-et{ font-size:9.5px; font-weight:800; line-height:1; }
+.akis-ses-dugme:active{ transform:scale(.93); }
+@media (min-width:560px){ .akis-ses-dugme{ width:58px; height:58px; right:20px; } .akis-ses-dugme svg{ width:25px; height:25px; } .akis-ses-et{ font-size:10.5px; } }
 .yrm-sil{ color:#ff9aa2; border-color:rgba(255,120,130,.4); }
 .yrm-etiket{ white-space:nowrap; }
 /* CEVAP YAZMA modu: giriş kutusunun üstünde "kime cevap" şeridi */
