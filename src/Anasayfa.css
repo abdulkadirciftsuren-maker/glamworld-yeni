@@ -259,7 +259,8 @@
 
 /* SES aç/kapat — sesi olan PAYLAŞIMIN sağ üst köşesinde. GLOXORG yazısı gibi TEMİZ: backdrop-filter/transform YOK → Android videoda da görünür. */
 /* Zemin KREM/BEYAZ + hoparlör ALTIN → altın letterbox üstünde de, video üstünde de NET görünür (altın-üstüne-altın kaybolmaz). */
-.apr-ses-ik{ position:absolute; top:10px; right:10px; z-index:5;
+/* ALT-SOL köşe: yatay videoda üst köşe örtülüyordu (alt-sağdaki GLOXORG görünüyor → alt köşe güvenli). GLOXORG alt-sağda, çakışmaz. */
+.apr-ses-ik{ position:absolute; bottom:10px; left:10px; z-index:5;
   width:38px; height:38px; border-radius:11px; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   border:2px solid #B8860B; color:#B8860B;
