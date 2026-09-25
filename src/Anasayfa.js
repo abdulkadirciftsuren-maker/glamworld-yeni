@@ -1927,10 +1927,13 @@ export default function Anasayfa({ pro = false }) {
   // REELS — tam ekran, yukarı-aşağı kayan kısa video akışı (TikTok/Instagram Reels gibi)
   const [reelsAcik, setReelsAcik] = useState(false);            // reels tam ekran açık mı
   const [reelSesAcik, setReelSesAcik] = useState(true);         // reels sesi AÇIK başlar (kullanıcı istedi); tarayıcı engellerse sessize düşer, kullanıcı alttaki düğmeyle açar
-  // ANA SAYFA AKIŞ SESİ — varsayılan KAPALI (tarayıcı sessiz olmayan videoyu kendiliğinden oynatmaz; kullanıcı düğmeye basınca AÇILIR).
-  const [akisSesAcik, setAkisSesAcik] = useState(() => { try { return localStorage.getItem("gw_akisSes") === "1"; } catch (e) { return false; } });
+  // ANA SAYFA AKIŞ SESİ — varsayılan AÇIK (kullanıcı istedi: "devamlı açık gelsin, istese kapatır").
+  // Tarayıcı ilk KULLANICI HAREKETİne kadar sesli oynatmayabilir → ilk dokunuşta sesi uygularız (aşağıda).
+  const [akisSesAcik, setAkisSesAcik] = useState(() => { try { const v = localStorage.getItem("gw_akisSes"); return v === null ? true : v === "1"; } catch (e) { return true; } });
   const akisSesAcikRef = useRef(akisSesAcik); useEffect(() => { akisSesAcikRef.current = akisSesAcik; }, [akisSesAcik]);
-  const akisSesUygulaRef = useRef(null);                        // gözlemci "sesi uygula" fonksiyonunu buraya koyar (düğme çağırır)
+  const akisSesUygulaRef = useRef(null);                        // gözlemci "sesi uygula" fonksiyonunu buraya koyar (ikon çağırır)
+  const akisMuzikRef = useRef(null);                            // foto+müzik paylaşımları için PAYLAŞIMLI ses öğesi (aynı anda tek müzik)
+  const akisMuzikUrlRef = useRef("");                           // o an çalan müziğin url'i (boşuna baştan başlatmayalım)
   const [reelAktif, setReelAktif] = useState(0);                // o an ekranda olan reel index
   const reelsAcikRef = useRef(reelsAcik); useEffect(() => { reelsAcikRef.current = reelsAcik; }, [reelsAcik]);
   const [canliYayinBilgi, setCanliYayinBilgi] = useState(false); // "Canlı yayın başlat" bilgi kutusu (gerçek canlı yayın yakında)
@@ -8686,36 +8689,59 @@ export default function Anasayfa({ pro = false }) {
   // (sessiz + döngü, telefon kuralları gereği sessiz autoplay), ekrandan ÇIKINCA DURUR; bir pencere açıkken hepsi durur.
   // Kullanıcı: "akışta pencereme video geldiği zaman canlanacak, canlı olacak." → gönderi videoları da .akis-video ile buraya dahil.
   useEffect(() => {
-    if (aktifKod !== "home") return;
+    const muzikDur = () => { try { const a = akisMuzikRef.current; if (a) a.pause(); } catch (e) {} };
+    if (aktifKod !== "home") { muzikDur(); return; }
     const vids = Array.from(document.querySelectorAll(".reels-serit-vid, .akis-video"));
-    if (!vids.length) return;
-    if (ustPencereVar) { vids.forEach((v) => { try { v.pause(); } catch (e) {} }); return; }
+    const muzikler = Array.from(document.querySelectorAll(".akis-muzikli")); // foto+müzik paylaşım kutuları
+    const medyalar = [...vids, ...muzikler];
+    if (!medyalar.length) { muzikDur(); return; }
+    if (ustPencereVar) { vids.forEach((v) => { try { v.pause(); } catch (e) {} }); muzikDur(); return; }
     const oranlar = new Map();
-    // SES UYGULA: ses açıksa EN ÇOK görünen (≥%50) videoya ses ver, DİĞERLERİNİ sustur (aynı anda tek ses). Ses kapalıysa hepsi sessiz.
+    // SES UYGULA: ses açıksa EN ÇOK görünen (≥%50) medyaya (video VEYA müzikli foto) ses ver, diğerlerini sustur (aynı anda TEK ses).
     const sesUygula = () => {
-      let enIyi = null, enOran = 0.5;
-      vids.forEach((v) => { const r = oranlar.get(v) || 0; if (r >= enOran) { enOran = r; enIyi = v; } });
-      vids.forEach((v) => { try { v.muted = !(akisSesAcikRef.current && v === enIyi); if (!v.muted && v.paused) v.play().catch(() => {}); } catch (e) {} });
+      let enEl = null, enOran = 0.5;
+      medyalar.forEach((el) => { const r = oranlar.get(el) || 0; if (r >= enOran) { enOran = r; enEl = el; } });
+      const aktifVideo = (enEl && enEl.tagName === "VIDEO") ? enEl : null;
+      const aktifMuzik = (enEl && enEl.classList && enEl.classList.contains("akis-muzikli")) ? enEl : null;
+      // Videolar: sadece aktif video sesli (ses açıkken); gerisi sessiz
+      vids.forEach((v) => { try { v.muted = !(akisSesAcikRef.current && v === aktifVideo); if (!v.muted && v.paused) v.play().catch(() => {}); } catch (e) {} });
+      // Müzik: aktif müzikli foto varsa onu çal (ses açıkken), yoksa durdur
+      const au = akisMuzikRef.current;
+      if (au) {
+        if (akisSesAcikRef.current && aktifMuzik) {
+          const url = aktifMuzik.dataset.muzik || "";
+          if (url) { if (akisMuzikUrlRef.current !== url) { au.src = url; akisMuzikUrlRef.current = url; au.loop = true; } if (au.paused) au.play().catch(() => {}); }
+        } else { try { au.pause(); } catch (e) {} }
+      }
     };
     akisSesUygulaRef.current = sesUygula;
     const io = new IntersectionObserver((girisler) => {
       girisler.forEach((g) => {
-        const v = g.target;
-        oranlar.set(v, g.intersectionRatio);
-        const kutu = v.closest && v.closest(".apr-medya");
-        if (g.isIntersecting && g.intersectionRatio >= 0.5) { try { const o = v.play(); if (o && o.then) o.then(() => { if (kutu) kutu.classList.add("oynuyor"); }).catch(() => {}); } catch (e) {} }
-        else { try { v.pause(); if (kutu) kutu.classList.remove("oynuyor"); } catch (e) {} }
+        const el = g.target;
+        oranlar.set(el, g.intersectionRatio);
+        if (el.tagName === "VIDEO") {
+          const kutu = el.closest && el.closest(".apr-medya");
+          if (g.isIntersecting && g.intersectionRatio >= 0.5) { try { const o = el.play(); if (o && o.then) o.then(() => { if (kutu) kutu.classList.add("oynuyor"); }).catch(() => {}); } catch (e) {} }
+          else { try { el.pause(); if (kutu) kutu.classList.remove("oynuyor"); } catch (e) {} }
+        }
       });
       sesUygula();
     }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
-    vids.forEach((v) => io.observe(v));
-    return () => { io.disconnect(); akisSesUygulaRef.current = null; };
+    medyalar.forEach((el) => io.observe(el));
+    return () => { io.disconnect(); akisSesUygulaRef.current = null; muzikDur(); };
   }, [aktifKod, gercekAkis, ustPencereVar, feedGoster, feedFiltre]);
-  // AKIŞ SES aç/kapat düğmesi → hemen uygula (basış bir "kullanıcı hareketi"dir → tarayıcı sesli oynatmaya izin verir)
-  function akisSesToggle() {
+  // İLK KULLANICI HAREKETİ (dokunuş/tık) → sesi uygula (tarayıcı ancak o zaman sesli oynatmaya izin verir; "varsayılan açık" böyle çalışır)
+  useEffect(() => {
+    const ilkDokunus = () => { if (akisSesUygulaRef.current) akisSesUygulaRef.current(); };
+    document.addEventListener("pointerdown", ilkDokunus, { once: true, passive: true });
+    return () => document.removeEventListener("pointerdown", ilkDokunus);
+  }, []);
+  // AKIŞ SES aç/kapat (ikon) → hemen uygula (basış bir "kullanıcı hareketi"dir → tarayıcı sesli oynatmaya izin verir)
+  function akisSesToggle(e) {
+    if (e) e.stopPropagation();
     const yeni = !akisSesAcik;
     setAkisSesAcik(yeni); akisSesAcikRef.current = yeni;
-    try { localStorage.setItem("gw_akisSes", yeni ? "1" : "0"); } catch (e) {}
+    try { localStorage.setItem("gw_akisSes", yeni ? "1" : "0"); } catch (x) {}
     if (akisSesUygulaRef.current) akisSesUygulaRef.current();
   }
   // REELS açılınca, seçilen reele (karuselden dokunulan) KAYDIR (baştan değil, o videodan başlasın)
@@ -9700,7 +9726,7 @@ export default function Anasayfa({ pro = false }) {
                         )}
                       </div>
                     )}
-                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "")} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
+                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "") + ((p.muzik && p.muzik.url && !p.video && !postMedyalar) ? " akis-muzikli" : "")} data-muzik={(p.muzik && p.muzik.url && !p.video && !postMedyalar) ? p.muzik.url : undefined} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
                       {postMedyalar
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
@@ -9758,6 +9784,14 @@ export default function Anasayfa({ pro = false }) {
                         : p.video
                         ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
                         : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
+                      {/* SES ikonu — SADECE sesi olan paylaşımda (video / foto+müzik / kolajda video). Bas=aç/kapa, tek küçük ikon. */}
+                      {(p.video || (p.muzik && p.muzik.url && !p.video && !postMedyalar) || (postMedyalar && postMedyalar.some((m) => m.tip === "video"))) && (
+                        <button className={"apr-ses-ik" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
+                          {akisSesAcik
+                            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
+                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
+                        </button>
+                      )}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
                       {/* YAZI medyanın ÜZERİNDE — yalnız METİN VARSA ve kullanıcı öyle istediyse (p.yaziUstunde) */}
@@ -12294,15 +12328,8 @@ export default function Anasayfa({ pro = false }) {
           </div>
         </div>
       )}
-      {/* ANA SAYFA SES aç/kapat — akışta gezerken en görünür videonun sesi (açıkken). Sağ altta, gezinme çubuğunun üstünde. */}
-      {aktifKod === "home" && !ustPencereVar && (
-        <button className={"akis-ses-dugme" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
-          {akisSesAcik
-            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
-            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
-          <span className="akis-ses-et">{akisSesAcik ? t("sesAcik", "Ses") : t("sesKapali", "Sessiz")}</span>
-        </button>
-      )}
+      {/* Foto+müzik paylaşımları için PAYLAŞIMLI ses öğesi (aynı anda tek müzik çalar) */}
+      <audio ref={akisMuzikRef} preload="none" playsInline />
       {/* GÖRÜNTÜLÜ SOHBET — KENDİ GÖRÜNTÜN (self-view): SÜRÜKLENEBİLİR küçük pencere; Gloxoo seni buradan görür. Ön/arka kamera değiştirilebilir. */}
       {kameraAcik && (
         <div className="kamera-self" ref={kameraPenRef}

@@ -257,18 +257,17 @@
 .yrm-begfoto img{ width:100%; height:100%; object-fit:cover; }
 .yrm-begharf{ font-size:10px; font-weight:800; color:#FFD700; }
 
-/* ANA SAYFA AKIŞ SESİ aç/kapat — sağ altta, gezinme çubuğunun ÜSTÜnde yüzen kare düğme (altın) */
-.akis-ses-dugme{ position:fixed; right:14px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:9000;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
-  width:52px; height:52px; border-radius:14px; cursor:pointer;
-  border:1.5px solid #B8860B; color:#1a1206;
-  background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#E0B000);
-  box-shadow:0 6px 16px rgba(90,60,0,.4); }
-.akis-ses-dugme svg{ width:22px; height:22px; }
-.akis-ses-dugme.acik{ border-color:#1e7d3a; box-shadow:0 0 0 2px rgba(46,160,80,.5),0 6px 16px rgba(90,60,0,.4); } /* açıkken yeşil çerçeve */
-.akis-ses-et{ font-size:9.5px; font-weight:800; line-height:1; }
-.akis-ses-dugme:active{ transform:scale(.93); }
-@media (min-width:560px){ .akis-ses-dugme{ width:58px; height:58px; right:20px; } .akis-ses-dugme svg{ width:25px; height:25px; } .akis-ses-et{ font-size:10.5px; } }
+/* SES ikonu — sesi olan PAYLAŞIMIN üstünde (sağ üst köşe), küçük ve şık; bas=aç/kapa. Yazı YOK. */
+.apr-ses-ik{ position:absolute; top:10px; right:10px; z-index:6;
+  width:38px; height:38px; border-radius:11px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px solid rgba(255,215,0,.85); color:#1a1206;
+  background:linear-gradient(180deg,rgba(255,233,168,.92),rgba(255,215,0,.92));
+  box-shadow:0 3px 10px rgba(0,0,0,.28); backdrop-filter:blur(2px); }
+.apr-ses-ik svg{ width:20px; height:20px; }
+.apr-ses-ik.acik{ border-color:#1e7d3a; box-shadow:0 0 0 2px rgba(46,160,80,.6),0 3px 10px rgba(0,0,0,.28); } /* açıkken yeşil halka */
+.apr-ses-ik:active{ transform:scale(.92); }
+@media (min-width:560px){ .apr-ses-ik{ width:44px; height:44px; } .apr-ses-ik svg{ width:23px; height:23px; } }
 .yrm-sil{ color:#ff9aa2; border-color:rgba(255,120,130,.4); }
 .yrm-etiket{ white-space:nowrap; }
 /* CEVAP YAZMA modu: giriş kutusunun üstünde "kime cevap" şeridi */
