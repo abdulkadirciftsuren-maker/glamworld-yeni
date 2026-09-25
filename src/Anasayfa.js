@@ -12,7 +12,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, yorumBegen, yorumDuzelt, yorumSil, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupGuncelle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
+import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, yorumBegen, yorumDuzelt, yorumSil, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, gonderiBegeniOnar, begeniSayilariniOnarHepsi, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupGuncelle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -2900,6 +2900,27 @@ export default function Anasayfa({ pro = false }) {
     }).catch(() => {});
     return () => { iptal = true; };
   }, [u]);
+  // GEÇMİŞ DRİFT ONARIMI — yönetici (site sahibi) girince, kaymış beğeni sayaçlarını GERÇEK beğenilere göre BİR KEZ onar.
+  // Neden: eski hatalı kod bazı sayaçları gerçekten düşük/yüksek bırakmıştı; B306 bundan sonrasını korur ama eskiyi düzeltmez.
+  // Cihaz başına TEK sefer çalışır (localStorage bayrağı). Sadece FARKLI olan sayaçları yazar (masraf az). Sonra akışı tazeler.
+  useEffect(() => {
+    if (!u || !u.email || u.email.toLowerCase() !== "abdulkadirciftsuren@gmail.com") return;
+    try { if (localStorage.getItem("gw_begeniOnar_v1")) return; } catch (e) {}
+    let iptal = false;
+    // Bildiğimiz mevcut sayaçlar (zaten doğru olanları yeniden yazmayalım)
+    const mevcut = {};
+    [...(gercekAkis || []), ...(gonderilerim || [])].forEach((g) => { if (g && g.id) mevcut[g.id] = (g.begeni || 0); });
+    begeniSayilariniOnarHepsi(mevcut).then((sonuc) => {
+      if (iptal || !sonuc) return;
+      try { localStorage.setItem("gw_begeniOnar_v1", "1"); } catch (e) {}
+      // Onarım bir şey değiştirdiyse akışı tazele ki doğru sayılar görünsün
+      if (sonuc.yazilan > 0) {
+        gonderileriOku({}, 40).then((arr) => { if (!iptal && arr && arr.length) setGercekAkis((eski) => { const h = new Map(); arr.forEach((p) => p && p.id && h.set(p.id, p)); (eski || []).forEach((p) => p && p.id && !h.has(p.id) && h.set(p.id, p)); return Array.from(h.values()); }); }).catch(() => {});
+        bilgiBalonu(t("begeniOnarildi", "Beğeni sayıları gerçek beğenilere göre düzeltildi ✓"));
+      }
+    }).catch(() => {});
+    return () => { iptal = true; };
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   // AI SOHBET GEÇMİŞİ HESABA (uid) GÖRE — her hesabın KENDİ geçmişi (groxSohbet_<uid>). Eskiden tek ortak anahtardı
   // (groxSohbet), o yüzden AYNI tarayıcıdaki BÜTÜN hesaplar aynı konuşmaları görüyordu. Artık her hesap AYRI, birbirini görmez.
   useEffect(() => {
@@ -6094,7 +6115,15 @@ export default function Anasayfa({ pro = false }) {
   const begenenlerAc = async (postId) => {
     if (!postId) return;
     setBegenenModal(postId); setBegenenModalYuk(true); setBegenenModalListe([]);
-    try { const bl = await begenenleriOku(postId, 150); setBegenenModalListe(bl || []); } catch (e) {}
+    try {
+      const bl = await begenenleriOku(postId, 150); setBegenenModalListe(bl || []);
+      // GERÇEK sayı = beğenen kişi sayısı. Sayaç bundan farklıysa (geçmiş drift) sayacı ve ekranı onar.
+      const gercek = (bl || []).length;
+      const guncelG = (g) => (g && g.id === postId && (g.begeni || 0) !== gercek) ? { ...g, begeni: gercek } : g;
+      setGercekAkis((a) => a.map(guncelG)); setGonderilerim((a) => a.map(guncelG));
+      setTamFoto((tf) => (tf && tf.id === postId && (tf.begeni || 0) !== gercek) ? { ...tf, begeni: gercek } : tf);
+      gonderiBegeniOnar(postId).catch(() => {}); // DB sayacını da gerçeğe eşitle (kalıcı)
+    } catch (e) {}
     setBegenenModalYuk(false);
   };
   // KİŞİYE MESAJ (beğenen/yorumcuya karşılık) → WhatsApp gibi sohbeti aç

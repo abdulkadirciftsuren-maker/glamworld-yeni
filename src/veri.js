@@ -42,6 +42,38 @@ export async function begenenleriOku(postId, adet = 100) {
     return l;
   } catch (e) { return []; }
 }
+// TEK GÖNDERİNİN GERÇEK beğeni sayısı = o gönderiye ait beğeni dokümanlarının sayısı (atomik sayaç kaymış olabilir → bu HER ZAMAN doğru).
+// Gönderi açılınca/beğeni penceresi açılınca çağrılır; sonuç sayaçtan farklıysa sayaç onarılabilir.
+export async function gonderiBegeniSayGercek(postId) {
+  if (!postId) return null;
+  try {
+    const q = query(collection(db, "begeniler"), where("postId", "==", postId), fsLimit(1000));
+    const snap = await getDocs(q);
+    return snap.size;
+  } catch (e) { return null; }
+}
+// SAYACI GERÇEĞE GÖRE ONAR — bir gönderinin "begeni" sayacını gerçek beğeni dokümanı sayısına eşitler (drift düzeltme).
+export async function gonderiBegeniOnar(postId) {
+  const gercek = await gonderiBegeniSayGercek(postId);
+  if (gercek === null) return null;
+  try { await updateDoc(doc(db, "gonderiler", postId), { begeni: gercek }); } catch (e) {}
+  return gercek;
+}
+// TÜM beğeni sayaçlarını GERÇEK beğenilere göre TEK SEFERDE onar (geçmiş drift'i temizler). Sadece yönetici çağırır.
+// begeniler koleksiyonunu bir kez okur, gönderi başına sayar, kaymış sayaçları düzeltir (sadece FARKLI olanları yazar → az yazma).
+export async function begeniSayilariniOnarHepsi(mevcutSayac = {}) {
+  try {
+    const snap = await getDocs(query(collection(db, "begeniler"), fsLimit(6000)));
+    const say = new Map();
+    snap.docs.forEach((d) => { const pid = (d.data() || {}).postId; if (pid) say.set(pid, (say.get(pid) || 0) + 1); });
+    let yazilan = 0;
+    await Promise.all(Array.from(say.entries()).map(async ([pid, c]) => {
+      if (mevcutSayac[pid] === c) return; // zaten doğruysa yazma (masraf yok)
+      try { await updateDoc(doc(db, "gonderiler", pid), { begeni: c }); yazilan++; } catch (e) {}
+    }));
+    return { toplamBegeni: snap.size, postSayisi: say.size, yazilan };
+  } catch (e) { return null; }
+}
 
 // ---------- ANKET OYLARI ----------
 // Kim hangi seçeneğe oy verdi — her oy AYRI doküman (anketOylari/{post}_{uid}), tıpkı beğeniler gibi.
