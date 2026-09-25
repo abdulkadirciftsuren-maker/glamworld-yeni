@@ -9663,6 +9663,11 @@ export default function Anasayfa({ pro = false }) {
               const mesajAc = () => { if (p.uid && p.ad) sohbetAc({ uid: p.uid, ad: p.ad, foto: p.foto }); };
               // ÇOK MEDYALI gönderi → galeri (parmakla yana kaydır); tek medyalı → eski tekli görünüm
               const postMedyalar = (p.medyalar && p.medyalar.length > 1) ? p.medyalar : null;
+              // SES DURUMU (bu paylaşımda ses var mı) — video / kolajda video / (video olmayan) foto+müzik
+              const kolajVideoVar = !!(postMedyalar && postMedyalar.some((m) => m.tip === "video"));
+              const videoVar = !!p.video || kolajVideoVar;
+              const muzikVar = !!(p.muzik && p.muzik.url) && !videoVar; // müzik SADECE video yoksa çalar (video kendi sesini verir)
+              const sesliMi = videoVar || muzikVar;
               // CANLI KONUM ROZETİ — "nereden paylaşıldı" (üstte, renkli, belirgin)
               const konumRozet = (p.konum && p.konum.tam) ? (
                 <div className="apr-konum notranslate" translate="no">
@@ -9737,7 +9742,7 @@ export default function Anasayfa({ pro = false }) {
                         )}
                       </div>
                     )}
-                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "") + ((p.muzik && p.muzik.url && !p.video && !postMedyalar) ? " akis-muzikli" : "")} data-muzik={(p.muzik && p.muzik.url && !p.video && !postMedyalar) ? p.muzik.url : undefined} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
+                    <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "") + (muzikVar ? " akis-muzikli" : "")} data-muzik={muzikVar ? p.muzik.url : undefined} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
                       {postMedyalar
                         ? (() => {
                             const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
@@ -9795,14 +9800,6 @@ export default function Anasayfa({ pro = false }) {
                         : p.video
                         ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
                         : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
-                      {/* SES ikonu — SADECE sesi olan paylaşımda (video / foto+müzik / kolajda video). Bas=aç/kapa, tek küçük ikon. */}
-                      {(p.video || (p.muzik && p.muzik.url && !p.video && !postMedyalar) || (postMedyalar && postMedyalar.some((m) => m.tip === "video"))) && (
-                        <button className={"apr-ses-ik" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
-                          {akisSesAcik
-                            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
-                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
-                        </button>
-                      )}
                       {/* TÜR ikonu (apr-tipikon) KALDIRILDI — kategori artık üst şeritteki rozette (tek gösterge). */}
                       {p.ustYazi && p.ustYazi.metin && <span className={"apr-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
                       {/* YAZI medyanın ÜZERİNDE — yalnız METİN VARSA ve kullanıcı öyle istediyse (p.yaziUstunde) */}
@@ -9837,6 +9834,14 @@ export default function Anasayfa({ pro = false }) {
                       <button className="apr-ic ape-paylas" onClick={() => paylasNative(p)}>{Ikon.paylas}</button>
                       <button className={"apr-ic apr-kaydet" + (kaydetSet.has(p.id) ? " dolu" : "")} onClick={() => kaydetToggle(p)}>{Ikon.kaydet}</button>
                       <button className="apr-ic ape-mesaj" onClick={mesajAc}>{Ikon.mesaj}</button>
+                      {/* SES aç/kapat — SADECE sesi olan paylaşımda; işlem çubuğunda (her zaman görünür, video onu örtemez). Bas=aç/kapa. */}
+                      {sesliMi && (
+                        <button className={"apr-ic apr-ses" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>
+                          {akisSesAcik
+                            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" /></svg>
+                            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M22 9l-6 6M16 9l6 6" /></svg>}
+                        </button>
+                      )}
                     </div>
                     {/* BEĞENENLER — beğeni ikonunun altında ufak profil resimleri */}
                     <span className="serit-grup"><BegenenlerSerit postId={p.id} sayi={p.begeni || 0} dil={dil} onAc={begenenlerAc} /><YorumcuSerit postId={p.id} sayi={p.yorumSayisi || 0} onAc={() => yorumAc(p)} /></span>

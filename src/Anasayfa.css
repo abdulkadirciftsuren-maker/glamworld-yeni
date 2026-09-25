@@ -257,19 +257,10 @@
 .yrm-begfoto img{ width:100%; height:100%; object-fit:cover; }
 .yrm-begharf{ font-size:10px; font-weight:800; color:#FFD700; }
 
-/* SES ikonu — sesi olan PAYLAŞIMIN üstünde (sağ üst köşe), küçük ve şık; bas=aç/kapa. Yazı YOK. */
-/* z-index yüksek + kendi katmanı (translateZ) → Android'de VİDEONUN ÜSTÜnde kalır (video kendi katmanına gizlemesin). */
-.apr-ses-ik{ position:absolute; top:10px; right:10px; z-index:12;
-  transform:translateZ(0); will-change:transform;
-  width:38px; height:38px; border-radius:11px; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  border:1.5px solid rgba(255,215,0,.9); color:#1a1206;
-  background:linear-gradient(180deg,rgba(255,233,168,.95),rgba(255,215,0,.95));
-  box-shadow:0 3px 10px rgba(0,0,0,.35); }
-.apr-ses-ik svg{ width:20px; height:20px; }
-.apr-ses-ik.acik{ border-color:#1e7d3a; box-shadow:0 0 0 2px rgba(46,160,80,.6),0 3px 10px rgba(0,0,0,.28); } /* açıkken yeşil halka */
-.apr-ses-ik:active{ transform:scale(.92); }
-@media (min-width:560px){ .apr-ses-ik{ width:44px; height:44px; } .apr-ses-ik svg{ width:23px; height:23px; } }
+/* SES aç/kapat — İŞLEM ÇUBUĞUNDA (❤️💬 sırası), her zaman görünür (video onu ÖRTEMEZ). Açıkken YEŞİL (ses var), kapalıyken soluk. */
+.apr-ic.apr-ses{ color:#c9b06a; }
+.apr-ic.apr-ses.acik{ color:#1e9e46; } /* ses AÇIK → yeşil */
+.apr-ic.apr-ses.acik svg{ filter:drop-shadow(0 0 3px rgba(46,160,80,.55)); }
 .yrm-sil{ color:#ff9aa2; border-color:rgba(255,120,130,.4); }
 .yrm-etiket{ white-space:nowrap; }
 /* CEVAP YAZMA modu: giriş kutusunun üstünde "kime cevap" şeridi */
