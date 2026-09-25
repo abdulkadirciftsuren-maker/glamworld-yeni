@@ -2885,13 +2885,18 @@ export default function Anasayfa({ pro = false }) {
   // Kullanıcı CANLI takip edilir — giriş çözülünce/foto gelince ekran güncellenir (yoksa foto boş kalıyordu).
   const [u, setU] = useState(auth.currentUser);
   useEffect(() => onAuthStateChanged(auth, setU), []);
-  // BEĞENİLERİM her cihazda DOLU görünsün: giriş yapınca backend'den (Firestore) beğendiğim gönderileri çek, begeniSet'e ekle
+  // BEĞENİLERİM her cihazda DOĞRU görünsün: giriş yapınca backend'den (Firestore) beğendiğim gönderileri çek.
+  // ÖNEMLİ: begeniSet'i sunucuya göre KESİN yap (sadece ekleme DEĞİL, bayat kalanları da ÇIKAR).
+  // Neden: başka cihazda beğeniyi kaldırınca bu cihazda kalp DOLU kalıyordu → basınca "beğeni" sanıp aslında GERİ ALIYORDU
+  // (sayı artacağına AZALIYORDU). Artık kalp durumu hep gerçekle aynı → beğende +1, geri alda -1 doğru işler.
+  // ids null ise (ağ hatası) DOKUNMA (kalpleri boşaltma); [] ise gerçekten hiç beğeni yok → temizle.
   useEffect(() => {
     if (!u || !u.uid) return;
     let iptal = false;
     benimBegenilerim(u.uid).then((ids) => {
-      if (iptal || !ids || !ids.length) return;
-      setBegeniSet((prev) => { const s = new Set(prev); ids.forEach((id) => s.add(id)); try { localStorage.setItem("groxBegeni", JSON.stringify([...s])); } catch (e) {} return s; });
+      if (iptal || ids === null) return;               // ağ hatası → mevcut hâli koru
+      const dogru = new Set(ids);
+      setBegeniSet(dogru); try { localStorage.setItem("groxBegeni", JSON.stringify([...dogru])); } catch (e) {}
     }).catch(() => {});
     return () => { iptal = true; };
   }, [u]);

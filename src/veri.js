@@ -30,7 +30,7 @@ export async function benimBegenilerim(uid, adet = 400) {
     const q = query(collection(db, "begeniler"), where("uid", "==", uid), fsLimit(adet));
     const snap = await getDocs(q);
     return snap.docs.map((d) => (d.data() || {}).postId).filter(Boolean);
-  } catch (e) { return []; }
+  } catch (e) { return null; } // HATA (ağ vb.) → null; "hiç beğeni yok" (boş dizi) ile karışmasın
 }
 export async function begenenleriOku(postId, adet = 100) {
   if (!postId) return [];
