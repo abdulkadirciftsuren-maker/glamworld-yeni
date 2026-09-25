@@ -3662,7 +3662,8 @@ export default function Anasayfa({ pro = false }) {
   const aktifK = (secili >= 0 && katmanlar[secili]) ? katmanlar[secili] : null;
   const kGuncelle = (yama) => setKatmanlar((ks) => ks.map((k, i) => (i === secili ? { ...k, ...yama } : k)));
   const yeniFoto = (img, ilk, n) => ({ tip: "foto", img, x: ilk ? 0 : 14 + (n || 0) * 12, y: ilk ? 0 : 14 + (n || 0) * 12, scale: ilk ? 1 : 0.55, rot: 0, parlak: 1, kontrast: 1, gri: 0 });
-  const yeniYazi = (metin, n) => ({ tip: "yazi", metin: metin || "Yazı", x: 0, y: (n || 0) * 26, boy: 1.3, renk: "#ffffff", font: "Playfair Display", rot: 0 });
+  // metin verilmezse BOŞ başlar (hayalet ipucu görünür ama yayına İŞLENMEZ) — kullanıcı: "yazacağım yere hazır yazı olmasın, açıklama olsun, hayalet olsun".
+  const yeniYazi = (metin, n) => ({ tip: "yazi", metin: (metin == null ? "" : metin), x: 0, y: (n || 0) * 26, boy: 1.3, renk: "#ffffff", font: "Playfair Display", rot: 0 });
   // Şekil yolu (kırpma): yuvarlak daire / yatay yuvarlak köşeli dörtgen
   function sekilYol(ctx, bw, bh) {
     ctx.beginPath();
@@ -3699,7 +3700,16 @@ export default function Anasayfa({ pro = false }) {
       ctx.save();
       ctx.translate(bw / 2 + kat.x * k, bh / 2 + kat.y * k);
       ctx.rotate((kat.rot || 0) * Math.PI / 180);
-      if (kat.tip === "yazi") {
+      if (kat.tip === "yazi" && !String(kat.metin || "").trim()) {
+        // BOŞ yazı katmanı: YAYINA/kayda İŞLENMEZ; sadece düzenleme önizlemesinde SOLUK ipucu (hayalet) göster.
+        if (secimGoster) {
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          const _fsG = yaziPx(kat, bw, bh);
+          ctx.font = "700 " + _fsG + "px '" + kat.font + "',serif";
+          ctx.fillStyle = "rgba(255,255,255,.38)";
+          ctx.fillText("Buraya yaz…", 0, 0);
+        }
+      } else if (kat.tip === "yazi") {
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
         const _maxW = bw * 0.92, _maxH = bh * 0.94;
         // verilen font boyutunda kelime kelime sar
@@ -3779,7 +3789,7 @@ export default function Anasayfa({ pro = false }) {
   const duzenSurukBit = () => { surukRef.current = null; };
   // Katman ekle/sil/seç
   const katmanFotoEkle = (img) => { setSecili(katmanlar.length); setKatmanlar((ks) => [...ks, yeniFoto(img, ks.length === 0, ks.length)]); setEditorFotoVar(true); };
-  const yaziEkle = () => { setSecili(katmanlar.length); setKatmanlar((ks) => [...ks, yeniYazi("Yazı", ks.filter((x) => x.tip === "yazi").length)]); };
+  const yaziEkle = () => { setSecili(katmanlar.length); setKatmanlar((ks) => [...ks, yeniYazi("", ks.filter((x) => x.tip === "yazi").length)]); };
   const katmanSil = (i) => { setKatmanlar((ks) => ks.filter((_, j) => j !== i)); setSecili((s) => (s >= i ? s - 1 : s)); };
   // Yazı tipi seç (seçili yazı katmanına) + fontu YÜKLE, sonra önizlemeyi tazele
   const yaziTipiSec = (f) => { kGuncelle({ font: f }); try { if (document.fonts && document.fonts.load) document.fonts.load("700 40px '" + f + "'").then(() => setFontTik((x) => x + 1)).catch(() => {}); } catch (e) {} };
@@ -3844,7 +3854,8 @@ export default function Anasayfa({ pro = false }) {
     ];
     return havuz[Math.floor(Math.random() * havuz.length)];
   };
-  const katmanSerile = (ks) => ks.map((k) => (k.tip === "yazi"
+  // BOŞ yazı katmanları SAKLANMAZ/yayınlanmaz (hayalet ipucu gerçek yazı değildir) → kullanıcı yazmadıysa hiç kaydedilmez.
+  const katmanSerile = (ks) => ks.filter((k) => k.tip !== "yazi" || String(k.metin || "").trim()).map((k) => (k.tip === "yazi"
     ? { tip: "yazi", metin: k.metin, x: k.x, y: k.y, boy: k.boy, renk: k.renk, font: k.font, rot: k.rot || 0 }
     : { tip: "foto", src: imgKucult(k.img, 420), x: k.x, y: k.y, scale: k.scale, rot: k.rot || 0, parlak: k.parlak, kontrast: k.kontrast, gri: k.gri })).filter((k) => k.tip === "yazi" || k.src);
   const katmanYukle = (seri, cb) => {
