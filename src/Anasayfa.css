@@ -257,10 +257,17 @@
 .yrm-begfoto img{ width:100%; height:100%; object-fit:cover; }
 .yrm-begharf{ font-size:10px; font-weight:800; color:#FFD700; }
 
-/* SES aç/kapat — İŞLEM ÇUBUĞUNDA (❤️💬 sırası), her zaman görünür (video onu ÖRTEMEZ). Açıkken YEŞİL (ses var), kapalıyken soluk. */
-.apr-ic.apr-ses{ color:#c9b06a; }
-.apr-ic.apr-ses.acik{ color:#1e9e46; } /* ses AÇIK → yeşil */
-.apr-ic.apr-ses.acik svg{ filter:drop-shadow(0 0 3px rgba(46,160,80,.55)); }
+/* SES aç/kapat — sesi olan PAYLAŞIMIN sağ üst köşesinde. GLOXORG yazısı gibi TEMİZ: backdrop-filter/transform YOK → Android videoda da görünür. */
+.apr-ses-ik{ position:absolute; top:10px; right:10px; z-index:5;
+  width:38px; height:38px; border-radius:11px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid #B8860B; color:#1a1206;
+  background:linear-gradient(180deg,#FFE9A8,#FFD700 60%,#E0B000);
+  box-shadow:0 2px 8px rgba(0,0,0,.4); }
+.apr-ses-ik svg{ width:21px; height:21px; }
+.apr-ses-ik.acik{ border-color:#1e9e46; } /* açıkken YEŞİL çerçeve (ses var) */
+.apr-ses-ik:active{ opacity:.7; } /* basış efekti opacity (transform YOK → katman oluşup videoyu üste atmasin) */
+@media (min-width:560px){ .apr-ses-ik{ width:44px; height:44px; } .apr-ses-ik svg{ width:24px; height:24px; } }
 .yrm-sil{ color:#ff9aa2; border-color:rgba(255,120,130,.4); }
 .yrm-etiket{ white-space:nowrap; }
 /* CEVAP YAZMA modu: giriş kutusunun üstünde "kime cevap" şeridi */
