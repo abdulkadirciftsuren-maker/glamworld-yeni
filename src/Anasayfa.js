@@ -8043,7 +8043,7 @@ export default function Anasayfa({ pro = false }) {
       // DÜZENLEME → mevcut gönderiyi güncelle. Kullanıcı: düzenleyip tekrar paylaşınca AKIŞTA EN ÜSTE gelsin + TARİH yenilensin.
       const yeniZaman = Date.now();
       // DÜZENLEMEDE MEDYA da kaydedilir (silinen/eklenen foto/video kalıcı olsun — kullanıcı: "düzenlerken silip kaydedeyim").
-      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, video: yeni.video, videoPoster: yeni.videoPoster, medyalar: yeni.medyalar, ustYazi: yeni.ustYazi, duzen: yeni.duzen, yaziUstunde: yeni.yaziUstunde, gitLinki: yeni.gitLinki, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, anket: yeni.anket || null, zamanMs: yeniZaman, zaman: "" };
+      const degisiklik = { baslik: yeni.baslik, yazi: yeni.yazi, tur: yeni.tur, gorsel: yeni.gorsel, video: yeni.video, videoPoster: yeni.videoPoster, medyalar: yeni.medyalar, muzik: muzikObj || null, dosya: dosyaObj || null, ustYazi: yeni.ustYazi, duzen: yeni.duzen, yaziUstunde: yeni.yaziUstunde, gitLinki: yeni.gitLinki, zemin: yeni.zemin, yaziRenk: yeni.yaziRenk, konum: yeni.konum || null, anket: yeni.anket || null, zamanMs: yeniZaman, zaman: "" };
       gonderiGuncelle(duzenlenen.id, degisiklik).then((ok) => {
         if (ok) {
           // EN ÜSTE taşı: eski konumundan çıkar, güncel haliyle başa ekle (hem akış hem profil).
