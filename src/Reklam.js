@@ -4,7 +4,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import L from "leaflet"; // haritadan konum seçmek için (iş yerini işaretle) — OSM, uygulamanın kullandığı kaynak
+import { gloxooResimUret } from "./firebase"; // Gloxoo amblem/logo çizimi
 import { pazarUrunEkle, pazarUrunleriOku, pazarUrunSil, gorselYukle } from "./veri";
+const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev"; // Gloxoo yazı köprüsü (tanıtım yazısı)
 
 const KATEGORILER = [
   { k: "elbise", ik: "👕", ck: "saElbise", ad: "Kıyafet" },
@@ -96,6 +98,10 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [haritaKonum, setHaritaKonum] = useState(null); // {lat,lng} — haritada seçili nokta
   const haritaRef = useRef(null);
   const haritaMapRef = useRef(null);
+  // GLOXOO (yapay zekâ) yardımcıları — tanıtım yazısı + amblem/logo çizimi
+  const [fAiYaziYuk, setFAiYaziYuk] = useState(false);
+  const [fAmblemTarif, setFAmblemTarif] = useState("");
+  const [fAmblemYuk, setFAmblemYuk] = useState(false);
 
   async function yukle() {
     try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
@@ -217,7 +223,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
 
   // --- FİRMA / İŞLETME reklamı ---
-  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); }
+  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); }
   async function firmaFotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFFoto(d); setFHata(""); } }
   // HARİTAYI AÇ — iş yerini haritada işaretle (parmakla dokun/pini sürükle)
   function haritaAc() { setHaritaKonum(fKonum ? { lat: fKonum.enlem, lng: fKonum.boylam } : null); setHaritaAcik(true); }
@@ -232,6 +238,39 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       } catch (e) {}
     }
     setHaritaAcik(false);
+  }
+  // GLOXOO — TANITIM YAZISI: firma adı + kategori + (varsa) sahibin notu + (varsa) foto (vision) → güzel kısa tanıtım (kullanıcının dilinde)
+  async function firmaTanitimYaz() {
+    if (fAiYaziYuk) return;
+    if (!fAd.trim() && !fAciklama.trim() && !fFoto) { setFHata(t("fkAiOnce", "Önce işletme adı yaz ya da foto ekle — Gloxoo ona göre yazsın.")); return; }
+    setFAiYaziYuk(true); setFHata("");
+    try {
+      const kat = fkAd(fKat);
+      const talimat = `Bir işletme/firma REKLAMI için KISA, çekici, samimi bir tanıtım yazısı yaz. İşletme adı: "${fAd || ""}". Kategori: ${kat}. ${fAciklama.trim() ? 'Sahibin notu: "' + fAciklama.trim() + '" — anlamını KORU, güzelleştir ve zenginleştir. ' : ""}${fFoto ? "Ekteki görsele DİKKATLİCE bak (ne satılıyor/ne var), SADECE gördüğüne göre gerçekçi yaz. " : ""}2-3 cümle; sıcak, davet edici, güven veren; 1-2 uygun emoji. Tek yazı ver; numara/tırnak/madde işareti KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
+      const parcalar = [];
+      if (fFoto) parcalar.push({ type: "image", source: fFoto });
+      parcalar.push({ type: "text", text: talimat });
+      const mesajlar = [{ role: "user", content: parcalar.length > 1 ? parcalar : talimat }];
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG reklam yazı asistanı. Işletmeler için KISA, cekici, samimi, guven veren tanitim yazilari yazarsin. Ekte gorsel varsa dikkatlice bak, sadece gordugune gore yaz. Istenen dilde yaz; numara/tirnak koyma." }) });
+      if (r.ok) { const v = await r.json(); const txt = ((v && v.metin) || "").replace(/^["'\s]+|["'\s]+$/g, "").trim(); if (txt) setFAciklama(txt); else setFHata(t("fkAiHata", "Gloxoo şu an yazamadı, tekrar dene.")); }
+      else setFHata(t("fkAiHata", "Gloxoo şu an yazamadı, tekrar dene."));
+    } catch (e) { setFHata(t("fkAiHata", "Gloxoo şu an yazamadı, tekrar dene.")); }
+    setFAiYaziYuk(false);
+  }
+  // GLOXOO — AMBLEM / LOGO ÇİZ: kısa tarif (ya da isim+kategori) → resimli güzel amblem/logo → firma fotosu olur
+  async function firmaAmblemCiz() {
+    if (fAmblemYuk) return;
+    const tarif = (fAmblemTarif || "").trim() || [fAd, fkAd(fKat)].filter(Boolean).join(", ");
+    if (!tarif) { setFHata(t("fkAmblemOnce", "Kısa bir tarif yaz (ör. 'altın renkli lokum kutusu logosu').")); return; }
+    setFAmblemYuk(true); setFHata("");
+    try {
+      // Resim üreticisi yazıyı bozar → LOGO'da YAZI İSTEME (sadece sembol/amblem); isim zaten kartta ayrı görünür.
+      const istem = "Professional, modern business logo / emblem. Business: '" + (fAd || "a business") + "'. Category: " + fkAd(fKat) + ". Idea: " + tarif + ". Clean elegant symbol/emblem, vibrant rich colors, centered, simple plain background, high quality, crisp. ABSOLUTELY NO text, NO letters, NO words — symbol only. Square.";
+      const r = await gloxooResimUret(istem);
+      const durl = r && r.dataUrl;
+      if (durl) { setFFoto(durl); setFHata(""); } else setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene."));
+    } catch (e) { setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene.")); }
+    setFAmblemYuk(false);
   }
   async function firmaYayinla() {
     if (fKaydet) return;
@@ -418,10 +457,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                 {fFoto ? <img src={fFoto} alt="" /> : <span className="reklam-foto-bos">📷<br />{t("fkFotoEkle", "İşletme fotoğrafı / logosu ekle")}</span>}
               </div>
               <input ref={fInpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={firmaFotoSec} />
+              {/* GLOXOO — AMBLEM/LOGO ÇİZ: foto yüklemeden Gloxoo resimli amblem hazırlasın (kısa tarif yaz) */}
+              <div className="reklam-amblem-satir">
+                <input className="reklam-inp" type="text" value={fAmblemTarif} onChange={(e) => setFAmblemTarif(e.target.value)} placeholder={t("fkAmblemTarif", "Amblem/logo tarifi (ör. altın lokum kutusu) — istersen boş bırak")} />
+                <button className="reklam-gloxoo-btn" disabled={fAmblemYuk} onClick={firmaAmblemCiz}>{fAmblemYuk ? "⏳" : "🎨"} {t("fkAmblemCiz", "Gloxoo amblem çizsin")}</button>
+              </div>
               <input className="reklam-inp" type="text" value={fAd} onChange={(e) => setFAd(e.target.value)} placeholder={t("fkAd", "İşletme / firma adı")} />
               <div className="reklam-kim-bas">{t("rkKategori", "Kategori")}</div>
               <div className="reklam-cip-satir">{FIRMA_KATEGORI.map((kt) => <button key={kt.k} className={"reklam-cip" + (fKat === kt.k ? " sec" : "")} onClick={() => setFKat(kt.k)}>{kt.ik} {t(kt.ck, kt.ad)}</button>)}</div>
-              <textarea className="reklam-inp reklam-alan" value={fAciklama} onChange={(e) => setFAciklama(e.target.value)} placeholder={t("fkAciklama", "Kısa tanıtım (ne yapıyorsunuz, öne çıkanlar…)")} rows={3} />
+              <textarea className="reklam-inp reklam-alan" value={fAciklama} onChange={(e) => setFAciklama(e.target.value)} placeholder={t("fkAciklama", "Kısa tanıtım (ne yapıyorsunuz, öne çıkanlar…) — istersen birkaç kelime yaz, Gloxoo güzelleştirsin")} rows={3} />
+              {/* GLOXOO — TANITIM YAZISI: isim/kategori/foto/notuna göre güzel tanıtım yazsın */}
+              <button className="reklam-gloxoo-btn reklam-gloxoo-yazi" disabled={fAiYaziYuk} onClick={firmaTanitimYaz}>{fAiYaziYuk ? "⏳ " + t("fkAiYaziyor", "Gloxoo yazıyor…") : "✨ " + t("fkTanitimYaz", "Gloxoo tanıtım yazsın")}</button>
               <input className="reklam-inp" type="tel" inputMode="tel" value={fTel} onChange={(e) => setFTel(e.target.value)} placeholder={t("fkTel", "📞 Telefon (Ara düğmesi için)")} />
               <input className="reklam-inp" type="text" inputMode="url" value={fWeb} onChange={(e) => setFWeb(e.target.value)} placeholder={t("fkWebInp", "🌐 Web sitesi / link (varsa)")} />
               <input className="reklam-inp" type="text" value={fAdres} onChange={(e) => setFAdres(e.target.value)} placeholder={t("fkAdres", "📍 Adres (Yol tarifi için)")} />
