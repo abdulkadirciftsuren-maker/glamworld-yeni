@@ -5809,7 +5809,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .sa-indir.indi{ background:#1fa463 !important; color:#fff !important; }
 
 /* ── VİTRİN / REKLAM ŞERİDİ (ana sayfada soldan-sağa akar) ── */
-.reklam-serit{ margin:0 0 12px; padding:10px 0 4px; border:2px solid #FFD700; border-radius:16px; background:linear-gradient(120deg,#fff6d8,#ffe9a8); box-shadow:0 4px 14px rgba(120,90,0,.22); overflow:hidden; }
+.reklam-serit{ margin:0 0 12px; padding:10px 0 4px; border:2px solid #E0B000; border-radius:16px; background:linear-gradient(120deg,#ffe9a8,#ffd54a); box-shadow:0 4px 14px rgba(120,90,0,.28); overflow:hidden; }
 .reklam-serit-bas{ display:flex; align-items:center; gap:8px; padding:0 12px 8px; }
 .reklam-serit-ad{ flex:1; font-weight:900; color:#7a5a00; font-size:16px; }
 .reklam-ver-mini{ background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:10px; padding:7px 12px; font-weight:900; font-size:13px; cursor:pointer; font-family:inherit; }
@@ -5827,9 +5827,11 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-kart-ad{ font-weight:800; color:#5a4300; font-size:13.5px; line-height:1.2; max-height:2.4em; overflow:hidden; }
 .reklam-kart-fiyat{ font-weight:900; color:#1a8f4e; font-size:14px; }
 .reklam-kart-dene{ font-weight:800; color:#7a5a00; font-size:11.5px; background:#ffe9a8; border-radius:7px; padding:3px 6px; text-align:center; }
-/* FİRMA / İŞLETME şeridi — moda şeridiyle aynı görünüm, yeşilimsi vurgu (ayrı olduğu belli olsun) */
-.firma-serit{ border-color:#1fa463; background:linear-gradient(120deg,#eafaf0,#d7f2e2); }
-.reklam-kart-fkat{ font-weight:800; color:#137a45; font-size:11.5px; background:#d7f2e2; border-radius:7px; padding:3px 6px; text-align:center; }
+/* FİRMA / İŞLETME şeridi — MODADAN belirgin FARKLI: canlı yeşil zemin (soluk değil), yatay/geniş kartlar (flyer TAM görünür) */
+.firma-serit{ border-color:#0f8a4d; background:linear-gradient(120deg,#bdeccf,#7fd8a3); }
+.firma-kart{ width:236px; background:#ffffff; border-color:#0f8a4d; }
+.firma-kart .reklam-kart-foto{ height:132px; background-color:#f4faf6; background-size:contain; background-repeat:no-repeat; background-position:center; } /* flyer TAM görünür (kırpılmaz), yatay */
+.reklam-kart-fkat{ font-weight:800; color:#0b6b3a; font-size:11.5px; background:#cdeed9; border-radius:7px; padding:3px 6px; text-align:center; }
 .reklam-firma-btn{ flex:1 1 45%; min-width:120px; text-align:center; text-decoration:none; border:none; border-radius:12px; padding:12px 8px; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; }
 .firma-ara{ background:#1fa463; color:#fff; }
 .firma-mesaj{ background:#0d6efd; color:#fff; }
@@ -5839,13 +5841,14 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-konum-btn{ display:block; width:100%; margin-top:4px; }
 
 /* Reklam detay + form penceresi */
-.reklam-fon{ position:fixed; inset:0; z-index:100085; display:flex; align-items:center; justify-content:center; background:rgba(90,70,0,.45); padding:14px; }
-.reklam-detay{ width:100%; max-width:460px; max-height:90vh; display:flex; flex-direction:column; background:linear-gradient(160deg,#fffdf5,#fff2cc); border:2px solid #FFD700; border-radius:18px; box-shadow:0 14px 44px rgba(80,60,0,.4); overflow:hidden; }
+.reklam-fon{ position:fixed; inset:0; z-index:100085; display:flex; align-items:center; justify-content:center; background:rgba(90,70,0,.45); padding:0; }
+/* Pencere DÜZ kenar (yuvarlak DEĞİL), GENİŞ (yatay) → flyer/foto tam görünür, yazılar sığar. Telefonda ekranı doldurur. */
+.reklam-detay{ width:100%; max-width:640px; max-height:100vh; display:flex; flex-direction:column; background:linear-gradient(160deg,#fffdf5,#fff2cc); border:none; border-radius:0; box-shadow:0 14px 44px rgba(80,60,0,.4); overflow:hidden; }
 .reklam-detay-ust{ display:flex; align-items:center; gap:10px; padding:14px 16px 10px; }
 .reklam-detay-bas{ flex:1; font-weight:900; font-size:19px; color:#5a3f00; }
 .reklam-kapat{ width:40px; height:40px; border-radius:11px; border:2px solid #7a5a00; background:rgba(255,253,240,.9); color:#7a5a00; font-size:19px; font-weight:900; cursor:pointer; }
 .reklam-detay-kaydir{ overflow-y:auto; padding:0 16px 18px; }
-.reklam-detay-foto{ width:100%; border-radius:13px; border:2px solid #a07800; display:block; margin-bottom:10px; }
+.reklam-detay-foto{ width:100%; border-radius:0; border:none; display:block; margin-bottom:10px; } /* foto YATAY ve TAM görünür, düz kenar */
 .reklam-detay-fiyat{ font-weight:900; color:#1a8f4e; font-size:24px; margin-bottom:6px; }
 .reklam-detay-satici{ color:#7a5a00; font-weight:800; margin-bottom:8px; }
 .reklam-detay-ozet{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
