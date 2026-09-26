@@ -257,8 +257,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
             <div className="reklam-track">
               {firmaListe.map((r) => (
                 <button className="reklam-kart firma-kart" key={r.id} onClick={() => setDetay(r)}>
-                  <span className="reklam-kart-foto" style={r.kapak ? { backgroundImage: `url(${r.kapak})` } : {}}>{!r.kapak && "🏢"}</span>
+                  {/* AD ÜSTTE (kullanıcı isteği) → foto → kategori */}
                   <span className="reklam-kart-ad">{r.baslik || ""}</span>
+                  <span className="reklam-kart-foto" style={r.kapak ? { backgroundImage: `url(${r.kapak})` } : {}}>{!r.kapak && "🏢"}</span>
                   <span className="reklam-kart-fkat">{fkAd(r.kategori)}</span>
                 </button>
               ))}

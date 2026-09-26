@@ -5829,10 +5829,10 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-kart-dene{ font-weight:800; color:#7a5a00; font-size:11.5px; background:#ffe9a8; border-radius:7px; padding:3px 6px; text-align:center; }
 /* FİRMA / İŞLETME şeridi — MODADAN belirgin FARKLI: canlı yeşil zemin (soluk değil), yatay/geniş kartlar (flyer TAM görünür) */
 .firma-serit{ border-color:#0f8a4d; background:linear-gradient(120deg,#bdeccf,#7fd8a3); }
-/* Kart ne BEYAZ ne SİYAH → yumuşak GÖK MAVİSİ (kullanıcı isteği). Flyer kenar boşluğu da aynı mavi (beyaz bant olmaz). */
-.firma-kart{ width:236px; background:linear-gradient(160deg,#eaf3fb,#cfe4f7); border-color:#0f8a4d; }
-.firma-kart .reklam-kart-foto{ height:132px; background-color:#cfe4f7; background-size:contain; background-repeat:no-repeat; background-position:center; } /* flyer TAM görünür (kırpılmaz), boşluk MAVİ (beyaz değil) */
-.firma-kart .reklam-kart-ad{ color:#12324f; } /* mavi zeminde koyu lacivert yazı — net okunur */
+/* Kart ne BEYAZ ne SİYAH → GÖK MAVİSİ (kullanıcı: mavi çok açıktı → koyulaştırıldı). Ad ÜSTTE, foto kartı DOLDURUR (boşluk yok). Tam flyer detayda açılır. */
+.firma-kart{ width:236px; background:linear-gradient(160deg,#a9cdf0,#79ade4); border-color:#0f8a4d; }
+.firma-kart .reklam-kart-foto{ height:150px; background-color:#79ade4; background-size:cover; background-repeat:no-repeat; background-position:center; border-radius:9px; } /* foto kartı DOLDURUR (boş yer kalmaz); tam hâli detayda görünür */
+.firma-kart .reklam-kart-ad{ color:#0e2c4a; font-size:15px; } /* mavi zeminde koyu lacivert, üstte, biraz büyük */
 .reklam-kart-fkat{ font-weight:800; color:#0b6b3a; font-size:11.5px; background:#cdeed9; border-radius:7px; padding:3px 6px; text-align:center; }
 .reklam-firma-btn{ flex:1 1 45%; min-width:120px; text-align:center; text-decoration:none; border:none; border-radius:12px; padding:12px 8px; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; }
 .firma-ara{ background:#1fa463; color:#fff; }
