@@ -1852,6 +1852,7 @@ export default function Anasayfa({ pro = false }) {
   const [grupUyeEkleAcik, setGrupUyeEkleAcik] = useState(false); // "üye ekle" penceresi
   const [grupUyelerAcik, setGrupUyelerAcik] = useState(false);   // "grup üyeleri" penceresi (kim var)
   const [grupAraSecAcik, setGrupAraSecAcik] = useState(false);   // "kimleri arayalım" seçme penceresi
+  const [grupCanliDavetAcik, setGrupCanliDavetAcik] = useState(false); // GÖRÜŞME SÜRERKEN "birini davet et" penceresi
   const [grupYukleniyor, setGrupYukleniyor] = useState(false);   // grup sohbetine foto/video yükleniyor
   const [grupFotoBuyut, setGrupFotoBuyut] = useState("");        // grup sohbetinde foto'ya dokununca TAM EKRAN
   const [grupBiriKatildi, setGrupBiriKatildi] = useState(false); // grup aramasına EN AZ BİR kişi katıldı mı (herkes çıkınca TEKRAR "aranıyor"a dönüp çalmasın diye)
@@ -4313,7 +4314,7 @@ export default function Anasayfa({ pro = false }) {
     yenile();
     return room;
   };
-  const grupAramaBaslat = async (secilenKisiler) => {
+  const grupAramaBaslat = async (secilenKisiler, grup) => {
     const uu = auth.currentUser; if (!uu) return;
     const kisiler = (secilenKisiler || []).filter((k) => k && k.uid && k.uid !== uu.uid);
     if (!kisiler.length) { bilgiBalonu(t("grupKisiSec", "En az bir kişi seç.")); return; }
@@ -4322,7 +4323,8 @@ export default function Anasayfa({ pro = false }) {
     const oda = "grup_" + uu.uid + "_" + Date.now();
     const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
     setGrupSecAcik(false); setGrupSecim([]); setMesajAcik(false);
-    setGrupArama({ oda, olusturan: true, davetliler: kisiler });
+    // Grup üye listesini de sakla → GÖRÜŞME SÜRERKEN "davet et" ile diğer üyeleri çağırabilelim
+    setGrupArama({ oda, olusturan: true, davetliler: kisiler, grupId: (grup && grup.id) || null, uyeler: (grup && grup.uyeler) || [], grupAd: (grup && grup.ad) || "" });
     // ⚡ DAVETLERİ HEMEN ATEŞLE + AYNI ANDA kendim bağlan (PARALEL). B287'de davetleri "await Promise.all" ile ÖNCE
     //    bekleyip SONRA bağlanıyordum → yavaş ağda (telefon/4G) davetlerin sunucuya gitmesi birkaç sn sürünce KENDİM de
     //    çok geç bağlanıyordum ("ben çok geç bağlanıyorum çok geç"). Çözüm: davetleri BEKLEMEDEN gönder (setDoc anında
@@ -4391,10 +4393,33 @@ export default function Anasayfa({ pro = false }) {
     setGrupAraSecAcik(true);
   };
   const grupSecilenleriAra = () => {
+    const g = aktifGrupRef.current || aktifGrup; // görüşme sürerken davet için grup üyeleri lazım
     const kisiler = grupSecim.map((uid) => { const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {}; return { uid, ad: b.ad || sx.ad || "" }; });
     if (!kisiler.length) return;
     setGrupAraSecAcik(false); setAktifGrup(null);
-    grupAramaBaslat(kisiler);
+    grupAramaBaslat(kisiler, g);
+  };
+  // GÖRÜŞME SÜRERKEN DAVET — mevcut odaya (grupArama.oda) yeni kişileri çağır (yeni oda AÇMAZ; kabul edenler AYNI görüşmeye katılır)
+  const grupCanliDavetAc = () => {
+    const uu = auth.currentUser; const ga = grupArama;
+    if (!uu || !ga) return;
+    const digerler = (ga.uyeler || []).filter((x) => x && x !== uu.uid);
+    if (!digerler.length) { bilgiBalonu(t("grupDavetUyeYok", "Davet edilecek başka üye yok. (Gruba üye ekle.)")); return; }
+    setGrupSecim([]); setGrupCanliDavetAcik(true);
+  };
+  const grupCanliDavetGonder = () => {
+    const uu = auth.currentUser; const ga = grupArama;
+    if (!uu || !ga || !ga.oda) return;
+    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
+    (grupSecim || []).forEach((uid) => {
+      if (!uid || uid === uu.uid) return;
+      const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {};
+      const ad = b.ad || sx.ad || "";
+      try { aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: uid, arananAd: ad, tip: "grup", oda: ga.oda }).catch(() => {}); } catch (e) {}
+      try { bildirimEkle({ aliciUid: uid, gonderenUid: uu.uid, gonderenAd: benimAd, gonderenFoto: bildirimFotoUrl || "", tip: "arama", metin: "📹 Grup görüşmesine çağırdı" }).catch(() => {}); } catch (e) {}
+    });
+    setGrupCanliDavetAcik(false); setGrupSecim([]);
+    bilgiBalonu(t("grupDavetGonderildi", "Davet gönderildi 📩 — kabul edince görüşmeye katılır."));
   };
   // Grup sohbetine FOTO/VİDEO ekle (dosyaYukle gerçek türü korur → foto görünür, video oynar)
   const grupMedyaSec = () => { try { if (grupDosyaRef.current) grupDosyaRef.current.click(); } catch (e) {} };
@@ -10981,6 +11006,10 @@ export default function Anasayfa({ pro = false }) {
             </div>
           )}
           <div className="grup-alt">
+            {/* KONUŞMA ANINDA DAVET — görüşme sürerken başka üyeleri bu görüşmeye çağır */}
+            <button className="grup-dugme grup-davet" onClick={grupCanliDavetAc} aria-label={t("grupDavetEt", "Kişi davet et")} title={t("grupDavetEt", "Kişi davet et")}>
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.4" /><path d="M3.5 20c0-3.3 2.6-5.2 5.5-5.2s5.5 1.9 5.5 5.2" /><path d="M19 8v6M22 11h-6" /></svg>
+            </button>
             <button className={"grup-dugme" + (grupMik ? " kapali" : "")} onClick={grupMikToggle} aria-label={t("mikrofon", "Mikrofon")} title={t("mikrofon", "Mikrofon")}>{grupMik ? "🔇" : "🎤"}</button>
             <button className={"grup-dugme" + (grupKam ? " kapali" : "")} onClick={grupKamToggle} aria-label={t("kamera", "Kamera")} title={t("kamera", "Kamera")}>{grupKam ? "🚫" : "📷"}</button>
             <button className="grup-dugme grup-kapat" onClick={grupAramaKapat} aria-label={t("kapat", "Kapat")} title={t("kapat", "Kapat")}>
@@ -11135,6 +11164,33 @@ export default function Anasayfa({ pro = false }) {
             <div className="grp-modal-alt">
               <button className="grp-modal-vaz" onClick={() => setGrupAraSecAcik(false)}>{t("vazgec", "Vazgeç")}</button>
               <button className="grp-modal-tamam" disabled={grupSecim.length === 0} onClick={grupSecilenleriAra}>📹 {t("ara", "Ara") + (grupSecim.length ? " (" + grupSecim.length + ")" : "")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GÖRÜŞME SÜRERKEN DAVET — mevcut görüşmeye kişi çağır (grup ekranının ÜSTÜnde açılır) */}
+      {grupCanliDavetAcik && grupArama && (
+        <div className="grp-modal-fon grp-modal-canli" onClick={(e) => { if (e.target === e.currentTarget) { setGrupCanliDavetAcik(false); setGrupSecim([]); } }}>
+          <div className="grp-modal grp-modal-genis">
+            <b className="grp-modal-baslik notranslate" translate="no">{t("grupGorusmeyeDavet", "Görüşmeye kişi davet et")}</b>
+            <div className="grp-uye-liste">
+              {(grupArama.uyeler || []).filter((x) => x !== benUid).map((uid) => {
+                const b = kisiBilgiHarita[uid] || {}; const sx = sohbetListesi.find((x) => x.uid === uid) || {};
+                const ad = b.ad || sx.ad || "—"; const foto = b.foto || sx.foto || "";
+                const secili = grupSecim.indexOf(uid) !== -1;
+                return (
+                  <button key={uid} className={"mm-grup-oge" + (secili ? " secili" : "")} onClick={() => setGrupSecim((a) => a.indexOf(uid) !== -1 ? a.filter((x) => x !== uid) : [...a, uid])}>
+                    <span className="mm-grup-avatar">{foto ? <img src={foto} alt="" referrerPolicy="no-referrer" /> : (ad.trim()[0] || "?").toUpperCase()}</span>
+                    <b className="notranslate" translate="no">{ad}</b>
+                    <span className={"mm-grup-tik" + (secili ? " on" : "")}>{secili ? "✓" : "＋"}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="grp-modal-alt">
+              <button className="grp-modal-vaz" onClick={() => { setGrupCanliDavetAcik(false); setGrupSecim([]); }}>{t("vazgec", "Vazgeç")}</button>
+              <button className="grp-modal-tamam" disabled={grupSecim.length === 0} onClick={grupCanliDavetGonder}>📩 {t("davetEt", "Davet et") + (grupSecim.length ? " (" + grupSecim.length + ")" : "")}</button>
             </div>
           </div>
         </div>

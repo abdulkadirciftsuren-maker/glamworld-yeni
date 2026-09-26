@@ -4654,6 +4654,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 /* ===================== İNTERNET ARAMASI (sesli/görüntülü) — ALTIN zemin, KARE düğmeler ===================== */
 .arama-fon{ position:fixed; inset:0; z-index:100030; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;
   background:radial-gradient(circle at 50% 34%, #c79a34, #7a5f22); animation:adFon .2s ease; }
+/* GELEN ARAMA ekranı grup görüşmesinin (100035) ÜSTÜnde olsun → grup görüşmesindeyken biri arayınca EKRANDA görünür, cevaplanabilir (eskiden altta kalıyordu). */
+.arama-fon.arama-geliyor{ z-index:100050; }
 /* KÜÇÜLTÜLMÜŞ arama — köşede küçük pencere; ARKA PLAN artık bloklanmaz (uygulamada gezinilir). Pencereye dokununca büyür. */
 .arama-fon.arama-mini{ inset:auto; right:12px; bottom:86px; width:150px; height:214px; border-radius:16px; border:2px solid #ffe9a8;
   box-shadow:0 8px 26px rgba(0,0,0,.55); cursor:pointer; animation:none; }
