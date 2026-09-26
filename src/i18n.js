@@ -29,6 +29,7 @@ import { CEVIRI_HARITA_CANLI, NAV_MAKARA, SBP_SOR, AK_BUYUT } from "./ceviriHari
 import { CEVIRI_SANAL_AYNA } from "./ceviriSanalAyna";
 import { CEVIRI_MUHASEBE } from "./ceviriMuhasebe";
 import { CEVIRI_REKLAM } from "./ceviriReklam";
+import { CEVIRI_YENI } from "./ceviriYeni";
 
 // Dil seçicide görünecek diller (yerel adları + gerçek bayrak ISO kodu)
 export const DILLER = [
@@ -2483,6 +2484,11 @@ Object.keys(CEVIRI_SANAL_AYNA).forEach((lng) => {
 Object.keys(CEVIRI_REKLAM).forEach((lng) => {
   if (!resources[lng]) resources[lng] = { translation: {} };
   Object.assign(resources[lng].translation, CEVIRI_REKLAM[lng]);
+});
+// YENİ ÖZELLİKLER çevirileri (yorum beğeni/cevap/düzelt/sil + yoruma medya + indirme + grup davet) — 13 dil
+Object.keys(CEVIRI_YENI).forEach((lng) => {
+  if (!resources[lng]) resources[lng] = { translation: {} };
+  Object.assign(resources[lng].translation, CEVIRI_YENI[lng]);
 });
 // MUHASEBE + BELGELER çevirileri (13 dil)
 Object.keys(CEVIRI_MUHASEBE).forEach((lng) => {
