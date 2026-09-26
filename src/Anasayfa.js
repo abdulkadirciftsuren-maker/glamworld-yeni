@@ -7769,19 +7769,27 @@ export default function Anasayfa({ pro = false }) {
     } catch (e) { window.open(sehirGaleriUrl, "_blank"); }
   };
   // GÖNDERİ medyasını (video/foto) indir
+  // FOTOĞRAF/VİDEO İNDİR — Firebase (cross-origin) resimde <a download> tarayıcıda ÇALIŞMAZ (dosyayı indirmez, AÇAR).
+  // ÇÖZÜM: dosyayı blob olarak çek → aynı-köken object URL → benzersiz adla indir. Önbelleği atla (taze CORS cevabı),
+  // boş/opak cevabı ele, olmazsa yeni sekmede aç (kullanıcı basılı tutup kaydeder).
   const medyaIndir = async (p) => {
     const url = p && (p.video || p.gorsel);
     if (!url) return;
     const uzanti = p.video ? "mp4" : "jpg";
+    setKucukMesaj(t("indiriliyor", "İndiriliyor…"));
     try {
-      const r = await fetch(url);
+      const ayirac = url.indexOf("?") >= 0 ? "&" : "?";       // SW önbelleğini atla → taze (okunabilir) cevap gelsin
+      const r = await fetch(url + ayirac + "gloxdl=" + Date.now(), { mode: "cors", cache: "no-store" });
+      if (!r || !r.ok) throw new Error("indirilemedi");
       const b = await r.blob();
+      if (!b || !b.size) throw new Error("bos");
       const u = URL.createObjectURL(b);
       const a = document.createElement("a");
-      a.href = u; a.download = `gloxorg-${(p.ad || "gonderi").replace(/\s+/g, "-")}.${uzanti}`;
+      a.href = u; a.download = `gloxorg-${(p.ad || "gonderi").toString().replace(/\s+/g, "-").slice(0, 24)}-${Date.now().toString(36)}.${uzanti}`;
       document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(u), 1500);
-    } catch (e) { window.open(url, "_blank"); }
+      setTimeout(() => URL.revokeObjectURL(u), 3000);
+      setKucukMesaj(t("indirildi", "İndirildi 📄"));
+    } catch (e) { setKucukMesaj(t("indirYeniSekme", "İndirme için resme basılı tutup 'Kaydet' de")); window.open(url, "_blank"); }
   };
   // Günün şehri fotoğrafından "GLOXORG'a sor" → site asistanını ŞEHİR BAĞLAMIYLA aç
   const sehirAISor = () => {
@@ -12120,7 +12128,7 @@ export default function Anasayfa({ pro = false }) {
               )}
               {/* İNDİRME + 3 NOKTA — sağ üstte ayrı satır (foto/videoya ait) */}
               <div className="tf-ustarac" onClick={(e) => e.stopPropagation()}>
-                <a className="tf-ic tf-indir" href={p.video || p.gorsel || "#"} download target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} aria-label={pl(aiDil, "indir")}>{Ikon.indir}</a>
+                <button className="tf-ic tf-indir" onClick={(e) => { e.stopPropagation(); medyaIndir(p); }} aria-label={pl(aiDil, "indir")}>{Ikon.indir}</button>
                 <button className="tf-ic tf-daha" aria-label={t("dahaFazla", "Daha fazla")} onClick={() => dahaAc(p)}><span className="daha-tas" aria-hidden="true"><Elmas4 c="#1a1a1a" /></span></button>
               </div>
               {/* YAZI + Çevir/Sor (foto/video açıklaması). Yazı YOKSA da Sor düğmesi çıkar (Gloxoo görseli/videoyu okuyup çevirir). */}
