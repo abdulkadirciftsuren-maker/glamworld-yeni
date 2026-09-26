@@ -3,7 +3,7 @@
 // Altyapı: Elite Pazar'ın "pazarUrunleri" koleksiyonu (reklam:true işaretli) → yeni Firestore kuralı GEREKMEZ.
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { pazarUrunEkle, pazarUrunleriOku, gorselYukle } from "./veri";
+import { pazarUrunEkle, pazarUrunleriOku, pazarUrunSil, gorselYukle } from "./veri";
 
 const KATEGORILER = [
   { k: "elbise", ik: "👕", ck: "saElbise", ad: "Kıyafet" },
@@ -36,7 +36,7 @@ function kucultB64(dataUrl, max = 720) {
   });
 }
 
-export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif }) {
+export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif, yonetici }) {
   const { t } = useTranslation();
   const [reklamlar, setReklamlar] = useState([]);
   const [detay, setDetay] = useState(null);       // açık reklam (detay penceresi)
@@ -136,6 +136,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
 
   const kAd = (kkey) => { const k = KATEGORILER.find((x) => x.k === kkey); return k ? t(k.ck, k.ad) : kkey; };
 
+  // REKLAMI SİL — kendi reklamını herkes, YÖNETİCİ ise HER reklamı silebilir (uygun olmayanı kaldır). Kural zaten korur.
+  const benimMi = (r) => !!(uid && (r.sahipUid === uid || r.uid === uid));
+  const silinebilir = (r) => !!(r && (benimMi(r) || yonetici));
+  async function reklamSilEt(r) {
+    if (!r || !r.id) return;
+    if (typeof window !== "undefined" && !window.confirm(t("rkSilOnay", "Bu reklamı silmek istiyor musun?"))) return;
+    setReklamlar((a) => a.filter((x) => x.id !== r.id)); // anında kaldır
+    setDetay(null);
+    try { await pazarUrunSil(r.id); } catch (e) {}
+  }
+
   return (
     <>
       {/* ŞERİT — ana sayfada soldan-sağa akar */}
@@ -196,6 +207,10 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                   const m = `"${detay.baslik}" reklamınız için yazıyorum. ${detay.fiyat ? "(" + detay.fiyat + " " + (detay.paraSimge || "₺") + ") " : ""}Bilgi/sipariş almak istiyorum.`;
                   setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid || detay.uid, ad: detay.satici, foto: detay.saticiFoto }, m);
                 }}>💬 {t("rkYaz", "Satıcıya Yaz")}</button>
+                {/* SİL — kendi reklamın (herkes) veya YÖNETİCİ her reklamı (uygun olmayanı kaldır) */}
+                {silinebilir(detay) && (
+                  <button className="reklam-sil-btn" onClick={() => reklamSilEt(detay)}>🗑 {t("rkSil", "Reklamı Sil")}{yonetici && !benimMi(detay) ? " (" + t("yonetici", "yönetici") + ")" : ""}</button>
+                )}
               </div>
             </div>
           </div>

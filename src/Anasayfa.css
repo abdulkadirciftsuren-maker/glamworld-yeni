@@ -5841,7 +5841,9 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-detay-ozet{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
 .reklam-oz{ background:#fff7db; border:1.5px solid rgba(160,120,0,.5); border-radius:9px; padding:5px 9px; font-size:13.5px; color:#5a4300; }
 .reklam-detay-aciklama{ color:#5a4300; font-weight:600; line-height:1.5; margin-bottom:14px; white-space:pre-wrap; }
-.reklam-detay-dugmeler{ display:flex; gap:8px; }
+.reklam-detay-dugmeler{ display:flex; gap:8px; flex-wrap:wrap; }
+.reklam-sil-btn{ flex:1 1 100%; background:#e0202c; color:#fff; border:none; border-radius:12px; padding:12px 8px; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; }
+.reklam-sil-btn:active{ transform:scale(.97); }
 .reklam-dene-btn{ flex:1.3; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; border:none; border-radius:12px; padding:13px 8px; font-weight:900; font-size:15px; cursor:pointer; font-family:inherit; }
 .reklam-yaz-btn{ flex:1; background:#1fa463; color:#fff; border:none; border-radius:12px; padding:13px 8px; font-weight:900; font-size:15px; cursor:pointer; font-family:inherit; }
 .reklam-dene-btn:active, .reklam-yaz-btn:active{ transform:scale(.97); }

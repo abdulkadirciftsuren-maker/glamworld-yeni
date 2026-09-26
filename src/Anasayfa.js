@@ -9536,6 +9536,7 @@ export default function Anasayfa({ pro = false }) {
                 benFoto={(profilBilgi && (profilBilgi.fotoUrl || profilBilgi.avatarFoto)) || ""}
                 dil={dil}
                 paraSym={myParaSym}
+                yonetici={yoneticiMi()}
                 pasif={aktifKod === "ayna"}
                 onDene={(urun) => { setSanalAynaBaslangic(urun || null); setAktifKod("ayna"); }}
                 saticiyaYaz={(satici, mesaj) => { if (satici && satici.uid) { sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto }); if (mesaj) { try { setSohbetYazi(mesaj); } catch (e) {} } } }}
