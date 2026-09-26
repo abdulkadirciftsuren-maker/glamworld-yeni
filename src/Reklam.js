@@ -17,6 +17,26 @@ const KISILER = [
   { k: "kiz", ik: "👧", ck: "saKisiKiz", ad: "Kız" }, { k: "erkekcocuk", ik: "👦", ck: "saKisiErkekCocuk", ad: "Erkek Çocuk" },
   { k: "bebek", ik: "👶", ck: "saKisiBebek", ad: "Bebek" },
 ];
+// FİRMA / İŞLETME reklam kategorileri (moda DIŞI her şey: yemek, market, emlak, araç, firma...)
+const FIRMA_KATEGORI = [
+  { k: "yemek", ik: "🍽️", ck: "fkYemek", ad: "Yemek / Restoran" },
+  { k: "market", ik: "🛒", ck: "fkMarket", ad: "Market / Bakkal" },
+  { k: "guzellik", ik: "💇", ck: "fkGuzellik", ad: "Kuaför / Güzellik" },
+  { k: "emlak", ik: "🏠", ck: "fkEmlak", ad: "Emlak" },
+  { k: "arac", ik: "🚗", ck: "fkArac", ad: "Araç / Oto" },
+  { k: "magaza", ik: "🏬", ck: "fkMagaza", ad: "Mağaza" },
+  { k: "saglik", ik: "🏥", ck: "fkSaglik", ad: "Sağlık" },
+  { k: "egitim", ik: "🎓", ck: "fkEgitim", ad: "Eğitim" },
+  { k: "hizmet", ik: "🔧", ck: "fkHizmet", ad: "Hizmet" },
+  { k: "diger", ik: "🏢", ck: "fkDiger", ad: "Diğer / Firma" },
+];
+// Web adresini düzelt (başında http yoksa ekle) + Yol tarifi (harita) linki
+function webDuzelt(w) { w = (w || "").toString().trim(); if (!w) return ""; return /^https?:\/\//i.test(w) ? w : ("https://" + w); }
+function yolTarifiUrl(r) {
+  if (r && r.konum && r.konum.enlem != null && r.konum.boylam != null) return "https://www.google.com/maps/dir/?api=1&destination=" + r.konum.enlem + "," + r.konum.boylam;
+  if (r && r.adres) return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(r.adres);
+  return "";
+}
 function dosyaOku(file) { return new Promise((res) => { try { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(file); } catch (e) { res(""); } }); }
 // Fotoğrafı küçült (küçük base64) → "üstümde dene"de GERÇEK ürünü giydirmek için doğrudan görsel yollanır (CORS derdi olmaz)
 function kucultB64(dataUrl, max = 720) {
@@ -56,6 +76,20 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [kaydet, setKaydet] = useState(false);
   const [hata, setHata] = useState("");
   const inpRef = useRef(null);
+  // FİRMA / İŞLETME reklam formu
+  const [firmaVerAcik, setFirmaVerAcik] = useState(false);
+  const [fFoto, setFFoto] = useState("");
+  const [fAd, setFAd] = useState("");
+  const [fKat, setFKat] = useState("yemek");
+  const [fAciklama, setFAciklama] = useState("");
+  const [fTel, setFTel] = useState("");
+  const [fWeb, setFWeb] = useState("");
+  const [fAdres, setFAdres] = useState("");
+  const [fKonum, setFKonum] = useState(null);       // {enlem,boylam} — "Konumumu ekle" ile GPS
+  const [fKonumDurum, setFKonumDurum] = useState("");
+  const [fKaydet, setFKaydet] = useState(false);
+  const [fHata, setFHata] = useState("");
+  const fInpRef = useRef(null);
 
   async function yukle() {
     try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
@@ -147,15 +181,49 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     try { await pazarUrunSil(r.id); } catch (e) {}
   }
 
+  // --- FİRMA / İŞLETME reklamı ---
+  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); }
+  async function firmaFotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFFoto(d); setFHata(""); } }
+  function firmaKonumAl() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) { setFKonumDurum("hata"); return; }
+    setFKonumDurum("aliniyor");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setFKonum({ enlem: pos.coords.latitude, boylam: pos.coords.longitude }); setFKonumDurum("ok"); },
+      () => setFKonumDurum("hata"), { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+  async function firmaYayinla() {
+    if (fKaydet) return;
+    if (!fFoto) { setFHata(t("fkFotoOnce", "Önce işletme fotoğrafı/logosu ekle.")); return; }
+    if (!fAd.trim()) { setFHata(t("fkAdOnce", "İşletme/firma adı yaz.")); return; }
+    if (!fTel.trim() && !fWeb.trim() && !fAdres.trim() && !fKonum) { setFHata(t("fkIletisimOnce", "En az bir iletişim ekle: telefon, web veya adres.")); return; }
+    setFKaydet(true); setFHata("");
+    try {
+      let kapak = ""; try { kapak = await gorselYukle(fFoto, uid || "reklam"); } catch (e) {}
+      if (!kapak) kapak = fFoto;
+      await pazarUrunEkle({
+        reklam: true, reklamTur: "firma", tur: "reklam", kapak, baslik: fAd.trim(), kategori: fKat,
+        aciklama: fAciklama.trim(), telefon: fTel.trim(), web: webDuzelt(fWeb), adres: fAdres.trim(), konum: fKonum || null,
+        uid: uid || "", satici: benAd || "", saticiFoto: benFoto || "",
+      });
+      firmaFormSifirla(); setFirmaVerAcik(false); yukle();
+    } catch (e) { setFHata(t("rkOlmadi", "Yayınlanamadı, tekrar dene.")); }
+    setFKaydet(false);
+  }
+  const fkAd = (kkey) => { const k = FIRMA_KATEGORI.find((x) => x.k === kkey); return k ? t(k.ck, k.ad) : kkey; };
+  // İKİ AYRI ŞERİT: MODA (denenebilir ürün) ve FİRMA (işletme/yemek/emlak...)
+  const modaListe = reklamlar.filter((r) => r.reklamTur !== "firma");
+  const firmaListe = reklamlar.filter((r) => r.reklamTur === "firma");
+
   return (
     <>
-      {/* ŞERİT — ana sayfada soldan-sağa akar */}
+      {/* MODA ŞERİDİ — ana sayfada soldan-sağa akar (kıyafet/ayakkabı/çanta/takı/makyaj — üstümde dene) */}
       <div className="reklam-serit">
         <div className="reklam-serit-bas">
           <span className="reklam-serit-ad">🛍️ {t("rkBaslik", "Vitrin — Reklam")}</span>
           <button className="reklam-ver-mini" onClick={() => { formSifirla(); setVerAcik(true); }}>＋ {t("rkVer", "Reklam Ver")}</button>
         </div>
-        {reklamlar.length === 0 ? (
+        {modaListe.length === 0 ? (
           <button className="reklam-bos" onClick={() => { formSifirla(); setVerAcik(true); }}>＋ {t("rkIlk", "İlk reklamı sen ver — ürününü buradan tanıt")}</button>
         ) : (
           <div className="reklam-akis" ref={akisRef}
@@ -163,12 +231,35 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
             onPointerDown={etkilesimBas} onPointerMove={(e) => { if (e.buttons) etkilesimHar(); }} onPointerUp={etkilesimBit} onPointerLeave={etkilesimBit}>
             <div className="reklam-track">
               {/* liste İKİ kez basılır → kesintisiz sonsuz akış */}
-              {reklamlar.concat(reklamlar).map((r, i) => (
+              {modaListe.concat(modaListe).map((r, i) => (
                 <button className="reklam-kart" key={r.id + "-" + i} onClick={() => setDetay(r)}>
                   <span className="reklam-kart-foto" style={r.kapak ? { backgroundImage: `url(${r.kapak})` } : {}}>{!r.kapak && "🛍️"}</span>
                   <span className="reklam-kart-ad">{r.baslik || ""}</span>
                   {r.fiyat ? <span className="reklam-kart-fiyat">{r.fiyat} {r.paraSimge || "₺"}</span> : null}
                   <span className="reklam-kart-dene">🪞 {t("rkDene", "Üstümde dene")}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* FİRMA / İŞLETME ŞERİDİ — yemek/restoran, market, emlak, araç, firma... (Ara / Mesaj / Web / Yol tarifi) */}
+      <div className="reklam-serit firma-serit">
+        <div className="reklam-serit-bas">
+          <span className="reklam-serit-ad">🏢 {t("fkBaslik", "Firma / İşletme Reklamları")}</span>
+          <button className="reklam-ver-mini" onClick={() => { firmaFormSifirla(); setFirmaVerAcik(true); }}>＋ {t("fkVer", "Firma Reklamı Ver")}</button>
+        </div>
+        {firmaListe.length === 0 ? (
+          <button className="reklam-bos" onClick={() => { firmaFormSifirla(); setFirmaVerAcik(true); }}>＋ {t("fkIlk", "İşletmeni buradan tanıt — yemek, market, emlak, firma…")}</button>
+        ) : (
+          <div className="reklam-akis firma-akis">
+            <div className="reklam-track">
+              {firmaListe.map((r) => (
+                <button className="reklam-kart firma-kart" key={r.id} onClick={() => setDetay(r)}>
+                  <span className="reklam-kart-foto" style={r.kapak ? { backgroundImage: `url(${r.kapak})` } : {}}>{!r.kapak && "🏢"}</span>
+                  <span className="reklam-kart-ad">{r.baslik || ""}</span>
+                  <span className="reklam-kart-fkat">{fkAd(r.kategori)}</span>
                 </button>
               ))}
             </div>
@@ -186,32 +277,48 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
             </div>
             <div className="reklam-detay-kaydir">
               {detay.kapak && <img className="reklam-detay-foto" src={detay.kapak} alt="" referrerPolicy="no-referrer" />}
-              {detay.fiyat ? <div className="reklam-detay-fiyat">{detay.fiyat} {detay.paraSimge || "₺"}</div> : null}
-              <div className="reklam-detay-satici">🏪 {detay.satici || t("rkSatici", "Satıcı")}</div>
-              <div className="reklam-detay-ozet">
-                <span className="reklam-oz"><b>{t("rkKimIcin", "Kim için")}:</b> {(KISILER.find((x) => x.k === detay.kimIcin) || {}).ad ? t((KISILER.find((x) => x.k === detay.kimIcin) || {}).ck, "") : "—"}</span>
-                <span className="reklam-oz"><b>{kAd(detay.kategori)}</b></span>
-                {detay.beden && <span className="reklam-oz"><b>{t("rkBeden", "Beden")}:</b> {detay.beden}</span>}
-                {detay.renk && <span className="reklam-oz"><b>{t("saRenk", "Renk")}:</b> {detay.renk}</span>}
-                {detay.kumas && <span className="reklam-oz"><b>{t("rkKumas", "Kumaş")}:</b> {detay.kumas}</span>}
-              </div>
-              {detay.aciklama && <div className="reklam-detay-aciklama">{detay.aciklama}</div>}
-              <div className="reklam-detay-dugmeler">
-                <button className="reklam-dene-btn" onClick={() => {
-                  // Ürünün TAM tarifi (renk/kumaş/beden/açıklama) → yapay zekâ referans fotoğrafı DAHA sadık kopyalasın
-                  const tarif = [detay.renk && ("renk: " + detay.renk), detay.kumas && ("kumaş: " + detay.kumas), detay.beden && ("beden: " + detay.beden), detay.aciklama].filter(Boolean).join("; ");
-                  const urun = { kategori: detay.kategori || "elbise", kisi: detay.kimIcin || "bayan", model: [detay.baslik, detay.renk, detay.kumas].filter(Boolean).join(", "), ad: detay.baslik || "", tarif, refFotoUrl: detay.kapak || "", refB64: detay.refB64 || "" };
-                  setDetay(null); onDene && onDene(urun);
-                }}>🪞 {t("rkDene", "Üstümde dene")}</button>
-                <button className="reklam-yaz-btn" onClick={() => {
-                  const m = `"${detay.baslik}" reklamınız için yazıyorum. ${detay.fiyat ? "(" + detay.fiyat + " " + (detay.paraSimge || "₺") + ") " : ""}Bilgi/sipariş almak istiyorum.`;
-                  setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid || detay.uid, ad: detay.satici, foto: detay.saticiFoto }, m);
-                }}>💬 {t("rkYaz", "Satıcıya Yaz")}</button>
-                {/* SİL — kendi reklamın (herkes) veya YÖNETİCİ her reklamı (uygun olmayanı kaldır) */}
-                {silinebilir(detay) && (
-                  <button className="reklam-sil-btn" onClick={() => reklamSilEt(detay)}>🗑 {t("rkSil", "Reklamı Sil")}{yonetici && !benimMi(detay) ? " (" + t("yonetici", "yönetici") + ")" : ""}</button>
-                )}
-              </div>
+              {detay.reklamTur === "firma" ? (
+                <>
+                  {/* FİRMA / İŞLETME detayı — Ara / Mesaj / Web / Yol tarifi */}
+                  <div className="reklam-detay-satici">🏢 {detay.satici || t("fkSahip", "İşletme")}</div>
+                  <div className="reklam-detay-ozet"><span className="reklam-oz"><b>{fkAd(detay.kategori)}</b></span>{detay.adres && <span className="reklam-oz">📍 {detay.adres}</span>}</div>
+                  {detay.aciklama && <div className="reklam-detay-aciklama">{detay.aciklama}</div>}
+                  <div className="reklam-detay-dugmeler">
+                    {detay.telefon && <a className="reklam-firma-btn firma-ara" href={"tel:" + detay.telefon}>📞 {t("fkAra", "Ara")}</a>}
+                    <button className="reklam-firma-btn firma-mesaj" onClick={() => { const m = `"${detay.baslik}" işletmeniz için yazıyorum. Bilgi almak istiyorum.`; setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid || detay.uid, ad: detay.satici, foto: detay.saticiFoto }, m); }}>💬 {t("fkMesaj", "Mesaj")}</button>
+                    {detay.web && <a className="reklam-firma-btn firma-web" href={detay.web} target="_blank" rel="noreferrer">🌐 {t("fkWeb", "Web sitesi")}</a>}
+                    {yolTarifiUrl(detay) && <a className="reklam-firma-btn firma-yol" href={yolTarifiUrl(detay)} target="_blank" rel="noreferrer">🗺️ {t("fkYol", "Yol tarifi")}</a>}
+                    {silinebilir(detay) && <button className="reklam-sil-btn" onClick={() => reklamSilEt(detay)}>🗑 {t("rkSil", "Reklamı Sil")}{yonetici && !benimMi(detay) ? " (" + t("yonetici", "yönetici") + ")" : ""}</button>}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {detay.fiyat ? <div className="reklam-detay-fiyat">{detay.fiyat} {detay.paraSimge || "₺"}</div> : null}
+                  <div className="reklam-detay-satici">🏪 {detay.satici || t("rkSatici", "Satıcı")}</div>
+                  <div className="reklam-detay-ozet">
+                    <span className="reklam-oz"><b>{t("rkKimIcin", "Kim için")}:</b> {(KISILER.find((x) => x.k === detay.kimIcin) || {}).ad ? t((KISILER.find((x) => x.k === detay.kimIcin) || {}).ck, "") : "—"}</span>
+                    <span className="reklam-oz"><b>{kAd(detay.kategori)}</b></span>
+                    {detay.beden && <span className="reklam-oz"><b>{t("rkBeden", "Beden")}:</b> {detay.beden}</span>}
+                    {detay.renk && <span className="reklam-oz"><b>{t("saRenk", "Renk")}:</b> {detay.renk}</span>}
+                    {detay.kumas && <span className="reklam-oz"><b>{t("rkKumas", "Kumaş")}:</b> {detay.kumas}</span>}
+                  </div>
+                  {detay.aciklama && <div className="reklam-detay-aciklama">{detay.aciklama}</div>}
+                  <div className="reklam-detay-dugmeler">
+                    <button className="reklam-dene-btn" onClick={() => {
+                      const tarif = [detay.renk && ("renk: " + detay.renk), detay.kumas && ("kumaş: " + detay.kumas), detay.beden && ("beden: " + detay.beden), detay.aciklama].filter(Boolean).join("; ");
+                      const urun = { kategori: detay.kategori || "elbise", kisi: detay.kimIcin || "bayan", model: [detay.baslik, detay.renk, detay.kumas].filter(Boolean).join(", "), ad: detay.baslik || "", tarif, refFotoUrl: detay.kapak || "", refB64: detay.refB64 || "" };
+                      setDetay(null); onDene && onDene(urun);
+                    }}>🪞 {t("rkDene", "Üstümde dene")}</button>
+                    <button className="reklam-yaz-btn" onClick={() => {
+                      const m = `"${detay.baslik}" reklamınız için yazıyorum. ${detay.fiyat ? "(" + detay.fiyat + " " + (detay.paraSimge || "₺") + ") " : ""}Bilgi/sipariş almak istiyorum.`;
+                      setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid || detay.uid, ad: detay.satici, foto: detay.saticiFoto }, m);
+                    }}>💬 {t("rkYaz", "Satıcıya Yaz")}</button>
+                    {silinebilir(detay) && (
+                      <button className="reklam-sil-btn" onClick={() => reklamSilEt(detay)}>🗑 {t("rkSil", "Reklamı Sil")}{yonetici && !benimMi(detay) ? " (" + t("yonetici", "yönetici") + ")" : ""}</button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -250,6 +357,38 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               </div>
               {hata && <div className="reklam-hata">⚠️ {hata}</div>}
               <button className="reklam-yayinla" disabled={kaydet} onClick={yayinla}>{kaydet ? "⏳ " + t("rkYayinlaniyor", "Yayınlanıyor…") : "✅ " + t("rkYayinla", "Yayınla")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FİRMA / İŞLETME REKLAMI VER formu */}
+      {firmaVerAcik && (
+        <div className="reklam-fon" onClick={(e) => { if (e.target === e.currentTarget) setFirmaVerAcik(false); }}>
+          <div className="reklam-detay">
+            <div className="reklam-detay-ust">
+              <span className="reklam-detay-bas">🏢 {t("fkYeni", "Firma / İşletme Reklamı")}</span>
+              <button className="reklam-kapat" onClick={() => setFirmaVerAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+            </div>
+            <div className="reklam-detay-kaydir">
+              <div className="reklam-not">{t("rkUcretsizNot", "Şimdilik ÜCRETSİZ. İleride reklam yayını ücretli olacak.")}</div>
+              <div className="reklam-foto-kutu" onClick={() => fInpRef.current && fInpRef.current.click()}>
+                {fFoto ? <img src={fFoto} alt="" /> : <span className="reklam-foto-bos">📷<br />{t("fkFotoEkle", "İşletme fotoğrafı / logosu ekle")}</span>}
+              </div>
+              <input ref={fInpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={firmaFotoSec} />
+              <input className="reklam-inp" type="text" value={fAd} onChange={(e) => setFAd(e.target.value)} placeholder={t("fkAd", "İşletme / firma adı")} />
+              <div className="reklam-kim-bas">{t("rkKategori", "Kategori")}</div>
+              <div className="reklam-cip-satir">{FIRMA_KATEGORI.map((kt) => <button key={kt.k} className={"reklam-cip" + (fKat === kt.k ? " sec" : "")} onClick={() => setFKat(kt.k)}>{kt.ik} {t(kt.ck, kt.ad)}</button>)}</div>
+              <textarea className="reklam-inp reklam-alan" value={fAciklama} onChange={(e) => setFAciklama(e.target.value)} placeholder={t("fkAciklama", "Kısa tanıtım (ne yapıyorsunuz, öne çıkanlar…)")} rows={3} />
+              <input className="reklam-inp" type="tel" inputMode="tel" value={fTel} onChange={(e) => setFTel(e.target.value)} placeholder={t("fkTel", "📞 Telefon (Ara düğmesi için)")} />
+              <input className="reklam-inp" type="text" inputMode="url" value={fWeb} onChange={(e) => setFWeb(e.target.value)} placeholder={t("fkWebInp", "🌐 Web sitesi / link (varsa)")} />
+              <input className="reklam-inp" type="text" value={fAdres} onChange={(e) => setFAdres(e.target.value)} placeholder={t("fkAdres", "📍 Adres (Yol tarifi için)")} />
+              <button className={"reklam-cip reklam-konum-btn" + (fKonum ? " sec" : "")} onClick={firmaKonumAl}>
+                {fKonumDurum === "aliniyor" ? "⏳ " + t("fkKonumAliniyor", "Konum alınıyor…") : fKonum ? "✓ " + t("fkKonumEklendi", "Konum eklendi (haritada tam yer)") : "🗺️ " + t("fkKonumEkle", "Konumumu ekle (haritada tam yer)")}
+              </button>
+              {fKonumDurum === "hata" && <div className="reklam-hata">⚠️ {t("fkKonumHata", "Konum alınamadı — adres yazman yeterli.")}</div>}
+              {fHata && <div className="reklam-hata">⚠️ {fHata}</div>}
+              <button className="reklam-yayinla" disabled={fKaydet} onClick={firmaYayinla}>{fKaydet ? "⏳ " + t("rkYayinlaniyor", "Yayınlanıyor…") : "✅ " + t("rkYayinla", "Yayınla")}</button>
             </div>
           </div>
         </div>
