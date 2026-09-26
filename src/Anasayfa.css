@@ -5841,6 +5841,16 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .firma-yol{ background:#0f9aa3; color:#fff; }
 .reklam-firma-btn:active{ transform:scale(.97); }
 .reklam-konum-btn{ display:block; width:100%; margin-top:4px; }
+/* HARİTADAN KONUM SEÇME penceresi (firma reklamı — iş yerini işaretle) */
+.reklam-harita-fon{ position:fixed; inset:0; z-index:100092; display:flex; align-items:center; justify-content:center; background:rgba(90,70,0,.55); }
+.reklam-harita-kutu{ width:100%; max-width:640px; height:100%; max-height:100vh; display:flex; flex-direction:column; background:#fffdf5; }
+.reklam-harita-bas{ display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(120deg,#ffe9a8,#ffd54a); }
+.reklam-harita-bilgi{ flex:1; font-weight:800; color:#5a3f00; font-size:14px; }
+.reklam-harita{ flex:1 1 auto; min-height:0; width:100%; }
+.reklam-harita-alt{ display:flex; gap:10px; padding:12px 14px; background:#fff6d8; }
+.reklam-harita-vaz{ flex:1; background:rgba(120,90,0,.12); border:2px solid #b8860b; color:#7a5a00; border-radius:12px; padding:13px; font-weight:800; font-size:15px; cursor:pointer; }
+.reklam-harita-tamam{ flex:1.4; background:#1fa463; border:none; color:#fff; border-radius:12px; padding:13px; font-weight:900; font-size:15px; cursor:pointer; }
+.reklam-harita-tamam:disabled{ opacity:.5; }
 
 /* Reklam detay + form penceresi */
 .reklam-fon{ position:fixed; inset:0; z-index:100085; display:flex; align-items:center; justify-content:center; background:rgba(90,70,0,.45); padding:0; }

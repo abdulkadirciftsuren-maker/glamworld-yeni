@@ -3,6 +3,7 @@
 // Altyapı: Elite Pazar'ın "pazarUrunleri" koleksiyonu (reklam:true işaretli) → yeni Firestore kuralı GEREKMEZ.
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import L from "leaflet"; // haritadan konum seçmek için (iş yerini işaretle) — OSM, uygulamanın kullandığı kaynak
 import { pazarUrunEkle, pazarUrunleriOku, pazarUrunSil, gorselYukle } from "./veri";
 
 const KATEGORILER = [
@@ -85,16 +86,50 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [fTel, setFTel] = useState("");
   const [fWeb, setFWeb] = useState("");
   const [fAdres, setFAdres] = useState("");
-  const [fKonum, setFKonum] = useState(null);       // {enlem,boylam} — "Konumumu ekle" ile GPS
+  const [fKonum, setFKonum] = useState(null);       // {enlem,boylam} — haritadan seçilen tam yer
   const [fKonumDurum, setFKonumDurum] = useState("");
   const [fKaydet, setFKaydet] = useState(false);
   const [fHata, setFHata] = useState("");
   const fInpRef = useRef(null);
+  // HARİTADAN KONUM SEÇME (iş yerini işaretle — GPS'in aldığı "şu anki yer" değil)
+  const [haritaAcik, setHaritaAcik] = useState(false);
+  const [haritaKonum, setHaritaKonum] = useState(null); // {lat,lng} — haritada seçili nokta
+  const haritaRef = useRef(null);
+  const haritaMapRef = useRef(null);
 
   async function yukle() {
     try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
   }
   useEffect(() => { yukle(); }, []);
+
+  // HARİTA — açılınca Leaflet haritası kur (OSM); parmakla dokun/pini sürükle → nokta seç. Kapanınca temizle.
+  useEffect(() => {
+    if (!haritaAcik) return;
+    const el = haritaRef.current; if (!el) return;
+    let map, marker;
+    const bas = fKonum ? [fKonum.enlem, fKonum.boylam] : [39.0, 35.0]; // seçili varsa oraya, yoksa Türkiye ortası
+    const zoom = fKonum ? 16 : 5;
+    try {
+      map = L.map(el, { zoomControl: true }).setView(bas, zoom);
+      L.tileLayer("https://a.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+      // Altın damla pin (resim gerektirmez — Leaflet varsayılan ikon 404 vermesin)
+      const pin = L.divIcon({ className: "", html: '<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#FFD700;border:2.5px solid #7a5a00;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>', iconSize: [26, 26], iconAnchor: [13, 26] });
+      marker = L.marker(bas, { draggable: true, icon: pin }).addTo(map);
+      if (fKonum) setHaritaKonum({ lat: bas[0], lng: bas[1] });
+      marker.on("dragend", () => { const p = marker.getLatLng(); setHaritaKonum({ lat: p.lat, lng: p.lng }); });
+      map.on("click", (e) => { marker.setLatLng(e.latlng); setHaritaKonum({ lat: e.latlng.lat, lng: e.latlng.lng }); });
+      // Seçili yer yoksa GPS ile yaklaştır (başlangıç kolaylığı) — kullanıcı sonra pini iş yerine taşır
+      if (!fKonum && typeof navigator !== "undefined" && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const ll = [pos.coords.latitude, pos.coords.longitude];
+          try { map.setView(ll, 15); marker.setLatLng(ll); setHaritaKonum({ lat: ll[0], lng: ll[1] }); } catch (e) {}
+        }, () => {}, { timeout: 8000 });
+      }
+      setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 250); // modal açılınca harita boyutunu düzelt
+      haritaMapRef.current = map;
+    } catch (e) {}
+    return () => { try { if (map) map.remove(); } catch (e) {} haritaMapRef.current = null; };
+  }, [haritaAcik]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ŞERİT OTOMATİK AKIŞ — üstteki değerler şeridi gibi: yavaşça sola akar, parmak basınca DURUR,
   // parmakla sağa-sola serbest çekilir, bırakınca 1-2 sn sonra otomatik devam eder. Liste 2 kez basılır → sonsuz döngü.
@@ -184,13 +219,19 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   // --- FİRMA / İŞLETME reklamı ---
   function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); }
   async function firmaFotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFFoto(d); setFHata(""); } }
-  function firmaKonumAl() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) { setFKonumDurum("hata"); return; }
-    setFKonumDurum("aliniyor");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setFKonum({ enlem: pos.coords.latitude, boylam: pos.coords.longitude }); setFKonumDurum("ok"); },
-      () => setFKonumDurum("hata"), { enableHighAccuracy: true, timeout: 10000 }
-    );
+  // HARİTAYI AÇ — iş yerini haritada işaretle (parmakla dokun/pini sürükle)
+  function haritaAc() { setHaritaKonum(fKonum ? { lat: fKonum.enlem, lng: fKonum.boylam } : null); setHaritaAcik(true); }
+  // Seçilen noktayı onayla → firma konumu + (adres boşsa) ters-coğrafya ile adresi doldur
+  async function haritaOnayla() {
+    if (!haritaKonum) { setHaritaAcik(false); return; }
+    setFKonum({ enlem: haritaKonum.lat, boylam: haritaKonum.lng }); setFKonumDurum("ok");
+    if (!fAdres.trim()) {
+      try {
+        const r = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + haritaKonum.lat + "&lon=" + haritaKonum.lng + "&zoom=18&accept-language=" + (dil || "tr"), { headers: { Accept: "application/json" } });
+        if (r.ok) { const j = await r.json(); if (j && j.display_name) setFAdres(j.display_name); }
+      } catch (e) {}
+    }
+    setHaritaAcik(false);
   }
   async function firmaYayinla() {
     if (fKaydet) return;
@@ -384,12 +425,28 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               <input className="reklam-inp" type="tel" inputMode="tel" value={fTel} onChange={(e) => setFTel(e.target.value)} placeholder={t("fkTel", "📞 Telefon (Ara düğmesi için)")} />
               <input className="reklam-inp" type="text" inputMode="url" value={fWeb} onChange={(e) => setFWeb(e.target.value)} placeholder={t("fkWebInp", "🌐 Web sitesi / link (varsa)")} />
               <input className="reklam-inp" type="text" value={fAdres} onChange={(e) => setFAdres(e.target.value)} placeholder={t("fkAdres", "📍 Adres (Yol tarifi için)")} />
-              <button className={"reklam-cip reklam-konum-btn" + (fKonum ? " sec" : "")} onClick={firmaKonumAl}>
-                {fKonumDurum === "aliniyor" ? "⏳ " + t("fkKonumAliniyor", "Konum alınıyor…") : fKonum ? "✓ " + t("fkKonumEklendi", "Konum eklendi (haritada tam yer)") : "🗺️ " + t("fkKonumEkle", "Konumumu ekle (haritada tam yer)")}
+              <button className={"reklam-cip reklam-konum-btn" + (fKonum ? " sec" : "")} onClick={haritaAc}>
+                {fKonum ? "✓ " + t("fkKonumSecildi", "İş yeri haritada seçildi (değiştir)") : "🗺️ " + t("fkHaritaSec", "Haritadan iş yerini seç")}
               </button>
-              {fKonumDurum === "hata" && <div className="reklam-hata">⚠️ {t("fkKonumHata", "Konum alınamadı — adres yazman yeterli.")}</div>}
               {fHata && <div className="reklam-hata">⚠️ {fHata}</div>}
               <button className="reklam-yayinla" disabled={fKaydet} onClick={firmaYayinla}>{fKaydet ? "⏳ " + t("rkYayinlaniyor", "Yayınlanıyor…") : "✅ " + t("rkYayinla", "Yayınla")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HARİTADAN KONUM SEÇME — iş yerini işaretle (dokun / pini sürükle) */}
+      {haritaAcik && (
+        <div className="reklam-harita-fon" onClick={(e) => { if (e.target === e.currentTarget) setHaritaAcik(false); }}>
+          <div className="reklam-harita-kutu">
+            <div className="reklam-harita-bas">
+              <span className="reklam-harita-bilgi">🗺️ {t("fkHaritaBilgi", "Haritada iş yerine dokun ya da pini sürükle")}</span>
+              <button className="reklam-kapat" onClick={() => setHaritaAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+            </div>
+            <div ref={haritaRef} className="reklam-harita" />
+            <div className="reklam-harita-alt">
+              <button className="reklam-harita-vaz" onClick={() => setHaritaAcik(false)}>{t("vazgec", "Vazgeç")}</button>
+              <button className="reklam-harita-tamam" disabled={!haritaKonum} onClick={haritaOnayla}>✓ {t("fkBuKonum", "Bu konumu kullan")}</button>
             </div>
           </div>
         </div>
