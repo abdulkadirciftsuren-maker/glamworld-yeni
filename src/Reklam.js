@@ -132,6 +132,10 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [fAmblemRenk, setFAmblemRenk] = useState("krem"); // amblem zemin rengi (kullanıcı seçer, beyaz olmasın)
   const [fAmblemYaziRenk, setFAmblemYaziRenk] = useState("kahve"); // amblemdeki firma ismi rengi
   const [fBuyukFoto, setFBuyukFoto] = useState(null);     // işletme fotosunu/amblemi TAM EKRAN aç (indirilebilir)
+  const [fZoom, setFZoom] = useState({ s: 1, x: 0, y: 0 }); // tam ekran önizleme yakınlaştırma
+  const fPinchRef = useRef(null);
+  const fZoomRef = useRef(fZoom); useEffect(() => { fZoomRef.current = fZoom; }, [fZoom]);
+  const fSonDokunRef = useRef(0);
 
   async function yukle() {
     try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
@@ -256,8 +260,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFAmblemYaziRenk("kahve"); setFDuzenlenenId(null); }
   // İşletme fotosunu/amblemi İNDİR — data: doğrudan iner; http (Firebase) ise BLOB ile indirilir
   // (cross-origin'de <a download> yok sayılıp tarayıcıda AÇILIYORDU → blob + cache-buster ile gerçekten indirir).
-  async function firmaFotoIndir() {
-    const url = fFoto; if (!url) return;
+  // url verilmezse: açık tam ekran görsel (fBuyukFoto) ya da formdaki foto (fFoto) indirilir.
+  async function firmaFotoIndir(url) {
+    url = url || fBuyukFoto || fFoto; if (!url) return;
     const inak = (href, revoke) => { try { const a = document.createElement("a"); a.href = href; a.download = "amblem-" + Date.now() + ".jpg"; document.body.appendChild(a); a.click(); a.remove(); if (revoke) setTimeout(() => { try { URL.revokeObjectURL(href); } catch (e) {} }, 4000); } catch (e) {} };
     try {
       if (url.indexOf("data:") === 0) { inak(url, false); return; }
@@ -268,6 +273,22 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       inak(URL.createObjectURL(blob), true);
     } catch (e) { try { window.open(url, "_blank"); } catch (x) {} } // en kötü ihtimalle yeni sekme (basılı tut → kaydet)
   }
+  // --- TAM EKRAN önizlemede parmakla ZOOM (müşteri amblemi/fotoyu büyütüp gezebilsin) ---
+  const fMesafe = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  useEffect(() => { setFZoom({ s: 1, x: 0, y: 0 }); }, [fBuyukFoto]); // her açılışta normal boyut
+  function fbTouchStart(e) {
+    if (e.touches.length === 2) { fPinchRef.current = { tip: "pinch", d0: fMesafe(e.touches), s0: fZoomRef.current.s }; }
+    else if (e.touches.length === 1 && fZoomRef.current.s > 1) { fPinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: fZoomRef.current.x, oy: fZoomRef.current.y }; }
+    else { fPinchRef.current = null; const n = Date.now(); if (n - fSonDokunRef.current < 300) { fbCift(); fSonDokunRef.current = 0; } else fSonDokunRef.current = n; }
+  }
+  function fbTouchMove(e) {
+    const p = fPinchRef.current; if (!p) return;
+    if (p.tip === "pinch" && e.touches.length === 2) { e.preventDefault(); const s = Math.min(5, Math.max(1, p.s0 * (fMesafe(e.touches) / p.d0))); setFZoom((z) => ({ ...z, s, ...(s === 1 ? { x: 0, y: 0 } : {}) })); }
+    else if (p.tip === "pan" && e.touches.length === 1) { e.preventDefault(); setFZoom((z) => ({ ...z, x: p.ox + (e.touches[0].clientX - p.x0), y: p.oy + (e.touches[0].clientY - p.y0) })); }
+  }
+  function fbTouchEnd(e) { if (e.touches.length === 0) fPinchRef.current = null; }
+  function fbCift() { setFZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
+  function fbTeker(e) { e.preventDefault(); setFZoom((z) => { const s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); return s === 1 ? { s: 1, x: 0, y: 0 } : { ...z, s }; }); }
   // FİRMA REKLAMINI DÜZENLE — mevcut reklamın bilgilerini forma doldur, "düzenleme" moduna geç (yayınlayınca ÜSTÜNE yazar, yeni eklemez)
   function firmaDuzenleBaslat(r) {
     if (!r) return;
@@ -419,7 +440,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               <button className="reklam-kapat" onClick={() => setDetay(null)} aria-label={t("kapat", "Kapat")}>✕</button>
             </div>
             <div className="reklam-detay-kaydir">
-              {detay.kapak && <img className="reklam-detay-foto" src={detay.kapak} alt="" referrerPolicy="no-referrer" />}
+              {detay.kapak && <img className="reklam-detay-foto reklam-detay-foto-ac" src={detay.kapak} alt="" referrerPolicy="no-referrer" onClick={() => setFBuyukFoto(detay.kapak)} title={t("fkTamAc", "Tam ekran aç")} />}
               {detay.reklamTur === "firma" ? (
                 <>
                   {/* FİRMA / İŞLETME detayı — Ara / Mesaj / Web / Yol tarifi */}
@@ -576,9 +597,12 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       {/* TAM EKRAN foto/amblem önizleme — altın zemin, indirilebilir (kullanıcı: tam açabileyim, indirebileyim) */}
       {fBuyukFoto && (
         <div className="reklam-buyukfoto-fon" onClick={() => setFBuyukFoto(null)}>
-          <img className="reklam-buyukfoto-img" src={fBuyukFoto} alt="" referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} />
+          <img className="reklam-buyukfoto-img" src={fBuyukFoto} alt="" referrerPolicy="no-referrer"
+            style={{ transform: `translate(${fZoom.x}px, ${fZoom.y}px) scale(${fZoom.s})`, touchAction: "none", cursor: fZoom.s > 1 ? "grab" : "zoom-in" }}
+            onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => { e.stopPropagation(); fbCift(); }}
+            onTouchStart={fbTouchStart} onTouchMove={fbTouchMove} onTouchEnd={fbTouchEnd} onWheel={fbTeker} />
           <button className="reklam-kapat reklam-buyukfoto-kapat" onClick={(e) => { e.stopPropagation(); setFBuyukFoto(null); }} aria-label={t("kapat", "Kapat")}>✕</button>
-          <button className="reklam-buyukfoto-indir" onClick={(e) => { e.stopPropagation(); firmaFotoIndir(); }}>⬇ {t("indir", "İndir")}</button>
+          <button className="reklam-buyukfoto-indir" onClick={(e) => { e.stopPropagation(); firmaFotoIndir(fBuyukFoto); }}>⬇ {t("indir", "İndir")}</button>
         </div>
       )}
     </>

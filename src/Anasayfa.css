@@ -5843,6 +5843,7 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-firma-btn:active{ transform:scale(.97); }
 .reklam-konum-btn{ display:block; width:100%; margin-top:4px; }
 /* İşletme fotosu/amblem: TAM EKRAN aç + İNDİR düğmeleri */
+.reklam-detay-foto-ac{ cursor:zoom-in; }
 .reklam-foto-arac{ display:flex; gap:8px; margin:6px 0 2px; }
 .reklam-foto-arac-btn{ flex:1; border:1.5px solid #d9b64a; border-radius:12px; padding:9px 8px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; background:linear-gradient(180deg,#fff7d6,#ffe9a8); color:#4a3500; }
 .reklam-foto-arac-btn:active{ transform:scale(.97); }
