@@ -5877,11 +5877,15 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .firma-galeri-vid-ik{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:34px; height:34px; border-radius:50%; background:rgba(90,60,10,.55); border:2px solid #ffd700; color:#ffd700; display:flex; align-items:center; justify-content:center; font-size:14px; padding-left:2px; pointer-events:none; }
 /* FİRMA GALERİSİ — form (yükleme/düzenleme) */
 .firma-galeri-duzen{ display:flex; flex-direction:column; gap:8px; margin:4px 0 6px; }
-.firma-galeri-oge-d{ position:relative; display:flex; align-items:center; gap:8px; background:#fff8e6; border:1.5px solid #e6cf87; border-radius:12px; padding:7px; }
-.firma-galeri-onizle{ width:58px; height:58px; object-fit:cover; border-radius:9px; flex:none; background:#f0dfb4; }
-.firma-galeri-oge-d .firma-galeri-vid-ik{ top:36px; left:36px; width:24px; height:24px; font-size:11px; }
-.firma-galeri-acik-inp{ flex:1; margin:0; }
-.firma-galeri-sil{ flex:none; border:none; background:#e0202c; color:#fff; width:40px; height:40px; border-radius:10px; font-size:16px; cursor:pointer; }
+.firma-galeri-oge-d{ position:relative; display:flex; align-items:flex-start; gap:8px; background:#fff8e6; border:1.5px solid #e6cf87; border-radius:12px; padding:7px; }
+.firma-galeri-onizsar{ position:relative; flex:none; width:64px; height:64px; }
+.firma-galeri-onizle{ width:64px; height:64px; object-fit:cover; border-radius:9px; background:#f0dfb4; display:block; }
+.firma-galeri-onizsar .firma-galeri-vid-ik{ top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; font-size:12px; }
+.firma-galeri-sag{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.firma-galeri-acik-inp{ width:100%; margin:0; }
+.firma-galeri-altbtn{ display:flex; gap:6px; align-items:stretch; }
+.firma-galeri-gloxoo{ flex:1; margin:0; font-size:13px; padding:8px 6px; }
+.firma-galeri-sil{ flex:none; border:none; background:#e0202c; color:#fff; width:44px; border-radius:10px; font-size:16px; cursor:pointer; }
 .firma-galeri-sil:active{ transform:scale(.95); }
 .firma-galeri-ekle-btn{ display:block; width:100%; margin:2px 0 4px; font-weight:800; }
 /* GLOXOO (yapay zekâ) yardımcı düğmeleri — mor/altın, belirgin (amblem çiz + tanıtım yaz) */

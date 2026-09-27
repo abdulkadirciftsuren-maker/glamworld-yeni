@@ -322,6 +322,33 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
   function firmaGaleriAciklama(i, v) { setFGaleri((a) => a.map((g, k) => (k === i ? { ...g, aciklama: v } : g))); }
   function firmaGaleriSil(i) { setFGaleri((a) => a.filter((_, k) => k !== i)); }
+  // GLOXOO — bir galeri ögesine (foto/video) BAKIP kısa açıklama yazar. Sahibin notu (varsa) dikkate alınır.
+  async function firmaGaleriGloxoo(i) {
+    const g = fGaleri[i]; if (!g || g.aiYuk) return;
+    setFGaleri((a) => a.map((x, k) => (k === i ? { ...x, aiYuk: true } : x)));
+    try {
+      const kat = fkAd(fKat);
+      const not = (g.aciklama || "").trim();
+      const talimat = `Bir işletme ÜRÜN/GÖRSEL galerisi için KISA (1-2 cümle) çekici bir açıklama yaz. İşletme: "${fAd || ""}" (kategori: ${kat}). ${not ? 'Sahibin notu: "' + not + '" — anlamını KORU, güzelleştir. ' : ""}${g.tip === "video" ? "Bu bir ürün VİDEOSU. " : "Ekteki görsele DİKKATLİCE bak; SADECE gerçekten gördüğün ürünü/şeyi anlat. "}Sıcak, davet edici; en fazla 1 uygun emoji. Sadece açıklamayı ver; numara/tırnak/başlık KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
+      const parcalar = [];
+      // Foto ise görseli DOĞRU biçimde (küçültüp base64) ekle → Gloxoo görerek yazsın. (Video için kare çıkarmak zor → notla yazar.)
+      if (g.tip !== "video") {
+        let durl = "";
+        try {
+          if (g.dosya) durl = await dosyaOku(g.dosya);
+          else if (g.url) { const b = await (await fetch(g.url + (g.url.indexOf("?") >= 0 ? "&" : "?") + "gloxai=" + Date.now(), { mode: "cors", cache: "no-store" })).blob(); durl = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(b); }); }
+          if (durl) { const kucuk = await kucultB64(durl, 900); const gp = gorselParcasi(kucuk); if (gp) parcalar.push(gp); }
+        } catch (e) {}
+      }
+      parcalar.push({ type: "text", text: talimat });
+      const mesajlar = [{ role: "user", content: parcalar.length > 1 ? parcalar : talimat }];
+      const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG reklam yazı asistanı. Ürün görsellerine bakıp KISA, çekici, samimi açıklamalar yazarsın. Ekte görsel varsa SADECE gerçekten gördüğünü yaz. Istenen dilde yaz; numara/tırnak koyma." }) });
+      let txt = "";
+      if (r.ok) { const v = await r.json(); txt = ((v && v.metin) || "").replace(/^["'\s]+|["'\s]+$/g, "").trim(); }
+      setFGaleri((a) => a.map((x, k) => (k === i ? { ...x, aciklama: (txt || x.aciklama), aiYuk: false } : x)));
+      if (!txt) setFHata(t("fkAiHata", "Gloxoo şu an yazamadı, tekrar dene."));
+    } catch (e) { setFGaleri((a) => a.map((x, k) => (k === i ? { ...x, aiYuk: false } : x))); setFHata(t("fkAiHata", "Gloxoo şu an yazamadı, tekrar dene.")); }
+  }
   // FİRMA REKLAMINI DÜZENLE — mevcut reklamın bilgilerini forma doldur, "düzenleme" moduna geç (yayınlayınca ÜSTÜNE yazar, yeni eklemez)
   function firmaDuzenleBaslat(r) {
     if (!r) return;
@@ -634,12 +661,19 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                 <div className="firma-galeri-duzen">
                   {fGaleri.map((g, i) => (
                     <div className="firma-galeri-oge-d" key={i}>
-                      {g.tip === "video"
-                        ? <video className="firma-galeri-onizle" src={g.onizle || g.url} muted playsInline preload="metadata" />
-                        : <img className="firma-galeri-onizle" src={g.onizle || g.url} alt="" referrerPolicy="no-referrer" />}
-                      {g.tip === "video" && <span className="firma-galeri-vid-ik" aria-hidden="true">▶</span>}
-                      <input className="reklam-inp firma-galeri-acik-inp" type="text" value={g.aciklama} onChange={(e) => firmaGaleriAciklama(i, e.target.value)} placeholder={t("fkGaleriAciklama", "Bu ne? (kısa açıklama)")} />
-                      <button className="firma-galeri-sil" onClick={() => firmaGaleriSil(i)} aria-label={t("kaldir", "Kaldır")}>🗑</button>
+                      <span className="firma-galeri-onizsar">
+                        {g.tip === "video"
+                          ? <video className="firma-galeri-onizle" src={g.onizle || g.url} muted playsInline preload="metadata" />
+                          : <img className="firma-galeri-onizle" src={g.onizle || g.url} alt="" referrerPolicy="no-referrer" />}
+                        {g.tip === "video" && <span className="firma-galeri-vid-ik" aria-hidden="true">▶</span>}
+                      </span>
+                      <div className="firma-galeri-sag">
+                        <input className="reklam-inp firma-galeri-acik-inp" type="text" value={g.aciklama} onChange={(e) => firmaGaleriAciklama(i, e.target.value)} placeholder={t("fkGaleriAciklama", "Bu ne? (istersen birkaç kelime yaz, Gloxoo güzelleştirir)")} />
+                        <div className="firma-galeri-altbtn">
+                          <button className="reklam-gloxoo-btn firma-galeri-gloxoo" disabled={g.aiYuk} onClick={() => firmaGaleriGloxoo(i)}>{g.aiYuk ? "⏳ " + t("fkAiYaziyor", "Gloxoo yazıyor…") : "✨ " + t("fkGaleriGloxoo", "Gloxoo açıklasın")}</button>
+                          <button className="firma-galeri-sil" onClick={() => firmaGaleriSil(i)} aria-label={t("kaldir", "Kaldır")}>🗑</button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
