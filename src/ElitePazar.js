@@ -125,6 +125,10 @@ async function fotoKucult(file, max = 1200) {
   });
 }
 
+// Konumu GÜVENLE yazıya çevir — string ise aynen; nesne ({enlem,boylam} vb.) ise adres/boş.
+// (Firma reklamlarında konum {enlem,boylam} NESNE; doğrudan yazınca React #31 çöküyordu.)
+function yerMetin(k) { if (!k) return ""; if (typeof k === "string") return k; if (typeof k === "object") return k.tam || k.adres || ""; return ""; }
+
 export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYaz, onPencere, kapatRef, benLat, benLon, para, paraSym, ulkeAd }) {
   const { t, i18n } = useTranslation();
   const [urunler, setUrunler] = useState([]);
@@ -139,7 +143,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
   const [favSet, setFavSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("gw_pazarFav") || "[]")); } catch (e) { return new Set(); } });
 
   // Ürünleri yükle
-  const yukle = async () => { setYuk(true); const l = await pazarUrunleriOku(200); setUrunler(l); setYuk(false); };
+  const yukle = async () => { setYuk(true); const l = await pazarUrunleriOku(200); setUrunler((l || []).filter((x) => !x.reklam)); setYuk(false); }; // reklam/Vitrin ilanları Elit Pazar'a girmez
   useEffect(() => { yukle(); }, []);
 
   // ANDROID GERİ DÜĞMESİ: detay/ilan formu açıkken geri basınca onu KAPAT, Elite'de KAL (ana sayfaya atma).
@@ -290,7 +294,7 @@ export default function ElitePazar({ uid, benAd, benFoto, konum, dil, saticiyaYa
                   <div className={"ep-kfiyat" + (ucretsiz ? " bedava" : "")}>{ucretsiz ? t("epUcretsiz") : (u.fiyat ? <>{u.fiyat}<span className="ep-sym">{" " + (u.paraSimge || paraSimEP(u.paraBirimi))}</span></> : "—")}</div>
                   <div className="ep-ksat">
                     <span className="ep-kavatar">{(u.saticiFoto) ? <img src={u.saticiFoto} alt="" /> : (u.satici || "?").slice(0, 1).toUpperCase()}</span>
-                    <span className="ep-kyer"><KayanYazi>{u.konum || ""}</KayanYazi></span>
+                    <span className="ep-kyer"><KayanYazi>{yerMetin(u.konum)}</KayanYazi></span>
                   </div>
                 </div>
               </div>
@@ -318,7 +322,7 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
   const aktifDil = dilAdi(i18n.language);
   const k = KAT(urun.kategori); const etk = urun.etiketler || [];
   const parSim = urun.paraSimge || paraSimEP(urun.paraBirimi); // bu ilanın para sembolü (₴/₺/€…), sabit ₺ DEĞİL
-  const nerede = urun.konum || ulkeAd || "";                    // ürünün satıldığı yer (Gloxoo buna göre değerlendirir)
+  const nerede = yerMetin(urun.konum) || ulkeAd || "";                    // ürünün satıldığı yer (Gloxoo buna göre değerlendirir)
   // Sadece GEÇERLİ (url'i olan) medyaları göster; kapak yedek. Bozuk/boş öğe elenir → şeritte "mavi/boş" kutu kalmaz.
   const medyalar = ((urun.medyalar && urun.medyalar.length ? urun.medyalar : (urun.kapak ? [{ tip: "foto", url: urun.kapak }] : [])) || [])
     .filter((x) => x && x.url && typeof x.url === "string" && x.url.indexOf("http") === 0);
@@ -398,7 +402,7 @@ function PazarDetay({ urun, benim, favli, benLat, benLon, onKapat, onFav, onYaz,
           {(typeof urun.lat === "number" && typeof urun.lon === "number") && <HaritaGoster lat={urun.lat} lon={urun.lon} benLat={benLat} benLon={benLon} />}
           <div className="ep-dsatici">
             <span className="ep-kavatar buyuk">{urun.saticiFoto ? <img src={urun.saticiFoto} alt="" /> : (urun.satici || "?").slice(0, 1).toUpperCase()}</span>
-            <div><div className="ep-dsatici-ad">{urun.satici || t("epSatici")}</div><div className="ep-dsatici-yer">{urun.konum || ""}</div></div>
+            <div><div className="ep-dsatici-ad">{urun.satici || t("epSatici")}</div><div className="ep-dsatici-yer">{yerMetin(urun.konum)}</div></div>
           </div>
 
           {/* GLOXOO YARDIMI (alıcı için) — fiyat uygun mu + pazarlık mesajı */}
