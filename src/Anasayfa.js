@@ -8904,30 +8904,36 @@ export default function Anasayfa({ pro = false }) {
   // Her yeni fotoğrafa geçince / galeri açılıp kapanınca NORMAL boyuta dön (yakınlaştırma sıfırlanır)
   useEffect(() => { setGZoom({ s: 1, x: 0, y: 0 }); }, [onizGaleri ? onizGaleri.i : -1]); // eslint-disable-line react-hooks/exhaustive-deps
   function galTouchStart(e) {
-    if (e.touches.length === 2) {
-      gPinchRef.current = { tip: "pinch", d0: _mesafe(e.touches), s0: gZoomRef.current.s };
-    } else if (e.touches.length === 1 && gZoomRef.current.s > 1) {
-      gPinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: gZoomRef.current.x, oy: gZoomRef.current.y };
-    } else {
-      gPinchRef.current = null;
-      const simdi = Date.now(); // çift dokunuşla büyüt/küçült (mobil)
-      if (simdi - gSonDokunRef.current < 300) { galCiftDokun(); gSonDokunRef.current = 0; } else gSonDokunRef.current = simdi;
-    }
+    try {
+      e.stopPropagation();
+      if (e.touches.length === 2) {
+        const d = _mesafe(e.touches);
+        gPinchRef.current = { tip: "pinch", d0: (d > 1 ? d : 1), s0: gZoomRef.current.s };
+      } else if (e.touches.length === 1 && gZoomRef.current.s > 1) {
+        gPinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: gZoomRef.current.x, oy: gZoomRef.current.y };
+      } else {
+        gPinchRef.current = null;
+        const simdi = Date.now(); // çift dokunuşla büyüt/küçült (mobil)
+        if (simdi - gSonDokunRef.current < 300) { galCiftDokun(); gSonDokunRef.current = 0; } else gSonDokunRef.current = simdi;
+      }
+    } catch (x) { gPinchRef.current = null; }
   }
   function galTouchMove(e) {
     const p = gPinchRef.current; if (!p) return;
-    const gEl = (e.currentTarget && e.currentTarget.querySelector && e.currentTarget.querySelector(".oniz-medya")) || e.currentTarget;
-    if (p.tip === "pinch" && e.touches.length === 2) {
-      e.preventDefault();
-      let s = p.s0 * (_mesafe(e.touches) / (p.d0 || 1)); if (!isFinite(s)) s = 1; s = Math.min(5, Math.max(1, s));
-      setGZoom((z) => { if (s === 1) return { s: 1, x: 0, y: 0 }; const sn = _zoomSinirla(z.x, z.y, s, gEl); return { s, x: sn.x, y: sn.y }; });
-    } else if (p.tip === "pan" && e.touches.length === 1) {
-      e.preventDefault(); e.stopPropagation(); // büyütülmüşken tek parmak = kaydır (fotoğrafı DEĞİŞTİRME)
-      const nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0);
-      setGZoom((z) => { const sn = _zoomSinirla(nx, ny, z.s, gEl); return { ...z, x: sn.x, y: sn.y }; }); // fotonun gerçek boyutuna göre sınır (alt/üst de doğru)
-    }
+    try {
+      const gEl = (e.currentTarget && e.currentTarget.querySelector && e.currentTarget.querySelector(".oniz-medya")) || e.currentTarget;
+      if (p.tip === "pinch" && e.touches.length === 2) {
+        e.preventDefault();
+        let s = p.s0 * (_mesafe(e.touches) / (p.d0 || 1)); if (!isFinite(s)) s = 1; s = Math.min(5, Math.max(1, s));
+        setGZoom((z) => { if (s === 1) return { s: 1, x: 0, y: 0 }; const sn = _zoomSinirla(z.x, z.y, s, gEl); return { s, x: sn.x, y: sn.y }; });
+      } else if (p.tip === "pan" && e.touches.length === 1) {
+        e.preventDefault(); e.stopPropagation(); // büyütülmüşken tek parmak = kaydır (fotoğrafı DEĞİŞTİRME)
+        const nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0);
+        setGZoom((z) => { const sn = _zoomSinirla(nx, ny, z.s, gEl); return { ...z, x: sn.x, y: sn.y }; }); // fotonun gerçek boyutuna göre sınır (alt/üst de doğru)
+      }
+    } catch (x) {}
   }
-  function galTouchEnd(e) { if (e.touches.length === 0) gPinchRef.current = null; }
+  function galTouchEnd(e) { try { e.stopPropagation(); } catch (x) {} if (e.touches.length === 0) gPinchRef.current = null; }
   function galCiftDokun() { setGZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
   function galTeker(e) {
     e.preventDefault();

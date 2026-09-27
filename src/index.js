@@ -40,16 +40,18 @@ try {
 
 // ÜST DÜZEY HATA SINIRI — bir render çökmesi TÜM sayfayı boş bırakmasın: bir kez otomatik yenile; olmazsa altın kurtarma ekranı.
 class KokHataSiniri extends React.Component {
-  constructor(p) { super(p); this.state = { hata: false }; }
-  static getDerivedStateFromError() { return { hata: true }; }
+  constructor(p) { super(p); this.state = { hata: false, mesaj: "" }; }
+  static getDerivedStateFromError(err) { return { hata: true, mesaj: (err && (err.message || String(err))) || "" }; }
   componentDidCatch(err) {
-    // Çökünce BİR KEZ otomatik yenile (kilitli). Kilit doluysa (tekrar çöktü) ekranı gösterir, kullanıcı düğmeyle dener.
+    // Hata detayını sakla (kurtarma ekranında küçük gösterilir → tekrar çökerse sebebi görülür)
+    try { this._detay = (((err && err.stack) || "").split("\n").slice(0, 4).join(" | ")).slice(0, 300); } catch (e) { this._detay = ""; }
+    // Çökünce BİR KEZ otomatik yenile (kilitli). Kilit doluysa (tekrar çöktü) ekran görünür kalır → hata okunabilir.
     if (!_kurtar()) { /* zaten yakın zamanda denendi → kurtarma ekranı görünür kalsın */ }
   }
   render() {
     if (this.state.hata) {
       return React.createElement("div", {
-        style: { position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "24px", textAlign: "center",
+        style: { position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", padding: "24px", textAlign: "center",
           background: "radial-gradient(circle at 50% 40%, #ffe9a8, #ffd54a 60%, #e0b000)", color: "#4a3500", fontFamily: "inherit" }
       },
         React.createElement("div", { style: { fontSize: "40px" } }, "💎"),
@@ -58,7 +60,11 @@ class KokHataSiniri extends React.Component {
           onClick: () => { try { sessionStorage.removeItem(_KURTARMA_ANAHTAR); } catch (e) {} try { window.location.reload(); } catch (e) {} },
           style: { border: "none", borderRadius: "14px", padding: "14px 26px", fontSize: "16px", fontWeight: 900, cursor: "pointer",
             background: "linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17)", color: "#3a2a00", boxShadow: "0 6px 18px rgba(120,90,0,.4)" }
-        }, "Yeniden Yükle")
+        }, "Yeniden Yükle"),
+        // HATA DETAYI (küçük) — geliştiriciye yardım için; kullanıcı ekran görüntüsü alıp iletebilir
+        (this.state.mesaj || this._detay) ? React.createElement("div", {
+          style: { marginTop: "10px", maxWidth: "340px", fontSize: "11px", lineHeight: 1.35, color: "#6a4e00", opacity: 0.85, wordBreak: "break-word", fontFamily: "monospace" }
+        }, "hata: " + (this.state.mesaj || "") + (this._detay ? (" — " + this._detay) : "")) : null
       );
     }
     return this.props.children;
