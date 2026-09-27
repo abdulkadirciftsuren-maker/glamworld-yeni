@@ -5864,7 +5864,8 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-buyukfoto-kapat{ position:fixed; top:max(12px,env(safe-area-inset-top)); right:14px; }
 .reklam-buyukfoto-indir{ position:fixed; bottom:max(18px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); border:none; border-radius:14px; padding:13px 26px; font-weight:900; font-size:15px; cursor:pointer; font-family:inherit; background:linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17); color:#3a2a00; box-shadow:0 6px 18px rgba(120,90,0,.4); }
 .reklam-buyukfoto-indir:active{ transform:translateX(-50%) scale(.97); }
-.reklam-buyukfoto-acik{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(max(18px,env(safe-area-inset-bottom)) + 58px); max-width:92vw; text-align:center; background:rgba(74,53,0,.82); color:#ffe9a8; font-weight:700; font-size:14px; padding:8px 14px; border-radius:12px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+/* Açıklama YATAY geniş şerit (dar/dikey değil): sol+sağ boşluk + ortala; uzun yazıda kaydır */
+.reklam-buyukfoto-acik{ position:fixed; left:12px; right:12px; margin:0 auto; bottom:calc(max(18px,env(safe-area-inset-bottom)) + 58px); max-width:600px; max-height:32vh; overflow-y:auto; text-align:center; background:rgba(74,53,0,.85); color:#ffe9a8; font-weight:700; font-size:14px; line-height:1.4; padding:11px 16px; border-radius:14px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
 /* FİRMA ÜRÜN GALERİSİ — müşteri detayında ızgara */
 .firma-galeri{ margin:12px 0 4px; }
 .firma-galeri-bas{ font-weight:800; color:#4a3500; font-size:14px; margin:0 0 8px; }

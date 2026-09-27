@@ -323,7 +323,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     try {
       const kat = fkAd(fKat);
       const not = (g.aciklama || "").trim();
-      const talimat = `Bir işletme ÜRÜN/GÖRSEL galerisi için KISA (1-2 cümle) çekici bir açıklama yaz. İşletme: "${fAd || ""}" (kategori: ${kat}). ${not ? 'Sahibin notu: "' + not + '" — anlamını KORU, güzelleştir. ' : ""}${g.tip === "video" ? "Bu bir ürün VİDEOSU. " : "Ekteki görsele DİKKATLİCE bak; SADECE gerçekten gördüğün ürünü/şeyi anlat. "}Sıcak, davet edici; en fazla 1 uygun emoji. Sadece açıklamayı ver; numara/tırnak/başlık KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
+      const talimat = `Bir işletme ÜRÜN/GÖRSEL galerisi için KISA (1-2 cümle) çekici bir açıklama yaz. İşletme: "${fAd || ""}" (kategori: ${kat}). ${not ? 'Sahibin notu: "' + not + '" — anlamını KORU, güzelleştir. ' : ""}${g.tip === "video" ? "Bu bir ürün VİDEOSU. " : "Ekteki görsele DİKKATLİCE bak; SADECE gerçekten NET gördüğün ürünü/şeyi anlat. Emin olmadığın detayı (isim, malzeme, sayı, marka) UYDURMA; emin değilsen genel ama DOĞRU kal. "}Sıcak, davet edici; en fazla 1 uygun emoji. Sadece açıklamayı ver; numara/tırnak/başlık KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
       const parcalar = [];
       // Foto ise görseli URL ile yolla (köprü base64'ü güvenilir görmüyor, URL'i görüyor). Yeni foto ise ÖNCE yükle,
       // adresini al ve ögeye KAYDET (yayında tekrar yüklenmez). Video için kare çıkarmak zor → notla yazar.
