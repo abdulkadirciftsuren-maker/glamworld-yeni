@@ -5864,6 +5864,14 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-buyukfoto-kapat{ position:fixed; top:max(12px,env(safe-area-inset-top)); right:14px; }
 .reklam-buyukfoto-indir{ position:fixed; bottom:max(18px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); border:none; border-radius:14px; padding:13px 26px; font-weight:900; font-size:15px; cursor:pointer; font-family:inherit; background:linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17); color:#3a2a00; box-shadow:0 6px 18px rgba(120,90,0,.4); }
 .reklam-buyukfoto-indir:active{ transform:translateX(-50%) scale(.97); }
+/* Tam ekran galeri: sayaç (üst-orta), oklar (sol/sağ orta), noktalar (alt) */
+.reklam-buyukfoto-say{ position:fixed; top:max(14px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); background:rgba(74,53,0,.7); color:#ffe9a8; font-size:13px; font-weight:800; padding:4px 12px; border-radius:99px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.reklam-buyukfoto-ok{ position:fixed; top:50%; transform:translateY(-50%); width:46px; height:46px; border-radius:50%; border:none; background:rgba(74,53,0,.5); color:#ffe9a8; font-size:30px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.reklam-buyukfoto-ok.sol{ left:10px; } .reklam-buyukfoto-ok.sag{ right:10px; }
+.reklam-buyukfoto-ok:active{ transform:translateY(-50%) scale(.92); }
+.reklam-buyukfoto-nokta{ position:fixed; left:0; right:0; bottom:max(8px,env(safe-area-inset-bottom)); display:flex; gap:6px; justify-content:center; }
+.reklam-buyukfoto-nokta i{ width:7px; height:7px; border-radius:50%; background:rgba(255,233,168,.45); }
+.reklam-buyukfoto-nokta i.on{ background:#ffd700; width:9px; height:9px; }
 /* Açıklama YATAY geniş şerit (dar/dikey değil): sol+sağ boşluk + ortala; uzun yazıda kaydır */
 .reklam-buyukfoto-acik{ position:fixed; left:12px; right:12px; margin:0 auto; bottom:calc(max(18px,env(safe-area-inset-bottom)) + 58px); max-width:600px; max-height:32vh; overflow-y:auto; text-align:center; background:rgba(74,53,0,.85); color:#ffe9a8; font-weight:700; font-size:14px; line-height:1.4; padding:11px 16px; border-radius:14px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
 /* FİRMA ÜRÜN GALERİSİ — müşteri detayında ızgara */

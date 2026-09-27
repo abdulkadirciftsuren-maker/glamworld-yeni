@@ -259,7 +259,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   // (cross-origin'de <a download> yok sayılıp tarayıcıda AÇILIYORDU → blob + cache-buster ile gerçekten indirir).
   // url verilmezse: açık tam ekran görsel (fBuyukFoto) ya da formdaki foto (fFoto) indirilir.
   async function firmaFotoIndir(url) {
-    url = url || fBuyukFoto || fFoto; if (!url) return;
+    url = url || fFoto; if (!url) return;
     const inak = (href, revoke) => { try { const a = document.createElement("a"); a.href = href; a.download = "amblem-" + Date.now() + ".jpg"; document.body.appendChild(a); a.click(); a.remove(); if (revoke) setTimeout(() => { try { URL.revokeObjectURL(href); } catch (e) {} }, 4000); } catch (e) {} };
     try {
       if (url.indexOf("data:") === 0) { inak(url, false); return; }
@@ -292,11 +292,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     const gx = isFinite(x) ? x : 0, gy = isFinite(y) ? y : 0;
     return { x: Math.max(-maxX, Math.min(maxX, gx)), y: Math.max(-maxY, Math.min(maxY, gy)) };
   };
+  // Tam ekranda diğer fotoğrafa geç (önceki/sonraki) — sadece birden çok medya varsa
+  function fBuyukGec(yon) { setFBuyukFoto((b) => { if (!b || !b.liste) return b; const n = b.liste.length; const yeni = Math.min(Math.max((b.i || 0) + yon, 0), n - 1); return yeni === (b.i || 0) ? b : { ...b, i: yeni }; }); }
   function fbTouchStart(e) {
     e.stopPropagation(); // dokunuş alttaki ana sayfaya GEÇMESİN (sekme değiştirmesin)
     if (e.touches.length === 2) { fPinchRef.current = { tip: "pinch", d0: fMesafe(e.touches), s0: fZoomRef.current.s }; }
     else if (e.touches.length === 1 && fZoomRef.current.s > 1) { fPinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: fZoomRef.current.x, oy: fZoomRef.current.y }; }
-    else { fPinchRef.current = null; const n = Date.now(); if (n - fSonDokunRef.current < 300) { fbCift(); fSonDokunRef.current = 0; } else fSonDokunRef.current = n; }
+    else {
+      const n = Date.now();
+      if (n - fSonDokunRef.current < 300) { fbCift(); fSonDokunRef.current = 0; fPinchRef.current = null; } // çift dokunuş → büyüt/küçült
+      else { fSonDokunRef.current = n; fPinchRef.current = { tip: "kaydir", x0: e.touches[0].clientX, y0: e.touches[0].clientY }; } // yakınlaştırılmamış tek parmak → sola/sağa geçiş için izle
+    }
   }
   function fbTouchMove(e) {
     e.stopPropagation();
@@ -304,7 +310,16 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     if (p.tip === "pinch" && e.touches.length === 2) { e.preventDefault(); const s = Math.min(5, Math.max(1, p.s0 * (fMesafe(e.touches) / p.d0))); const el = e.currentTarget; setFZoom((z) => { const sn = fSinirla(z.x, z.y, s, el); return { s, x: s === 1 ? 0 : sn.x, y: s === 1 ? 0 : sn.y }; }); }
     else if (p.tip === "pan" && e.touches.length === 1) { e.preventDefault(); const el = e.currentTarget, nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0); setFZoom((z) => { const sn = fSinirla(nx, ny, z.s, el); return { ...z, x: sn.x, y: sn.y }; }); }
   }
-  function fbTouchEnd(e) { e.stopPropagation(); if (e.touches.length === 0) fPinchRef.current = null; }
+  function fbTouchEnd(e) {
+    e.stopPropagation();
+    const p = fPinchRef.current;
+    // Yakınlaştırılmamışken yatay kaydırma → önceki/sonraki fotoğraf
+    if (p && p.tip === "kaydir" && fZoomRef.current.s <= 1) {
+      const x1 = (e.changedTouches[0] || {}).clientX, y1 = (e.changedTouches[0] || {}).clientY;
+      if (typeof x1 === "number") { const dx = x1 - p.x0, dy = y1 - p.y0; if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) fBuyukGec(dx < 0 ? 1 : -1); }
+    }
+    if (e.touches.length === 0) fPinchRef.current = null;
+  }
   function fbCift() { setFZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
   function fbTeker(e) { e.preventDefault(); setFZoom((z) => { const s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); return s === 1 ? { s: 1, x: 0, y: 0 } : { ...z, s }; }); }
   // --- FİRMA ÜRÜN GALERİSİ yardımcıları (form) ---
@@ -515,7 +530,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               <button className="reklam-kapat" onClick={() => setDetay(null)} aria-label={t("kapat", "Kapat")}>✕</button>
             </div>
             <div className="reklam-detay-kaydir">
-              {detay.kapak && <img className="reklam-detay-foto reklam-detay-foto-ac" src={detay.kapak} alt="" referrerPolicy="no-referrer" onClick={() => setFBuyukFoto({ url: detay.kapak, tip: "foto" })} title={t("fkTamAc", "Tam ekran aç")} />}
+              {detay.kapak && <img className="reklam-detay-foto reklam-detay-foto-ac" src={detay.kapak} alt="" referrerPolicy="no-referrer" onClick={() => setFBuyukFoto({ liste: [{ url: detay.kapak, tip: "foto" }], i: 0 })} title={t("fkTamAc", "Tam ekran aç")} />}
               {detay.reklamTur === "firma" ? (
                 <>
                   {/* FİRMA / İŞLETME detayı — Ara / Mesaj / Web / Yol tarifi */}
@@ -528,7 +543,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                       <div className="firma-galeri-bas">🖼️ {t("fkUrunler", "Ürünler / Görseller")}</div>
                       <div className="firma-galeri-izgara">
                         {detay.firmaMedya.map((m, i) => (
-                          <button className="firma-galeri-oge" key={i} onClick={() => setFBuyukFoto({ url: m.url, tip: m.tip, aciklama: m.aciklama })}>
+                          <button className="firma-galeri-oge" key={i} onClick={() => setFBuyukFoto({ liste: detay.firmaMedya.map((x) => ({ url: x.url, tip: x.tip, aciklama: x.aciklama })), i })}>
                             {m.tip === "video"
                               ? <><video className="firma-galeri-oge-medya" src={m.url} muted playsInline preload="metadata" referrerPolicy="no-referrer" /><span className="firma-galeri-vid-ik" aria-hidden="true">▶</span></>
                               : <img className="firma-galeri-oge-medya" src={m.url} alt="" referrerPolicy="no-referrer" />}
@@ -635,7 +650,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               {/* Foto varsa: TAM EKRAN aç + İNDİR (kullanıcı isteği) */}
               {fFoto && (
                 <div className="reklam-foto-arac">
-                  <button className="reklam-foto-arac-btn" onClick={() => setFBuyukFoto({ url: fFoto, tip: "foto" })}>🔍 {t("fkTamAc", "Tam ekran aç")}</button>
+                  <button className="reklam-foto-arac-btn" onClick={() => setFBuyukFoto({ liste: [{ url: fFoto, tip: "foto" }], i: 0 })}>🔍 {t("fkTamAc", "Tam ekran aç")}</button>
                   <button className="reklam-foto-arac-btn" onClick={firmaFotoIndir}>⬇ {t("indir", "İndir")}</button>
                 </div>
               )}
@@ -710,13 +725,16 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
         </div>
       )}
 
-      {/* TAM EKRAN foto/amblem önizleme — altın zemin, indirilebilir (kullanıcı: tam açabileyim, indirebileyim) */}
+      {/* TAM EKRAN foto/amblem önizleme — altın zemin, indirilebilir; birden çok medya varsa soldan-sağa GEÇİŞ */}
       {fBuyukFoto && (() => {
-        const bf = (typeof fBuyukFoto === "string") ? { url: fBuyukFoto, tip: "foto" } : (fBuyukFoto || {});
+        const liste = (fBuyukFoto && fBuyukFoto.liste) ? fBuyukFoto.liste : (typeof fBuyukFoto === "string" ? [{ url: fBuyukFoto, tip: "foto" }] : [fBuyukFoto || {}]);
+        const i = (fBuyukFoto && typeof fBuyukFoto.i === "number") ? fBuyukFoto.i : 0;
+        const bf = liste[i] || {};
+        const cok = liste.length > 1;
         return (
           <div className="reklam-buyukfoto-fon" onClick={() => setFBuyukFoto(null)}>
             {bf.tip === "video"
-              ? <video className="reklam-buyukfoto-img" src={bf.url} controls autoPlay playsInline referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} />
+              ? <video className="reklam-buyukfoto-img" src={bf.url} controls autoPlay playsInline referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} onTouchStart={fbTouchStart} onTouchEnd={fbTouchEnd} />
               : <img className="reklam-buyukfoto-img" src={bf.url} alt="" referrerPolicy="no-referrer"
                   style={{ transform: `translate(${fZoom.x}px, ${fZoom.y}px) scale(${fZoom.s})`, touchAction: "none", cursor: fZoom.s > 1 ? "grab" : "zoom-in" }}
                   onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => { e.stopPropagation(); fbCift(); }}
@@ -724,6 +742,12 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
             {bf.aciklama && <div className="reklam-buyukfoto-acik" onClick={(e) => e.stopPropagation()}>{bf.aciklama}</div>}
             <button className="reklam-kapat reklam-buyukfoto-kapat" onClick={(e) => { e.stopPropagation(); setFBuyukFoto(null); }} aria-label={t("kapat", "Kapat")}>✕</button>
             <button className="reklam-buyukfoto-indir" onClick={(e) => { e.stopPropagation(); firmaFotoIndir(bf.url); }}>⬇ {t("indir", "İndir")}</button>
+            {cok && <>
+              <span className="reklam-buyukfoto-say">{i + 1} / {liste.length}</span>
+              {i > 0 && <button className="reklam-buyukfoto-ok sol" onClick={(e) => { e.stopPropagation(); fBuyukGec(-1); }} aria-label={t("onceki", "Önceki")}>‹</button>}
+              {i < liste.length - 1 && <button className="reklam-buyukfoto-ok sag" onClick={(e) => { e.stopPropagation(); fBuyukGec(1); }} aria-label={t("sonraki", "Sonraki")}>›</button>}
+              <span className="reklam-buyukfoto-nokta">{liste.map((_, di) => <i key={di} className={di === i ? "on" : ""} />)}</span>
+            </>}
           </div>
         );
       })()}
