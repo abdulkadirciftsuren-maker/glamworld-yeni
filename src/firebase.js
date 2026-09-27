@@ -150,7 +150,7 @@ async function _resimDene(backend, istem, girdiResim, girdiResim2) {
   } catch (e) {}
   throw new Error(neden === "guvenlik" ? "GUVENLIK: bu icerik yapay zeka tarafindan reddedildi" : "Resim gelmedi (modelin cevabinda gorsel yok)");
 }
-export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransiz) {
+export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransiz, yaziSerbest) {
   // ÖNCE Gemini Developer API (kullanıcının kurduğu + kredi ekleyeceği yer), OLMAZSA Vertex AI.
   // filigransiz=true → ARA adım (örn. Sanal Ayna 2 aşamalı giydirme: 1. gövde+elbise) → filigran EKLENMEZ;
   // son adımda (yüz yerleştirme) filigran eklenir → çift filigran olmaz.
@@ -162,7 +162,10 @@ export async function gloxooResimUret(istem, girdiResim, girdiResim2, filigransi
   // ⛔ ÇİFT GLOXORG ÖNLE (kullanıcı: "foto zaten GLOXORG'luysa yapay zekâ bir tane daha koyuyor, üst üste biniyor"):
   //   Girdi fotoğrafında GLOXORG varsa model onu KOPYALIYOR, sonra biz (_filigranEkle) bir tane daha ekleyince ÇİFT oluyordu.
   //   Modele HER ZAMAN: hiç watermark/logo/GLOXORG EKLEME + girdideki MEVCUDU TEMİZLE. Damgayı hep BİZ ekleriz → tek GLOXORG kalır.
-  const istemTemiz = String(istem || "") + " CRITICAL WATERMARK RULE: The output image MUST be completely CLEAN — NO watermark, NO logo, NO brand mark, NO caption, NO sticker and NO text of any kind, especially the word 'GLOXORG'. VERY IMPORTANT: the provided/source image very often ALREADY has a 'GLOXORG' watermark or logo in the BOTTOM-RIGHT corner (sometimes gold text, sometimes on a dark rounded box). You MUST completely ERASE and PAINT OVER that whole corner with the surrounding clean background so that absolutely NO trace of any watermark, box or 'GLOXORG' text remains. NEVER copy, keep or recreate any existing watermark or logo from the source image.";
+  // yaziSerbest=true → LOGO/amblem üretimi: iş yeri ismini YAZMASINA izin ver (ama yine de GLOXORG filigranı EKLEME/kopyalama).
+  const istemTemiz = String(istem || "") + (yaziSerbest
+    ? " WATERMARK RULE: Do NOT add any 'GLOXORG' watermark, logo or brand mark. If the source image already has a 'GLOXORG' watermark (often bottom-right), ERASE and paint over it completely. You MAY render ONLY the business name text that the prompt explicitly asks for (spelled exactly as given); do NOT add any other text, caption or sticker."
+    : " CRITICAL WATERMARK RULE: The output image MUST be completely CLEAN — NO watermark, NO logo, NO brand mark, NO caption, NO sticker and NO text of any kind, especially the word 'GLOXORG'. VERY IMPORTANT: the provided/source image very often ALREADY has a 'GLOXORG' watermark or logo in the BOTTOM-RIGHT corner (sometimes gold text, sometimes on a dark rounded box). You MUST completely ERASE and PAINT OVER that whole corner with the surrounding clean background so that absolutely NO trace of any watermark, box or 'GLOXORG' text remains. NEVER copy, keep or recreate any existing watermark or logo from the source image.");
   for (const y of yollar) {
     let bk; try { bk = y.yap(); } catch (e) { hatalar.push(y.ad + ":kurulamadi"); continue; }
     // Her yol için EN FAZLA 2 deneme; SADECE gerçek geçici hatada (503/500/overload) 1 kez hızlı tekrar dener.
