@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import L from "leaflet"; // haritadan konum seçmek için (iş yerini işaretle) — OSM, uygulamanın kullandığı kaynak
 import { gloxooResimUret } from "./firebase"; // Gloxoo amblem/logo çizimi
-import { pazarUrunEkle, pazarUrunGuncelle, pazarUrunleriOku, pazarUrunSil, gorselYukle } from "./veri";
+import { pazarUrunEkle, pazarUrunGuncelle, pazarUrunleriOku, pazarUrunSil, gorselYukle, videoYukle } from "./veri";
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev"; // Gloxoo yazı köprüsü (tanıtım yazısı)
 
 const KATEGORILER = [
@@ -136,6 +136,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const fPinchRef = useRef(null);
   const fZoomRef = useRef(fZoom); useEffect(() => { fZoomRef.current = fZoom; }, [fZoom]);
   const fSonDokunRef = useRef(0);
+  // FİRMA ÜRÜN GALERİSİ — sahibi foto/video yükler (her birinde açıklama), müşteri görür
+  const [fGaleri, setFGaleri] = useState([]); // [{tip:'foto'|'video', dosya?:File, onizle?:objURL, url?:varolan, aciklama}]
+  const fGalInpRef = useRef(null);
 
   async function yukle() {
     try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
@@ -257,7 +260,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
 
   // --- FİRMA / İŞLETME reklamı ---
-  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFAmblemYaziRenk("kahve"); setFDuzenlenenId(null); }
+  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFAmblemYaziRenk("kahve"); setFGaleri([]); setFDuzenlenenId(null); }
   // İşletme fotosunu/amblemi İNDİR — data: doğrudan iner; http (Firebase) ise BLOB ile indirilir
   // (cross-origin'de <a download> yok sayılıp tarayıcıda AÇILIYORDU → blob + cache-buster ile gerçekten indirir).
   // url verilmezse: açık tam ekran görsel (fBuyukFoto) ya da formdaki foto (fFoto) indirilir.
@@ -289,12 +292,22 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   function fbTouchEnd(e) { if (e.touches.length === 0) fPinchRef.current = null; }
   function fbCift() { setFZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
   function fbTeker(e) { e.preventDefault(); setFZoom((z) => { const s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); return s === 1 ? { s: 1, x: 0, y: 0 } : { ...z, s }; }); }
+  // --- FİRMA ÜRÜN GALERİSİ yardımcıları (form) ---
+  function firmaGaleriEkle(e) {
+    const dosyalar = Array.from((e.target && e.target.files) || []); if (!dosyalar.length) return;
+    const yeni = dosyalar.map((dosya) => ({ tip: ((dosya.type || "").indexOf("video") === 0 ? "video" : "foto"), dosya, onizle: (() => { try { return URL.createObjectURL(dosya); } catch (x) { return ""; } })(), aciklama: "" }));
+    setFGaleri((a) => [...a, ...yeni]);
+    try { e.target.value = ""; } catch (x) {} // aynı dosyayı tekrar seçebilsin
+  }
+  function firmaGaleriAciklama(i, v) { setFGaleri((a) => a.map((g, k) => (k === i ? { ...g, aciklama: v } : g))); }
+  function firmaGaleriSil(i) { setFGaleri((a) => a.filter((_, k) => k !== i)); }
   // FİRMA REKLAMINI DÜZENLE — mevcut reklamın bilgilerini forma doldur, "düzenleme" moduna geç (yayınlayınca ÜSTÜNE yazar, yeni eklemez)
   function firmaDuzenleBaslat(r) {
     if (!r) return;
     setFFoto(r.kapak || ""); setFAd(r.baslik || ""); setFKat(r.kategori || "yemek"); setFAciklama(r.aciklama || "");
     setFTel(r.telefon || ""); setFWeb(r.web || ""); setFAdres(r.adres || ""); setFKonum(r.konum || null);
     setFKonumDurum(r.konum ? "ok" : ""); setFAmblemTarif(""); setFHata(""); setFDuzenlenenId(r.id);
+    setFGaleri(Array.isArray(r.firmaMedya) ? r.firmaMedya.map((m) => ({ tip: m.tip || "foto", url: m.url, aciklama: m.aciklama || "" })) : []); // mevcut galeriyi doldur
     setDetay(null); setFirmaVerAcik(true);
   }
   async function firmaFotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFFoto(d); setFHata(""); } }
@@ -360,9 +373,23 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       // Foto SADECE yeni seçildiyse (data:) yüklenir; düzenlemede eski foto (http) aynı kalırsa tekrar yüklenmez.
       let kapak = fFoto;
       if (fFoto && fFoto.indexOf("data:") === 0) { try { const u = await gorselYukle(fFoto, uid || "reklam"); if (u) kapak = u; } catch (e) {} }
+      // ÜRÜN GALERİSİ — yeni eklenenler (dosya) yüklenir, mevcutlar (url) korunur; her birinde açıklama saklanır.
+      const galeriSon = [];
+      for (const g of fGaleri) {
+        if (g.url && !g.dosya) { galeriSon.push({ tip: g.tip, url: g.url, aciklama: (g.aciklama || "").trim() }); continue; }
+        if (g.dosya) {
+          try {
+            let url = "";
+            if (g.tip === "video") { url = await videoYukle(g.dosya, uid || "reklam"); }
+            else { const d = await dosyaOku(g.dosya); const kucuk = await kucultB64(d, 1400); url = await gorselYukle(kucuk, uid || "reklam"); }
+            if (url) galeriSon.push({ tip: g.tip, url, aciklama: (g.aciklama || "").trim() });
+          } catch (e) {}
+        }
+      }
       const bilgi = {
         kapak, baslik: fAd.trim(), kategori: fKat,
         aciklama: fAciklama.trim(), telefon: fTel.trim(), web: webDuzelt(fWeb), adres: fAdres.trim(), konum: fKonum || null,
+        firmaMedya: galeriSon,
       };
       if (fDuzenlenenId) {
         await pazarUrunGuncelle(fDuzenlenenId, bilgi); // DÜZENLE: mevcut reklamın üstüne yaz
@@ -440,13 +467,29 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               <button className="reklam-kapat" onClick={() => setDetay(null)} aria-label={t("kapat", "Kapat")}>✕</button>
             </div>
             <div className="reklam-detay-kaydir">
-              {detay.kapak && <img className="reklam-detay-foto reklam-detay-foto-ac" src={detay.kapak} alt="" referrerPolicy="no-referrer" onClick={() => setFBuyukFoto(detay.kapak)} title={t("fkTamAc", "Tam ekran aç")} />}
+              {detay.kapak && <img className="reklam-detay-foto reklam-detay-foto-ac" src={detay.kapak} alt="" referrerPolicy="no-referrer" onClick={() => setFBuyukFoto({ url: detay.kapak, tip: "foto" })} title={t("fkTamAc", "Tam ekran aç")} />}
               {detay.reklamTur === "firma" ? (
                 <>
                   {/* FİRMA / İŞLETME detayı — Ara / Mesaj / Web / Yol tarifi */}
                   <div className="reklam-detay-satici">🏢 {detay.satici || t("fkSahip", "İşletme")}</div>
                   <div className="reklam-detay-ozet"><span className="reklam-oz"><b>{fkAd(detay.kategori)}</b></span>{detay.adres && <span className="reklam-oz">📍 {detay.adres}</span>}</div>
                   {detay.aciklama && <div className="reklam-detay-aciklama">{detay.aciklama}</div>}
+                  {/* ÜRÜN GALERİSİ — firmanın malları (foto/video); dokununca tam ekran + zoom/oynat + açıklama */}
+                  {Array.isArray(detay.firmaMedya) && detay.firmaMedya.length > 0 && (
+                    <div className="firma-galeri">
+                      <div className="firma-galeri-bas">🖼️ {t("fkUrunler", "Ürünler / Görseller")}</div>
+                      <div className="firma-galeri-izgara">
+                        {detay.firmaMedya.map((m, i) => (
+                          <button className="firma-galeri-oge" key={i} onClick={() => setFBuyukFoto({ url: m.url, tip: m.tip, aciklama: m.aciklama })}>
+                            {m.tip === "video"
+                              ? <><video className="firma-galeri-oge-medya" src={m.url} muted playsInline preload="metadata" referrerPolicy="no-referrer" /><span className="firma-galeri-vid-ik" aria-hidden="true">▶</span></>
+                              : <img className="firma-galeri-oge-medya" src={m.url} alt="" referrerPolicy="no-referrer" />}
+                            {m.aciklama && <span className="firma-galeri-acik">{m.aciklama}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="reklam-detay-dugmeler">
                     {detay.telefon && <a className="reklam-firma-btn firma-ara" href={"tel:" + detay.telefon}>📞 {t("fkAra", "Ara")}</a>}
                     <button className="reklam-firma-btn firma-mesaj" onClick={() => { const m = `"${detay.baslik}" işletmeniz için yazıyorum. Bilgi almak istiyorum.`; setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid || detay.uid, ad: detay.satici, foto: detay.saticiFoto }, m); }}>💬 {t("fkMesaj", "Mesaj")}</button>
@@ -544,7 +587,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               {/* Foto varsa: TAM EKRAN aç + İNDİR (kullanıcı isteği) */}
               {fFoto && (
                 <div className="reklam-foto-arac">
-                  <button className="reklam-foto-arac-btn" onClick={() => setFBuyukFoto(fFoto)}>🔍 {t("fkTamAc", "Tam ekran aç")}</button>
+                  <button className="reklam-foto-arac-btn" onClick={() => setFBuyukFoto({ url: fFoto, tip: "foto" })}>🔍 {t("fkTamAc", "Tam ekran aç")}</button>
                   <button className="reklam-foto-arac-btn" onClick={firmaFotoIndir}>⬇ {t("indir", "İndir")}</button>
                 </div>
               )}
@@ -564,6 +607,24 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               <textarea className="reklam-inp reklam-alan" value={fAciklama} onChange={(e) => setFAciklama(e.target.value)} placeholder={t("fkAciklama", "Kısa tanıtım (ne yapıyorsunuz, öne çıkanlar…) — istersen birkaç kelime yaz, Gloxoo güzelleştirsin")} rows={3} />
               {/* GLOXOO — TANITIM YAZISI: isim/kategori/foto/notuna göre güzel tanıtım yazsın */}
               <button className="reklam-gloxoo-btn reklam-gloxoo-yazi" disabled={fAiYaziYuk} onClick={firmaTanitimYaz}>{fAiYaziYuk ? "⏳ " + t("fkAiYaziyor", "Gloxoo yazıyor…") : "✨ " + t("fkTanitimYaz", "Gloxoo tanıtım yazsın")}</button>
+              {/* ÜRÜN GALERİSİ — sahibi firmanın mallarını (foto/video) yükler, her birine açıklama yazar */}
+              <div className="reklam-kim-bas">🖼️ {t("fkUrunGaleri", "Ürün foto / videoları")}</div>
+              {fGaleri.length > 0 && (
+                <div className="firma-galeri-duzen">
+                  {fGaleri.map((g, i) => (
+                    <div className="firma-galeri-oge-d" key={i}>
+                      {g.tip === "video"
+                        ? <video className="firma-galeri-onizle" src={g.onizle || g.url} muted playsInline preload="metadata" />
+                        : <img className="firma-galeri-onizle" src={g.onizle || g.url} alt="" referrerPolicy="no-referrer" />}
+                      {g.tip === "video" && <span className="firma-galeri-vid-ik" aria-hidden="true">▶</span>}
+                      <input className="reklam-inp firma-galeri-acik-inp" type="text" value={g.aciklama} onChange={(e) => firmaGaleriAciklama(i, e.target.value)} placeholder={t("fkGaleriAciklama", "Bu ne? (kısa açıklama)")} />
+                      <button className="firma-galeri-sil" onClick={() => firmaGaleriSil(i)} aria-label={t("kaldir", "Kaldır")}>🗑</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button className="reklam-cip firma-galeri-ekle-btn" onClick={() => fGalInpRef.current && fGalInpRef.current.click()}>＋ {t("fkGaleriEkle", "Ürün foto/video ekle")}</button>
+              <input ref={fGalInpRef} type="file" accept="image/*,video/*" multiple style={{ display: "none" }} onChange={firmaGaleriEkle} />
               <input className="reklam-inp" type="tel" inputMode="tel" value={fTel} onChange={(e) => setFTel(e.target.value)} placeholder={t("fkTel", "📞 Telefon (Ara düğmesi için)")} />
               <input className="reklam-inp" type="text" inputMode="url" value={fWeb} onChange={(e) => setFWeb(e.target.value)} placeholder={t("fkWebInp", "🌐 Web sitesi / link (varsa)")} />
               <input className="reklam-inp" type="text" value={fAdres} onChange={(e) => setFAdres(e.target.value)} placeholder={t("fkAdres", "📍 Adres (Yol tarifi için)")} />
@@ -595,16 +656,22 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       )}
 
       {/* TAM EKRAN foto/amblem önizleme — altın zemin, indirilebilir (kullanıcı: tam açabileyim, indirebileyim) */}
-      {fBuyukFoto && (
-        <div className="reklam-buyukfoto-fon" onClick={() => setFBuyukFoto(null)}>
-          <img className="reklam-buyukfoto-img" src={fBuyukFoto} alt="" referrerPolicy="no-referrer"
-            style={{ transform: `translate(${fZoom.x}px, ${fZoom.y}px) scale(${fZoom.s})`, touchAction: "none", cursor: fZoom.s > 1 ? "grab" : "zoom-in" }}
-            onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => { e.stopPropagation(); fbCift(); }}
-            onTouchStart={fbTouchStart} onTouchMove={fbTouchMove} onTouchEnd={fbTouchEnd} onWheel={fbTeker} />
-          <button className="reklam-kapat reklam-buyukfoto-kapat" onClick={(e) => { e.stopPropagation(); setFBuyukFoto(null); }} aria-label={t("kapat", "Kapat")}>✕</button>
-          <button className="reklam-buyukfoto-indir" onClick={(e) => { e.stopPropagation(); firmaFotoIndir(fBuyukFoto); }}>⬇ {t("indir", "İndir")}</button>
-        </div>
-      )}
+      {fBuyukFoto && (() => {
+        const bf = (typeof fBuyukFoto === "string") ? { url: fBuyukFoto, tip: "foto" } : (fBuyukFoto || {});
+        return (
+          <div className="reklam-buyukfoto-fon" onClick={() => setFBuyukFoto(null)}>
+            {bf.tip === "video"
+              ? <video className="reklam-buyukfoto-img" src={bf.url} controls autoPlay playsInline referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} />
+              : <img className="reklam-buyukfoto-img" src={bf.url} alt="" referrerPolicy="no-referrer"
+                  style={{ transform: `translate(${fZoom.x}px, ${fZoom.y}px) scale(${fZoom.s})`, touchAction: "none", cursor: fZoom.s > 1 ? "grab" : "zoom-in" }}
+                  onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => { e.stopPropagation(); fbCift(); }}
+                  onTouchStart={fbTouchStart} onTouchMove={fbTouchMove} onTouchEnd={fbTouchEnd} onWheel={fbTeker} />}
+            {bf.aciklama && <div className="reklam-buyukfoto-acik" onClick={(e) => e.stopPropagation()}>{bf.aciklama}</div>}
+            <button className="reklam-kapat reklam-buyukfoto-kapat" onClick={(e) => { e.stopPropagation(); setFBuyukFoto(null); }} aria-label={t("kapat", "Kapat")}>✕</button>
+            <button className="reklam-buyukfoto-indir" onClick={(e) => { e.stopPropagation(); firmaFotoIndir(bf.url); }}>⬇ {t("indir", "İndir")}</button>
+          </div>
+        );
+      })()}
     </>
   );
 }

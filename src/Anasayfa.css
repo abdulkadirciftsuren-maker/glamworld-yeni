@@ -5857,6 +5857,26 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-buyukfoto-kapat{ position:fixed; top:max(12px,env(safe-area-inset-top)); right:14px; }
 .reklam-buyukfoto-indir{ position:fixed; bottom:max(18px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); border:none; border-radius:14px; padding:13px 26px; font-weight:900; font-size:15px; cursor:pointer; font-family:inherit; background:linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17); color:#3a2a00; box-shadow:0 6px 18px rgba(120,90,0,.4); }
 .reklam-buyukfoto-indir:active{ transform:translateX(-50%) scale(.97); }
+.reklam-buyukfoto-acik{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(max(18px,env(safe-area-inset-bottom)) + 58px); max-width:92vw; text-align:center; background:rgba(74,53,0,.82); color:#ffe9a8; font-weight:700; font-size:14px; padding:8px 14px; border-radius:12px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+/* FİRMA ÜRÜN GALERİSİ — müşteri detayında ızgara */
+.firma-galeri{ margin:12px 0 4px; }
+.firma-galeri-bas{ font-weight:800; color:#4a3500; font-size:14px; margin:0 0 8px; }
+.firma-galeri-izgara{ display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+@media (min-width:560px){ .firma-galeri-izgara{ grid-template-columns:repeat(4,1fr); } }
+.firma-galeri-oge{ position:relative; border:none; padding:0; cursor:pointer; border-radius:12px; overflow:hidden; aspect-ratio:1/1; background:#f3e4c0; font-family:inherit; }
+.firma-galeri-oge-medya{ width:100%; height:100%; object-fit:cover; display:block; }
+.firma-galeri-oge:active{ transform:scale(.97); }
+.firma-galeri-acik{ position:absolute; left:0; right:0; bottom:0; padding:8px 6px 5px; font-size:11px; font-weight:700; color:#fff; text-align:left; background:linear-gradient(0deg, rgba(60,40,5,.86), transparent); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.firma-galeri-vid-ik{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:34px; height:34px; border-radius:50%; background:rgba(90,60,10,.55); border:2px solid #ffd700; color:#ffd700; display:flex; align-items:center; justify-content:center; font-size:14px; padding-left:2px; pointer-events:none; }
+/* FİRMA GALERİSİ — form (yükleme/düzenleme) */
+.firma-galeri-duzen{ display:flex; flex-direction:column; gap:8px; margin:4px 0 6px; }
+.firma-galeri-oge-d{ position:relative; display:flex; align-items:center; gap:8px; background:#fff8e6; border:1.5px solid #e6cf87; border-radius:12px; padding:7px; }
+.firma-galeri-onizle{ width:58px; height:58px; object-fit:cover; border-radius:9px; flex:none; background:#f0dfb4; }
+.firma-galeri-oge-d .firma-galeri-vid-ik{ top:36px; left:36px; width:24px; height:24px; font-size:11px; }
+.firma-galeri-acik-inp{ flex:1; margin:0; }
+.firma-galeri-sil{ flex:none; border:none; background:#e0202c; color:#fff; width:40px; height:40px; border-radius:10px; font-size:16px; cursor:pointer; }
+.firma-galeri-sil:active{ transform:scale(.95); }
+.firma-galeri-ekle-btn{ display:block; width:100%; margin:2px 0 4px; font-weight:800; }
 /* GLOXOO (yapay zekâ) yardımcı düğmeleri — mor/altın, belirgin (amblem çiz + tanıtım yaz) */
 .reklam-amblem-satir{ display:flex; flex-direction:column; gap:6px; margin:6px 0; }
 .reklam-gloxoo-btn{ width:100%; background:linear-gradient(90deg,#7a4dd6,#a36be6); color:#fff; border:none; border-radius:12px; padding:12px; font-weight:800; font-size:14.5px; cursor:pointer; font-family:inherit; }
