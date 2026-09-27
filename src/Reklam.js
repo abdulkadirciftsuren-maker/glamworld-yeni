@@ -279,17 +279,32 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   // --- TAM EKRAN önizlemede parmakla ZOOM (müşteri amblemi/fotoyu büyütüp gezebilsin) ---
   const fMesafe = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   useEffect(() => { setFZoom({ s: 1, x: 0, y: 0 }); }, [fBuyukFoto]); // her açılışta normal boyut
+  // Tam ekran önizleme açıkken arka sayfa KAYMASIN (parmak kayınca alttaki sayfa yeniden yüklenmesin/gezmesin)
+  useEffect(() => {
+    if (!fBuyukFoto) return;
+    const onceki = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = onceki; };
+  }, [fBuyukFoto]);
+  // Kaydırmayı SINIRLA → fotoğraf ekran dışına/sarı boşluğa taşmaz (kullanıcı: dışarı çekilip sayfa değişiyordu)
+  const fSinirla = (x, y, s, el) => {
+    const w = (el && el.offsetWidth) || 0, h = (el && el.offsetHeight) || 0;
+    const maxX = (w * (s - 1)) / 2, maxY = (h * (s - 1)) / 2;
+    return { x: Math.max(-maxX, Math.min(maxX, x)), y: Math.max(-maxY, Math.min(maxY, y)) };
+  };
   function fbTouchStart(e) {
+    e.stopPropagation(); // dokunuş alttaki ana sayfaya GEÇMESİN (sekme değiştirmesin)
     if (e.touches.length === 2) { fPinchRef.current = { tip: "pinch", d0: fMesafe(e.touches), s0: fZoomRef.current.s }; }
     else if (e.touches.length === 1 && fZoomRef.current.s > 1) { fPinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: fZoomRef.current.x, oy: fZoomRef.current.y }; }
     else { fPinchRef.current = null; const n = Date.now(); if (n - fSonDokunRef.current < 300) { fbCift(); fSonDokunRef.current = 0; } else fSonDokunRef.current = n; }
   }
   function fbTouchMove(e) {
+    e.stopPropagation();
     const p = fPinchRef.current; if (!p) return;
-    if (p.tip === "pinch" && e.touches.length === 2) { e.preventDefault(); const s = Math.min(5, Math.max(1, p.s0 * (fMesafe(e.touches) / p.d0))); setFZoom((z) => ({ ...z, s, ...(s === 1 ? { x: 0, y: 0 } : {}) })); }
-    else if (p.tip === "pan" && e.touches.length === 1) { e.preventDefault(); setFZoom((z) => ({ ...z, x: p.ox + (e.touches[0].clientX - p.x0), y: p.oy + (e.touches[0].clientY - p.y0) })); }
+    if (p.tip === "pinch" && e.touches.length === 2) { e.preventDefault(); const s = Math.min(5, Math.max(1, p.s0 * (fMesafe(e.touches) / p.d0))); const el = e.currentTarget; setFZoom((z) => { const sn = fSinirla(z.x, z.y, s, el); return { s, x: s === 1 ? 0 : sn.x, y: s === 1 ? 0 : sn.y }; }); }
+    else if (p.tip === "pan" && e.touches.length === 1) { e.preventDefault(); const el = e.currentTarget, nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0); setFZoom((z) => { const sn = fSinirla(nx, ny, z.s, el); return { ...z, x: sn.x, y: sn.y }; }); }
   }
-  function fbTouchEnd(e) { if (e.touches.length === 0) fPinchRef.current = null; }
+  function fbTouchEnd(e) { e.stopPropagation(); if (e.touches.length === 0) fPinchRef.current = null; }
   function fbCift() { setFZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
   function fbTeker(e) { e.preventDefault(); setFZoom((z) => { const s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); return s === 1 ? { s: 1, x: 0, y: 0 } : { ...z, s }; }); }
   // --- FİRMA ÜRÜN GALERİSİ yardımcıları (form) ---

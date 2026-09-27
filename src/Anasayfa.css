@@ -5851,9 +5851,9 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-renk-cip{ min-width:70px; font-weight:800; }
 .reklam-renk-cip.sec{ outline:3px solid #7a5a00; outline-offset:1px; }
 /* TAM EKRAN foto/amblem önizleme — PARLAK ALTIN zemin (asla siyah) */
-.reklam-buyukfoto-fon{ position:fixed; inset:0; z-index:100096; display:flex; align-items:center; justify-content:center; padding:16px; /* form(100085)+harita(100092) ÜSTÜNDE */
+.reklam-buyukfoto-fon{ position:fixed; inset:0; z-index:100096; display:flex; align-items:center; justify-content:center; padding:4px; overflow:hidden; touch-action:none; /* form(100085)+harita(100092) ÜSTÜNDE; taşan kısım gizlensin */
   background:radial-gradient(circle at 30% 25%, #ffe7a8, transparent 55%), radial-gradient(circle at 75% 80%, #ffd05c, transparent 58%), radial-gradient(circle at 50% 50%, #b7902f, #7a5f22); }
-.reklam-buyukfoto-img{ max-width:96vw; max-height:82vh; object-fit:contain; border-radius:14px; box-shadow:0 10px 34px rgba(90,65,0,.5); }
+.reklam-buyukfoto-img{ max-width:99vw; max-height:86vh; object-fit:contain; border-radius:12px; box-shadow:0 10px 34px rgba(90,65,0,.5); }
 .reklam-buyukfoto-kapat{ position:fixed; top:max(12px,env(safe-area-inset-top)); right:14px; }
 .reklam-buyukfoto-indir{ position:fixed; bottom:max(18px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); border:none; border-radius:14px; padding:13px 26px; font-weight:900; font-size:15px; cursor:pointer; font-family:inherit; background:linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17); color:#3a2a00; box-shadow:0 6px 18px rgba(120,90,0,.4); }
 .reklam-buyukfoto-indir:active{ transform:translateX(-50%) scale(.97); }

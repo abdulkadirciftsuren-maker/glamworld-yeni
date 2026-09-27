@@ -8904,7 +8904,14 @@ export default function Anasayfa({ pro = false }) {
       setGZoom((z) => ({ ...z, s, ...(s === 1 ? { x: 0, y: 0 } : {}) }));
     } else if (p.tip === "pan" && e.touches.length === 1) {
       e.preventDefault(); e.stopPropagation(); // büyütülmüşken tek parmak = kaydır (fotoğrafı DEĞİŞTİRME)
-      setGZoom((z) => ({ ...z, x: p.ox + (e.touches[0].clientX - p.x0), y: p.oy + (e.touches[0].clientY - p.y0) }));
+      const el = (e.currentTarget && e.currentTarget.querySelector && e.currentTarget.querySelector(".oniz-medya")) || e.currentTarget;
+      const nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0);
+      setGZoom((z) => {
+        // kaydırmayı SINIRLA → fotoğraf ekran dışına taşmaz
+        const w = (el && el.offsetWidth) || 0, h = (el && el.offsetHeight) || 0;
+        const maxX = (w * (z.s - 1)) / 2, maxY = (h * (z.s - 1)) / 2;
+        return { ...z, x: Math.max(-maxX, Math.min(maxX, nx)), y: Math.max(-maxY, Math.min(maxY, ny)) };
+      });
     }
   }
   function galTouchEnd(e) { if (e.touches.length === 0) gPinchRef.current = null; }
@@ -9197,7 +9204,7 @@ export default function Anasayfa({ pro = false }) {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
       // .ak-foto-buyut: tam ekran Akademi fotoğrafı — üstünde parmak gezince ZOOM/pan yapılır, sayfa DEĞİŞMEZ.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .reklam-buyukfoto-fon, .reklam-harita-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
