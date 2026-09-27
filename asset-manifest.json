@@ -1,9 +1,9 @@
 {
   "files": {
     "main.css": "./static/css/main.1b2a6e8d.css",
-    "main.js": "./static/js/main.cd2e1413.js",
+    "main.js": "./static/js/main.21cb5815.js",
     "static/css/922.4d28c01c.chunk.css": "./static/css/922.4d28c01c.chunk.css",
-    "static/js/922.4972b138.chunk.js": "./static/js/922.4972b138.chunk.js",
+    "static/js/922.5db6eae9.chunk.js": "./static/js/922.5db6eae9.chunk.js",
     "static/js/95.4ece48a0.chunk.js": "./static/js/95.4ece48a0.chunk.js",
     "static/js/240.ee216c3c.chunk.js": "./static/js/240.ee216c3c.chunk.js",
     "static/js/342.4c29fec6.chunk.js": "./static/js/342.4c29fec6.chunk.js",
@@ -36,9 +36,9 @@
     "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
     "index.html": "./index.html",
     "main.1b2a6e8d.css.map": "./static/css/main.1b2a6e8d.css.map",
-    "main.cd2e1413.js.map": "./static/js/main.cd2e1413.js.map",
+    "main.21cb5815.js.map": "./static/js/main.21cb5815.js.map",
     "922.4d28c01c.chunk.css.map": "./static/css/922.4d28c01c.chunk.css.map",
-    "922.4972b138.chunk.js.map": "./static/js/922.4972b138.chunk.js.map",
+    "922.5db6eae9.chunk.js.map": "./static/js/922.5db6eae9.chunk.js.map",
     "95.4ece48a0.chunk.js.map": "./static/js/95.4ece48a0.chunk.js.map",
     "240.ee216c3c.chunk.js.map": "./static/js/240.ee216c3c.chunk.js.map",
     "342.4c29fec6.chunk.js.map": "./static/js/342.4c29fec6.chunk.js.map",
@@ -54,6 +54,6 @@
   },
   "entrypoints": [
     "static/css/main.1b2a6e8d.css",
-    "static/js/main.cd2e1413.js"
+    "static/js/main.21cb5815.js"
   ]
 }
