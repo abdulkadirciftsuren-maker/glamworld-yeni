@@ -9,6 +9,62 @@ import reportWebVitals from './reportWebVitals';
 // Routing tamamen hafızada (App.js MemoryRouter) — Chrome geçmişine dokunmaz.
 // Yeni sürüm otomatik gelir: hash'li dosya isimleri + index.html no-cache meta.
 
+// ================= OTOMATİK KURTARMA (kullanıcı: "sayfa bazen boş sarı kalıyor, silip yeniden yüklemem lazım") =================
+// SEBEP: bir JS çökmesi ya da bir "parça" (chunk: hash'li js/css) yüklenemezse (yeni sürüm yayınlanınca eski sayfa eski parçayı
+//   ararsa) uygulama boş kalıyordu ve KENDİNİ TOPARLAMIYORDU. Çözüm: böyle bir hatada sayfayı BİR KEZ otomatik yenile
+//   (kapat-aç ile aynı etki) → boş kalmaz. Döngüye girmesin diye 20 sn kilidi var; toparlanmazsa altın "Yeniden Yükle" ekranı gösterilir.
+const _KURTARMA_ANAHTAR = "gloxSonKurtarma";
+function _chunkHatasiMi(msg) {
+  const s = String((msg && msg.message) || msg || "");
+  return /ChunkLoadError|Loading chunk|Loading CSS chunk|dynamically imported module|Failed to fetch dynamically|Importing a module script failed/i.test(s);
+}
+function _kurtar() {
+  try {
+    const son = parseInt(sessionStorage.getItem(_KURTARMA_ANAHTAR) || "0", 10);
+    if (Date.now() - son < 20000) return false; // 20 sn içinde zaten denedik → sonsuz döngü YOK
+    sessionStorage.setItem(_KURTARMA_ANAHTAR, String(Date.now()));
+    window.location.reload();
+    return true;
+  } catch (e) { return false; }
+}
+try {
+  // Parça (script/stylesheet) yüklenemezse (capture: kaynak hataları böyle yakalanır) → otomatik yenile
+  window.addEventListener("error", (e) => {
+    const hedef = e && e.target;
+    if (hedef && (hedef.tagName === "SCRIPT" || hedef.tagName === "LINK")) { _kurtar(); return; }
+    if (e && _chunkHatasiMi(e.message)) _kurtar();
+  }, true);
+  // Yakalanmamış söz reddi (dinamik import başarısız vb.) → chunk hatasıysa otomatik yenile
+  window.addEventListener("unhandledrejection", (e) => { if (e && _chunkHatasiMi(e.reason)) _kurtar(); });
+} catch (x) {}
+
+// ÜST DÜZEY HATA SINIRI — bir render çökmesi TÜM sayfayı boş bırakmasın: bir kez otomatik yenile; olmazsa altın kurtarma ekranı.
+class KokHataSiniri extends React.Component {
+  constructor(p) { super(p); this.state = { hata: false }; }
+  static getDerivedStateFromError() { return { hata: true }; }
+  componentDidCatch(err) {
+    // Çökünce BİR KEZ otomatik yenile (kilitli). Kilit doluysa (tekrar çöktü) ekranı gösterir, kullanıcı düğmeyle dener.
+    if (!_kurtar()) { /* zaten yakın zamanda denendi → kurtarma ekranı görünür kalsın */ }
+  }
+  render() {
+    if (this.state.hata) {
+      return React.createElement("div", {
+        style: { position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "24px", textAlign: "center",
+          background: "radial-gradient(circle at 50% 40%, #ffe9a8, #ffd54a 60%, #e0b000)", color: "#4a3500", fontFamily: "inherit" }
+      },
+        React.createElement("div", { style: { fontSize: "40px" } }, "💎"),
+        React.createElement("div", { style: { fontSize: "18px", fontWeight: 800, maxWidth: "320px", lineHeight: 1.4 } }, "Küçük bir aksaklık oldu. Sayfa yenileniyor…"),
+        React.createElement("button", {
+          onClick: () => { try { sessionStorage.removeItem(_KURTARMA_ANAHTAR); } catch (e) {} try { window.location.reload(); } catch (e) {} },
+          style: { border: "none", borderRadius: "14px", padding: "14px 26px", fontSize: "16px", fontWeight: 900, cursor: "pointer",
+            background: "linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17)", color: "#3a2a00", boxShadow: "0 6px 18px rgba(120,90,0,.4)" }
+        }, "Yeniden Yükle")
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // UYGULAMAYI YÜKLE (PWA "Ana ekrana ekle"): tarayıcı hazır olunca beforeinstallprompt tetiklenir —
 // olayı ERKEN yakalayıp sakla ki Davet penceresindeki "Uygulamayı yükle" düğmesi çalışsın.
 try {
@@ -24,5 +80,5 @@ try {
 } catch (x) {}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(<KokHataSiniri><App /></KokHataSiniri>);
 reportWebVitals();
