@@ -2000,6 +2000,8 @@ export default function Anasayfa({ pro = false }) {
   // ---- HİKÂYELER (Stories) ----
   const [hikayeGruplar, setHikayeGruplar] = useState([]); // [{uid,ad,foto,amblem,ogeler:[...],yeni:bool}]
   const [hikayeAcik, setHikayeAcik] = useState(null);     // görüntüleyici: {gi:grupIndex, oi:ögeIndex}
+  // Her yeni hikâye ögesine geçince medya-hata bayrağını sıfırla (yenisi yüklenemezse tekrar işaretlenir)
+  useEffect(() => { setHikMedyaHata(false); }, [hikayeAcik ? (hikayeAcik.gi + "_" + hikayeAcik.oi) : ""]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hikayeYuk, setHikayeYuk] = useState(false);      // hikaye yükleniyor mu (oluşturma)
   const [hikayeIlerle, setHikayeIlerle] = useState(0);    // 0..100 aktif hikayenin ilerleme yüzdesi
   // ⛔ PARLAMA KÖK ÇÖZÜM (story): ilerleme çubuğu foto'da ~60/sn, video'da onlarca/sn state güncelliyordu → TÜM sayfa
@@ -2015,6 +2017,7 @@ export default function Anasayfa({ pro = false }) {
   const [hikSesli, setHikSesli] = useState(true);         // ışıltı sesi AÇIK mı (müzik/video sesi) — sol üstteki düğme aç/kapar (videoyu DURDURMAZ)
   const [hikBegenAcik, setHikBegenAcik] = useState(null); // {yuk:bool, liste:[]} — kendi ışıltında "kim beğenmiş" paneli (null=kapalı)
   const hikBasRef = useRef({ x: 0, y: 0 }); // dokunma başlangıç noktası (dokun/kaydır ayrımı)
+  const [hikMedyaHata, setHikMedyaHata] = useState(false); // açık hikâyenin medyası yüklenemedi → boş-sarı yerine yedek ekran
   // ---- HİKÂYE DÜZENLEYİCİ (paylaşmadan önce: yazı + Gloxoo AI) ----
   const [hikTaslak, setHikTaslak] = useState(null); // {tip,url(önizleme),file,poster} — seçilen medya (düzenleniyor)
   const [hikYazilar, setHikYazilar] = useState([]);  // [{id, metin, xr(0..1), yr(0..1), renk}] — istediğin yere sürüklenen birden çok yazı
@@ -9634,8 +9637,8 @@ export default function Anasayfa({ pro = false }) {
                       {kapak.tip === "video"
                         /* KULLANICI İSTEĞİ (B269): "Işıltını Göster"de CANLI video GERİ GELDİ (B255'te durağan yapmıştık,
                            kullanıcı "parlama düzelmedi, eskiden video oynuyordu, geri getir" dedi). Kapak yine OYNAR (autoPlay+loop, sessiz). */
-                        ? (<video className="hik-kart-medya" src={videoSade(kapak.url)} autoPlay loop muted playsInline preload="metadata" tabIndex={-1} onLoadedMetadata={hikKapakYon} />)
-                        : (<img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} />)}
+                        ? (<video className="hik-kart-medya" src={videoSade(kapak.url)} autoPlay loop muted playsInline preload="metadata" tabIndex={-1} onLoadedMetadata={hikKapakYon} onError={(e) => { try { e.currentTarget.style.display = "none"; } catch (x) {} }} />)
+                        : (<img className="hik-kart-medya" src={kapak.url} alt="" referrerPolicy="no-referrer" onLoad={hikKapakYon} onError={(e) => { try { e.currentTarget.style.display = "none"; } catch (x) {} }} />)}
                     </span>
                     {g.ogeler.length > 1 && <span className="hik-kart-sayac" aria-label={g.ogeler.length + " hikâye"}>🖼 {g.ogeler.length}</span>}
                     <span className={"hik-kart-av" + (g.yeni ? " yeni" : " gorulen") + (g.amblem ? " amblem" : "")}>{g.foto ? <img src={g.foto} alt="" referrerPolicy="no-referrer" /> : ((g.ad || "?")[0] || "?").toUpperCase()}</span>
@@ -13533,11 +13536,19 @@ export default function Anasayfa({ pro = false }) {
               <button className="hik-kapat" onClick={(e) => { e.stopPropagation(); hikayeKapat(); }} aria-label="Kapat">✕</button>
             </div>
             {hikBildiri ? <div className="hik-toast">{hikBildiri}</div> : null}
-            {oge.tip === "video"
+            {(!oge.url || hikMedyaHata)
+              /* MEDYA YOK/BOZUK → boş-sarı yerine YEDEK ekran: kişinin fotoğrafı + adı + kısa açıklama (kullanıcı: Hiranur'un hikâyesi boş görünüyordu) */
+              ? <div className="hik-medya-yedek">
+                  <span className={"hik-yedek-av" + (grup.amblem ? " amblem" : "")}>{grup.foto ? <img src={grup.foto} alt="" referrerPolicy="no-referrer" /> : ((grup.ad || "?")[0] || "?").toUpperCase()}</span>
+                  <b className="notranslate" translate="no">{grup.ad || "—"}</b>
+                  <span className="hik-yedek-not">{t("hikGosterilemiyor", "Bu hikâye şu an görüntülenemiyor")}</span>
+                </div>
+              : oge.tip === "video"
               ? <video ref={hikVidRef} className="hik-medya" src={videoSade(oge.url)} autoPlay playsInline muted={oge.ses ? true : !hikSesli}
                     onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration && hikIlerleBarRef.current) hikIlerleBarRef.current.style.width = Math.min(100, (v.currentTime / v.duration) * 100) + "%"; }}
+                    onError={() => setHikMedyaHata(true)}
                     onEnded={() => hikayeGec(1)} />
-              : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" /></>}
+              : <><img className="hik-medya-bg" src={oge.url} alt="" referrerPolicy="no-referrer" aria-hidden="true" /><img key={oge.id} className="hik-medya hik-foto-canli" src={oge.url} alt="" referrerPolicy="no-referrer" onError={() => setHikMedyaHata(true)} /></>}
             {/* HİKÂYENİN ÜSTÜNDEKİ YAZILAR (paylaşırken konmuş yer/renk ile) */}
             {Array.isArray(oge.yazilar) && oge.yazilar.map((y, i) => (
               <div key={i} className="hik-yazi-tas hik-yazi-goster" style={{ left: ((y.xr != null ? y.xr : 0.5) * 100) + "%", top: ((y.yr != null ? y.yr : 0.85) * 100) + "%", color: y.renk || "#ffd700" }}><span style={{ fontSize: Math.round(23 * (y.boyut || 1)) + "px", fontFamily: hikFontCss(y.font) }}>{y.metin}</span></div>
