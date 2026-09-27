@@ -8842,28 +8842,44 @@ export default function Anasayfa({ pro = false }) {
       if (sar && w && h) sar.classList.toggle("yatay", w > h * 1.08);
     } catch (x) {}
   };
+  // Kaydırmayı SINIRLA → tek foto da (firma/galeri gibi) ekran dışına/boşluğa çekilmez (kullanıcı: foto ekrandan çıkıyor).
+  const _zoomSinirla = (x, y, s, el) => {
+    const w = (el && el.offsetWidth) || 0, h = (el && el.offsetHeight) || 0;
+    const maxX = (w * (s - 1)) / 2, maxY = (h * (s - 1)) / 2;
+    const gx = isFinite(x) ? x : 0, gy = isFinite(y) ? y : 0;
+    return { x: Math.max(-maxX, Math.min(maxX, gx)), y: Math.max(-maxY, Math.min(maxY, gy)) };
+  };
   function fotoTouchStart(e) {
-    if (e.touches.length === 2) {
-      pinchRef.current = { tip: "pinch", d0: _mesafe(e.touches), s0: zoom.s };
-    } else if (e.touches.length === 1 && zoom.s > 1) {
-      pinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: zoom.x, oy: zoom.y };
-    } else if (e.touches.length === 1) {
-      // Yakınlaştırılmamış: yatay kaydırma izle → sola çekince üye sayfası açılır
-      pinchRef.current = { tip: "kaydir", x0: e.touches[0].clientX, y0: e.touches[0].clientY, dx: 0, dy: 0 };
-    }
+    try {
+      if (e.touches.length === 2) {
+        const d = _mesafe(e.touches);
+        pinchRef.current = { tip: "pinch", d0: (d > 1 ? d : 1), s0: zoom.s }; // d0 asla 0 olmasın (bölme/çökme önlenir)
+      } else if (e.touches.length === 1 && zoom.s > 1) {
+        pinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: zoom.x, oy: zoom.y };
+      } else if (e.touches.length === 1) {
+        // Yakınlaştırılmamış: yatay kaydırma izle → sola çekince üye sayfası açılır
+        pinchRef.current = { tip: "kaydir", x0: e.touches[0].clientX, y0: e.touches[0].clientY, dx: 0, dy: 0 };
+      }
+    } catch (x) { pinchRef.current = null; }
   }
   function fotoTouchMove(e) {
     const p = pinchRef.current; if (!p) return;
-    if (p.tip === "pinch" && e.touches.length === 2) {
-      e.preventDefault();
-      const s = Math.min(5, Math.max(1, p.s0 * (_mesafe(e.touches) / p.d0)));
-      setZoom((z) => ({ ...z, s, ...(s === 1 ? { x: 0, y: 0 } : {}) }));
-    } else if (p.tip === "pan" && e.touches.length === 1) {
-      e.preventDefault();
-      setZoom((z) => ({ ...z, x: p.ox + (e.touches[0].clientX - p.x0), y: p.oy + (e.touches[0].clientY - p.y0) }));
-    } else if (p.tip === "kaydir" && e.touches.length === 1) {
-      p.dx = e.touches[0].clientX - p.x0; p.dy = e.touches[0].clientY - p.y0;
-    }
+    try {
+      if (p.tip === "pinch" && e.touches.length === 2) {
+        e.preventDefault();
+        let s = p.s0 * (_mesafe(e.touches) / (p.d0 || 1));
+        if (!isFinite(s)) s = 1;
+        s = Math.min(5, Math.max(1, s));
+        const el = e.currentTarget;
+        setZoom((z) => { if (s === 1) return { s: 1, x: 0, y: 0 }; const sn = _zoomSinirla(z.x, z.y, s, el); return { s, x: sn.x, y: sn.y }; });
+      } else if (p.tip === "pan" && e.touches.length === 1) {
+        e.preventDefault();
+        const el = e.currentTarget, nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0);
+        setZoom((z) => { const sn = _zoomSinirla(nx, ny, z.s, el); return { ...z, x: sn.x, y: sn.y }; });
+      } else if (p.tip === "kaydir" && e.touches.length === 1) {
+        p.dx = e.touches[0].clientX - p.x0; p.dy = e.touches[0].clientY - p.y0;
+      }
+    } catch (x) {}
   }
   function fotoTouchEnd(e) {
     const p = pinchRef.current;
@@ -8876,7 +8892,8 @@ export default function Anasayfa({ pro = false }) {
   function fotoCiftDokun() { setZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
   function fotoTeker(e) {
     e.preventDefault();
-    setZoom((z) => { const s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); return s === 1 ? { s: 1, x: 0, y: 0 } : { ...z, s }; });
+    const el = e.currentTarget;
+    setZoom((z) => { let s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); if (s === 1) return { s: 1, x: 0, y: 0 }; const sn = _zoomSinirla(z.x, z.y, s, el); return { s, x: sn.x, y: sn.y }; });
   }
   // --- GALERİ (çoklu foto/kolaj) parmakla ZOOM — tekli fotodaki zoom'u BOZMADAN ayrı çalışır (kullanıcı: 3-4 fotoyu açınca zoom yoktu) ---
   const [gZoom, setGZoom] = useState({ s: 1, x: 0, y: 0 });
