@@ -8878,6 +8878,41 @@ export default function Anasayfa({ pro = false }) {
     e.preventDefault();
     setZoom((z) => { const s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); return s === 1 ? { s: 1, x: 0, y: 0 } : { ...z, s }; });
   }
+  // --- GALERİ (çoklu foto/kolaj) parmakla ZOOM — tekli fotodaki zoom'u BOZMADAN ayrı çalışır (kullanıcı: 3-4 fotoyu açınca zoom yoktu) ---
+  const [gZoom, setGZoom] = useState({ s: 1, x: 0, y: 0 });
+  const gPinchRef = useRef(null);            // aktif jest (iki parmak yakınlaştırma / tek parmak sürükleme)
+  const gZoomRef = useRef(gZoom); useEffect(() => { gZoomRef.current = gZoom; }, [gZoom]);
+  const gSonDokunRef = useRef(0);            // çift dokunuş (mobil) yakalamak için son dokunuş zamanı
+  // Her yeni fotoğrafa geçince / galeri açılıp kapanınca NORMAL boyuta dön (yakınlaştırma sıfırlanır)
+  useEffect(() => { setGZoom({ s: 1, x: 0, y: 0 }); }, [onizGaleri ? onizGaleri.i : -1]); // eslint-disable-line react-hooks/exhaustive-deps
+  function galTouchStart(e) {
+    if (e.touches.length === 2) {
+      gPinchRef.current = { tip: "pinch", d0: _mesafe(e.touches), s0: gZoomRef.current.s };
+    } else if (e.touches.length === 1 && gZoomRef.current.s > 1) {
+      gPinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: gZoomRef.current.x, oy: gZoomRef.current.y };
+    } else {
+      gPinchRef.current = null;
+      const simdi = Date.now(); // çift dokunuşla büyüt/küçült (mobil)
+      if (simdi - gSonDokunRef.current < 300) { galCiftDokun(); gSonDokunRef.current = 0; } else gSonDokunRef.current = simdi;
+    }
+  }
+  function galTouchMove(e) {
+    const p = gPinchRef.current; if (!p) return;
+    if (p.tip === "pinch" && e.touches.length === 2) {
+      e.preventDefault();
+      const s = Math.min(5, Math.max(1, p.s0 * (_mesafe(e.touches) / p.d0)));
+      setGZoom((z) => ({ ...z, s, ...(s === 1 ? { x: 0, y: 0 } : {}) }));
+    } else if (p.tip === "pan" && e.touches.length === 1) {
+      e.preventDefault(); e.stopPropagation(); // büyütülmüşken tek parmak = kaydır (fotoğrafı DEĞİŞTİRME)
+      setGZoom((z) => ({ ...z, x: p.ox + (e.touches[0].clientX - p.x0), y: p.oy + (e.touches[0].clientY - p.y0) }));
+    }
+  }
+  function galTouchEnd(e) { if (e.touches.length === 0) gPinchRef.current = null; }
+  function galCiftDokun() { setGZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
+  function galTeker(e) {
+    e.preventDefault();
+    setGZoom((z) => { const s = Math.min(5, Math.max(1, z.s + (e.deltaY < 0 ? 0.25 : -0.25))); return s === 1 ? { s: 1, x: 0, y: 0 } : { ...z, s }; });
+  }
   const acikBolumRef = useRef(acikBolum); // Profilim ayar paneli — android geri TANISIN
   useEffect(() => { acikBolumRef.current = acikBolum; }, [acikBolum]);
   const uyeSayfaRef = useRef(uyeSayfa); // Üye paylaşım sayfası — android geri TANISIN
@@ -13737,19 +13772,24 @@ export default function Anasayfa({ pro = false }) {
 
       {onizGaleri && onizGaleri.liste && onizGaleri.liste.length > 0 && createPortal((
         <div className="oniz-fon" onClick={() => setOnizGaleri(null)}
-          onTouchStart={(e) => { onizGaleri._x = (e.touches[0] || {}).clientX; }}
+          onTouchStart={(e) => { onizGaleri._x = (e.touches[0] || {}).clientX; onizGaleri._multi = e.touches.length > 1; }}
           onTouchEnd={(e) => {
+            // Fotoğraf BÜYÜTÜLMÜŞSE ya da iki parmak jestiyse → kaydırma fotoğrafı DEĞİŞTİRMESİN (yakınlaştırma/kaydırma için)
+            if (gZoomRef.current.s > 1 || onizGaleri._multi) return;
             const x0 = onizGaleri._x, x1 = (e.changedTouches[0] || {}).clientX;
             if (typeof x0 === "number" && typeof x1 === "number") {
               const dx = x1 - x0;
               if (Math.abs(dx) > 45) { e.stopPropagation(); setOnizGaleri((g) => { if (!g) return g; const n = g.liste.length; const yeni = dx < 0 ? Math.min(g.i + 1, n - 1) : Math.max(g.i - 1, 0); return { ...g, i: yeni }; }); }
             }
           }}>
-          {(() => { const it = onizGaleri.liste[onizGaleri.i] || {}; return (
-            <div className="oniz-govde" onClick={(e) => e.stopPropagation()}>
+          {(() => { const it = onizGaleri.liste[onizGaleri.i] || {}; const fotoMu = it.tip !== "video"; return (
+            <div className="oniz-govde" onClick={(e) => e.stopPropagation()}
+              onTouchStart={fotoMu ? galTouchStart : undefined} onTouchMove={fotoMu ? galTouchMove : undefined} onTouchEnd={fotoMu ? galTouchEnd : undefined} onWheel={fotoMu ? galTeker : undefined}>
               {it.tip === "video"
                 ? <video src={it.src} poster={it.poster || undefined} controls autoPlay playsInline className="oniz-medya" />
-                : <img src={it.src} alt="" referrerPolicy="no-referrer" className="oniz-medya" />}
+                : <img src={it.src} alt="" referrerPolicy="no-referrer" className="oniz-medya"
+                    style={{ transform: `translate(${gZoom.x}px, ${gZoom.y}px) scale(${gZoom.s})`, cursor: gZoom.s > 1 ? "grab" : "zoom-in", touchAction: "none" }}
+                    onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => { e.stopPropagation(); galCiftDokun(); }} />}
             </div>
           ); })()}
           <button className="oniz-kapat" onClick={(e) => { e.stopPropagation(); setOnizGaleri(null); }} aria-label="Kapat">✕</button>
