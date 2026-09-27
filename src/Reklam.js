@@ -58,6 +58,58 @@ function kucultB64(dataUrl, max = 720) {
     } catch (e) { res(dataUrl); }
   });
 }
+// Vision (görsel okuma) için görseli Anthropic biçimine çevir: {type:"image", source:{type:"base64", media_type, data}}.
+// (HATA DÜZELTME: eskiden source olarak HAM dataURL yollanıyordu → köprü hata veriyordu: "Gloxoo şu an yazamadı".)
+function gorselParcasi(durl) {
+  if (!durl || durl.indexOf("data:image") !== 0) return null;
+  const vir = durl.indexOf(","); if (vir < 0) return null;
+  const mt = (durl.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg";
+  return { type: "image", source: { type: "base64", media_type: mt, data: durl.slice(vir + 1) } };
+}
+// AMBLEM ZEMİN RENKLERİ — kullanıcı seçer (hep beyaz olmasın). Hepsi AÇIK/canlı (asla siyah/koyu).
+const AMBLEM_RENKLER = [
+  { k: "krem", hex: "#fff3d6", en: "soft warm cream", ck: "renkKrem", ad: "Krem" },
+  { k: "altin", hex: "#ffe08a", en: "warm gold", ck: "renkAltin", ad: "Altın" },
+  { k: "mavi", hex: "#cfe4f7", en: "soft sky blue", ck: "renkMavi", ad: "Mavi" },
+  { k: "yesil", hex: "#cdeecf", en: "soft mint green", ck: "renkYesil", ad: "Yeşil" },
+  { k: "pembe", hex: "#f7d6e6", en: "soft rose pink", ck: "renkPembe", ad: "Pembe" },
+  { k: "mor", hex: "#e2d6f7", en: "soft lavender purple", ck: "renkMor", ad: "Mor" },
+];
+// Amblem üreticisi YAZI basamıyor (bozuyor) → firma ismini TEMİZ yazıyla amblemin ALT bandına biz basarız,
+// kenar/köşe boşluklarını da seçilen zemin rengiyle doldururuz (beyaz/boş kalmaz). Kare 1024 kanvas.
+function amblemeIsimBas(dataUrl, isim, zeminHex) {
+  return new Promise((res) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const S = 1024;
+          const c = document.createElement("canvas"); c.width = S; c.height = S;
+          const ctx = c.getContext("2d");
+          ctx.fillStyle = zeminHex || "#fff3d6"; ctx.fillRect(0, 0, S, S); // tüm zemini renkle doldur (köşe/kenar boş kalmaz)
+          const ad = (isim || "").trim();
+          if (ad) {
+            const alt = Math.round(S * 0.80);                 // amblem ÜST %80'e, alt %20 isme kalsın
+            const eboy = Math.min(S, alt);
+            ctx.drawImage(img, Math.round((S - eboy) / 2), Math.round((alt - eboy) / 2), eboy, eboy); // ortala
+            const bandH = S - alt;
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            let fs = Math.round(bandH * 0.46);
+            ctx.font = "800 " + fs + "px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+            while (ctx.measureText(ad).width > S * 0.92 && fs > 12) { fs -= 2; ctx.font = "800 " + fs + "px system-ui, -apple-system, Segoe UI, Roboto, sans-serif"; }
+            ctx.fillStyle = "#4a3500"; // açık zeminde okunur koyu kahve isim (siyah değil)
+            ctx.fillText(ad, S / 2, alt + bandH / 2);
+          } else {
+            ctx.drawImage(img, 0, 0, S, S);
+          }
+          res(c.toDataURL("image/jpeg", 0.9));
+        } catch (e) { res(dataUrl); }
+      };
+      img.onerror = () => res(dataUrl);
+      img.src = dataUrl;
+    } catch (e) { res(dataUrl); }
+  });
+}
 
 export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif, yonetici }) {
   const { t } = useTranslation();
@@ -103,6 +155,8 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [fAiYaziYuk, setFAiYaziYuk] = useState(false);
   const [fAmblemTarif, setFAmblemTarif] = useState("");
   const [fAmblemYuk, setFAmblemYuk] = useState(false);
+  const [fAmblemRenk, setFAmblemRenk] = useState("krem"); // amblem zemin rengi (kullanıcı seçer, beyaz olmasın)
+  const [fBuyukFoto, setFBuyukFoto] = useState(null);     // işletme fotosunu/amblemi TAM EKRAN aç (indirilebilir)
 
   async function yukle() {
     try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
@@ -224,7 +278,15 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
 
   // --- FİRMA / İŞLETME reklamı ---
-  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFDuzenlenenId(null); }
+  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFDuzenlenenId(null); }
+  // İşletme fotosunu/amblemi İNDİR (amblem data: ise doğrudan iner; http ise yeni sekmede açılır → basılı tut kaydet)
+  function firmaFotoIndir() {
+    const url = fFoto; if (!url) return;
+    try {
+      if (url.indexOf("data:") === 0) { const a = document.createElement("a"); a.href = url; a.download = "amblem-" + Date.now() + ".jpg"; document.body.appendChild(a); a.click(); a.remove(); }
+      else window.open(url, "_blank");
+    } catch (e) { try { window.open(url, "_blank"); } catch (x) {} }
+  }
   // FİRMA REKLAMINI DÜZENLE — mevcut reklamın bilgilerini forma doldur, "düzenleme" moduna geç (yayınlayınca ÜSTÜNE yazar, yeni eklemez)
   function firmaDuzenleBaslat(r) {
     if (!r) return;
@@ -257,7 +319,8 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       const kat = fkAd(fKat);
       const talimat = `Bir işletme/firma REKLAMI için KISA, çekici, samimi bir tanıtım yazısı yaz. İşletme adı: "${fAd || ""}". Kategori: ${kat}. ${fAciklama.trim() ? 'Sahibin notu: "' + fAciklama.trim() + '" — anlamını KORU, güzelleştir ve zenginleştir. ' : ""}${fFoto ? "Ekteki görsele DİKKATLİCE bak (ne satılıyor/ne var), SADECE gördüğüne göre gerçekçi yaz. " : ""}2-3 cümle; sıcak, davet edici, güven veren; 1-2 uygun emoji. Tek yazı ver; numara/tırnak/madde işareti KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
       const parcalar = [];
-      if (fFoto) parcalar.push({ type: "image", source: fFoto });
+      // Görseli DOĞRU biçimde ekle (küçültüp base64 nesnesine çevir) — yoksa köprü hata veriyordu.
+      if (fFoto) { try { const kucuk = await kucultB64(fFoto, 900); const gp = gorselParcasi(kucuk); if (gp) parcalar.push(gp); } catch (e) {} }
       parcalar.push({ type: "text", text: talimat });
       const mesajlar = [{ role: "user", content: parcalar.length > 1 ? parcalar : talimat }];
       const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG reklam yazı asistanı. Işletmeler için KISA, cekici, samimi, guven veren tanitim yazilari yazarsin. Ekte gorsel varsa dikkatlice bak, sadece gordugune gore yaz. Istenen dilde yaz; numara/tirnak koyma." }) });
@@ -273,11 +336,15 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     if (!tarif) { setFHata(t("fkAmblemOnce", "Kısa bir tarif yaz (ör. 'altın renkli lokum kutusu logosu').")); return; }
     setFAmblemYuk(true); setFHata("");
     try {
-      // Resim üreticisi yazıyı bozar → LOGO'da YAZI İSTEME (sadece sembol/amblem); isim zaten kartta ayrı görünür.
-      const istem = "Professional, modern business logo / emblem. Business: '" + (fAd || "a business") + "'. Category: " + fkAd(fKat) + ". Idea: " + tarif + ". Clean elegant symbol/emblem, vibrant rich colors, centered, simple plain background, high quality, crisp. ABSOLUTELY NO text, NO letters, NO words — symbol only. Square.";
+      const renk = AMBLEM_RENKLER.find((x) => x.k === fAmblemRenk) || AMBLEM_RENKLER[0];
+      // Üretici YAZI basamaz → sembol iste (yazısız), ismi biz temiz yazıyla altına basacağız. Zemini SEÇİLEN renkle DOLDUR (beyaz/boş olmasın).
+      const istem = "Professional, modern business logo / emblem. Business: '" + (fAd || "a business") + "'. Category: " + fkAd(fKat) + ". Idea: " + tarif + ". Clean elegant symbol centered in the UPPER part, leaving a little empty space at the bottom. Background: SOLID " + renk.en + " color filling the ENTIRE square edge to edge — NO white, NO borders, NO frame. Vibrant rich colors, high quality, crisp. ABSOLUTELY NO text, NO letters, NO words — symbol only. Square.";
       const r = await gloxooResimUret(istem);
-      const durl = r && r.dataUrl;
-      if (durl) { setFFoto(durl); setFHata(""); } else setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene."));
+      let durl = r && r.dataUrl;
+      if (durl) {
+        try { durl = await amblemeIsimBas(durl, fAd, renk.hex); } catch (e) {} // firma ismini altına bas + köşeleri renkle doldur
+        setFFoto(durl); setFHata("");
+      } else setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene."));
     } catch (e) { setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene.")); }
     setFAmblemYuk(false);
   }
@@ -472,7 +539,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                 {fFoto ? <img src={fFoto} alt="" /> : <span className="reklam-foto-bos">📷<br />{t("fkFotoEkle", "İşletme fotoğrafı / logosu ekle")}</span>}
               </div>
               <input ref={fInpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={firmaFotoSec} />
-              {/* GLOXOO — AMBLEM/LOGO ÇİZ: foto yüklemeden Gloxoo resimli amblem hazırlasın (kısa tarif yaz) */}
+              {/* Foto varsa: TAM EKRAN aç + İNDİR (kullanıcı isteği) */}
+              {fFoto && (
+                <div className="reklam-foto-arac">
+                  <button className="reklam-foto-arac-btn" onClick={() => setFBuyukFoto(fFoto)}>🔍 {t("fkTamAc", "Tam ekran aç")}</button>
+                  <button className="reklam-foto-arac-btn" onClick={firmaFotoIndir}>⬇ {t("indir", "İndir")}</button>
+                </div>
+              )}
+              {/* AMBLEM ZEMİN RENGİ — hep beyaz olmasın; kullanıcı seçer (amblem bu renkle çizilir, isim altına yazılır) */}
+              <div className="reklam-kim-bas">{t("fkAmblemZemin", "Amblem zemin rengi")}</div>
+              <div className="reklam-cip-satir">{AMBLEM_RENKLER.map((rk) => <button key={rk.k} className={"reklam-cip reklam-renk-cip" + (fAmblemRenk === rk.k ? " sec" : "")} style={{ background: rk.hex, color: "#4a3500" }} onClick={() => setFAmblemRenk(rk.k)}>{t(rk.ck, rk.ad)}</button>)}</div>
+              {/* GLOXOO — AMBLEM/LOGO ÇİZ: foto yüklemeden Gloxoo resimli amblem hazırlasın (kısa tarif yaz). Firma ismi altına yazılır. */}
               <div className="reklam-amblem-satir">
                 <input className="reklam-inp" type="text" value={fAmblemTarif} onChange={(e) => setFAmblemTarif(e.target.value)} placeholder={t("fkAmblemTarif", "Amblem/logo tarifi (ör. altın lokum kutusu) — istersen boş bırak")} />
                 <button className="reklam-gloxoo-btn" disabled={fAmblemYuk} onClick={firmaAmblemCiz}>{fAmblemYuk ? "⏳" : "🎨"} {t("fkAmblemCiz", "Gloxoo amblem çizsin")}</button>
@@ -510,6 +587,15 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               <button className="reklam-harita-tamam" disabled={!haritaKonum} onClick={haritaOnayla}>✓ {t("fkBuKonum", "Bu konumu kullan")}</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* TAM EKRAN foto/amblem önizleme — altın zemin, indirilebilir (kullanıcı: tam açabileyim, indirebileyim) */}
+      {fBuyukFoto && (
+        <div className="reklam-buyukfoto-fon" onClick={() => setFBuyukFoto(null)}>
+          <img className="reklam-buyukfoto-img" src={fBuyukFoto} alt="" referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} />
+          <button className="reklam-kapat reklam-buyukfoto-kapat" onClick={(e) => { e.stopPropagation(); setFBuyukFoto(null); }} aria-label={t("kapat", "Kapat")}>✕</button>
+          <button className="reklam-buyukfoto-indir" onClick={(e) => { e.stopPropagation(); firmaFotoIndir(); }}>⬇ {t("indir", "İndir")}</button>
         </div>
       )}
     </>
