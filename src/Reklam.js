@@ -394,11 +394,12 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     setFAiYaziYuk(true); setFHata("");
     try {
       const kat = fkAd(fKat);
-      const talimat = `Bir işletme/firma REKLAMI için KISA, çekici, samimi bir tanıtım yazısı yaz. İşletme adı: "${fAd || ""}". Kategori: ${kat}. ${fAciklama.trim() ? 'Sahibin notu: "' + fAciklama.trim() + '" — anlamını KORU, güzelleştir ve zenginleştir. ' : ""}${fFoto ? "Ekteki görsele DİKKATLİCE bak (ne satılıyor/ne var), SADECE gördüğüne göre gerçekçi yaz. " : ""}2-3 cümle; sıcak, davet edici, güven veren; 1-2 uygun emoji. Tek yazı ver; numara/tırnak/madde işareti KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
+      // Görsel SADECE http adresse ise yollanır (köprü base64'ü güvenilir görmüyor). Yeni amblem (data:) ise görsel yollanmaz →
+      // o zaman metinde de "ekteki görsel" DEME (yoksa Gloxoo "görsel bulamadım" diyordu); isim/kategori/nottan yazar.
+      const gorselVar = !!(fFoto && /^https?:\/\//.test(fFoto));
+      const talimat = `Bir işletme/firma REKLAMI için KISA, çekici, samimi bir tanıtım yazısı yaz. İşletme adı: "${fAd || ""}". Kategori: ${kat}. ${fAciklama.trim() ? 'Sahibin notu: "' + fAciklama.trim() + '" — anlamını KORU, güzelleştir ve zenginleştir. ' : ""}${gorselVar ? "Ekteki görsele DİKKATLİCE bak (ne satılıyor/ne var), SADECE gördüğüne göre gerçekçi yaz. " : "İşletme adına ve kategorisine göre yaz (görsel yok, uydurma detay verme). "}2-3 cümle; sıcak, davet edici, güven veren; 1-2 uygun emoji. Tek yazı ver; numara/tırnak/madde işareti KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
       const parcalar = [];
-      // Görseli URL ile yolla (köprü base64'ü güvenilir görmüyor). http foto varsa doğrudan; yeni amblem (data:) ise
-      // görsel atlanır (isim/kategori/nottan yazar) — böylece "görseli göremiyorum" hatası olmaz.
-      if (fFoto && /^https?:\/\//.test(fFoto)) parcalar.push({ type: "image", source: { type: "url", url: fFoto } });
+      if (gorselVar) parcalar.push({ type: "image", source: { type: "url", url: fFoto } });
       parcalar.push({ type: "text", text: talimat });
       const mesajlar = [{ role: "user", content: parcalar.length > 1 ? parcalar : talimat }];
       const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG reklam yazı asistanı. Işletmeler için KISA, cekici, samimi, guven veren tanitim yazilari yazarsin. Ekte gorsel varsa dikkatlice bak, sadece gordugune gore yaz. Istenen dilde yaz; numara/tirnak koyma." }) });
@@ -651,7 +652,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               {fFoto && (
                 <div className="reklam-foto-arac">
                   <button className="reklam-foto-arac-btn" onClick={() => setFBuyukFoto({ liste: [{ url: fFoto, tip: "foto" }], i: 0 })}>🔍 {t("fkTamAc", "Tam ekran aç")}</button>
-                  <button className="reklam-foto-arac-btn" onClick={firmaFotoIndir}>⬇ {t("indir", "İndir")}</button>
+                  <button className="reklam-foto-arac-btn" onClick={() => firmaFotoIndir()}>⬇ {t("indir", "İndir")}</button>
                 </div>
               )}
               {/* AMBLEM ZEMİN RENGİ — hep beyaz olmasın; kullanıcı seçer (amblem bu renkle çizilir, isim altına yazılır) */}
