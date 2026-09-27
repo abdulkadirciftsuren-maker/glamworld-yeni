@@ -8851,18 +8851,19 @@ export default function Anasayfa({ pro = false }) {
   };
   function fotoTouchStart(e) {
     try {
+      e.stopPropagation(); // dokunuş ALTTAKİ ana sayfaya GEÇMESİN (başka sayfa/foto açılmasın, kapanmasın)
       if (e.touches.length === 2) {
         const d = _mesafe(e.touches);
         pinchRef.current = { tip: "pinch", d0: (d > 1 ? d : 1), s0: zoom.s }; // d0 asla 0 olmasın (bölme/çökme önlenir)
       } else if (e.touches.length === 1 && zoom.s > 1) {
         pinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: zoom.x, oy: zoom.y };
-      } else if (e.touches.length === 1) {
-        // Yakınlaştırılmamış: yatay kaydırma izle → sola çekince üye sayfası açılır
-        pinchRef.current = { tip: "kaydir", x0: e.touches[0].clientX, y0: e.touches[0].clientY, dx: 0, dy: 0 };
+      } else {
+        pinchRef.current = null; // YAKINLAŞTIRILMAMIŞKEN kaydırma YOK → alt sayfayı algılayıp ayna/profil açması/kapatması biter (kullanıcı isteği)
       }
     } catch (x) { pinchRef.current = null; }
   }
   function fotoTouchMove(e) {
+    try { e.stopPropagation(); } catch (x) {}
     const p = pinchRef.current; if (!p) return;
     try {
       if (p.tip === "pinch" && e.touches.length === 2) {
@@ -8876,17 +8877,11 @@ export default function Anasayfa({ pro = false }) {
         e.preventDefault();
         const el = e.currentTarget, nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0);
         setZoom((z) => { const sn = _zoomSinirla(nx, ny, z.s, el); return { ...z, x: sn.x, y: sn.y }; });
-      } else if (p.tip === "kaydir" && e.touches.length === 1) {
-        p.dx = e.touches[0].clientX - p.x0; p.dy = e.touches[0].clientY - p.y0;
       }
     } catch (x) {}
   }
   function fotoTouchEnd(e) {
-    const p = pinchRef.current;
-    // Sola çekiş (yatay > 70px ve dikeyden baskın) → o üyenin paylaşım sayfası
-    if (p && p.tip === "kaydir" && p.dx < -70 && Math.abs(p.dx) > Math.abs(p.dy) * 1.6) {
-      if (tamFotoRef.current) uyeyiAc(tamFotoRef.current);
-    }
+    try { e.stopPropagation(); } catch (x) {}
     if (e.touches.length === 0) pinchRef.current = null;
   }
   function fotoCiftDokun() { setZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
@@ -9221,7 +9216,7 @@ export default function Anasayfa({ pro = false }) {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
       // .ak-foto-buyut: tam ekran Akademi fotoğrafı — üstünde parmak gezince ZOOM/pan yapılır, sayfa DEĞİŞMEZ.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .reklam-buyukfoto-fon, .reklam-harita-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .reklam-buyukfoto-fon, .reklam-harita-fon, .tamfoto-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
