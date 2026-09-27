@@ -8842,10 +8842,16 @@ export default function Anasayfa({ pro = false }) {
       if (sar && w && h) sar.classList.toggle("yatay", w > h * 1.08);
     } catch (x) {}
   };
-  // Kaydırmayı SINIRLA → tek foto da (firma/galeri gibi) ekran dışına/boşluğa çekilmez (kullanıcı: foto ekrandan çıkıyor).
+  // Kaydırmayı SINIRLA → foto ekran dışına/sarı boşluğa çekilmez. ÖNEMLİ: sınır KUTU'ya göre değil,
+  // fotonun EKRANDA GERÇEK GÖRÜNEN boyutuna (object-fit:contain) göre hesaplanır → yatay fotoda YUKARI/AŞAĞI,
+  // dikey fotoda SAĞ/SOL taşma olmaz (kullanıcı: sağ/sol düzeldi ama alt/üst kaçıyordu).
   const _zoomSinirla = (x, y, s, el) => {
-    const w = (el && el.offsetWidth) || 0, h = (el && el.offsetHeight) || 0;
-    const maxX = (w * (s - 1)) / 2, maxY = (h * (s - 1)) / 2;
+    if (!el) return { x: 0, y: 0 };
+    const cw = el.offsetWidth || el.clientWidth || 0, ch = el.offsetHeight || el.clientHeight || 0;
+    const nw = el.naturalWidth || el.videoWidth || cw, nh = el.naturalHeight || el.videoHeight || ch;
+    let rw = cw, rh = ch;
+    if (nw && nh && cw && ch) { const f = Math.min(cw / nw, ch / nh); rw = nw * f; rh = nh * f; } // ekranda görünen gerçek foto boyutu
+    const maxX = Math.max(0, (rw * s - cw) / 2), maxY = Math.max(0, (rh * s - ch) / 2);
     const gx = isFinite(x) ? x : 0, gy = isFinite(y) ? y : 0;
     return { x: Math.max(-maxX, Math.min(maxX, gx)), y: Math.max(-maxY, Math.min(maxY, gy)) };
   };
@@ -8910,20 +8916,15 @@ export default function Anasayfa({ pro = false }) {
   }
   function galTouchMove(e) {
     const p = gPinchRef.current; if (!p) return;
+    const gEl = (e.currentTarget && e.currentTarget.querySelector && e.currentTarget.querySelector(".oniz-medya")) || e.currentTarget;
     if (p.tip === "pinch" && e.touches.length === 2) {
       e.preventDefault();
-      const s = Math.min(5, Math.max(1, p.s0 * (_mesafe(e.touches) / p.d0)));
-      setGZoom((z) => ({ ...z, s, ...(s === 1 ? { x: 0, y: 0 } : {}) }));
+      let s = p.s0 * (_mesafe(e.touches) / (p.d0 || 1)); if (!isFinite(s)) s = 1; s = Math.min(5, Math.max(1, s));
+      setGZoom((z) => { if (s === 1) return { s: 1, x: 0, y: 0 }; const sn = _zoomSinirla(z.x, z.y, s, gEl); return { s, x: sn.x, y: sn.y }; });
     } else if (p.tip === "pan" && e.touches.length === 1) {
       e.preventDefault(); e.stopPropagation(); // büyütülmüşken tek parmak = kaydır (fotoğrafı DEĞİŞTİRME)
-      const el = (e.currentTarget && e.currentTarget.querySelector && e.currentTarget.querySelector(".oniz-medya")) || e.currentTarget;
       const nx = p.ox + (e.touches[0].clientX - p.x0), ny = p.oy + (e.touches[0].clientY - p.y0);
-      setGZoom((z) => {
-        // kaydırmayı SINIRLA → fotoğraf ekran dışına taşmaz
-        const w = (el && el.offsetWidth) || 0, h = (el && el.offsetHeight) || 0;
-        const maxX = (w * (z.s - 1)) / 2, maxY = (h * (z.s - 1)) / 2;
-        return { ...z, x: Math.max(-maxX, Math.min(maxX, nx)), y: Math.max(-maxY, Math.min(maxY, ny)) };
-      });
+      setGZoom((z) => { const sn = _zoomSinirla(nx, ny, z.s, gEl); return { ...z, x: sn.x, y: sn.y }; }); // fotonun gerçek boyutuna göre sınır (alt/üst de doğru)
     }
   }
   function galTouchEnd(e) { if (e.touches.length === 0) gPinchRef.current = null; }

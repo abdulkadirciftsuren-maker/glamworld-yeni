@@ -286,11 +286,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = onceki; };
   }, [fBuyukFoto]);
-  // Kaydırmayı SINIRLA → fotoğraf ekran dışına/sarı boşluğa taşmaz (kullanıcı: dışarı çekilip sayfa değişiyordu)
+  // Kaydırmayı SINIRLA → foto ekran dışına/sarı boşluğa taşmaz. Sınır KUTU'ya göre değil, fotonun EKRANDA GERÇEK
+  // GÖRÜNEN boyutuna (object-fit:contain) göre → yatay fotoda alt/üst, dikey fotoda sağ/sol taşma olmaz.
   const fSinirla = (x, y, s, el) => {
-    const w = (el && el.offsetWidth) || 0, h = (el && el.offsetHeight) || 0;
-    const maxX = (w * (s - 1)) / 2, maxY = (h * (s - 1)) / 2;
-    return { x: Math.max(-maxX, Math.min(maxX, x)), y: Math.max(-maxY, Math.min(maxY, y)) };
+    if (!el) return { x: 0, y: 0 };
+    const cw = el.offsetWidth || el.clientWidth || 0, ch = el.offsetHeight || el.clientHeight || 0;
+    const nw = el.naturalWidth || cw, nh = el.naturalHeight || ch;
+    let rw = cw, rh = ch;
+    if (nw && nh && cw && ch) { const f = Math.min(cw / nw, ch / nh); rw = nw * f; rh = nh * f; }
+    const maxX = Math.max(0, (rw * s - cw) / 2), maxY = Math.max(0, (rh * s - ch) / 2);
+    const gx = isFinite(x) ? x : 0, gy = isFinite(y) ? y : 0;
+    return { x: Math.max(-maxX, Math.min(maxX, gx)), y: Math.max(-maxY, Math.min(maxY, gy)) };
   };
   function fbTouchStart(e) {
     e.stopPropagation(); // dokunuş alttaki ana sayfaya GEÇMESİN (sekme değiştirmesin)
