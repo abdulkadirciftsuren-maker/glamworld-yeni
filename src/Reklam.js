@@ -58,14 +58,8 @@ function kucultB64(dataUrl, max = 720) {
     } catch (e) { res(dataUrl); }
   });
 }
-// Vision (görsel okuma) için görseli Anthropic biçimine çevir: {type:"image", source:{type:"base64", media_type, data}}.
-// (HATA DÜZELTME: eskiden source olarak HAM dataURL yollanıyordu → köprü hata veriyordu: "Gloxoo şu an yazamadı".)
-function gorselParcasi(durl) {
-  if (!durl || durl.indexOf("data:image") !== 0) return null;
-  const vir = durl.indexOf(","); if (vir < 0) return null;
-  const mt = (durl.match(/data:(image\/[a-z0-9.+-]+)/i) || [])[1] || "image/jpeg";
-  return { type: "image", source: { type: "base64", media_type: mt, data: durl.slice(vir + 1) } };
-}
+// NOT: Vision (görsel okuma) için köprü base64'ü güvenilir görmüyor → görseller URL ile yollanıyor
+// (önce Firebase'e yüklenip adresi kullanılıyor). Eski base64 yardımcısı kaldırıldı.
 // AMBLEM ZEMİN RENKLERİ — kullanıcı seçer (hep beyaz olmasın). Hepsi AÇIK/canlı (asla siyah/koyu).
 const AMBLEM_RENKLER = [
   { k: "krem", hex: "#fff3d6", en: "soft warm cream", ck: "renkKrem", ad: "Krem" },
@@ -331,14 +325,19 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       const not = (g.aciklama || "").trim();
       const talimat = `Bir işletme ÜRÜN/GÖRSEL galerisi için KISA (1-2 cümle) çekici bir açıklama yaz. İşletme: "${fAd || ""}" (kategori: ${kat}). ${not ? 'Sahibin notu: "' + not + '" — anlamını KORU, güzelleştir. ' : ""}${g.tip === "video" ? "Bu bir ürün VİDEOSU. " : "Ekteki görsele DİKKATLİCE bak; SADECE gerçekten gördüğün ürünü/şeyi anlat. "}Sıcak, davet edici; en fazla 1 uygun emoji. Sadece açıklamayı ver; numara/tırnak/başlık KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
       const parcalar = [];
-      // Foto ise görseli DOĞRU biçimde (küçültüp base64) ekle → Gloxoo görerek yazsın. (Video için kare çıkarmak zor → notla yazar.)
+      // Foto ise görseli URL ile yolla (köprü base64'ü güvenilir görmüyor, URL'i görüyor). Yeni foto ise ÖNCE yükle,
+      // adresini al ve ögeye KAYDET (yayında tekrar yüklenmez). Video için kare çıkarmak zor → notla yazar.
       if (g.tip !== "video") {
-        let durl = "";
-        try {
-          if (g.dosya) durl = await dosyaOku(g.dosya);
-          else if (g.url) { const b = await (await fetch(g.url + (g.url.indexOf("?") >= 0 ? "&" : "?") + "gloxai=" + Date.now(), { mode: "cors", cache: "no-store" })).blob(); durl = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result || "")); r.onerror = () => res(""); r.readAsDataURL(b); }); }
-          if (durl) { const kucuk = await kucultB64(durl, 900); const gp = gorselParcasi(kucuk); if (gp) parcalar.push(gp); }
-        } catch (e) {}
+        let url = g.url || "";
+        if (!url && g.dosya) {
+          try {
+            const d = await dosyaOku(g.dosya);
+            const kucuk = await kucultB64(d, 1400);
+            url = await gorselYukle(kucuk, uid || "reklam");
+            if (url) setFGaleri((a) => a.map((x, k) => (k === i ? { ...x, url, dosya: undefined, onizle: url } : x)));
+          } catch (e) {}
+        }
+        if (url) parcalar.push({ type: "image", source: { type: "url", url } });
       }
       parcalar.push({ type: "text", text: talimat });
       const mesajlar = [{ role: "user", content: parcalar.length > 1 ? parcalar : talimat }];
@@ -382,8 +381,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       const kat = fkAd(fKat);
       const talimat = `Bir işletme/firma REKLAMI için KISA, çekici, samimi bir tanıtım yazısı yaz. İşletme adı: "${fAd || ""}". Kategori: ${kat}. ${fAciklama.trim() ? 'Sahibin notu: "' + fAciklama.trim() + '" — anlamını KORU, güzelleştir ve zenginleştir. ' : ""}${fFoto ? "Ekteki görsele DİKKATLİCE bak (ne satılıyor/ne var), SADECE gördüğüne göre gerçekçi yaz. " : ""}2-3 cümle; sıcak, davet edici, güven veren; 1-2 uygun emoji. Tek yazı ver; numara/tırnak/madde işareti KOYMA. Kullanıcının dili: "${dil || "tr"}" — MUTLAKA o dilde yaz.`;
       const parcalar = [];
-      // Görseli DOĞRU biçimde ekle (küçültüp base64 nesnesine çevir) — yoksa köprü hata veriyordu.
-      if (fFoto) { try { const kucuk = await kucultB64(fFoto, 900); const gp = gorselParcasi(kucuk); if (gp) parcalar.push(gp); } catch (e) {} }
+      // Görseli URL ile yolla (köprü base64'ü güvenilir görmüyor). http foto varsa doğrudan; yeni amblem (data:) ise
+      // görsel atlanır (isim/kategori/nottan yazar) — böylece "görseli göremiyorum" hatası olmaz.
+      if (fFoto && /^https?:\/\//.test(fFoto)) parcalar.push({ type: "image", source: { type: "url", url: fFoto } });
       parcalar.push({ type: "text", text: talimat });
       const mesajlar = [{ role: "user", content: parcalar.length > 1 ? parcalar : talimat }];
       const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: "Sen Gloxoo'sun — GLOXORG reklam yazı asistanı. Işletmeler için KISA, cekici, samimi, guven veren tanitim yazilari yazarsin. Ekte gorsel varsa dikkatlice bak, sadece gordugune gore yaz. Istenen dilde yaz; numara/tirnak koyma." }) });
