@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import L from "leaflet"; // haritadan konum seçmek için (iş yerini işaretle) — OSM, uygulamanın kullandığı kaynak
 import { gloxooResimUret } from "./firebase"; // Gloxoo amblem/logo çizimi
-import { pazarUrunEkle, pazarUrunleriOku, pazarUrunSil, gorselYukle } from "./veri";
+import { pazarUrunEkle, pazarUrunGuncelle, pazarUrunleriOku, pazarUrunSil, gorselYukle } from "./veri";
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev"; // Gloxoo yazı köprüsü (tanıtım yazısı)
 
 const KATEGORILER = [
@@ -92,6 +92,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [fKonumDurum, setFKonumDurum] = useState("");
   const [fKaydet, setFKaydet] = useState(false);
   const [fHata, setFHata] = useState("");
+  const [fDuzenlenenId, setFDuzenlenenId] = useState(null); // null = yeni reklam; dolu = bu reklamı DÜZENLİYORUZ
   const fInpRef = useRef(null);
   // HARİTADAN KONUM SEÇME (iş yerini işaretle — GPS'in aldığı "şu anki yer" değil)
   const [haritaAcik, setHaritaAcik] = useState(false);
@@ -223,7 +224,15 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
 
   // --- FİRMA / İŞLETME reklamı ---
-  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); }
+  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFDuzenlenenId(null); }
+  // FİRMA REKLAMINI DÜZENLE — mevcut reklamın bilgilerini forma doldur, "düzenleme" moduna geç (yayınlayınca ÜSTÜNE yazar, yeni eklemez)
+  function firmaDuzenleBaslat(r) {
+    if (!r) return;
+    setFFoto(r.kapak || ""); setFAd(r.baslik || ""); setFKat(r.kategori || "yemek"); setFAciklama(r.aciklama || "");
+    setFTel(r.telefon || ""); setFWeb(r.web || ""); setFAdres(r.adres || ""); setFKonum(r.konum || null);
+    setFKonumDurum(r.konum ? "ok" : ""); setFAmblemTarif(""); setFHata(""); setFDuzenlenenId(r.id);
+    setDetay(null); setFirmaVerAcik(true);
+  }
   async function firmaFotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFFoto(d); setFHata(""); } }
   // HARİTAYI AÇ — iş yerini haritada işaretle (parmakla dokun/pini sürükle)
   function haritaAc() { setHaritaKonum(fKonum ? { lat: fKonum.enlem, lng: fKonum.boylam } : null); setHaritaAcik(true); }
@@ -279,13 +288,18 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     if (!fTel.trim() && !fWeb.trim() && !fAdres.trim() && !fKonum) { setFHata(t("fkIletisimOnce", "En az bir iletişim ekle: telefon, web veya adres.")); return; }
     setFKaydet(true); setFHata("");
     try {
-      let kapak = ""; try { kapak = await gorselYukle(fFoto, uid || "reklam"); } catch (e) {}
-      if (!kapak) kapak = fFoto;
-      await pazarUrunEkle({
-        reklam: true, reklamTur: "firma", tur: "reklam", kapak, baslik: fAd.trim(), kategori: fKat,
+      // Foto SADECE yeni seçildiyse (data:) yüklenir; düzenlemede eski foto (http) aynı kalırsa tekrar yüklenmez.
+      let kapak = fFoto;
+      if (fFoto && fFoto.indexOf("data:") === 0) { try { const u = await gorselYukle(fFoto, uid || "reklam"); if (u) kapak = u; } catch (e) {} }
+      const bilgi = {
+        kapak, baslik: fAd.trim(), kategori: fKat,
         aciklama: fAciklama.trim(), telefon: fTel.trim(), web: webDuzelt(fWeb), adres: fAdres.trim(), konum: fKonum || null,
-        uid: uid || "", satici: benAd || "", saticiFoto: benFoto || "",
-      });
+      };
+      if (fDuzenlenenId) {
+        await pazarUrunGuncelle(fDuzenlenenId, bilgi); // DÜZENLE: mevcut reklamın üstüne yaz
+      } else {
+        await pazarUrunEkle({ reklam: true, reklamTur: "firma", tur: "reklam", ...bilgi, uid: uid || "", satici: benAd || "", saticiFoto: benFoto || "" });
+      }
       firmaFormSifirla(); setFirmaVerAcik(false); yukle();
     } catch (e) { setFHata(t("rkOlmadi", "Yayınlanamadı, tekrar dene.")); }
     setFKaydet(false);
@@ -369,6 +383,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                     <button className="reklam-firma-btn firma-mesaj" onClick={() => { const m = `"${detay.baslik}" işletmeniz için yazıyorum. Bilgi almak istiyorum.`; setDetay(null); saticiyaYaz && saticiyaYaz({ uid: detay.sahipUid || detay.uid, ad: detay.satici, foto: detay.saticiFoto }, m); }}>💬 {t("fkMesaj", "Mesaj")}</button>
                     {detay.web && <a className="reklam-firma-btn firma-web" href={detay.web} target="_blank" rel="noreferrer">🌐 {t("fkWeb", "Web sitesi")}</a>}
                     {yolTarifiUrl(detay) && <a className="reklam-firma-btn firma-yol" href={yolTarifiUrl(detay)} target="_blank" rel="noreferrer">🗺️ {t("fkYol", "Yol tarifi")}</a>}
+                    {silinebilir(detay) && <button className="reklam-firma-btn firma-duzenle" onClick={() => firmaDuzenleBaslat(detay)}>🖊 {t("duzelt", "Düzenle")}</button>}
                     {silinebilir(detay) && <button className="reklam-sil-btn" onClick={() => reklamSilEt(detay)}>🗑 {t("rkSil", "Reklamı Sil")}{yonetici && !benimMi(detay) ? " (" + t("yonetici", "yönetici") + ")" : ""}</button>}
                   </div>
                 </>
@@ -448,8 +463,8 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
         <div className="reklam-fon" onClick={(e) => { if (e.target === e.currentTarget) setFirmaVerAcik(false); }}>
           <div className="reklam-detay">
             <div className="reklam-detay-ust">
-              <span className="reklam-detay-bas">🏢 {t("fkYeni", "Firma / İşletme Reklamı")}</span>
-              <button className="reklam-kapat" onClick={() => setFirmaVerAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+              <span className="reklam-detay-bas">🏢 {fDuzenlenenId ? t("duzelt", "Düzenle") : t("fkYeni", "Firma / İşletme Reklamı")}</span>
+              <button className="reklam-kapat" onClick={() => { setFirmaVerAcik(false); firmaFormSifirla(); }} aria-label={t("kapat", "Kapat")}>✕</button>
             </div>
             <div className="reklam-detay-kaydir">
               <div className="reklam-not">{t("rkUcretsizNot", "Şimdilik ÜCRETSİZ. İleride reklam yayını ücretli olacak.")}</div>
@@ -475,7 +490,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                 {fKonum ? "✓ " + t("fkKonumSecildi", "İş yeri haritada seçildi (değiştir)") : "🗺️ " + t("fkHaritaSec", "Haritadan iş yerini seç")}
               </button>
               {fHata && <div className="reklam-hata">⚠️ {fHata}</div>}
-              <button className="reklam-yayinla" disabled={fKaydet} onClick={firmaYayinla}>{fKaydet ? "⏳ " + t("rkYayinlaniyor", "Yayınlanıyor…") : "✅ " + t("rkYayinla", "Yayınla")}</button>
+              <button className="reklam-yayinla" disabled={fKaydet} onClick={firmaYayinla}>{fKaydet ? "⏳ " + t("rkYayinlaniyor", "Yayınlanıyor…") : (fDuzenlenenId ? "✅ " + t("kaydet", "Kaydet") : "✅ " + t("rkYayinla", "Yayınla"))}</button>
             </div>
           </div>
         </div>

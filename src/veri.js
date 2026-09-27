@@ -1020,6 +1020,10 @@ export async function pazarUrunSil(id) {
 export async function pazarFavGuncelle(id, delta) {
   try { await updateDoc(doc(db, "pazarUrunleri", id), { favSayi: increment(delta) }); return true; } catch (e) { return false; }
 }
+// Reklam/ilan DÜZENLE — sahibi (ya da yönetici) kendi reklamının alanlarını günceller (kural zaten izin veriyor).
+export async function pazarUrunGuncelle(id, veri) {
+  try { await updateDoc(doc(db, "pazarUrunleri", id), { ...veri, guncelleme: serverTimestamp() }); return true; } catch (e) { return false; }
+}
 
 // 🎵 GLOXORG HAZIR MÜZİK KÜTÜPHANESİ — herkes OKUR (paylaşımına şarkı seçmek için), SADECE site sahibi ekler/siler (telifsiz parçalar).
 // Firestore koleksiyonu: gloxMuzik. (Kural: read if true; create/update/delete if yonetici.)
