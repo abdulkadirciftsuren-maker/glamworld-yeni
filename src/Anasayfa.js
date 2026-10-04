@@ -13873,6 +13873,8 @@ export default function Anasayfa({ pro = false }) {
               {!tm.silindi && GLOME_TEPKI.map((emo) => (
                 <button key={emo} className="sts-emo" onClick={() => tepkiSec(tm.id, emo)}>{emo}</button>
               ))}
+              {/* KOPYALA — mesaj yazısını panoya kopyala (hem gelen hem giden mesaj). Basılı tut → menüden Kopyala. */}
+              {!tm.silindi && tm.metin && <button className="sts-islem" onClick={() => { panoyaKopyala(tm.metin); setTepkiMesaj(null); }} title={t("kopyala", "Kopyala")}>📋</button>}
               {benimMsj && !tm.silindi && tm.metin && <button className="sts-islem" onClick={() => mesajDuzenleBaslat(tm)} title={t("duzenle", "Düzenle")}>✏️</button>}
               {benimMsj && !tm.silindi && <button className="sts-islem sts-sil" onClick={() => mesajSilEt(tm.id)} title={t("sil", "Geri çek / Sil")}>🗑️</button>}
             </div>
