@@ -6657,7 +6657,15 @@ export default function Anasayfa({ pro = false }) {
       {
         const sonKulC = (yeniListe[sonIdx] && yeniListe[sonIdx].rol === "user") ? (yeniListe[sonIdx].metin || "") : "";
         const kulDusC = sonKulC.toLowerCase();
-        const paylasNiyet = /(payla|mesaj|resim|resm|görsel|gorsel|foto|kart|dua|gönderi|gonderi|hazırla|hazirla|yaz|ver|iste|göster|goster|mübarek|mubarek|card|image|picture|photo|send|make|create|bild|karte)/.test(kulDusC);
+        // ⛔ YANLIŞ TETİKLENMEYİ ÖNLE (kullanıcı şikâyeti B353): İçinde "cuma/bayram..." kelimesi GEÇEN ama aslında
+        // CİDDİ, UZUN bir SORU/anlatım olan yazıya ASLA tebrik kartı BASMA (kullanıcı "cuma akşam geldim" yazınca Gloxoo
+        // yanlışlıkla 3 kez Cuma tebriği üretmişti). Tebrik kartını SADECE kullanıcı AÇIKÇA "... paylaşımı/kartı/resmi/
+        // görseli hazırla/yap/ver" gibi KISA bir istek yazınca üret. Böylece normal sorular hep CEVAPLANIR, kart basılmaz.
+        const kelimeSayisi = kulDusC.trim().split(/\s+/).filter(Boolean).length;
+        // AÇIK kart/paylaşım sözü (genel "yaz/ver/dua/mesaj" gibi cümlede sık geçen kelimeleri ÇIKARDIK → yanlış yakalamasın)
+        const acikKartSoz = /(payla[şs]|kart|karte|resim|resm|görsel|gorsel|foto|photo|picture|image|gönderi|gonderi|card|bild|tebrik)/.test(kulDusC);
+        // Gerçekten kart istenmiş say: AÇIK kart sözü VAR ve mesaj KISA (en çok 14 kelime). Uzun/ciddi yazıyı YAKALAMAZ.
+        const paylasNiyet = acikKartSoz && kelimeSayisi <= 14;
         let tebrikTur = "";
         for (const k of Object.keys(TEBRIK)) { if (TEBRIK[k].test.test(kulDusC)) { tebrikTur = k; break; } }
         if (tebrikTur && paylasNiyet) {
