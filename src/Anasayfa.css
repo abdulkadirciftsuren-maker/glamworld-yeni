@@ -6065,3 +6065,21 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .grp-uye-satir b{ flex:1 1 auto; min-width:0; font-size:15.5px; font-weight:800; color:#4a3600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .grp-uye-cikar{ flex:0 0 auto; padding:6px 12px; border:1.5px solid rgba(224,32,44,0.5); border-radius:10px; background:#fff2f0; color:#c0202c; font-size:13px; font-weight:800; cursor:pointer; }
 .grp-uye-ayril{ padding:10px 16px; border:none; border-radius:12px; background:#e0202c; color:#fff; font-size:15px; font-weight:900; cursor:pointer; }
+
+/* ===== KULLANICI/TESTÇİ GERİ BİLDİRİM GÖNDERME penceresi (ANAYASA: ALTIN/canlı zemin — siyah YOK; kare köşe; okunur; masaüstü ≥ telefon) ===== */
+.gbg-pencere{ background:linear-gradient(170deg,#fff6db,#ffe9a8 52%,#f0cf6e) !important; border:1px solid rgba(180,130,20,.55) !important; width:min(440px,94vw); }
+.gbg-pencere .msj-bas{ background:linear-gradient(135deg,#f0c84b,#d9a82f); }
+.gbg-pencere .msj-baslik{ color:#4a3208; font-weight:800; }
+.gbg-pencere .msj-kapat{ color:#4a3208; }
+.gbg-govde{ display:flex; flex-direction:column; gap:12px; padding:16px; }
+.gbg-not{ margin:0; color:#5a4312; font-size:15px; line-height:1.5; font-weight:600; }
+/* yazı kutusu: krem zemin + koyu kahve yazı (okunur); 16px → iPhone'da odakta yakınlaşmaz */
+.gbg-yaz{ width:100%; box-sizing:border-box; min-height:120px; max-height:40vh; resize:vertical; border:1.5px solid rgba(180,130,20,.55); border-radius:14px; padding:13px 15px; font-size:16px; font-family:inherit; background:#fffdf5; color:#3a2c08; outline:none; line-height:1.5; }
+.gbg-yaz::placeholder{ color:#9a8446; }
+.gbg-gonder{ align-self:stretch; border:none; border-radius:14px; padding:14px; font-size:16px; font-weight:800; font-family:'Cinzel',serif; letter-spacing:.02em; color:#1a1206; background:linear-gradient(180deg,#FFE9A8,#FFD700 55%,#B8860B); cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.25); border-top:1px solid rgba(255,255,255,.25); }
+.gbg-gonder:disabled{ opacity:.5; cursor:default; }
+/* yönetici konsolunda kullanıcı görüşü kartı (💬) ve cihaz satırı */
+.gb-kart.kullanici{ border-left:4px solid #3a8dde; }
+.gb-ozet-oge.kullanici{ color:#2f7fd0; }
+.gb-kart-cihaz{ margin-top:5px; font-size:11px; color:#8a7a52; overflow-wrap:anywhere; }
+@media (min-width:560px){ .gbg-not{ font-size:16px; } .gbg-yaz{ font-size:17px; } .gbg-gonder{ font-size:17px; } }

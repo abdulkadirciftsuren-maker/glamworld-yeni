@@ -626,8 +626,10 @@ export async function geriBildirimEkle(b) {
     const ref = doc(collection(db, "geriBildirim"));
     await setDoc(ref, {
       uid: b.uid || "", ad: (b.ad || "").slice(0, 80),
-      oneri: (b.oneri || "").slice(0, 600), yorum: (b.yorum || "").slice(0, 600),
+      oneri: (b.oneri || "").slice(0, 600), yorum: (b.yorum || "").slice(0, 2000),
       begendi: !!b.begendi, sayfa: b.sayfa || "paylas-ai",
+      tur: b.tur || "ai-oneri",   // "ai-oneri" = Gloxoo öneri 👍/👎 | "kullanici" = testçi/kullanıcı doğrudan görüş yazdı
+      cihaz: (b.tur === "kullanici" && typeof navigator !== "undefined" ? (navigator.userAgent || "").slice(0, 200) : ""), // kullanıcı görüşünde hangi telefon/tarayıcı (hata ayıklamaya yardımcı)
       zamanMs: Date.now(), olusturma: serverTimestamp(),
     });
     return ref.id;

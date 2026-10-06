@@ -2167,6 +2167,10 @@ export default function Anasayfa({ pro = false }) {
   const [aiYorumAcik, setAiYorumAcik] = useState(-1);           // beğenmedim → "neyi beğenmedin" kutusu açık öneri indeksi (-1 kapalı)
   const [aiYorum, setAiYorum] = useState("");                   // beğenmeme yorumu metni
   const [geriBildirimAcik, setGeriBildirimAcik] = useState(false); // YÖNETİCİ konsolu açık mı
+  // KULLANICI/TESTÇİ GERİ BİLDİRİM GÖNDERME penceresi (herkese açık; yönetici konsolundan AYRI)
+  const [gbGonderAcik, setGbGonderAcik] = useState(false);        // "Geri bildirim gönder" penceresi açık mı
+  const [gbGonderMetin, setGbGonderMetin] = useState("");         // kullanıcının yazdığı görüş
+  const [gbGonderiliyor, setGbGonderiliyor] = useState(false);    // gönderiliyor mu (çift gönderimi önle)
   const [geriBildirimListe, setGeriBildirimListe] = useState([]);  // toplanan geri bildirimler
   const [gbYukleniyor, setGbYukleniyor] = useState(false);
   const [gbSekme, setGbSekme] = useState("geri");                 // geri | istatistik | kullanici | gonderi
@@ -6168,6 +6172,32 @@ export default function Anasayfa({ pro = false }) {
   const geriBildirimAc = async () => {
     setMenuAcik(false); setGeriBildirimAcik(true); setGbSekme("geri");
     yoneticiVeriYukle();
+  };
+  // KULLANICI/TESTÇİ — "Geri bildirim gönder" penceresini aç
+  const gbGonderPencereAc = () => { setMenuAcik(false); setGbGonderMetin(""); setGbGonderAcik(true); };
+  // KULLANICI/TESTÇİ — yazdığı görüşü gönder (geriBildirim koleksiyonuna; yönetici konsolunda 💬 olarak görünür)
+  const gbGonder = async () => {
+    const metin = (gbGonderMetin || "").trim();
+    if (!metin || gbGonderiliyor) return;
+    setGbGonderiliyor(true);
+    let ok = false;
+    try {
+      const id = await geriBildirimEkle({
+        uid: (auth.currentUser && auth.currentUser.uid) || "",
+        ad: adTam || "",
+        yorum: metin,
+        tur: "kullanici",
+        sayfa: aktifKod || "",
+      });
+      ok = !!id;
+    } catch (e) { ok = false; }
+    setGbGonderiliyor(false);
+    if (ok) {
+      setGbGonderMetin(""); setGbGonderAcik(false);
+      try { bilgiBalonu(t("geriBildirimTesekkur", "Teşekkürler! Geri bildirimin bize ulaştı 💎")); } catch (e) {}
+    } else {
+      try { bilgiBalonu(t("geriBildirimHata", "Gönderilemedi, internetini kontrol edip tekrar dene.")); } catch (e) {}
+    }
   };
   // Yöneticide bir kullanıcının e-postasını panoya kopyala (tam adres — kesilmeden)
   const gbEpostaKopyala = (k) => {
@@ -12930,6 +12960,8 @@ export default function Anasayfa({ pro = false }) {
             <button className="ana-menu-oge c-yesil" onClick={() => { setMenuAcik(false); setAktifKod("muhasebe"); }}><span className="ana-menu-ik">📊</span>{t("muhBaslik", "Muhasebe")}</button>
             <button className="ana-menu-oge c-kirmizi" onClick={() => { setMenuAcik(false); setUyelikKartAcik(true); }}><span className="ana-menu-ik">💎</span>{t("proOlBaslik", "Profesyonel Ol")}</button>
             <button className="ana-menu-oge c-turuncu" onClick={() => { setMenuAcik(false); setAyarlarAcik(true); }}><span className="ana-menu-ik">⚙️</span>{t("menuAyarlar", "Ayarlar")}</button>
+            {/* HERKESE AÇIK — testçiler/kullanıcılar görüş/şikâyet/öneri gönderir (yönetici konsolundan AYRI) */}
+            <button className="ana-menu-oge c-mavi" onClick={gbGonderPencereAc}><span className="ana-menu-ik">💬</span>{t("geriBildirimGonderBtn", "Geri bildirim gönder")}</button>
             {yoneticiMi() && <button className="ana-menu-oge c-mor" onClick={geriBildirimAc}><span className="ana-menu-ik">📊</span>{t("geriBildirimBaslik", "Geri Bildirimler")}</button>}
             <button className="ana-menu-oge c-yesil" onClick={() => { setMenuAcik(false); setDavetKopya(false); setDavetAcik(true); }}><span className="ana-menu-ik">🔗</span>{(DAVET_CEVIRI[dil] || DAVET_CEVIRI.en).menu}</button>
             {/* TELEFON BİLDİRİMLERİ — ayardan aç/durum göster */}
@@ -12945,6 +12977,24 @@ export default function Anasayfa({ pro = false }) {
       ), document.body)}
 
       {/* YÖNETİCİ KONSOLU (sadece sahip): Geri bildirim · İstatistik · Kullanıcılar · Gönderiler */}
+      {/* KULLANICI/TESTÇİ — GERİ BİLDİRİM GÖNDER penceresi (herkese açık; .msj-fon artık klavye-güvenli --gercek-vh) */}
+      {gbGonderAcik && createPortal((
+        <div className="msj-fon gbg-fon" onClick={(e) => { if (e.target === e.currentTarget) setGbGonderAcik(false); }}>
+          <div className="msj-pencere gbg-pencere">
+            <div className="msj-bas">
+              <span className="msj-baslik">💬 {t("geriBildirimGonderBtn", "Geri bildirim gönder")}</span>
+              <button className="msj-kapat" onClick={() => setGbGonderAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
+            </div>
+            <div className="gbg-govde">
+              <p className="gbg-not">{t("gbgNot", "Uygulama hakkındaki görüşünü, beğendiğin bir şeyi, bir hatayı ya da öneriyi yaz. Bize çok yardımcı olur 💛")}</p>
+              <textarea className="gbg-yaz" value={gbGonderMetin} onChange={(e) => setGbGonderMetin(e.target.value)} placeholder={t("gbgYer", "Görüşünü buraya yaz…")} rows={5} maxLength={2000} autoFocus />
+              <button className="gbg-gonder" onClick={gbGonder} disabled={!gbGonderMetin.trim() || gbGonderiliyor}>
+                {gbGonderiliyor ? t("gonderiliyor", "Gönderiliyor…") : "💌 " + t("gonder", "Gönder")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ), document.body)}
       {geriBildirimAcik && createPortal((
         <div className="msj-fon gb-fon" onClick={(e) => { if (e.target === e.currentTarget) setGeriBildirimAcik(false); }}>
           <div className="msj-pencere gb-pencere">
@@ -12966,19 +13016,21 @@ export default function Anasayfa({ pro = false }) {
                   geriBildirimListe.length === 0 ? <div className="gb-bos">{t("geriBildirimYok", "Henüz geri bildirim yok.")}</div>
                   : <>
                       <div className="gb-ozet">
-                        <span className="gb-ozet-oge begen">👍 {geriBildirimListe.filter((g) => g.begendi).length}</span>
-                        <span className="gb-ozet-oge begenme">👎 {geriBildirimListe.filter((g) => !g.begendi).length}</span>
+                        <span className="gb-ozet-oge begen">👍 {geriBildirimListe.filter((g) => g.tur !== "kullanici" && g.begendi).length}</span>
+                        <span className="gb-ozet-oge begenme">👎 {geriBildirimListe.filter((g) => g.tur !== "kullanici" && !g.begendi).length}</span>
+                        <span className="gb-ozet-oge kullanici">💬 {geriBildirimListe.filter((g) => g.tur === "kullanici").length}</span>
                         <span className="gb-ozet-oge">Σ {geriBildirimListe.length}</span>
                       </div>
                       {geriBildirimListe.map((g) => (
-                        <div key={g.id} className={"gb-kart" + (g.begendi ? " begen" : " begenme")}>
+                        <div key={g.id} className={"gb-kart" + (g.tur === "kullanici" ? " kullanici" : g.begendi ? " begen" : " begenme")}>
                           <div className="gb-kart-ust">
-                            <span className="gb-kart-ik">{g.begendi ? "👍" : "👎"}</span>
+                            <span className="gb-kart-ik">{g.tur === "kullanici" ? "💬" : g.begendi ? "👍" : "👎"}</span>
                             <span className="gb-kart-ad">{g.ad || t("gbAnonim", "Kullanıcı")}</span>
                             <span className="gb-kart-tarih">{g.zamanMs ? new Date(g.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
                           </div>
                           {g.oneri && <div className="gb-kart-oneri">"{g.oneri}"</div>}
-                          {g.yorum && <div className="gb-kart-yorum">💬 {g.yorum}</div>}
+                          {g.yorum && <div className="gb-kart-yorum">{g.tur === "kullanici" ? "" : "💬 "}{g.yorum}</div>}
+                          {g.tur === "kullanici" && g.cihaz && <div className="gb-kart-cihaz">📱 {g.cihaz}</div>}
                         </div>
                       ))}
                     </>
