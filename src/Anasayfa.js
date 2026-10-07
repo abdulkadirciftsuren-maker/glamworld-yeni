@@ -3020,99 +3020,24 @@ export default function Anasayfa({ pro = false }) {
     }, 1400);
     return () => clearTimeout(ti);
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
-  // GÜVENLİ YENİLEME — sayfayı en fazla 30 SANİYEDE BİR yeniler. GitHub sunucuları yeni yayından sonra bir süre
-  // FARKLI sürüm gösterebiliyor; eski kod bunu görünce "yeni var→yenile→eski→yenile" diye SÜREKLİ yeniliyordu →
-  // sayfa PARLIYOR, konuşma kesiliyor, hiçbir şey yapılamıyordu. Bu, o döngüyü kırar.
-  const yenileBekleRef = useRef(false); // güncelleme geldi ama kullanıcı meşguldü → boşalınca yenile
-  const mesgulRef = useRef(false);      // foto/paylaşım/pencere açık ya da Gloxoo konuşuyor mu (yenilemeyi ertele → foto/konuşma kaybı OLMASIN)
-  const sonGorunurMs = useRef(Date.now()); // ⛔ ÖNLEM: sayfa en son NE ZAMAN görünür oldu (arka plandan dönüş anı) — dönüşten hemen sonra reload'u ENGELLEMEK için
-  const guvenliYenile = (hedefHash) => {
-    try {
-      if (window.__groxYenilendi) return;
-      // ⛔ AÇILIŞ KORUMASI: sayfa yeni açıldıysa (ilk 18 sn) profil/ayar/foto verisi HÂLÂ yükleniyor olabilir.
-      // Şimdi yenilersek yükleme YARIDA kalır → sayfa EKSİK gelir (profil resmi/ayarlar gelmez). O yüzden ilk 18 sn
-      // yenileme YOK; veri tam otursun. (Eskiden 35 sn'ydi; kullanıcı "yeni sürüm geç geliyor, elle güncelliyorum" dedi →
-      // 18'e indirdim ki AÇILIŞTAN kısa süre sonra otomatik güncel sürüme geçsin. Reload tam yeniden yükleme olduğu için eksik kalmaz.)
-      if (Date.now() - ACILIS_MS < 18000) return;
-      // ⛔ MUHASEBEDE YENİLEME YOK: kullanıcı belge/tablo/yazı hazırlarken sayfa kendini yenilerse YAPTIĞI İŞ UÇAR
-      // (kullanıcı: "Word'de yazdığım siliniyor, işimi bitirmeden çıkıyorum"). Muhasebeden çıkınca (60 sn kontrol) yenilenir.
-      if (aktifKodRef.current === "muhasebe") { yenileBekleRef.current = true; return; }
-      // ⛔ MEŞGULKEN YENİLEME YOK: kullanıcı fotoğraf ekliyor/paylaşım yazıyor ya da Gloxoo konuşuyorsa
-      // sayfayı yenilemek FOTOĞRAFLARI SİLER / konuşmayı KESER. Ertele; işi bitince (boşalınca) yenile.
-      if (mesgulRef.current) { yenileBekleRef.current = true; return; }
-      // ⛔⛔ ÖNLEM (KİLİT — kullanıcı: "bu hata bir daha olursa siteyi kaldırırım"): Kullanıcı arka plandan YENİ DÖNDÜYSE
-      //   (son 12 sn içinde sayfa yeniden görünür olduysa) HİÇBİR koşulda yeniden yükleme YAPMA → ertele. Sayfanın yeniden
-      //   yüklenmesinin TEK yolu burası; bu kilit sayesinde hangi yol tetiklerse tetiklesin (sürüm kontrolü, servis çalışan,
-      //   ileride eklenecek herhangi bir şey), DÖNÜŞ anında sayfa ASLA kendini yeniden yükleyemez → profil/menü/ışıltı yerinde kalır.
-      if (Date.now() - sonGorunurMs.current < 12000) { yenileBekleRef.current = true; return; }
-      const simdi = Date.now();
-      let son = 0; try { son = parseInt(sessionStorage.getItem("groxSonYenileMs") || "0", 10); } catch (e) {}
-      if (son && simdi - son < 90000) return; // 90 sn içinde zaten yenilendi → TEKRAR yenileme (parlama/döngü olmasın)
-      // ⛔ PARLAMA DÖNGÜSÜ KİLİDİ: CDN kısa süre "yeni→eski→yeni" gösterebilir. DAHA ÖNCE geçtiğimiz bir sürüme
-      // ASLA tekrar yenileme — yoksa sayfa saniyede bir yenilenip PARLAR. Sadece hiç görmediğimiz YENİ sürüme geç.
-      if (hedefHash) {
-        let liste = []; try { liste = JSON.parse(sessionStorage.getItem("groxYenilenenHashler") || "[]"); } catch (e) {}
-        if (liste.indexOf(hedefHash) !== -1) return; // bu sürüme zaten geçmiştik → döngüyü kır (yenileme YOK)
-        liste.push(hedefHash); if (liste.length > 8) liste = liste.slice(-8);
-        try { sessionStorage.setItem("groxYenilenenHashler", JSON.stringify(liste)); } catch (e) {}
-      }
-      window.__groxYenilendi = true;
-      try { sessionStorage.setItem("groxSonYenileMs", String(simdi)); } catch (e) {}
-      // ⛔ EKSİK/PARÇA PARÇA YÜKLEME ÇÖZÜMÜ (kullanıcı: "sayfa parça parça yükleniyor, bölümler eksik kalıyor, güncelleme yarım
-      //   geliyor; arama ilk denemede tutmuyor"). SEBEP: ana paket (main.<hash>.js ~6.8MB) BÜYÜK; yeni sürümde HEMEN reload edilince
-      //   tarayıcı o 6.8MB'ı yeniden indirirken sayfa parça parça açılıyor, bölümler eksik kalıyordu. ÇÖZÜM: reload'dan ÖNCE yeni
-      //   ana paketi + CSS'i ARKA PLANDA tam indir (SW /static önbelleğini doldurur); İNDİKTEN SONRA reload → yenileme ANINDA + TAM,
-      //   hiçbir bölüm eksik kalmaz. İndirme başarısız/uzarsa (en fazla 15 sn) yine de reload → takılma OLMAZ.
-      (async () => {
-        try {
-          const r = await fetch((process.env.PUBLIC_URL || "") + "/index.html?_p=" + Date.now(), { cache: "no-store" });
-          if (r && r.ok) {
-            const h = await r.text();
-            const js = (h.match(/src="([^"]*main\.[a-z0-9]+\.js)"/) || [])[1];
-            const css = (h.match(/href="([^"]*main\.[a-z0-9]+\.css)"/) || [])[1];
-            const indir = [js, css].filter(Boolean).map((p) => {
-              try { return fetch(new URL(p, window.location.href).href).then(() => {}).catch(() => {}); }
-              catch (e) { return Promise.resolve(); }
-            });
-            if (indir.length) await Promise.race([Promise.all(indir), new Promise((res) => setTimeout(res, 15000))]);
-          }
-        } catch (e) {}
-        try { window.location.reload(); } catch (e) {}
-      })();
-    } catch (e) {}
-  };
-  // ⛔ ÖNLEM DİNLEYİCİSİ: Sayfa her görünür olduğunda (arka plandan dönüş / sekmeye geçiş) SADECE zamanı kaydet.
-  //   Bu, guvenliYenile'deki 12 sn'lik kilidi besler → dönüşten hemen sonra yeniden yükleme ENGELLENİR. Burada RELOAD YOK,
-  //   sadece zaman damgası. (Eskiden buradaki visibilitychange yeniden yükleme TETİKLİYORDU; o kaldırıldı, bu sadece korur.)
-  useEffect(() => {
-    const g = () => { if (document.visibilityState === "visible") sonGorunurMs.current = Date.now(); };
-    document.addEventListener("visibilitychange", g);
-    window.addEventListener("focus", g);
-    return () => { document.removeEventListener("visibilitychange", g); window.removeEventListener("focus", g); };
-  }, []);
+  // ⛔ ÇALIŞAN SAYFAYI ARTIK YENİDEN YÜKLEMİYORUZ (kullanıcı: "sayfa kendi kendine ya da arka plandan dönünce
+  //   yeniden yükleniyor, parça parça açılıyor"). Eskiden burada agresif bir OTOMATİK-YENİLEME makinesi vardı
+  //   (25 sn'de bir sürüm kontrolü + servis çalışanı mesajı + ertelenen yenileme). Biz sık yayın yaptığımız için,
+  //   kullanıcılar KULLANIRKEN sayfa durmadan kendini yeniliyordu (en büyük şikâyet). TAMAMEN KALDIRILDI.
+  //   Yeni sürüm, kullanıcı uygulamayı KAPATIP YENİDEN AÇINCA kendiliğinden gelir (hash'li dosya adları +
+  //   index.html no-cache). Böylece hiçbir testçi/kullanıcı kullanırken sayfa sıçramaz, yenilenmez.
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    // Yeni servis çalışan "güncellendi" haberi gönderince → sayfayı (güvenli) yenile
+    // Servis çalışanını SADECE telefon bildirimi gösterebilmek için kaydet.
+    // ⛔ ARTIK SW GÜNCELLEMESİ SAYFAYI YENİLEMEZ (eskiden "sw-guncellendi" mesajı + updatefound → reload vardı;
+    //   çalışan sayfayı sıçratıyordu — kaldırıldı). Yeni sürüm kapat-aç'ta kendiliğinden gelir.
+    // updateViaCache:"none" → tarayıcı sw.js'i her kontrolde TAZE indirir (eski sürümde takılmaz).
     try {
-      navigator.serviceWorker.addEventListener("message", (ev) => {
-        if (ev && ev.data && ev.data.tip === "sw-guncellendi") { guvenliYenile(); }
-      });
+      navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js", { updateViaCache: "none" }).then((reg) => {
+        try { reg.update(); } catch (e) {}
+      }).catch(() => {});
     } catch (e) {}
-    // updateViaCache:"none" → tarayıcı sw.js'i HER kontrolde TAZE indirir (HTTP önbelleğinden değil) → yeni sürüm ANINDA görülür,
-    // eski sürümde takılma OLMAZ. (Kullanıcı B28'de takılıp kaldı çünkü tarayıcı sw.js'i önbellekten okuyordu.)
-    navigator.serviceWorker.register((process.env.PUBLIC_URL || "") + "/sw.js", { updateViaCache: "none" }).then((reg) => {
-      try { reg.update(); } catch (e) {}
-      // Yeni surum hazir olunca (yeni servis calisan devralinca) sayfayi BIR KEZ yenile → kullanici hep guncel gorur
-      reg.addEventListener && reg.addEventListener("updatefound", () => {
-        const yeni = reg.installing; if (!yeni) return;
-        yeni.addEventListener("statechange", () => {
-          if (yeni.state === "activated" && navigator.serviceWorker.controller) {
-            guvenliYenile();
-          }
-        });
-      });
-    }).catch(() => {});
   }, []);
   // UYGULAMAYI YÜKLE (PWA): index.js beforeinstallprompt'u window.__groxKurPrompt'a saklar; burada dinleyip düğmeyi göster
   useEffect(() => {
@@ -3121,45 +3046,9 @@ export default function Anasayfa({ pro = false }) {
     f();
     return () => window.removeEventListener("grox-kurulabilir", f);
   }, []);
-  // OTOMATİK GÜNCELLEME (service worker'a bağlı DEĞİL): sunucudaki index.html'i belli aralıklarla kontrol et;
-  // yüklü ana script (main.<hash>.js) ile sunucudaki FARKLIYSA → yeni sürüm yayınlanmış → sayfayı BİR KEZ yenile.
-  // Böylece her yayında kullanıcı ELLE yenilemeden otomatik güncel sürüme geçer (sw.js değişmese bile çalışır).
-  useEffect(() => {
-    let durdu = false;
-    // Şu an ÇALIŞAN ana script dosyası (main.<hash>.js) — her yayında hash değişir
-    const suanki = (() => {
-      try {
-        const s = Array.from(document.querySelectorAll('script[src]')).map((x) => x.src).find((u) => /\/static\/js\/main\.[a-z0-9]+\.js/.test(u));
-        return s ? (s.match(/main\.[a-z0-9]+\.js/) || [""])[0] : "";
-      } catch (e) { return ""; }
-    })();
-    const kontrol = async () => {
-      if (durdu || !suanki || window.__groxYenilendi) return;
-      try {
-        const r = await fetch((process.env.PUBLIC_URL || "") + "/index.html?_g=" + Date.now(), { cache: "no-store" });
-        if (!r.ok) return;
-        const html = await r.text();
-        const yeni = (html.match(/main\.[a-z0-9]+\.js/) || [""])[0];
-        if (yeni && yeni !== suanki) { // sunucuda FARKLI sürüm var → HEMEN yenile (kapat-aç ile takılmasın)
-          // Not: eskiden "aynı sürümü 2 kez gör" şartı vardı; kullanıcı hızlı kapat-aç yapınca 2. görüşe hiç ulaşamayıp
-          // ESKİ sürümde TAKILIYORDU. Artık ilk görüşte yenilenir; ping-pong'u guvenliYenile'nin hash-kilidi zaten önler.
-          try { const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); reg && reg.update && reg.update(); } catch (e) {}
-          guvenliYenile(yeni);
-        }
-      } catch (e) {}
-    };
-    const iv = setInterval(kontrol, 25000);                 // her 25 sn'de bir kontrol (SEN aktif kullanırken) — yeni sürüm daha çabuk insin (kullanıcı: "geç güncelliyor")
-    // ⛔ ARKA PLANDAN DÖNÜNCE ZORLA YENİDEN YÜKLEME KALDIRILDI (kullanıcı: "başka uygulamaya geçip dönünce
-    //   profil/menü/ışıltı siliniyor, sayfa kendini güncelliyor, geç yükleniyor, video kesik oynuyor").
-    //   ESKİDEN: visibilitychange + focus'ta HEMEN sürüm kontrolü → yeni sürüm varsa sayfa RELOAD → her dönüşte
-    //   her şey baştan yükleniyordu. Bu iki tetik KALDIRILDI. Güncelleme yine gelir (60 sn'lik kontrolle sen
-    //   AKTİFKEN, ya da uygulamayı TEMİZ açtığında); ama arka plandan DÖNÜNCE artık zorla yeniden yükleme YOK.
-    // AÇILIŞ KONTROLLERİ — birden çok kez dene ki yeni sürüm açılıştan kısa süre sonra otomatik insin (18 sn'lik açılış koruması geçince uygulanır)
-    const ilk1 = setTimeout(kontrol, 5000);                 // ~5 sn (sürümü erken tespit et; koruma geçince yeniler)
-    const ilk2 = setTimeout(kontrol, 19000);               // ~19 sn (açılış koruması yeni geçti → varsa hemen güncelle)
-    const ilk3 = setTimeout(kontrol, 32000);               // ~32 sn (yavaş bağlantıda kaçmasın)
-    return () => { durdu = true; clearInterval(iv); clearTimeout(ilk1); clearTimeout(ilk2); clearTimeout(ilk3); };
-  }, []);
+  // ⛔ OTOMATİK GÜNCELLEME KONTROLÜ KALDIRILDI (kullanıcı: "sayfa kendi kendine yenileniyor, parça parça açılıyor").
+  //   Eskiden burası 25 sn'de bir sunucuyu yoklayıp yeni sürüm görünce sayfayı zorla yeniliyordu. Biz sık yayın
+  //   yaptığımız için kullanırken sürekli yenileniyordu. Yeni sürüm artık SADECE kapat-aç'ta gelir → kullanırken sıçrama YOK.
   // CANLI bildirim dinle (sayfa açıkken anında gelir); yeni gelenleri telefon bildirimi olarak göster
   useEffect(() => {
     if (!u || !u.uid) { setBildirimListe([]); gorulenBildirimRef.current = null; return; }
@@ -8703,13 +8592,6 @@ export default function Anasayfa({ pro = false }) {
   const [pazarPencereAcik, setPazarPencereAcik] = useState(false);
   const pazarKapatRef = useRef(null); // ElitePazar açık pencereyi kapatan fonksiyonu buraya koyar; onPop çağırır
   const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!onizGaleri || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi || !!aramaDurum || !!gelenArama || pazarPencereAcik;
-  // MEŞGUL MÜ? — bir pencere/paylaşım/foto açık VEYA Gloxoo konuşuyor/duraklamış. Meşgulken güncelleme yenilemesi ERTELENİR
-  // (foto ve konuşma kaybı olmasın). Boşalınca bekleyen yenileme yapılır → kullanıcı yine güncel sürüme geçer.
-  useEffect(() => {
-    const mesgul = !!(ustPencereVar || paylasAcik || duzenAcik || aiKonusuyor || aiDuraklat);
-    mesgulRef.current = mesgul;
-    if (!mesgul && yenileBekleRef.current) { yenileBekleRef.current = false; try { guvenliYenile(); } catch (e) {} }
-  }, [ustPencereVar, paylasAcik, duzenAcik, aiKonusuyor, aiDuraklat]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (aktifKod !== "home") return;
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)

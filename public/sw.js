@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A13B356";
+const SW_SURUM = "A13B357";
 // ONBELLEK ADI SW_SURUM'e bağlı → her yeni yayında YENİ önbellek; eskisi activate'te silinir (eski sürümde takılma OLMAZ).
 const ONBELLEK = "glox-onbellek-" + SW_SURUM;
 // RESİM ÖNBELLEĞİ — SÜRÜMDEN BAĞIMSIZ (yeni yayında SİLİNMEZ) → indirilen fotoğraflar telefonda KALICI kalır,
@@ -32,8 +32,19 @@ self.addEventListener("fetch", (e) => {
   let url; try { url = new URL(istek.url); } catch (x) { return; }
   if (istek.mode === "navigate") {
     e.respondWith((async () => {
-      try { return await fetch(istek, { cache: "no-store" }); }
-      catch (x) { const c = await caches.match(istek); return c || Response.error(); }
+      // ÖNCE AĞDAN (taze sürüm) dene; ama en fazla ~3.5 sn bekle. Ağ yavaş/yoksa ÖNBELLEKTEN ver →
+      // sayfa SARI ekranda SONSUZA KADAR TAKILMAZ (kullanıcı: "bazen sarı perde çıkıyor, yüklemiyor").
+      const agdan = fetch(istek, { cache: "no-store" }).then((cevap) => {
+        try { if (cevap && cevap.ok) { const kopya = cevap.clone(); caches.open(ONBELLEK).then((c) => c.put("gloxindex", kopya)).catch(() => {}); } } catch (x) {}
+        return cevap;
+      });
+      try {
+        const zamanAsimi = new Promise((_, red) => setTimeout(() => red(new Error("yavas-ag")), 3500));
+        return await Promise.race([agdan, zamanAsimi]);           // ağ hızlıysa taze sürüm gelir
+      } catch (x) {
+        const c = (await caches.match("gloxindex")) || (await caches.match(istek));
+        return c || (await agdan);                                 // önbellekte varsa ANINDA; yoksa ağı beklemeye devam et
+      }
     })());
     return;
   }
