@@ -2416,6 +2416,11 @@ video.yrm-medya{ cursor:default; }
 .ana-post{
   background:transparent;
   border:none; border-radius:0; overflow:hidden;
+  /* ⚡ PERFORMANS (kullanıcı: "sayfa donuyor, kaydırınca donuyor, yarım saat sonra çöküyor"): EKRAN DIŞINDAKİ
+     gönderileri tarayıcı ÇİZMEZ (foto/video dahil) → uzun akışta telefon donmaz, bellek şişmez. content-visibility
+     ekrana girince çizer, çıkınca bırakır. contain-intrinsic-size: görünmezken tahmini yükseklik (kaydırma çubuğu
+     zıplamasın; auto = bir kez çizilince GERÇEK boyutu hatırlar). Android Chrome destekler; desteklemeyen görmezden gelir. */
+  content-visibility:auto; contain-intrinsic-size:auto 480px;
 }
 .ana-post::before{ content:""; display:block; height:6px; flex:none;
   background:linear-gradient(to bottom, var(--sep,#0d0a05) 50%, var(--pc,#c9a227) 50%); } /* ÜST kenar: dış belirleyici + iç renk */
