@@ -5029,7 +5029,7 @@ export default function Anasayfa({ pro = false }) {
         .catch(() => { if (!iptal && !doldu && denedi < 6) { denedi++; setTimeout(cek, Math.min(8000, 1200 * denedi)); } });
     };
     cek();
-    const zmn = setTimeout(() => { if (!iptal) gonderileriOku({}, 150).then(yaz).catch(() => {}); }, 3000); // arkada tümü (150)
+    const zmn = setTimeout(() => { if (!iptal) gonderileriOku({ hepsi: true }, 150).then(yaz).catch(() => {}); }, 3000); // arkada TÜMÜ (150) — hepsi:true → zamanMs'siz ESKİ gönderiler de gelir (eski paylaşımlar kaybolmasın)
     return () => { iptal = true; clearTimeout(zmn); };
   }, []);
   // AKIŞ OTOMATİK TAZELEME (kullanıcı: "başkası paylaşınca/beğenince/yorum yapınca ben yenilemeden görmüyorum, saçma").

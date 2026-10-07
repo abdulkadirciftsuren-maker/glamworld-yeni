@@ -965,27 +965,29 @@ export async function takipEttiklerimOku(uid, adet = 200) {
   } catch (e) { return []; }
 }
 
-export async function gonderileriOku({ ulke, meslek } = {}, adet = 150) {
-  // AKIŞ HERKESTE AYNI + EN YENİ olsun diye zamanMs'e göre SIRALI çekilir.
-  // ESKİ HATA: orderBy YOKken fsLimit(150) Firestore'dan RASTGELE 150 gönderi getiriyordu (en yeniler değil)
-  // → yeni paylaşımlar karşı tarafa "gitmiyor", sıra bozuk görünüyordu. ÇÖZÜM: orderBy("zamanMs","desc")
-  // → EN YENİ 'adet' gönderi, HERKESE AYNI sırada gelir. (Her paylaşımda zamanMs yazılıyor; gonderiEkle garanti ediyor.)
+export async function gonderileriOku({ ulke, meslek, hepsi } = {}, adet = 150) {
+  // AKIŞ HERKESTE AYNI + EN YENİ olsun diye zamanMs'e göre SIRALI çekilir (orderBy zamanMs desc).
+  // ⚠️ AMA Firestore'da orderBy, o alanı OLMAYAN belgeleri DIŞLAR → zamanMs'i olmayan ESKİ gönderiler
+  //   akıştan TAMAMEN kaybolur (kullanıcı: "eski paylaşımlar kayıp, ulaşılmıyor"). ÇÖZÜM — hepsi:true iken İKİ sorgu:
+  //   (1) orderBy(zamanMs desc) → en yeni 'adet' (yeni paylaşımlar herkese AYNI sırada gider)
+  //   (2) orderBy'sız (sadece where + limit) → zamanMs'i olmayan ESKİ gönderileri de yakalar
+  //   İkisi id'ye göre birleşir → yeniler garanti gelir, eskiler de geri döner. (hepsi:false → tek/ucuz sorgu, 60 sn tazeleme için.)
   try {
     const kosullar = [];
     if (ulke) kosullar.push(where("ulke", "==", ulke));
     if (meslek) kosullar.push(where("meslek", "==", meslek));
-    try {
-      const q = query(collection(db, "gonderiler"), ...kosullar, orderBy("zamanMs", "desc"), fsLimit(adet));
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi); // ÇÖPE atılanlar akışta GÖRÜNMEZ
-    } catch (indexErr) {
-      // Filtre (ulke/meslek) + orderBy için bileşik dizin yoksa: filtreli çek, İSTEMCİDE sırala (yine çalışsın, boş kalmasın)
-      const q2 = query(collection(db, "gonderiler"), ...kosullar, fsLimit(adet));
-      const snap2 = await getDocs(q2);
-      const liste = snap2.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
-      liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
-      return liste;
+    const harita = new Map();
+    const ekle = (docs) => docs.forEach((d) => { const v = { id: d.id, ...d.data() }; if (!v.silindi) harita.set(d.id, v); }); // çöpe atılanlar GÖRÜNMEZ
+    // (1) EN YENİLER (orderBy) — bileşik dizin hatası olursa sessizce atla (aşağıdaki orderBy'sız sorgu yine doldurur)
+    let orderByOldu = false;
+    try { ekle((await getDocs(query(collection(db, "gonderiler"), ...kosullar, orderBy("zamanMs", "desc"), fsLimit(adet)))).docs); orderByOldu = true; } catch (e) {}
+    // (2) ESKİ / zamanMs'siz gönderiler de gelsin (orderBy YOK). hepsi:true ise HER ZAMAN; değilse sadece (1) başarısızsa.
+    if (hepsi || !orderByOldu) {
+      try { ekle((await getDocs(query(collection(db, "gonderiler"), ...kosullar, fsLimit(adet)))).docs); } catch (e) {}
     }
+    const liste = Array.from(harita.values());
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // zamanMs yoksa 0 = en eski (en altta); yine ERİŞİLİR
+    return liste;
   } catch (e) { return []; }
 }
 
