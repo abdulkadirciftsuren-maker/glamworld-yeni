@@ -3020,12 +3020,43 @@ export default function Anasayfa({ pro = false }) {
     }, 1400);
     return () => clearTimeout(ti);
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
-  // ⛔ ÇALIŞAN SAYFAYI ARTIK YENİDEN YÜKLEMİYORUZ (kullanıcı: "sayfa kendi kendine ya da arka plandan dönünce
-  //   yeniden yükleniyor, parça parça açılıyor"). Eskiden burada agresif bir OTOMATİK-YENİLEME makinesi vardı
-  //   (25 sn'de bir sürüm kontrolü + servis çalışanı mesajı + ertelenen yenileme). Biz sık yayın yaptığımız için,
-  //   kullanıcılar KULLANIRKEN sayfa durmadan kendini yeniliyordu (en büyük şikâyet). TAMAMEN KALDIRILDI.
-  //   Yeni sürüm, kullanıcı uygulamayı KAPATIP YENİDEN AÇINCA kendiliğinden gelir (hash'li dosya adları +
-  //   index.html no-cache). Böylece hiçbir testçi/kullanıcı kullanırken sayfa sıçramaz, yenilenmez.
+  // ⚡ OTOMATİK GÜNCELLEME — AKILLI (kullanıcı: "testçilere 'güncelle' diyemem, kendiliğinden güncellensin;
+  //   ama sayfa öyle kötü kendini yenilemesin"). ÇÖZÜM: Sayfa KULLANIRKEN ASLA yenilenmez. SADECE kullanıcı
+  //   uygulamaya GERİ DÖNDÜĞÜNDE (başka uygulamadan/arka plandan dönüş = visibilitychange/focus) sunucuda YENİ
+  //   sürüm VARSA ve kullanıcı MEŞGUL DEĞİLSE (pencere açık/paylaşım yazıyor/Gloxoo konuşuyor değilse) ve açılışın
+  //   ilk 18 sn'si geçmişse → BİR KEZ sessizce yenilenir. Böylece hem OTOMATİK güncel kalır (testçiye bir şey
+  //   demeye gerek yok) hem KULLANIRKEN sıçramaz. (Eskiden 25 sn'de bir, kullanırken bile yeniliyordu → o kalktı.)
+  const mesgulRef = useRef(false);   // bir pencere/paylaşım açık ya da Gloxoo konuşuyor mu → bu anlarda yenileme YOK (aşağıda beslenir)
+  useEffect(() => {
+    // ŞU AN ÇALIŞAN ana script (main.<hash>.js) — her yayında hash değişir; sunucudakiyle karşılaştırırız
+    const suanki = (() => {
+      try { const s = Array.from(document.querySelectorAll('script[src]')).map((x) => x.src).find((u) => /\/static\/js\/main\.[a-z0-9]+\.js/.test(u)); return s ? (s.match(/main\.[a-z0-9]+\.js/) || [""])[0] : ""; }
+      catch (e) { return ""; }
+    })();
+    let bakiliyor = false;
+    const deneYenile = async () => {
+      if (window.__groxYenilendi || !suanki || bakiliyor) return;
+      if (document.visibilityState !== "visible") return;          // SADECE uygulamaya dönünce
+      if (Date.now() - ACILIS_MS < 18000) return;                  // açılışın ilk 18 sn'si (veri yüklenirken) DOKUNMA
+      if (mesgulRef.current) return;                               // pencere açık/paylaşım/Gloxoo → yenileme YOK
+      bakiliyor = true;
+      try {
+        const r = await fetch((process.env.PUBLIC_URL || "") + "/index.html?_g=" + Date.now(), { cache: "no-store" });
+        if (r.ok) {
+          const html = await r.text();
+          const yeni = (html.match(/main\.[a-z0-9]+\.js/) || [""])[0];
+          if (yeni && yeni !== suanki) { window.__groxYenilendi = true; try { window.location.reload(); } catch (e) {} return; }
+        }
+      } catch (e) {}
+      bakiliyor = false;
+    };
+    const onGorunur = () => { if (document.visibilityState === "visible") deneYenile(); };
+    document.addEventListener("visibilitychange", onGorunur);
+    window.addEventListener("focus", deneYenile);
+    // Açılıştan bir süre sonra bir kez de dene (ilk açılışta kullanıcı eski sürümdeyse, 20 sn sonra sessizce güncelle)
+    const ilk = setTimeout(deneYenile, 20000);
+    return () => { document.removeEventListener("visibilitychange", onGorunur); window.removeEventListener("focus", deneYenile); clearTimeout(ilk); };
+  }, []);
   // Servis çalışanını kaydet (telefon bildirimi gösterebilmek için — Android uyumlu)
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
@@ -8592,6 +8623,9 @@ export default function Anasayfa({ pro = false }) {
   const [pazarPencereAcik, setPazarPencereAcik] = useState(false);
   const pazarKapatRef = useRef(null); // ElitePazar açık pencereyi kapatan fonksiyonu buraya koyar; onPop çağırır
   const ustPencereVar = menuAcik || ayarlarAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || paylasAcik || !!tamFoto || !!onizGaleri || !!hikayeAcik || !!hikTaslak || hikSecimAcik || !!uyeSayfa || yardimciAcik || sehirAcik || !!araSecili || uyelikKartAcik || ayarHaritaAcik || !!sektorListe || arsivAcik || reelsAcik || !!sohbetKisi || !!aramaDurum || !!gelenArama || pazarPencereAcik;
+  // MEŞGUL MÜ? — otomatik güncelleme (yukarıda) bu anlarda yenileme YAPMAZ: pencere/paylaşım açıkken ya da
+  // Gloxoo konuşurken sayfayı yenilemek işi/fotoğrafı/konuşmayı bozar. Boşalınca tekrar güncellenebilir.
+  useEffect(() => { mesgulRef.current = !!(ustPencereVar || paylasAcik || duzenAcik || aiKonusuyor || aiDuraklat); }, [ustPencereVar, paylasAcik, duzenAcik, aiKonusuyor, aiDuraklat]);
   useEffect(() => {
     if (aktifKod !== "home") return;
     // PARLAMA ÖNLE: pencere açıkken SADECE feed değil, HİKÂYE ŞERİDİ (kart) videoları da durur (arka planda oynayıp parlamasın)
