@@ -7,7 +7,7 @@ import { auth, googleProvider, db } from "./firebase";
 import { girisEpostasiGonder } from "./eposta";
 import DilSecici from "./DilSecici";
 import SurumRozeti from "./SurumRozeti";
-import { Elmas6Kose } from "./Anasayfa";
+import { Elmas6Kose } from "./Elmas6Kose";
 import "./Giris.css";
 
 const ALTIN_STILLERI = [

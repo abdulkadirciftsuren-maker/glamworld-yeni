@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './MusteriForm.css';
 import SurumRozeti from './SurumRozeti';
-import { Elmas6Kose } from './Anasayfa';
+import { Elmas6Kose } from './Elmas6Kose';
 import { ulkeAdiCevir } from './i18n';
 import { auth, db, googleProvider } from './firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signInWithPopup, linkWithPopup } from 'firebase/auth';

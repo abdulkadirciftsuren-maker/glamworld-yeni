@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { mc, ulkeAdiCevir } from './i18n';
-import { Elmas6Kose } from './Anasayfa';
+import { Elmas6Kose } from './Elmas6Kose';
 import { auth, db, googleProvider } from './firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signInWithPopup, linkWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
