@@ -4652,7 +4652,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-gonder-btn{ background:linear-gradient(135deg,#2f9e44,#268a3a); color:#fff; }
 .sohbet-gonder-btn svg{ width:21px; height:21px; }
 .sohbet-gonder-btn:disabled, .sohbet-foto-btn:disabled{ opacity:.5; cursor:default; }
-.sohbet-input{ flex:1; min-width:0; min-height:42px; max-height:138px; resize:none; border:1.5px solid #d9b64a; border-radius:14px; padding:10px 12px; font-size:15px; font-family:inherit; line-height:1.35; background:#fffef8; color:#2a2008; outline:none; overflow-y:auto; }
+.sohbet-input{ flex:1; min-width:0; min-height:42px; max-height:138px; resize:none; border:1.5px solid #d9b64a; border-radius:14px; padding:10px 12px; font-size:16px; font-family:inherit; line-height:1.35; background:#fffef8; color:#2a2008; outline:none; overflow-y:auto; } /* 16px: odakta iPhone YAKINLAŞMASIN (yazı şeridi kaymasın) */
 .sohbet-input::placeholder{ color:#a98c4a; }
 .adm-sohbet{ background:linear-gradient(135deg,#2f9e44,#268a3a) !important; color:#fff !important; }
 @media (min-width:560px){

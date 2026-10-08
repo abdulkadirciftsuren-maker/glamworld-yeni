@@ -10973,6 +10973,7 @@ export default function Anasayfa({ pro = false }) {
               </button>
               <textarea ref={sohbetInputRef} className="sohbet-input" value={sohbetYazi}
                 onChange={(e) => { setSohbetYazi(e.target.value); const el = e.target; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 138) + "px"; }}
+                onFocus={(e) => { try { const el = e.target; setTimeout(() => { try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (er) {} }, 300); } catch (er) {} }}
                 placeholder={t("mesajYaz", "Mesaj yaz…")} maxLength={2000} rows={1}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !("ontouchstart" in window)) { e.preventDefault(); sohbetMetinGonder(); } }} />
               <button className="sohbet-gonder-btn" onClick={sohbetMetinGonder} disabled={!sohbetYazi.trim() && !bekleyenMedyalar.length} aria-label={t("gonder", "Gönder")}>
