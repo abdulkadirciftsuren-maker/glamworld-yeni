@@ -4062,35 +4062,18 @@ export default function Anasayfa({ pro = false }) {
     if (tip === "goruntulu") { setTimeout(() => { if (yerelVideoRef.current) yerelVideoRef.current.srcObject = stream; }, 50); }
     return stream;
   };
-  // Karşıdan gelen ses/görüntüyü uygun elemente bağla (sesli → <audio>, görüntülü → <video>) ve OYNAT.
+  // Karşıdan gelen ses/görüntüyü uygun elemente bağla ve OYNAT.
+  // ⚡ KARŞI SESİ DOĞRUDAN ÇAL (kullanıcı: "aramada ses yok, ne onda ne bende" — hiç düzgün çalışmamış). Eskiden sesi
+  //   WebAudio ile "yükseltme" numarası vardı (elementi SUSTURUP sesi AudioContext'ten veriyordu); mobilde AudioContext
+  //   çoğu zaman askıda (suspended) kalıp sesi TAMAMEN susturuyordu → kimse kimseyi duymuyordu. O numara KALDIRILDI.
+  //   Artık karşı ses doğrudan <audio>/<video> elementinden çalar → ses KESİN gelir (hoparlör kapalıysa sessiz).
   const baglaUzakMedya = () => {
     const st = uzakStreamRef.current; if (!st) return;
     const el = uzakVideoRef.current || uzakSesRef.current; // görüntülüde video, seslide audio
-    // HER ZAMAN yeniden bağla (sonradan gelen VIDEO track'i de render olsun → "karşı beni görüyor ben görmüyorum/siyah perde" çözümü)
-    if (el) { try { el.srcObject = st; } catch (e) {} try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
-    sesYukseltBagla(st, el); // karşı sesi güçlendir (kısık duyulma şikâyeti)
-  };
-  // Karşı tarafın sesini WebAudio ile GÜÇLENDİR (element en fazla 1; kısıktı). Element sessize alınır, ses gain'den güçlü çıkar.
-  // iOS için "kickstart": sessiz element akışı canlı tutar, gerçek ses WebAudio'dan gelir. HER ŞEY try/catch — olmazsa elemente düşer, ses ASLA tümden kaybolmaz.
-  const sesYukseltBagla = (stream, el) => {
-    if (!stream || !el) return;
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) { el.muted = !hoparlorAcikRef.current; el.volume = 1; return; } // WebAudio yoksa eski yol
-      if (!sesCtxRef.current) sesCtxRef.current = new AC();
-      const ctx = sesCtxRef.current;
-      if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
-      try { if (sesGainRef.current && sesGainRef.current.source) sesGainRef.current.source.disconnect(); } catch (e) {}
-      try { if (sesGainRef.current && sesGainRef.current.gain) sesGainRef.current.gain.disconnect(); } catch (e) {}
-      const source = ctx.createMediaStreamSource(stream);
-      const gain = ctx.createGain();
-      gain.gain.value = hoparlorAcikRef.current ? SES_KAT : 0;
-      source.connect(gain); gain.connect(ctx.destination);
-      sesGainRef.current = { source, gain };
-      el.muted = true; // element sessiz (çift ses olmasın); ses WebAudio'dan
-      // GÜVENLİK: 1.5 sn sonra bağlam çalışmıyorsa (ses gelmiyorsa) elementi geri aç → ses tümden kaybolmasın
-      setTimeout(() => { try { if (!sesCtxRef.current || sesCtxRef.current.state !== "running") { el.muted = !hoparlorAcikRef.current; el.volume = 1; } } catch (e) {} }, 1500);
-    } catch (e) { try { el.muted = !hoparlorAcikRef.current; el.volume = 1; } catch (x) {} }
+    if (!el) return;
+    try { el.srcObject = st; } catch (e) {}
+    try { el.muted = !hoparlorAcikRef.current; el.volume = 1; } catch (e) {}
+    try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
   };
   // ---- KENDİ CANLI GÖRÜŞME SUNUCUMUZ (LiveKit) ----
   // Eski ham WebRTC (Metered — kotası doldu) yerine: köprüden (worker) imzalı bir "bilet" (token) alıp KENDİ sunucumuza bağlanırız.
@@ -4452,11 +4435,9 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     hoparlorAcikRef.current = hoparlorAcik;
     try {
-      const g = sesGainRef.current;
       [uzakSesRef.current, uzakVideoRef.current].forEach((el) => {
         if (!el) return;
-        if (g && g.gain) { el.muted = true; try { g.gain.gain.value = hoparlorAcik ? SES_KAT : 0; } catch (e) {} } // güçlendirme aktif → sesi gain kontrol eder
-        else { el.volume = hoparlorAcik ? 1 : 0; el.muted = !hoparlorAcik; }                                       // güçlendirme yoksa (fallback) eski yol
+        el.muted = !hoparlorAcik; el.volume = 1; // açık=karşıyı duy, kapalı=sessiz (doğrudan element — WebAudio numarası YOK)
       });
     } catch (e) {}
   }, [hoparlorAcik, aramaDurum, aktifArama]); // eslint-disable-line react-hooks/exhaustive-deps
