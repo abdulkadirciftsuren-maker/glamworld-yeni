@@ -4,6 +4,14 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 📌 BEKLEYEN İŞ — TAM EKRAN (TWA assetlinks) — 8 EKİ 2026 (UNUTMA, kullanıcıyı TEKRAR GEZDİRME)
+- **SORUN:** Play Store'dan kurulu uygulama (TWA, paket `com.gloxorg.twa`) üstte **"gloxorg.com" çubuğu** gösteriyor, TAM EKRAN değil (üst saat + alt Android şeridi gizlenmiyor). Kaldır-kur DENENDİ, düzelmedi.
+- **SİTE TARAFI DOĞRU (DOĞRULANDI):** `gloxorg.com/.well-known/assetlinks.json` sunuluyor; Google Digital Asset Links API ile kontrol edildi (8 Eki) → dosya okunuyor, paket `com.gloxorg.twa`, **2 SHA-256** var: `0D:B0:B7:22:...:1B:91` ve `34:29:6F:16:...:C6:98`. manifest.json `display:fullscreen` DE DOĞRU.
+- **EKSİK OLAN TEK ŞEY:** Bu 2 anahtardan hiçbiri Google'ın uygulamayı imzaladığı **Play App Signing** anahtarı DEĞİL → o 3. SHA-256 `assetlinks.json`'a eklenmeli (public + build, sonra deploy + kullanıcı kaldır-kur).
+- **O ANAHTAR NEREDE:** Play Console → GLOXORG → **App signing / Uygulama imzalama** ("App signing key certificate" → SHA-256). Google bu sayfayı TAŞIMIŞ (app-list'e geri atıyor). Bir dahaki sefere üstteki ARAMA'ya "imzalama"/"app signing" yaz. **Kullanıcıyı uzun uzun gezdirme — ya doğrudan yolu bul ya da üretimden sonraya bırak.**
+- **ÇOK ÖNEMLİ:** KOZMETİK — **Google Play testini ETKİLEMEZ** (testçiler çubukla da kullanır). Üretimden SONRA bile yapılabilir. Acelesi YOK.
+
+---
 ## 🟢 GÜNCEL DURUM — 21 EYL 2026 (yeni oturum ÖNCE BUNU OKU)
 - **Glome araması KENDİ sunucumuzdan (LiveKit) çalışıyor** — Metered tamamen bırakıldı. 1'e1 sesli+görüntülü ÇALIŞIYOR (kullanıcı iki telefonda test etti, "her şey normal" dedi). Sürüm **A13.B281**.
 - **BİTENLER (bugün):** (1) Anasayfa.js arama kodu ham WebRTC→`livekit-client` (livekitBaglan/livekitYayinla; oda adı=arama id; Firebase sadece zil/durum). (2) ZİL: gerçek gömülü WAV, gelen (melodik `ZIL_GELEN`) ≠ giden (ringback `ZIL_GIDEN`) — `src/zilSesi.js`. (3) adaptiveStream/dynacast KAPALI (siyah perde/donma çözüldü). (4) baglaUzakMedya her seferinde yeniden bağlar (video render). (5) Arayan odaya erkenden mikrofonsuz bağlanır, kabulde yayınlar. (6) aramaKapat başında zilDurdur (reddedince/kapatınca zil susar). (7) Görüşmede CANLI SÜRE SAYACI (dk:sn) — `aramaSayacBicim`. (8) Kabulde medyaAl‖livekitBaglan paralel.
