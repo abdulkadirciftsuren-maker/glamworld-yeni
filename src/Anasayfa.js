@@ -1257,6 +1257,36 @@ const SAYFA_ACIKLAMA = {
     ja: "ここはアカデミー——あらゆる職業の研修。職業を選ぶと、Gloxoo が基礎を教え、各種類を正確な分量で解説し、工房・工場の設立と実現可能性を説明し、本格的な試験を行います。作品を見せて、検証できる GLOXORG 認定証を取得できます。",
     hi: "यह अकादमी है — हर पेशे के लिए प्रशिक्षण। एक पेशा चुनो: Gloxoo बुनियादी बातें सिखाता है, हर किस्म को सटीक माप के साथ समझाता है, वर्कशॉप/फ़ैक्ट्री सेटअप और व्यवहार्यता बताता है, एक गंभीर परीक्षा लेता है; अपना काम दिखाओ और सत्यापन-योग्य GLOXORG प्रमाणपत्र पाओ।",
   },
+  ayna: {
+    tr: "Burası Sanal Ayna. Kendi fotoğrafını yükle (galeriden seç ya da çek); üzerinde saç, makyaj, tırnak, kıyafet, ayakkabı, çanta ve aksesuar dene. Ne denemek istediğini seç ya da yaz; Gloxoo onu senin fotoğrafının üzerinde gösterir.",
+    en: "This is the Virtual Mirror. Upload your own photo (pick from gallery or take one); try hair, makeup, nails, clothes, shoes, bags and accessories on yourself. Choose or type what to try; Gloxoo shows it on your photo.",
+    de: "Das ist der Virtuelle Spiegel. Lade dein eigenes Foto hoch (aus der Galerie oder aufnehmen); probiere Frisur, Make-up, Nägel, Kleidung, Schuhe, Taschen und Accessoires an dir aus. Wähle oder schreibe, was du testen willst; Gloxoo zeigt es auf deinem Foto.",
+    fr: "C'est le Miroir Virtuel. Ajoute ta propre photo (galerie ou appareil) ; essaie coiffure, maquillage, ongles, vêtements, chaussures, sacs et accessoires sur toi. Choisis ou écris ce que tu veux essayer ; Gloxoo l'affiche sur ta photo.",
+    es: "Esto es el Espejo Virtual. Sube tu propia foto (galería o cámara); prueba peinado, maquillaje, uñas, ropa, zapatos, bolsos y accesorios en ti. Elige o escribe qué probar; Gloxoo lo muestra en tu foto.",
+    it: "Questo è lo Specchio Virtuale. Carica la tua foto (galleria o scatta); prova capelli, trucco, unghie, vestiti, scarpe, borse e accessori su di te. Scegli o scrivi cosa provare; Gloxoo lo mostra sulla tua foto.",
+    pt: "Isto é o Espelho Virtual. Carrega a tua foto (galeria ou tira uma); experimenta cabelo, maquilhagem, unhas, roupa, sapatos, malas e acessórios em ti. Escolhe ou escreve o que experimentar; o Gloxoo mostra na tua foto.",
+    ru: "Это Виртуальное зеркало. Загрузи своё фото (из галереи или сделай); примеряй причёску, макияж, ногти, одежду, обувь, сумки и аксессуары на себе. Выбери или напиши, что примерить; Gloxoo покажет это на твоём фото.",
+    uk: "Це Віртуальне дзеркало. Завантаж своє фото (з галереї або зроби); приміряй зачіску, макіяж, нігті, одяг, взуття, сумки й аксесуари на собі. Обери або напиши, що приміряти; Gloxoo покаже це на твоєму фото.",
+    ar: "هذه المرآة الافتراضية. ارفع صورتك (من المعرض أو التقطها)؛ جرّب تسريحة الشعر والمكياج والأظافر والملابس والأحذية والحقائب والإكسسوارات على نفسك. اختر أو اكتب ما تريد تجربته؛ يعرضه غلوكسو على صورتك.",
+    zh: "这里是虚拟试镜。上传你自己的照片（从相册选或拍一张）；在自己身上试发型、妆容、美甲、服装、鞋子、包和配饰。选择或输入想试的，Gloxoo 会在你的照片上展示。",
+    ja: "ここはバーチャルミラー。自分の写真をアップ（ギャラリーから選ぶか撮影）し、髪型・メイク・ネイル・服・靴・バッグ・アクセサリーを自分で試せます。試したいものを選ぶか入力すると、Gloxoo があなたの写真に反映します。",
+    hi: "यह वर्चुअल मिरर है। अपनी फ़ोटो अपलोड करो (गैलरी से चुनो या खींचो); अपने ऊपर हेयरस्टाइल, मेकअप, नाखून, कपड़े, जूते, बैग और एक्सेसरीज़ आज़माओ। क्या आज़माना है चुनो या लिखो; Gloxoo उसे तुम्हारी फ़ोटो पर दिखाएगा।",
+  },
+  muhasebe: {
+    tr: "Burası Muhasebe. Gelir ve giderlerini, faturalarını kaydedersin; kârını ve durumunu görürsün. Düzenli yaz, Gloxoo toplamları ve özetleri senin için hesaplar.",
+    en: "This is Accounting. Record your income, expenses and invoices; see your profit and status. Enter them regularly and Gloxoo totals and summarizes everything for you.",
+    de: "Das ist Buchhaltung. Erfasse Einnahmen, Ausgaben und Rechnungen; sieh deinen Gewinn und Status. Trag sie regelmäßig ein, Gloxoo rechnet Summen und Übersichten für dich.",
+    fr: "C'est la Comptabilité. Enregistre tes revenus, dépenses et factures ; vois ton bénéfice et ta situation. Saisis-les régulièrement, Gloxoo calcule les totaux et les résumés pour toi.",
+    es: "Esto es Contabilidad. Registra ingresos, gastos y facturas; ve tu beneficio y estado. Anótalos con regularidad y Gloxoo calcula totales y resúmenes por ti.",
+    it: "Questa è Contabilità. Registra entrate, uscite e fatture; vedi il tuo profitto e lo stato. Inseriscili regolarmente e Gloxoo calcola totali e riepiloghi per te.",
+    pt: "Isto é Contabilidade. Regista receitas, despesas e faturas; vê o teu lucro e estado. Insere-os com regularidade e o Gloxoo calcula totais e resumos por ti.",
+    ru: "Это Бухгалтерия. Записывай доходы, расходы и счета; смотри прибыль и состояние. Вноси регулярно — Gloxoo посчитает суммы и сводки за тебя.",
+    uk: "Це Бухгалтерія. Записуй доходи, витрати й рахунки; дивись прибуток і стан. Вноси регулярно — Gloxoo порахує суми та зведення за тебе.",
+    ar: "هذه المحاسبة. سجّل دخلك ومصروفاتك وفواتيرك؛ شاهد ربحك وحالتك. أدخلها بانتظام وسيحسب غلوكسو المجاميع والملخصات نيابةً عنك.",
+    zh: "这里是记账。记录你的收入、支出和发票；查看利润和状况。定期录入，Gloxoo 会为你汇总和统计。",
+    ja: "ここは会計です。収入・支出・請求を記録し、利益と状況を確認できます。こまめに入力すれば、Gloxoo が合計と要約を計算します。",
+    hi: "यह अकाउंटिंग है। अपनी आय, खर्च और बिल दर्ज करो; अपना मुनाफ़ा और स्थिति देखो। नियमित रूप से डालो, Gloxoo तुम्हारे लिए कुल और सारांश निकाल देगा।",
+  },
 };
 
 // CANLI MASKOT YÜZÜ — konuşurken (konusuyor=true) ağzı açılıp kapanır + hafif zıplar. tur: "grox" (elmas) | "ekspert" (ayı).
@@ -2765,7 +2795,7 @@ export default function Anasayfa({ pro = false }) {
   // otomatik=true → ilk-giriş otomatik anlatımı: mikrofonu ZORLA açmaz (kullanıcıyı boğmaz); düğmeyle açılınca canlı dinler.
   const eksperTanitYap = (otomatik) => {
     const ak = mevcutSayfaKodu();
-    const sayfaAdlar = { home: "Ana sayfa / Keşfet", ara: "Arama", konum: "Konum", mesaj: "Mesajlar", profil: "Profil", paylas: "Paylaşım", ayarlar: "Ayarlar", bildirim: "Bildirimler", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", akademi: "Akademi" };
+    const sayfaAdlar = { home: "Ana sayfa / Keşfet", ara: "Arama", konum: "Konum", mesaj: "Mesajlar", profil: "Profil", paylas: "Paylaşım", ayarlar: "Ayarlar", bildirim: "Bildirimler", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", akademi: "Akademi", ayna: "Sanal Ayna", muhasebe: "Muhasebe" };
     const sayfaAd = sayfaAdlar[ak] || "Ana sayfa / Keşfet";
     setYardimciBaglam(`Kullanıcı şu an GLOXORG "${sayfaAd}" sayfasında; bu sayfanın uzmanı gibi yardım et.`);
     const ad = hitapAdi(); const _ea = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
@@ -2775,9 +2805,19 @@ export default function Anasayfa({ pro = false }) {
     const aciklama = ack[aiDilRef.current] || ack.en;
     const selam = intro + " " + aciklama;
     setMaskotTur("grox"); setMaskotMetni(selam); setMaskotTanit(true); setYardimciMod("site");
-    // KENDİ KENDİNE KAPANMAZ — açık/hazır kalır; kapatmayı KULLANICI yapar (boşluğa dokun / ✕).
-    try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
-    if (!otomatik) maskotCanliBaslat(); // düğmeyle açılınca: karşılamadan sonra mikrofonu açıp seni bekler
+    if (otomatik) {
+      // ⬇️ OTOMATİK SAYFA TANITIMI (kullanıcı: "konuşma bittiğinde ortadan kaybolsun — ekranda durup içeriği kapatmasın"):
+      //   konuşma bitince KENDİLİĞİNDEN kapanır. Ses kapalıysa/onBitti gelmezse, yazı uzunluğuna göre bir süre sonra yine kapanır.
+      let kapandi = false;
+      const otoKapat = () => { if (kapandi) return; kapandi = true; try { setMaskotTanit(false); setMaskotMini(false); setMaskotMetni(""); } catch (e) {} };
+      try { sesliOku(selam, otoKapat, undefined, teleIlerleme); } catch (e) {}
+      const sure = Math.max(6000, kelimeSayisi(selam) * 430 + 2500); // ~okuma süresi + tampon
+      setTimeout(otoKapat, sure);
+    } else {
+      // Ekspert düğmesiyle AÇILINCA: açık kalır, karşılamadan sonra mikrofonu açıp seni dinler (sohbet modu).
+      try { sesliOku(selam, undefined, undefined, teleIlerleme); } catch (e) {}
+      maskotCanliBaslat();
+    }
   };
   const [paylasDuzen, setPaylasDuzen] = useState(null); // paylaşım fotoğrafının katman hafızası (yeniden düzenle)
   const [paylasZemin, setPaylasZemin] = useState(""); // yazılı gönderi ZEMİN (arka plan) rengi/gradyanı
