@@ -122,7 +122,7 @@ function App() {
         // GEÇİCİ boşluk → giriş kartını gösterme, "yükleniyor" kal; oturum gelirse (üstteki u dalı) düzelir.
         setKullanici("yukleniyor");
         if (cikisTimerRef.current) clearTimeout(cikisTimerRef.current);
-        cikisTimerRef.current = setTimeout(() => { if (!auth.currentUser) gercekCikis(); }, 6000); // 6 sn hâlâ gelmezse gerçekten çıkış say
+        cikisTimerRef.current = setTimeout(() => { if (!auth.currentUser) gercekCikis(); }, 25000); // 25 sn hâlâ gelmezse gerçekten çıkış say (YAVAŞ/YORGUN telefonda oturum geç gelebilir; 6 sn'de "çıkış" sanıp kullanıcıyı giriş kartına ATIYOR + ayar bayraklarını siliyordu — kullanıcı: "her açılışta tekrar giriş istiyor, ayarlarım sıfırlanıyor". 25 sn ile oturum geri gelir, yanlış çıkış OLMAZ.)
       }
     }
   }), []);
