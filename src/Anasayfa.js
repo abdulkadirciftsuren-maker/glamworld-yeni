@@ -7778,6 +7778,9 @@ export default function Anasayfa({ pro = false }) {
   // (her AI kendi penceresinin içeriğini görür; konuşma devam eder, kesmez)
   const yaziAISor = (p) => {
     if (!p) return;
+    // ⛔ GLOXOO CEVABI SAYFA DİLİNDE OLSUN (kullanıcı: "sayfa Rusça ama bana Türkçe cevap veriyor, Rusça olmalı").
+    //   Cevap dili aiDilRef'e göre belirleniyor; bazen sayfa dilinden kayıyordu. "Sor"a basınca sayfa diline SABİTLE.
+    try { if (aiDilRef.current !== dil) { aiDilRef.current = dil; setAiDil(dil); } } catch (e) {}
     setTamFoto("");
     // ⛔ KULLANICI ISRARLA İSTEDİ: "Sor" ARTIK KONUŞMAYI SIFIRLAMAZ/ARŞİVLEMEZ. Soru, AÇIK OLAN konuşmanın DEVAMINA
     //   eklenir → hiçbir şey silinmez, tek akışta devam eder. (Eskiden oturumKaydet + listeSifirla ile eski konuşmayı
@@ -9757,12 +9760,26 @@ export default function Anasayfa({ pro = false }) {
                     )}
                     <span className="apr-alt-arac">
                       {/* ÇEVİR: metin varsa yerinde çevirir; metin YOKSA (yazı resmin içinde) resmi OKUYUP çeviriyi burada gösterir (Gloxoo penceresi açmaz) */}
-                      <button className="apr-cevir" onClick={(e) => { e.stopPropagation(); if (p.yazi || p.baslik) cevirToggle(p, anahtar); else resimCevir(p, anahtar); }}>
+                      <button className="apr-cevir" title={t("yaziyiCevir", "Yazıyı çevir")} onClick={(e) => { e.stopPropagation(); if (p.yazi || p.baslik) cevirToggle(p, anahtar); else resimCevir(p, anahtar); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
                         {cevYuk ? t("ceviriliyor", "Çevriliyor…") : (cevAcik && cevMetin ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
                       </button>
+                      {/* GÖRSEL — fotoğrafın İÇİNDEKİ yazıyı kullanıcının diline çevirir (resimCevir). AYRI anahtar ("|g") → yazı
+                          çevirisiyle ÇAKIŞMAZ. SADECE yazı(caption) VARKEN gösterilir (caption yoksa yukarıdaki "Çevir" zaten resmi okur). */}
+                      {(p.yazi || p.baslik) && (p.gorsel || p.poster || (p.medyalar && p.medyalar[0])) && (
+                        <button className="apr-cevir" title={t("gorseldekiYaziCevir", "Görseldeki yazıyı çevir")} onClick={(e) => { e.stopPropagation(); resimCevir(p, anahtar + "|g"); }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5" /><circle cx="8.5" cy="9" r="1.6" /><path d="M4 18l5-5 4 4 3-3 4 4" /></svg>
+                          {ceviri[anahtar + "|g"] && ceviri[anahtar + "|g"].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar + "|g"] && ceviri[anahtar + "|g"].acik ? t("gizle", "Gizle") : t("gorselCevir", "Görsel"))}
+                        </button>
+                      )}
                       <button className="apr-cevir apr-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
                     </span>
+                    {/* GÖRSELDEKİ YAZININ ÇEVİRİSİ — "Görsel" açıkken, şeridin altında ayrı kutuda (caption çevirisinden BAĞIMSIZ). */}
+                    {ceviri[anahtar + "|g"] && ceviri[anahtar + "|g"].acik && (
+                      <div translate="no" className="apr-altyazi notranslate acik apr-gorsel-ceviri">
+                        {ceviri[anahtar + "|g"].yuk ? t("ceviriliyor", "Çevriliyor…") : metniLinkle(ceviri[anahtar + "|g"].metin || "")}
+                      </div>
+                    )}
                   </>
                 );
                 return (
