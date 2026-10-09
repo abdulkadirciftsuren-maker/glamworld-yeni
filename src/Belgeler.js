@@ -33,8 +33,9 @@ async function elemPdf(el, ad) {
     pdf.addImage(pc.toDataURL("image/jpeg", 0.92), "JPEG", kenar, kenar, iw, dilimPx / pxPerPt); // JPEG → çok daha KÜÇÜK/uyumlu PDF (her uygulamada hızlı açılır)
     srcY += dilimPx; ilk = false;
   }
-  const blob = pdf.output("blob"); const dosya = new File([blob], dosyaAd(ad, "pdf"), { type: "application/pdf" });
-  if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG" }); return; } catch (e) {} }
+  // DOĞRUDAN İNDİR (İndirilenler'e) → her telefonda güvenilir açılır. (Eskiden paylaş menüsü açılıyordu; kullanıcının
+  //   seçtiği bazı uygulamalar (dönüştürücü/Drive) PDF'i AÇMAYIP takılıyordu. Artık indirilir, PDF okuyucuda açılır;
+  //   göndermek istenirse İndirilenler'den paylaşılır.)
   pdf.save(dosyaAd(ad, "pdf"));
 }
 // ---- YAZDIR (printer): ANA SAYFAYI yazdırır (Android yazıcı servisi bunu RICOH vb. yazıcılara sorunsuz gönderir).
@@ -359,7 +360,7 @@ function TabloEditor({ t, belge, onKapat, onKaydet, bilgi }) {
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-excel" onClick={() => excelIndirAoa(ad || "tablo", grid.map((row, r) => row.map((v, c) => { const d = _hesapHucre(grid, r, c, new Set()); return typeof d === "number" ? d : String(d); }))).then(() => bilgi(t("belExcelIndi", "Excel indirildi 📊"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📊 Excel</button>
-        <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || "tablo").then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
+        <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || "tablo").then(() => bilgi(t("belPdfIndi", "📄 İndirilenler'e indirildi"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
         <button className="muh-btn muh-yazdir-btn" onClick={() => yazdirElem(yazdirRef.current, ad || "tablo")}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
     </div>
@@ -423,7 +424,7 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || "belge", htmlAl()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>
-        <button className="muh-btn muh-pdf" onClick={async () => { try { const el = await yazdirAlanHazirla(); if (el) { await elemPdf(el, ad || "belge"); bilgi(t("belPdfHazir", "PDF hazır 📄")); } } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } }}>📄 PDF</button>
+        <button className="muh-btn muh-pdf" onClick={async () => { try { const el = await yazdirAlanHazirla(); if (el) { await elemPdf(el, ad || "belge"); bilgi(t("belPdfIndi", "📄 İndirilenler'e indirildi")); } } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } }}>📄 PDF</button>
         <button className="muh-btn muh-yazdir-btn" onClick={async () => { const el = await yazdirAlanHazirla(); if (el) yazdirElem(el, ad || "belge"); }}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
       {/* GİZLİ YAZDIRMA ALANI — sabit A4 genişliği; PDF/Yazdır bunu çevirir (canlı editör değil) → kısa yazı tek sayfa, düzgün A4 */}
@@ -457,7 +458,7 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
   const pdfYap = async () => {
     if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; }
     setYuk(true);
-    try { await elemPdf(yazdirRef.current, baslik || "foto"); bilgi(t("belPdfHazir", "PDF hazır 📄")); }
+    try { await elemPdf(yazdirRef.current, baslik || "foto"); bilgi(t("belPdfIndi", "📄 İndirilenler'e indirildi")); }
     catch (e) { bilgi(t("belOlmadi", "Olmadı")); }
     setYuk(false);
   };
@@ -558,7 +559,7 @@ function FaturaEditor({ t, belge, onKapat, onKaydet, bilgi, paraSym, benAd }) {
         <button className="muh-btn muh-kaydet" onClick={() => onKaydet(veri())}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-excel" onClick={() => excelIndirAoa(ad || no, aoa()).then(() => bilgi(t("belExcelIndi", "Excel indirildi 📊"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📊 Excel</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || no, faturaHtml()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>
-        <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || no).then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
+        <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || no).then(() => bilgi(t("belPdfIndi", "📄 İndirilenler'e indirildi"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
         <button className="muh-btn muh-yazdir-btn" onClick={() => yazdirElem(yazdirRef.current, ad || no)}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
 
@@ -728,7 +729,7 @@ function MeslekSayfa({ t, belge, onKapat, onKaydet, bilgi, onGloxordaPaylas }) {
   const fotoSec = (e) => { const f = (e.target.files || [])[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { let w = im.naturalWidth, h = im.naturalHeight; const max = 900; if (w > max || h > max) { if (w >= h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } } const cv = document.createElement("canvas"); cv.width = w; cv.height = h; cv.getContext("2d").drawImage(im, 0, 0, w, h); try { setFoto(cv.toDataURL("image/jpeg", 0.85)); } catch (x) { setFoto(String(r.result)); } }; im.src = String(r.result); }; r.readAsDataURL(f); e.target.value = ""; };
   const hizmetDizi = hizmetler.split("\n").map((s) => s.trim()).filter(Boolean);
   const veri = () => ({ belgeTuru: "meslek", ad: ad.trim() || firma || t("belMeslek", "Meslek sayfası"), meslekSayfa: { firma, meslek, slogan, aciklama, hizmetler, tel, adres, foto, renk }, zamanMs: Date.now() });
-  const pdf = async () => { setYuk(true); try { await elemPdf(kartRef.current, ad || firma || "meslek-sayfam"); bilgi(t("belPdfHazir", "PDF hazır 📄")); } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } setYuk(false); };
+  const pdf = async () => { setYuk(true); try { await elemPdf(kartRef.current, ad || firma || "meslek-sayfam"); bilgi(t("belPdfIndi", "📄 İndirilenler'e indirildi")); } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } setYuk(false); };
   const paylas = async () => { setYuk(true); try { await elemFotoPaylas(kartRef.current, ad || firma || "meslek-sayfam"); bilgi(t("belPaylasildi", "Paylaşıldı ✓")); } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } setYuk(false); };
   const gloxorda = async () => {
     if (!onGloxordaPaylas) return; setYuk(true);
