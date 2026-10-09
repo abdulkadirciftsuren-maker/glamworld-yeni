@@ -9,6 +9,21 @@ import reportWebVitals from './reportWebVitals';
 // Routing tamamen hafızada (App.js MemoryRouter) — Chrome geçmişine dokunmaz.
 // Yeni sürüm otomatik gelir: hash'li dosya isimleri + index.html no-cache meta.
 
+// ================= KALICI DEPOLAMA (kullanıcı: "her açılışta AYARLAR siliniyor, gene GİRİŞ istiyor, dil Rusça oluyor") =================
+// GERÇEK SEBEP: Android/Chrome, telefonda YER AZALINCA "kalıcı" işaretlenmemiş sitelerin verisini SİLER:
+//   IndexedDB (= Firebase GİRİŞ bilgisi) + localStorage (= TÜM ayarlar, seçili DİL, feed önbelleği). Silinince →
+//   giriş gider (tekrar giriş sorar), ayarlar sıfırlanır, bildirim izni YENİDEN sorulur, dil otomatiğe dönüp
+//   (Rusça vb.) gösterir. Bu yüzden "her açılışta her şey siliniyor" oluyordu.
+// ÇÖZÜM (KISITLAMA DEĞİL — tam tersi, veriyi KORUR): tarayıcıdan verimizi SİLMEMESİNİ iste.
+//   (Ana ekrana eklenmiş/yüklenmiş uygulamada çoğu zaman kendiliğinden ONAYLANIR; normal sekmede de zarar vermez.)
+try {
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persisted()
+      .then((zatenKalici) => { if (!zatenKalici) { try { navigator.storage.persist().catch(() => {}); } catch (e) {} } })
+      .catch(() => { try { navigator.storage.persist().catch(() => {}); } catch (e) {} });
+  }
+} catch (e) {}
+
 // ================= OTOMATİK KURTARMA (kullanıcı: "sayfa bazen boş sarı kalıyor, silip yeniden yüklemem lazım") =================
 // SEBEP: bir JS çökmesi ya da bir "parça" (chunk: hash'li js/css) yüklenemezse (yeni sürüm yayınlanınca eski sayfa eski parçayı
 //   ararsa) uygulama boş kalıyordu ve KENDİNİ TOPARLAMIYORDU. Çözüm: böyle bir hatada sayfayı BİR KEZ otomatik yenile
