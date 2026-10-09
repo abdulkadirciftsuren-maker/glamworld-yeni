@@ -11,16 +11,27 @@ const dosyaAd = (ad, uz) => ("GLOXORG-" + (ad || "belge")).replace(/[^\wğüşı
 
 // ---- ortak: bir HTML öğesini PDF yap (Türkçe doğru çıkar) ve indir/paylaş
 async function elemPdf(el, ad) {
+  if (!el) throw new Error("no el");
   const html2canvas = (await import("html2canvas")).default;
   const { jsPDF } = await import("jspdf");
   const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-  const img = canvas.toDataURL("image/png");
   const pdf = new jsPDF({ unit: "pt", format: "a4" });
   const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-  const kenar = 24, iw = pw - kenar * 2, ih = canvas.height * iw / canvas.width;
-  if (ih <= ph - kenar * 2) pdf.addImage(img, "PNG", kenar, kenar, iw, ih);
-  else { let hLeft = ih, pos = kenar; pdf.addImage(img, "PNG", kenar, pos, iw, ih); hLeft -= (ph - kenar * 2);
-    while (hLeft > 0) { pos -= (ph - kenar * 2); pdf.addPage(); pdf.addImage(img, "PNG", kenar, pos, iw, ih); hLeft -= (ph - kenar * 2); } }
+  const kenar = 28, iw = pw - kenar * 2;
+  // ⛔ ESKİ HATA: tüm uzun resmi her sayfada yukarı KAYDIRARAK ekliyordu → sayfalar ÜST ÜSTE BİNİYORDU (kullanıcı şikâyeti).
+  //   DOĞRUSU: kaynağı sayfa-boyu DİLİMLERE böl, HER dilimi AYRI sayfaya tam yerleştir → binme YOK, kısa içerik TEK sayfa.
+  const pxPerPt = canvas.width / iw;                   // kaynak piksel / pdf-pt
+  const sayfaIcPt = ph - kenar * 2;                    // bir sayfada kullanılabilir yükseklik (pt)
+  const sayfaIcPx = Math.max(1, Math.floor(sayfaIcPt * pxPerPt)); // bir sayfaya sığan kaynak piksel
+  let srcY = 0, ilk = true;
+  while (srcY < canvas.height - 1) {
+    const dilimPx = Math.min(sayfaIcPx, canvas.height - srcY);
+    const pc = document.createElement("canvas"); pc.width = canvas.width; pc.height = dilimPx;
+    pc.getContext("2d").drawImage(canvas, 0, srcY, canvas.width, dilimPx, 0, 0, canvas.width, dilimPx);
+    if (!ilk) pdf.addPage();
+    pdf.addImage(pc.toDataURL("image/png"), "PNG", kenar, kenar, iw, dilimPx / pxPerPt);
+    srcY += dilimPx; ilk = false;
+  }
   const blob = pdf.output("blob"); const dosya = new File([blob], dosyaAd(ad, "pdf"), { type: "application/pdf" });
   if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG" }); return; } catch (e) {} }
   pdf.save(dosyaAd(ad, "pdf"));
@@ -367,6 +378,16 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   const durdur = (e) => { try { e.preventDefault(); } catch (x) {} }; // düğmeye basınca yazı alanı odağını KAYBETME
   const htmlAl = () => (icRef.current ? icRef.current.innerHTML : "");
   const kaydet = () => onKaydet({ belgeTuru: "yazi", ad: ad.trim() || t("belAdsiz", "Adsız belge"), html: htmlAl(), zamanMs: Date.now() });
+  // PDF/YAZDIR: canlı editörü (min-height'li, ekran-genişlikli) DEĞİL; yazıyı GİZLİ, SABİT A4-genişlikli temiz alana
+  //   koyup ONU çeviriyoruz → kısa yazı TEK sayfa (boş yer eklenmez), A4'e düzgün sığar. (Kullanıcı: "3 sayfa/üst üste binme".)
+  const yaziYazdirRef = useRef(null);
+  const yazdirAlanHazirla = async () => {
+    const el = yaziYazdirRef.current; if (!el) return null;
+    const ic = htmlAl();
+    el.innerHTML = (ic && ic.replace(/<[^>]*>/g, "").trim()) ? ic : "<p>—</p>"; // boşsa en azından bir şey
+    await new Promise((r) => setTimeout(r, 60)); // tarayıcı çizsin
+    return el;
+  };
   const fontlar = ["Arial", "Georgia", "Times New Roman", "Verdana", "Trebuchet MS", "Courier New", "Comic Sans MS"];
   const boylar = [["3", t("belNormal", "Normal")], ["1", "XS"], ["2", "S"], ["4", "L"], ["5", "XL"], ["6", "XXL"], ["7", "XXXL"]];
   return (
@@ -398,9 +419,11 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-kaydet" onClick={kaydet}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || "belge", htmlAl()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>
-        <button className="muh-btn muh-pdf" onClick={() => elemPdf(icRef.current, ad || "belge").then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
-        <button className="muh-btn muh-yazdir-btn" onClick={() => yazdirElem(icRef.current, ad || "belge")}>🖨️ {t("belYazdir", "Yazdır")}</button>
+        <button className="muh-btn muh-pdf" onClick={async () => { try { const el = await yazdirAlanHazirla(); if (el) { await elemPdf(el, ad || "belge"); bilgi(t("belPdfHazir", "PDF hazır 📄")); } } catch (e) { bilgi(t("belOlmadi", "Olmadı")); } }}>📄 PDF</button>
+        <button className="muh-btn muh-yazdir-btn" onClick={async () => { const el = await yazdirAlanHazirla(); if (el) yazdirElem(el, ad || "belge"); }}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
+      {/* GİZLİ YAZDIRMA ALANI — sabit A4 genişliği; PDF/Yazdır bunu çevirir (canlı editör değil) → kısa yazı tek sayfa, düzgün A4 */}
+      <div ref={yaziYazdirRef} className="bel-yazi-yazdir" aria-hidden="true" />
     </div>
   );
 }

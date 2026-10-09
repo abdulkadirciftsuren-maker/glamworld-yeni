@@ -5760,6 +5760,13 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 /* Word yazı alanı */
 .bel-yazi-alan{ min-height:44vh; background:#fff; border:1.6px solid rgba(160,120,0,.5); border-radius:12px; padding:16px; font-size:15.5px; color:#222; line-height:1.6; overflow-y:auto; }
 .bel-yazi-alan:focus{ outline:2px solid #FFD700; }
+/* GİZLİ YAZDIRMA ALANI (Word/yazı belgesi PDF/Yazdır) — sabit A4 genişliği + DOĞAL yükseklik (min-height YOK) →
+   kısa yazı tek sayfa, metin A4'e düzgün sığar, Türkçe harfler doğru. Ekran dışında. */
+.bel-yazi-yazdir{ position:absolute; left:-99999px; top:0; width:760px; background:#fff; color:#111; padding:40px 44px;
+  font-family:Arial, sans-serif; font-size:15.5px; line-height:1.6; box-sizing:border-box; }
+.bel-yazi-yazdir h1, .bel-yazi-yazdir h2, .bel-yazi-yazdir h3{ color:#111; margin:.4em 0; }
+.bel-yazi-yazdir p{ margin:.3em 0; }
+.bel-yazi-yazdir img, .bel-yazi-yazdir table{ max-width:100%; }
 /* Fatura */
 .bel-ikili{ display:flex; gap:8px; } .bel-ikili .muh-inp{ flex:1; }
 .bel-fat-satirlar{ background:#fffbe9; border:1.5px solid rgba(160,120,0,.5); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px; }
