@@ -168,7 +168,9 @@ export default function Acilis({ baslik = "GLOXORG", onBitti }) {
       zamanlar.push(setTimeout(() => { if (onBitti) { sesiBitir(); onBitti(); } }, 8000));
     }
 
+    let basladi = false;
     function basla() {
+      if (basladi) return; basladi = true;   // İKİ KEZ başlamasın (parmakla dokunma + aşağıdaki otomatik başlatma çakışmasın)
       sesBaslat();
       sinematikGiris();
       giris.classList.add("kapan");
@@ -190,6 +192,12 @@ export default function Acilis({ baslik = "GLOXORG", onBitti }) {
     giris.addEventListener("click", onGiris);
     gecBtn.addEventListener("click", onGec);
     sesBtn.addEventListener("click", onSes);
+    // ⛔ GÜVENCE (kullanıcı: "GLOXORG yazısı gitmiyor, ekranda HEP duruyor") — açılış ARTIK dokunma BEKLEMEZ:
+    // Eskiden açılış, ekrana parmakla dokunulana kadar başlamıyor, dokunulmazsa SONSUZA KADAR ekranda asılı
+    // kalıyordu (sayfa kendini yenileyince de yine çıkıp dokunma bekliyordu → "hep duruyor"). Artık 1.2 sn içinde
+    // dokunma olmazsa KENDİLİĞİNDEN başlar (ses tarayıcı izni gerektirir; dokunma yoksa sessiz oynar) ve sov()
+    // içindeki 8 sn'lik zamanlayıcı onBitti ile açılışı KENDİLİĞİNDEN kapatır → açılış ASLA takılı kalmaz.
+    zamanlar.push(setTimeout(basla, 1200));
     window.addEventListener("pagehide", sesiTamKapat);
     document.addEventListener("visibilitychange", onGizle);
 
