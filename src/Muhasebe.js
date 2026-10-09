@@ -142,8 +142,11 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
         srcY += dilimPx; ilk = false;
       }
       const ad = ("GLOXORG-" + (data.baslik || "muhasebe")).replace(/[^\wğüşıöçĞÜŞİÖÇ ]/gi, "").replace(/\s+/g, "-").slice(0, 40) + ".pdf";
-      pdf.save(ad); // DOĞRUDAN İNDİR (İndirilenler'e) → her telefonda güvenilir açılır; paylaş menüsündeki bozuk uygulamalara düşmez
-      bilgi(t("muhPdfIndi", "PDF indirildi 📄 (İndirilenler'de)"));
+      // PAYLAŞ (gönder) — kullanıcı PDF'i kime isterse DOĞRUDAN gönderebilsin (KORUNUR); olmazsa İndirilenler'e kaydeder.
+      const blob = pdf.output("blob"); const dosya = new File([blob], ad, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG Muhasebe" }); } catch (e) { pdf.save(ad); } }
+      else pdf.save(ad);
+      bilgi(t("muhPdfHazir", "PDF hazır 📄"));
     } catch (e) { bilgi(t("muhOlmadi", "Olmadı, tekrar dener misin?")); }
     setYazdirData(null); setIslemYok(false);
   }
@@ -251,7 +254,7 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
                   <button className="muh-btn muh-excel" disabled={islemYok} onClick={() => excelYaz(seciliCari.ad + " hesap", [t("muhTarih", "Tarih"), t("muhAciklama", "Açıklama"), t("muhBorc", "Borç"), t("muhTahsilat", "Tahsilat")],
                     kayit.map((i) => [trTarih(i.tarih), i.aciklama || "", (i.islemTuru === "tahsilat" ? "" : sayi(i.tutar)), (i.islemTuru === "tahsilat" ? sayi(i.tutar) : "")]),
                     [["", t("muhKalan", "Kalan"), "", bak]])}>📊 {t("muhExcel", "Excel")}</button>
-                  <button className="muh-btn muh-pdf" disabled={islemYok} onClick={() => pdfYaz({ baslik: seciliCari.ad + " hesap", cari: seciliCari, satirlar: kayit, tBorc, tTah, bak })}>📄 {t("muhPdfIndir", "PDF indir")}</button>
+                  <button className="muh-btn muh-pdf" disabled={islemYok} onClick={() => pdfYaz({ baslik: seciliCari.ad + " hesap", cari: seciliCari, satirlar: kayit, tBorc, tTah, bak })}>📄 {t("muhPdfPaylas", "PDF / Paylaş")}</button>
                   <button className="muh-btn muh-yazdir-btn" disabled={islemYok} onClick={() => yazdirMuh({ baslik: seciliCari.ad + " hesap", cari: seciliCari, satirlar: kayit, tBorc, tTah, bak })}>🖨️ {t("belYazdir", "Yazdır")}</button>
                 </div>
               </>);

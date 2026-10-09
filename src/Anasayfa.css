@@ -5758,8 +5758,15 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .bel-alt-dugmeler{ display:flex; gap:7px; flex-wrap:wrap; }
 .bel-alt-dugmeler .muh-btn{ flex:1; min-width:88px; }
 /* Word yazı alanı */
-.bel-yazi-alan{ min-height:44vh; background:#fff; border:1.6px solid rgba(160,120,0,.5); border-radius:12px; padding:16px; font-size:15.5px; color:#222; line-height:1.6; overflow-y:auto; }
-.bel-yazi-alan:focus{ outline:2px solid #FFD700; }
+/* WORD YAZI ALANI = A4 KÂĞIDI GÖRÜNÜMÜ (kullanıcı: "yazarken A4 kâğıdı gibi görünsün"). Beyaz sayfa + belge kenar
+   boşlukları (yüzde ile orantılı) + PDF'le AYNI yazı tipi (Times/serif) → yazarken gördüğün ≈ çıkan PDF (WYSIWYG).
+   Ortalanmış, hafif gölgeli "kâğıt"; A4 oranında uzun (min-height). */
+/* A4 KÂĞIT: dıştaki .muh-ic'in 14px yan boşluğunu negatif margin ile AŞ → beyaz kâğıt SAĞ-SOL EKRANI TAM doldurur. */
+.bel-yazi-alan{ min-height:82vh; width:calc(100% + 28px); margin:0 -14px; background:#fff; border:none; border-radius:0;
+  box-shadow:0 2px 12px rgba(90,63,0,.18); padding:34px 22px; box-sizing:border-box;
+  font-family:'Times New Roman', Georgia, serif; font-size:16.5px; color:#111; line-height:1.75; overflow-y:auto; }
+.bel-yazi-alan:focus{ outline:none; box-shadow:0 2px 12px rgba(90,63,0,.18), inset 0 0 0 2px #FFD700; }
+@media (min-width:560px){ .bel-yazi-alan{ padding:48px 56px; font-size:17px; } }
 /* GİZLİ YAZDIRMA ALANI (Word/yazı belgesi PDF/Yazdır) — sabit A4 genişliği + DOĞAL yükseklik (min-height YOK) →
    kısa yazı tek sayfa, metin A4'e düzgün sığar, Türkçe harfler doğru. Ekran dışında. */
 /* GERÇEK A4 GÖRÜNÜMÜ: 794px = A4 genişliği (96dpi); kenar boşlukları ~20mm; yazı ~12pt (belge gibi okunur).
