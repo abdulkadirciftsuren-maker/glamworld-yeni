@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -10,10 +10,11 @@ import Giris from "./Giris";
 // (Dosyalar duruyor; ileride gerekirse geri bağlanır.)
 import AltinCerceve from "./AltinCerceve";
 import KayitTamam from "./KayitTamam";
-// ⚡ ANASAYFA GEÇ YÜKLENİR (lazy) — en büyük parça (~14.000 satır + Reklam, Elite Pazar, harita, video arama,
-//   çeviriler, Gloxoo...) ARTIK ilk açılışta inmez. Önce splash/giriş HEMEN açılır; ağır kısım giriş sonrası,
-//   sadece gerekince yüklenir (altın "Yükleniyor…" ekranıyla). Böylece ilk açılış ÇOK hafifler/hızlanır.
-const Anasayfa = lazy(() => import("./Anasayfa"));
+// ⛔ ANASAYFA TEK PARÇA (eager) — GERİ ALINDI (kullanıcı: "sarı perdede takılıyor, açılmıyor"). Geç-yükleme (lazy)
+//   ilk açılışı hafifletiyordu AMA ağ bir an takılınca/yayından sonra Anasayfa parçası inemeyince sayfa SONSUZA KADAR
+//   sarı "Yükleniyor" ekranında kalıyordu (Suspense fallback asılı). İSTİKRAR için tek parçaya döndü: ya tam yüklenir
+//   ya temiz hata verir (asılı kalmaz). İlk indirme biraz daha büyük ama GÜVENİLİR.
+import Anasayfa from "./Anasayfa";
 
 // HashRouter: geri tuşu açık PENCEREYİ kapatır (siteyi değil) — güvenilir, özel kod yok.
 // ÖNEMLİ: Adres çubuğunda ekran adı görünür ama bu YENİDEN YÜKLEME DEĞİL ve Google'a
@@ -175,7 +176,7 @@ function App() {
         {/* Kaydı olmayan (üye olmamış) kişi ana sayfayı GÖREMEZ → üyeliğini tamamlamaya yollanır.
             Hesap tipi PROFESYONEL ise ana sayfa PROFESYONEL modda (kırmızı) açılır;
             müşteri/diğer herkes AYNEN müşteri ana sayfasını görür (birbirini görmezler). */}
-        <Route path="/anasayfa" element={(!kullanici || !profilVarmi) ? <Navigate to="/" replace /> : <Suspense fallback={<Yukleniyor />}><Anasayfa pro={tip === "profesyonel"} /></Suspense>} />
+        <Route path="/anasayfa" element={(!kullanici || !profilVarmi) ? <Navigate to="/" replace /> : <Anasayfa pro={tip === "profesyonel"} />} />
         {/* Eski kırmızı profil sayfası KALDIRILDI (kullanıcı: sil her yerden, bir daha görmeyeyim).
             Profil artık ana sayfanın İÇİNDE kendi penceresi. Eski adrese gelen ana sayfaya gider. */}
         <Route path="/profil" element={<Navigate to="/anasayfa" replace />} />
