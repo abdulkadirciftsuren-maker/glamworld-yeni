@@ -9932,16 +9932,32 @@ export default function Anasayfa({ pro = false }) {
                     </div>
                   )}
                   {p.yazi && (
-                    /* ÇEVİR + "devamını oku" → yazının İÇİNDE, SAĞDA (yazının bittiği yerde); "devamını oku" SADECE yazı kesilince */
+                    /* ÇEVİR (yazı) + GÖRSEL (resimdeki yazı) + SOR (Gloxoo) → üç düğme. "devamını oku" yazı kesilince. */
+                    <>
                     <div className="ana-post-altsatir" style={{ background: icZemin }}>
                       {(kesik[anahtar] || yaziAcikSet.has(p.id)) && <span className="ana-post-devam" onClick={() => yaziAcKapa(p.id)}>{yaziAcikSet.has(p.id) ? t("gizle", "gizle") : t("devamOku", "… devamını oku")}</span>}
-                      <button className="ana-post-cevir" onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
+                      <button className="ana-post-cevir" title={t("yaziyiCevir", "Yazıyı çevir")} onClick={(e) => { e.stopPropagation(); cevirToggle(p, anahtar); }}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" /></svg>
                         {ceviri[anahtar] && ceviri[anahtar].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar] && ceviri[anahtar].acik ? t("orijinalGoster", "Orijinal") : t("cevir", "Çevir"))}
                       </button>
+                      {/* GÖRSEL — fotoğrafın İÇİNDEKİ yazıyı kullanıcının diline çevirir (resimCevir). AYRI anahtar ("|g") →
+                          yazı (caption) çevirisiyle ÇAKIŞMAZ, ikisi ayrı ayrı açılıp kapanır. Sadece fotoğraflı gönderide çıkar. */}
+                      {p.gorsel && (
+                        <button className="ana-post-cevir" title={t("gorseldekiYaziCevir", "Görseldeki yazıyı çevir")} onClick={(e) => { e.stopPropagation(); resimCevir(p, anahtar + "|g"); }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5" /><circle cx="8.5" cy="9" r="1.6" /><path d="M4 18l5-5 4 4 3-3 4 4" /></svg>
+                          {ceviri[anahtar + "|g"] && ceviri[anahtar + "|g"].yuk ? t("ceviriliyor", "Çevriliyor…") : (ceviri[anahtar + "|g"] && ceviri[anahtar + "|g"].acik ? t("gizle", "Gizle") : t("gorselCevir", "Görsel"))}
+                        </button>
+                      )}
                       {/* SOR — Gloxoo'ya sor (metni kullanıcının diline çevirir/anlatır). Sadece-metin gönderisinde de olsun. */}
                       <button className="ana-post-cevir ana-post-ai" onClick={(e) => { e.stopPropagation(); yaziAISor(p); }} aria-label={t("yaziAiSor", "GLOXORG'a sor")}><span className="apr-ai-tas" aria-hidden="true"><Elmas4 c="#FFD700" /></span>{t("aiSor", "Sor")}</button>
                     </div>
+                    {/* GÖRSELDEKİ YAZININ ÇEVİRİSİ — "Görsel" açıkken şeridin altında ayrı kutuda gösterilir (caption çevirisinden BAĞIMSIZ). */}
+                    {p.gorsel && ceviri[anahtar + "|g"] && ceviri[anahtar + "|g"].acik && (
+                      <div translate="no" className="ana-post-yazi notranslate buyuk acik" style={{ background: icZemin, color: "#fff", fontSize: "13px", lineHeight: 1.36 }}>
+                        {ceviri[anahtar + "|g"].yuk ? t("ceviriliyor", "Çevriliyor…") : metniLinkle(ceviri[anahtar + "|g"].metin || "")}
+                      </div>
+                    )}
+                    </>
                   )}
                   {p.medya && (
                     <div className="ana-post-medya" style={{ background: p.medya }}>
