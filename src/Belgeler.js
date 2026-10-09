@@ -78,6 +78,9 @@ async function excelIndirAoa(ad, aoa) {
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   const enUzun = aoa.reduce((m, r) => Math.max(m, r.length), 0);
   ws["!cols"] = Array.from({ length: enUzun }, () => ({ wch: 18 }));
+  // A4 SAYFA: yazdırınca/paylaşınca A4 dikey, sütunlar sayfa genişliğine sığar (kullanıcı: Excel'i de A4 yap).
+  ws["!pageSetup"] = { paperSize: 9, orientation: "portrait", fitToWidth: 1, fitToHeight: 0, scale: 100 };
+  ws["!margins"] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Sayfa1");
   XLSX.writeFile(wb, dosyaAd(ad, "xlsx"));
 }

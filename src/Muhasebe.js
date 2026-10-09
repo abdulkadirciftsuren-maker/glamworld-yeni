@@ -108,6 +108,9 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
       if (altToplam) { aoa.push([]); altToplam.forEach((r) => aoa.push(r)); }
       const ws = XLSX.utils.aoa_to_sheet(aoa);
       ws["!cols"] = basliklar.map(() => ({ wch: 18 }));
+      // A4 SAYFA: yazdırınca/paylaşınca A4 dikey, sütunlar sayfa genişliğine sığar (kullanıcı: Excel'i de A4 yap).
+      ws["!pageSetup"] = { paperSize: 9, orientation: "portrait", fitToWidth: 1, fitToHeight: 0, scale: 100 };
+      ws["!margins"] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Muhasebe");
       XLSX.writeFile(wb, ("GLOXORG-" + baslik).replace(/[^\wğüşıöçĞÜŞİÖÇ ]/gi, "").replace(/\s+/g, "-").slice(0, 40) + ".xlsx");
       bilgi(t("muhExcelIndi", "Excel indirildi 📊"));
@@ -123,13 +126,21 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
       const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-      const img = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ unit: "pt", format: "a4" });
       const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-      const kenar = 24, iw = pw - kenar * 2, ih = canvas.height * iw / canvas.width;
-      if (ih <= ph - kenar * 2) pdf.addImage(img, "PNG", kenar, kenar, iw, ih);
-      else { let hLeft = ih, pos = kenar; pdf.addImage(img, "PNG", kenar, pos, iw, ih); hLeft -= (ph - kenar * 2);
-        while (hLeft > 0) { pos -= (ph - kenar * 2); pdf.addPage(); pdf.addImage(img, "PNG", kenar, pos, iw, ih); hLeft -= (ph - kenar * 2); } }
+      const kenar = 28, iw = pw - kenar * 2;
+      // TEMIZ DILIMLEME (üst üste binme YOK) + JPEG (küçük/uyumlu PDF) — Belgeler.elemPdf ile aynı yöntem.
+      const pxPerPt = canvas.width / iw, sayfaIcPx = Math.max(1, Math.floor((ph - kenar * 2) * pxPerPt));
+      let srcY = 0, ilk = true;
+      while (srcY < canvas.height - 1) {
+        const dilimPx = Math.min(sayfaIcPx, canvas.height - srcY);
+        const pc = document.createElement("canvas"); pc.width = canvas.width; pc.height = dilimPx;
+        const pctx = pc.getContext("2d"); pctx.fillStyle = "#ffffff"; pctx.fillRect(0, 0, pc.width, pc.height);
+        pctx.drawImage(canvas, 0, srcY, canvas.width, dilimPx, 0, 0, canvas.width, dilimPx);
+        if (!ilk) pdf.addPage();
+        pdf.addImage(pc.toDataURL("image/jpeg", 0.92), "JPEG", kenar, kenar, iw, dilimPx / pxPerPt);
+        srcY += dilimPx; ilk = false;
+      }
       const ad = ("GLOXORG-" + (data.baslik || "muhasebe")).replace(/[^\wğüşıöçĞÜŞİÖÇ ]/gi, "").replace(/\s+/g, "-").slice(0, 40) + ".pdf";
       const blob = pdf.output("blob"); const dosya = new File([blob], ad, { type: "application/pdf" });
       if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG Muhasebe" }); } catch (e) { pdf.save(ad); } }
