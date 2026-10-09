@@ -5762,10 +5762,13 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .bel-yazi-alan:focus{ outline:2px solid #FFD700; }
 /* GİZLİ YAZDIRMA ALANI (Word/yazı belgesi PDF/Yazdır) — sabit A4 genişliği + DOĞAL yükseklik (min-height YOK) →
    kısa yazı tek sayfa, metin A4'e düzgün sığar, Türkçe harfler doğru. Ekran dışında. */
-.bel-yazi-yazdir{ position:absolute; left:-99999px; top:0; width:760px; background:#fff; color:#111; padding:40px 44px;
-  font-family:Arial, sans-serif; font-size:15.5px; line-height:1.6; box-sizing:border-box; }
-.bel-yazi-yazdir h1, .bel-yazi-yazdir h2, .bel-yazi-yazdir h3{ color:#111; margin:.4em 0; }
-.bel-yazi-yazdir p{ margin:.3em 0; }
+/* GERÇEK A4 GÖRÜNÜMÜ: 794px = A4 genişliği (96dpi); kenar boşlukları ~20mm; yazı ~12pt (belge gibi okunur).
+   min-height = A4 yüksekliği (1123px) → kısa yazı bile TAM A4 SAYFASI üzerinde görünür ("A4 kağıdına yazılmış gibi"). */
+.bel-yazi-yazdir{ position:absolute; left:-99999px; top:0; width:794px; min-height:1123px; background:#fff; color:#111; padding:72px 80px;
+  font-family:'Times New Roman', Georgia, serif; font-size:17.5px; line-height:1.7; box-sizing:border-box; text-align:left; }
+.bel-yazi-yazdir h1{ font-size:26px; } .bel-yazi-yazdir h2{ font-size:22px; } .bel-yazi-yazdir h3{ font-size:19px; }
+.bel-yazi-yazdir h1, .bel-yazi-yazdir h2, .bel-yazi-yazdir h3{ color:#111; margin:.5em 0 .3em; }
+.bel-yazi-yazdir p{ margin:.35em 0; }
 .bel-yazi-yazdir img, .bel-yazi-yazdir table{ max-width:100%; }
 /* Fatura */
 .bel-ikili{ display:flex; gap:8px; } .bel-ikili .muh-inp{ flex:1; }

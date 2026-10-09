@@ -27,9 +27,10 @@ async function elemPdf(el, ad) {
   while (srcY < canvas.height - 1) {
     const dilimPx = Math.min(sayfaIcPx, canvas.height - srcY);
     const pc = document.createElement("canvas"); pc.width = canvas.width; pc.height = dilimPx;
-    pc.getContext("2d").drawImage(canvas, 0, srcY, canvas.width, dilimPx, 0, 0, canvas.width, dilimPx);
+    const pctx = pc.getContext("2d"); pctx.fillStyle = "#ffffff"; pctx.fillRect(0, 0, pc.width, pc.height); // JPEG saydamlık yok → beyaz zemin garanti
+    pctx.drawImage(canvas, 0, srcY, canvas.width, dilimPx, 0, 0, canvas.width, dilimPx);
     if (!ilk) pdf.addPage();
-    pdf.addImage(pc.toDataURL("image/png"), "PNG", kenar, kenar, iw, dilimPx / pxPerPt);
+    pdf.addImage(pc.toDataURL("image/jpeg", 0.92), "JPEG", kenar, kenar, iw, dilimPx / pxPerPt); // JPEG → çok daha KÜÇÜK/uyumlu PDF (her uygulamada hızlı açılır)
     srcY += dilimPx; ilk = false;
   }
   const blob = pdf.output("blob"); const dosya = new File([blob], dosyaAd(ad, "pdf"), { type: "application/pdf" });
