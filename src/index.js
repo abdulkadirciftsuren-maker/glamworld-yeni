@@ -23,9 +23,16 @@ function _kurtar() {
     const son = parseInt(sessionStorage.getItem(_KURTARMA_ANAHTAR) || "0", 10);
     if (Date.now() - son < 20000) return false; // 20 sn içinde zaten denedik → sonsuz döngü YOK
     sessionStorage.setItem(_KURTARMA_ANAHTAR, String(Date.now()));
-    window.location.reload();
+    // ⛔ BOZUK/ESKİ ÖNBELLEĞİ TEMİZLE (kullanıcı: "kaydırınca silinip yükleniyor, ayarlar sıfırlanıyor" — telefonda
+    //   ESKİ sürüm takılı kalıp sürekli çöküyordu). Önbellekleri + servis çalışanını temizleyip TEMİZ yükle →
+    //   eski bozuk sürümden KESİN çıkar, en güncel sürüm gelir. (Bir sonraki temiz açılışta SW tekrar kaydolur.)
+    const bitir = () => { try { window.location.reload(); } catch (e) {} };
+    let bekle = 0; const belki = () => { bekle--; if (bekle <= 0) bitir(); };
+    try { if (window.caches && caches.keys) { bekle++; caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k)))).catch(() => {}).finally(belki); } } catch (e) {}
+    try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) { bekle++; navigator.serviceWorker.getRegistrations().then((rs) => Promise.all(rs.map((r) => r.unregister()))).catch(() => {}).finally(belki); } } catch (e) {}
+    if (bekle === 0) bitir(); else setTimeout(bitir, 2500); // en fazla 2.5 sn bekle, yine de yenile (takılmasın)
     return true;
-  } catch (e) { return false; }
+  } catch (e) { try { window.location.reload(); } catch (x) {} return false; }
 }
 try {
   // Parça (script/stylesheet) yüklenemezse (capture: kaynak hataları böyle yakalanır) → otomatik yenile
