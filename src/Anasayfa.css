@@ -881,6 +881,15 @@ video.yrm-medya{ cursor:default; }
 .hik-secim-not{ margin:12px 2px 0; color:#8a90a6; font-size:12.5px; font-weight:600; text-align:center; }
 @media (min-width:560px){ .hik-secim-kart{ font-size:16px; padding:26px 8px; } .hik-secim-ik{ font-size:30px; } .hik-secim-bas b{ font-size:20px; } }
 
+/* "MEDYAN HAZIRLANIYOR" ÖRTÜ — galeriden sonra video kopyalanırken ana sayfa yerine ALTIN ekran (siyah/daire YOK). */
+.hik-hazirlik-fon{ position:fixed; inset:0; z-index:100060; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#ffe9a8 0%,#ffd700 55%,#f4c200 100%); }
+.hik-hazirlik-kutu{ text-align:center; padding:26px 30px; }
+.hik-hazirlik-isilti{ font-size:46px; line-height:1; animation:hikHazirIsilti 1s ease-in-out infinite; }
+@keyframes hikHazirIsilti{ 0%,100%{ transform:scale(.8); opacity:.6; } 50%{ transform:scale(1.18); opacity:1; } }
+.hik-hazirlik-yazi{ margin-top:16px; font-weight:800; font-size:19px; color:#5a3f00; }
+.hik-hazirlik-alt{ margin-top:8px; font-size:14px; font-weight:600; color:#6a4a00; opacity:.92; }
+@media (min-width:560px){ .hik-hazirlik-isilti{ font-size:56px; } .hik-hazirlik-yazi{ font-size:22px; } .hik-hazirlik-alt{ font-size:15.5px; } }
+
 /* COMPOSER — ek fotoğraflar (çok fotoğraflı gönderi) */
 .pyl-foto-sayac{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; font-weight:800; padding:3px 9px; border-radius:99px; z-index:2; }
 .pyl-ekfotolar{ display:flex; gap:7px; overflow-x:auto; padding:2px 0; margin:4px 0; scrollbar-width:none; }

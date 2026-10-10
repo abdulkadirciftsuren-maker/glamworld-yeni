@@ -2068,6 +2068,7 @@ export default function Anasayfa({ pro = false }) {
   const [hikMesajYazi, setHikMesajYazi] = useState("");     // hikâye görüntüleyicide "mesaj gönder" kutusu
   const hikGizliRef = useRef(null);                         // "görme" denen kişilerin uid kümesi (localStorage)
   const [hikSecimAcik, setHikSecimAcik] = useState(false);  // "Hikâye Oluştur" seçenek ekranı (Foto/Video/Yazı)
+  const [hikHazirlik, setHikHazirlik] = useState(false);    // "Medyan hazırlanıyor" örtüsü — galeri seçiciden sonra, telefon videoyu kopyalarken ana sayfa yerine altın ekran göster
   const hikMenuAcikRef = useRef(false);
   const hikSecimAcikRef = useRef(false);
   const hikVideoInputRef = useRef(null);                    // SADECE video seçici
@@ -3227,12 +3228,26 @@ export default function Anasayfa({ pro = false }) {
     });
     setHikayeGruplar(gruplar);
   };
+  // MEDYA SEÇ (Foto/Video/Canlı) — seçim ekranını kapatır, "hazırlanıyor" altın örtüsünü açar, sonra sistem seçicisini açar.
+  // Örtü: galeri kapanıp telefon videoyu kopyalarken (~birkaç sn) ana sayfa görünmesin → altın "hazırlanıyor" görünsün.
+  const medyaSec = (ref, canli) => {
+    setHikSecimAcik(false);
+    if (canli) hikCanliRef.current = true;
+    const el = ref && ref.current; if (!el) return;
+    setHikHazirlik(true);
+    // İPTAL (dosya seçmeden kapatma): modern tarayıcıda "cancel" olayı gelir → örtüyü kaldır.
+    const iptal = () => { setHikHazirlik(false); el.removeEventListener("cancel", iptal); };
+    try { el.addEventListener("cancel", iptal, { once: true }); } catch (x) {}
+    // GÜVENLİK: herhangi bir sebeple sinyal gelmezse örtü sonsuza kadar kalmasın (90 sn sonra kesin kalk).
+    try { setTimeout(() => setHikHazirlik(false), 90000); } catch (x) {}
+    try { el.click(); } catch (x) { setHikHazirlik(false); }
+  };
   // + ile foto/video seç → HEMEN yüklemez, DÜZENLEYİCİYİ açar (yazı + Gloxoo AI)
   const hikayeSecildi = async (e) => {
     const f = e.target.files && e.target.files[0]; if (e.target) e.target.value = "";
-    if (!f || !u) return;
+    if (!f || !u) { setHikHazirlik(false); return; }                  // dosya yok (iptal) → hazırlık örtüsünü kaldır
     const video = (f.type || "").indexOf("video") === 0;
-    if (video && f.size > 200 * 1024 * 1024) { alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 200 MB olmalı.")); return; }
+    if (video && f.size > 200 * 1024 * 1024) { setHikHazirlik(false); alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 200 MB olmalı.")); return; }
     setHikayeYuk(true);
     try {
       let onizUrl = "";
@@ -3246,6 +3261,7 @@ export default function Anasayfa({ pro = false }) {
       if (canli) { try { hikKonumAl(); } catch (x2) {} }
     } catch (x) {}
     setHikayeYuk(false);
+    setHikHazirlik(false);                                            // düzenleyici açıldı → "hazırlanıyor" örtüsü biter
   };
   // Hikâyeye CANLI konum al (paylaşımdaki gibi) — ikinci basış kapatır
   const hikKonumAl = () => {
@@ -13667,16 +13683,16 @@ export default function Anasayfa({ pro = false }) {
           <div className="hik-secim-kutu" onClick={(e) => e.stopPropagation()}>
             <div className="hik-secim-bas"><b>{t("hikayeOlustur", "Hikâye Oluştur")}</b><button className="hik-duzen-kapat" onClick={() => setHikSecimAcik(false)} aria-label={t("vazgec", "Vazgeç")}>✕</button></div>
             <div className="hik-secim-grid">
-              <button className="hik-secim-kart hsk-foto" onClick={() => { setHikSecimAcik(false); if (hikFotoInputRef.current) hikFotoInputRef.current.click(); }}>
+              <button className="hik-secim-kart hsk-foto" onClick={() => medyaSec(hikFotoInputRef, false)}>
                 <span className="hik-secim-ik" aria-hidden="true">🖼️</span><span>{t("hikSecFoto", "Fotoğraf")}</span>
               </button>
-              <button className="hik-secim-kart hsk-video" onClick={() => { setHikSecimAcik(false); if (hikVideoInputRef.current) hikVideoInputRef.current.click(); }}>
+              <button className="hik-secim-kart hsk-video" onClick={() => medyaSec(hikVideoInputRef, false)}>
                 <span className="hik-secim-ik" aria-hidden="true">🎬</span><span>{t("hikSecVideo", "Video")}</span>
               </button>
-              <button className="hik-secim-kart hsk-canli" onClick={() => { setHikSecimAcik(false); hikCanliRef.current = true; if (hikCanliInputRef.current) hikCanliInputRef.current.click(); }}>
+              <button className="hik-secim-kart hsk-canli" onClick={() => medyaSec(hikCanliInputRef, true)}>
                 <span className="hik-secim-ik" aria-hidden="true">📷</span><span>{t("hikSecCanliFoto", "Canlı Foto")}</span>
               </button>
-              <button className="hik-secim-kart hsk-canlivid" onClick={() => { setHikSecimAcik(false); hikCanliRef.current = true; if (hikCanliVidInputRef.current) hikCanliVidInputRef.current.click(); }}>
+              <button className="hik-secim-kart hsk-canlivid" onClick={() => medyaSec(hikCanliVidInputRef, true)}>
                 <span className="hik-secim-ik" aria-hidden="true">🎥</span><span>{t("hikSecCanliVideo", "Canlı Video")}</span>
               </button>
               <button className="hik-secim-kart hsk-yazi" onClick={yaziHikayesiBaslat}>
@@ -13684,6 +13700,18 @@ export default function Anasayfa({ pro = false }) {
               </button>
             </div>
             <p className="hik-secim-not">{t("hikSecNot", "Video seçince yalnızca videolar, fotoğraf seçince yalnızca fotoğraflar açılır.")}</p>
+          </div>
+        </div>
+      ), document.body)}
+
+      {/* "MEDYAN HAZIRLANIYOR" ALTIN ÖRTÜ — galeriden video seçtikten sonra telefon videoyu kopyalarken
+          (~birkaç sn) ana sayfa görünmesin; bunun yerine altın "hazırlanıyor" ekranı görünür. Düzenleyici açılınca kalkar. */}
+      {hikHazirlik && createPortal((
+        <div className="hik-hazirlik-fon" role="status" aria-live="polite">
+          <div className="hik-hazirlik-kutu">
+            <div className="hik-hazirlik-isilti" aria-hidden="true">✨</div>
+            <div className="hik-hazirlik-yazi">{t("hikHazirlaniyor", "Medyan hazırlanıyor…")}</div>
+            <div className="hik-hazirlik-alt">{t("hikHazirlaniyorAlt", "Video büyükse birkaç saniye sürebilir")}</div>
           </div>
         </div>
       ), document.body)}
