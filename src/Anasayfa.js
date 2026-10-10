@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment, Component, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment, Component, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -24,6 +24,19 @@ import { ZIL_GELEN, ZIL_GIDEN } from "./zilSesi"; // gelen arama zili (melodik/g
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
+// ⚡ SAYFALAR TEK PARÇA (eager import) — ARTIK "parça parça (lazy)" DEĞİL. Eskiden Pazar/Harita/Akademi/Sanal Ayna/
+//   Muhasebe/Reklam ayrı parça (chunk) olarak yükleniyordu → (1) her birine girince ayrı parça inerken SARI "…" perdesi
+//   çıkıyordu ("parça parça açılıyor"), (2) her yeni yayında parça adı (hash) değişince AÇIK uygulama eski parçayı
+//   bulamayıp (404) index.js kurtarması TÜM önbelleği silip KOMPLE yeniden yüklüyordu. İkisi de en büyük şikâyetti.
+//   ÇÖZÜM: hepsi ana pakete alındı (tek parça) → sarı perde YOK, parça-404 reload YOK, her sayfa ANINDA açılır.
+//   (İlk indirme biraz büyür ama SW önbelleğe alır → bir kez iner, sonra hep hızlı. B366'da Anasayfa için de yapılmıştı.)
+import ElitePazar from "./ElitePazar";
+import KonumHarita from "./KonumHarita";
+import AdresHarita from "./AdresHarita";
+import AkademiSayfa from "./AkademiSayfa";
+import SanalAyna from "./SanalAyna";
+import Muhasebe from "./Muhasebe";
+import Reklam from "./Reklam";
 import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
 import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
 import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
@@ -85,21 +98,6 @@ function AiTanitimKart({ t, onAyna, onGloxoo }) {
     </article>
   );
 }
-
-// ElitePazar AYRI PARÇA (code-split): ilk açılışta inmez, sadece Elite'e girince yüklenir.
-// Böylece ana paket küçülür + Elite'i her düzenlediğimizde kullanıcı tüm paketi değil sadece bu küçük parçayı indirir.
-const ElitePazar = lazy(() => import("./ElitePazar"));
-// KONUM sayfası (navigasyon haritası) — AYRI PARÇA (code-split): sadece Konum'a girince yüklenir.
-const KonumHarita = lazy(() => import("./KonumHarita"));
-// ADRES HARİTASI (kapı numaralı adres bul + kopyala, HERE) — arkadaş haritasının ALTINDA
-const AdresHarita = lazy(() => import("./AdresHarita"));
-// AKADEMİ sayfası (eğitim + Gloxoo sınavı + işini göster + GLOXORG sertifikası) — AYRI PARÇA (code-split)
-const AkademiSayfa = lazy(() => import("./AkademiSayfa"));
-// SANAL AYNA (kendi fotoğrafında saç/tırnak/makyaj dene) — AYRI PARÇA (code-split)
-const SanalAyna = lazy(() => import("./SanalAyna"));
-const Muhasebe = lazy(() => import("./Muhasebe"));
-// VİTRİN / REKLAM (ana sayfada akan reklam şeridi + üstünde dene + satıcıya yaz) — AYRI PARÇA
-const Reklam = lazy(() => import("./Reklam"));
 
 // 🎵 GLOXORG HAZIR MÜZİK KÜTÜPHANESİ — TELİFSİZ/serbest şarkılar (müşteri paylaşımına buradan da seçebilir).
 // Her öğe: { ad, url }. url = Firebase Storage'daki (herkese açık okuma) ses dosyası bağlantısı.
@@ -2068,7 +2066,6 @@ export default function Anasayfa({ pro = false }) {
   const [hikMesajYazi, setHikMesajYazi] = useState("");     // hikâye görüntüleyicide "mesaj gönder" kutusu
   const hikGizliRef = useRef(null);                         // "görme" denen kişilerin uid kümesi (localStorage)
   const [hikSecimAcik, setHikSecimAcik] = useState(false);  // "Hikâye Oluştur" seçenek ekranı (Foto/Video/Yazı)
-  const [hikHazirlik, setHikHazirlik] = useState(false);    // "Medyan hazırlanıyor" örtüsü — galeri seçiciden sonra, telefon videoyu kopyalarken ana sayfa yerine altın ekran göster
   const hikMenuAcikRef = useRef(false);
   const hikSecimAcikRef = useRef(false);
   const hikVideoInputRef = useRef(null);                    // SADECE video seçici
@@ -3228,26 +3225,19 @@ export default function Anasayfa({ pro = false }) {
     });
     setHikayeGruplar(gruplar);
   };
-  // MEDYA SEÇ (Foto/Video/Canlı) — seçim ekranını kapatır, "hazırlanıyor" altın örtüsünü açar, sonra sistem seçicisini açar.
-  // Örtü: galeri kapanıp telefon videoyu kopyalarken (~birkaç sn) ana sayfa görünmesin → altın "hazırlanıyor" görünsün.
+  // MEDYA SEÇ (Foto/Video/Canlı) — seçim ekranını kapatır, sistem seçicisini açar.
   const medyaSec = (ref, canli) => {
     setHikSecimAcik(false);
     if (canli) hikCanliRef.current = true;
     const el = ref && ref.current; if (!el) return;
-    setHikHazirlik(true);
-    // İPTAL (dosya seçmeden kapatma): modern tarayıcıda "cancel" olayı gelir → örtüyü kaldır.
-    const iptal = () => { setHikHazirlik(false); el.removeEventListener("cancel", iptal); };
-    try { el.addEventListener("cancel", iptal, { once: true }); } catch (x) {}
-    // GÜVENLİK: herhangi bir sebeple sinyal gelmezse örtü sonsuza kadar kalmasın (90 sn sonra kesin kalk).
-    try { setTimeout(() => setHikHazirlik(false), 90000); } catch (x) {}
-    try { el.click(); } catch (x) { setHikHazirlik(false); }
+    try { el.click(); } catch (x) {}
   };
   // + ile foto/video seç → HEMEN yüklemez, DÜZENLEYİCİYİ açar (yazı + Gloxoo AI)
   const hikayeSecildi = async (e) => {
     const f = e.target.files && e.target.files[0]; if (e.target) e.target.value = "";
-    if (!f || !u) { setHikHazirlik(false); return; }                  // dosya yok (iptal) → hazırlık örtüsünü kaldır
+    if (!f || !u) return;
     const video = (f.type || "").indexOf("video") === 0;
-    if (video && f.size > 200 * 1024 * 1024) { setHikHazirlik(false); alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 200 MB olmalı.")); return; }
+    if (video && f.size > 200 * 1024 * 1024) { alert(t("hikayeVideoBuyuk", "Hikâye videosu en fazla 200 MB olmalı.")); return; }
     setHikayeYuk(true);
     try {
       let onizUrl = "";
@@ -3261,7 +3251,6 @@ export default function Anasayfa({ pro = false }) {
       if (canli) { try { hikKonumAl(); } catch (x2) {} }
     } catch (x) {}
     setHikayeYuk(false);
-    setHikHazirlik(false);                                            // düzenleyici açıldı → "hazırlanıyor" örtüsü biter
   };
   // Hikâyeye CANLI konum al (paylaşımdaki gibi) — ikinci basış kapatır
   const hikKonumAl = () => {
@@ -13700,18 +13689,6 @@ export default function Anasayfa({ pro = false }) {
               </button>
             </div>
             <p className="hik-secim-not">{t("hikSecNot", "Video seçince yalnızca videolar, fotoğraf seçince yalnızca fotoğraflar açılır.")}</p>
-          </div>
-        </div>
-      ), document.body)}
-
-      {/* "MEDYAN HAZIRLANIYOR" ALTIN ÖRTÜ — galeriden video seçtikten sonra telefon videoyu kopyalarken
-          (~birkaç sn) ana sayfa görünmesin; bunun yerine altın "hazırlanıyor" ekranı görünür. Düzenleyici açılınca kalkar. */}
-      {hikHazirlik && createPortal((
-        <div className="hik-hazirlik-fon" role="status" aria-live="polite">
-          <div className="hik-hazirlik-kutu">
-            <div className="hik-hazirlik-isilti" aria-hidden="true">✨</div>
-            <div className="hik-hazirlik-yazi">{t("hikHazirlaniyor", "Medyan hazırlanıyor…")}</div>
-            <div className="hik-hazirlik-alt">{t("hikHazirlaniyorAlt", "Video büyükse birkaç saniye sürebilir")}</div>
           </div>
         </div>
       ), document.body)}
