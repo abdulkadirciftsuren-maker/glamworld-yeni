@@ -2,7 +2,7 @@
 // Bu dosya sitenin "beyni"dir: Üye Ol → veriler buraya kaydedilir,
 // Giriş Yap → buradan doğrulanır. Anahtar genel web kimliğidir (gizli şifre değil).
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
@@ -32,6 +32,37 @@ export const googleProvider = new GoogleAuthProvider();
 // Google'a basınca DÜZ "e-posta gir" değil, HESAP SEÇME penceresi çıksın:
 // kullanıcı kendi Google hesabını görür/seçer (veya "başka hesap"). Eskiden olduğu gibi.
 googleProvider.setCustomParameters({ prompt: "select_account" });
+
+// ── SOSYAL GİRİŞ — ANDROID UYGULAMASI (TWA) UYUMLU ──
+// SORUN (kullanıcılar aylarca "sarı perde / giriş açılmıyor" dedi): Android uygulamasının (TWA, com.gloxorg.twa)
+//   içinde signInWithPopup ÇALIŞMAZ. Açılır pencere ana sayfaya geri konuşamaz → "Google ile giriş yapılıyor…"
+//   (Iniciando sesión con Google…) ekranı SONSUZA KADAR döner, kullanıcı giremez ve uygulamayı siler.
+// ÇÖZÜM: Android uygulaması içindeysek signInWithRedirect kullan → sayfa Google'a gider, giriş yapılır, GERİ DÖNER;
+//   dönüşte App.js içindeki getRedirectResult + onAuthStateChanged oturumu açar. NORMAL TARAYICIDA hiçbir şey
+//   değişmez — eskisi gibi hızlı popup. (En kötü ihtimalde TWA kullanıcısı giriş kartına döner, ASILI KALMAZ.)
+export function twaIcinde() {
+  try {
+    // TWA açılışta document.referrer = "android-app://com.gloxorg.twa" olur ve tek sayfa (SPA) boyunca korunur.
+    if (typeof document !== "undefined" && (document.referrer || "").indexOf("android-app://") === 0) return true;
+  } catch (e) {}
+  return false;
+}
+export async function saglayiciIleGir(saglayici) {
+  // Android uygulaması → popup asılı kalıyor → doğrudan yönlendirme (redirect).
+  if (twaIcinde()) { await signInWithRedirect(auth, saglayici); return { yonlendirildi: true }; }
+  try {
+    const cred = await signInWithPopup(auth, saglayici);
+    return { cred };
+  } catch (e) {
+    const k = (e && e.code) || "";
+    // Popup bu ortamda hiç desteklenmiyor/engellendi (TWA dışı ama sorunlu tarayıcı) → redirect'e düş.
+    // NOT: kullanıcının kendi iptali (popup-closed-by-user / cancelled-popup-request) redirect'e DÜŞMEZ.
+    if (k === "auth/popup-blocked" || k === "auth/operation-not-supported-in-this-environment" || k === "auth/web-storage-unsupported") {
+      await signInWithRedirect(auth, saglayici); return { yonlendirildi: true };
+    }
+    throw e;
+  }
+}
 
 // PUSH BİLDİRİM (FCM) — site KAPALIYKEN bile mesaj/beğeni/arama bildirimi almak için telefon "anahtarı" (token) alır.
 // vapidKey = Firebase Console > Proje Ayarları > Cloud Messaging > "Web Push sertifikaları" anahtarı.

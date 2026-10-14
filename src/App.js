@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import Acilis from "./Acilis";
@@ -127,6 +127,24 @@ function App() {
       }
     }
   }), []);
+
+  // ANDROID UYGULAMASI (TWA) GOOGLE GİRİŞİ — redirect dönüşü.
+  // Android'de Google girişi signInWithRedirect ile yapılır (popup orada "giriş yapılıyor…" diye asılı kalıyordu).
+  // Sayfa Google'dan geri dönünce sonucu İŞLE: başarılıysa onAuthStateChanged oturumu açar ve yükleme ekranını (#gw-yuk)
+  // gizler (yukarıda). Sonuç gelmezse / hata olursa → yükleme ekranını BURADA gizle ki "Google ile giriş yapılıyor…"
+  // ekranı asılı kalmasın; kullanıcı giriş kartına döner, tekrar deneyebilir veya e-posta ile girebilir.
+  useEffect(() => {
+    let iptal = false;
+    const yukGizle = () => {
+      try { sessionStorage.removeItem("gwYukMetin"); } catch (e) {}
+      const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
+      if (el) el.style.display = "none";
+    };
+    getRedirectResult(auth)
+      .then((res) => { if (!iptal && !(res && res.user) && !auth.currentUser) yukGizle(); })
+      .catch(() => { if (!iptal) yukGizle(); });
+    return () => { iptal = true; };
+  }, []);
 
   // Kayıt tamamlanınca form "profil hazır" der → anında ana sayfaya geçer (yarış/yeniden yükleme yok).
   useEffect(() => {

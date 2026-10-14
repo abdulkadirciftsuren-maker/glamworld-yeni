@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, OAuthProvider, FacebookAuthProvider, sendPasswordResetEmail, signOut, updateProfile } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, OAuthProvider, FacebookAuthProvider, sendPasswordResetEmail, signOut, updateProfile } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, googleProvider, db } from "./firebase";
+import { auth, googleProvider, db, saglayiciIleGir } from "./firebase";
 import { girisEpostasiGonder } from "./eposta";
 import DilSecici from "./DilSecici";
 import SurumRozeti from "./SurumRozeti";
@@ -190,7 +190,11 @@ export default function Giris({ zorunluUye }) {
   async function sosyal(saglayici) {
     sosyalYukGoster(t("sosyalGirisMetin", { ad: saglayiciAdi(saglayici) }));
     try {
-      const cred = await signInWithPopup(auth, saglayici);
+      // Android uygulamasında (TWA) popup asılı kalıyordu → saglayiciIleGir orada redirect'e geçer.
+      const sonuc = await saglayiciIleGir(saglayici);
+      // Redirect yapıldıysa sayfa Google'a gidiyor; dönüşte App.js (getRedirectResult) halleder → burada bekleme.
+      if (sonuc && sonuc.yonlendirildi) return;
+      const cred = sonuc.cred;
       // KAYIT ŞART: profil yoksa OTOMATİK üye YAPMA. Varsa direkt gir, yoksa tür seçtir.
       let profilVar = false;
       try {
