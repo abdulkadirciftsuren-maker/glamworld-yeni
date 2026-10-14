@@ -68,6 +68,13 @@ function App() {
         const k = localStorage.key(i);
         if (k && k.indexOf("firebase:authUser:") === 0) return "yukleniyor";
       }
+      // SOSYAL GİRİŞ (Google/redirect) SÜRÜYORSA giriş kartını FLAŞ etme → "yükleniyor" göster.
+      // (Kullanıcı: "Google ile girince gene giriş sayfası çıkıyor 2-3 saniye kalıp gidiyor." SEBEP: Google'dan
+      //  dönünce oturum birkaç saniyede gelir; o arada kullanici=null olduğu için GİRİŞ KARTI görünüyordu. Sosyal
+      //  giriş bayrağı (gwYukMetin, redirect öncesi yazılır) varken giriş kartı yerine YÜKLENİYOR ekranı kalır →
+      //  oturum gelince ana sayfaya geçer, giriş kartı hiç flaş etmez. Oturum gelmezse onAuthStateChanged null ile
+      //  gerçek çıkışa düşer ve giriş kartı normal gösterilir, takılı kalmaz.)
+      try { if (sessionStorage.getItem("gwYukMetin")) return "yukleniyor"; } catch (e) {}
     } catch (e) {}
     return null;
   });
