@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import Acilis from "./Acilis";
 import Giris from "./Giris";
@@ -106,7 +106,19 @@ function App() {
             let yeniKayit = false;
             try { const z = parseInt(localStorage.getItem("gw_profilVarZaman") || "0", 10); if (Date.now() - z < 15000) yeniKayit = true; } catch (e) {}
             if (yeniKayit) { setProfil("var"); }
-            else { setProfil("yok"); try { localStorage.removeItem("gw_profilVar"); } catch (e) {} }
+            else {
+              // PROFİL YOK — kullanıcı: "Google ile giriyorum ama GENE kayıt/bilgi doldur diyor." SEBEP: popup yolunda
+              // profil OTOMATİK oluşuyordu; Android redirect yolunda oluşmuyordu → zorunlu kayıt FORMU çıkıyordu.
+              // ÇÖZÜM: Google zaten isim/e-posta/foto veriyor → burada OTOMATİK müşteri profili oluştur → form ÇIKMAZ,
+              // direkt ana sayfaya geçer (popup ile AYNI davranış). İyimser: önce "var" (form flaş etmez), doc arkada yazılır.
+              setProfil("var"); setTip("musteri");
+              try {
+                const ad = ((u.displayName || "").split(" ")[0] || "").trim();
+                const soy = ((u.displayName || "").split(" ").slice(1).join(" ") || "").trim();
+                try { localStorage.setItem("gw_profilVar", "1"); localStorage.setItem("gw_tip", "musteri"); localStorage.setItem("gw_profilVarZaman", String(Date.now())); } catch (e) {}
+                setDoc(doc(db, "kullanicilar", u.uid), { tip: "musteri", isim: ad, soyisim: soy, eposta: u.email || "", foto: u.photoURL || "", olusturma: Date.now() }, { merge: true }).catch(() => {});
+              } catch (e) {}
+            }
           }
         })
         .catch(() => { setProfil("var"); }); // okuma hatasında kullanıcıyı KİLİTLEME
