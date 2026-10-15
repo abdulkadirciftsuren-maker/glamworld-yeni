@@ -11007,17 +11007,18 @@ export default function Anasayfa({ pro = false }) {
             <span>{(grupKatilimcilar.length + 1)} {t("kisiKisa", "kişi")}</span>
           </div>
           {grupToast && <div className="grup-toast notranslate" translate="no">{grupToast}</div>}
-          {/* YÜZLER KARE/GENİŞ GÖRÜNSÜN (kullanıcı: "6-8 kişi çok kötü çıkıyor"): 1-2 kişi TEK SÜTUN (2 kişi alt alta);
-              3-8 kişi 2 SÜTUN (4=2x2, 6=2x3, 8=2x4 → telefon ekranında yüzler KARE; 3 sütun ince-uzun yaptığı için 8'e kadar
-              2 sütun tutuyoruz); 9+ kişi 3 sütun (zorunlu). TEK sayıda (3,5,7) SON kişi tam genişlik (genis) → boş yer kalmaz. */}
-          <div className="grup-izgara" style={{ gridTemplateColumns: "repeat(" + ((grupKatilimcilar.length + 1) <= 2 ? 1 : (grupKatilimcilar.length + 1) <= 8 ? 2 : 3) + ", 1fr)" }}>
+          {/* YÜZLER KARE/GENİŞ GÖRÜNSÜN (kullanıcı: 3 sütun ince-uzun yapıyor, sevmiyor; 6-8-10 kişi de iyi olsun).
+              KURAL: 1-2 kişi 1 SÜTUN (2 kişi ALT ALTA); 3-10 kişi 2 SÜTUN (4=2x2, 6=2x3, 8=2x4, 10=2x5 → telefonda yüzler
+              geniş/kare; 3 sütun HİÇ kullanılmaz, çünkü ince-uzun oluyordu). Grup en çok 10 kişi. TEK sayıda (3,5,7,9) SON
+              kişi TAM GENİŞLİK (genis) → boş yer kalmaz, yalnız kalan kişi geniş görünür. */}
+          <div className="grup-izgara" style={{ gridTemplateColumns: "repeat(" + ((grupKatilimcilar.length + 1) <= 2 ? 1 : 2) + ", 1fr)" }}>
             <div className="grup-kare grup-kare-ben">
               <video ref={grupYerelVideoRef} className="ayna" autoPlay playsInline muted style={{ display: grupKam ? "none" : "block" }} />
               {grupKam && <span className="grup-kare-harf">{((benimHikayeKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
               <span className="grup-kare-ad notranslate" translate="no">{t("ben", "Ben")}</span>
               <span className="grup-kare-sure notranslate" translate="no">{_sureBicim(grupSaniye)}</span>
             </div>
-            {grupKatilimcilar.map((p, i) => <GrupKare key={p.identity || p.sid} p={p} genis={(grupKatilimcilar.length + 1) > 2 && (grupKatilimcilar.length + 1) <= 8 && (grupKatilimcilar.length + 1) % 2 === 1 && i === (grupKatilimcilar.length - 1)} />)}
+            {grupKatilimcilar.map((p, i) => <GrupKare key={p.identity || p.sid} p={p} genis={(grupKatilimcilar.length + 1) > 2 && (grupKatilimcilar.length + 1) % 2 === 1 && i === (grupKatilimcilar.length - 1)} />)}
           </div>
           {grupKatilimcilar.length === 0 && (
             <div className="grup-bekle">
