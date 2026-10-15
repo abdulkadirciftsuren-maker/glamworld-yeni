@@ -238,7 +238,7 @@ function _sureBicim(sn) {
   return sa > 0 ? (sa + ":" + iki(dk) + ":" + iki(s)) : (iki(dk) + ":" + iki(s));
 }
 // GRUP GÖRÜŞMESİ — her uzak katılımcının bir "karesi" (video+ses). LiveKit track'lerini kendi <video>/<audio>'suna bağlar.
-function GrupKare({ p }) {
+function GrupKare({ p, genis }) {
   const vRef = useRef(null); const aRef = useRef(null);
   const [ad, setAd] = useState((p && (p.name || p.identity)) || "");
   const [kameraVar, setKameraVar] = useState(false);
@@ -264,7 +264,7 @@ function GrupKare({ p }) {
     return () => { iptal = true; try { p.off("trackSubscribed", olay); p.off("trackUnsubscribed", olay); p.off("trackMuted", olay); p.off("trackUnmuted", olay); } catch (e) {} };
   }, [p]);
   return (
-    <div className="grup-kare">
+    <div className={"grup-kare" + (genis ? " grup-kare-genis" : "")}>
       <video ref={vRef} autoPlay playsInline style={{ display: kameraVar ? "block" : "none" }} />
       {!kameraVar && <span className="grup-kare-harf">{(ad || "?").trim()[0] ? (ad || "?").trim()[0].toUpperCase() : "?"}</span>}
       <audio ref={aRef} autoPlay playsInline />
@@ -11007,14 +11007,17 @@ export default function Anasayfa({ pro = false }) {
             <span>{(grupKatilimcilar.length + 1)} {t("kisiKisa", "kişi")}</span>
           </div>
           {grupToast && <div className="grup-toast notranslate" translate="no">{grupToast}</div>}
-          <div className="grup-izgara" style={{ gridTemplateColumns: "repeat(" + ((grupKatilimcilar.length + 1) <= 1 ? 1 : (grupKatilimcilar.length + 1) <= 4 ? 2 : 3) + ", 1fr)" }}>
+          {/* YÜZLER KARE/GENİŞ GÖRÜNSÜN (kullanıcı: "6-8 kişi çok kötü çıkıyor"): 1-2 kişi TEK SÜTUN (2 kişi alt alta);
+              3-8 kişi 2 SÜTUN (4=2x2, 6=2x3, 8=2x4 → telefon ekranında yüzler KARE; 3 sütun ince-uzun yaptığı için 8'e kadar
+              2 sütun tutuyoruz); 9+ kişi 3 sütun (zorunlu). TEK sayıda (3,5,7) SON kişi tam genişlik (genis) → boş yer kalmaz. */}
+          <div className="grup-izgara" style={{ gridTemplateColumns: "repeat(" + ((grupKatilimcilar.length + 1) <= 2 ? 1 : (grupKatilimcilar.length + 1) <= 8 ? 2 : 3) + ", 1fr)" }}>
             <div className="grup-kare grup-kare-ben">
               <video ref={grupYerelVideoRef} className="ayna" autoPlay playsInline muted style={{ display: grupKam ? "none" : "block" }} />
               {grupKam && <span className="grup-kare-harf">{((benimHikayeKisi.ad || "?").trim()[0] || "?").toUpperCase()}</span>}
               <span className="grup-kare-ad notranslate" translate="no">{t("ben", "Ben")}</span>
               <span className="grup-kare-sure notranslate" translate="no">{_sureBicim(grupSaniye)}</span>
             </div>
-            {grupKatilimcilar.map((p) => <GrupKare key={p.identity || p.sid} p={p} />)}
+            {grupKatilimcilar.map((p, i) => <GrupKare key={p.identity || p.sid} p={p} genis={(grupKatilimcilar.length + 1) > 2 && (grupKatilimcilar.length + 1) <= 8 && (grupKatilimcilar.length + 1) % 2 === 1 && i === (grupKatilimcilar.length - 1)} />)}
           </div>
           {grupKatilimcilar.length === 0 && (
             <div className="grup-bekle">
