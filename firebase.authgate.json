@@ -1,0 +1,7 @@
+{
+  "hosting": {
+    "public": "authgate",
+    "site": "glamworld2",
+    "ignore": ["firebase.json", "firebase.authgate.json", "**/.*", "**/node_modules/**"]
+  }
+}

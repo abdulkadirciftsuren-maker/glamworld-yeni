@@ -1,0 +1,52 @@
+# GLOXORG — Google girisi "ilk dokunusta acilsin" icin AYNI-ADRES (same-origin) auth kurulumu.
+# Bu is akisi, kullanicinin GitHub'a ekledigi FIREBASE_SA anahtariyla (hizmet hesabi) Firebase Hosting'e
+# kucuk bir "giris kapisi" sitesi yayinlar. Boylece Firebase konsolunda Hosting panosu acilir ve
+# auth.gloxorg.com ozel alan adi baglanabilir. (Asil uygulama gloxorg.com'da, gh-pages'te kalir.)
+name: GLOXORG auth hosting kurulum
+on:
+  push:
+    branches: ["claude/glamworld-rules-review-0kzl0x"]
+    paths:
+      - ".github/workflows/firebase-hosting-auth.yml"
+      - "authgate/**"
+      - "firebase.authgate.json"
+  workflow_dispatch: {}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+      - name: Node kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: firebase-tools kur
+        run: npm install -g firebase-tools@13.29.1
+      - name: Hizmet hesabi anahtarini yaz
+        env:
+          SA: ${{ secrets.FIREBASE_SA }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "HATA: FIREBASE_SA secret bulunamadi. Once GitHub'a secret eklenmeli."
+            exit 1
+          fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          echo "Anahtar dosyasi yazildi."
+      - name: Hangi yetkiler var (teshis)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          echo "=== Firebase projeleri ==="
+          firebase projects:list --project glamworld2 || true
+          echo "=== Hosting siteleri ==="
+          firebase hosting:sites:list --project glamworld2 || true
+      - name: Auth giris kapisi sitesini yayinla
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          firebase deploy --only hosting --config firebase.authgate.json --project glamworld2 --non-interactive
+      - name: Bitti
+        run: |
+          echo "YAYIN TAMAM."
+          echo "Simdi Firebase konsolunda Hosting panosu acildi; auth.gloxorg.com ozel alan adi baglanabilir."
