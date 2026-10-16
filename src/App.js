@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db, girisOtomatikTekrar, girisDenemeTemizle } from "./firebase";
+import { auth, db, girisDenemeTemizle } from "./firebase";
 import Acilis from "./Acilis";
 import Giris from "./Giris";
 // NOT: MusteriForm ve ProfesyonelForm artık akışta DEĞİL (kayıt tek kart Giris'te). İçe aktarımları
@@ -166,51 +166,36 @@ function App() {
   // ekranı asılı kalmasın; kullanıcı giriş kartına döner, tekrar deneyebilir veya e-posta ile girebilir.
   useEffect(() => {
     let iptal = false;
-    // Yükleme ekranı (#gw-yuk) YAZISINI güncelle + görünür tut → kullanıcı ne olduğunu GÖRSÜN.
-    const yukYaz = (metin) => {
-      try { if (metin) sessionStorage.setItem("gwYukMetin", metin); } catch (e) {}
-      const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
-      if (el) { const m = document.getElementById("gw-yuk-m"); if (m && metin) m.textContent = metin; el.style.display = "flex"; }
-    };
     const yukGizle = () => {
       try { sessionStorage.removeItem("gwYukMetin"); girisDenemeTemizle(); } catch (e) {}
       const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
       if (el) el.style.display = "none";
-      // GİRİŞ GERÇEKTEN OLMADI (ne ilk ne 2. deneme) → onAuthStateChanged null dalı "yükleniyor"da bekletiyor olabilir
-      // (18 sn güvenlik sayacı). Burada hemen giriş kartına dön ki kullanıcı boşu boşuna "yükleniyor"da ASILI kalmasın.
+      // GİRİŞ OLMADI → "yükleniyor"da asılı kalmasın, giriş kartına TEMİZ dön.
       if (cikisTimerRef.current) { clearTimeout(cikisTimerRef.current); cikisTimerRef.current = null; }
       if (!auth.currentUser) { setKullanici(null); setProfil("yok"); setTip(""); }
     };
 
-    // Redirect'ten YENİ mi döndük? (saglayiciIleGir, Google+TWA yolunda gwGirisDeneme yazar)
-    let redirecttenGeldik = false;
-    try { redirecttenGeldik = !!localStorage.getItem("gwGirisDeneme"); } catch (e) {}
+    // Sosyal giriş (Google) DENENDİ mi? (gwYukMetin redirect öncesi yazılır). Sadece o durumda giriş kartına
+    // dönmek gerekir; NORMAL yenilemede getRedirectResult null döner ama oturum onAuthStateChanged'den gelir → DOKUNMA.
+    let girisDenemesiVardi = false;
+    try { girisDenemesiVardi = !!sessionStorage.getItem("gwYukMetin"); } catch (e) {}
 
-    // SDK sonucu işlesin: BAŞARILIYSA sayacı temizle. ⛔ HATADA (ısınma) sayacı TEMİZLEME —
-    //   (eski B389 hatası buydu: getRedirectResult ısınmada HATA atıyordu, .catch sayacı siliyordu,
-    //    otomatik 2. deneme HİÇ tetiklenemiyordu → kullanıcı: "hiçbir şey değişmedi"). Artık retry'i
-    //   aşağıdaki ZAMANLAYICI yönetir; getRedirectResult null dönse de HATA atsa da fark etmez.
+    // ⛔ OTOMATİK 2. DENEME KALDIRILDI (B392): Kullanıcı test etti → "Tekrar deneniyor" yazısını gördü AMA iki deneme
+    //   de başarısız oldu, hatta DAHA KÖTÜ oldu (iki boş tur Google'a gidip geldi). KANITLANDI: KÖK sebep authDomain
+    //   cross-origin (uygulama gloxorg.com, giriş kapısı glamworld2.firebaseapp.com); telefon/WebView bu iki FARKLI adres
+    //   arası giriş sonucunu KULLANICI DOKUNUŞU (gesture) olmadan okutmuyor → otomatik (dokunuşsuz) 2. redirect de
+    //   başarısız. Kullanıcının ELLE 2. dokunuşu çalışıyor (gesture var). Firebase resmi çözümü: /__/auth/ yardımcısını
+    //   AYNI adreste (gloxorg.com) sunmak (proxy/self-host) VEYA aynı-origin hosting. Bu hosting işi ayrıca yapılacak.
+    //   Şimdilik: ilk redirect oturumu getirmezse giriş kartına TEMİZ dön → kullanıcı bir kez daha Google'a basar, girer
+    //   (2 boş tur gitmez, DAHA KÖTÜ olmaz). B390 giriş-kartı-flaşı koruması duruyor.
     getRedirectResult(auth)
-      .then((res) => { if (!iptal && ((res && res.user) || auth.currentUser)) { try { girisDenemeTemizle(); } catch (e) {} } })
-      .catch(() => {}); // ısınma hatasını YUT (sayacı silme) → zamanlayıcı 2. denemeyi yapsın
-
-    // SAĞLAM OTOMATİK 2. DENEME — getRedirectResult'tan BAĞIMSIZ (null dönsün ya da hata atsın, fark etmez):
-    //   Redirect'ten döndüysek biraz bekle; oturum GELMEDİYSE otomatik 2. redirect başlat (bu sefer sessiz,
-    //   hesap seçme çıkmaz), ekranda "Tekrar deneniyor…" göster. En fazla 1 otomatik tekrar (girisOtomatikTekrar
-    //   n>=2'de false döner) → olmazsa giriş kartı. Böylece kullanıcı TEK dokunuşla girer (2. tur arkada otomatik).
-    let t = null;
-    if (redirecttenGeldik) {
-      t = setTimeout(async () => {
+      .then((res) => {
         if (iptal) return;
-        if (auth.currentUser) { try { girisDenemeTemizle(); } catch (e) {} return; } // oturum geldi → onAuthStateChanged ana sayfaya geçirir
-        yukYaz("Tekrar deneniyor…"); // kullanıcı 2. denemeyi GÖRSÜN (teşhis: bu yazı çıkıyorsa otomatik tekrar çalışıyor demektir)
-        let tekrar = false;
-        try { tekrar = await girisOtomatikTekrar(); } catch (e) {}
-        if (tekrar) return;     // 2. redirect başladı, sayfa Google'a gidiyor
-        if (!iptal) yukGizle(); // 2. deneme de yok/bitti → giriş kartına dön
-      }, 4000); // 4 sn: getRedirectResult + onAuthStateChanged oturumu getirsin; gelmezse otomatik 2. tur
-    }
-    return () => { iptal = true; if (t) clearTimeout(t); };
+        if ((res && res.user) || auth.currentUser) { try { girisDenemeTemizle(); } catch (e) {} return; } // giriş OLDU → onAuthStateChanged ana sayfaya geçirir
+        if (girisDenemesiVardi) yukGizle(); // sosyal giriş denendi, oturum gelmedi → temiz giriş kartı
+      })
+      .catch(() => { if (!iptal && girisDenemesiVardi) yukGizle(); });
+    return () => { iptal = true; };
   }, []);
 
   // Kayıt tamamlanınca form "profil hazır" der → anında ana sayfaya geçer (yarış/yeniden yükleme yok).
