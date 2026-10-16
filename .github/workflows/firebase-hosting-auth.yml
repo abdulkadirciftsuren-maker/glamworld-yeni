@@ -73,6 +73,21 @@ jobs:
               "https://identitytoolkit.googleapis.com/admin/v2/projects/glamworld2/config?updateMask=authorizedDomains" \
               -d "{\"authorizedDomains\": $NEW}" | jq '.authorizedDomains'
           fi
+      - name: OAuth redirect URI kabul ediliyor mu (auth.gloxorg.com)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          gcloud auth activate-service-account --key-file="$RUNNER_TEMP/sa.json" --project=glamworld2 -q
+          TOKEN=$(gcloud auth print-access-token)
+          CID=$(curl -s -H "Authorization: Bearer $TOKEN" "https://identitytoolkit.googleapis.com/admin/v2/projects/glamworld2/defaultSupportedIdpConfigs/google.com" | jq -r '.clientId')
+          echo "Google OAuth client_id (bas kisim): ${CID:0:24}..."
+          RU_ENC="https%3A%2F%2Fauth.gloxorg.com%2F__%2Fauth%2Fhandler"
+          BODY=$(curl -s "https://accounts.google.com/o/oauth2/v2/auth?client_id=$CID&redirect_uri=$RU_ENC&response_type=code&scope=openid")
+          if echo "$BODY" | grep -qi "redirect_uri_mismatch"; then
+            echo "SONUC: redirect_uri HENUZ KABUL EDILMIYOR (yayilmamis ya da yanlis). Birkac dk daha bekle."
+          else
+            echo "SONUC: OK -> redirect_uri KABUL EDILIYOR (mismatch YOK). authDomain cevrilebilir."
+          fi
       - name: SSL/handler hazir mi (auth.gloxorg.com)
         run: |
           echo "=== https://auth.gloxorg.com/__/auth/handler durum ==="
