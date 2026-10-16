@@ -137,12 +137,24 @@ function App() {
         setKullanici(null); setProfil("yok"); setTip("");
         try { localStorage.removeItem("gw_profilVar"); localStorage.removeItem("gw_tip"); localStorage.removeItem("gw_uyelik"); localStorage.removeItem("gw_oturum"); localStorage.removeItem("gw_cikis"); } catch (e) {}
       };
-      if (cikisYapildi || !oturumVardi) { gercekCikis(); } // kesin çıkış → giriş kartı
-      else {
-        // GEÇİCİ boşluk → giriş kartını gösterme, "yükleniyor" kal; oturum gelirse (üstteki u dalı) düzelir.
+      // SOSYAL GİRİŞ SÜRÜYORSA (Google redirect dönüşü / otomatik 2. deneme) → giriş kartını GÖSTERME, "yükleniyor" kal.
+      // KULLANICI: "e-postamı onayladıktan sonra, ana sayfa yüklenene kadar o ARADA gene giriş sayfası çıkıyor, orada
+      //   takılıyor." SEBEP: yeni Google kullanıcısında oturum YOK (oturumVardi=false) -> onAuthStateChanged null gelince
+      //   hemen gercekCikis -> GİRİŞ KARTI flaşlıyor. Giriş bayrağı (gwYukMetin) varken giriş kartı ÇIKMASIN, yükleniyor
+      //   kalsın; oturum gelince (üstteki u dalı) ana sayfaya geçer. getRedirectResult tarafı başarı/vazgeçmeyi yönetir.
+      let girisSuruyor = false;
+      try { girisSuruyor = !cikisYapildi && !!sessionStorage.getItem("gwYukMetin"); } catch (e) {}
+      if (girisSuruyor) {
         setKullanici("yukleniyor");
         if (cikisTimerRef.current) clearTimeout(cikisTimerRef.current);
-        cikisTimerRef.current = setTimeout(() => { if (!auth.currentUser) gercekCikis(); }, 25000); // 25 sn hâlâ gelmezse gerçekten çıkış say (YAVAŞ/YORGUN telefonda oturum geç gelebilir; 6 sn'de "çıkış" sanıp kullanıcıyı giriş kartına ATIYOR + ayar bayraklarını siliyordu — kullanıcı: "her açılışta tekrar giriş istiyor, ayarlarım sıfırlanıyor". 25 sn ile oturum geri gelir, yanlış çıkış OLMAZ.)
+        // GÜVENLİK: 18 sn hâlâ giremediyse (otomatik 2. deneme de olmadıysa) giriş kartına dön, asılı kalma.
+        cikisTimerRef.current = setTimeout(() => { if (!auth.currentUser) { try { girisDenemeTemizle(); sessionStorage.removeItem("gwYukMetin"); } catch (e) {} gercekCikis(); } }, 18000);
+      } else if (cikisYapildi || !oturumVardi) { gercekCikis(); } // kesin çıkış → giriş kartı
+      else {
+        // GEÇİCİ boşluk (yenileme) → giriş kartını gösterme, "yükleniyor" kal; oturum gelirse (üstteki u dalı) düzelir.
+        setKullanici("yukleniyor");
+        if (cikisTimerRef.current) clearTimeout(cikisTimerRef.current);
+        cikisTimerRef.current = setTimeout(() => { if (!auth.currentUser) gercekCikis(); }, 25000); // 25 sn hâlâ gelmezse gerçekten çıkış say (yavaş telefonda oturum geç gelebilir)
       }
     }
   }), []);
@@ -155,9 +167,13 @@ function App() {
   useEffect(() => {
     let iptal = false;
     const yukGizle = () => {
-      try { sessionStorage.removeItem("gwYukMetin"); } catch (e) {}
+      try { sessionStorage.removeItem("gwYukMetin"); girisDenemeTemizle(); } catch (e) {}
       const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
       if (el) el.style.display = "none";
+      // GİRİŞ GERÇEKTEN OLMADI (ne ilk ne 2. deneme) → onAuthStateChanged null dalı "yükleniyor"da bekletiyor olabilir
+      // (18 sn güvenlik sayacı). Burada hemen giriş kartına dön ki kullanıcı boşu boşuna "yükleniyor"da ASILI kalmasın.
+      if (cikisTimerRef.current) { clearTimeout(cikisTimerRef.current); cikisTimerRef.current = null; }
+      if (!auth.currentUser) { setKullanici(null); setProfil("yok"); setTip(""); }
     };
     getRedirectResult(auth)
       .then(async (res) => {
