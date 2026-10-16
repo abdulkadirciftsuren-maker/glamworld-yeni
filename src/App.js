@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { auth, db, girisOtomatikTekrar, girisDenemeTemizle } from "./firebase";
 import Acilis from "./Acilis";
 import Giris from "./Giris";
 // NOT: MusteriForm ve ProfesyonelForm artık akışta DEĞİL (kayıt tek kart Giris'te). İçe aktarımları
@@ -160,8 +160,16 @@ function App() {
       if (el) el.style.display = "none";
     };
     getRedirectResult(auth)
-      .then((res) => { if (!iptal && !(res && res.user) && !auth.currentUser) yukGizle(); })
-      .catch(() => { if (!iptal) yukGizle(); });
+      .then(async (res) => {
+        if (iptal) return;
+        if ((res && res.user) || auth.currentUser) { try { girisDenemeTemizle(); } catch (e) {} return; } // giriş OLDU → sayaç temizle, onAuthStateChanged ana sayfaya geçirir
+        // Oturum GELMEDİ (redirect ilk seferde boş döndü — "ısınma"). OTOMATİK 2. deneme gerekiyor mu?
+        let tekrar = false;
+        try { tekrar = await girisOtomatikTekrar(); } catch (e) {}
+        if (tekrar) return; // 2. redirect başladı, sayfa Google'a gidiyor → YÜKLENİYOR ekranı kalsın (giriş kartı çıkmasın)
+        yukGizle(); // tekrar yok/başarısız → giriş kartına dön (elle tekrar denenebilir)
+      })
+      .catch(() => { if (!iptal) { try { girisDenemeTemizle(); } catch (e) {} yukGizle(); } });
     return () => { iptal = true; };
   }, []);
 

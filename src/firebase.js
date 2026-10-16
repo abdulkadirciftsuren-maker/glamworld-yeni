@@ -47,9 +47,33 @@ export function twaIcinde() {
   } catch (e) {}
   return false;
 }
+// ── OTOMATİK 2. DENEME (kullanıcı: "Google'a bastım, e-postamı onayladım, döndü döndü GENE giriş ekranına attı") ──
+// SEBEP: Android'de redirect ile giriş ÇOĞU ZAMAN ilk seferde "ısınma" yüzünden oturumu getiremez (getRedirectResult
+//   boş döner); 2. seferde girer. Kullanıcıyı elle 2. kez bastırmamak için: ilk Google redirect'inde bir sayaç yazarız;
+//   dönüşte oturum GELMEDİYSE App.js bu yardımcıyla OTOMATİK 2. kez dener → kullanıcı tek dokunuşla girer.
+//   Döngü OLMASIN diye: en fazla 1 otomatik tekrar + 60 sn zaman sınırı. Olmazsa giriş kartı gösterilir (eskisi gibi).
+const GIRIS_DENEME_ANAHTAR = "gwGirisDeneme";
+export function girisDenemeTemizle() { try { localStorage.removeItem(GIRIS_DENEME_ANAHTAR); } catch (e) {} }
+export async function girisOtomatikTekrar() {
+  try {
+    const ham = localStorage.getItem(GIRIS_DENEME_ANAHTAR);
+    if (!ham) return false;
+    let o = null; try { o = JSON.parse(ham); } catch (e) { o = null; }
+    if (!o || o.n >= 2 || (Date.now() - (o.t || 0)) > 60000) { girisDenemeTemizle(); return false; }
+    // 2. denemeyi işaretle → redirect. Bu sefer "hesap seçme" penceresi ÇIKMASIN diye prompt YOK
+    // (ilk denemede Google oturumu zaten açıldı, 2. redirect o oturumla sessizce geçer).
+    try { localStorage.setItem(GIRIS_DENEME_ANAHTAR, JSON.stringify({ n: 2, t: Date.now() })); } catch (e) {}
+    await signInWithRedirect(auth, new GoogleAuthProvider());
+    return true;
+  } catch (e) { girisDenemeTemizle(); return false; }
+}
 export async function saglayiciIleGir(saglayici) {
   // Android uygulaması → popup asılı kalıyor → doğrudan yönlendirme (redirect).
-  if (twaIcinde()) { await signInWithRedirect(auth, saglayici); return { yonlendirildi: true }; }
+  if (twaIcinde()) {
+    // SADECE Google için otomatik 2. deneme sayacı başlat (asıl sorun Google'da). Microsoft vb. için başlatma.
+    try { if (saglayici && saglayici.providerId === "google.com") localStorage.setItem(GIRIS_DENEME_ANAHTAR, JSON.stringify({ n: 1, t: Date.now() })); } catch (e) {}
+    await signInWithRedirect(auth, saglayici); return { yonlendirildi: true };
+  }
   try {
     const cred = await signInWithPopup(auth, saglayici);
     return { cred };
