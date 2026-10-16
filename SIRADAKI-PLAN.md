@@ -4,6 +4,16 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🔐 GOOGLE GİRİŞİ — AYNI-ADRES (same-origin) KURULUMU — 16 EKİ 2026 — ⛔ SAKIN BOZMA
+- **ÇÖZÜLDÜ (kullanıcı telefonla doğruladı, A13.B395):** Google ile giriş artık Android uygulamasında (TWA) **İLK dokunuşta** açılıyor. 1,5 yıllık "Google ilk seferde girmiyor, 2. seferde giriyor / sarı perde" derdi KÖKTEN bitti.
+- **NASIL:** `src/firebase.js` → `authDomain: "auth.gloxorg.com"` (ESKİ: `glamworld2.firebaseapp.com`). Uygulama gloxorg.com, giriş kapısı auth.gloxorg.com → AYNI site → TWA/WebView'de 3rd-party storage engeli YOK → ilk dokunuşta girer. (Firebase resmi çözümü: "redirect-best-practices".)
+- **KURULUM (hepsi yapıldı, KALICI — tekrar yapmaya gerek yok):** (1) Firebase Hosting'de `glamworld2` sitesine `auth.gloxorg.com` özel alan adı bağlı. (2) Namecheap DNS: host `auth` → CNAME → `glamworld2.web.app`. (3) Google SSL sertifikası hazır (https://auth.gloxorg.com/__/auth/handler → 200). (4) Firebase Auth yetkili alan adlarında `auth.gloxorg.com` var. (5) Google Cloud OAuth istemcisi ("Web client auto created by Google Service") → **Yetkili yönlendirme URI:** `https://auth.gloxorg.com/__/auth/handler` + **JS kaynak:** `https://auth.gloxorg.com`.
+- **⛔ SAKIN authDomain'i geri `glamworld2.firebaseapp.com` YAPMA** (ilk-dokunuş bozulur, 2. dokunuşa döner). Başka adrese çevireceksen ÖNCE o adres için yukarıdaki 5 adımı (özellikle OAuth redirect URI) yap, yoksa Google "Hata 400: redirect_uri_mismatch" → HİÇ giriş olmaz (bunu bir kez yaşadık, B393→B394 geri aldık).
+- **GERİ ALMA (acil, bir şey bozulursa):** `src/firebase.js` → authDomain = `"glamworld2.firebaseapp.com"` → yayınla → 2. dokunuşla çalışan eski hale döner (daha kötü değil).
+- **Kurulum dosyaları (repoda duruyor, ZARARSIZ):** `.github/workflows/firebase-hosting-auth.yml` + `authgate/` + `firebase.authgate.json` — bir kerelik kurulum içindi; normal app deploy'da tetiklenmez (GitHub secret `FIREBASE_SA` silindi, hizmet hesabı anahtarı iptal edildi). İstenirse silinebilir, şart değil. Yeniden kurulum gerekirse yeni anahtar + secret lazım.
+- **YENİ GOOGLE KULLANICISI:** App.js onAuthStateChanged → profil yoksa Google bilgisiyle (isim/soyisim/eposta/foto) OTOMATİK `musteri` profili oluşturur (kullanicilar koleksiyonu); form çıkmaz, direkt ana sayfa. (B385'ten beri, korunuyor.)
+
+---
 ## 📌 BEKLEYEN İŞ — TAM EKRAN (TWA assetlinks) — 8 EKİ 2026 (UNUTMA, kullanıcıyı TEKRAR GEZDİRME)
 - **SORUN:** Play Store'dan kurulu uygulama (TWA, paket `com.gloxorg.twa`) üstte **"gloxorg.com" çubuğu** gösteriyor, TAM EKRAN değil (üst saat + alt Android şeridi gizlenmiyor). Kaldır-kur DENENDİ, düzelmedi.
 - **SİTE TARAFI DOĞRU (DOĞRULANDI):** `gloxorg.com/.well-known/assetlinks.json` sunuluyor; Google Digital Asset Links API ile kontrol edildi (8 Eki) → dosya okunuyor, paket `com.gloxorg.twa`, **2 SHA-256** var: `0D:B0:B7:22:...:1B:91` ve `34:29:6F:16:...:C6:98`. manifest.json `display:fullscreen` DE DOĞRU.
