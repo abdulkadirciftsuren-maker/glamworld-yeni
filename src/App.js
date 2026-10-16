@@ -166,6 +166,12 @@ function App() {
   // ekranı asılı kalmasın; kullanıcı giriş kartına döner, tekrar deneyebilir veya e-posta ile girebilir.
   useEffect(() => {
     let iptal = false;
+    // Yükleme ekranı (#gw-yuk) YAZISINI güncelle + görünür tut → kullanıcı ne olduğunu GÖRSÜN.
+    const yukYaz = (metin) => {
+      try { if (metin) sessionStorage.setItem("gwYukMetin", metin); } catch (e) {}
+      const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
+      if (el) { const m = document.getElementById("gw-yuk-m"); if (m && metin) m.textContent = metin; el.style.display = "flex"; }
+    };
     const yukGizle = () => {
       try { sessionStorage.removeItem("gwYukMetin"); girisDenemeTemizle(); } catch (e) {}
       const el = typeof document !== "undefined" && document.getElementById("gw-yuk");
@@ -175,18 +181,36 @@ function App() {
       if (cikisTimerRef.current) { clearTimeout(cikisTimerRef.current); cikisTimerRef.current = null; }
       if (!auth.currentUser) { setKullanici(null); setProfil("yok"); setTip(""); }
     };
+
+    // Redirect'ten YENİ mi döndük? (saglayiciIleGir, Google+TWA yolunda gwGirisDeneme yazar)
+    let redirecttenGeldik = false;
+    try { redirecttenGeldik = !!localStorage.getItem("gwGirisDeneme"); } catch (e) {}
+
+    // SDK sonucu işlesin: BAŞARILIYSA sayacı temizle. ⛔ HATADA (ısınma) sayacı TEMİZLEME —
+    //   (eski B389 hatası buydu: getRedirectResult ısınmada HATA atıyordu, .catch sayacı siliyordu,
+    //    otomatik 2. deneme HİÇ tetiklenemiyordu → kullanıcı: "hiçbir şey değişmedi"). Artık retry'i
+    //   aşağıdaki ZAMANLAYICI yönetir; getRedirectResult null dönse de HATA atsa da fark etmez.
     getRedirectResult(auth)
-      .then(async (res) => {
+      .then((res) => { if (!iptal && ((res && res.user) || auth.currentUser)) { try { girisDenemeTemizle(); } catch (e) {} } })
+      .catch(() => {}); // ısınma hatasını YUT (sayacı silme) → zamanlayıcı 2. denemeyi yapsın
+
+    // SAĞLAM OTOMATİK 2. DENEME — getRedirectResult'tan BAĞIMSIZ (null dönsün ya da hata atsın, fark etmez):
+    //   Redirect'ten döndüysek biraz bekle; oturum GELMEDİYSE otomatik 2. redirect başlat (bu sefer sessiz,
+    //   hesap seçme çıkmaz), ekranda "Tekrar deneniyor…" göster. En fazla 1 otomatik tekrar (girisOtomatikTekrar
+    //   n>=2'de false döner) → olmazsa giriş kartı. Böylece kullanıcı TEK dokunuşla girer (2. tur arkada otomatik).
+    let t = null;
+    if (redirecttenGeldik) {
+      t = setTimeout(async () => {
         if (iptal) return;
-        if ((res && res.user) || auth.currentUser) { try { girisDenemeTemizle(); } catch (e) {} return; } // giriş OLDU → sayaç temizle, onAuthStateChanged ana sayfaya geçirir
-        // Oturum GELMEDİ (redirect ilk seferde boş döndü — "ısınma"). OTOMATİK 2. deneme gerekiyor mu?
+        if (auth.currentUser) { try { girisDenemeTemizle(); } catch (e) {} return; } // oturum geldi → onAuthStateChanged ana sayfaya geçirir
+        yukYaz("Tekrar deneniyor…"); // kullanıcı 2. denemeyi GÖRSÜN (teşhis: bu yazı çıkıyorsa otomatik tekrar çalışıyor demektir)
         let tekrar = false;
         try { tekrar = await girisOtomatikTekrar(); } catch (e) {}
-        if (tekrar) return; // 2. redirect başladı, sayfa Google'a gidiyor → YÜKLENİYOR ekranı kalsın (giriş kartı çıkmasın)
-        yukGizle(); // tekrar yok/başarısız → giriş kartına dön (elle tekrar denenebilir)
-      })
-      .catch(() => { if (!iptal) { try { girisDenemeTemizle(); } catch (e) {} yukGizle(); } });
-    return () => { iptal = true; };
+        if (tekrar) return;     // 2. redirect başladı, sayfa Google'a gidiyor
+        if (!iptal) yukGizle(); // 2. deneme de yok/bitti → giriş kartına dön
+      }, 4000); // 4 sn: getRedirectResult + onAuthStateChanged oturumu getirsin; gelmezse otomatik 2. tur
+    }
+    return () => { iptal = true; if (t) clearTimeout(t); };
   }, []);
 
   // Kayıt tamamlanınca form "profil hazır" der → anında ana sayfaya geçer (yarış/yeniden yükleme yok).
