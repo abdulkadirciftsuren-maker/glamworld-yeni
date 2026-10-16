@@ -10,11 +10,13 @@ import { getAI, getGenerativeModel, GoogleAIBackend, VertexAIBackend, ResponseMo
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw",
-  // GIRIS KAPISI AYNI-ADRESTE (same-origin): uygulama gloxorg.com, giris kapisi auth.gloxorg.com (ikisi ayni "aile"=
-  // ayni site). Boylece Android uygulamasinda (TWA) Google girisi ILK dokunusta acilir. ESKI: glamworld2.firebaseapp.com
-  // (farkli adresti -> telefon ilk seferde kabul etmiyordu). auth.gloxorg.com Firebase Hosting'e CNAME ile baglandi,
-  // /__/auth/ oradan sunuluyor, SSL hazir, yetkili alan adlarina eklendi. GERI ALMAK gerekirse: "glamworld2.firebaseapp.com".
-  authDomain: "auth.gloxorg.com",
+  // ⏪ GECICI GERI ALINDI (B394): auth.gloxorg.com'a cevirmistik AMA Google OAuth istemcisinde o adresin
+  //   "yetkili yonlendirme URI'si" (https://auth.gloxorg.com/__/auth/handler) EKSIK oldugu icin "redirect_uri_mismatch"
+  //   hatasi verdi -> HIC giris olmuyordu. Testciler girebilsin diye SIMDILIK calisan eski adrese donduk (2. dokunusta
+  //   girer). Altyapi HAZIR DURUYOR (auth.gloxorg.com CNAME+SSL+yetkili alan). TEK eksik: Google Cloud Console >
+  //   Credentials > OAuth istemcisi > "Authorized redirect URIs" e https://auth.gloxorg.com/__/auth/handler eklemek.
+  //   O eklenince tekrar authDomain="auth.gloxorg.com" yapilacak -> ILK dokunusta girer. Hicbir emek bosa gitmedi.
+  authDomain: "glamworld2.firebaseapp.com",
   projectId: "glamworld2",
   storageBucket: "glamworld2.firebasestorage.app",
   messagingSenderId: "656498925104",
