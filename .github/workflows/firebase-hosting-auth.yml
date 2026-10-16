@@ -53,10 +53,29 @@ jobs:
       - name: DNS kontrol (auth.gloxorg.com CNAME dogru mu)
         run: |
           echo "=== auth.gloxorg.com CNAME kontrolu ==="
-          echo "--- nslookup CNAME ---"
           nslookup -type=CNAME auth.gloxorg.com 8.8.8.8 || true
-          echo "--- dig CNAME (varsa) ---"
-          (command -v dig >/dev/null && dig +short CNAME auth.gloxorg.com @8.8.8.8) || echo "dig yok"
-          echo "--- adres cozumu ---"
-          (command -v dig >/dev/null && dig +short auth.gloxorg.com @8.8.8.8) || nslookup auth.gloxorg.com 8.8.8.8 || true
-          echo "NOT: 'glamworld2.web.app' gorunuyorsa CNAME DOGRU. Bos ise DNS henuz yayilmamis (birkac dk bekle)."
+          (command -v dig >/dev/null && dig +short CNAME auth.gloxorg.com @8.8.8.8) || true
+          echo "NOT: 'glamworld2.web.app' gorunuyorsa CNAME DOGRU."
+      - name: Auth yetkili alan adina auth.gloxorg.com ekle
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          gcloud auth activate-service-account --key-file="$RUNNER_TEMP/sa.json" --project=glamworld2 -q
+          TOKEN=$(gcloud auth print-access-token)
+          CFG=$(curl -s -H "Authorization: Bearer $TOKEN" "https://identitytoolkit.googleapis.com/admin/v2/projects/glamworld2/config")
+          echo "=== Mevcut yetkili alan adlari ==="; echo "$CFG" | jq '.authorizedDomains'
+          if echo "$CFG" | jq -e '.authorizedDomains | index("auth.gloxorg.com")' >/dev/null; then
+            echo "auth.gloxorg.com ZATEN yetkili alan adlarinda."
+          else
+            NEW=$(echo "$CFG" | jq -c '.authorizedDomains + ["auth.gloxorg.com"]')
+            echo "=== auth.gloxorg.com ekleniyor ==="
+            curl -s -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              "https://identitytoolkit.googleapis.com/admin/v2/projects/glamworld2/config?updateMask=authorizedDomains" \
+              -d "{\"authorizedDomains\": $NEW}" | jq '.authorizedDomains'
+          fi
+      - name: SSL/handler hazir mi (auth.gloxorg.com)
+        run: |
+          echo "=== https://auth.gloxorg.com/__/auth/handler durum ==="
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://auth.gloxorg.com/__/auth/handler" || echo "BAGLANTI_YOK")
+          echo "HTTP durum: $code"
+          echo "NOT: 200 ise SSL hazir ve giris kapisi calisiyor. 000/BAGLANTI_YOK/SSL hatasi ise sertifika henuz hazirlanmamis (bekle)."
