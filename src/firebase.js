@@ -10,13 +10,12 @@ import { getAI, getGenerativeModel, GoogleAIBackend, VertexAIBackend, ResponseMo
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw",
-  // ⏪ GECICI GERI ALINDI (B394): auth.gloxorg.com'a cevirmistik AMA Google OAuth istemcisinde o adresin
-  //   "yetkili yonlendirme URI'si" (https://auth.gloxorg.com/__/auth/handler) EKSIK oldugu icin "redirect_uri_mismatch"
-  //   hatasi verdi -> HIC giris olmuyordu. Testciler girebilsin diye SIMDILIK calisan eski adrese donduk (2. dokunusta
-  //   girer). Altyapi HAZIR DURUYOR (auth.gloxorg.com CNAME+SSL+yetkili alan). TEK eksik: Google Cloud Console >
-  //   Credentials > OAuth istemcisi > "Authorized redirect URIs" e https://auth.gloxorg.com/__/auth/handler eklemek.
-  //   O eklenince tekrar authDomain="auth.gloxorg.com" yapilacak -> ILK dokunusta girer. Hicbir emek bosa gitmedi.
-  authDomain: "glamworld2.firebaseapp.com",
+  // ✅ GIRIS KAPISI AYNI-ADRESTE (B395): uygulama gloxorg.com, giris kapisi auth.gloxorg.com -> AYNI site ->
+  //   TWA/WebView'de 3rd-party storage engeli YOK -> Google ILK dokunusta acilir. Kurulum TAM: CNAME (auth->
+  //   glamworld2.web.app), SSL (handler 200), Auth yetkili alan adlari, VE Google OAuth istemcisine
+  //   https://auth.gloxorg.com/__/auth/handler yetkili yonlendirme URI'si eklendi (redirect_uri_mismatch yok -
+  //   dogrulandi). B394 te bu URI eksik oldugu icin geri almistik; artik eklendi. GERI ALMA: "glamworld2.firebaseapp.com".
+  authDomain: "auth.gloxorg.com",
   projectId: "glamworld2",
   storageBucket: "glamworld2.firebasestorage.app",
   messagingSenderId: "656498925104",
