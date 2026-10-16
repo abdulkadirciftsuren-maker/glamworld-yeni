@@ -1,4 +1,4 @@
-# GLOXORG — Google girisi "ilk dokunusta acilsin" icin AYNI-ADRES (same-origin) auth kurulumu.
+# GLOXORG — Google girisi "ilk dokunusta acilsin" icin AYNI-ADRES (same-origin) auth kurulumu. (calistirma 1)
 # Bu is akisi, kullanicinin GitHub'a ekledigi FIREBASE_SA anahtariyla (hizmet hesabi) Firebase Hosting'e
 # kucuk bir "giris kapisi" sitesi yayinlar. Boylece Firebase konsolunda Hosting panosu acilir ve
 # auth.gloxorg.com ozel alan adi baglanabilir. (Asil uygulama gloxorg.com'da, gh-pages'te kalir.)
