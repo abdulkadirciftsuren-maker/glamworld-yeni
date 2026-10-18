@@ -135,5 +135,44 @@
         }
       } catch (e) {}
     </script>
+    <script>
+      /* ===== ARKA PLANDAN DÖNÜŞ KURTARMASI (SABİT SARI PERDE) =====
+         KULLANICI (kronik, en büyük şikâyet): "Uygulama arka planda UZUN kalınca, geri açtığımda SABİT sarı perde
+         çıkıyor, kendi açılmıyor, kapat-aç yapmam lazım. İnternet hep açık (5G)."
+         SEBEP: Android/WebView uygulamayı arka planda dondurunca, geri gelince sayfanın İÇERİĞİ (#root) BOŞ kalıyor
+         (altındaki altın zemin görünüyor = sarı perde) ve KENDİNİ TOPARLAMIYOR. index.js'teki _kurtar SADECE dosya
+         hatası/çökme olunca çalışır; bu durumda hata/çökme YOK, o yüzden devreye girmiyordu — işte o boşluk burada kapanıyor.
+         ÇÖZÜM: sayfa TEKRAR GÖRÜNÜR olunca (arka plandan dönüş / bfcache), kısa bir süre sonra #root HÂLÂ BOŞ ise (takıldı)
+         sayfayı TEK SEFER temiz yeniden yükle → React yeniden kurulur, sarı perde gider (kapat-aç ile aynı etki, ama otomatik).
+         GÜVENLİK: İçerik doluysa (normal) HİÇBİR ŞEY yapmaz → hızlı dönüş (bfcache) korunur, gereksiz yenileme OLMAZ.
+         DÖNGÜ KORUMASI: 60 sn'de en fazla 1 otomatik yenile. Soğuk açılışta (ilk açılış) ÇALIŞMAZ (sadece dönüşte). */
+      (function () {
+        var gizliZaman = 0;
+        function iceriDolu() {
+          try { var r = document.getElementById('root'); return !!(r && r.childElementCount > 0); } catch (e) { return true; }
+        }
+        function kurtarmayiDene() {
+          setTimeout(function () {
+            try {
+              if (document.hidden) return;          // tekrar arka plana geçtiyse karışma
+              if (iceriDolu()) return;              // içerik GELDİ → sorun yok, dokunma (hızlı dönüş korunur)
+              var son = 0; try { son = parseInt(sessionStorage.getItem('gwDonusKurtar') || '0', 10); } catch (e) {}
+              if (Date.now() - son < 60000) return; // 60 sn içinde zaten denedik → sonsuz döngü YOK
+              try { sessionStorage.setItem('gwDonusKurtar', String(Date.now())); } catch (e) {}
+              window.location.reload();             // takıldı → temiz yeniden yükle (React yeniden kurulur)
+            } catch (e) {}
+          }, 1800); // 1.8 sn izin ver (yavaş telefonda kendine gelebilir); hâlâ boşsa yenile
+        }
+        try {
+          document.addEventListener('visibilitychange', function () {
+            if (document.hidden) { gizliZaman = Date.now(); return; }
+            // Görünür olduk. Yalnızca GERÇEKTEN arka planda kaldıysa (>15 sn) kurtarmayı düşün (kısa geçişlerde değil).
+            if (gizliZaman && (Date.now() - gizliZaman > 15000)) kurtarmayiDene();
+          });
+          // bfcache'ten (geri/ileri ya da arka plandan) geri dönüş
+          window.addEventListener('pageshow', function (e) { if (e && e.persisted) kurtarmayiDene(); });
+        } catch (e) {}
+      })();
+    </script>
   </body>
 </html>
