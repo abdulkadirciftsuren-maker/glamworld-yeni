@@ -115,6 +115,16 @@
     <noscript>Bu uygulamayı çalıştırmak için JavaScript gerekli.</noscript>
     <!-- Sosyal giriş yükleme ekranı (varsayılan gizli) -->
     <div id="gw-yuk"><div class="gw-k"><div class="gw-h"></div><div class="gw-m" id="gw-yuk-m"></div></div></div>
+    <!-- TAKILDI EKRANI (B397): Uygulama açılırken içerik (#root) uzun süre BOŞ kalırsa (sabit sarı perde) burası
+         görünür → kullanıcı TEK DOKUNUŞLA yeniler (kapat-aç gerekmez). Ayrıca küçük SAYAÇ sürekli artar = JS çalışıyor
+         demek (teşhis: bu ekran+artan sayaç görünüyorsa sorun web tarafında çözülebilir; bu ekran HİÇ çıkmıyorsa JS donmuş
+         = telefon uygulamayı öldürmüş, o zaman farklı bakarız). Zemin ALTIN (siyah yok). -->
+    <div id="gw-takildi" style="display:none;position:fixed;inset:0;z-index:100000;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%);font-family:Georgia,'Times New Roman',serif;color:#5a3f00;">
+      <div style="font-size:40px">💎</div>
+      <div style="font-size:17px;font-weight:700;max-width:300px;line-height:1.45">Açılış biraz uzun sürdü.<br>Yenilemek için dokun.</div>
+      <button id="gw-takildi-btn" type="button" style="border:none;border-radius:14px;padding:14px 30px;font-size:16px;font-weight:900;cursor:pointer;background:linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17);color:#3a2a00;box-shadow:0 6px 18px rgba(120,90,0,.4)">Yeniden Yükle</button>
+      <div id="gw-takildi-bilgi" style="font-size:11px;opacity:.65;font-family:monospace"></div>
+    </div>
     <div id="root"></div>
     <!-- ALT CAM-ALTIN ŞERİT (SADECE kurulu uygulama modunda görünür; normal tarayıcıda gizli).
          Telefonun ALT tuş çubuğu bölgesini (güvenli-alan) şeffaf cam + hafif altın tozuyla kaplar.
@@ -172,6 +182,33 @@
           // bfcache'ten (geri/ileri ya da arka plandan) geri dönüş
           window.addEventListener('pageshow', function (e) { if (e && e.persisted) kurtarmayiDene(); });
         } catch (e) {}
+      })();
+    </script>
+    <script>
+      /* ===== AÇILIŞTA TAKILMA YAKALAYICI + TEŞHİS (B397) =====
+         Sayfa açılırken içerik (#root) ~11 sn içinde HÂLÂ BOŞ ise (sabit sarı perde / arka plandan dönüşte takılma),
+         "Yeniden Yükle" ekranını göster → kullanıcı TEK DOKUNUŞLA açar (kapat-aç gerekmez). Sayaç artarsa JS çalışıyor
+         demek (teşhis). İçerik gelince ekran kendiliğinden kaybolur. Bu yalnızca GERÇEKTEN takıldığında çıkar; normal
+         (hatta yavaş) açılışta içerik gelince hiç görünmez. Otomatik reload YOK (yavaş indirmeyi kesmeyelim) → sadece düğme. */
+      (function () {
+        function bosMu() { try { var r = document.getElementById('root'); return !(r && r.childElementCount > 0); } catch (e) { return false; } }
+        setTimeout(function () {
+          try {
+            if (!bosMu()) return;                 // içerik geldi → sorun yok
+            var ekran = document.getElementById('gw-takildi'); if (ekran) ekran.style.display = 'flex';
+            var bilgi = document.getElementById('gw-takildi-bilgi'); var sn = 0;
+            var t = setInterval(function () {
+              sn++;
+              if (bilgi) bilgi.textContent = 'A13B397 • ' + sn + ' sn';
+              if (!bosMu()) { try { if (ekran) ekran.style.display = 'none'; } catch (e) {} clearInterval(t); } // içerik geldi → gizle
+            }, 1000);
+            var btn = document.getElementById('gw-takildi-btn');
+            if (btn) btn.onclick = function () {
+              try { sessionStorage.removeItem('gloxSonKurtarma'); sessionStorage.removeItem('gwDonusKurtar'); } catch (e) {}
+              try { window.location.reload(); } catch (e) {}
+            };
+          } catch (e) {}
+        }, 11000); // 11 sn içinde içerik yoksa "takıldı" ekranı
       })();
     </script>
   </body>

@@ -1,7 +1,7 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A13B396";
+const SW_SURUM = "A13B397";
 // ONBELLEK ADI SW_SURUM'e bağlı → her yeni yayında YENİ önbellek; eskisi activate'te silinir (eski sürümde takılma OLMAZ).
 const ONBELLEK = "glox-onbellek-" + SW_SURUM;
 // RESİM ÖNBELLEĞİ — SÜRÜMDEN BAĞIMSIZ (yeni yayında SİLİNMEZ) → indirilen fotoğraflar telefonda KALICI kalır,
@@ -32,11 +32,17 @@ self.addEventListener("fetch", (e) => {
   let url; try { url = new URL(istek.url); } catch (x) { return; }
   if (istek.mode === "navigate") {
     e.respondWith((async () => {
-      // SAF AĞ-ÖNCE: sayfayı (index.html) HER ZAMAN ağdan taze al → her zaman GÜNCEL dosyaları (main.<hash>) gösterir.
-      // (Eskiden 3.5 sn sonra ÖNBELLEKTEKİ sayfayı sunuyordu; o BAYAT sayfa, yayından sonra SİLİNMİŞ parçaları isteyince
-      //  404 → sarı ekranda TAKILMA oluyordu. KALDIRILDI.) Sadece ağ GERÇEKTEN yoksa (offline) önbelleğe düşer.
-      try { return await fetch(istek, { cache: "no-store" }); }
-      catch (x) { const c = await caches.match(istek); return c || Response.error(); }
+      // AĞ-ÖNCE ama ZAMAN AŞIMLI (B397): sayfayı (index.html) ağdan taze al → her zaman GÜNCEL dosyaları gösterir.
+      // ⚠️ KRİTİK: Eskiden zaman aşımı YOKTU → arka plandan dönüşte bu fetch bazen TAKILIP hiç dönmüyordu → sayfa
+      //   sonsuza kadar BOŞ (SABİT SARI PERDE) kalıyordu (kullanıcının kronik derdi). ÇÖZÜM: 6 sn'de dönmezse (takıldıysa)
+      //   ÖNBELLEKTEKİ sayfaya düş → sayfa AÇILIR, boş kalmaz. Önbellek GÜNCELSE sorunsuz; BAYATSA (yeni yayından hemen
+      //   sonra) silinmiş parça 404 verir → index.js'teki _kurtar devreye girip temiz yeniler. Her durumda açılır.
+      try {
+        return await Promise.race([
+          fetch(istek, { cache: "no-store" }),
+          new Promise((_, ret) => setTimeout(() => ret(new Error("gezinme-zaman-asimi")), 6000)),
+        ]);
+      } catch (x) { const c = await caches.match(istek); return c || Response.error(); }
     })());
     return;
   }
