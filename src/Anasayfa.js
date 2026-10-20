@@ -5146,7 +5146,7 @@ export default function Anasayfa({ pro = false }) {
   // Tepki çubuğu (uzun basınca) — düğmenin üstünde çıkar
   const tepkiCubugu = (p) => tepkiAcik === p.id ? (
     <span className="tepki-cubuk" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-      {TEPKILER.map((tp) => (<button key={tp.k} className="tepki-oge" title={tp.ad} onClick={(e) => { e.stopPropagation(); begeniTepkiVer(p, tp.k); }} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); begeniTepkiVer(p, tp.k); }}>{tp.e}</button>))}
+      {TEPKILER.map((tp) => (<button key={tp.k} className="tepki-oge" title={t("tepki_" + tp.k, tp.ad)} onClick={(e) => { e.stopPropagation(); begeniTepkiVer(p, tp.k); }} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); begeniTepkiVer(p, tp.k); }}>{tp.e}</button>))}
     </span>
   ) : null;
   function begenenleriAc(p) { if (!p || !p.id) return; setBegeniListeAcik(p); setBegeniListe(null); begenenleriOku(p.id).then(setBegeniListe).catch(() => setBegeniListe([])); }
@@ -11579,7 +11579,7 @@ export default function Anasayfa({ pro = false }) {
                         <div className="pyl-muzik-sahip">
                           <input ref={kutupDosyaRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={kutuphaneyeEkle} />
                           <select className="pyl-muzik-katsec" value={kutupKat} onChange={(e) => setKutupKat(e.target.value)}>
-                            {MUZIK_KATEGORI.map((kt) => (<option key={kt.k} value={kt.k}>{kt.ad}</option>))}
+                            {MUZIK_KATEGORI.map((kt) => (<option key={kt.k} value={kt.k}>{t("muzikKat_" + kt.k, kt.ad)}</option>))}
                           </select>
                           <button className="pyl-muzik-ekle" disabled={kutupYukleniyor} onClick={() => kutupDosyaRef.current && kutupDosyaRef.current.click()}>{kutupYukleniyor ? "⏳ " + t("muzikYukleniyor", "Müzik yükleniyor…") : "➕ " + t("muzikKutupEkleBtn", "Kütüphaneye şarkı ekle")}</button>
                         </div>
@@ -11592,7 +11592,7 @@ export default function Anasayfa({ pro = false }) {
                             <button key={mz.id || mz.url} className={"pyl-muzik-oge" + (paylasMuzik && paylasMuzik.url === mz.url ? " sec" : "")} onClick={() => { setPaylasMuzik({ ad: mz.ad, url: mz.url }); setMuzikMenu(""); }}>
                               <span className="pyl-muzik-oge-ik" aria-hidden="true">🎵</span>
                               <span className="pyl-muzik-oge-ad notranslate">{mz.ad}</span>
-                              {mz.kategori ? <span className="pyl-muzik-oge-kat">{(MUZIK_KATEGORI.find((x) => x.k === mz.kategori) || {}).ad || ""}</span> : null}
+                              {mz.kategori ? <span className="pyl-muzik-oge-kat">{(() => { const _c = MUZIK_KATEGORI.find((x) => x.k === mz.kategori); return _c ? t("muzikKat_" + _c.k, _c.ad) : ""; })()}</span> : null}
                               {yoneticiMi() && <span className="pyl-muzik-oge-sil" role="button" title={t("sil", "Sil")} aria-label={t("sil", "Sil")} onClick={(e) => { e.stopPropagation(); muzikKutupSil(mz); }}>✕</span>}
                             </button>
                           ))}
@@ -13443,7 +13443,7 @@ export default function Anasayfa({ pro = false }) {
               <div className="ayar-adres-kutu">
                 {bulunan.en && bulunan.en.adres && (
                   <div className="ayar-adres-blok ayar-adres-en">
-                    <div className="ayar-adres-met"><b>🌐 İngilizce</b><br />{bulunan.en.adres}</div>
+                    <div className="ayar-adres-met"><b>🌐 {t("adresIngilizce", "İngilizce")}</b><br />{bulunan.en.adres}</div>
                     <div className="ayar-adres-aksiyon">
                       <button className="ayar-adres-kopya" onClick={() => adresKopyala(bulunan.en.adres)}>📋 {t("ayarKopyala", "Kopyala")}</button>
                       <button className="ayar-adres-yaz" onClick={() => seritlereYaz("en")}>✓ {t("ayarSeriteYaz", "Şeritlere yaz")}</button>
@@ -13751,7 +13751,7 @@ export default function Anasayfa({ pro = false }) {
               {hikSeciliYazi && (() => { const sy = hikYazilar.find((y) => y.id === hikSeciliYazi); if (!sy) return null; return (
                 <div className="hik-font-satir">
                   {HIK_FONTLAR.map((f) => (
-                    <button key={f.k} className={"hik-font-btn" + ((sy.font || "sade") === f.k ? " aktif" : "")} style={{ fontFamily: f.css }} onClick={() => hikYaziFont(sy.id, f.k)}>Aa<i>{f.ad}</i></button>
+                    <button key={f.k} className={"hik-font-btn" + ((sy.font || "sade") === f.k ? " aktif" : "")} style={{ fontFamily: f.css }} onClick={() => hikYaziFont(sy.id, f.k)}>Aa<i>{t("hikFont_" + f.k, f.ad)}</i></button>
                   ))}
                 </div>
               ); })()}

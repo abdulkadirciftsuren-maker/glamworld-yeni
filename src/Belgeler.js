@@ -569,7 +569,7 @@ function FaturaEditor({ t, belge, onKapat, onKaydet, bilgi, paraSym, benAd }) {
         <h2 style={{ margin: "0 0 4px", color: "#7a5a00" }}>FATURA</h2>
         <div style={{ fontSize: 13, color: "#333" }}>No: {no} &nbsp;·&nbsp; Tarih: {trTarih(tarih)}</div>
         <table style={{ width: "100%", marginTop: 8, fontSize: 13 }}><tbody>
-          <tr><td style={{ width: "50%", verticalAlign: "top" }}><b>Satıcı:</b><br />{firma}</td><td style={{ verticalAlign: "top" }}><b>Alıcı:</b><br />{musteri}</td></tr>
+          <tr><td style={{ width: "50%", verticalAlign: "top" }}><b>{t("belSatici", "Satıcı")}:</b><br />{firma}</td><td style={{ verticalAlign: "top" }}><b>{t("belAlici", "Alıcı")}:</b><br />{musteri}</td></tr>
         </tbody></table>
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12, fontSize: 13 }}>
           <thead><tr>{[t("belUrun", "Ürün/Hizmet"), t("belMiktar", "Miktar"), t("belFiyat", "Birim Fiyat"), t("belTutar", "Tutar")].map((h, i) => <th key={i} style={{ border: "1px solid #999", padding: "6px 8px", background: "#f2e4b8", textAlign: i ? "right" : "left" }}>{h}</th>)}</tr></thead>
