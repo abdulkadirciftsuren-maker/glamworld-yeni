@@ -1945,6 +1945,10 @@ export default function Anasayfa({ pro = false }) {
   const [tepkiSimgeAcik, setTepkiSimgeAcik] = useState(false); // GLOME üstündeki simge seçici açık mı
   const [aramaFabAcik, setAramaFabAcik] = useState(false);     // sohbette sağ alttaki "asılı" arama düğmesinin menüsü açık mı
   const [glomeSekme, setGlomeSekme] = useState("sohbetler");   // GLOME altındaki WhatsApp gibi ikon çubuğu: sohbetler | durum | gruplar | aramalar
+  // ARAMA GEÇMİŞİ — çoklu seçip TOPLU silme (WhatsApp gibi). SENİN listenden gizler (karşı tarafı ETKİLEMEZ); seçim bu cihazda saklanır.
+  const [aramaSecModu, setAramaSecModu] = useState(false);     // "Seç" modu açık mı (işaret kutuları görünür)
+  const [aramaSecili, setAramaSecili] = useState(() => new Set()); // işaretlenen arama id'leri
+  const [gizliAramalar, setGizliAramalar] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxGizliAramalar") || "[]")); } catch (e) { return new Set(); } });
   const tepkiSimgeSec = (s) => { setTepkiSimge(s); try { localStorage.setItem("groxTepkiSimge", s); } catch (e) {} setTepkiSimgeAcik(false); };
   // TEŞEKKÜR — seni beğenen/tepki veren kişiye "teşekkür et" (bildirimden). Kime teşekkür ettiğimizi hatırla (tekrar etme).
   const [tesekkurEdilen, setTesekkurEdilen] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxTesekkur") || "[]")); } catch (e) { return new Set(); } });
@@ -4808,8 +4812,25 @@ export default function Anasayfa({ pro = false }) {
         return { id: m.id, karsiUid, ad, foto, giden, tip: m.arama.tip || "sesli", durum: m.arama.durum || "cevapsiz", sureSn: m.arama.sureSn || 0, zamanMs: m.zamanMs || 0 };
       })
       .filter((x) => x.karsiUid && x.karsiUid !== benUid)
+      .filter((x) => !gizliAramalar.has(x.id))                      // SENİN listenden sildiklerin görünmez
       .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
-  }, [mesajlarimTum, benUid, kisiBilgiHarita]);
+  }, [mesajlarimTum, benUid, kisiBilgiHarita, gizliAramalar]);
+  // Bir aramayı işaretle/işareti kaldır (seç modunda)
+  const aramaSecToggle = (id) => setAramaSecili((s) => { const y = new Set(s); if (y.has(id)) y.delete(id); else y.add(id); return y; });
+  // SEÇİLİ aramaları SENİN listenden sil (gizle) — karşı tarafı etkilemez; bu cihazda saklanır.
+  const aramaSeciliSil = () => {
+    if (!aramaSecili.size) return;
+    setGizliAramalar((onceki) => {
+      const y = new Set(onceki); aramaSecili.forEach((id) => y.add(id));
+      try { localStorage.setItem("groxGizliAramalar", JSON.stringify([...y])); } catch (e) {}
+      return y;
+    });
+    setKucukMesaj(t("aramalarSilindi", "Seçili aramalar listenden silindi 🗑️"));
+    setTimeout(() => setKucukMesaj(""), 2500);
+    setAramaSecili(new Set()); setAramaSecModu(false);
+  };
+  // GLOME sekmesi değişince seç modunu sıfırla (başka sekmede takılı kalmasın)
+  useEffect(() => { setAramaSecModu(false); setAramaSecili(new Set()); }, [glomeSekme]);
   // Kişi arama sonucu (isimle) — yeni sohbet başlatmak için
   const mmSonuc = useMemo(() => {
     const q = mmAra.trim().toLowerCase(); if (q.length < 2) return [];
@@ -10865,13 +10886,26 @@ export default function Anasayfa({ pro = false }) {
                     <span>{t("mmAramalarAlt", "Yaptığın sesli/görüntülü aramalar burada listelenecek. Aramak için bir sohbeti aç, sağ alttaki arama düğmesine bas.")}</span>
                     <button className="mm-bos-btn" onClick={() => setGlomeSekme("sohbetler")}>{t("mmSohbetlereGit", "Sohbetlere git")}</button>
                   </div>
-                ) : aramaGecmisi.map((a) => {
+                ) : (<>
+                  {/* ARAÇ ÇUBUĞU — Seç / Tümünü seç / Vazgeç (çoklu silme) */}
+                  <div className="arama-arac-bar">
+                    {!aramaSecModu ? (
+                      <button className="arama-sec-btn" onClick={() => setAramaSecModu(true)}>🗑️ {t("sec", "Seç")}</button>
+                    ) : (
+                      <>
+                        <button className="arama-sec-btn" onClick={() => { const hepsi = new Set(aramaGecmisi.map((x) => x.id)); setAramaSecili(aramaSecili.size === aramaGecmisi.length ? new Set() : hepsi); }}>{aramaSecili.size === aramaGecmisi.length ? t("secimiTemizle", "Seçimi bırak") : t("tumunuSec", "Tümünü seç")}</button>
+                        <button className="arama-sec-btn vazgec" onClick={() => { setAramaSecModu(false); setAramaSecili(new Set()); }}>{t("vazgec", "Vazgeç")}</button>
+                      </>
+                    )}
+                  </div>
+                  {aramaGecmisi.map((a) => {
                   const bas = ((a.ad || "?").trim()[0] || "?").toUpperCase();
                   const ne = a.zamanMs ? new Date(a.zamanMs).toLocaleString(dil || "tr", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
                   const cevapsizMi = a.durum !== "cevaplandi";
                   const durumYazi = a.durum === "cevaplandi" ? aramaSure(a.sureSn) : a.durum === "reddedildi" ? t("aramaReddedildi", "Reddedildi") : (a.giden ? t("cevaplanmadi", "Cevaplanmadı") : t("cevapsizArama", "Cevapsız arama"));
                   return (
-                    <button className="msj-kart arama-kart" key={a.id} onClick={() => sohbetAc({ uid: a.karsiUid, ad: a.ad, foto: a.foto })}>
+                    <button className={"msj-kart arama-kart" + (aramaSecModu && aramaSecili.has(a.id) ? " secili" : "")} key={a.id} onClick={() => aramaSecModu ? aramaSecToggle(a.id) : sohbetAc({ uid: a.karsiUid, ad: a.ad, foto: a.foto })}>
+                      {aramaSecModu && <span className={"arama-sec-kutu" + (aramaSecili.has(a.id) ? " secili" : "")}>{aramaSecili.has(a.id) ? "✓" : ""}</span>}
                       <span className="msj-foto">{a.foto ? <img src={a.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
                       <div className="msj-icerik">
                         <div className="msj-ust"><b className="notranslate" translate="no">{a.ad}</b><i>{ne}</i></div>
@@ -10881,17 +10915,24 @@ export default function Anasayfa({ pro = false }) {
                           <span className="arama-kart-durum">{durumYazi}</span>
                         </div>
                       </div>
-                      {/* TEKRAR ARA — sohbeti açmadan aynı türde yeniden ara */}
+                      {/* TEKRAR ARA — sohbeti açmadan aynı türde yeniden ara (seç modunda GİZLİ) */}
+                      {!aramaSecModu && (
                       <span className="arama-kart-btn" onClick={(e) => { e.stopPropagation(); setMesajAcik(false); aramaBaslat({ uid: a.karsiUid, ad: a.ad, foto: a.foto }, a.tip); }} aria-label={t("navAra", "Ara")}>
                         {a.tip === "goruntulu"
                           ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>
                           : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z" /></svg>}
                       </span>
+                      )}
                     </button>
                   );
-                })
+                })}
+                </>)
               )}
             </div>
+            {/* SEÇİLİ ARAMALARI SİL — seç modunda ve en az 1 işaretliyken alt ikon çubuğunun üstünde çıkar */}
+            {glomeSekme === "aramalar" && aramaSecModu && aramaSecili.size > 0 && (
+              <button className="arama-sil-bar" onClick={aramaSeciliSil}>🗑️ {t("sil", "Sil")} ({aramaSecili.size})</button>
+            )}
             {/* ALT İKON ÇUBUĞU — WhatsApp gibi 4 bölme (Sohbetler / Durum / Gruplar / Aramalar) */}
             <div className="mm-alt-bar">
               <button className={"mm-alt-btn" + (glomeSekme === "sohbetler" ? " aktif" : "")} onClick={() => setGlomeSekme("sohbetler")}>
