@@ -6756,6 +6756,20 @@ export default function Anasayfa({ pro = false }) {
       const parcalar = _sesBol(temiz.slice(0, 2400));               // parça metinleri
       const uzun = parcalar.map((p) => p.length || 1);              // her parçanın karakter uzunluğu (kelime imleci için)
       const toplamChar = uzun.reduce((a, b) => a + b, 0) || 1;
+      // İMLEÇ (sohbette CÜMLE vurgusu) — ekrandaki renkliCumleler ile AYNI HAM bölme (orijinal metin, AYNI regex) → AYNI indeks.
+      // Ses parçaları (temiz + birleştirilmiş) cümlelerle 1:1 OLMADIĞI için, okunan cümleyi İLERLEME ORANINDAN buluruz →
+      // imleç konuşmayla birlikte doğru cümlede yürür (eskiden onCumle sadece ilk parçada çağrılıyordu → ilk cümlede takılıyordu).
+      const _ham = String(metin || "").match(/[^.!?…\n]+[.!?…]*/g) || [String(metin || "")];
+      const _hamLen = _ham.map((s) => (s && s.length) || 1);
+      const _hamTop = _hamLen.reduce((a, b) => a + b, 0) || 1;
+      const _hamBas = []; { let _a = 0; for (const L of _hamLen) { _hamBas.push(_a); _a += L; } }
+      let _sonImlecCumle = -1;
+      const cumleImlec = (f) => {
+        if (typeof onCumle !== "function") return;
+        const pos = Math.max(0, Math.min(_hamTop - 1, (f || 0) * _hamTop));
+        let i = 0; while (i + 1 < _hamBas.length && _hamBas[i + 1] <= pos) i++;
+        if (i !== _sonImlecCumle) { _sonImlecCumle = i; try { onCumle(i); } catch (e) {} }
+      };
       let oncekiChar = 0;                                           // tamamlanan parçaların toplam karakteri
       let durduruldu = false;
       sesZinciriIptalRef.current = () => { durduruldu = true; };    // gloxSustur bunu çağırınca zincir durur
@@ -6785,7 +6799,7 @@ export default function Anasayfa({ pro = false }) {
           try { const vs = (window.speechSynthesis.getVoices && window.speechSynthesis.getVoices()) || []; const lk = (utter.lang || "tr").toLowerCase(), kok = lk.split("-")[0]; const dl = vs.filter((v) => v.lang && (v.lang.toLowerCase() === lk || v.lang.toLowerCase().startsWith(kok))); const v = dl.find((vv) => /natural|neural|online|google/i.test(vv.name || "")) || dl.find((vv) => vv.localService === false) || dl[0]; if (v) utter.voice = v; } catch (e) {}
           aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now();
           const sure = Math.max(1200, cLen * 90), t0 = Date.now();
-          if (typeof onIlerleme === "function") ilerIv = setInterval(() => { const fr = Math.min(0.95, (Date.now() - t0) / sure); try { onIlerleme(Math.min(1, (buBas + fr * cLen) / toplamChar)); } catch (e) {} konusIlerRef.current = Date.now(); }, 90);
+          if (typeof onIlerleme === "function") ilerIv = setInterval(() => { const fr = Math.min(0.95, (Date.now() - t0) / sure); try { onIlerleme(Math.min(1, (buBas + fr * cLen) / toplamChar)); } catch (e) {} try { cumleImlec(Math.min(1, (buBas + fr * cLen) / toplamChar)); } catch (e) {} konusIlerRef.current = Date.now(); }, 90);
           utter.onend = bit; utter.onerror = bit;
           guard = setTimeout(bit, sure + 8000);     // ne olursa olsun asla takılmasın → sonraki cümleye geç
           try { window.speechSynthesis.speak(utter); } catch (e) { bit(); }
@@ -6816,7 +6830,7 @@ export default function Anasayfa({ pro = false }) {
         try { audio.preservesPitch = true; audio.mozPreservesPitch = true; audio.webkitPreservesPitch = true; audio.playbackRate = gloxHizRef.current || 0.9; } catch (e) {}
         aiSesElemRef.current = audio;
         const buBas = oncekiChar;
-        audio.onplay = () => { aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now(); if (idx === 0 && typeof onCumle === "function") { try { onCumle(0); } catch (e) {} } };
+        audio.onplay = () => { aiHazirlaniyorRef.current = false; aiKonusuyorRef.current = true; setAiKonusuyor(true); konusIlerRef.current = Date.now(); try { cumleImlec(buBas / toplamChar); } catch (e) {} };
         audio.ontimeupdate = () => {
           konusIlerRef.current = Date.now();
           if (typeof onIlerleme === "function" && audio.duration && isFinite(audio.duration)) {
@@ -6825,11 +6839,12 @@ export default function Anasayfa({ pro = false }) {
             const ic = Math.min(1, audio.currentTime / (audio.duration * 0.97));
             let f = (buBas + ic * uzun[idx]) / toplamChar; if (f < 0) f = 0; if (f > 1) f = 1;
             try { onIlerleme(f); } catch (e) {}
+            try { cumleImlec(f); } catch (e) {}
           }
         };
         // SONRAKİ PARÇAYA GEÇ (tek sefer) — normalde onended çağırır; ses TAKILIRSA emniyet zaman aşımı da çağırır → ASLA kilitlenmez.
         let ilerledi = false, capId = null;
-        const sonraGec = () => { if (ilerledi || durduruldu) return; ilerledi = true; try { clearTimeout(capId); } catch (e) {} oncekiChar += uzun[idx]; try { if (typeof onIlerleme === "function") onIlerleme(Math.min(1, oncekiChar / toplamChar)); } catch (e) {} if (aiSesElemRef.current === audio) aiSesElemRef.current = null; oynatSira(idx + 1); };
+        const sonraGec = () => { if (ilerledi || durduruldu) return; ilerledi = true; try { clearTimeout(capId); } catch (e) {} oncekiChar += uzun[idx]; try { if (typeof onIlerleme === "function") onIlerleme(Math.min(1, oncekiChar / toplamChar)); } catch (e) {} try { cumleImlec(Math.min(1, oncekiChar / toplamChar)); } catch (e) {} if (aiSesElemRef.current === audio) aiSesElemRef.current = null; oynatSira(idx + 1); };
         audio.onended = () => { if (!durduruldu) sonraGec(); };
         audio.onerror = () => { if (durduruldu) return; if (idx === 0 && oncekiChar === 0) { try { clearTimeout(capId); } catch (e) {} dus(); return; } sonraGec(); };
         // PLAYBACK EMNİYETİ: "bitti" (onended) gelmezse (ses takılırsa) ZORLA sonraki parçaya geç → mavi/okunmamış kısım da okunur, konuşma ortada DONMAZ.
