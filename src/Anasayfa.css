@@ -347,9 +347,16 @@ video.yrm-medya{ cursor:default; }
 .paylas-gonder{ flex:none; margin:10px 16px 16px; width:auto; background:linear-gradient(180deg,#FFE9A8,#FFD700 55%,#B8860B); border:none; color:#1a1206; border-radius:13px; padding:14px; font-weight:800; font-size:15px; font-family:'Cinzel',serif; letter-spacing:.03em; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4); border-top:1px solid rgba(255,255,255,.2); }
 .paylas-gonder:disabled{ opacity:.5; }
 /* PAYLAŞ aç kutusu (akış üstü) */
-.ana-paylas-ac{ display:flex; align-items:center; gap:9px; width:100%; margin-bottom:0; cursor:pointer; text-align:left;
-  background:linear-gradient(150deg,rgba(255,255,255,.9),rgba(253,248,238,.95)); border:1.5px dashed rgba(184,134,11,.55); border-radius:13px; padding:9px 13px; color:#7a6a3a; font-size:13px; font-style:italic; }
-.ana-paylas-art{ width:22px; height:22px; flex:none; border-radius:50%; background:linear-gradient(180deg,#FFE9A8,#FFD700,#B8860B); color:#1a1206; font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; font-style:normal; }
+/* PAYLAS SERIDI — CANLI ALTIN (kullanici: "cok zayif kaliyor, dikkat cekmiyor, daha guzel ve canli yap").
+   Eski: soluk beyaz + kesik cizgi + silik italik -> placeholder gibi goruluyordu. Yeni: parlak altin gradyan,
+   dolu kenar, KALIN okunur yazi, hafif golge + yavas "nefes" parlamasi (dikkat ceker ama goz yormaz). */
+.ana-paylas-ac{ display:flex; align-items:center; gap:10px; width:100%; margin-bottom:0; cursor:pointer; text-align:left;
+  background:linear-gradient(150deg,#FFF3C9,#FFD700 55%,#E6BD52); border:1.8px solid #b8860b; border-radius:14px; padding:12px 15px; color:#4a3208; font-size:15px; font-weight:800; font-style:normal;
+  box-shadow:0 4px 13px rgba(184,134,11,.4), inset 0 1px 0 rgba(255,255,255,.55); animation:anaPaylasParla 2.6s ease-in-out infinite; }
+.ana-paylas-ac:active{ transform:scale(.98); }
+@keyframes anaPaylasParla{ 0%,100%{ box-shadow:0 4px 13px rgba(184,134,11,.4), inset 0 1px 0 rgba(255,255,255,.55); } 50%{ box-shadow:0 6px 20px rgba(255,200,45,.6), inset 0 1px 0 rgba(255,255,255,.72); } }
+/* "+" kutusu: KARE (hafif yuvarlatilmis) — anayasa: tam daire ASLA. */
+.ana-paylas-art{ width:26px; height:26px; flex:none; border-radius:8px; background:linear-gradient(180deg,#fff7d6,#FFD700,#B8860B); color:#1a1206; font-weight:900; font-size:18px; display:flex; align-items:center; justify-content:center; font-style:normal; box-shadow:0 2px 6px rgba(120,80,10,.45); }
 .ana-post-avatar-img{ width:100%; height:100%; object-fit:cover; border-radius:inherit; }
 /* BİLDİRİM UYARI BANDI — herkesin bildirimi açması için (arama/mesaj ulaşsın); altın/canlı (anayasa) */
 .bildirim-bandi{ display:flex; align-items:center; gap:9px; margin:0 0 10px; padding:11px 13px; border-radius:13px;
