@@ -4500,6 +4500,9 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-kart.secili{ background:rgba(255,215,0,.26) !important; }
 .arama-sil-bar{ display:block; width:calc(100% - 20px); margin:8px auto 2px; padding:13px 16px; border-radius:12px; border:1.5px solid #a3121a; background:linear-gradient(160deg,#ff6b6b,#e0202c,#b3121a); color:#fff; font-weight:800; font-size:16px; white-space:nowrap; cursor:pointer; box-shadow:0 3px 10px rgba(160,20,30,.4); }
 .arama-sil-bar:active{ transform:scale(.97); }
+/* UZUN BASINCA tek arama "Sil" düğmesi (kartın sağında) — kırmızı, kare, yazı kesilmez */
+.arama-hizli-sil{ flex:none; padding:9px 15px; border-radius:11px; border:1.5px solid #a3121a; background:linear-gradient(160deg,#ff6b6b,#e0202c,#b3121a); color:#fff; font-weight:800; font-size:14.5px; white-space:nowrap; cursor:pointer; box-shadow:0 2px 7px rgba(160,20,30,.4); }
+.arama-hizli-sil:active{ transform:scale(.93); }
 
 /* GLOME ALT İKON ÇUBUĞU (WhatsApp gibi 4 bölme) — altın, kare düğmeler */
 .mm-alt-bar{ flex:0 0 auto; display:flex; background:linear-gradient(135deg,#e8d49a,#d9b64a); border-top:1px solid #c9a13f; box-shadow:0 -2px 10px rgba(90,60,10,.2); padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px)); }

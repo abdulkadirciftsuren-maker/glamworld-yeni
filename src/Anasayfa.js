@@ -1949,6 +1949,9 @@ export default function Anasayfa({ pro = false }) {
   const [aramaSecModu, setAramaSecModu] = useState(false);     // "Seç" modu açık mı (işaret kutuları görünür)
   const [aramaSecili, setAramaSecili] = useState(() => new Set()); // işaretlenen arama id'leri
   const [gizliAramalar, setGizliAramalar] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxGizliAramalar") || "[]")); } catch (e) { return new Set(); } });
+  const aramaBasRef = useRef(null);                            // uzun-basma zamanlayıcısı (tek arama hızlı sil)
+  const aramaUzunRef = useRef(false);                          // uzun basıldıysa tık'ı (sohbet aç) bastır
+  const [aramaHizliSil, setAramaHizliSil] = useState(null);    // uzun basılan aramanın id'si → "Sil" düğmesi o kartta çıkar
   const tepkiSimgeSec = (s) => { setTepkiSimge(s); try { localStorage.setItem("groxTepkiSimge", s); } catch (e) {} setTepkiSimgeAcik(false); };
   // TEŞEKKÜR — seni beğenen/tepki veren kişiye "teşekkür et" (bildirimden). Kime teşekkür ettiğimizi hatırla (tekrar etme).
   const [tesekkurEdilen, setTesekkurEdilen] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxTesekkur") || "[]")); } catch (e) { return new Set(); } });
@@ -4829,8 +4832,18 @@ export default function Anasayfa({ pro = false }) {
     setTimeout(() => setKucukMesaj(""), 2500);
     setAramaSecili(new Set()); setAramaSecModu(false);
   };
-  // GLOME sekmesi değişince seç modunu sıfırla (başka sekmede takılı kalmasın)
-  useEffect(() => { setAramaSecModu(false); setAramaSecili(new Set()); }, [glomeSekme]);
+  // UZUN BAS → o aramaya özel "Sil" düğmesi çıkar (hızlı tek silme; seç moduna girmeden)
+  const aramaBas = (id) => { if (aramaSecModu) return; aramaUzunRef.current = false; aramaBasRef.current = setTimeout(() => { aramaUzunRef.current = true; setAramaHizliSil(id); try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) {} }, 480); };
+  const aramaBasBirak = () => { if (aramaBasRef.current) { clearTimeout(aramaBasRef.current); aramaBasRef.current = null; } };
+  // Tek aramayı SENİN listenden sil (gizle) — karşı tarafı etkilemez
+  const aramaTekSil = (id) => {
+    setGizliAramalar((onceki) => { const y = new Set(onceki); y.add(id); try { localStorage.setItem("groxGizliAramalar", JSON.stringify([...y])); } catch (e) {} return y; });
+    setAramaHizliSil(null);
+    setKucukMesaj(t("aramalarSilindi", "Seçili aramalar listenden silindi 🗑️"));
+    setTimeout(() => setKucukMesaj(""), 2500);
+  };
+  // GLOME sekmesi değişince seç modunu + hızlı sil düğmesini sıfırla (başka sekmede takılı kalmasın)
+  useEffect(() => { setAramaSecModu(false); setAramaSecili(new Set()); setAramaHizliSil(null); }, [glomeSekme]);
   // Kişi arama sonucu (isimle) — yeni sohbet başlatmak için
   const mmSonuc = useMemo(() => {
     const q = mmAra.trim().toLowerCase(); if (q.length < 2) return [];
@@ -10904,7 +10917,15 @@ export default function Anasayfa({ pro = false }) {
                   const cevapsizMi = a.durum !== "cevaplandi";
                   const durumYazi = a.durum === "cevaplandi" ? aramaSure(a.sureSn) : a.durum === "reddedildi" ? t("aramaReddedildi", "Reddedildi") : (a.giden ? t("cevaplanmadi", "Cevaplanmadı") : t("cevapsizArama", "Cevapsız arama"));
                   return (
-                    <button className={"msj-kart arama-kart" + (aramaSecModu && aramaSecili.has(a.id) ? " secili" : "")} key={a.id} onClick={() => aramaSecModu ? aramaSecToggle(a.id) : sohbetAc({ uid: a.karsiUid, ad: a.ad, foto: a.foto })}>
+                    <button className={"msj-kart arama-kart" + ((aramaSecModu && aramaSecili.has(a.id)) || aramaHizliSil === a.id ? " secili" : "")} key={a.id}
+                      onClick={() => {
+                        if (aramaSecModu) return aramaSecToggle(a.id);
+                        if (aramaUzunRef.current) { aramaUzunRef.current = false; return; }  // uzun basmaydı → sohbet açma
+                        if (aramaHizliSil === a.id) return;                                   // bu kartın sil düğmesi açık → sohbet açma
+                        if (aramaHizliSil) { setAramaHizliSil(null); return; }                // başka kartta açık → önce onu kapat
+                        sohbetAc({ uid: a.karsiUid, ad: a.ad, foto: a.foto });
+                      }}
+                      onPointerDown={() => aramaBas(a.id)} onPointerUp={aramaBasBirak} onPointerLeave={aramaBasBirak} onPointerCancel={aramaBasBirak}>
                       {aramaSecModu && <span className={"arama-sec-kutu" + (aramaSecili.has(a.id) ? " secili" : "")}>{aramaSecili.has(a.id) ? "✓" : ""}</span>}
                       <span className="msj-foto">{a.foto ? <img src={a.foto} alt="" referrerPolicy="no-referrer" /> : bas}</span>
                       <div className="msj-icerik">
@@ -10915,8 +10936,10 @@ export default function Anasayfa({ pro = false }) {
                           <span className="arama-kart-durum">{durumYazi}</span>
                         </div>
                       </div>
-                      {/* TEKRAR ARA — sohbeti açmadan aynı türde yeniden ara (seç modunda GİZLİ) */}
-                      {!aramaSecModu && (
+                      {/* UZUN BASINCA: o aramaya özel "Sil" düğmesi (karşı tarafı etkilemez, senin listenden siler) */}
+                      {aramaHizliSil === a.id ? (
+                        <span className="arama-hizli-sil" onClick={(e) => { e.stopPropagation(); aramaTekSil(a.id); }}>🗑️ {t("sil", "Sil")}</span>
+                      ) : !aramaSecModu && (
                       <span className="arama-kart-btn" onClick={(e) => { e.stopPropagation(); setMesajAcik(false); aramaBaslat({ uid: a.karsiUid, ad: a.ad, foto: a.foto }, a.tip); }} aria-label={t("navAra", "Ara")}>
                         {a.tip === "goruntulu"
                           ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10l5-3v10l-5-3z" /></svg>
