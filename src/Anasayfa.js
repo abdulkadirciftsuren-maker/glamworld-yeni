@@ -5795,6 +5795,8 @@ export default function Anasayfa({ pro = false }) {
     try {
       const mesajlar = (gecmis || []).map((m) => ({ role: m.rol === "ai" ? "assistant" : "user", content: m.metin }));
       if (selam) mesajlar.push({ role: "user", content: "(Kullanıcı seninle sohbeti yeni açtı. Ona sıcak, KISA bir selam ver, kendini bir cümleyle tanıt ve bir soru sor.)" });
+      // DİL GARANTİSİ (recency): dil talimatını son mesaja da ekle → geçmiş başka dilde olsa bile yanıt sayfa diline çekilir.
+      try { const _s = mesajlar[mesajlar.length - 1]; if (_s && _s.role === "user" && typeof _s.content === "string") _s.content += ` (ÖNEMLİ: Yanıtını SADECE ${_tanDilAd()} dilinde yaz — önceki mesajlar başka dilde olsa bile.)`; } catch (e) {}
       const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: tanismaAISistem(k, _tanDilAd()) }) });
       let metin = ""; if (r.ok) { const v = await r.json(); metin = ((v && v.metin) || "").trim(); }
       if (metin) {
@@ -6548,6 +6550,17 @@ export default function Anasayfa({ pro = false }) {
       }
       return { role: "user", content: m.metin };
     });
+    // DİL GARANTİSİ (recency): sistem prompttaki dil kuralı, UZUN/başka-dilli GEÇMİŞTE tek başına yetmiyordu
+    // (cevap yarı Türkçe yarı Rusça kayıyordu). ÇÖZÜM: dil talimatını modelin cevap vermeden HEMEN ÖNCE gördüğü
+    // SON kullanıcı mesajına da ekle (en güçlü yer) → geçmiş başka dilde olsa bile yanıt sayfa diline çekilir.
+    try {
+      const _sonM = mesajlar[mesajlar.length - 1];
+      const _dilNot = ` (ÖNEMLİ: Yanıtını SADECE ${dilAd} dilinde yaz — önceki mesajlar/geçmiş başka dilde olsa bile; dilleri KARIŞTIRMA.)`;
+      if (_sonM && _sonM.role === "user") {
+        if (typeof _sonM.content === "string") _sonM.content += _dilNot;
+        else if (Array.isArray(_sonM.content)) { const _tp = _sonM.content.find((p) => p && p.type === "text"); if (_tp) _tp.text = (_tp.text || "") + _dilNot; else _sonM.content.push({ type: "text", text: _dilNot.trim() }); }
+      }
+    } catch (e) {}
     try {
       // ⛔ GEÇİCİ HATA OTOMATİK TEKRAR (kullanıcı: fotoğraf sorunca "yazı beyni yoğun/kredisi bitmiş" hatası çıktı). Fotoğraf gibi AĞIR
       //   (görme/vision) isteklerde beyin ANLIK aşırı yük/hız-limiti döndürebilir; bu "kredisi bitmiş" gibi GÖRÜNSE de aslında geçicidir.
