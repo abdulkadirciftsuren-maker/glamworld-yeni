@@ -10657,9 +10657,22 @@ export default function Anasayfa({ pro = false }) {
                 <div className="ai-sohbet-uyari">🤖 {t("tanisAIsohbetUyari", "Bu bir yapay zekâ — gerçek kişi değil. Kişisel bilgi/para verme.")}</div>
                 <div className="ai-sohbet-akis" ref={aiSohbetAkisRef}>
                   {aiSohbetMesajlar.length === 0 && !aiSohbetYaziliyor && <div className="ai-sohbet-bos">💬 {t("tanisAIbasla", "Selam yaz, sohbete başla!")}</div>}
-                  {aiSohbetMesajlar.map((m, mi) => (
-                    <div key={mi} className={"ai-sohbet-balon " + (m.rol === "ben" ? "ben" : "ai")}>{m.metin}</div>
-                  ))}
+                  {aiSohbetMesajlar.map((m, mi) => {
+                    const _ck = "tanis_" + ((aiSohbetKisi && aiSohbetKisi.id) || "x") + "_" + mi;
+                    const _cv = ceviri[_ck];
+                    const _goster = (_cv && _cv.acik && _cv.metin) ? _cv.metin : m.metin;
+                    return (
+                      <div key={mi} className={"ai-sohbet-balon " + (m.rol === "ben" ? "ben" : "ai")}>
+                        {_goster}
+                        {m.rol !== "ben" && m.metin && (
+                          <button type="button" onClick={() => cevirToggle({ yazi: m.metin }, _ck)}
+                            style={{ display: "block", marginTop: 6, border: "none", borderRadius: 9, padding: "4px 11px", fontSize: 12, fontWeight: 800, fontFamily: "inherit", cursor: "pointer", background: "linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17)", color: "#3a2a00", boxShadow: "0 2px 5px rgba(120,90,0,.28)" }}>
+                            {_cv && _cv.yuk ? "⏳ " + t("ceviriliyor", "Çevriliyor…") : (_cv && _cv.acik && _cv.metin) ? "🔁 " + t("orijinalGoster", "Orijinal") : "🌐 " + t("cevir", "Çevir")}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                   {aiSohbetYaziliyor && <div className="ai-sohbet-balon ai ai-yaziyor"><span></span><span></span><span></span></div>}
                 </div>
                 <div className="ai-sohbet-giris">
