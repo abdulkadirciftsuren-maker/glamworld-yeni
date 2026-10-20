@@ -9926,7 +9926,20 @@ export default function Anasayfa({ pro = false }) {
                           })()
                         : p.video
                         ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
-                        : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => { if (e.target.naturalHeight > e.target.naturalWidth * 1.04) e.target.parentNode.classList.add("uzun"); else e.target.parentNode.classList.remove("uzun"); }} />}
+                        : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => {
+                            // DİKEY FOTO: pencereyi fotoğrafın GERÇEK oranına (sınırlı) ayarla → foto TAM görünür, alt-üst KIRPILMAZ
+                            // (altındaki GLOXORG yazısı kesilmez). Yatay foto NORMAL kalır (dokunulmaz). Video ayrı (dokunulmaz).
+                            const el = e.target; const w = el.naturalWidth || 0; const h = el.naturalHeight || 0; const kutu = el.parentNode;
+                            if (h > w * 1.04) {
+                              kutu.classList.add("uzun");
+                              let oran = (w && h) ? (w / h) : 0.8;
+                              if (oran > 0.95) oran = 0.95; if (oran < 0.5) oran = 0.5; // çok uzun olanı sınırla (düzen bozulmasın)
+                              kutu.style.aspectRatio = oran.toFixed(4);
+                            } else {
+                              kutu.classList.remove("uzun");
+                              kutu.style.aspectRatio = "";
+                            }
+                          }} />}
                       {/* SES aç/kapat — sesi olan paylaşımın sağ altında (GLOXORG yazısının üstünde). Altın. Videoda da görünür (kutu artık taşmıyor). */}
                       {sesliMi && (
                         <button className={"apr-ses-ik" + (akisSesAcik ? " acik" : "")} onClick={akisSesToggle} aria-label={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={akisSesAcik ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")}>

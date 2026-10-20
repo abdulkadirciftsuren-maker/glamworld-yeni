@@ -985,8 +985,10 @@ video.yrm-medya{ cursor:default; }
    kutu zemini PARLAK ALTIN (base .apr-medya #f6e6a8→#e3c469) idi; foto object-fit:cover ile kutuyu doldurur ama kaydırırken
    foto bir an boyanmayınca o PARLAK ALTIN üstten görünüp göze "sarı perde/parlama" gibi çarpıyordu. Zemini sayfanın YUMUŞAK
    AÇIK tonuna çevirdik → foto bir an boyanmasa da parlak sarı çarpmaz (yumuşak, fark edilmez). ⛔ SİYAH/KOYU DEĞİL (anayasa). Video zemini AYRI (dokunulmadı). */
+/* DİKEY FOTO: pencere EN-BOY oranı JS ile fotoğrafın GERÇEK oranına kurulur (yukarıda onLoad) → 4/5 yalnız YEDEK.
+   object-fit:contain → foto ASLA kırpılmaz, alt-üst tam görünür (altındaki GLOXORG yazısı KESİLMEZ). */
 .apr-medya.uzun{ aspect-ratio:4/5; padding:0; background:#efe7d3; }
-.apr-medya.uzun img{ width:100%; height:100%; object-fit:cover; display:block; }
+.apr-medya.uzun img{ width:100%; height:100%; object-fit:contain; display:block; }
 /* YATAY (enli) foto: pencereyi DOĞAL doldurur — min-height/ortalama YOK → alt-üst altın/boş bant kalmaz
    (kullanıcı: yatay foto yatay gelsin, kısa kalıp ekleme/karartma olmasın). İkon şeridi (.apr-rail) medyanın
    DIŞINDA olduğu için min-height kaldırmak ikonları bozmaz. */
