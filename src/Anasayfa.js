@@ -2011,6 +2011,9 @@ export default function Anasayfa({ pro = false }) {
   const [aiSohbetMesajlar, setAiSohbetMesajlar] = useState([]); // {rol:'ben'|'ai', metin}
   const [aiSohbetYazi, setAiSohbetYazi] = useState("");
   const [aiSohbetYaziliyor, setAiSohbetYaziliyor] = useState(false);
+  const [aiSohbetSesli, setAiSohbetSesli] = useState(true);           // Tanışma AI: cevapları SESLE okusun mu (canlı)
+  const aiSohbetSesliRef = useRef(true); useEffect(() => { aiSohbetSesliRef.current = aiSohbetSesli; }, [aiSohbetSesli]);
+  const [aiSohbetDinliyor, setAiSohbetDinliyor] = useState(false);    // mikrofon dinliyor mu (konuşarak yaz)
   const aiFotoUretiliyorRef = useRef(false);        // avatar üretimi aynı anda bir kez çalışsın
   const aiSohbetAkisRef = useRef(null);             // AI sohbet akışı — otomatik en alta kaydır
   const [taniCevriDamga, setTaniCevriDamga] = useState(0); // çeviri yüklenince yeniden çiz
@@ -5794,7 +5797,11 @@ export default function Anasayfa({ pro = false }) {
       if (selam) mesajlar.push({ role: "user", content: "(Kullanıcı seninle sohbeti yeni açtı. Ona sıcak, KISA bir selam ver, kendini bir cümleyle tanıt ve bir soru sor.)" });
       const r = await fetch(AI_KOPRU, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mesajlar, sistem: tanismaAISistem(k, _tanDilAd()) }) });
       let metin = ""; if (r.ok) { const v = await r.json(); metin = ((v && v.metin) || "").trim(); }
-      if (metin) setAiSohbetMesajlar((eski) => { const yeni = [...eski, { rol: "ai", metin }]; kaydetAIsohbet(k.id, yeni); return yeni; });
+      if (metin) {
+        setAiSohbetMesajlar((eski) => { const yeni = [...eski, { rol: "ai", metin }]; kaydetAIsohbet(k.id, yeni); return yeni; });
+        // CANLI: AI cevabını SESLE oku (doğal ses). Ses kapalıysa (🔇) okumaz. Önce varsa çalan sesi durdur.
+        if (aiSohbetSesliRef.current) { try { gloxSustur(); } catch (e) {} try { sesliOku(metin); } catch (e) {} }
+      }
     } catch (e) {}
     setAiSohbetYaziliyor(false);
   }
@@ -5805,6 +5812,24 @@ export default function Anasayfa({ pro = false }) {
     setAiSohbetYazi(""); setAiSohbetMesajlar(yeni); kaydetAIsohbet(k.id, yeni);
     aiSohbetIste(k, yeni, false);
   }
+  // TANIŞMA AI — MİKROFONLA KONUŞ: söylediğin yazı kutusuna yazılır (aiIstekDinle deseni; tek seferlik dinleme)
+  function aiSohbetDinle() {
+    try {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { setKucukMesaj(t("sesYok", "Cihaz sesli okumayı desteklemiyor")); setTimeout(() => setKucukMesaj(""), 2500); return; }
+      try { gloxSustur(); } catch (e) {}                 // AI konuşuyorsa sustur, SENİ dinlesin
+      const rec = new SR();
+      rec.lang = aiSesKodu(aiDilRef.current);
+      rec.continuous = false; rec.interimResults = false;
+      setAiSohbetDinliyor(true);
+      rec.onresult = (e) => { try { const tx = (e.results[0][0].transcript || "").trim(); if (tx) setAiSohbetYazi((p) => (p ? p + " " : "") + tx); } catch (x) {} };
+      rec.onend = () => setAiSohbetDinliyor(false);
+      rec.onerror = () => setAiSohbetDinliyor(false);
+      rec.start();
+    } catch (e) { setAiSohbetDinliyor(false); }
+  }
+  // Tanışma sohbetini kapat → çalan sesi de durdur (AI konuşurken kapatınca ses devam etmesin)
+  const aiSohbetKapat = () => { try { gloxSustur(); } catch (e) {} setAiSohbetKisi(null); };
   // ── AKILLI ARAMA — doğal cümleyi yapay zekâya ver, uygun kişileri (gerçek + AI) bulsun ──
   const arayisMetin = { arkadaslik: "arkadaşlık", sohbet: "sohbet", flort: "flört", evlilik: "evlilik" };
   async function aiAkilliAra() {
@@ -10618,7 +10643,7 @@ export default function Anasayfa({ pro = false }) {
           )}
           {/* ── YAPAY ZEKÂ SOHBET PENCERESİ (açıkça etiketli) ── */}
           {aiSohbetKisi && (
-            <div className="ai-sohbet-fon" onClick={(e) => { if (e.target === e.currentTarget) setAiSohbetKisi(null); }}>
+            <div className="ai-sohbet-fon" onClick={(e) => { if (e.target === e.currentTarget) aiSohbetKapat(); }}>
               <div className="ai-sohbet">
                 <div className="ai-sohbet-bas">
                   <span className="ai-sohbet-av">{aiFoto[aiSohbetKisi.id] ? <img src={aiFoto[aiSohbetKisi.id]} alt="" referrerPolicy="no-referrer" /> : (aiSohbetKisi.ad[0] || "?").toUpperCase()}</span>
@@ -10626,7 +10651,8 @@ export default function Anasayfa({ pro = false }) {
                     <b className="notranslate" translate="no">{aiSohbetKisi.ad}<span className="ai-sohbet-yas"> · {aiSohbetKisi.yas}</span></b>
                     <i>🤖 {t("yapayZeka", "Yapay Zekâ")} · {[aiSohbetKisi.sehir, aiSohbetKisi.ulke].filter(Boolean).join(", ")}</i>
                   </span>
-                  <button className="ai-sohbet-kapat" onClick={() => setAiSohbetKisi(null)} aria-label={t("kapat", "Kapat")}>✕</button>
+                  <button className="ai-sohbet-kapat" onClick={() => { const yeni = !aiSohbetSesli; setAiSohbetSesli(yeni); if (!yeni) { try { gloxSustur(); } catch (e) {} } }} aria-label={aiSohbetSesli ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} title={aiSohbetSesli ? t("sesKapat", "Sesi kapat") : t("sesAc", "Sesi aç")} style={{ marginRight: 6 }}>{aiSohbetSesli ? "🔊" : "🔇"}</button>
+                  <button className="ai-sohbet-kapat" onClick={aiSohbetKapat} aria-label={t("kapat", "Kapat")}>✕</button>
                 </div>
                 <div className="ai-sohbet-uyari">🤖 {t("tanisAIsohbetUyari", "Bu bir yapay zekâ — gerçek kişi değil. Kişisel bilgi/para verme.")}</div>
                 <div className="ai-sohbet-akis" ref={aiSohbetAkisRef}>
@@ -10637,7 +10663,8 @@ export default function Anasayfa({ pro = false }) {
                   {aiSohbetYaziliyor && <div className="ai-sohbet-balon ai ai-yaziyor"><span></span><span></span><span></span></div>}
                 </div>
                 <div className="ai-sohbet-giris">
-                  <input value={aiSohbetYazi} onChange={(e) => setAiSohbetYazi(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") aiSohbetGonder(); }} placeholder={t("tanisAIyaz", "Mesaj yaz…")} />
+                  <button type="button" onClick={aiSohbetDinle} disabled={aiSohbetYaziliyor} aria-label={t("sesliYaz", "Konuşarak yaz")} title={t("sesliYaz", "Konuşarak yaz")} style={{ flex: "none", border: "none", cursor: "pointer", background: aiSohbetDinliyor ? "#e74c3c" : "linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17)", color: aiSohbetDinliyor ? "#fff" : "#3a2a00", borderRadius: 10, width: 42, height: 42, fontSize: 18 }}>🎤</button>
+                  <input value={aiSohbetYazi} onChange={(e) => setAiSohbetYazi(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") aiSohbetGonder(); }} placeholder={aiSohbetDinliyor ? t("dinliyorum", "Dinliyorum…") : t("tanisAIyaz", "Mesaj yaz…")} />
                   <button onClick={aiSohbetGonder} disabled={aiSohbetYaziliyor || !aiSohbetYazi.trim()} aria-label={t("gonder", "Gönder")}>➤</button>
                 </div>
               </div>
