@@ -9927,16 +9927,21 @@ export default function Anasayfa({ pro = false }) {
                         : p.video
                         ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
                         : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => {
-                            // DİKEY FOTO: pencereyi fotoğrafın GERÇEK oranına (sınırlı) ayarla → foto TAM görünür, alt-üst KIRPILMAZ
-                            // (altındaki GLOXORG yazısı kesilmez). Yatay foto NORMAL kalır (dokunulmaz). Video ayrı (dokunulmaz).
+                            // DİKEY FOTO: pencereyi fotoğrafın GERÇEK oranına ayarla ama BOYUNU SINIRLA (telefon ekranına sığsın).
+                            // NORMAL dikey (3:4'e kadar): tam görünür, alt-üst KIRPILMAZ (GLOXORG kesilmez).
+                            // ÇOK UZUN (3:4'ten uzun): pencere 3:4'te sabit kalır, foto ALTTAN hizalı doldurur → ÜST kırpılır ama
+                            //   ALT + GLOXORG korunur, ekrana sığar, yan boş bant olmaz. Yatay foto / video AYRI (dokunulmaz).
                             const el = e.target; const w = el.naturalWidth || 0; const h = el.naturalHeight || 0; const kutu = el.parentNode;
                             if (h > w * 1.04) {
                               kutu.classList.add("uzun");
                               let oran = (w && h) ? (w / h) : 0.8;
-                              if (oran > 0.95) oran = 0.95; if (oran < 0.5) oran = 0.5; // çok uzun olanı sınırla (düzen bozulmasın)
+                              const EN_UZUN = 0.75; // pencerenin en uzun hali = 3:4 (telefona sığar); daha uzun foto alttan hizalı kırpılır
+                              if (oran > 0.95) oran = 0.95;
+                              if (oran < EN_UZUN) { oran = EN_UZUN; kutu.classList.add("cokuzun"); } else { kutu.classList.remove("cokuzun"); }
                               kutu.style.aspectRatio = oran.toFixed(4);
                             } else {
                               kutu.classList.remove("uzun");
+                              kutu.classList.remove("cokuzun");
                               kutu.style.aspectRatio = "";
                             }
                           }} />}
