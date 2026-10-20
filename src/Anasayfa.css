@@ -989,8 +989,8 @@ video.yrm-medya{ cursor:default; }
    object-fit:contain → foto ASLA kırpılmaz, alt-üst tam görünür (altındaki GLOXORG yazısı KESİLMEZ). */
 .apr-medya.uzun{ aspect-ratio:4/5; padding:0; background:#efe7d3; }
 .apr-medya.uzun img{ width:100%; height:100%; object-fit:contain; display:block; }
-/* ÇOK UZUN dikey foto (3:4'ten uzun): pencere 3:4'te sınırlı (telefona sığar); foto ALTTAN hizalı doldurur →
-   ÜST kırpılır ama ALT + GLOXORG korunur, yan boş bant olmaz (object-fit:cover + object-position alt). */
+/* ÇOK UZUN dikey foto (~5:8'ten uzun): pencere ~5:8'te sınırlı (telefona sığar); foto ALTTAN hizalı doldurur →
+   ÜST az kırpılır ama ALT + GLOXORG korunur, yan boş bant olmaz (object-fit:cover + object-position alt). */
 .apr-medya.uzun.cokuzun img{ object-fit:cover; object-position:center bottom; }
 /* YATAY (enli) foto: pencereyi DOĞAL doldurur — min-height/ortalama YOK → alt-üst altın/boş bant kalmaz
    (kullanıcı: yatay foto yatay gelsin, kısa kalıp ekleme/karartma olmasın). İkon şeridi (.apr-rail) medyanın
