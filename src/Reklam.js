@@ -79,7 +79,7 @@ const AMBLEM_YAZI_RENKLER = [
   { k: "beyaz", hex: "#ffffff", en: "clean white", ck: "yaziBeyaz", ad: "Beyaz" },
 ];
 
-export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif, yonetici }) {
+export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif, yonetici, onKatman }) {
   const { t } = useTranslation();
   const [reklamlar, setReklamlar] = useState([]);
   const [detay, setDetay] = useState(null);       // açık reklam (detay penceresi)
@@ -315,6 +315,21 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   // --- TAM EKRAN önizlemede parmakla ZOOM (müşteri amblemi/fotoyu büyütüp gezebilsin) ---
   const fMesafe = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   useEffect(() => { setFZoom({ s: 1, x: 0, y: 0 }); }, [fBuyukFoto]); // her açılışta normal boyut
+  // GERİ TUŞU KAYDI — açık pencereleri (tam ekran foto / formlar / şirket detayı) Anasayfa'nın geri-koruma
+  // sistemine bildir (Muhasebe/Akademi deseni). Böylece Android geri tuşu UYGULAMAYI KAPATMAZ, sadece en üstteki
+  // açık pencereyi kapatır. Her değişimde güncel sayı + "en üsttekini kapat" fonksiyonu gönderilir.
+  useEffect(() => {
+    if (!onKatman) return;
+    const n = (fBuyukFoto ? 1 : 0) + (haritaAcik ? 1 : 0) + (verAcik ? 1 : 0) + (firmaVerAcik ? 1 : 0) + (detay ? 1 : 0);
+    const geri = () => {
+      if (fBuyukFoto) { setFBuyukFoto(null); return; }
+      if (haritaAcik) { setHaritaAcik(false); return; }
+      if (verAcik) { setVerAcik(false); return; }
+      if (firmaVerAcik) { setFirmaVerAcik(false); return; }
+      if (detay) { setDetay(null); return; }
+    };
+    onKatman(n, geri);
+  }, [detay, verAcik, firmaVerAcik, haritaAcik, fBuyukFoto]); // eslint-disable-line react-hooks/exhaustive-deps
   // Tam ekran önizleme açıkken arka sayfa KAYMASIN (parmak kayınca alttaki sayfa yeniden yüklenmesin/gezmesin)
   useEffect(() => {
     if (!fBuyukFoto) return;

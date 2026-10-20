@@ -4720,6 +4720,11 @@ export default function Anasayfa({ pro = false }) {
   const muhasebeDerinlikRef = useRef(0);
   const muhasebeGeriRef = useRef(null);
   const muhasebeKatmanDegis = (d, geriFn) => { muhasebeDerinlikRef.current = d || 0; setMuhasebeDerinlik(d || 0); muhasebeGeriRef.current = geriFn || null; };
+  // REKLAM (ana sayfaya gömülü reklam şeridi) açık pencereleri için geri-koruma kaydı (Muhasebe deseni)
+  const [reklamDerinlik, setReklamDerinlik] = useState(0);
+  const reklamDerinlikRef = useRef(0);
+  const reklamGeriRef = useRef(null);
+  const reklamKatmanDegis = (d, geriFn) => { reklamDerinlikRef.current = d || 0; setReklamDerinlik(d || 0); reklamGeriRef.current = geriFn || null; };
   // KONUM AÇILINCA: (1) paylaşım AÇIKSA kendi ŞU ANKİ konumumu yaz (elle seçmek YOK, otomatik),
   // (2) arkadaşların TAZE konumu için listeyi yenile.
   useEffect(() => {
@@ -8953,7 +8958,7 @@ export default function Anasayfa({ pro = false }) {
   const guardSayRef = useRef(0); // ittiğimiz koruma kaydı sayısı (geçmiş tepesinde)
   useEffect(() => {
     const acikKatman = (aktifKod !== "home" ? 1 : 0) + (duzenAcik ? 1 : 0) + (acikBolum ? 1 : 0)
-      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0) + (akademiDerinlik || 0) + (sanalAynaDerinlik || 0) + (gloxSesAcik ? 1 : 0);
+      + ((menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || ayarlarAcik) ? 1 : 0) + (haritaTam ? 1 : 0) + (ayarHaritaAcik ? 1 : 0) + (telHaritaAcik ? 1 : 0) + (sektorListe ? 1 : 0) + (uyelikKartAcik ? 1 : 0) + (araSecili ? 1 : 0) + (paylasAcik ? 1 : 0) + (tamFoto ? 1 : 0) + (onizGaleri ? 1 : 0) + (hikayeAcik ? 1 : 0) + (hikMenuAcik ? 1 : 0) + (hikTaslak ? 1 : 0) + (hikSecimAcik ? 1 : 0) + (uyeSayfa ? 1 : 0) + (yardimciAcik ? 1 : 0) + (sehirAcik ? 1 : 0) + (reelsAcik ? 1 : 0) + (sohbetKisi ? 1 : 0) + (aramaDurum ? 1 : 0) + (gelenArama ? 1 : 0) + (pazarPencereAcik ? 1 : 0) + (akademiDerinlik || 0) + (sanalAynaDerinlik || 0) + (reklamDerinlik || 0) + (gloxSesAcik ? 1 : 0);
     // Açık katman sayısı kadar koruma kaydı OLSUN — eksikse ekle (pushState, hash DEĞİŞMEZ).
     while (guardSayRef.current < acikKatman) {
       try { window.history.pushState(window.history.state, "", window.location.href); guardSayRef.current++; }
@@ -8961,7 +8966,7 @@ export default function Anasayfa({ pro = false }) {
     }
     // Katman DOKUNARAK kapandıysa kayıt fazla kalır — DOKUNMAYIZ (history.back YOK = sekme sıfırlanamaz);
     // o fazla kayıt sonraki geri basışta zararsızca (aynı sayfa) tükenir.
-  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik, sanalAynaDerinlik, muhasebeDerinlik, gloxSesAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [menuAcik, profilAcik, bildirimAcik, araAcik, acikBolum, duzenAcik, aktifKod, araSecili, mesajAcik, paylasAcik, tamFoto, onizGaleri, hikayeAcik, hikMenuAcik, hikTaslak, hikSecimAcik, uyeSayfa, yardimciAcik, sehirAcik, ayarlarAcik, ayarHaritaAcik, sektorListe, uyelikKartAcik, telHaritaAcik, reelsAcik, sohbetKisi, aramaDurum, gelenArama, pazarPencereAcik, haritaTam, akademiDerinlik, sanalAynaDerinlik, muhasebeDerinlik, reklamDerinlik, gloxSesAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const onPop = () => {
       // Bu geri basışı bir koruma kaydı tüketti. EN ÜST açık katmanı kapat, sayfada KAL.
@@ -8975,6 +8980,7 @@ export default function Anasayfa({ pro = false }) {
       else if (sanalAynaDerinlikRef.current > 0) { if (sanalAynaGeriRef.current) { try { sanalAynaGeriRef.current(); } catch (e) {} } }
       // MUHASEBE: müşteri açıkken geri → listeye dön (sayfada kal); listede geri → ana sayfaya (kayıtlar KAYBOLMAZ)
       else if (muhasebeDerinlikRef.current > 0) { if (muhasebeGeriRef.current) { try { muhasebeGeriRef.current(); } catch (e) {} } }
+      else if (reklamDerinlikRef.current > 0) { if (reklamGeriRef.current) { try { reklamGeriRef.current(); } catch (e) {} } } // REKLAM açık penceresi (şirket detayı/tam ekran foto/form) → sadece kapat, ana sayfada KAL
       else if (gloxSesAcikRef.current) { gloxSesAcikRef.current = false; setGloxSesAcik(false); } // Gloxoo Sesi penceresi → geri tuşu ONU kapatır (sohbette KAL)
       else if (sohbetKisiRef.current) { sohbetKisiRef.current = null; setSohbetKisi(null); }
       else if (reelsAcikRef.current) { reelsAcikRef.current = false; setReelsAcik(false); }
@@ -9557,6 +9563,7 @@ export default function Anasayfa({ pro = false }) {
                 paraSym={myParaSym}
                 yonetici={yoneticiMi()}
                 pasif={aktifKod === "ayna"}
+                onKatman={reklamKatmanDegis}
                 onDene={(urun) => { setSanalAynaBaslangic(urun || null); setAktifKod("ayna"); }}
                 saticiyaYaz={(satici, mesaj) => { if (satici && satici.uid) { sohbetAc({ uid: satici.uid, ad: satici.ad, foto: satici.foto }); if (mesaj) { try { setSohbetYazi(mesaj); } catch (e) {} } } }}
               />
