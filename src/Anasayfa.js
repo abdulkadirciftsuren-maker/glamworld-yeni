@@ -6851,7 +6851,16 @@ export default function Anasayfa({ pro = false }) {
   //   ve o yol ilk cümleden sonra kesiliyordu; benim tek-parça düzeltmem tarayıcı yolundaydı → ona hiç ulaşmıyordu. Artık HEP tarayıcı yolu.
   const sesliOku = (metin, onBitti, onCumle, onIlerleme) => {
     if (!metin) { if (typeof onBitti === "function") onBitti(); return; }
-    try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {}
+    // ÖNCE GERÇEK (DOĞAL Gemini) SES — Ayarlar'dan seçilen sesle (gloxSes: Aoede/Kore… = kadın/erkek).
+    // gercekSesOku cümle cümle yedeklidir: bir cümlenin doğal sesi gelmezse O cümleyi tarayıcı okur, konuşma KESİLMEZ;
+    // hiç gelmezse (anahtar/ağ) komple tarayıcı (robot) sesine düşer → Gloxoo ASLA susmaz. (Eskiden hep robottu; düzeltildi.)
+    try {
+      gercekSesOku(metin, onBitti, onCumle, onIlerleme, () => {
+        try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e) {}
+      });
+    } catch (e) {
+      try { sesliOkuTarayici(metin, onBitti, onCumle, onIlerleme); } catch (e2) {}
+    }
   };
   // AI cevabını TARAYICININ KENDİ sesiyle oku (yedek) — dil kodu HER ZAMAN güncel aiDilRef'ten
   const sesliOkuTarayici = (metin, onBitti, onCumle, onIlerleme) => {
