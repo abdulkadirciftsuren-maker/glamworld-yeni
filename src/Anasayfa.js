@@ -2124,6 +2124,9 @@ export default function Anasayfa({ pro = false }) {
   const [paylasGorsel, setPaylasGorsel] = useState(""); // eklenen fotoğraf (dataURL) — 1. (ANA) fotoğraf
   const [paylasEkFotolar, setPaylasEkFotolar] = useState([]); // EK fotoğraflar (dataURL dizisi) — çok fotoğraflı gönderi; Storage'a yüklenir
   const [filigranEkle, setFiligranEkle] = useState(true); // GLOXORG filigranı eklensin mi (foto zaten GLOXORG'luysa kapat → çift olmasın)
+  const [koruAcik, setKoruAcik] = useState(false); // İÇERİK KORUMA: açıksa bu gönderiyi BAŞKASI İNDİREMEZ (indirme oku engellenir, "sahibi engelledi" yazısı çıkar)
+  // Paylaş penceresi açılınca koru ayarını belirle: YENİ gönderi → kapalı; DÜZENLEME → gönderinin kendi ayarı (sahibi açıp kapatabilsin)
+  useEffect(() => { if (paylasAcik) setKoruAcik(duzenlenen ? !!duzenlenen.koru : false); }, [paylasAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   const [gitLinki, setGitLinki] = useState(false); // paylaşımın altına "gloxorg.com'a git" düğmesi eklensin mi (VARSAYILAN KAPALI — sadece kullanıcı isterse açar; kendiliğinden çıkmaz)
   const [paylasKonum, setPaylasKonum] = useState(null); // CANLI konum: { enlem, boylam, yer, sehir, ulke, tam } — "nereden paylaşıldı" (hastane/havalimanı/otogar...)
   const [konumDurum, setKonumDurum] = useState(""); // "" | "aliniyor" | "hata"
@@ -7821,6 +7824,8 @@ export default function Anasayfa({ pro = false }) {
   // ÇÖZÜM: dosyayı blob olarak çek → aynı-köken object URL → benzersiz adla indir. Önbelleği atla (taze CORS cevabı),
   // boş/opak cevabı ele, olmazsa yeni sekmede aç (kullanıcı basılı tutup kaydeder).
   const medyaIndir = async (p) => {
+    // İÇERİK KORUMA: sahibi bu gönderiyi indirmeye kapattıysa İNDİRME, uyarı göster (Android kopyalama/ekran görüntüsüne dokunmaz — sadece indirme oku).
+    if (p && p.koru) { setKucukMesaj(t("indirmeEngelli", "Bu içerik indirilemez — sahibi tarafından engellenmiştir 🔒")); setTimeout(() => setKucukMesaj(""), 3500); return; }
     const url = p && (p.video || p.gorsel);
     if (!url) return;
     const uzanti = p.video ? "mp4" : "jpg";
@@ -8099,7 +8104,7 @@ export default function Anasayfa({ pro = false }) {
       foto: (paylasAvatar === "amblem" && isFoto) ? isFoto : (foto || isFoto || ""), amblem: !!(paylasAvatar === "amblem" && isFoto),
       baslik: paylasBaslik.trim().slice(0, 20000), gorsel: gorselSonUrl, video: videoSon || "", videoPoster: ((videoSon && paylasVideoPoster && paylasVideoPoster.length < 500000) ? paylasVideoPoster : ""), medyalar: (medyalar.length > 1 ? medyalar : null), dosya: dosyaObj || null, muzik: muzikObj || null, yazi: paylasYazi.trim().slice(0, 20000), zamanMs: Date.now(),
       ustYazi: (ustYazi.trim() && (paylasGorsel || videoURL)) ? { metin: ustYazi.trim().slice(0, 120), renk: ustRenk, boyut: ustBoyut, yer: ustYer } : null,
-      duzen: paylasDuzen || null, yaziUstunde: !!yaziMedyaUstunde, gitLinki: !!gitLinki,
+      duzen: paylasDuzen || null, yaziUstunde: !!yaziMedyaUstunde, gitLinki: !!gitLinki, koru: !!koruAcik,
       zemin: (!paylasGorsel && !videoURL) ? (paylasZemin || "") : "", yaziRenk: (!paylasGorsel && !videoURL) ? (paylasYaziRenk || "") : "",
       // ANKET — en az 2 dolu şık varsa gönderiye eklenir (şıklar; oylar ayrı koleksiyonda tutulur)
       anket: (anketAcik && anketSecenekler.filter((s) => s.trim()).length >= 2) ? { secenekler: anketSecenekler.map((s) => s.trim()).filter(Boolean).slice(0, 4) } : null,
@@ -11558,6 +11563,14 @@ export default function Anasayfa({ pro = false }) {
               <button className={"pyl-filigran-tog" + (filigranEkle ? " acik" : "")} onClick={() => setFiligranEkle((v) => !v)}>
                 <span className="pyl-filigran-kutu">{filigranEkle ? "✓" : ""}</span>
                 <span>{filigranEkle ? t("filigranAcik", "◈ GLOXORG filigranı eklenecek") : t("filigranKapali", "Filigran KAPALI (fotoğrafta zaten GLOXORG varsa böyle kalsın)")}</span>
+              </button>
+            )}
+            {/* İÇERİK KORUMA aç/kapa — açıksa başkası bu gönderiyi İNDİREMEZ (indirme oku engellenir, "sahibi engelledi" yazısı çıkar).
+                Foto VEYA video varsa görünür. Sahibi istediğinde (paylaşırken veya sonra Düzenle ile) açar/kapatır. */}
+            {(paylasGorsel || paylasVideo || paylasVideoFile || (paylasEkFotolar && paylasEkFotolar.length > 0)) && (
+              <button type="button" className={"pyl-filigran-tog" + (koruAcik ? " acik" : "")} onClick={() => setKoruAcik((v) => !v)}>
+                <span className="pyl-filigran-kutu">{koruAcik ? "✓" : ""}</span>
+                <span>{koruAcik ? t("koruAcikEt", "🔒 Korumalı — kimse indiremez") : t("koruKapaliEt", "İçeriğimi koru — başkası indiremesin")}</span>
               </button>
             )}
             {/* YAZI KONUMU — varsayılan AYRI ŞERİT (medyayı kapatmaz); istersen medyanın ÜZERİNE koy */}

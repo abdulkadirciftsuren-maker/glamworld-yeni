@@ -10,6 +10,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Geri bildirim gönder", gbgYer: "Görüşünü buraya yaz…",
     gbgNot: "Uygulama hakkındaki görüşünü, beğendiğin bir şeyi, bir hatayı ya da öneriyi yaz. Bize çok yardımcı olur 💛",
     geriBildirimTesekkur: "Teşekkürler! Geri bildirimin bize ulaştı 💎", geriBildirimHata: "Gönderilemedi, internetini kontrol edip tekrar dene.",
+    koruKapaliEt: "İçeriğimi koru — başkası indiremesin", koruAcikEt: "🔒 Korumalı — kimse indiremez", indirmeEngelli: "Bu içerik indirilemez — sahibi tarafından engellenmiştir 🔒",
   },
   en: {
     hikFont_sade: "Plain", hikFont_klasik: "Classic", hikFont_kalin: "Bold", hikFont_daktilo: "Typewriter", hikFont_elyazi: "Handwriting", hikFont_zarif: "Elegant",
@@ -18,6 +19,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Send feedback", gbgYer: "Write your feedback here…",
     gbgNot: "Share your thoughts about the app, something you like, a bug or a suggestion. It helps us a lot 💛",
     geriBildirimTesekkur: "Thank you! We received your feedback 💎", geriBildirimHata: "Couldn't send. Check your internet and try again.",
+    koruKapaliEt: "Protect my content — no one can download it", koruAcikEt: "🔒 Protected — no one can download", indirmeEngelli: "This content can't be downloaded — blocked by the owner 🔒",
   },
   de: {
     hikFont_sade: "Schlicht", hikFont_klasik: "Klassisch", hikFont_kalin: "Fett", hikFont_daktilo: "Schreibmaschine", hikFont_elyazi: "Handschrift", hikFont_zarif: "Elegant",
@@ -26,6 +28,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Feedback senden", gbgYer: "Schreibe dein Feedback hier…",
     gbgNot: "Teile deine Meinung zur App, etwas das dir gefällt, einen Fehler oder einen Vorschlag. Das hilft uns sehr 💛",
     geriBildirimTesekkur: "Danke! Wir haben dein Feedback erhalten 💎", geriBildirimHata: "Konnte nicht gesendet werden. Prüfe dein Internet und versuche es erneut.",
+    koruKapaliEt: "Meinen Inhalt schützen — niemand kann ihn herunterladen", koruAcikEt: "🔒 Geschützt — niemand kann herunterladen", indirmeEngelli: "Dieser Inhalt kann nicht heruntergeladen werden — vom Eigentümer gesperrt 🔒",
   },
   ar: {
     hikFont_sade: "بسيط", hikFont_klasik: "كلاسيكي", hikFont_kalin: "عريض", hikFont_daktilo: "آلة كاتبة", hikFont_elyazi: "خط اليد", hikFont_zarif: "أنيق",
@@ -34,6 +37,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "إرسال ملاحظات", gbgYer: "اكتب ملاحظتك هنا…",
     gbgNot: "شاركنا رأيك في التطبيق، أو شيئًا أعجبك، أو خطأً، أو اقتراحًا. هذا يساعدنا كثيرًا 💛",
     geriBildirimTesekkur: "شكرًا! وصلتنا ملاحظتك 💎", geriBildirimHata: "تعذّر الإرسال. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى.",
+    koruKapaliEt: "احمِ محتواي — لا يمكن لأحد تنزيله", koruAcikEt: "🔒 محمي — لا يمكن لأحد التنزيل", indirmeEngelli: "لا يمكن تنزيل هذا المحتوى — تم حظره من قبل المالك 🔒",
   },
   ru: {
     hikFont_sade: "Простой", hikFont_klasik: "Классический", hikFont_kalin: "Жирный", hikFont_daktilo: "Печатная", hikFont_elyazi: "Рукописный", hikFont_zarif: "Элегантный",
@@ -42,6 +46,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Отправить отзыв", gbgYer: "Напишите своё мнение здесь…",
     gbgNot: "Напишите своё мнение о приложении, что понравилось, об ошибке или предложении. Это нам очень помогает 💛",
     geriBildirimTesekkur: "Спасибо! Мы получили ваш отзыв 💎", geriBildirimHata: "Не удалось отправить. Проверьте интернет и попробуйте снова.",
+    koruKapaliEt: "Защитить мой контент — чтобы никто не скачал", koruAcikEt: "🔒 Защищено — никто не скачает", indirmeEngelli: "Этот контент нельзя скачать — заблокировано владельцем 🔒",
   },
   uk: {
     hikFont_sade: "Простий", hikFont_klasik: "Класичний", hikFont_kalin: "Жирний", hikFont_daktilo: "Друкарська", hikFont_elyazi: "Рукописний", hikFont_zarif: "Елегантний",
@@ -50,6 +55,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Надіслати відгук", gbgYer: "Напишіть свою думку тут…",
     gbgNot: "Напишіть свою думку про застосунок, що сподобалось, про помилку чи пропозицію. Це дуже нам допомагає 💛",
     geriBildirimTesekkur: "Дякуємо! Ми отримали ваш відгук 💎", geriBildirimHata: "Не вдалося надіслати. Перевірте інтернет і спробуйте ще раз.",
+    koruKapaliEt: "Захистити мій вміст — щоб ніхто не завантажив", koruAcikEt: "🔒 Захищено — ніхто не завантажить", indirmeEngelli: "Цей вміст не можна завантажити — заблоковано власником 🔒",
   },
   es: {
     hikFont_sade: "Sencilla", hikFont_klasik: "Clásica", hikFont_kalin: "Negrita", hikFont_daktilo: "Máquina", hikFont_elyazi: "Manuscrita", hikFont_zarif: "Elegante",
@@ -58,6 +64,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Enviar comentarios", gbgYer: "Escribe tu opinión aquí…",
     gbgNot: "Escribe tu opinión sobre la app, algo que te guste, un error o una sugerencia. Nos ayuda mucho 💛",
     geriBildirimTesekkur: "¡Gracias! Recibimos tus comentarios 💎", geriBildirimHata: "No se pudo enviar. Revisa tu internet e inténtalo de nuevo.",
+    koruKapaliEt: "Proteger mi contenido — que nadie lo descargue", koruAcikEt: "🔒 Protegido — nadie puede descargar", indirmeEngelli: "Este contenido no se puede descargar — bloqueado por el propietario 🔒",
   },
   fr: {
     hikFont_sade: "Simple", hikFont_klasik: "Classique", hikFont_kalin: "Gras", hikFont_daktilo: "Machine à écrire", hikFont_elyazi: "Manuscrite", hikFont_zarif: "Élégante",
@@ -66,6 +73,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Envoyer un avis", gbgYer: "Écris ton avis ici…",
     gbgNot: "Donne ton avis sur l'application, ce que tu aimes, un bug ou une suggestion. Ça nous aide beaucoup 💛",
     geriBildirimTesekkur: "Merci ! Nous avons reçu ton avis 💎", geriBildirimHata: "Échec de l'envoi. Vérifie ta connexion et réessaie.",
+    koruKapaliEt: "Protéger mon contenu — personne ne peut le télécharger", koruAcikEt: "🔒 Protégé — personne ne peut télécharger", indirmeEngelli: "Ce contenu ne peut pas être téléchargé — bloqué par le propriétaire 🔒",
   },
   it: {
     hikFont_sade: "Semplice", hikFont_klasik: "Classico", hikFont_kalin: "Grassetto", hikFont_daktilo: "Macchina", hikFont_elyazi: "Corsivo", hikFont_zarif: "Elegante",
@@ -74,6 +82,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Invia feedback", gbgYer: "Scrivi qui la tua opinione…",
     gbgNot: "Scrivi la tua opinione sull'app, qualcosa che ti piace, un errore o un suggerimento. Ci aiuta molto 💛",
     geriBildirimTesekkur: "Grazie! Abbiamo ricevuto il tuo feedback 💎", geriBildirimHata: "Invio non riuscito. Controlla la connessione e riprova.",
+    koruKapaliEt: "Proteggi il mio contenuto — nessuno può scaricarlo", koruAcikEt: "🔒 Protetto — nessuno può scaricare", indirmeEngelli: "Questo contenuto non può essere scaricato — bloccato dal proprietario 🔒",
   },
   zh: {
     hikFont_sade: "简约", hikFont_klasik: "经典", hikFont_kalin: "粗体", hikFont_daktilo: "打字机", hikFont_elyazi: "手写", hikFont_zarif: "优雅",
@@ -82,6 +91,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "发送反馈", gbgYer: "在此写下你的意见…",
     gbgNot: "写下你对应用的看法、喜欢的地方、遇到的问题或建议。这对我们帮助很大 💛",
     geriBildirimTesekkur: "谢谢！我们已收到你的反馈 💎", geriBildirimHata: "发送失败。请检查网络后重试。",
+    koruKapaliEt: "保护我的内容 — 任何人都无法下载", koruAcikEt: "🔒 已保护 — 无人可下载", indirmeEngelli: "此内容无法下载 — 已被所有者禁止 🔒",
   },
   hi: {
     hikFont_sade: "सादा", hikFont_klasik: "क्लासिक", hikFont_kalin: "बोल्ड", hikFont_daktilo: "टाइपराइटर", hikFont_elyazi: "हस्तलेख", hikFont_zarif: "सुंदर",
@@ -90,6 +100,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "प्रतिक्रिया भेजें", gbgYer: "अपनी राय यहाँ लिखें…",
     gbgNot: "ऐप के बारे में अपनी राय, कोई पसंद की बात, कोई गड़बड़ी या सुझाव लिखें। इससे हमें बहुत मदद मिलती है 💛",
     geriBildirimTesekkur: "धन्यवाद! हमें आपकी प्रतिक्रिया मिल गई 💎", geriBildirimHata: "भेजा नहीं जा सका। अपना इंटरनेट जांचें और फिर से कोशिश करें।",
+    koruKapaliEt: "मेरी सामग्री सुरक्षित करें — कोई डाउनलोड न कर सके", koruAcikEt: "🔒 सुरक्षित — कोई डाउनलोड नहीं कर सकता", indirmeEngelli: "यह सामग्री डाउनलोड नहीं की जा सकती — मालिक द्वारा अवरुद्ध 🔒",
   },
   pt: {
     hikFont_sade: "Simples", hikFont_klasik: "Clássica", hikFont_kalin: "Negrito", hikFont_daktilo: "Máquina", hikFont_elyazi: "Manuscrita", hikFont_zarif: "Elegante",
@@ -98,6 +109,7 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "Enviar feedback", gbgYer: "Escreva sua opinião aqui…",
     gbgNot: "Escreva sua opinião sobre o app, algo que você gostou, um erro ou uma sugestão. Isso nos ajuda muito 💛",
     geriBildirimTesekkur: "Obrigado! Recebemos seu feedback 💎", geriBildirimHata: "Não foi possível enviar. Verifique sua internet e tente novamente.",
+    koruKapaliEt: "Proteger meu conteúdo — ninguém pode baixar", koruAcikEt: "🔒 Protegido — ninguém pode baixar", indirmeEngelli: "Este conteúdo não pode ser baixado — bloqueado pelo proprietário 🔒",
   },
   ja: {
     hikFont_sade: "シンプル", hikFont_klasik: "クラシック", hikFont_kalin: "太字", hikFont_daktilo: "タイプライター", hikFont_elyazi: "手書き", hikFont_zarif: "エレガント",
@@ -106,5 +118,6 @@ export const CEVIRI_EK8 = {
     geriBildirimGonderBtn: "フィードバックを送る", gbgYer: "ここにご意見を書いてください…",
     gbgNot: "アプリについての感想、気に入った点、不具合や提案を書いてください。とても助かります 💛",
     geriBildirimTesekkur: "ありがとう！フィードバックを受け取りました 💎", geriBildirimHata: "送信できませんでした。インターネットを確認してもう一度お試しください。",
+    koruKapaliEt: "コンテンツを保護 — 誰もダウンロードできません", koruAcikEt: "🔒 保護済み — 誰もダウンロード不可", indirmeEngelli: "このコンテンツはダウンロードできません — 所有者によりブロックされています 🔒",
   },
 };
