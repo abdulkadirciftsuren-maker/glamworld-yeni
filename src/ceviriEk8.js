@@ -1,70 +1,110 @@
-// GLOXORG — Ek çeviriler (B399). Ekranda t() ile SARILMAMIS kalan kucuk Turkce yazilar
-// (hikaye font adlari, tepki adlari, adres "Ingilizce" etiketi, fatura Satici/Alici) 13 dile cevrildi.
+// GLOXORG — Ek çeviriler (B399/B400). Ekranda t() ile cevrilmeden kalan kucuk yazilar 13 dile.
+// hikaye fontlari, tepki adlari, adres "Ingilizce" etiketi, fatura Satici/Alici (B399)
+// + "Geri bildirim gonder" penceresi (menu dugmesi/baslik/not/yer tutucu/tesekkur/hata) (B400).
 // i18n.js'teki birlestirme dizisine eklenir (Object.assign ile resources[lng].translation'a girer).
 export const CEVIRI_EK8 = {
   tr: {
     hikFont_sade: "Sade", hikFont_klasik: "Klasik", hikFont_kalin: "Kalın", hikFont_daktilo: "Daktilo", hikFont_elyazi: "El yazısı", hikFont_zarif: "Zarif",
     tepki_begen: "Beğen", tepki_kalp: "Sevdim", tepki_kahkaha: "Güldüm", tepki_saskin: "Şaşırdım", tepki_uzgun: "Üzüldüm", tepki_kizgin: "Kızdım",
     adresIngilizce: "İngilizce", belSatici: "Satıcı", belAlici: "Alıcı",
+    geriBildirimGonderBtn: "Geri bildirim gönder", gbgYer: "Görüşünü buraya yaz…",
+    gbgNot: "Uygulama hakkındaki görüşünü, beğendiğin bir şeyi, bir hatayı ya da öneriyi yaz. Bize çok yardımcı olur 💛",
+    geriBildirimTesekkur: "Teşekkürler! Geri bildirimin bize ulaştı 💎", geriBildirimHata: "Gönderilemedi, internetini kontrol edip tekrar dene.",
   },
   en: {
     hikFont_sade: "Plain", hikFont_klasik: "Classic", hikFont_kalin: "Bold", hikFont_daktilo: "Typewriter", hikFont_elyazi: "Handwriting", hikFont_zarif: "Elegant",
     tepki_begen: "Like", tepki_kalp: "Love", tepki_kahkaha: "Haha", tepki_saskin: "Wow", tepki_uzgun: "Sad", tepki_kizgin: "Angry",
     adresIngilizce: "English", belSatici: "Seller", belAlici: "Buyer",
+    geriBildirimGonderBtn: "Send feedback", gbgYer: "Write your feedback here…",
+    gbgNot: "Share your thoughts about the app, something you like, a bug or a suggestion. It helps us a lot 💛",
+    geriBildirimTesekkur: "Thank you! We received your feedback 💎", geriBildirimHata: "Couldn't send. Check your internet and try again.",
   },
   de: {
     hikFont_sade: "Schlicht", hikFont_klasik: "Klassisch", hikFont_kalin: "Fett", hikFont_daktilo: "Schreibmaschine", hikFont_elyazi: "Handschrift", hikFont_zarif: "Elegant",
     tepki_begen: "Gefällt mir", tepki_kalp: "Liebe", tepki_kahkaha: "Haha", tepki_saskin: "Wow", tepki_uzgun: "Traurig", tepki_kizgin: "Wütend",
     adresIngilizce: "Englisch", belSatici: "Verkäufer", belAlici: "Käufer",
+    geriBildirimGonderBtn: "Feedback senden", gbgYer: "Schreibe dein Feedback hier…",
+    gbgNot: "Teile deine Meinung zur App, etwas das dir gefällt, einen Fehler oder einen Vorschlag. Das hilft uns sehr 💛",
+    geriBildirimTesekkur: "Danke! Wir haben dein Feedback erhalten 💎", geriBildirimHata: "Konnte nicht gesendet werden. Prüfe dein Internet und versuche es erneut.",
   },
   ar: {
     hikFont_sade: "بسيط", hikFont_klasik: "كلاسيكي", hikFont_kalin: "عريض", hikFont_daktilo: "آلة كاتبة", hikFont_elyazi: "خط اليد", hikFont_zarif: "أنيق",
     tepki_begen: "إعجاب", tepki_kalp: "أحببته", tepki_kahkaha: "هاها", tepki_saskin: "رائع", tepki_uzgun: "حزين", tepki_kizgin: "غاضب",
     adresIngilizce: "الإنجليزية", belSatici: "البائع", belAlici: "المشتري",
+    geriBildirimGonderBtn: "إرسال ملاحظات", gbgYer: "اكتب ملاحظتك هنا…",
+    gbgNot: "شاركنا رأيك في التطبيق، أو شيئًا أعجبك، أو خطأً، أو اقتراحًا. هذا يساعدنا كثيرًا 💛",
+    geriBildirimTesekkur: "شكرًا! وصلتنا ملاحظتك 💎", geriBildirimHata: "تعذّر الإرسال. تحقّق من اتصالك بالإنترنت وحاول مرة أخرى.",
   },
   ru: {
     hikFont_sade: "Простой", hikFont_klasik: "Классический", hikFont_kalin: "Жирный", hikFont_daktilo: "Печатная", hikFont_elyazi: "Рукописный", hikFont_zarif: "Элегантный",
     tepki_begen: "Нравится", tepki_kalp: "Любовь", tepki_kahkaha: "Ха-ха", tepki_saskin: "Вау", tepki_uzgun: "Грустно", tepki_kizgin: "Возмутительно",
     adresIngilizce: "Английский", belSatici: "Продавец", belAlici: "Покупатель",
+    geriBildirimGonderBtn: "Отправить отзыв", gbgYer: "Напишите своё мнение здесь…",
+    gbgNot: "Напишите своё мнение о приложении, что понравилось, об ошибке или предложении. Это нам очень помогает 💛",
+    geriBildirimTesekkur: "Спасибо! Мы получили ваш отзыв 💎", geriBildirimHata: "Не удалось отправить. Проверьте интернет и попробуйте снова.",
   },
   uk: {
     hikFont_sade: "Простий", hikFont_klasik: "Класичний", hikFont_kalin: "Жирний", hikFont_daktilo: "Друкарська", hikFont_elyazi: "Рукописний", hikFont_zarif: "Елегантний",
     tepki_begen: "Подобається", tepki_kalp: "Люблю", tepki_kahkaha: "Ха-ха", tepki_saskin: "Вау", tepki_uzgun: "Сумно", tepki_kizgin: "Обурливо",
     adresIngilizce: "Англійська", belSatici: "Продавець", belAlici: "Покупець",
+    geriBildirimGonderBtn: "Надіслати відгук", gbgYer: "Напишіть свою думку тут…",
+    gbgNot: "Напишіть свою думку про застосунок, що сподобалось, про помилку чи пропозицію. Це дуже нам допомагає 💛",
+    geriBildirimTesekkur: "Дякуємо! Ми отримали ваш відгук 💎", geriBildirimHata: "Не вдалося надіслати. Перевірте інтернет і спробуйте ще раз.",
   },
   es: {
     hikFont_sade: "Sencilla", hikFont_klasik: "Clásica", hikFont_kalin: "Negrita", hikFont_daktilo: "Máquina", hikFont_elyazi: "Manuscrita", hikFont_zarif: "Elegante",
     tepki_begen: "Me gusta", tepki_kalp: "Me encanta", tepki_kahkaha: "Me divierte", tepki_saskin: "Me asombra", tepki_uzgun: "Me entristece", tepki_kizgin: "Me enoja",
     adresIngilizce: "Inglés", belSatici: "Vendedor", belAlici: "Comprador",
+    geriBildirimGonderBtn: "Enviar comentarios", gbgYer: "Escribe tu opinión aquí…",
+    gbgNot: "Escribe tu opinión sobre la app, algo que te guste, un error o una sugerencia. Nos ayuda mucho 💛",
+    geriBildirimTesekkur: "¡Gracias! Recibimos tus comentarios 💎", geriBildirimHata: "No se pudo enviar. Revisa tu internet e inténtalo de nuevo.",
   },
   fr: {
     hikFont_sade: "Simple", hikFont_klasik: "Classique", hikFont_kalin: "Gras", hikFont_daktilo: "Machine à écrire", hikFont_elyazi: "Manuscrite", hikFont_zarif: "Élégante",
     tepki_begen: "J'aime", tepki_kalp: "J'adore", tepki_kahkaha: "Haha", tepki_saskin: "Wouah", tepki_uzgun: "Triste", tepki_kizgin: "Grrr",
     adresIngilizce: "Anglais", belSatici: "Vendeur", belAlici: "Acheteur",
+    geriBildirimGonderBtn: "Envoyer un avis", gbgYer: "Écris ton avis ici…",
+    gbgNot: "Donne ton avis sur l'application, ce que tu aimes, un bug ou une suggestion. Ça nous aide beaucoup 💛",
+    geriBildirimTesekkur: "Merci ! Nous avons reçu ton avis 💎", geriBildirimHata: "Échec de l'envoi. Vérifie ta connexion et réessaie.",
   },
   it: {
     hikFont_sade: "Semplice", hikFont_klasik: "Classico", hikFont_kalin: "Grassetto", hikFont_daktilo: "Macchina", hikFont_elyazi: "Corsivo", hikFont_zarif: "Elegante",
     tepki_begen: "Mi piace", tepki_kalp: "Adoro", tepki_kahkaha: "Ahah", tepki_saskin: "Wow", tepki_uzgun: "Triste", tepki_kizgin: "Arrabbiato",
     adresIngilizce: "Inglese", belSatici: "Venditore", belAlici: "Acquirente",
+    geriBildirimGonderBtn: "Invia feedback", gbgYer: "Scrivi qui la tua opinione…",
+    gbgNot: "Scrivi la tua opinione sull'app, qualcosa che ti piace, un errore o un suggerimento. Ci aiuta molto 💛",
+    geriBildirimTesekkur: "Grazie! Abbiamo ricevuto il tuo feedback 💎", geriBildirimHata: "Invio non riuscito. Controlla la connessione e riprova.",
   },
   zh: {
     hikFont_sade: "简约", hikFont_klasik: "经典", hikFont_kalin: "粗体", hikFont_daktilo: "打字机", hikFont_elyazi: "手写", hikFont_zarif: "优雅",
     tepki_begen: "赞", tepki_kalp: "爱心", tepki_kahkaha: "哈哈", tepki_saskin: "哇", tepki_uzgun: "伤心", tepki_kizgin: "怒",
     adresIngilizce: "英语", belSatici: "卖方", belAlici: "买方",
+    geriBildirimGonderBtn: "发送反馈", gbgYer: "在此写下你的意见…",
+    gbgNot: "写下你对应用的看法、喜欢的地方、遇到的问题或建议。这对我们帮助很大 💛",
+    geriBildirimTesekkur: "谢谢！我们已收到你的反馈 💎", geriBildirimHata: "发送失败。请检查网络后重试。",
   },
   hi: {
     hikFont_sade: "सादा", hikFont_klasik: "क्लासिक", hikFont_kalin: "बोल्ड", hikFont_daktilo: "टाइपराइटर", hikFont_elyazi: "हस्तलेख", hikFont_zarif: "सुंदर",
     tepki_begen: "पसंद", tepki_kalp: "प्यार", tepki_kahkaha: "हाहा", tepki_saskin: "वाह", tepki_uzgun: "दुखी", tepki_kizgin: "गुस्सा",
     adresIngilizce: "अंग्रेज़ी", belSatici: "विक्रेता", belAlici: "खरीदार",
+    geriBildirimGonderBtn: "प्रतिक्रिया भेजें", gbgYer: "अपनी राय यहाँ लिखें…",
+    gbgNot: "ऐप के बारे में अपनी राय, कोई पसंद की बात, कोई गड़बड़ी या सुझाव लिखें। इससे हमें बहुत मदद मिलती है 💛",
+    geriBildirimTesekkur: "धन्यवाद! हमें आपकी प्रतिक्रिया मिल गई 💎", geriBildirimHata: "भेजा नहीं जा सका। अपना इंटरनेट जांचें और फिर से कोशिश करें।",
   },
   pt: {
     hikFont_sade: "Simples", hikFont_klasik: "Clássica", hikFont_kalin: "Negrito", hikFont_daktilo: "Máquina", hikFont_elyazi: "Manuscrita", hikFont_zarif: "Elegante",
     tepki_begen: "Curtir", tepki_kalp: "Amei", tepki_kahkaha: "Haha", tepki_saskin: "Uau", tepki_uzgun: "Triste", tepki_kizgin: "Grr",
     adresIngilizce: "Inglês", belSatici: "Vendedor", belAlici: "Comprador",
+    geriBildirimGonderBtn: "Enviar feedback", gbgYer: "Escreva sua opinião aqui…",
+    gbgNot: "Escreva sua opinião sobre o app, algo que você gostou, um erro ou uma sugestão. Isso nos ajuda muito 💛",
+    geriBildirimTesekkur: "Obrigado! Recebemos seu feedback 💎", geriBildirimHata: "Não foi possível enviar. Verifique sua internet e tente novamente.",
   },
   ja: {
     hikFont_sade: "シンプル", hikFont_klasik: "クラシック", hikFont_kalin: "太字", hikFont_daktilo: "タイプライター", hikFont_elyazi: "手書き", hikFont_zarif: "エレガント",
     tepki_begen: "いいね", tepki_kalp: "超いいね", tepki_kahkaha: "うける", tepki_saskin: "すごいね", tepki_uzgun: "悲しいね", tepki_kizgin: "ひどいね",
     adresIngilizce: "英語", belSatici: "売り手", belAlici: "買い手",
+    geriBildirimGonderBtn: "フィードバックを送る", gbgYer: "ここにご意見を書いてください…",
+    gbgNot: "アプリについての感想、気に入った点、不具合や提案を書いてください。とても助かります 💛",
+    geriBildirimTesekkur: "ありがとう！フィードバックを受け取りました 💎", geriBildirimHata: "送信できませんでした。インターネットを確認してもう一度お試しください。",
   },
 };
