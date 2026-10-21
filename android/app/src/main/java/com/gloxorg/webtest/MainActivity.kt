@@ -75,6 +75,16 @@ class MainActivity : Activity() {
         CookieManager.getInstance().setAcceptCookie(true)
         CookieManager.getInstance().setAcceptThirdPartyCookies(w, true)
 
+        // GOOGLE GİRİŞİ: WebView kimliğindeki "wv" (sarmalanmış tarayıcı) işaretini kaldır → Google
+        // "disallowed_useragent" ile girişi engellemesin, normal Chrome gibi görüp izin versin.
+        try {
+            val ua = s.userAgentString ?: ""
+            s.userAgentString = ua.replace("; wv)", ")").replace("; wv", "").replace(" wv", "")
+        } catch (e: Exception) {}
+
+        // (Geliştirme için; zararsız) uzaktan hata ayıklama açık
+        try { WebView.setWebContentsDebuggingEnabled(true) } catch (e: Exception) {}
+
         w.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
