@@ -1,0 +1,51 @@
+name: Android Test APK
+
+# GLOXORG native (WebView) DENEME uygulamasını derler → kurulabilir test APK üretir.
+# Web sitesini/yayını ETKİLEMEZ (sadece android/ klasörü). Çıktı: Actions > bu çalışma > Artifacts > gloxorg-test-apk
+
+on:
+  push:
+    branches: [ claude/glamworld-rules-review-0kzl0x ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-test.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JDK 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK kur
+        uses: android-actions/setup-android@v3
+
+      - name: SDK bileşenleri (platform 34 + build-tools)
+        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Gradle wrapper üret
+        working-directory: android
+        run: gradle wrapper --gradle-version 8.9
+
+      - name: Debug APK derle
+        working-directory: android
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: APK'yı yükle (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: gloxorg-test-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

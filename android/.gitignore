@@ -1,0 +1,13 @@
+# Android derleme çıktıları (repoya girmesin)
+.gradle/
+build/
+app/build/
+local.properties
+gradle/
+gradlew
+gradlew.bat
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
