@@ -11,6 +11,9 @@ on:
       - '.github/workflows/android-test.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write   # APK'yı gh-pages'e (siteye) koyabilmek için
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -51,3 +54,17 @@ jobs:
           name: gloxorg-test-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: APK'yı siteye koy (gloxorg.com/GLOXORG-test.apk)
+        run: |
+          set -e
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          git config user.name "gloxorg-ci"
+          git config user.email "ci@gloxorg.local"
+          git fetch origin gh-pages --depth=1
+          git worktree add ../ghp gh-pages
+          cp "$APK" ../ghp/GLOXORG-test.apk
+          cd ../ghp
+          git add GLOXORG-test.apk
+          git commit -m "deneme APK: GLOXORG-test.apk" || echo "degisiklik yok"
+          git push origin gh-pages
