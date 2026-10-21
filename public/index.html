@@ -188,30 +188,41 @@
       })();
     </script>
     <script>
-      /* ===== AÇILIŞTA TAKILMA YAKALAYICI + TEŞHİS (B397) =====
-         Sayfa açılırken içerik (#root) ~11 sn içinde HÂLÂ BOŞ ise (sabit sarı perde / arka plandan dönüşte takılma),
-         "Yeniden Yükle" ekranını göster → kullanıcı TEK DOKUNUŞLA açar (kapat-aç gerekmez). Sayaç artarsa JS çalışıyor
-         demek (teşhis). İçerik gelince ekran kendiliğinden kaybolur. Bu yalnızca GERÇEKTEN takıldığında çıkar; normal
-         (hatta yavaş) açılışta içerik gelince hiç görünmez. Otomatik reload YOK (yavaş indirmeyi kesmeyelim) → sadece düğme. */
+      /* ===== AÇILIŞTA TAKILMA — OTOMATİK KURTARMA + TEŞHİS (B415) =====
+         Sayfa açılırken içerik (#root) 9 sn içinde HÂLÂ BOŞ ise (sabit sarı perde): JS çalışıyor ama bir şey takıldı /
+         dosya inmedi demektir → TEK SEFER kendiliğinden TEMİZ yeniden yükle (kapat-aç gerekmez, kullanıcı düğmeye basmasın).
+         Yenileme de düzeltmezse (hâlâ boş) "Yeniden Yükle" düğmesini + artan sayacı göster (teşhis: sayaç artıyorsa JS çalışıyor).
+         İçerik gelince ekran kendiliğinden kaybolur. Normal/yavaş açılışta (içerik gelince) HİÇBİR ŞEY görünmez.
+         ⚠️ SINIR: Bu ancak sayfanın JS'i ÇALIŞIYORSA işe yarar. Telefon uygulamayı arka planda tamamen ÖLDÜRDÜYSE
+         (renderer kill — agresif pil yönetimi), bu kod da çalışamaz → o durumda telefon ayarından uygulamayı
+         "uyutma/pil kısıtlaması" KAPATILMALI (veya yeni uygulama paketi gerekir). */
       (function () {
         function bosMu() { try { var r = document.getElementById('root'); return !(r && r.childElementCount > 0); } catch (e) { return false; } }
+        var OTO = 'gwAcilisOto';
         setTimeout(function () {
           try {
-            if (!bosMu()) return;                 // içerik geldi → sorun yok
+            if (!bosMu()) return;                 // içerik geldi → sorun yok (dokunma)
+            var son = 0; try { son = parseInt(sessionStorage.getItem(OTO) || '0', 10); } catch (e) {}
+            if (Date.now() - son > 45000) {        // 45 sn'de EN FAZLA 1 otomatik yenile → sonsuz döngü YOK
+              try { sessionStorage.setItem(OTO, String(Date.now())); } catch (e) {}
+              try { window.location.reload(); } catch (e) {} // takıldı → TEK SEFER kendiliğinden temiz yenile
+              return;
+            }
+            // Yakın zamanda zaten otomatik yeniledik ve HÂLÂ boş → kullanıcıya düğme + sayaç göster
             var ekran = document.getElementById('gw-takildi'); if (ekran) ekran.style.display = 'flex';
             var bilgi = document.getElementById('gw-takildi-bilgi'); var sn = 0;
             var t = setInterval(function () {
               sn++;
-              if (bilgi) bilgi.textContent = 'A13B397 • ' + sn + ' sn';
+              if (bilgi) bilgi.textContent = 'A13B415 • ' + sn + ' sn';
               if (!bosMu()) { try { if (ekran) ekran.style.display = 'none'; } catch (e) {} clearInterval(t); } // içerik geldi → gizle
             }, 1000);
             var btn = document.getElementById('gw-takildi-btn');
             if (btn) btn.onclick = function () {
-              try { sessionStorage.removeItem('gloxSonKurtarma'); sessionStorage.removeItem('gwDonusKurtar'); } catch (e) {}
+              try { sessionStorage.removeItem('gloxSonKurtarma'); sessionStorage.removeItem('gwDonusKurtar'); sessionStorage.removeItem(OTO); } catch (e) {}
               try { window.location.reload(); } catch (e) {}
             };
           } catch (e) {}
-        }, 11000); // 11 sn içinde içerik yoksa "takıldı" ekranı
+        }, 9000); // 9 sn içinde içerik yoksa: önce 1 kez otomatik yenile, olmazsa düğme
       })();
     </script>
   </body>
