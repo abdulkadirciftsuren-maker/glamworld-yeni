@@ -24,8 +24,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Android SDK kur
+      - name: Android SDK kur (kendi paketini kurmasın — eski 'tools' paketi artık yok, patlıyor)
         uses: android-actions/setup-android@v3
+        with:
+          packages: ''
 
       - name: SDK bileşenleri (platform 34 + build-tools)
         run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
