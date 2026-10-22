@@ -78,6 +78,15 @@ const AMBLEM_YAZI_RENKLER = [
   { k: "yesil", hex: "#116644", en: "deep emerald green", ck: "yaziYesil", ad: "Yeşil" },
   { k: "beyaz", hex: "#ffffff", en: "clean white", ck: "yaziBeyaz", ad: "Beyaz" },
 ];
+// AMBLEM STİLLERİ — müşteri istediği tarzı seçer; SEÇMEZSE her "çiz"de SIRAYLA farklı stil dener (güzelini bulana kadar).
+const AMBLEM_STILLER = [
+  { k: "modern",  ck: "stilModern",  ad: "Modern",  en: "modern, minimalist, clean FLAT VECTOR style, simple bold geometric shapes, contemporary professional brand mark, uncluttered" },
+  { k: "klasik",  ck: "stilKlasik",  ad: "Klasik",  en: "classic, rich, elegant and refined emblem with tasteful decorative details, warm premium luxury badge feel" },
+  { k: "minimal", ck: "stilMinimal", ad: "Minimal", en: "ultra-minimal, very simple clean iconic mark, generous negative space, one clear simple symbol" },
+  { k: "cizgi",   ck: "stilCizgi",   ad: "Çizgi",   en: "elegant line-art / monoline outline style, thin continuous clean strokes, refined lineal logo" },
+  { k: "rozet",   ck: "stilRozet",   ad: "Rozet",   en: "circular badge / crest emblem, a round seal with the business name integrated around it, classic professional shop badge" },
+  { k: "renkli",  ck: "stilRenkli",  ad: "Renkli",  en: "colorful, friendly illustrative emblem, vivid rich harmonious colors, lively and inviting, polished illustration quality" },
+];
 
 export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif, yonetici, onKatman }) {
   const { t } = useTranslation();
@@ -166,6 +175,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [fAmblemTarif, setFAmblemTarif] = useState("");
   const [fAmblemYuk, setFAmblemYuk] = useState(false);
   const [fAmblemRenk, setFAmblemRenk] = useState("krem"); // amblem zemin rengi (kullanıcı seçer, beyaz olmasın)
+  const [fAmblemStil, setFAmblemStil] = useState("");      // seçili amblem stili ("" = otomatik/sırayla dener)
+  const [fAmblemUretildi, setFAmblemUretildi] = useState(false); // Gloxoo bir amblem çizdi mi → "Başka çiz" düğmesi çıksın
+  const amblemSiraRef = useRef(0);                         // otomatik stilde sıra (her çizimde bir sonraki stil)
   const [fAmblemYaziRenk, setFAmblemYaziRenk] = useState("kahve"); // amblemdeki firma ismi rengi
   const [fBuyukFoto, setFBuyukFoto] = useState(null);     // işletme fotosunu/amblemi TAM EKRAN aç (indirilebilir)
   const [fZoom, setFZoom] = useState({ s: 1, x: 0, y: 0 }); // tam ekran önizleme yakınlaştırma
@@ -296,7 +308,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
 
   // --- FİRMA / İŞLETME reklamı ---
-  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFAmblemYaziRenk("kahve"); setFGaleri([]); setFDuzenlenenId(null); }
+  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFAmblemYaziRenk("kahve"); setFAmblemStil(""); setFAmblemUretildi(false); setFGaleri([]); setFDuzenlenenId(null); }
   // İşletme fotosunu/amblemi İNDİR — data: doğrudan iner; http (Firebase) ise BLOB ile indirilir
   // (cross-origin'de <a download> yok sayılıp tarayıcıda AÇILIYORDU → blob + cache-buster ile gerçekten indirir).
   // url verilmezse: açık tam ekran görsel (fBuyukFoto) ya da formdaki foto (fFoto) indirilir.
@@ -429,7 +441,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     setFGaleri(Array.isArray(r.firmaMedya) ? r.firmaMedya.map((m) => ({ tip: m.tip || "foto", url: m.url, aciklama: m.aciklama || "" })) : []); // mevcut galeriyi doldur
     setDetay(null); setFirmaVerAcik(true);
   }
-  async function firmaFotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFFoto(d); setFHata(""); } }
+  async function firmaFotoSec(e) { const f = e.target.files && e.target.files[0]; if (!f) return; const d = await dosyaOku(f); if (d) { setFFoto(d); setFHata(""); setFAmblemUretildi(false); } }
   // HARİTAYI AÇ — iş yerini haritada işaretle (parmakla dokun/pini sürükle)
   function haritaAc() { setHaritaKonum(fKonum ? { lat: fKonum.enlem, lng: fKonum.boylam } : null); setHaritaAcik(true); }
   // Seçilen noktayı onayla → firma konumu + (adres boşsa) ters-coğrafya ile adresi doldur
@@ -476,11 +488,14 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       const yaziR = AMBLEM_YAZI_RENKLER.find((x) => x.k === fAmblemYaziRenk) || AMBLEM_YAZI_RENKLER[0];
       const ad = (fAd || "").trim();
       // İsim, amblemle BERABER TASARLANIR (ayrı yazı bandı YOK); amblem çerçeveyi DOLDURUR (küçük/ortada değil).
-      const isimTalimat = ad ? (' The business name spelled EXACTLY "' + ad + '" MUST be a prominent, beautifully designed, clearly readable part of the logo — modern, clean, stylish lettering integrated WITH the symbol (like a real professional brand mark), not a plain caption. Business name letters color: ' + yaziR.en + '.') : "";
-      const istem = "Design a MODERN, minimalist, professional business LOGO / brand emblem for a real shop — clean FLAT VECTOR style, simple bold geometric shapes, contemporary brand identity like high-quality Dribbble/Behance logos. Make it LARGE and well-balanced, filling most of the square with a strong, centered composition (not a tiny icon lost in empty margins). Business type: " + fkAd(fKat) + ". Idea/details: " + tarif + "." + isimTalimat + " Background: solid " + zeminR.en + " color filling the whole square (no white borders). Clean, crisp, elegant, uncluttered, truly modern. Flat design — NO photorealism, NO 3D, NO messy or cluttered details. Square.";
+      const isimTalimat = ad ? (' The business name spelled EXACTLY "' + ad + '" MUST be a prominent, beautifully designed, clearly readable part of the logo — clean, stylish lettering integrated WITH the symbol (like a real professional brand mark), not a plain caption. Business name letters color: ' + yaziR.en + '.') : "";
+      // STİL: seçiliyse onu kullan; SEÇİLİ DEĞİLSE her çizimde SIRAYLA farklı stil (güzelini bulana kadar)
+      let stil = AMBLEM_STILLER.find((s) => s.k === fAmblemStil);
+      if (!stil) { stil = AMBLEM_STILLER[amblemSiraRef.current % AMBLEM_STILLER.length]; amblemSiraRef.current++; }
+      const istem = "Design a professional, high-quality business LOGO / brand emblem for a real shop. Style: " + stil.en + ". Make it LARGE and well-balanced, filling most of the square with a strong, centered composition (not a tiny icon lost in empty margins). Business type: " + fkAd(fKat) + ". Idea/details: " + tarif + "." + isimTalimat + " Background: solid " + zeminR.en + " color filling the whole square (no white borders). Crisp, clean, well composed, appealing. Square.";
       const r = await gloxooResimUret(istem, undefined, undefined, false, true); // yaziSerbest=true → iş yeri ismini yazabilsin
       const durl = r && r.dataUrl;
-      if (durl) { setFFoto(durl); setFHata(""); } else setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene."));
+      if (durl) { setFFoto(durl); setFHata(""); setFAmblemUretildi(true); } else setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene."));
     } catch (e) { setFHata(t("fkAmblemHata", "Amblem çizilemedi, tekrar dene.")); }
     setFAmblemYuk(false);
   }
@@ -717,10 +732,13 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               <div className="reklam-cip-satir">{AMBLEM_RENKLER.map((rk) => <button key={rk.k} className={"reklam-cip reklam-renk-cip" + (fAmblemRenk === rk.k ? " sec" : "")} style={{ background: rk.hex, color: "#4a3500" }} onClick={() => setFAmblemRenk(rk.k)}>{t(rk.ck, rk.ad)}</button>)}</div>
               <div className="reklam-kim-bas">{t("fkAmblemYazi", "Firma ismi rengi")}</div>
               <div className="reklam-cip-satir">{AMBLEM_YAZI_RENKLER.map((rk) => <button key={rk.k} className={"reklam-cip reklam-renk-cip" + (fAmblemYaziRenk === rk.k ? " sec" : "")} style={{ background: rk.hex, color: rk.k === "beyaz" || rk.k === "altin" ? "#4a3500" : "#fff" }} onClick={() => setFAmblemYaziRenk(rk.k)}>{t(rk.ck, rk.ad)}</button>)}</div>
-              {/* GLOXOO — AMBLEM/LOGO ÇİZ: foto yüklemeden Gloxoo resimli amblem hazırlasın (kısa tarif yaz). Firma ismi altına yazılır. */}
+              {/* AMBLEM STİLİ — müşteri tarz seçer; seçmezse Gloxoo her "çiz"de SIRAYLA farklı stil dener (güzelini bulana kadar) */}
+              <div className="reklam-kim-bas">{t("fkAmblemStil", "Amblem stili (istersen seç — seçmezsen Gloxoo sırayla dener)")}</div>
+              <div className="reklam-cip-satir">{AMBLEM_STILLER.map((s) => <button key={s.k} className={"reklam-cip" + (fAmblemStil === s.k ? " sec" : "")} onClick={() => setFAmblemStil(fAmblemStil === s.k ? "" : s.k)}>{t(s.ck, s.ad)}</button>)}</div>
+              {/* GLOXOO — AMBLEM/LOGO ÇİZ: foto yüklemeden Gloxoo resimli amblem hazırlasın (kısa tarif yaz). Beğenmezse "Başka çiz" ile tekrar dener. */}
               <div className="reklam-amblem-satir">
                 <input className="reklam-inp" type="text" value={fAmblemTarif} onChange={(e) => setFAmblemTarif(e.target.value)} placeholder={t("fkAmblemTarif", "Amblem/logo tarifi (ör. altın lokum kutusu) — istersen boş bırak")} />
-                <button className="reklam-gloxoo-btn" disabled={fAmblemYuk} onClick={firmaAmblemCiz}>{fAmblemYuk ? "⏳" : "🎨"} {t("fkAmblemCiz", "Gloxoo amblem çizsin")}</button>
+                <button className="reklam-gloxoo-btn" disabled={fAmblemYuk} onClick={firmaAmblemCiz}>{fAmblemYuk ? ("⏳ " + t("fkAmblemCiziliyor", "Çiziliyor…")) : (fAmblemUretildi ? ("🔄 " + t("fkAmblemBaska", "Başka çiz")) : ("🎨 " + t("fkAmblemCiz", "Gloxoo amblem çizsin")))}</button>
               </div>
               <input className="reklam-inp" type="text" value={fAd} onChange={(e) => setFAd(e.target.value)} placeholder={t("fkAd", "İşletme / firma adı")} />
               <div className="reklam-kim-bas">{t("rkKategori", "Kategori")}</div>
