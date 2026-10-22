@@ -5969,7 +5969,8 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-detay-bas{ flex:1; font-weight:900; font-size:19px; color:#5a3f00; }
 .reklam-kapat{ width:40px; height:40px; border-radius:11px; border:2px solid #7a5a00; background:rgba(255,253,240,.9); color:#7a5a00; font-size:19px; font-weight:900; cursor:pointer; }
 .reklam-detay-kaydir{ overflow-y:auto; padding:0 16px 18px; }
-.reklam-detay-foto{ width:100%; border-radius:0; border:none; display:block; margin-bottom:10px; } /* foto YATAY ve TAM görünür, düz kenar */
+/* foto/amblem TAM görünür ama pencereyi AŞMAZ: max-height ile ekrana sığar, contain ile kırpılmaz, kenar boşluğu ALTIN (siyah yok) */
+.reklam-detay-foto{ width:100%; max-height:56vh; object-fit:contain; border-radius:0; border:none; display:block; margin-bottom:10px; background:radial-gradient(circle at 50% 44%, #f6e6a8, #e3c469); }
 .reklam-detay-fiyat{ font-weight:900; color:#1a8f4e; font-size:24px; margin-bottom:6px; }
 .reklam-detay-satici{ color:#7a5a00; font-weight:800; margin-bottom:8px; }
 .reklam-detay-ozet{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px; }
