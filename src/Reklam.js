@@ -178,6 +178,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const [fAmblemStil, setFAmblemStil] = useState("");      // seçili amblem stili ("" = otomatik/sırayla dener)
   const [fAmblemUretildi, setFAmblemUretildi] = useState(false); // Gloxoo bir amblem çizdi mi → "Başka çiz" düğmesi çıksın
   const amblemSiraRef = useRef(0);                         // otomatik stilde sıra (her çizimde bir sonraki stil)
+  const [fAdim, setFAdim] = useState(1);                   // 3 AŞAMALI pencere: 1=Amblem/Logo, 2=Tanıtım, 3=Yayınla
   const [fAmblemYaziRenk, setFAmblemYaziRenk] = useState("kahve"); // amblemdeki firma ismi rengi
   const [fBuyukFoto, setFBuyukFoto] = useState(null);     // işletme fotosunu/amblemi TAM EKRAN aç (indirilebilir)
   const [fZoom, setFZoom] = useState({ s: 1, x: 0, y: 0 }); // tam ekran önizleme yakınlaştırma
@@ -308,7 +309,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
 
   // --- FİRMA / İŞLETME reklamı ---
-  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFAmblemYaziRenk("kahve"); setFAmblemStil(""); setFAmblemUretildi(false); setFGaleri([]); setFDuzenlenenId(null); }
+  function firmaFormSifirla() { setFFoto(""); setFAd(""); setFKat("yemek"); setFAciklama(""); setFTel(""); setFWeb(""); setFAdres(""); setFKonum(null); setFKonumDurum(""); setFHata(""); setFAmblemTarif(""); setFAmblemRenk("krem"); setFAmblemYaziRenk("kahve"); setFAmblemStil(""); setFAmblemUretildi(false); setFGaleri([]); setFDuzenlenenId(null); setFAdim(1); }
+  // 3 AŞAMALI pencere açılınca HER ZAMAN 1. aşamadan başla (yeni veya düzenleme)
+  useEffect(() => { if (firmaVerAcik) setFAdim(1); }, [firmaVerAcik]);
+  // "İleri" — aşama 1'den geçmek için logo/foto + firma adı şart (çizimde de lazım); sonra bir sonraki aşama
+  function adimIleri() {
+    if (fAdim === 1) {
+      if (!fFoto) { setFHata(t("fkFotoOnce2", "Önce bir logo/fotoğraf ekle ya da Gloxoo'ya çizdir.")); return; }
+      if (!fAd.trim()) { setFHata(t("fkAdOnce", "İşletme/firma adı yaz.")); return; }
+    }
+    setFHata(""); setFAdim((a) => Math.min(3, a + 1));
+  }
   // İşletme fotosunu/amblemi İNDİR — data: doğrudan iner; http (Firebase) ise BLOB ile indirilir
   // (cross-origin'de <a download> yok sayılıp tarayıcıda AÇILIYORDU → blob + cache-buster ile gerçekten indirir).
   // url verilmezse: açık tam ekran görsel (fBuyukFoto) ya da formdaki foto (fFoto) indirilir.
@@ -501,9 +512,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   }
   async function firmaYayinla() {
     if (fKaydet) return;
-    if (!fFoto) { setFHata(t("fkFotoOnce", "Önce işletme fotoğrafı/logosu ekle.")); return; }
-    if (!fAd.trim()) { setFHata(t("fkAdOnce", "İşletme/firma adı yaz.")); return; }
-    if (!fTel.trim() && !fWeb.trim() && !fAdres.trim() && !fKonum) { setFHata(t("fkIletisimOnce", "En az bir iletişim ekle: telefon, web veya adres.")); return; }
+    if (!fFoto) { setFAdim(1); setFHata(t("fkFotoOnce", "Önce işletme fotoğrafı/logosu ekle.")); return; }
+    if (!fAd.trim()) { setFAdim(1); setFHata(t("fkAdOnce", "İşletme/firma adı yaz.")); return; }
+    if (!fTel.trim() && !fWeb.trim() && !fAdres.trim() && !fKonum) { setFAdim(3); setFHata(t("fkIletisimOnce", "En az bir iletişim ekle: telefon, web veya adres.")); return; }
     setFKaydet(true); setFHata("");
     try {
       // Foto SADECE yeni seçildiyse (data:) yüklenir; düzenlemede eski foto (http) aynı kalırsa tekrar yüklenmez.
@@ -716,6 +727,17 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
             </div>
             <div className="reklam-detay-kaydir">
               <div className="reklam-not">{t("rkUcretsizNot", "Şimdilik ÜCRETSİZ. İleride reklam yayını ücretli olacak.")}</div>
+              {/* 3 AŞAMA GÖSTERGESİ */}
+              <div className="reklam-adim-bar">
+                <span className={"reklam-adim" + (fAdim === 1 ? " aktif" : (fAdim > 1 ? " tamam" : ""))}>1 · {t("fkAdim1", "Amblem")}</span>
+                <span className="reklam-adim-ok">›</span>
+                <span className={"reklam-adim" + (fAdim === 2 ? " aktif" : (fAdim > 2 ? " tamam" : ""))}>2 · {t("fkAdim2", "Tanıtım")}</span>
+                <span className="reklam-adim-ok">›</span>
+                <span className={"reklam-adim" + (fAdim === 3 ? " aktif" : "")}>3 · {t("fkAdim3", "Yayınla")}</span>
+              </div>
+
+              {/* ===== AŞAMA 1 — AMBLEM / LOGO ===== */}
+              {fAdim === 1 && (<>
               <div className="reklam-foto-kutu" onClick={() => fInpRef.current && fInpRef.current.click()}>
                 {fFoto ? <img src={fFoto} alt="" /> : <span className="reklam-foto-bos">📷<br />{t("fkFotoEkle", "İşletme fotoğrafı / logosu ekle")}</span>}
               </div>
@@ -727,26 +749,31 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
                   <button className="reklam-foto-arac-btn" onClick={() => firmaFotoIndir()}>⬇ {t("indir", "İndir")}</button>
                 </div>
               )}
-              {/* AMBLEM ZEMİN RENGİ — hep beyaz olmasın; kullanıcı seçer (amblem bu renkle çizilir, isim altına yazılır) */}
+              {/* FİRMA ADI — çizimden ÖNCE (amblemde isim doğru yazılsın) */}
+              <input className="reklam-inp" type="text" value={fAd} onChange={(e) => setFAd(e.target.value)} placeholder={t("fkAd", "İşletme / firma adı")} />
+              {/* AMBLEM ZEMİN RENGİ — hep beyaz olmasın; kullanıcı seçer */}
               <div className="reklam-kim-bas">{t("fkAmblemZemin", "Amblem zemin rengi")}</div>
               <div className="reklam-cip-satir">{AMBLEM_RENKLER.map((rk) => <button key={rk.k} className={"reklam-cip reklam-renk-cip" + (fAmblemRenk === rk.k ? " sec" : "")} style={{ background: rk.hex, color: "#4a3500" }} onClick={() => setFAmblemRenk(rk.k)}>{t(rk.ck, rk.ad)}</button>)}</div>
               <div className="reklam-kim-bas">{t("fkAmblemYazi", "Firma ismi rengi")}</div>
               <div className="reklam-cip-satir">{AMBLEM_YAZI_RENKLER.map((rk) => <button key={rk.k} className={"reklam-cip reklam-renk-cip" + (fAmblemYaziRenk === rk.k ? " sec" : "")} style={{ background: rk.hex, color: rk.k === "beyaz" || rk.k === "altin" ? "#4a3500" : "#fff" }} onClick={() => setFAmblemYaziRenk(rk.k)}>{t(rk.ck, rk.ad)}</button>)}</div>
-              {/* AMBLEM STİLİ — müşteri tarz seçer; seçmezse Gloxoo her "çiz"de SIRAYLA farklı stil dener (güzelini bulana kadar) */}
+              {/* AMBLEM STİLİ — müşteri tarz seçer; seçmezse Gloxoo her "çiz"de SIRAYLA farklı stil dener */}
               <div className="reklam-kim-bas">{t("fkAmblemStil", "Amblem stili (istersen seç — seçmezsen Gloxoo sırayla dener)")}</div>
               <div className="reklam-cip-satir">{AMBLEM_STILLER.map((s) => <button key={s.k} className={"reklam-cip" + (fAmblemStil === s.k ? " sec" : "")} onClick={() => setFAmblemStil(fAmblemStil === s.k ? "" : s.k)}>{t(s.ck, s.ad)}</button>)}</div>
-              {/* GLOXOO — AMBLEM/LOGO ÇİZ: foto yüklemeden Gloxoo resimli amblem hazırlasın (kısa tarif yaz). Beğenmezse "Başka çiz" ile tekrar dener. */}
+              {/* GLOXOO — AMBLEM/LOGO ÇİZ; beğenmezse "Başka çiz" ile tekrar dener */}
               <div className="reklam-amblem-satir">
                 <input className="reklam-inp" type="text" value={fAmblemTarif} onChange={(e) => setFAmblemTarif(e.target.value)} placeholder={t("fkAmblemTarif", "Amblem/logo tarifi (ör. altın lokum kutusu) — istersen boş bırak")} />
                 <button className="reklam-gloxoo-btn" disabled={fAmblemYuk} onClick={firmaAmblemCiz}>{fAmblemYuk ? ("⏳ " + t("fkAmblemCiziliyor", "Çiziliyor…")) : (fAmblemUretildi ? ("🔄 " + t("fkAmblemBaska", "Başka çiz")) : ("🎨 " + t("fkAmblemCiz", "Gloxoo amblem çizsin")))}</button>
               </div>
-              <input className="reklam-inp" type="text" value={fAd} onChange={(e) => setFAd(e.target.value)} placeholder={t("fkAd", "İşletme / firma adı")} />
+              </>)}
+
+              {/* ===== AŞAMA 2 — TANITIM / DETAY ===== */}
+              {fAdim === 2 && (<>
               <div className="reklam-kim-bas">{t("rkKategori", "Kategori")}</div>
               <div className="reklam-cip-satir">{FIRMA_KATEGORI.map((kt) => <button key={kt.k} className={"reklam-cip" + (fKat === kt.k ? " sec" : "")} onClick={() => setFKat(kt.k)}>{kt.ik} {t(kt.ck, kt.ad)}</button>)}</div>
               <textarea className="reklam-inp reklam-alan" value={fAciklama} onChange={(e) => setFAciklama(e.target.value)} placeholder={t("fkAciklama", "Kısa tanıtım (ne yapıyorsunuz, öne çıkanlar…) — istersen birkaç kelime yaz, Gloxoo güzelleştirsin")} rows={3} />
-              {/* GLOXOO — TANITIM YAZISI: isim/kategori/foto/notuna göre güzel tanıtım yazsın */}
+              {/* GLOXOO — TANITIM YAZISI */}
               <button className="reklam-gloxoo-btn reklam-gloxoo-yazi" disabled={fAiYaziYuk} onClick={firmaTanitimYaz}>{fAiYaziYuk ? "⏳ " + t("fkAiYaziyor", "Gloxoo yazıyor…") : "✨ " + t("fkTanitimYaz", "Gloxoo tanıtım yazsın")}</button>
-              {/* ÜRÜN GALERİSİ — sahibi firmanın mallarını (foto/video) yükler, her birine açıklama yazar */}
+              {/* ÜRÜN GALERİSİ */}
               <div className="reklam-kim-bas">🖼️ {t("fkUrunGaleri", "Ürün foto / videoları")}</div>
               {fGaleri.length > 0 && (
                 <div className="firma-galeri-duzen">
@@ -771,14 +798,25 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               )}
               <button className="reklam-cip firma-galeri-ekle-btn" onClick={() => fGalInpRef.current && fGalInpRef.current.click()}>＋ {t("fkGaleriEkle", "Ürün foto/video ekle")}</button>
               <input ref={fGalInpRef} type="file" accept="image/*,video/*" multiple style={{ display: "none" }} onChange={firmaGaleriEkle} />
+              </>)}
+
+              {/* ===== AŞAMA 3 — YAYINLA / İLETİŞİM ===== */}
+              {fAdim === 3 && (<>
               <input className="reklam-inp" type="tel" inputMode="tel" value={fTel} onChange={(e) => setFTel(e.target.value)} placeholder={t("fkTel", "📞 Telefon (Ara düğmesi için)")} />
               <input className="reklam-inp" type="text" inputMode="url" value={fWeb} onChange={(e) => setFWeb(e.target.value)} placeholder={t("fkWebInp", "🌐 Web sitesi / link (varsa)")} />
               <input className="reklam-inp" type="text" value={fAdres} onChange={(e) => setFAdres(e.target.value)} placeholder={t("fkAdres", "📍 Adres (Yol tarifi için)")} />
               <button className={"reklam-cip reklam-konum-btn" + (fKonum ? " sec" : "")} onClick={haritaAc}>
                 {fKonum ? "✓ " + t("fkKonumSecildi", "İş yeri haritada seçildi (değiştir)") : "🗺️ " + t("fkHaritaSec", "Haritadan iş yerini seç")}
               </button>
+              </>)}
+
               {fHata && <div className="reklam-hata">⚠️ {fHata}</div>}
-              <button className="reklam-yayinla" disabled={fKaydet} onClick={firmaYayinla}>{fKaydet ? "⏳ " + t("rkYayinlaniyor", "Yayınlanıyor…") : (fDuzenlenenId ? "✅ " + t("kaydet", "Kaydet") : "✅ " + t("rkYayinla", "Yayınla"))}</button>
+              {/* NAVİGASYON — Geri / İleri / Yayınla */}
+              <div className="reklam-adim-nav">
+                {fAdim > 1 && <button className="reklam-adim-geri" onClick={() => { setFHata(""); setFAdim((a) => Math.max(1, a - 1)); }}>← {t("fkGeri", "Geri")}</button>}
+                {fAdim < 3 && <button className="reklam-adim-ileri" onClick={adimIleri}>{t("fkIleri", "İleri")} →</button>}
+                {fAdim === 3 && <button className="reklam-yayinla" disabled={fKaydet} onClick={firmaYayinla}>{fKaydet ? "⏳ " + t("rkYayinlaniyor", "Yayınlanıyor…") : (fDuzenlenenId ? "✅ " + t("kaydet", "Kaydet") : "✅ " + t("rkYayinla", "Yayınla"))}</button>}
+              </div>
             </div>
           </div>
         </div>

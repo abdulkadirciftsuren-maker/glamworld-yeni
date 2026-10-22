@@ -5997,6 +5997,17 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .reklam-hata{ color:#8a1a1a; background:#ffe1e1; border:1.5px solid #c04a4a; border-radius:10px; padding:9px 12px; font-weight:700; font-size:14px; margin-bottom:10px; }
 .reklam-yayinla{ width:100%; padding:14px; border-radius:13px; border:none; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; font-weight:900; font-size:17px; cursor:pointer; font-family:inherit; }
 .reklam-yayinla:disabled{ opacity:.7; }
+/* 3 AŞAMALI REKLAM PENCERESİ — üstte aşama göstergesi + altta Geri/İleri/Yayınla */
+.reklam-adim-bar{ display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:nowrap; margin:4px 0 12px; }
+.reklam-adim{ font-size:12.5px; font-weight:800; color:#9c854a; background:#fbf3dc; border:1.5px solid #e3cf95; border-radius:9px; padding:5px 9px; white-space:nowrap; }
+.reklam-adim.aktif{ color:#4a3500; background:linear-gradient(160deg,#fff3c9,#ffd700,#e6bd52); border-color:#b8860b; box-shadow:0 2px 6px rgba(120,90,20,.25); }
+.reklam-adim.tamam{ color:#1a5c2e; background:#e6f4ea; border-color:#8cc69f; }
+.reklam-adim-ok{ color:#c0a65e; font-weight:900; font-size:15px; }
+.reklam-adim-nav{ display:flex; align-items:center; gap:10px; margin-top:12px; }
+.reklam-adim-geri{ flex:none; padding:14px 20px; border-radius:13px; border:1.5px solid #cbb06a; background:#fbf2d8; color:#5a4a1e; font-weight:800; font-size:16px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.reklam-adim-ileri{ flex:1; padding:14px; border-radius:13px; border:none; background:linear-gradient(90deg,#FFD700,#f2a900); color:#4a3500; font-weight:900; font-size:17px; cursor:pointer; font-family:inherit; }
+.reklam-adim-nav .reklam-yayinla{ flex:1; margin:0; }
+.reklam-adim-geri:active, .reklam-adim-ileri:active{ transform:scale(.97); }
 
 /* Sanal Ayna — reklamdan gelen ürün önizlemesi */
 .sa-urun-serit{ display:flex; align-items:center; gap:11px; background:#fff7db; border:2px solid #FFD700; border-radius:14px; padding:9px; margin-bottom:12px; }
