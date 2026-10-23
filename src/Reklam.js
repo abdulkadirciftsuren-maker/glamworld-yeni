@@ -739,7 +739,13 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
               {/* ===== AŞAMA 1 — AMBLEM / LOGO ===== */}
               {fAdim === 1 && (<>
               <div className="reklam-foto-kutu" onClick={() => fInpRef.current && fInpRef.current.click()}>
-                {fFoto ? <img src={fFoto} alt="" /> : <span className="reklam-foto-bos">📷<br />{t("fkFotoEkle", "İşletme fotoğrafı / logosu ekle")}</span>}
+                {fFoto ? <img src={fFoto} alt="" /> : (
+                  <span className="reklam-foto-bos">
+                    <span className="reklam-foto-bos-ik">📷</span>
+                    <b className="reklam-foto-bos-bas">{t("fkFotoEkle", "İşletme fotoğrafı / logosu ekle")}</b>
+                    <i className="reklam-foto-bos-not">{t("fkFotoBosNot", "Dokun ve galeriden seç — ya da aşağıdan firma adını yazıp stil seç, “Gloxoo amblem çizsin” de, sana güzel bir logo hazırlasın 🎨")}</i>
+                  </span>
+                )}
               </div>
               <input ref={fInpRef} type="file" accept="image/*" style={{ display: "none" }} onChange={firmaFotoSec} />
               {/* Foto varsa: TAM EKRAN aç + İNDİR (kullanıcı isteği) */}

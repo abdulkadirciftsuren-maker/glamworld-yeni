@@ -58,8 +58,21 @@
          bırakınca tarayıcı sayfayı KOMPLE yeniden yüklüyordu = tam parlama/beyazlama + "her seferinde güncelleniyor"
          hissi (kullanıcı: "aşağıdan yukarı aldığımda gene yeniden yükleme yapıyor"). overscroll-behavior:none bunu
          KAPATIR (Facebook/TikTok gibi). Sayfa içi kaydırma normal çalışır; sadece en üstte çekince yenileme olmaz. */
-      html, body, #root { touch-action: pan-x pan-y; overscroll-behavior:none; background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%); }
+      html, body, #root { touch-action: pan-x pan-y; overscroll-behavior:none; }
+      html, body { background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%); }
+      /* #root ŞEFFAF → içerik BOŞ/henüz gelmediğinde ALTTAKİ markalı yükleme ekranı (#gw-arka) görünür;
+         içerik (Giriş/Anasayfa — hepsi kendi opak zeminli) gelince onu ÖRTER. */
+      #root { background:transparent; position:relative; z-index:1; }
       img { touch-action: auto; }
+      /* ===== MARKALI YÜKLEME EKRANI (#gw-arka) — "sarı perde" artık bomboş değil, GLOXORG logosu + dönen halka.
+         En arkada (z-index:-1) durur; #root boşken görünür, içerik gelince ÖRTÜLÜR. Sadece CSS/HTML → JS gerektirmez,
+         asla "takılı" kalmaz. Arka plandan dönüşte/yavaş açılışta bomboş sarı yerine düzgün bir yükleme ekranı gösterir. */
+      #gw-arka{ position:fixed; inset:0; z-index:-1; display:flex; align-items:center; justify-content:center; pointer-events:none;
+        background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%); }
+      #gw-arka .gw-arka-ic{ display:flex; flex-direction:column; align-items:center; gap:16px; }
+      #gw-arka .gw-arka-logo{ width:94px; height:94px; border-radius:20px; box-shadow:0 10px 30px rgba(120,90,0,.28); }
+      #gw-arka .gw-arka-ad{ font-family:Georgia,'Times New Roman',serif; font-weight:800; font-size:26px; letter-spacing:.16em; color:#6a4e00; }
+      #gw-arka .gw-arka-halka{ width:40px; height:40px; border-radius:50%; border:4px solid rgba(120,90,0,.2); border-top-color:#8a6a00; animation:gwDon .85s linear infinite; }
       /* SOSYAL GİRİŞ YÜKLEME EKRANI — index.html'de (React'ten ÖNCE de görünür).
          Google/sosyal girişte sayfa bir an yeniden yüklenince BEYAZ flash olmasın diye,
          baştan sona TEK koyu ekran kalır. SADECE sosyal giriş bayrağı varsa gösterilir. */
@@ -127,6 +140,14 @@
       <div style="font-size:17px;font-weight:700;max-width:300px;line-height:1.45">Açılış biraz uzun sürdü.<br>Yenilemek için dokun.</div>
       <button id="gw-takildi-btn" type="button" style="border:none;border-radius:14px;padding:14px 30px;font-size:16px;font-weight:900;cursor:pointer;background:linear-gradient(180deg,#fff7d6,#ffd700 60%,#c79a17);color:#3a2a00;box-shadow:0 6px 18px rgba(120,90,0,.4)">Yeniden Yükle</button>
       <div id="gw-takildi-bilgi" style="font-size:11px;opacity:.65;font-family:monospace"></div>
+    </div>
+    <!-- MARKALI YÜKLEME EKRANI — en arkada; #root boşken (açılış/arka plandan dönüş) GLOXORG logosu+halka görünür, içerik gelince örtülür -->
+    <div id="gw-arka" aria-hidden="true">
+      <div class="gw-arka-ic">
+        <img class="gw-arka-logo" src="%PUBLIC_URL%/logo192-b213.png" alt="" />
+        <div class="gw-arka-ad notranslate" translate="no">GLOXORG</div>
+        <div class="gw-arka-halka"></div>
+      </div>
     </div>
     <div id="root"></div>
     <!-- ALT CAM-ALTIN ŞERİT (SADECE kurulu uygulama modunda görünür; normal tarayıcıda gizli).
