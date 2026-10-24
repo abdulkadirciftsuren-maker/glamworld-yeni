@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>GLOXORG — Google</title>
+<!--
+  GLOXORG NATIVE UYGULAMA (com.gloxorg.app) — GOOGLE GİRİŞ KÖPRÜSÜ
+  Uygulamanın WebView'i içinde Google girişi çalışmıyor (popup geri konuşamıyor, redirect "missing initial state").
+  Bu yüzden uygulama bu sayfayı CHROME penceresinde (Custom Tab) açar. Burada Google girişi normal tarayıcıdaki gibi
+  (signInWithRedirect) yapılır, çıkan Google kimlik anahtarı (idToken) intent ile SADECE com.gloxorg.app'e geri verilir;
+  uygulama da kendi içinde signInWithCredential ile oturum açar. Firebase dosyaları kendi sitemizden (/glox/) gelir.
+-->
+<style>
+  html, body { margin:0; height:100%; }
+  body {
+    background: radial-gradient(ellipse at 50% 30%, #fff6d6 0%, #f6e4a3 40%, #ecce72 72%, #dcbb4e 100%);
+    font-family: 'Trebuchet MS', system-ui, sans-serif; color:#5a4200;
+    display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; box-sizing:border-box;
+  }
+  .kutu { display:flex; flex-direction:column; align-items:center; gap:16px; max-width:360px; width:100%; }
+  .logo { width:92px; height:92px; border-radius:20px; box-shadow:0 10px 30px rgba(120,90,0,.28); }
+  .ad { font-family: Georgia, 'Times New Roman', serif; font-weight:800; font-size:26px; letter-spacing:.16em; color:#6a4e00; }
+  .yazi { font-size:17px; font-weight:700; line-height:1.45; }
+  .halka { width:38px; height:38px; border-radius:50%; border:4px solid rgba(120,90,0,.2); border-top-color:#8a6a00; animation:don .85s linear infinite; }
+  @keyframes don { to { transform: rotate(360deg); } }
+  .btn { display:block; width:100%; box-sizing:border-box; padding:15px 16px; border-radius:12px; font-size:17px; font-weight:900;
+         text-decoration:none; border:2px solid #b8860b; cursor:pointer; font-family:inherit; }
+  .btn-ana { background:linear-gradient(180deg,#FFF3C9,#FFD700 55%,#E6BD52); color:#4a3208; box-shadow:0 4px 14px rgba(120,90,0,.25); }
+  .btn-ikinci { background:#fffbe9; color:#7a5a00; }
+  .gizli { display:none !important; }
+  .hata { font-size:13px; color:#9c4a00; word-break:break-word; }
+</style>
+</head>
+<body>
+  <div class="kutu">
+    <img class="logo" src="logo192-b213.png" alt="" />
+    <div class="ad notranslate" translate="no">GLOXORG</div>
+    <div class="halka" id="halka"></div>
+    <div class="yazi" id="yazi"></div>
+    <a class="btn btn-ana gizli" id="donBtn" href="#"></a>
+    <button class="btn btn-ana gizli" id="tekrarBtn" type="button"></button>
+    <a class="btn btn-ikinci gizli" id="vazgecBtn" href="#"></a>
+    <div class="hata" id="hata"></div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "./glox/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "./glox/firebase-auth.js";
+
+  // Dil: Türkçe telefonda Türkçe, diğerlerinde İngilizce
+  const tr = ((navigator.language || "") + "").toLowerCase().indexOf("tr") === 0;
+  const M = tr ? {
+    bekle: "Google ile giriş yapılıyor…",
+    tamam: "Giriş tamam ✓ GLOXORG'a dönülüyor…",
+    don: "✓ GLOXORG'a dön",
+    tekrarYazi: "Google girişi tamamlanmadı.",
+    tekrar: "Tekrar dene",
+    vazgec: "Vazgeç, uygulamaya dön",
+    hata: "Bir sorun oldu. Tekrar dene.",
+  } : {
+    bekle: "Signing in with Google…",
+    tamam: "Signed in ✓ Returning to GLOXORG…",
+    don: "✓ Return to GLOXORG",
+    tekrarYazi: "Google sign-in was not completed.",
+    tekrar: "Try again",
+    vazgec: "Cancel, back to the app",
+    hata: "Something went wrong. Please try again.",
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const BAYRAK = "gloxGoogleBasladi";
+  // Anahtar SADECE com.gloxorg.app paketine gider (başka uygulama yakalayamaz)
+  const uygulamaAdresi = (sorgu) => "intent://giris?" + sorgu + "#Intent;scheme=gloxorg;package=com.gloxorg.app;end";
+
+  $("vazgecBtn").textContent = M.vazgec;
+  $("vazgecBtn").href = uygulamaAdresi("iptal=1");
+  $("tekrarBtn").textContent = M.tekrar;
+  $("donBtn").textContent = M.don;
+
+  function goster(durum, hataKodu) {
+    $("halka").classList.toggle("gizli", durum !== "bekle" && durum !== "tamam");
+    $("donBtn").classList.toggle("gizli", durum !== "tamam");
+    $("tekrarBtn").classList.toggle("gizli", durum !== "tekrar" && durum !== "hata");
+    $("vazgecBtn").classList.toggle("gizli", durum === "bekle" || durum === "tamam");
+    $("yazi").textContent = durum === "tamam" ? M.tamam : durum === "tekrar" ? M.tekrarYazi : durum === "hata" ? M.hata : M.bekle;
+    $("hata").textContent = hataKodu ? "[" + hataKodu + "]" : "";
+  }
+
+  const app = initializeApp({
+    apiKey: "AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw",
+    authDomain: "auth.gloxorg.com",
+    projectId: "glamworld2",
+    storageBucket: "glamworld2.firebasestorage.app",
+    messagingSenderId: "656498925104",
+    appId: "1:656498925104:web:2b684fa8f2eafab97b57f5",
+  });
+  const auth = getAuth(app);
+
+  async function googleaGit() {
+    sessionStorage.setItem(BAYRAK, "1");
+    goster("bekle");
+    const p = new GoogleAuthProvider();
+    p.setCustomParameters({ prompt: "select_account" });
+    await signInWithRedirect(auth, p);
+  }
+
+  async function basla() {
+    goster("bekle");
+    try {
+      const sonuc = await getRedirectResult(auth);
+      if (sonuc) {
+        sessionStorage.removeItem(BAYRAK);
+        const kimlik = GoogleAuthProvider.credentialFromResult(sonuc);
+        const anahtar = kimlik && kimlik.idToken;
+        if (!anahtar) throw { code: "idtoken-yok" };
+        const adres = uygulamaAdresi("t=" + encodeURIComponent(anahtar));
+        $("donBtn").href = adres;
+        goster("tamam");
+        location.href = adres; // otomatik dönüş; tarayıcı engellerse "GLOXORG'a dön" düğmesi duruyor
+        return;
+      }
+      // Google'dan sonuçsuz döndüyse (vazgeçildi) → döngüye girme, seçenek göster
+      if (sessionStorage.getItem(BAYRAK)) { sessionStorage.removeItem(BAYRAK); goster("tekrar"); return; }
+      await googleaGit();
+    } catch (e) {
+      sessionStorage.removeItem(BAYRAK);
+      goster("hata", (e && (e.code || e.message)) || "");
+    }
+  }
+
+  $("tekrarBtn").addEventListener("click", () => { googleaGit().catch((e) => goster("hata", (e && (e.code || e.message)) || "")); });
+  basla();
+</script>
+</body>
+</html>
