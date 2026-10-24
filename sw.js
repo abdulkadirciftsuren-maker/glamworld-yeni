@@ -1,13 +1,37 @@
 /* GLOXORG servis çalışanı — bildirim göstermek için (Android Chrome new Notification() desteklemez,
    ServiceWorkerRegistration.showNotification() gerekir). Tam ekran/arka plan sekmede bildirim çıkar.
    SW_SURUM: her yayında ARTAR → tarayıcı yeni sw.js farkını görüp yeni sürümü kurar (eski önbellekte takılmaz). */
-const SW_SURUM = "A13B423";
+const SW_SURUM = "A13B424";
 // ONBELLEK ADI SW_SURUM'e bağlı → her yeni yayında YENİ önbellek; eskisi activate'te silinir (eski sürümde takılma OLMAZ).
 const ONBELLEK = "glox-onbellek-" + SW_SURUM;
 // RESİM ÖNBELLEĞİ — SÜRÜMDEN BAĞIMSIZ (yeni yayında SİLİNMEZ) → indirilen fotoğraflar telefonda KALICI kalır,
 // kaydırıp geri gelince internetten YENİDEN İNMEZ, anında yerelden gelir (sarı flaş/parlama biter). B262.
 const RESIM_ONBELLEK = "glox-resim-v1";
-self.addEventListener("install", (e) => { self.skipWaiting(); });
+// ANA SAYFA KABUĞU (B424): uygulamanın ana sayfası (index.html) + açılış için gereken JS/CSS telefonda saklanır.
+//   Kullanıcı: arka plandan dönünce "Web sayfası mevcut değil — net::ERR_FAILED" çıktı. SEBEP: dönüşte telefonun interneti
+//   henüz uyanmamışken sayfa isteği başarısız oluyor, görevli ana sayfanın KAYITLI kopyası olmadığı için hata veriyordu.
+//   ARTIK: internet yok/geç kalırsa sayfa KAYITLI kopyadan ANINDA açılır (içerik de Firestore telefon önbelleğinden gelir).
+const KABUK = new URL("./", self.registration.scope).href;
+function zamanAsimi(ms) { return new Promise((_, ret) => setTimeout(() => ret(new Error("zaman-asimi")), ms)); }
+async function kabuguSakla() {
+  const c = await caches.open(ONBELLEK);
+  const r = await fetch(KABUK, { cache: "no-store" });
+  if (!r || !r.ok || r.redirected) return;
+  const metin = await r.clone().text();
+  await c.put(KABUK, r);
+  // index.html'in açılışta yüklediği /static/ dosyaları (ana JS + CSS) da kaydedilir → internetsiz açılış mümkün
+  const yollar = new Set();
+  (metin.match(/(?:src|href)="[^"]*\/static\/[^"]+"/g) || []).forEach((m) => yollar.add(m.replace(/^(?:src|href)="/, "").replace(/"$/, "")));
+  await Promise.all(Array.from(yollar).map((y) => {
+    const u = new URL(y, KABUK).href;
+    return fetch(u).then((rr) => { if (rr && rr.ok && rr.type === "basic") return c.put(u, rr); }).catch(() => {});
+  }));
+}
+self.addEventListener("install", (e) => {
+  self.skipWaiting();
+  // Kurulumda kabuğu sakla; internet takılırsa en fazla 20 sn bekle (kurulum ASLA asılı kalmaz)
+  e.waitUntil(Promise.race([kabuguSakla(), zamanAsimi(20000)]).catch(() => {}));
+});
 self.addEventListener("activate", (e) => { e.waitUntil((async () => {
   // SADECE ESKİ SÜRÜMLERİN önbelleğini sil; bu sürümünkini KORU (böylece hız için sakladıklarımız durur).
   try { const anahtarlar = await caches.keys(); await Promise.all(anahtarlar.filter((k) => k !== ONBELLEK && k !== RESIM_ONBELLEK).map((k) => caches.delete(k))); } catch (x) {}
@@ -37,12 +61,19 @@ self.addEventListener("fetch", (e) => {
       //   sonsuza kadar BOŞ (SABİT SARI PERDE) kalıyordu (kullanıcının kronik derdi). ÇÖZÜM: 6 sn'de dönmezse (takıldıysa)
       //   ÖNBELLEKTEKİ sayfaya düş → sayfa AÇILIR, boş kalmaz. Önbellek GÜNCELSE sorunsuz; BAYATSA (yeni yayından hemen
       //   sonra) silinmiş parça 404 verir → index.js'teki _kurtar devreye girip temiz yeniler. Her durumda açılır.
+      // B424: başarılı her açılışta sayfanın taze kopyası saklanır; internet yok/4 sn'de gelmezse KAYITLI kopya verilir.
+      const anaSayfaMi = (url.origin === self.location.origin) && (url.pathname === new URL(KABUK).pathname || /\/index\.html$/.test(url.pathname));
       try {
-        return await Promise.race([
-          fetch(istek, { cache: "no-store" }),
-          new Promise((_, ret) => setTimeout(() => ret(new Error("gezinme-zaman-asimi")), 6000)),
-        ]);
-      } catch (x) { const c = await caches.match(istek); return c || Response.error(); }
+        const cevap = await Promise.race([ fetch(istek, { cache: "no-store" }), zamanAsimi(anaSayfaMi ? 4000 : 6000) ]);
+        if (anaSayfaMi && cevap && cevap.ok && !cevap.redirected && cevap.type === "basic") {
+          const kopya = cevap.clone();
+          caches.open(ONBELLEK).then((c) => c.put(KABUK, kopya)).catch(() => {});
+        }
+        return cevap;
+      } catch (x) {
+        const c = (await caches.match(istek, { ignoreSearch: true })) || (anaSayfaMi ? await caches.match(KABUK) : null);
+        return c || Response.error();
+      }
     })());
     return;
   }
