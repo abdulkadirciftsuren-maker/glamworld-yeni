@@ -100,7 +100,7 @@ jobs:
           path: cikti/
           if-no-files-found: error
 
-      - name: Test APK'sini siteye koy (gloxorg.com/GLOXORG-kurulum.apk)
+      - name: APK + AAB'yi siteye koy (gloxorg.com uzerinden alinabilsin)
         run: |
           set -e
           git config user.name "gloxorg-ci"
@@ -108,7 +108,8 @@ jobs:
           git fetch origin gh-pages --depth=1
           git worktree add ../ghp gh-pages
           cp cikti/GLOXORG-kurulum.apk ../ghp/GLOXORG-kurulum.apk
+          cp cikti/GLOXORG.aab ../ghp/GLOXORG.aab
           cd ../ghp
-          git add GLOXORG-kurulum.apk
-          git commit -m "uretim test APK: GLOXORG-kurulum.apk" || echo "degisiklik yok"
+          git add GLOXORG-kurulum.apk GLOXORG.aab
+          git commit -m "uretim: GLOXORG-kurulum.apk + GLOXORG.aab" || echo "degisiklik yok"
           git push origin gh-pages
