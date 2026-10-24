@@ -8,6 +8,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -21,6 +22,7 @@ import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -54,6 +56,9 @@ class MainActivity : Activity() {
     // Google girişi Chrome'dan dönünce sayfaya verilecek komut (sayfa henüz hazır değilse burada bekler)
     private var bekleyenGirisJs: String? = null
     private var sayfaHazir = false
+    // Ana sayfa yüklenemezse (internet o an yok) hata sayfası GÖSTERİLMEZ; logolu ekran kalır, kendiliğinden tekrar denenir
+    private var sayfaHatali = false
+    private var hataSayisi = 0
 
     private val BASLANGIC_URL = "https://gloxorg.com"
     private val DOSYA_SEC = 1001
@@ -222,7 +227,25 @@ class MainActivity : Activity() {
                 }
             }
 
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                sayfaHatali = false
+            }
+
+            // Ana sayfa yüklenemedi (internet uyanmamış / kesik) → çirkin hata sayfası yerine logolu ekran + otomatik tekrar
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                if (request == null || !request.isForMainFrame) return
+                sayfaHatali = true
+                ortuGoster(true)
+                val bekle = minOf(1500L * (hataSayisi + 1), 8000L)
+                hataSayisi++
+                view?.postDelayed({
+                    try { view.loadUrl(BASLANGIC_URL) } catch (e: Exception) {}
+                }, bekle)
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
+                if (sayfaHatali) return // hata sayfası: örtü kalsın, tekrar deneme sürüyor
+                hataSayisi = 0
                 // Sayfa geldi → markalı açılış örtüsünü kaldır (kısa gecikme: ilk boyama otursun)
                 view?.postDelayed({ ortuGoster(false) }, 350)
                 sayfaHazir = true
