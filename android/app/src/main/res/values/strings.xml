@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Marka adı — hiçbir dile çevrilmez -->
+    <string name="app_adi" translatable="false">GLOXORG</string>
+</resources>

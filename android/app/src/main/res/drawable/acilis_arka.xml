@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Açılış zemini: altın radyal gradyan + ortada GLOXORG logosu (OS açılış ekranı). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="480dp"
+                android:centerX="0.5"
+                android:centerY="0.34"
+                android:startColor="#FFF6D6"
+                android:centerColor="#F2DF9F"
+                android:endColor="#DCBB4E" />
+        </shape>
+    </item>
+    <item android:gravity="center">
+        <bitmap
+            android:src="@drawable/gloxorg_logo"
+            android:gravity="center"
+            android:width="96dp"
+            android:height="96dp" />
+    </item>
+</layer-list>

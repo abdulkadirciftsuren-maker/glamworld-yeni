@@ -4,12 +4,7 @@ name: Android Test APK
 # Web sitesini/yayını ETKİLEMEZ (sadece android/ klasörü). Çıktı: Actions > bu çalışma > Artifacts > gloxorg-test-apk
 
 on:
-  push:
-    branches: [ claude/glamworld-rules-review-0kzl0x ]
-    paths:
-      - 'android/**'
-      - '.github/workflows/android-test.yml'
-  workflow_dispatch:
+  workflow_dispatch:   # Artik otomatik calismaz (uretim icin android-release.yml kullanilir); elle tetiklenebilir.
 
 permissions:
   contents: write   # APK'yı gh-pages'e (siteye) koyabilmek için

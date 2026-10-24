@@ -4,21 +4,41 @@ plugins {
 }
 
 android {
-    namespace 'com.gloxorg.webtest'
-    compileSdk 34
+    namespace 'com.gloxorg.app'
+    compileSdk 35
 
     defaultConfig {
-        // DENEME paketi — canlı uygulamadan AYRI (com.gloxorg.twa'ya dokunmaz, yan yana kurulur)
-        applicationId 'com.gloxorg.webtest'
+        // ÜRETİM paketi — yeni temiz uygulama (eski com.gloxorg.twa'dan AYRI)
+        applicationId 'com.gloxorg.app'
         minSdk 24
-        targetSdk 34
-        versionCode 2
-        versionName '1.0-test2'
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+
+    // İMZA: anahtar bilgileri ortam değişkenlerinden okunur (CI'da üretilir/secret'tan gelir).
+    // Yoksa (yerel/denemede) release imzasız kalmasın diye debug imzasına düşer.
+    signingConfigs {
+        release {
+            def storeF = System.getenv('GLOX_STORE_FILE')
+            if (storeF != null && !storeF.isEmpty()) {
+                storeFile file(storeF)
+                storePassword System.getenv('GLOX_STORE_PASSWORD')
+                keyAlias System.getenv('GLOX_KEY_ALIAS')
+                keyPassword System.getenv('GLOX_KEY_PASSWORD')
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
+            def storeF = System.getenv('GLOX_STORE_FILE')
+            if (storeF != null && !storeF.isEmpty()) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
         }
     }
 

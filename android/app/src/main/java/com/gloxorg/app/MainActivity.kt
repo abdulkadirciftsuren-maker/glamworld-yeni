@@ -1,4 +1,4 @@
-package com.gloxorg.webtest
+package com.gloxorg.app
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -8,10 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.SystemClock
+import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
@@ -24,17 +25,27 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 
 /**
- * GLOXORG — native WebView kabuğu (DENEME).
+ * GLOXORG — native uygulama (üretim).
  *
- * SARI PERDE ÇÖZÜMÜ: Telefon arka planda WebView'in render sürecini öldürürse (sabah bomboş sarı ekranın
- * gerçek sebebi buydu), onRenderProcessGone devreye girer → ölü WebView'i atar, YENİSİNİ kurar, sayfayı
- * yeniden yükler → kullanıcı bomboş ekran görmez, sayfa gelir. TWA bunu yapamıyordu; native kabuk yapar.
- * Ayrıca uzun süre arka planda kalıp dönünce de tazeler.
+ * ⭐ SARI PERDE ÇÖZÜMÜ (asıl sebep buydu): Telefon arka planda WebView'in render sürecini öldürünce
+ *    (sabah açınca bomboş sarı ekranın gerçek sebebi), onRenderProcessGone devreye girer → ölü
+ *    WebView'i atar, YENİSİNİ kurar, sayfayı yeniden yükler → kullanıcı bomboş ekran görmez. Bu,
+ *    TWA'nın (eski Play sürümü) YAPAMADIĞI şey; native kabuk yapar. Ayrıca uzun süre arka planda
+ *    kalıp dönünce de tazeler.
+ *
+ * ⭐ MARKALI AÇILIŞ: WebView daha hiç boyanmadan önce bile (ve yeniden kurulurken) altın zemin +
+ *    GLOXORG logosu + dönen halka gösterilir (native görünüm, her zaman boyanır) → sayfa gelene
+ *    kadar bomboş ekran OLMAZ, düzgün bir "yükleniyor" görünür.
  */
 class MainActivity : Activity() {
 
+    private var kok: FrameLayout? = null
+    private var ortu: View? = null
     private var web: WebView? = null
     private var dosyaCallback: ValueCallback<Array<Uri>>? = null
     private var arkaPlanZamani: Long = 0L
@@ -47,14 +58,59 @@ class MainActivity : Activity() {
     private val IZIN_KONUM = 2002
     // Bu kadar milisaniyeden uzun arka planda kaldıysa, dönüşte tazele (içerik bayatlamasın)
     private val UZUN_ARKA_PLAN = 30 * 60 * 1000L // 30 dakika
+    private val ALTIN = 0xFFF2DF9F.toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        yeniWebViewKur(ilk = true)
+        // Kök: altta WebView, üstte markalı açılış örtüsü
+        val root = FrameLayout(this)
+        root.setBackgroundColor(ALTIN)
+        setContentView(root, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        kok = root
+        ortu = acilisOrtusuYap()
+        yeniWebViewKur()
+        root.addView(ortu) // örtü en üstte kalsın
     }
 
+    /** Altın zemin + GLOXORG logosu + dönen halka — sayfa gelene kadar görünür (bomboş ekran olmaz). */
+    private fun acilisOrtusuYap(): View {
+        val fon = FrameLayout(this)
+        fon.setBackgroundColor(ALTIN)
+        fon.isClickable = true // alttaki sayfaya dokunma geçmesin
+
+        val kutu = LinearLayout(this)
+        kutu.orientation = LinearLayout.VERTICAL
+        kutu.gravity = Gravity.CENTER
+
+        val logo = ImageView(this)
+        logo.setImageResource(R.drawable.gloxorg_logo)
+        val lp = LinearLayout.LayoutParams(dp(96), dp(96))
+        lp.gravity = Gravity.CENTER
+        logo.layoutParams = lp
+        kutu.addView(logo)
+
+        val halka = ProgressBar(this)
+        val hp = LinearLayout.LayoutParams(dp(36), dp(36))
+        hp.gravity = Gravity.CENTER
+        hp.topMargin = dp(22)
+        halka.layoutParams = hp
+        kutu.addView(halka)
+
+        val klp = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER
+        )
+        fon.addView(kutu, klp)
+        return fon
+    }
+
+    private fun ortuGoster(goster: Boolean) {
+        ortu?.visibility = if (goster) View.VISIBLE else View.GONE
+    }
+
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
+
     @SuppressLint("SetJavaScriptEnabled")
-    private fun yeniWebViewKur(ilk: Boolean) {
+    private fun yeniWebViewKur() {
         val w = WebView(this)
 
         val s = w.settings
@@ -82,8 +138,7 @@ class MainActivity : Activity() {
             s.userAgentString = ua.replace("; wv)", ")").replace("; wv", "").replace(" wv", "")
         } catch (e: Exception) {}
 
-        // (Geliştirme için; zararsız) uzaktan hata ayıklama açık
-        try { WebView.setWebContentsDebuggingEnabled(true) } catch (e: Exception) {}
+        w.setBackgroundColor(ALTIN) // yüklenirken WebView'in kendi zemini de altın (beyaz/siyah flaş yok)
 
         w.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -99,8 +154,15 @@ class MainActivity : Activity() {
                 }
             }
 
+            override fun onPageFinished(view: WebView?, url: String?) {
+                // Sayfa geldi → markalı açılış örtüsünü kaldır (kısa gecikme: ilk boyama otursun)
+                view?.postDelayed({ ortuGoster(false) }, 350)
+            }
+
             // *** SARI PERDE ÇÖZÜMÜ ***
             override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
+                // Render süreci öldü → markalı örtüyü göster, ölü WebView'i at, yenisini kur
+                ortuGoster(true)
                 yenidenKur()
                 return true // ele aldık → uygulama ÇÖKMEZ, sayfa yeniden gelir
             }
@@ -174,7 +236,11 @@ class MainActivity : Activity() {
             } catch (e: Exception) {}
         }
 
-        setContentView(w, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        // WebView'i örtünün ALTINA ekle (örtü varsa index 0)
+        val root = kok
+        if (root != null) {
+            root.addView(w, 0, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
         web = w
         w.loadUrl(BASLANGIC_URL)
     }
@@ -187,7 +253,7 @@ class MainActivity : Activity() {
             eski?.destroy()
         } catch (e: Exception) {}
         web = null
-        yeniWebViewKur(ilk = false)
+        yeniWebViewKur()
     }
 
     private fun izinVar(izin: String): Boolean =
@@ -256,6 +322,7 @@ class MainActivity : Activity() {
         // Uzun süre arka planda kaldıysa dönüşte tazele (içerik bayatlamasın / boş kalmasın)
         val w = web
         if (w != null && arkaPlanZamani > 0L && (SystemClock.elapsedRealtime() - arkaPlanZamani) > UZUN_ARKA_PLAN) {
+            ortuGoster(true)
             w.reload()
         }
         arkaPlanZamani = 0L

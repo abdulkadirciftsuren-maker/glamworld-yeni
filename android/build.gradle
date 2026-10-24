@@ -1,5 +1,5 @@
-// Kök derleme dosyası — eklenti sürümleri (AGP + Kotlin)
+// Kök derleme dosyası — eklenti sürümleri (AGP + Kotlin). compileSdk 35 için AGP 8.6+ gerekir.
 plugins {
-    id 'com.android.application' version '8.5.2' apply false
+    id 'com.android.application' version '8.6.1' apply false
     id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
 }

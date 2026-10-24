@@ -1,0 +1,114 @@
+name: Android Release (Play icin AAB)
+
+# GLOXORG native URETIM uygulamasini derler → Play'e yuklenecek IMZALI .aab + test icin .apk uretir.
+# Web sitesini/yayini ETKILEMEZ (sadece android/ klasoru).
+# Ilk calismada yeni bir imza anahtari (keystore) uretir ve loga base64'unu yazar; sonraki guncellemeler
+# icin ayni anahtar KEYSTORE_B64 secret'ina konur (boylece Play guncellemeleri kabul eder).
+
+on:
+  push:
+    branches: [ claude/glamworld-rules-review-0kzl0x ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # test APK'sini gh-pages'e (siteye) koyabilmek icin
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JDK 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK kur (kendi paketini kurmasin)
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
+      - name: SDK bilesenleri (platform 35 + build-tools 35)
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Gradle wrapper uret
+        working-directory: android
+        run: gradle wrapper --gradle-version 8.9
+
+      - name: Imza anahtari (keystore) hazirla
+        id: ks
+        working-directory: android
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          set -e
+          KS=app/gloxorg-upload.jks
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$KS"
+            echo "Secret'tan mevcut imza anahtari kuruldu (guncelleme)."
+          else
+            keytool -genkeypair -v -keystore "$KS" -alias gloxorg \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass gloxorg2026 -keypass gloxorg2026 \
+              -dname "CN=GLOXORG, OU=GLOXORG, O=GLOXORG, L=Istanbul, S=Istanbul, C=TR"
+            echo "YENI imza anahtari uretildi. Asagidaki base64'u KEYSTORE_B64 secret'ina koy (sonraki guncellemeler icin):"
+            echo "----KEYSTORE_B64_BASLANGIC----"
+            base64 -w0 "$KS"
+            echo ""
+            echo "----KEYSTORE_B64_BITIS----"
+          fi
+
+      - name: AAB + APK derle (imzali)
+        working-directory: android
+        env:
+          GLOX_STORE_FILE: ${{ github.workspace }}/android/app/gloxorg-upload.jks
+          GLOX_STORE_PASSWORD: gloxorg2026
+          GLOX_KEY_ALIAS: gloxorg
+          GLOX_KEY_PASSWORD: gloxorg2026
+        run: ./gradlew bundleRelease assembleRelease --stacktrace --no-daemon
+
+      - name: Ciktilari topla
+        run: |
+          set -e
+          mkdir -p cikti
+          cp android/app/build/outputs/bundle/release/app-release.aab cikti/GLOXORG.aab
+          cp android/app/build/outputs/apk/release/app-release.apk cikti/GLOXORG-kurulum.apk
+          cp android/app/gloxorg-upload.jks cikti/gloxorg-imza-anahtari.jks
+          cat > cikti/ANAHTAR-BILGISI.txt <<'EOF'
+          GLOXORG imza anahtari — GUVENLE SAKLA, KAYBETME! (Play guncellemeleri icin lazim)
+          Dosya: gloxorg-imza-anahtari.jks
+          Store sifresi: gloxorg2026
+          Anahtar adi (alias): gloxorg
+          Anahtar sifresi: gloxorg2026
+          EOF
+
+      - name: Ciktilari yukle (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: gloxorg-release
+          path: cikti/
+          if-no-files-found: error
+
+      - name: Test APK'sini siteye koy (gloxorg.com/GLOXORG-kurulum.apk)
+        run: |
+          set -e
+          git config user.name "gloxorg-ci"
+          git config user.email "ci@gloxorg.local"
+          git fetch origin gh-pages --depth=1
+          git worktree add ../ghp gh-pages
+          cp cikti/GLOXORG-kurulum.apk ../ghp/GLOXORG-kurulum.apk
+          cd ../ghp
+          git add GLOXORG-kurulum.apk
+          git commit -m "uretim test APK: GLOXORG-kurulum.apk" || echo "degisiklik yok"
+          git push origin gh-pages

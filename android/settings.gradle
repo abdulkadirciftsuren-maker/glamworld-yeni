@@ -1,4 +1,4 @@
-// GLOXORG native (WebView) deneme uygulaması — proje ayarları
+// GLOXORG native uygulaması — proje ayarları
 pluginManagement {
     repositories {
         google()
@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "GloxorgWeb"
+rootProject.name = "Gloxorg"
 include ':app'

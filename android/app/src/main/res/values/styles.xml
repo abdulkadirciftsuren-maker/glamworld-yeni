@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Uygulama teması: açılış anında (daha uygulama kurulmadan) OS, altın zemin + GLOXORG logosu
+         gösterir → asla beyaz/siyah flaş veya bomboş ekran olmaz. ANAYASA: her yer ALTIN. -->
+    <style name="GloxorgTema" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/acilis_arka</item>
+        <item name="android:statusBarColor">#F2DF9F</item>
+        <item name="android:navigationBarColor">#F2DF9F</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
