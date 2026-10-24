@@ -3,7 +3,7 @@
 // Giriş Yap → buradan doğrulanır. Anahtar genel web kimliğidir (gizli şifre değil).
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 import { getAI, getGenerativeModel, GoogleAIBackend, VertexAIBackend, ResponseModality } from "firebase/ai";
@@ -30,7 +30,18 @@ const app = initializeApp(firebaseConfig);
 // konmuştu; bu async çağrı, sayfa YENİLENİRKEN (her güncelleme sonrası) oturumu bir an "yok" gösterip kullanıcıyı
 // giriş ekranına atıyordu (kendiliğinden çıkış). O çağrı KALDIRILDI → yenilemede oturum korunur, tekrar giriş istemez.
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// VERİTABANI — TELEFONDA KALICI ÖNBELLEK (B423, kullanıcı: "Facebook'ta arka pencereden dönünce sayfa ANINDA geliyor,
+//   bizde her seferinde parça parça yükleniyor"). Eskiden veriler sadece hafızadaydı → telefon uygulamayı arka planda
+//   kapatınca her şey İNTERNETTEN baştan iniyordu. Artık son görülen gönderiler/profiller telefonda (IndexedDB) saklanır:
+//   açılışta ÖNCE telefondaki içerik ANINDA gösterilir, yenileri internetten gelince sessizce eklenir.
+//   Birden fazla sekme/pencere aynı anda açık olabilir (persistentMultipleTabManager). Kurulamazsa eski usule düşer.
+let _db;
+try {
+  _db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+} catch (e) {
+  _db = getFirestore(app);
+}
+export const db = _db;
 // VİDEO/büyük dosya deposu (Firestore 1MB sınırına takılmadan video yüklenir)
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();

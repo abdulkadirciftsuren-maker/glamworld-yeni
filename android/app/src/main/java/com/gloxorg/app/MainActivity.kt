@@ -11,7 +11,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.os.SystemClock
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -50,7 +49,6 @@ class MainActivity : Activity() {
     private var ortu: View? = null
     private var web: WebView? = null
     private var dosyaCallback: ValueCallback<Array<Uri>>? = null
-    private var arkaPlanZamani: Long = 0L
     private var bekleyenIzinIstegi: PermissionRequest? = null
     private var bekleyenKonum: Pair<String?, GeolocationPermissions.Callback?>? = null
     // Google girişi Chrome'dan dönünce sayfaya verilecek komut (sayfa henüz hazır değilse burada bekler)
@@ -61,8 +59,6 @@ class MainActivity : Activity() {
     private val DOSYA_SEC = 1001
     private val IZIN_KAMERA_MIC = 2001
     private val IZIN_KONUM = 2002
-    // Bu kadar milisaniyeden uzun arka planda kaldıysa, dönüşte tazele (içerik bayatlamasın)
-    private val UZUN_ARKA_PLAN = 30 * 60 * 1000L // 30 dakika
     private val ALTIN = 0xFFF2DF9F.toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -391,20 +387,14 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
-        arkaPlanZamani = SystemClock.elapsedRealtime()
         try { web?.onPause() } catch (e: Exception) {}
     }
 
     override fun onResume() {
         super.onResume()
         try { web?.onResume() } catch (e: Exception) {}
-        // Uzun süre arka planda kaldıysa dönüşte tazele (içerik bayatlamasın / boş kalmasın)
-        val w = web
-        if (w != null && arkaPlanZamani > 0L && (SystemClock.elapsedRealtime() - arkaPlanZamani) > UZUN_ARKA_PLAN) {
-            ortuGoster(true)
-            w.reload()
-        }
-        arkaPlanZamani = 0L
+        // Arka plandan dönüşte sayfa YENİLENMEZ (Facebook gibi: kaldığın yerden ANINDA devam).
+        // Sadece telefon sayfanın motorunu öldürdüyse onRenderProcessGone yeniden kurar.
     }
 
     override fun onDestroy() {

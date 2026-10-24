@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write   # test APK'sini gh-pages'e (siteye) koyabilmek icin
+  actions: read     # bir onceki basarili derlemenin imza anahtarini (artifact) alabilmek icin
 
 jobs:
   build:
@@ -46,6 +47,21 @@ jobs:
         working-directory: android
         run: gradle wrapper --gradle-version 8.9
 
+      - name: Bir onceki derlemenin imza anahtarini al (AYNI anahtar = telefonda silmeden ustune kurulur, oturum gitmez)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          RID=$(gh run list --repo "${{ github.repository }}" --workflow android-release.yml --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          if [ -n "$RID" ]; then
+            gh run download "$RID" --repo "${{ github.repository }}" -n gloxorg-release -D onceki
+            if [ -f onceki/gloxorg-imza-anahtari.jks ]; then
+              cp onceki/gloxorg-imza-anahtari.jks android/app/gloxorg-upload.jks
+              echo "Onceki imza anahtari alindi (calisma $RID)."
+            fi
+          fi
+          exit 0
+
       - name: Imza anahtari (keystore) hazirla
         id: ks
         working-directory: android
@@ -57,6 +73,9 @@ jobs:
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$KS"
             echo "Secret'tan mevcut imza anahtari kuruldu (guncelleme)."
+          elif [ -f "$KS" ] && keytool -list -keystore "$KS" -storepass gloxorg2026 >/dev/null 2>&1; then
+            echo "Bir onceki derlemenin imza anahtari kullaniliyor (ayni anahtar)."
+            keytool -list -keystore "$KS" -storepass gloxorg2026 | grep -i "SHA-256" || true
           else
             keytool -genkeypair -v -keystore "$KS" -alias gloxorg \
               -keyalg RSA -keysize 2048 -validity 10000 \
