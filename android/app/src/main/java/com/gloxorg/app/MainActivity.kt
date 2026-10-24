@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DownloadManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -16,6 +17,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
+import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.ValueCallback
@@ -51,6 +53,9 @@ class MainActivity : Activity() {
     private var arkaPlanZamani: Long = 0L
     private var bekleyenIzinIstegi: PermissionRequest? = null
     private var bekleyenKonum: Pair<String?, GeolocationPermissions.Callback?>? = null
+    // Google girişi Chrome'dan dönünce sayfaya verilecek komut (sayfa henüz hazır değilse burada bekler)
+    private var bekleyenGirisJs: String? = null
+    private var sayfaHazir = false
 
     private val BASLANGIC_URL = "https://gloxorg.com"
     private val DOSYA_SEC = 1001
@@ -70,6 +75,67 @@ class MainActivity : Activity() {
         ortu = acilisOrtusuYap()
         yeniWebViewKur()
         root.addView(ortu) // örtü en üstte kalsın
+        girisDonusu(intent) // uygulama kapalıyken Chrome'dan anahtarla açıldıysa
+    }
+
+    // Chrome'daki Google girişinden dönüş (gloxorg://giris?t=ANAHTAR veya ?iptal=1)
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null) setIntent(intent)
+        girisDonusu(intent)
+    }
+
+    private fun girisDonusu(intent: Intent?) {
+        val veri = intent?.data ?: return
+        if (veri.scheme != "gloxorg" || veri.host != "giris") return
+        val anahtar = veri.getQueryParameter("t")
+        val cagri = if (anahtar != null && Regex("^[A-Za-z0-9._\\-]+$").matches(anahtar)) {
+            "window.gloxNativeGoogle('" + anahtar + "')"
+        } else {
+            "window.gloxNativeGoogleIptal && window.gloxNativeGoogleIptal()"
+        }
+        // Sayfanın işlevi hazır olana kadar kısa aralıklarla dene (sayfa yeniden yüklenmiş olabilir)
+        val js = "(function f(n){if(window.gloxNativeGoogle){" + cagri + "}else if(n>0){setTimeout(function(){f(n-1)},300)}})(60);"
+        val w = web
+        if (w != null && sayfaHazir) {
+            w.evaluateJavascript(js, null)
+        } else {
+            bekleyenGirisJs = js
+        }
+        // Aynı dönüş ikinci kez işlenmesin
+        intent?.data = null
+    }
+
+    /** Sayfa (gloxorg.com) buradan "Google ile giriş" ister → giriş Chrome penceresinde yapılır. */
+    inner class GloxKopru {
+        @JavascriptInterface
+        fun googleGiris() {
+            runOnUiThread { ozelSekmeAc("https://gloxorg.com/glox-google.html") }
+        }
+    }
+
+    // Chrome Custom Tab (uygulama içinde açılan Chrome penceresi). Paketi AÇIKÇA seçiyoruz ki
+    // gloxorg.com bağlantısını eski Play uygulaması (com.gloxorg.twa) kapmasın.
+    private fun ozelSekmeAc(url: String) {
+        val i = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val ek = Bundle()
+        ek.putBinder("android.support.customtabs.extra.SESSION", null)
+        i.putExtras(ek)
+        i.putExtra("android.support.customtabs.extra.TOOLBAR_COLOR", ALTIN)
+        val tarayicilar = listOf("com.android.chrome", "com.chrome.beta", "com.sec.android.app.sbrowser", "com.microsoft.emmx", "org.mozilla.firefox")
+        for (p in tarayicilar) {
+            try {
+                i.setPackage(p)
+                startActivity(i)
+                return
+            } catch (e: ActivityNotFoundException) {
+            } catch (e: Exception) {
+            }
+        }
+        try {
+            i.setPackage(null)
+            startActivity(i)
+        } catch (e: Exception) {}
     }
 
     /** Altın zemin + GLOXORG logosu + dönen halka — sayfa gelene kadar görünür (bomboş ekran olmaz). */
@@ -143,6 +209,8 @@ class MainActivity : Activity() {
         } catch (e: Exception) {}
 
         w.setBackgroundColor(ALTIN) // yüklenirken WebView'in kendi zemini de altın (beyaz/siyah flaş yok)
+        w.addJavascriptInterface(GloxKopru(), "AndroidGlox") // sayfa → uygulama: Google girişi
+        sayfaHazir = false
 
         w.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -161,6 +229,13 @@ class MainActivity : Activity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 // Sayfa geldi → markalı açılış örtüsünü kaldır (kısa gecikme: ilk boyama otursun)
                 view?.postDelayed({ ortuGoster(false) }, 350)
+                sayfaHazir = true
+                // Chrome'dan dönen Google anahtarı bekliyorsa şimdi ver
+                val js = bekleyenGirisJs
+                if (js != null) {
+                    bekleyenGirisJs = null
+                    view?.evaluateJavascript(js, null)
+                }
             }
 
             // *** SARI PERDE ÇÖZÜMÜ ***

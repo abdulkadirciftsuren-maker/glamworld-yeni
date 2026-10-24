@@ -2,7 +2,7 @@
 // Bu dosya sitenin "beyni"dir: Üye Ol → veriler buraya kaydedilir,
 // Giriş Yap → buradan doğrulanır. Anahtar genel web kimliğidir (gizli şifre değil).
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
@@ -63,7 +63,38 @@ export function twaIcinde() {
 //   temizlemek için duruyor (zararsız).
 const GIRIS_DENEME_ANAHTAR = "gwGirisDeneme";
 export function girisDenemeTemizle() { try { localStorage.removeItem(GIRIS_DENEME_ANAHTAR); } catch (e) {} }
+// ── NATIVE UYGULAMA (com.gloxorg.app) GOOGLE GİRİŞİ ──
+// Uygulamanın WebView'i içinde Google girişi (popup da redirect de) ÇALIŞMIYOR: popup geri konuşamıyor, redirect
+// dönüşte "missing initial state" veriyor (WebView sessionStorage'ı kaybediyor). ÇÖZÜM: giriş, Chrome'un kendi
+// penceresinde (Custom Tab) gloxorg.com/glox-google.html sayfasında yapılır (Chrome'da Google girişi sorunsuz),
+// oradan çıkan Google kimlik anahtarı (idToken) uygulamaya geri verilir, uygulama da burada signInWithCredential
+// ile oturumu açar. window.AndroidGlox köprüsünü SADECE native uygulama ekler → normal tarayıcı/TWA ETKİLENMEZ.
+function nativeGoogleVar() {
+  try { return typeof window !== "undefined" && window.AndroidGlox && typeof window.AndroidGlox.googleGiris === "function"; } catch (e) { return false; }
+}
+if (typeof window !== "undefined") {
+  // Uygulama, Chrome'dan dönen anahtarı buraya verir (bekleyen giriş yoksa da oturumu açar → App.js yönlendirir).
+  window.gloxNativeGoogle = async (idToken) => {
+    const b = window.__gloxGoogleBekle; window.__gloxGoogleBekle = null;
+    try {
+      const cred = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+      if (b) b.resolve({ cred });
+    } catch (e) { if (b) b.reject(e); }
+  };
+  // Kullanıcı Chrome penceresinde vazgeçti → bekleyen giriş "kapatıldı" olarak biter (hata yazısı çıkmaz).
+  window.gloxNativeGoogleIptal = () => {
+    const b = window.__gloxGoogleBekle; window.__gloxGoogleBekle = null;
+    if (b) b.reject({ code: "auth/popup-closed-by-user" });
+  };
+}
 export async function saglayiciIleGir(saglayici) {
+  // Native uygulama + Google → giriş Chrome penceresinde yapılır, anahtar geri gelince burada oturum açılır.
+  if (nativeGoogleVar() && saglayici && saglayici.providerId === "google.com") {
+    return new Promise((resolve, reject) => {
+      window.__gloxGoogleBekle = { resolve, reject };
+      try { window.AndroidGlox.googleGiris(); } catch (e) { window.__gloxGoogleBekle = null; reject(e); }
+    });
+  }
   // Android uygulaması → popup asılı kalıyor → doğrudan yönlendirme (redirect).
   if (twaIcinde()) {
     await signInWithRedirect(auth, saglayici); return { yonlendirildi: true };

@@ -33,6 +33,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Chrome'daki Google girişinden dönüş: gloxorg://giris?t=ANAHTAR (glox-google.html gönderir) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="gloxorg" android:host="giris" />
+            </intent-filter>
         </activity>
     </application>
 </manifest>
