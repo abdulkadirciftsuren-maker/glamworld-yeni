@@ -49,6 +49,9 @@ export function twaIcinde() {
   try {
     // TWA açılışta document.referrer = "android-app://com.gloxorg.twa" olur ve tek sayfa (SPA) boyunca korunur.
     if (typeof document !== "undefined" && (document.referrer || "").indexOf("android-app://") === 0) return true;
+    // YENİ native uygulama (com.gloxorg.app): kimliğine (User-Agent) "GloxorgApp" ekliyor → burada yakalanır.
+    // Böylece native WebView içinde de popup YERİNE redirect kullanılır (popup WebView'de geri konuşamaz → sarı ekran).
+    if (typeof navigator !== "undefined" && (navigator.userAgent || "").indexOf("GloxorgApp") !== -1) return true;
   } catch (e) {}
   return false;
 }

@@ -133,9 +133,13 @@ class MainActivity : Activity() {
 
         // GOOGLE GİRİŞİ: WebView kimliğindeki "wv" (sarmalanmış tarayıcı) işaretini kaldır → Google
         // "disallowed_useragent" ile girişi engellemesin, normal Chrome gibi görüp izin versin.
+        // AYRICA "GloxorgApp" ekle → site, uygulama içinde olduğumuzu anlar ve Google girişinde POPUP
+        // yerine REDIRECT kullanır (popup WebView'de geri konuşamaz → sarı ekran oluyordu). "wv" olmadığı
+        // için Google yine izin verir, "GloxorgApp" ise Google'ı engellemez (sadece site bizi tanır).
         try {
             val ua = s.userAgentString ?: ""
-            s.userAgentString = ua.replace("; wv)", ")").replace("; wv", "").replace(" wv", "")
+            val temiz = ua.replace("; wv)", ")").replace("; wv", "").replace(" wv", "")
+            s.userAgentString = "$temiz GloxorgApp/1.0"
         } catch (e: Exception) {}
 
         w.setBackgroundColor(ALTIN) // yüklenirken WebView'in kendi zemini de altın (beyaz/siyah flaş yok)
