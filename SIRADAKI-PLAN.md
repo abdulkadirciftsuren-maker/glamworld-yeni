@@ -4,6 +4,15 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 📱 NATIVE UYGULAMA (com.gloxorg.app) — 24 EKİ 2026 — KULLANICI YARINA KADAR TEST EDİYOR
+- **NEDEN:** Play'deki TWA (com.gloxorg.twa) arka planda telefon motoru öldürünce SARI PERDE'de kalıyordu (web tarafında çözülemez). Native WebView kabuğu `android/` (MainActivity.kt) `onRenderProcessGone` ile kendini diriltir. Kullanıcı e-posta hesabıyla 3 saat sonra açtı → **sarı perde ÇÖZÜLDÜ**.
+- **GOOGLE GİRİŞİ (B422):** WebView içinde Google girişi ÇALIŞMAZ (popup geri konuşamıyor, redirect "missing initial state"). Çözüm: `window.AndroidGlox.googleGiris()` → Chrome Custom Tab'de `public/glox-google.html` (signInWithRedirect) → idToken `intent://giris?t=...;package=com.gloxorg.app` ile uygulamaya → `window.gloxNativeGoogle` → signInWithCredential. Firebase/SHA-1 ayarı GEREKMEZ. Telefonda HENÜZ DOĞRULANMADI.
+- **B423:** native 30 dk zorla yenileme KALDIRILDI; Firestore `persistentLocalCache` (içerik telefonda, anında açılış). **B424:** sw.js ana sayfa kabuğu (index.html + açılış JS/CSS) saklanır → internet yokken bile açılır (net::ERR_FAILED bitti); native `onReceivedError` → logolu örtü + otomatik tekrar.
+- **İMZA:** CI (`.github/workflows/android-release.yml`) bir önceki başarılı derlemenin artifact'ındaki anahtarı yeniden kullanır → aynı imza (SHA-256 `68:00:72:FD:...:DE:0C`), kullanıcı SİLMEDEN üstüne kurar. Şifre gloxorg2026, alias gloxorg; .jks kullanıcıya verildi. Artifact 90 gün tutulur — Play'e yüklemeden önce `KEYSTORE_B64` GitHub secret'ı kalıcı yapılmalı (Code secret yazamıyor, kullanıcıya yaptırılacak). APK/AAB: gh-pages `GLOXORG-kurulum.apk` / `GLOXORG.aab`.
+- **SIRADAKİ:** Kullanıcı yarın sonucu söyleyecek (arka plandan dönüş + Google girişi). Sorunsuzsa → AAB'yi Play'e yükleme (yeni uygulama, ekran ekran rehberlik).
+- **⛔ KULLANICI KARARI:** Açılış animasyonunun (intro) SİYAH zemini KALSIN, ELLEME (24 Eki).
+
+---
 ## 🔐 GOOGLE GİRİŞİ — AYNI-ADRES (same-origin) KURULUMU — 16 EKİ 2026 — ⛔ SAKIN BOZMA
 - **ÇÖZÜLDÜ (kullanıcı telefonla doğruladı, A13.B395):** Google ile giriş artık Android uygulamasında (TWA) **İLK dokunuşta** açılıyor. 1,5 yıllık "Google ilk seferde girmiyor, 2. seferde giriyor / sarı perde" derdi KÖKTEN bitti.
 - **NASIL:** `src/firebase.js` → `authDomain: "auth.gloxorg.com"` (ESKİ: `glamworld2.firebaseapp.com`). Uygulama gloxorg.com, giriş kapısı auth.gloxorg.com → AYNI site → TWA/WebView'de 3rd-party storage engeli YOK → ilk dokunuşta girer. (Firebase resmi çözümü: "redirect-best-practices".)
