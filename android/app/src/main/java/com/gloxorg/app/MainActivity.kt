@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.CancellationSignal
 import android.os.Environment
 import android.view.Gravity
 import android.view.View
@@ -31,6 +32,17 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.Toast
+import androidx.credentials.CredentialManager
+import androidx.credentials.CredentialManagerCallback
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import java.util.concurrent.Executor
 
 /**
  * GLOXORG — native uygulama (üretim).
@@ -65,6 +77,8 @@ class MainActivity : Activity() {
     private val IZIN_KAMERA_MIC = 2001
     private val IZIN_KONUM = 2002
     private val ALTIN = 0xFFF2DF9F.toInt()
+    // Firebase projesinin (glamworld2) Google "Web client ID"si — telefondan alınan Google anahtarı bu kimlik için üretilir
+    private val WEB_CLIENT_ID = "656498925104-45kvtat6gar0b57ei9jbs88c4oplrv6v.apps.googleusercontent.com"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,7 +103,13 @@ class MainActivity : Activity() {
     private fun girisDonusu(intent: Intent?) {
         val veri = intent?.data ?: return
         if (veri.scheme != "gloxorg" || veri.host != "giris") return
-        val anahtar = veri.getQueryParameter("t")
+        sayfayaGoogleVer(veri.getQueryParameter("t"))
+        // Aynı dönüş ikinci kez işlenmesin
+        intent?.data = null
+    }
+
+    /** Google anahtarını sayfaya verir (anahtar yoksa/geçersizse "vazgeçildi" bildirir). */
+    private fun sayfayaGoogleVer(anahtar: String?) {
         val cagri = if (anahtar != null && Regex("^[A-Za-z0-9._\\-]+$").matches(anahtar)) {
             "window.gloxNativeGoogle('" + anahtar + "')"
         } else {
@@ -103,15 +123,56 @@ class MainActivity : Activity() {
         } else {
             bekleyenGirisJs = js
         }
-        // Aynı dönüş ikinci kez işlenmesin
-        intent?.data = null
+    }
+
+    /**
+     * GOOGLE GİRİŞİ — telefonda KAYITLI Google hesabıyla (Facebook/Instagram gibi): alttan "... olarak devam et"
+     * penceresi çıkar, şifre/onay/sayfa gidip gelmesi YOK. Chrome yolu (missing initial state, otomatik dönememe)
+     * yerine bu kullanılır. Firebase'de uygulamanın parmak izi (SHA-1) kayıtlı değilse ya da başka bir sorun olursa
+     * ESKİ Chrome yoluna düşer (hiçbir şey bozulmaz).
+     */
+    private fun googleNativeGiris() {
+        try {
+            val cm = CredentialManager.create(this)
+            val secenek = GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build()
+            val istek = GetCredentialRequest.Builder().addCredentialOption(secenek).build()
+            cm.getCredentialAsync(this, istek, CancellationSignal(), Executor { r -> runOnUiThread(r) },
+                object : CredentialManagerCallback<GetCredentialResponse, GetCredentialException> {
+                    override fun onResult(result: GetCredentialResponse) {
+                        val c = result.credential
+                        if (c is CustomCredential && c.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                            try {
+                                sayfayaGoogleVer(GoogleIdTokenCredential.createFrom(c.data).idToken)
+                                return
+                            } catch (e: Exception) {}
+                        }
+                        chromeIleGiris("kimlik-turu")
+                    }
+
+                    override fun onError(e: GetCredentialException) {
+                        if (e is GetCredentialCancellationException) {
+                            sayfayaGoogleVer(null) // kullanıcı vazgeçti → giriş ekranı eski haline döner
+                            return
+                        }
+                        chromeIleGiris(e.javaClass.simpleName + " " + (e.errorMessage ?: ""))
+                    }
+                })
+        } catch (e: Exception) {
+            chromeIleGiris(e.javaClass.simpleName)
+        }
+    }
+
+    /** Yedek yol: Google girişi Chrome penceresinde. Neden yedeğe düştüğü kısa bir yazıyla gösterilir (teşhis için). */
+    private fun chromeIleGiris(sebep: String) {
+        try { Toast.makeText(this, "Google (telefon hesabı) olmadı: " + sebep.take(90) + " → Chrome ile deneniyor", Toast.LENGTH_LONG).show() } catch (e: Exception) {}
+        ozelSekmeAc("https://gloxorg.com/glox-google.html")
     }
 
     /** Sayfa (gloxorg.com) buradan "Google ile giriş" ister → giriş Chrome penceresinde yapılır. */
     inner class GloxKopru {
         @JavascriptInterface
         fun googleGiris() {
-            runOnUiThread { ozelSekmeAc("https://gloxorg.com/glox-google.html") }
+            runOnUiThread { googleNativeGiris() }
         }
     }
 

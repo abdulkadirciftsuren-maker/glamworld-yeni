@@ -53,7 +53,7 @@
   const tr = ((navigator.language || "") + "").toLowerCase().indexOf("tr") === 0;
   const M = tr ? {
     bekle: "Google ile giriş yapılıyor…",
-    tamam: "Giriş tamam ✓ GLOXORG'a dönülüyor…",
+    tamam: "Giriş tamam ✓ Devam etmek için aşağıdaki düğmeye dokun",
     don: "✓ GLOXORG'a dön",
     tekrarYazi: "Google girişi tamamlanmadı.",
     tekrar: "Tekrar dene",
@@ -61,7 +61,7 @@
     hata: "Bir sorun oldu. Tekrar dene.",
   } : {
     bekle: "Signing in with Google…",
-    tamam: "Signed in ✓ Returning to GLOXORG…",
+    tamam: "Signed in ✓ Tap the button below to continue",
     don: "✓ Return to GLOXORG",
     tekrarYazi: "Google sign-in was not completed.",
     tekrar: "Try again",
@@ -80,7 +80,7 @@
   $("donBtn").textContent = M.don;
 
   function goster(durum, hataKodu) {
-    $("halka").classList.toggle("gizli", durum !== "bekle" && durum !== "tamam");
+    $("halka").classList.toggle("gizli", durum !== "bekle");
     $("donBtn").classList.toggle("gizli", durum !== "tamam");
     $("tekrarBtn").classList.toggle("gizli", durum !== "tekrar" && durum !== "hata");
     $("vazgecBtn").classList.toggle("gizli", durum === "bekle" || durum === "tamam");

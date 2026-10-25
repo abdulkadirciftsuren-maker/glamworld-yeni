@@ -52,5 +52,8 @@ android {
 }
 
 dependencies {
-    // Sade: AndroidX yok, sadece çerçeve WebView + Kotlin stdlib (eklenti ile gelir)
+    // Telefonda kayıtlı Google hesabıyla tek dokunuş giriş ("... olarak devam et") — Facebook/Instagram gibi
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
 }
