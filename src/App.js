@@ -34,17 +34,20 @@ try {
   }
 } catch (e) {}
 
-// Oturum çözülürken (Google/kalıcı oturum) gösterilen yükleniyor ekranı.
-// KURAL: hiçbir yerde siyah/koyu YOK → zemin ALTIN. Parlama (yanıp sönme) YOK.
-// Ama müşteri yüklendiğini ANLASIN diye ORTADA yavaşça DÖNEN bir halka + "Yükleniyor…" var (dönme parlama değildir).
+// Oturum çözülürken (Google/kalıcı oturum) gösterilen yükleniyor ekranı. KURAL: zemin ALTIN, parlama YOK;
+// ortada yavaşça DÖNEN halka yüklendiğini gösterir.
+// YÜKLENİYOR EKRANI — index.html'deki açılış ekranının (#gw-arka) BİREBİR AYNISI (altın zemin + logo + GLOXORG + halka).
+// (B425: eskiden MAVİ zemindi → açılışta ekran altından maviye atlıyordu, kullanıcı "bir sürü farklı ekran" diyordu.
+//  Artık açılış → yükleniyor geçişi GÖRÜNMEZ, tek ekran gibi.)
 function Yukleniyor() {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "22px", background: "radial-gradient(ellipse at 50% 22%, #3d63a0 0%, #294a7d 42%, #1a3560 72%, #142b4f 100%)" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%)" }}>
       <style>{"@keyframes gwDon{to{transform:rotate(360deg)}}"}</style>
-      <div style={{ fontFamily: "'Playfair Display','Cinzel',Georgia,serif", fontWeight: 800, fontSize: "40px", letterSpacing: ".08em", background: "linear-gradient(180deg,#fff4cf,#ffd700 55%,#b8860b)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", filter: "drop-shadow(0 2px 7px rgba(0,0,0,.4))" }}>GLOXORG</div>
-      {/* Dönen halka — yüklendiğini gösterir (altın, mavi zeminde net görünür) */}
-      <div style={{ width: "46px", height: "46px", borderRadius: "50%", border: "4px solid rgba(255,233,168,.28)", borderTopColor: "#ffd700", borderRightColor: "#ffe9a8", animation: "gwDon .8s linear infinite" }} />
-      <div style={{ fontFamily: "Georgia,serif", fontWeight: 700, fontSize: "15px", letterSpacing: ".05em", color: "#cfe0ff" }}>Yükleniyor…</div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+        <img src={(process.env.PUBLIC_URL || "") + "/logo192-b213.png"} alt="" style={{ width: "94px", height: "94px", borderRadius: "20px", boxShadow: "0 10px 30px rgba(120,90,0,.28)" }} />
+        <div className="notranslate" translate="no" style={{ fontFamily: "Georgia,'Times New Roman',serif", fontWeight: 800, fontSize: "26px", letterSpacing: ".16em", color: "#6a4e00" }}>GLOXORG</div>
+        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "4px solid rgba(120,90,0,.2)", borderTopColor: "#8a6a00", animation: "gwDon .85s linear infinite" }} />
+      </div>
     </div>
   );
 }
@@ -91,6 +94,10 @@ function App() {
     if (u) {
       if (cikisTimerRef.current) { clearTimeout(cikisTimerRef.current); cikisTimerRef.current = null; }
       setKullanici(u);
+      // B425: Çıkıştan sonra tekrar girişte profil hâlâ "yok" kalmıştı → profil okunana kadar GİRİŞ KARTI flaş ediyordu
+      // (kullanıcı: "hesabı seçince gene giriş penceresi görünüp sonra ana sayfaya giriyor"). Profil okunana kadar
+      // "belirsiz" → giriş kartı yerine Yükleniyor ekranı görünür.
+      setProfil((p) => (p === "var" ? p : "belirsiz"));
       // Oturum doğrulandı → KENDİ bayrağımızı yaz (bir sonraki açılışta giriş kartı flaş etmesin). Çıkış bayrağını temizle.
       try { localStorage.setItem("gw_oturum", "1"); localStorage.removeItem("gw_cikis"); } catch (e) {}
       // Sosyal giriş yükleme ekranını (#gw-yuk) gizle ve bayrağı temizle.
