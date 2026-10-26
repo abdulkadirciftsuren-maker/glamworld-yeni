@@ -45,6 +45,8 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import java.util.concurrent.Executor
+import java.lang.ref.WeakReference
+import com.google.firebase.messaging.FirebaseMessaging
 
 /**
  * GLOXORG — native uygulama (üretim).
@@ -80,6 +82,7 @@ class MainActivity : Activity() {
     private val DOSYA_SEC = 1001
     private val IZIN_KAMERA_MIC = 2001
     private val IZIN_KONUM = 2002
+    private val IZIN_BILDIRIM = 2003
     private val ALTIN = 0xFFF2DF9F.toInt()
     // Firebase projesinin (glamworld2) Google "Web client ID"si — telefondan alınan Google anahtarı bu kimlik için üretilir
     private val WEB_CLIENT_ID = "656498925104-45kvtat6gar0b57ei9jbs88c4oplrv6v.apps.googleusercontent.com"
@@ -97,6 +100,37 @@ class MainActivity : Activity() {
         kenarBosluklariniAyarla(root)
         cubuklariAyarla()
         girisDonusu(intent) // uygulama kapalıyken Chrome'dan anahtarla açıldıysa
+        aktif = WeakReference(this)
+        bildirimAnahtariAl()
+    }
+
+    // ===== BİLDİRİMLER =====
+    // Telefonun bildirim anahtarını (FCM token) al → siteye ver (site giriş yapan kullanıcıya kaydeder:
+    // kullanicilar/{uid}.fcmTokens — sunucu bildirimleri buraya yollar).
+    private fun bildirimAnahtariAl() {
+        try {
+            FirebaseMessaging.getInstance().token.addOnSuccessListener { tok ->
+                if (tok != null) { GloxMesajServisi.tokenSakla(this, tok); sayfayaTokenVer(tok) }
+            }
+        } catch (e: Exception) {}
+    }
+
+    private fun sayfayaTokenVer(tok: String) {
+        if (!Regex("^[A-Za-z0-9_:\\-]+$").matches(tok)) return
+        val js = "(function f(n){if(window.gloxNativeFcm){window.gloxNativeFcm('" + tok + "')}else if(n>0){setTimeout(function(){f(n-1)},1000)}})(90);"
+        try { if (sayfaHazir) web?.evaluateJavascript(js, null) } catch (e: Exception) {}
+    }
+
+    // Android 13+ : bildirim izni (bir kez sorulur; reddedilirse ayarlardan açılabilir)
+    private fun bildirimIzniSor(zorla: Boolean) {
+        if (Build.VERSION.SDK_INT < 33) return
+        try {
+            if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) return
+            val tercih = getSharedPreferences("glox", MODE_PRIVATE)
+            if (!zorla && tercih.getBoolean("bildirimSoruldu", false)) return
+            tercih.edit().putBoolean("bildirimSoruldu", true).apply()
+            requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), IZIN_BILDIRIM)
+        } catch (e: Exception) {}
     }
 
     /**
@@ -237,6 +271,14 @@ class MainActivity : Activity() {
     /** Sayfa (gloxorg.com) buradan "Google ile giriş" ister → giriş Chrome penceresinde yapılır. */
     inner class GloxKopru {
         @JavascriptInterface
+        fun fcmToken(): String = GloxMesajServisi.tokenOku(this@MainActivity)
+
+        @JavascriptInterface
+        fun bildirimIzniIste() {
+            runOnUiThread { bildirimIzniSor(true) }
+        }
+
+        @JavascriptInterface
         fun googleGiris() {
             runOnUiThread { googleNativeGiris() }
         }
@@ -376,6 +418,9 @@ class MainActivity : Activity() {
                 // Sayfa geldi → markalı açılış örtüsünü kaldır (kısa gecikme: ilk boyama otursun)
                 view?.postDelayed({ ortuGoster(false) }, 350)
                 sayfaHazir = true
+                val tok = GloxMesajServisi.tokenOku(this@MainActivity)
+                if (tok.isNotEmpty()) sayfayaTokenVer(tok)
+                view?.postDelayed({ bildirimIzniSor(false) }, 3000)
                 // Chrome'dan dönen Google anahtarı bekliyorsa şimdi ver
                 val js = bekleyenGirisJs
                 if (js != null) {
@@ -537,6 +582,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        onPlanda = false
         // Arka plana geçiyoruz → sayfadaki video/ses ve Gloxoo sussun (WebView'de visibilitychange her zaman gelmiyor).
         // Glome araması (canlı akış) sayfa tarafında hariç tutulur, arka planda sürer.
         try { web?.evaluateJavascript("window.dispatchEvent(new Event('glox-arka-plan'))", null) } catch (e: Exception) {}
@@ -545,6 +591,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        onPlanda = true
         try { web?.onResume() } catch (e: Exception) {}
         // Arka plandan dönüşte sayfa YENİLENMEZ (Facebook gibi: kaldığın yerden ANINDA devam).
         // Sadece telefon sayfanın motorunu öldürdüyse onRenderProcessGone yeniden kurar.
@@ -556,7 +603,19 @@ class MainActivity : Activity() {
         }
     }
 
+    companion object {
+        /** Uygulama şu an ekranda mı (öndeyse bildirimi sayfa gösterir, servis çift göstermez) */
+        @Volatile var onPlanda = false
+        private var aktif: WeakReference<MainActivity>? = null
+        /** Bildirim anahtarı değişti (servisten) → uygulama açıksa siteye ver */
+        fun tokenDegisti(tok: String) {
+            val a = aktif?.get() ?: return
+            try { a.runOnUiThread { a.sayfayaTokenVer(tok) } } catch (e: Exception) {}
+        }
+    }
+
     override fun onDestroy() {
+        if (aktif?.get() === this) aktif = null
         try {
             val w = web
             (w?.parent as? ViewGroup)?.removeView(w)

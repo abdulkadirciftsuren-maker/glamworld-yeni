@@ -5642,6 +5642,12 @@ export default function Anasayfa({ pro = false }) {
   // Ayarlardan telefon bildirimi izni iste
   async function bildirimIzniIste() {
     try {
+      // NATIVE UYGULAMA (B431): bildirimleri uygulamanın kendisi alır (WebView'de Notification yok) → izni uygulama sorar
+      if (typeof window !== "undefined" && window.AndroidGlox && typeof window.AndroidGlox.bildirimIzniIste === "function") {
+        window.AndroidGlox.bildirimIzniIste();
+        bilgiBalonu(t("bildAcildi", "Telefon bildirimleri açıldı"));
+        return;
+      }
       if (typeof Notification === "undefined") { bilgiBalonu(t("bildDesteklenmiyor", "Bu cihaz/tarayıcı bildirimi desteklemiyor")); return; }
       const izin = await Notification.requestPermission();
       setBildirimIzin(izin); try { localStorage.setItem("groxBildirimIzin", izin); } catch (e) {}
@@ -5677,6 +5683,18 @@ export default function Anasayfa({ pro = false }) {
     let izinli = false;
     try { izinli = (typeof Notification !== "undefined" && Notification.permission === "granted"); } catch (e) {}
     if (izinli) pushKaydet();
+  }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
+  // NATIVE UYGULAMA BİLDİRİM ANAHTARI (B431) — uygulama, telefonun bildirim anahtarını (FCM token) verir; giriş yapan
+  // kullanıcıya kaydedilir (kullanicilar/{uid}.fcmTokens) → sunucu bildirimleri uygulama KAPALIYKEN de bu telefona gelir.
+  useEffect(() => {
+    if (!u) return undefined;
+    const kaydet = (tok) => { try { if (tok && auth.currentUser) fcmTokenKaydet(auth.currentUser.uid, tok); } catch (e) {} };
+    window.gloxNativeFcm = (tok) => { window.__gloxNativeFcmTok = tok; kaydet(tok); };
+    try {
+      const ilk = window.__gloxNativeFcmTok || (window.AndroidGlox && typeof window.AndroidGlox.fcmToken === "function" ? window.AndroidGlox.fcmToken() : "");
+      if (ilk) kaydet(ilk);
+    } catch (e) {}
+    return undefined;
   }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   // Kısa bilgi balonu göster (alta belirir, 2.2 sn sonra kaybolur)
   function bilgiBalonu(metin) { setKucukMesaj(metin); setTimeout(() => setKucukMesaj((m) => (m === metin ? "" : m)), 2200); }

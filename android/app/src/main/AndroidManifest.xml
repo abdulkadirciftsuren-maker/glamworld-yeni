@@ -10,11 +10,14 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Bildirimler (Android 13+ izin ister) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
+        android:name=".GloxApp"
         android:allowBackup="true"
         android:label="@string/app_adi"
         android:icon="@mipmap/ic_launcher"
@@ -41,5 +44,17 @@
                 <data android:scheme="gloxorg" android:host="giris" />
             </intent-filter>
         </activity>
+
+        <!-- Bildirim servisi: uygulama kapalı/arka plandayken gelen bildirimleri gösterir -->
+        <service
+            android:name=".GloxMesajServisi"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="glox_bildirim" />
     </application>
 </manifest>
