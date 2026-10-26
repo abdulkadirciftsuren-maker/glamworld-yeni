@@ -134,37 +134,40 @@ class MainActivity : Activity() {
     }
 
     /**
-     * ALTTAKİ ANDROID DÜĞME ŞERİDİ GİZLİ (eski uygulama gibi tam ekran; aşağıdan kaydırınca geçici görünür).
-     * Üstteki saat/pil çubuğu GÖRÜNÜR kalır (kamera deliği/çentikle çakışmasın).
+     * TAM EKRAN (eski Play uygulaması gibi, B432): üstteki saat/pil çubuğu ve alttaki Android düğme şeridi GİZLİ.
+     * Kenardan kaydırınca geçici görünür, sonra kaybolur. Sayfa kamera deliğinin olduğu kısma kadar uzanır (eskisi gibi).
      */
     private fun cubuklariAyarla() {
         try {
+            if (Build.VERSION.SDK_INT >= 28) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
             if (Build.VERSION.SDK_INT >= 30) {
                 window.insetsController?.let { c ->
-                    c.hide(WindowInsets.Type.navigationBars())
+                    c.hide(WindowInsets.Type.systemBars())
                     c.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 }
             } else {
                 @Suppress("DEPRECATION")
-                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
             }
         } catch (e: Exception) {}
     }
 
     /**
-     * KENAR BOŞLUKLARI (Android 11+): Android 15 uygulamayı ekranın EN KENARINA kadar çiziyor → sayfanın üstü saat
-     * çubuğunun ALTINA giriyordu. Artık sayfa saat çubuğunun (ve kamera çentiğinin) altından başlar; klavye açılınca
-     * sayfa klavyenin ÜSTÜNDE biter (yazı kutusu klavyenin altında kalmaz). Kenar boşlukları ALTIN (kök zemini).
+     * KLAVYE BOŞLUĞU (Android 11+): uygulama tam ekran ve kenardan kenara çizilir; klavye açılınca sayfa klavyenin
+     * ÜSTÜNDE biter (yazı kutusu klavyenin altında kalmaz). Kök zemini ALTIN.
      */
     private fun kenarBosluklariniAyarla(root: FrameLayout) {
         if (Build.VERSION.SDK_INT < 30) return // eski sürümlerde sistem (adjustResize) zaten hallediyor
         try {
             window.setDecorFitsSystemWindows(false)
             root.setOnApplyWindowInsetsListener { v, ins ->
-                val ust = ins.getInsets(WindowInsets.Type.statusBars() or WindowInsets.Type.displayCutout())
+                // Çubuklar gizli (tam ekran) → üstte boşluk yok; sadece klavye açılınca alttan klavye kadar boşluk
                 val klavye = ins.getInsets(WindowInsets.Type.ime())
-                val gezinme = ins.getInsets(WindowInsets.Type.navigationBars())
-                v.setPadding(0, ust.top, 0, maxOf(klavye.bottom, gezinme.bottom))
+                v.setPadding(0, 0, 0, klavye.bottom)
                 WindowInsets.CONSUMED
             }
         } catch (e: Exception) {}
