@@ -4,6 +4,17 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🚀 PLAY'E YÜKLEME — 26 EKİ 2026 — GOOGLE ONAYI BEKLENİYOR (yeni oturum ÖNCE BUNU OKU)
+- **KARAR:** Native sürüm, Play'deki MEVCUT uygulamanın (paket `com.gloxorg.twa`, kapalı test 'alpha', son sürüm **versionCode 4 (4.0.0.0)**, 4 Eyl) GÜNCELLEMESİ olarak yüklenecek. Yeni paket (com.gloxorg.app) ayrı yüklenirse Google 12 testçi/14 gün testi TEKRAR ister → YAPMA. Üretim izni süresiz.
+- **YÜKLEME ANAHTARI SIFIRLAMA TALEBİ GÖNDERİLDİ (26 Eki 20:08):** Play Console > Uygulama imzalama > 'Sıfırlama talep edin' + `upload_certificate.pem` (bizim CI anahtarı: SHA-1 `11:90:52:6A:A3:2C:9F:4A:ED:94:B2:6B:98:57:93:87:D2:5C:B8:2F`, SHA-256 `68:00:72:FD:...:DE:0C`). Google 1-2 günde e-posta ile onaylar. Onaydan sonra CI anahtarıyla imzalı AAB yüklenebilir. (PWABuilder'ın 6 paket klasöründeki eski anahtarlar KULLANILMIYOR.)
+- **Play uygulama imzalama anahtarı (Google'ınki):** SHA-1 `2A:11:3D:1A:9A:AB:92:84:CD:72:A7:70:A6:AF:53:C2:89:AD:19:09`, SHA-256 `29:70:93:DF:C5:C5:2A:5E:FD:72:...:5A:5B`.
+- **FIREBASE (glamworld2) Android uygulamaları KAYITLI:** (1) `com.gloxorg.app` (GLOXORG, test) — SHA-1 11:90:52...; (2) `com.gloxorg.twa` (GLOXORG Play) — SHA-1 2A:11:3D... (Play) + 11:90:52... (bizim). Halka açık isim = GLOXORG. Web client ID `656498925104-45kvtat6gar0b57ei9jbs88c4oplrv6v.apps.googleusercontent.com`.
+- **GOOGLE GİRİŞİ (native):** telefon hesabıyla (Credential Manager) ÇALIŞIYOR — kullanıcı doğruladı (GLOXORG logolu hesap seçici). Chrome Custom Tab yolu sadece yedek.
+- **ONAY GELİNCE YAPILACAKLAR:** (a) applicationId'yi Play derlemesi için `com.gloxorg.twa` yap (test derlemesi com.gloxorg.app kalsın — kullanıcının telefonunda Play'den TWA kurulu, aynı paketi farklı imzayla üstüne kuramaz); (b) versionCode ≥ 10; (c) MainActivity'deki TEST teşhis penceresini (AlertDialog 'Google girişi') kaldır, yedeğe sessiz geç; (d) AAB üret, kullanıcıya ver, Play Console'da Üretim > yeni sürüm ekran ekran. NOT: TWA→native geçişinde kullanıcılar bir kere yeniden giriş yapar (Chrome verisi WebView'e taşınmaz).
+- **B426:** arka plana atınca video/Gloxoo susar (Glome araması sürer) — kullanıcı test ediyor.
+- **SIRADAKİ (onay beklerken):** sayfanın parça parça değil tek seferde açılması; bekleyen eski işler (Firma Reklamı açıklama alanı, ürün foto sırası).
+
+---
 ## 📱 NATIVE UYGULAMA (com.gloxorg.app) — 24 EKİ 2026 — KULLANICI YARINA KADAR TEST EDİYOR
 - **NEDEN:** Play'deki TWA (com.gloxorg.twa) arka planda telefon motoru öldürünce SARI PERDE'de kalıyordu (web tarafında çözülemez). Native WebView kabuğu `android/` (MainActivity.kt) `onRenderProcessGone` ile kendini diriltir. Kullanıcı e-posta hesabıyla 3 saat sonra açtı → **sarı perde ÇÖZÜLDÜ**.
 - **GOOGLE GİRİŞİ (B422):** WebView içinde Google girişi ÇALIŞMAZ (popup geri konuşamıyor, redirect "missing initial state"). Çözüm: `window.AndroidGlox.googleGiris()` → Chrome Custom Tab'de `public/glox-google.html` (signInWithRedirect) → idToken `intent://giris?t=...;package=com.gloxorg.app` ile uygulamaya → `window.gloxNativeGoogle` → signInWithCredential. Firebase/SHA-1 ayarı GEREKMEZ. Telefonda HENÜZ DOĞRULANMADI.
