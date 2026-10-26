@@ -10,12 +10,15 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Environment
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
@@ -91,7 +94,52 @@ class MainActivity : Activity() {
         ortu = acilisOrtusuYap()
         yeniWebViewKur()
         root.addView(ortu) // örtü en üstte kalsın
+        kenarBosluklariniAyarla(root)
+        cubuklariAyarla()
         girisDonusu(intent) // uygulama kapalıyken Chrome'dan anahtarla açıldıysa
+    }
+
+    /**
+     * ALTTAKİ ANDROID DÜĞME ŞERİDİ GİZLİ (eski uygulama gibi tam ekran; aşağıdan kaydırınca geçici görünür).
+     * Üstteki saat/pil çubuğu GÖRÜNÜR kalır (kamera deliği/çentikle çakışmasın).
+     */
+    private fun cubuklariAyarla() {
+        try {
+            if (Build.VERSION.SDK_INT >= 30) {
+                window.insetsController?.let { c ->
+                    c.hide(WindowInsets.Type.navigationBars())
+                    c.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+            }
+        } catch (e: Exception) {}
+    }
+
+    /**
+     * KENAR BOŞLUKLARI (Android 11+): Android 15 uygulamayı ekranın EN KENARINA kadar çiziyor → sayfanın üstü saat
+     * çubuğunun ALTINA giriyordu. Artık sayfa saat çubuğunun (ve kamera çentiğinin) altından başlar; klavye açılınca
+     * sayfa klavyenin ÜSTÜNDE biter (yazı kutusu klavyenin altında kalmaz). Kenar boşlukları ALTIN (kök zemini).
+     */
+    private fun kenarBosluklariniAyarla(root: FrameLayout) {
+        if (Build.VERSION.SDK_INT < 30) return // eski sürümlerde sistem (adjustResize) zaten hallediyor
+        try {
+            window.setDecorFitsSystemWindows(false)
+            root.setOnApplyWindowInsetsListener { v, ins ->
+                val ust = ins.getInsets(WindowInsets.Type.statusBars() or WindowInsets.Type.displayCutout())
+                val klavye = ins.getInsets(WindowInsets.Type.ime())
+                val gezinme = ins.getInsets(WindowInsets.Type.navigationBars())
+                v.setPadding(0, ust.top, 0, maxOf(klavye.bottom, gezinme.bottom))
+                WindowInsets.CONSUMED
+            }
+        } catch (e: Exception) {}
+    }
+
+    // Klavye/pencere/izin ekranından dönünce şerit tekrar görünür olabilir → yeniden gizle
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) cubuklariAyarla()
     }
 
     // Chrome'daki Google girişinden dönüş (gloxorg://giris?t=ANAHTAR veya ?iptal=1)

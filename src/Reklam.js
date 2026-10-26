@@ -208,7 +208,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   useEffect(() => () => { reklamAktifRef.current = false; }, []);
   useEffect(() => {
     if (!uid || !reklamlar.length || kucultmeBasladiRef.current) return undefined;
-    const benimkiler = reklamlar.filter((r) => (r.uid === uid || r.sahipUid === uid) && !r.kapakKucuk && typeof r.kapak === "string" && r.kapak.indexOf("http") === 0);
+    // Kendi reklamlarım + YÖNETİCİ ise TÜM reklamlar (kural yöneticiye güncelleme izni verir). Daha önce reddedilenler atlanır.
+    let atla = []; try { atla = JSON.parse(localStorage.getItem("gwKapakAtla") || "[]"); } catch (e) {}
+    const benimkiler = reklamlar.filter((r) => (r.uid === uid || r.sahipUid === uid || yonetici) && !r.kapakKucuk && atla.indexOf(r.id) < 0 && typeof r.kapak === "string" && r.kapak.indexOf("http") === 0);
     if (!benimkiler.length) return undefined;
     kucultmeBasladiRef.current = true;
     setTimeout(async () => {
@@ -224,12 +226,13 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
           const yeni = await gorselYukle(kucuk, uid);
           if (!yeni) continue;
           const ok = await pazarUrunGuncelle(r.id, { kapak: yeni, kapakEski: r.kapak, kapakKucuk: true });
+          if (!ok) { try { atla.push(r.id); localStorage.setItem("gwKapakAtla", JSON.stringify(atla)); } catch (e) {} continue; } // izin yok → bir daha deneme
           if (ok && reklamAktifRef.current) setReklamlar((a) => a.map((x) => (x.id === r.id ? { ...x, kapak: yeni, kapakKucuk: true } : x)));
         } catch (e) {}
       }
     }, 6000);
     return undefined;
-  }, [uid, reklamlar.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [uid, yonetici, reklamlar.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // HARİTA — açılınca Leaflet haritası kur (OSM); parmakla dokun/pini sürükle → nokta seç. Kapanınca temizle.
   useEffect(() => {
