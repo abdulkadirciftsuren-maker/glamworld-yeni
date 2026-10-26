@@ -32,7 +32,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
-import android.widget.Toast
 import androidx.credentials.CredentialManager
 import androidx.credentials.CredentialManagerCallback
 import androidx.credentials.CustomCredential
@@ -70,6 +69,8 @@ class MainActivity : Activity() {
     private var sayfaHazir = false
     // Ana sayfa yüklenemezse (internet o an yok) hata sayfası GÖSTERİLMEZ; logolu ekran kalır, kendiliğinden tekrar denenir
     private var sayfaHatali = false
+    // Chrome penceresinde Google girişi açıkken true: pencere anahtar vermeden kapanırsa (çarpı) sayfaya "vazgeçildi" denir
+    private var chromeGirisBekliyor = false
     private var hataSayisi = 0
 
     private val BASLANGIC_URL = "https://gloxorg.com"
@@ -103,6 +104,7 @@ class MainActivity : Activity() {
     private fun girisDonusu(intent: Intent?) {
         val veri = intent?.data ?: return
         if (veri.scheme != "gloxorg" || veri.host != "giris") return
+        chromeGirisBekliyor = false
         sayfayaGoogleVer(veri.getQueryParameter("t"))
         // Aynı dönüş ikinci kez işlenmesin
         intent?.data = null
@@ -162,10 +164,26 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Yedek yol: Google girişi Chrome penceresinde. Neden yedeğe düştüğü kısa bir yazıyla gösterilir (teşhis için). */
+    /**
+     * Yedek yol: Google girişi Chrome penceresinde. TEST AŞAMASI: telefon hesabıyla girişin NEDEN olmadığı
+     * "Tamam" düğmeli pencerede gösterilir (kullanıcı fotoğrafını çekip gönderebilsin). Sebep çözülünce bu pencere
+     * kaldırılıp yedeğe sessizce geçilecek.
+     */
     private fun chromeIleGiris(sebep: String) {
-        try { Toast.makeText(this, "Google (telefon hesabı) olmadı: " + sebep.take(90) + " → Chrome ile deneniyor", Toast.LENGTH_LONG).show() } catch (e: Exception) {}
-        ozelSekmeAc("https://gloxorg.com/glox-google.html")
+        try {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Google girişi")
+                .setMessage("Telefondaki Google hesabıyla giriş olmadı:\n\n" + sebep.take(300) + "\n\nTamam'a basınca Chrome ile denenecek.")
+                .setPositiveButton("Tamam") { _, _ ->
+                    chromeGirisBekliyor = true
+                    ozelSekmeAc("https://gloxorg.com/glox-google.html")
+                }
+                .setOnCancelListener { sayfayaGoogleVer(null) }
+                .show()
+        } catch (e: Exception) {
+            chromeGirisBekliyor = true
+            ozelSekmeAc("https://gloxorg.com/glox-google.html")
+        }
     }
 
     /** Sayfa (gloxorg.com) buradan "Google ile giriş" ister → giriş Chrome penceresinde yapılır. */
@@ -479,6 +497,12 @@ class MainActivity : Activity() {
         try { web?.onResume() } catch (e: Exception) {}
         // Arka plandan dönüşte sayfa YENİLENMEZ (Facebook gibi: kaldığın yerden ANINDA devam).
         // Sadece telefon sayfanın motorunu öldürdüyse onRenderProcessGone yeniden kurar.
+        // Chrome giriş penceresi anahtar getirmeden kapandıysa (çarpı/geri) → sayfadaki "giriş yapılıyor" beklemesi biter.
+        // (Anahtarla dönüşte onNewIntent, onResume'dan ÖNCE çalışır ve bayrağı indirir.)
+        if (chromeGirisBekliyor) {
+            chromeGirisBekliyor = false
+            sayfayaGoogleVer(null)
+        }
     }
 
     override fun onDestroy() {
