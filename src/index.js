@@ -24,6 +24,20 @@ try {
   }
 } catch (e) {}
 
+// ARKA PLANA ATINCA SES/VİDEO DURSUN (B426, kullanıcı: "ana sayfada video varsa / Gloxoo konuşurken uygulamayı arka
+//   plana atınca ses devam ediyor"). Native uygulama arka plana geçince "glox-arka-plan" olayını yollar (WebView'de
+//   visibilitychange her zaman gelmiyordu); tarayıcı/TWA'da visibilitychange (hidden) da aynı işi yapar.
+//   Sayfadaki TÜM video/ses durur — AMA Glome araması (srcObject = canlı akış) DURMAZ (WhatsApp gibi arka planda sürer).
+//   Gloxoo'nun sesi Anasayfa.js'te aynı olayla susturulur (gloxSustur).
+function _arkaPlanSustur() {
+  try { document.querySelectorAll("video, audio").forEach((m) => { try { if (!m.srcObject && !m.paused) m.pause(); } catch (e) {} }); } catch (e) {}
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+}
+try {
+  window.addEventListener("glox-arka-plan", _arkaPlanSustur);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) _arkaPlanSustur(); });
+} catch (e) {}
+
 // ================= OTOMATİK KURTARMA (kullanıcı: "sayfa bazen boş sarı kalıyor, silip yeniden yüklemem lazım") =================
 // SEBEP: bir JS çökmesi ya da bir "parça" (chunk: hash'li js/css) yüklenemezse (yeni sürüm yayınlanınca eski sayfa eski parçayı
 //   ararsa) uygulama boş kalıyordu ve KENDİNİ TOPARLAMIYORDU. Çözüm: böyle bir hatada sayfayı BİR KEZ otomatik yenile

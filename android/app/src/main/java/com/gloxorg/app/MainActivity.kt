@@ -489,6 +489,9 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        // Arka plana geçiyoruz → sayfadaki video/ses ve Gloxoo sussun (WebView'de visibilitychange her zaman gelmiyor).
+        // Glome araması (canlı akış) sayfa tarafında hariç tutulur, arka planda sürer.
+        try { web?.evaluateJavascript("window.dispatchEvent(new Event('glox-arka-plan'))", null) } catch (e: Exception) {}
         try { web?.onPause() } catch (e: Exception) {}
     }
 

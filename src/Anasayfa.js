@@ -2289,9 +2289,10 @@ export default function Anasayfa({ pro = false }) {
     window.addEventListener("pagehide", durdur);
     window.addEventListener("beforeunload", durdur);
     document.addEventListener("visibilitychange", gizlenince);
+    window.addEventListener("glox-arka-plan", durdur); // native uygulama arka plana geçti (B426)
     // ⛔ SPA GEÇİŞİ: giriş ekranına/başka rotaya geçince (tam yeniden yükleme DEĞİL) pagehide/beforeunload TETİKLENMEZ.
     // Bu yüzden Anasayfa kaldırılırken (unmount) Gloxoo sesini BURADA da kes → "sayfa kapandı ama Gloxoo hâlâ konuşuyor" bitsin.
-    return () => { try { durdur(); } catch (e) {} window.removeEventListener("pagehide", durdur); window.removeEventListener("beforeunload", durdur); document.removeEventListener("visibilitychange", gizlenince); };
+    return () => { try { durdur(); } catch (e) {} window.removeEventListener("pagehide", durdur); window.removeEventListener("beforeunload", durdur); document.removeEventListener("visibilitychange", gizlenince); window.removeEventListener("glox-arka-plan", durdur); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // TTS KİLİT AÇMA (Chrome/Android): Tarayıcı, sesli okumayı yalnızca kullanıcı sayfaya DOKUNDUKTAN sonra serbest
   // bırakır; cevap kendiliğinden gelince (dokunmadan) okuma SESSİZ kalıp "speaking=true" TAKILIYOR (parlama sebebi).
