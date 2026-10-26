@@ -56,6 +56,10 @@ import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvar
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
+import AcilisEkrani from "./AcilisEkrani";
+
+// İLK AÇILIŞ PERDESİ (B427) — uygulama başına SADECE BİR KEZ (sayfalar arası gezinmede tekrar çıkmaz).
+let _ilkAcilisBitti = false;
 
 // CANLI YAPAY ZEKÂ TANITIM KARTI — ana sayfa akışının ARASINA girer (kullanıcı: "ana sayfada canlı yapay zeka tanıtımı, akışta araya girsin").
 // Dönen örnekler + altın parıltı ile "canlı" durur; düğmeler Sanal Ayna'yı ve Gloxoo sohbetini açar.
@@ -9317,11 +9321,50 @@ export default function Anasayfa({ pro = false }) {
   // ÖRNEK/placeholder gönderiler KALDIRILDI (kullanıcı: sayfa ilk yüklenince çıkıp sonra gerçekler geliyordu — sil/at).
   // Artık SADECE gerçek gönderiler (gercekAkis) gösterilir.
 
+  // İLK AÇILIŞ PERDESİ (B427, kullanıcı: "sayfa parça parça açılıyor; Facebook'ta tek seferde, bütün olarak açılıyor").
+  // Uygulama açılınca ana sayfa, açılış ekranının (altın + logo + halka) ARKASINDA hazırlanır: gönderiler gelmiş,
+  // EKRANDA görünen resimler inmiş ve sonradan eklenen bölümler (vitrin/reklam şeridi gibi) yerleşmiş olunca
+  // perde yumuşakça kalkar → sayfa TEK SEFERDE, bütün görünür. En fazla 3,5 sn bekler (yavaş internette asılı kalmaz).
+  const [ilkPerde, setIlkPerde] = useState(() => !_ilkAcilisBitti);
+  const [ilkPerdeSoluyor, setIlkPerdeSoluyor] = useState(false);
+  const ilkAkisSayiRef = useRef(0);
+  ilkAkisSayiRef.current = (gercekAkis || []).length;
+  useEffect(() => {
+    if (!ilkPerde) return undefined;
+    const bas = Date.now();
+    let oncekiSayi = -1, sakin = 0, bitti = false;
+    const bitir = () => {
+      if (bitti) return; bitti = true; _ilkAcilisBitti = true;
+      setIlkPerdeSoluyor(true);
+      setTimeout(() => setIlkPerde(false), 260);
+    };
+    const iv = setInterval(() => {
+      try {
+        const gecen = Date.now() - bas;
+        if (gecen > 3500) { clearInterval(iv); bitir(); return; }
+        if (gecen < 450) return;                                         // sonradan gelen bölümler kendini eklesin
+        if (!ilkAkisSayiRef.current && gecen < 2500) return;             // gönderiler henüz gelmedi
+        const h = window.innerHeight || 800;
+        const resimler = Array.from(document.querySelectorAll(".ana-kok img")).filter((im) => {
+          if (im.closest && im.closest(".ana-ilk-perde")) return false;  // perdenin kendi logosu sayılmaz
+          const r = im.getBoundingClientRect();
+          return r.width > 0 && r.bottom > 0 && r.top < h;
+        });
+        const hazir = resimler.every((im) => im.complete);
+        if (hazir && resimler.length === oncekiSayi) sakin++; else sakin = 0;
+        oncekiSayi = resimler.length;
+        if (hazir && sakin >= 2) { clearInterval(iv); bitir(); }        // ~0,3 sn boyunca yeni bir şey eklenmedi
+      } catch (e) { clearInterval(iv); bitir(); }
+    }, 150);
+    return () => clearInterval(iv);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     /* DİKKAT: köke "ana-pro" sınıfı VERME — CSS'te eski yatay kaydırma sınıfı (.ana-pro)
        ile çakışır, bütün sayfayı yana dizer (B108 siyah ekran hatasının sebebi buydu). */
     <div ref={kokRef} className={"ana-kok" + (pro ? " ana-kok-pro" : "") + " sayfa-" + aktifKod + (ustPencereVar ? " pencere-acik" : "")} onTouchStart={kaydirBas} onTouchEnd={kaydirBit}
       onContextMenu={(e) => { try { if (!(e.target.closest && e.target.closest('input, textarea, [contenteditable="true"], .ai-msj, .ai-paylasim-metin, .apr-altyazi, .ana-post-yazi, .ana-post-baslik-metin, .apr-resim-ceviri, .tf-yazi, .tf-metin-kart, .gb-kul-eposta'))) e.preventDefault(); } catch (x) {} }}>
+      {ilkPerde && <AcilisEkrani soluyor={ilkPerdeSoluyor} />}
       {/* ARKA PLAN FOTO — ekrana SABİT (gerçek ekran yüksekliği); sayfa kaysa/adres çubuğu oynasa ZIPLAMAZ, alttan açıklık vermez */}
       {/* Arka plan: şehir fotoğrafı ama ÜSTÜNDE AÇIK GECE MAVİSİ perde (derin) — kullanıcı zemin mavi olsun dedi; foto hafif doku verir, renk mavidir. */}
       <div className="ana-arka-foto" aria-hidden="true" style={{ backgroundImage: `linear-gradient(rgba(41,74,125,.80),rgba(20,43,80,.88)), url("${sehirGaleriUrl}")` }} />

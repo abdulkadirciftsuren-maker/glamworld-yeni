@@ -4,6 +4,7 @@ import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db, girisDenemeTemizle } from "./firebase";
 import Acilis from "./Acilis";
+import AcilisEkrani from "./AcilisEkrani";
 import Giris from "./Giris";
 // NOT: MusteriForm ve ProfesyonelForm artık akışta DEĞİL (kayıt tek kart Giris'te). İçe aktarımları
 // kaldırıldı çünkü hiçbir yerde render edilmiyordu ama ana pakete ~2850 satır yük biniyordu → paket küçüldü.
@@ -40,16 +41,7 @@ try {
 // (B425: eskiden MAVİ zemindi → açılışta ekran altından maviye atlıyordu, kullanıcı "bir sürü farklı ekran" diyordu.
 //  Artık açılış → yükleniyor geçişi GÖRÜNMEZ, tek ekran gibi.)
 function Yukleniyor() {
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%)" }}>
-      <style>{"@keyframes gwDon{to{transform:rotate(360deg)}}"}</style>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-        <img src={(process.env.PUBLIC_URL || "") + "/logo192-b213.png"} alt="" style={{ width: "94px", height: "94px", borderRadius: "20px", boxShadow: "0 10px 30px rgba(120,90,0,.28)" }} />
-        <div className="notranslate" translate="no" style={{ fontFamily: "Georgia,'Times New Roman',serif", fontWeight: 800, fontSize: "26px", letterSpacing: ".16em", color: "#6a4e00" }}>GLOXORG</div>
-        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "4px solid rgba(120,90,0,.2)", borderTopColor: "#8a6a00", animation: "gwDon .85s linear infinite" }} />
-      </div>
-    </div>
-  );
+  return <AcilisEkrani />;
 }
 
 function App() {
