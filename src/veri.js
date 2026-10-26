@@ -4,7 +4,7 @@
 import { db, storage } from "./firebase";
 import {
   doc, getDoc, setDoc, deleteDoc, updateDoc,
-  collection, collectionGroup, query, where, limit as fsLimit, orderBy, getDocs, onSnapshot,
+  collection, collectionGroup, query, where, limit as fsLimit, orderBy, getDocs, getDocsFromCache, onSnapshot,
   serverTimestamp, increment, deleteField, arrayUnion, arrayRemove,
 } from "firebase/firestore";
 import { ref as depoRef, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
@@ -1003,6 +1003,17 @@ export async function pazarUrunleriOku(adet = 200) {
   try {
     const q = query(collection(db, "pazarUrunleri"), fsLimit(adet));
     const snap = await getDocs(q);
+    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
+    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+    return liste;
+  } catch (e) { return []; }
+}
+// Aynı listeyi TELEFONDAKİ ÖNBELLEKTEN anında okur (internet beklemez). Önbellek boşsa [] döner.
+// Vitrin/Reklam şeridi önce bununla ANINDA dolar, sonra pazarUrunleriOku ile internetten tazelenir (B429).
+export async function pazarUrunleriOnbellek(adet = 200) {
+  try {
+    const q = query(collection(db, "pazarUrunleri"), fsLimit(adet));
+    const snap = await getDocsFromCache(q);
     const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
     liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
     return liste;

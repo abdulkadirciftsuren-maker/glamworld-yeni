@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import L from "leaflet"; // haritadan konum seçmek için (iş yerini işaretle) — OSM, uygulamanın kullandığı kaynak
 import { gloxooResimUret } from "./firebase"; // Gloxoo amblem/logo çizimi
-import { pazarUrunEkle, pazarUrunGuncelle, pazarUrunleriOku, pazarUrunSil, gorselYukle, videoYukle } from "./veri";
+import { pazarUrunEkle, pazarUrunGuncelle, pazarUrunleriOku, pazarUrunleriOnbellek, pazarUrunSil, gorselYukle, videoYukle } from "./veri";
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev"; // Gloxoo yazı köprüsü (tanıtım yazısı)
 
 const KATEGORILER = [
@@ -50,7 +50,10 @@ function kucultB64(dataUrl, max = 720) {
         try {
           let w = img.width, h = img.height;
           if (w >= h && w > max) { h = Math.round(h * max / w); w = max; } else if (h > max) { w = Math.round(w * max / h); h = max; }
-          const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(img, 0, 0, w, h);
+          const c = document.createElement("canvas"); c.width = w; c.height = h;
+          const cx = c.getContext("2d");
+          cx.fillStyle = "#ffffff"; cx.fillRect(0, 0, w, h); // şeffaf PNG (Gloxoo amblemi) JPEG'de SİYAH olmasın
+          cx.drawImage(img, 0, 0, w, h);
           res(c.toDataURL("image/jpeg", 0.82));
         } catch (e) { res(dataUrl); }
       };
@@ -190,9 +193,43 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
   const fGalInpRef = useRef(null);
 
   async function yukle() {
+    // ÖNCE telefondaki önbellekten ANINDA göster (internet beklemeden), sonra internetten tazele (B429)
+    try { const yerel = await pazarUrunleriOnbellek(200); const r = (yerel || []).filter((p) => p.reklam); if (r.length) setReklamlar((a) => (a.length ? a : r)); } catch (e) {}
     try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
   }
   useEffect(() => { yukle(); }, []);
+
+  // ESKİ DEV KAPAKLARI KÜÇÜLT (B429) — eski reklamların kapakları ham yüklenmişti (1,5-2,4 MB → vitrin ~11 MB).
+  // Reklam SAHİBİ uygulamayı açınca, KENDİ reklamlarının büyük kapakları arka planda, sessizce 1080 px JPEG'e
+  // küçültülüp yeniden yüklenir ve reklam güncellenir. Her reklam için BİR KEZ (kapakKucuk). Açılışı yavaşlatmasın
+  // diye 6 sn sonra, birer birer çalışır. Orijinal dosya SİLİNMEZ (kapakEski alanında yedek).
+  const kucultmeBasladiRef = useRef(false);
+  const reklamAktifRef = useRef(true);
+  useEffect(() => () => { reklamAktifRef.current = false; }, []);
+  useEffect(() => {
+    if (!uid || !reklamlar.length || kucultmeBasladiRef.current) return undefined;
+    const benimkiler = reklamlar.filter((r) => (r.uid === uid || r.sahipUid === uid) && !r.kapakKucuk && typeof r.kapak === "string" && r.kapak.indexOf("http") === 0);
+    if (!benimkiler.length) return undefined;
+    kucultmeBasladiRef.current = true;
+    setTimeout(async () => {
+      for (const r of benimkiler) {
+        if (!reklamAktifRef.current) return; // sayfa kapandı → dur (sonraki açılışta kaldığı yerden devam eder)
+        try {
+          const blob = await (await fetch(r.kapak)).blob();
+          if (!blob || blob.size < 350000) { await pazarUrunGuncelle(r.id, { kapakKucuk: true }); continue; } // zaten küçük
+          const dataUrl = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result || "")); fr.onerror = () => res(""); fr.readAsDataURL(blob); });
+          if (!dataUrl) continue;
+          const kucuk = await kucultB64(dataUrl, 1080);
+          if (!kucuk || kucuk.length >= dataUrl.length) continue;
+          const yeni = await gorselYukle(kucuk, uid);
+          if (!yeni) continue;
+          const ok = await pazarUrunGuncelle(r.id, { kapak: yeni, kapakEski: r.kapak, kapakKucuk: true });
+          if (ok && reklamAktifRef.current) setReklamlar((a) => a.map((x) => (x.id === r.id ? { ...x, kapak: yeni, kapakKucuk: true } : x)));
+        } catch (e) {}
+      }
+    }, 6000);
+    return undefined;
+  }, [uid, reklamlar.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // HARİTA — açılınca Leaflet haritası kur (OSM); parmakla dokun/pini sürükle → nokta seç. Kapanınca temizle.
   useEffect(() => {
@@ -282,7 +319,8 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     if (!ad.trim()) { setHata(t("rkAdOnce", "Ürün adı yaz.")); return; }
     setKaydet(true); setHata("");
     try {
-      let kapak = ""; try { kapak = await gorselYukle(foto, uid || "reklam"); } catch (e) {}
+      // KAPAK KÜÇÜLTÜLEREK yüklenir (B429): eskiden ham yükleniyordu (1,5-2,4 MB) → vitrin çok yavaş açılıyordu.
+      let kapak = ""; try { kapak = await gorselYukle(await kucultB64(foto, 1080), uid || "reklam"); } catch (e) {}
       if (!kapak) kapak = foto; // yüklenemezse data URL
       let refB64 = ""; try { refB64 = await kucultB64(foto, 720); } catch (e) {} // "üstümde dene" için küçük referans (gerçek ürün)
       await pazarUrunEkle({
@@ -519,7 +557,8 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     try {
       // Foto SADECE yeni seçildiyse (data:) yüklenir; düzenlemede eski foto (http) aynı kalırsa tekrar yüklenmez.
       let kapak = fFoto;
-      if (fFoto && fFoto.indexOf("data:") === 0) { try { const u = await gorselYukle(fFoto, uid || "reklam"); if (u) kapak = u; } catch (e) {} }
+      // KAPAK/AMBLEM KÜÇÜLTÜLEREK yüklenir (B429): Gloxoo amblemi ham PNG ~1,5-1,9 MB idi → vitrin yavaştı.
+      if (fFoto && fFoto.indexOf("data:") === 0) { try { const u = await gorselYukle(await kucultB64(fFoto, 1080), uid || "reklam"); if (u) kapak = u; } catch (e) {} }
       // ÜRÜN GALERİSİ — yeni eklenenler (dosya) yüklenir, mevcutlar (url) korunur; her birinde açıklama saklanır.
       const galeriSon = [];
       for (const g of fGaleri) {
