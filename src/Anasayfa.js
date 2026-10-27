@@ -2249,6 +2249,10 @@ export default function Anasayfa({ pro = false }) {
   };
   // GLOXOO KONUŞUYOR MU? — tek merkez: tarayıcı sesi VEYA gerçek ses (mp3) çalıyorsa, ya da gerçek ses YÜKLENİYORSA true.
   // (Yükleniyor da sayılır → canlı sohbette mikrofon, ses gelmeden araya girip Gloxoo'yu kesmez.)
+  // GLOME ARAMASI VAR MI (gelen/giden/konuşuyor) — Gloxoo okuma işlevleri buna bakıp arama sırasında SUSAR.
+  const aramaVarRef = useRef(false);
+  aramaVarRef.current = !!(aramaDurum || gelenArama);
+  useEffect(() => { if (aramaDurum || gelenArama) { try { gloxSustur(); } catch (e) {} } }, [aramaDurum, gelenArama]); // arama başlayınca konuşan Gloxoo hemen sussun
   const gloxKonusuyor = () => {
     try {
       if (aiHazirlaniyorRef.current || aiKonusuyorRef.current) return true;
@@ -6829,6 +6833,8 @@ export default function Anasayfa({ pro = false }) {
   // Önce worker'dan DOĞAL insan sesi ister; gelirse <audio> ile çalar (maskot ağzı oynar + yazı kelime kelime yürür).
   // Ses gelmezse (anahtar yok / kredi yok / ağ hatası) → onBasarisiz ile tarayıcının KENDİ sesine düşer; Gloxoo ASLA susmaz.
   const gercekSesOku = async (metin, onBitti, onCumle, onIlerleme, onBasarisiz) => {
+    // ⛔ GLOME ARAMASI SÜRERKEN GLOXOO KONUŞMAZ (kullanıcı: "Glome'deyim, arkada Gloxoo konuşuyor, çok saçma")
+    if (aramaVarRef.current) { if (typeof onBitti === "function") onBitti(); return; }
     let dusuldu = false;
     const dus = () => { if (dusuldu) return; dusuldu = true; try { aiHazirlaniyorRef.current = false; } catch (e) {} try { onBasarisiz(); } catch (e) {} };
     try {
@@ -6973,6 +6979,7 @@ export default function Anasayfa({ pro = false }) {
   };
   // AI cevabını TARAYICININ KENDİ sesiyle oku (yedek) — dil kodu HER ZAMAN güncel aiDilRef'ten
   const sesliOkuTarayici = (metin, onBitti, onCumle, onIlerleme) => {
+    if (aramaVarRef.current) { if (typeof onBitti === "function") onBitti(); return; } // arama sürerken Gloxoo konuşmaz
     try {
       if (!("speechSynthesis" in window) || !metin) { if (typeof onBitti === "function") onBitti(); return; }
       const sesDilKodu = aiSesKodu(aiDilRef.current);
@@ -9296,6 +9303,10 @@ export default function Anasayfa({ pro = false }) {
     // NOT: Profil sayfası artık swipe'a AÇIK (kullanıcı: "profilde parmakla kaymıyor, Akademi'ye geçmiyordu").
     // Profil düzenleme paneli açıkken (duzenAcik) yine kapalı; profil filtre şeridi aşağıda closest() ile muaf.
     if (menuAcik || profilAcik || bildirimAcik || araAcik || mesajAcik || araSecili || paylasAcik || tamFoto || uyeSayfa || acikBolum || duzenAcik || pazarPencereAcik) { dokunRef.current = null; return; }
+    // ⛔ GLOME SOHBETİ / ARAMA AÇIKKEN sayfa kaydırma YOK (kullanıcı: "Glome'de konuşurken parmağımla dokununca arkada sayfa
+    //    değişti, Ayna'ya geçmiş, orada Gloxoo konuşuyor"). Arama KÜÇÜLTÜLMÜŞSE (köşede) sayfada gezinmeye izin var; ama küçük
+    //    pencerenin KENDİSİNE dokunmak (.arama-fon) sayfayı değiştirmez — aşağıdaki closest() listesinde.
+    if (sohbetKisi || gelenArama || (aramaDurum && !aramaKucuk)) { dokunRef.current = null; return; }
     // ⛔ AKADEMİ'DE BİR ŞEY AÇIKKEN (kurs/çeşit/foto — derinlik>0) sayfa kaydırma YOK: parmak sağa-sola kayınca
     //    başka sayfaya geçip Akademi'de yüklenen ders/foto KAYBOLUYORDU (kullanıcı: "yüklediklerim aniden kayboluyor").
     //    Artık Akademi içindeyken kaymaz; çıkmak için "‹ Geri" ya da alt menü kullanılır.
@@ -9307,7 +9318,7 @@ export default function Anasayfa({ pro = false }) {
       // ELİTE: .ep-sar ARTIK hariç DEĞİL → Elite sayfasında da parmakla kaydırınca öteki sayfaya geçilir.
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
       // .ak-foto-buyut: tam ekran Akademi fotoğrafı — üstünde parmak gezince ZOOM/pan yapılır, sayfa DEĞİŞMEZ.
-      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .reklam-buyukfoto-fon, .reklam-harita-fon, .tamfoto-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam")) { dokunRef.current = null; return; }
+      if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .reklam-buyukfoto-fon, .reklam-harita-fon, .tamfoto-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam, .arama-fon, .sohbet-fon")) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
