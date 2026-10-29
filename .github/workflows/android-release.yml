@@ -114,9 +114,9 @@ jobs:
           GLOX_KEY_ALIAS: gloxorg
           GLOX_KEY_PASSWORD: gloxorg2026
           GLOX_PAKET: com.gloxorg.twa
-          GLOX_SURUM_KODU: ${{ 100 + github.run_number }}
-          GLOX_SURUM_ADI: 2.0.${{ github.run_number }}
         run: |
+          export GLOX_SURUM_KODU=$((100 + GITHUB_RUN_NUMBER))
+          export GLOX_SURUM_ADI="2.0.$GITHUB_RUN_NUMBER"
           ./gradlew clean bundleRelease --stacktrace --no-daemon
           cp app/build/outputs/bundle/release/app-release.aab ../cikti/GLOXORG-play.aab
           echo "Play AAB: paket=$GLOX_PAKET surum kodu=$GLOX_SURUM_KODU surum adi=$GLOX_SURUM_ADI"
