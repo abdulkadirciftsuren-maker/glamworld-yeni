@@ -8,12 +8,14 @@ android {
     compileSdk 35
 
     defaultConfig {
-        // ÜRETİM paketi — yeni temiz uygulama (eski com.gloxorg.twa'dan AYRI)
-        applicationId 'com.gloxorg.app'
+        // PAKET ADI: varsayılan com.gloxorg.app (TEST uygulaması). Play'e giden derlemede GLOX_PAKET=com.gloxorg.twa verilir →
+        //   Play'deki mevcut GLOXORG uygulamasının GÜNCELLEMESİ olur (yeni uygulama değil, test süreci tekrarlanmaz).
+        applicationId(System.getenv('GLOX_PAKET') ?: 'com.gloxorg.app')
         minSdk 24
         targetSdk 35
-        versionCode 1
-        versionName '1.0'
+        // Play her yüklemede DAHA BÜYÜK sürüm kodu ister (eski uygulamanın son kodu 4) → Play derlemesinde GLOX_SURUM_KODU verilir.
+        versionCode((System.getenv('GLOX_SURUM_KODU') ?: '1').toInteger())
+        versionName(System.getenv('GLOX_SURUM_ADI') ?: '1.0')
     }
 
     // İMZA: anahtar bilgileri ortam değişkenlerinden okunur (CI'da üretilir/secret'tan gelir).

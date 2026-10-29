@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex" />
 <title>GLOXORG — Google</title>
 <!--
-  GLOXORG NATIVE UYGULAMA (com.gloxorg.app) — GOOGLE GİRİŞ KÖPRÜSÜ
+  GLOXORG NATIVE UYGULAMA (com.gloxorg.twa / com.gloxorg.app) — GOOGLE GİRİŞ KÖPRÜSÜ
   Uygulamanın WebView'i içinde Google girişi çalışmıyor (popup geri konuşamıyor, redirect "missing initial state").
   Bu yüzden uygulama bu sayfayı CHROME penceresinde (Custom Tab) açar. Burada Google girişi normal tarayıcıdaki gibi
   (signInWithRedirect) yapılır, çıkan Google kimlik anahtarı (idToken) intent ile SADECE com.gloxorg.app'e geri verilir;
@@ -71,8 +71,17 @@
 
   const $ = (id) => document.getElementById(id);
   const BAYRAK = "gloxGoogleBasladi";
-  // Anahtar SADECE com.gloxorg.app paketine gider (başka uygulama yakalayamaz)
-  const uygulamaAdresi = (sorgu) => "intent://giris?" + sorgu + "#Intent;scheme=gloxorg;package=com.gloxorg.app;end";
+  // Anahtar SADECE bizim iki paketimizden birine gider (başka uygulama yakalayamaz):
+  //   com.gloxorg.twa = Play'deki uygulama, com.gloxorg.app = test uygulaması. Uygulama ?p= ile kendi paketini bildirir;
+  //   Google'a gidip dönünce adres değişebileceği için sessionStorage'da da saklanır. Listede olmayan paket → test paketi.
+  const IZINLI_PAKETLER = ["com.gloxorg.twa", "com.gloxorg.app"];
+  const PAKET = (() => {
+    let p = ""; try { p = new URLSearchParams(location.search).get("p") || sessionStorage.getItem("gloxPaket") || ""; } catch (e) {}
+    if (IZINLI_PAKETLER.indexOf(p) < 0) p = "com.gloxorg.app";
+    try { sessionStorage.setItem("gloxPaket", p); } catch (e) {}
+    return p;
+  })();
+  const uygulamaAdresi = (sorgu) => "intent://giris?" + sorgu + "#Intent;scheme=gloxorg;package=" + PAKET + ";end";
 
   $("vazgecBtn").textContent = M.vazgec;
   $("vazgecBtn").href = uygulamaAdresi("iptal=1");

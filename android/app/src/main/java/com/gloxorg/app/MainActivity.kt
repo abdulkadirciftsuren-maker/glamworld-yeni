@@ -250,25 +250,13 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Yedek yol: Google girişi Chrome penceresinde. TEST AŞAMASI: telefon hesabıyla girişin NEDEN olmadığı
-     * "Tamam" düğmeli pencerede gösterilir (kullanıcı fotoğrafını çekip gönderebilsin). Sebep çözülünce bu pencere
-     * kaldırılıp yedeğe sessizce geçilecek.
+     * Yedek yol: telefondaki Google hesabıyla giriş olmazsa Google girişi Chrome penceresinde yapılır (sessizce).
+     * ?p= ile kendi paket adımızı bildiririz → giriş anahtarı SADECE bu uygulamaya geri döner.
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun chromeIleGiris(sebep: String) {
-        try {
-            android.app.AlertDialog.Builder(this)
-                .setTitle("Google girişi")
-                .setMessage("Telefondaki Google hesabıyla giriş olmadı:\n\n" + sebep.take(300) + "\n\nTamam'a basınca Chrome ile denenecek.")
-                .setPositiveButton("Tamam") { _, _ ->
-                    chromeGirisBekliyor = true
-                    ozelSekmeAc("https://gloxorg.com/glox-google.html")
-                }
-                .setOnCancelListener { sayfayaGoogleVer(null) }
-                .show()
-        } catch (e: Exception) {
-            chromeGirisBekliyor = true
-            ozelSekmeAc("https://gloxorg.com/glox-google.html")
-        }
+        chromeGirisBekliyor = true
+        ozelSekmeAc("https://gloxorg.com/glox-google.html?p=" + Uri.encode(packageName))
     }
 
     /** Sayfa (gloxorg.com) buradan "Google ile giriş" ister → giriş Chrome penceresinde yapılır. */

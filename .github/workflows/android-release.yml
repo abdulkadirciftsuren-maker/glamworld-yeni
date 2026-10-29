@@ -97,12 +97,33 @@ jobs:
           GLOX_KEY_PASSWORD: gloxorg2026
         run: ./gradlew bundleRelease assembleRelease --stacktrace --no-daemon
 
-      - name: Ciktilari topla
+      - name: Test ciktilarini topla (com.gloxorg.app)
         run: |
           set -e
           mkdir -p cikti
           cp android/app/build/outputs/bundle/release/app-release.aab cikti/GLOXORG.aab
           cp android/app/build/outputs/apk/release/app-release.apk cikti/GLOXORG-kurulum.apk
+
+      # PLAY DERLEMESI: Play'deki mevcut uygulamanin paketi (com.gloxorg.twa) → GUNCELLEME olarak yuklenir.
+      # Surum kodu her calismada artar (100 + calisma no) → eski uygulamanin son kodundan (4) hep buyuk.
+      - name: Play icin AAB derle (com.gloxorg.twa)
+        working-directory: android
+        env:
+          GLOX_STORE_FILE: ${{ github.workspace }}/android/app/gloxorg-upload.jks
+          GLOX_STORE_PASSWORD: gloxorg2026
+          GLOX_KEY_ALIAS: gloxorg
+          GLOX_KEY_PASSWORD: gloxorg2026
+          GLOX_PAKET: com.gloxorg.twa
+          GLOX_SURUM_KODU: ${{ 100 + github.run_number }}
+          GLOX_SURUM_ADI: 2.0.${{ github.run_number }}
+        run: |
+          ./gradlew clean bundleRelease --stacktrace --no-daemon
+          cp app/build/outputs/bundle/release/app-release.aab ../cikti/GLOXORG-play.aab
+          echo "Play AAB: paket=$GLOX_PAKET surum kodu=$GLOX_SURUM_KODU surum adi=$GLOX_SURUM_ADI"
+
+      - name: Anahtar bilgisini ekle
+        run: |
+          set -e
           cp android/app/gloxorg-upload.jks cikti/gloxorg-imza-anahtari.jks
           cat > cikti/ANAHTAR-BILGISI.txt <<'EOF'
           GLOXORG imza anahtari — GUVENLE SAKLA, KAYBETME! (Play guncellemeleri icin lazim)
@@ -128,7 +149,8 @@ jobs:
           git worktree add ../ghp gh-pages
           cp cikti/GLOXORG-kurulum.apk ../ghp/GLOXORG-kurulum.apk
           cp cikti/GLOXORG.aab ../ghp/GLOXORG.aab
+          cp cikti/GLOXORG-play.aab ../ghp/GLOXORG-play.aab
           cd ../ghp
-          git add GLOXORG-kurulum.apk GLOXORG.aab
+          git add GLOXORG-kurulum.apk GLOXORG.aab GLOXORG-play.aab
           git commit -m "uretim: GLOXORG-kurulum.apk + GLOXORG.aab" || echo "degisiklik yok"
           git push origin gh-pages
