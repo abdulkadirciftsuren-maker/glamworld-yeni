@@ -35,6 +35,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.window.OnBackInvokedDispatcher
 import androidx.credentials.CredentialManager
 import androidx.credentials.CredentialManagerCallback
 import androidx.credentials.CustomCredential
@@ -98,6 +99,10 @@ class MainActivity : Activity() {
         yeniWebViewKur()
         root.addView(ortu) // örtü en üstte kalsın
         kenarBosluklariniAyarla(root)
+        // GERİ TUŞU (Android 13+): Android 16'yı hedefleyen uygulamalarda eski onBackPressed ÇAĞRILMAZ → yeni yöntemle kaydedilir.
+        if (Build.VERSION.SDK_INT >= 33) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { geriBas() }
+        }
         cubuklariAyarla()
         girisDonusu(intent) // uygulama kapalıyken Chrome'dan anahtarla açıldıysa
         aktif = WeakReference(this)
@@ -561,14 +566,17 @@ class MainActivity : Activity() {
         }
     }
 
+    // Geri: açık pencereyi/önceki ekranı kapat; gidilecek yer yoksa uygulama KAPANMAZ, arka plana geçer
+    // (geri dönünce sayfa yeniden yüklenmeden olduğu gibi açılır).
+    private fun geriBas() {
+        val w = web
+        if (w != null && w.canGoBack()) w.goBack() else moveTaskToBack(true)
+    }
+
+    // Android 12 ve öncesi (13+ yukarıdaki yeni yöntemi kullanır)
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        val w = web
-        if (w != null && w.canGoBack()) {
-            w.goBack() // açık pencereyi/önceki ekranı kapat (uygulamadan çıkma)
-        } else {
-            super.onBackPressed()
-        }
+        geriBas()
     }
 
     override fun onPause() {
