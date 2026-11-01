@@ -4,7 +4,21 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
-## 🚀 PLAY'E YÜKLEME — 26 EKİ 2026 — GOOGLE ONAYI BEKLENİYOR (yeni oturum ÖNCE BUNU OKU)
+## ✅ PLAY'E GÖNDERİLDİ — 1 KAS 2026 — GOOGLE İNCELEMESİ BEKLENİYOR (yeni oturum ÖNCE BUNU OKU)
+- Yükleme anahtarı sıfırlaması ONAYLANDI (yeni anahtar SHA1 11:90:52:6A… 28 Eki 19:07 UTC'den beri geçerli).
+- Native uygulama Play'deki MEVCUT uygulamanın (com.gloxorg.twa) GÜNCELLEMESİ olarak Üretim'e gönderildi:
+  sürüm 115 (2.0.15), targetSdk 36 (Play Ağu 2026'dan beri 36 istiyor — 35 REDDEDİLDİ), 178 ülke + dünyanın geri kalanı,
+  tam kullanıma sunma, yönetilen yayınlama KAPALI (onaylanınca kendiliğinden yayınlanır). Üretim erişimi zaten verilmişti.
+- Derleme: CI (android-release.yml) her çalışmada İKİ çıktı verir: test APK (com.gloxorg.app, GLOXORG-kurulum.apk) +
+  Play AAB (GLOX_PAKET=com.gloxorg.twa, sürüm kodu 100+çalışma no, GLOXORG-play.aab). Hepsi gh-pages'e konur.
+  ⚠️ Web deploy'unda (gh-pages -d build) bu 3 dosyayı build/'e kopyala yoksa siteden silinir.
+- Android 16: geri tuşu OnBackInvokedCallback ile (geriBas: canGoBack→goBack, yoksa moveTaskToBack). Kullanıcı test etti, çalışıyor.
+- Kalan uyarı: "kod gösterme dosyası yok" (minify kapalı) — önemsiz.
+- Play'de yakında doldurulacak: Satıcı (tüccar) durumu beyanı (Kas 2026) + ACCESS_FINE_LOCATION beyanı (27 Oca 2027'ye kadar).
+- SIRADAKİ İŞLER: (1) diğer telefonlarda (iPhone/zayıf Android) takılma-donma ölçüp hafifletme, (2) uygulama kapalıyken
+  Glome araması gelince ZİL çalması (WhatsApp gibi; tip=arama bildirimi + native tam ekran arama bildirimi).
+
+## (ESKİ) PLAY'E YÜKLEME — 26 EKİ 2026 — GOOGLE ONAYI BEKLENİYOR
 - **KARAR:** Native sürüm, Play'deki MEVCUT uygulamanın (paket `com.gloxorg.twa`, kapalı test 'alpha', son sürüm **versionCode 4 (4.0.0.0)**, 4 Eyl) GÜNCELLEMESİ olarak yüklenecek. Yeni paket (com.gloxorg.app) ayrı yüklenirse Google 12 testçi/14 gün testi TEKRAR ister → YAPMA. Üretim izni süresiz.
 - **YÜKLEME ANAHTARI SIFIRLAMA TALEBİ GÖNDERİLDİ (26 Eki 20:08):** Play Console > Uygulama imzalama > 'Sıfırlama talep edin' + `upload_certificate.pem` (bizim CI anahtarı: SHA-1 `11:90:52:6A:A3:2C:9F:4A:ED:94:B2:6B:98:57:93:87:D2:5C:B8:2F`, SHA-256 `68:00:72:FD:...:DE:0C`). Google 1-2 günde e-posta ile onaylar. Onaydan sonra CI anahtarıyla imzalı AAB yüklenebilir. (PWABuilder'ın 6 paket klasöründeki eski anahtarlar KULLANILMIYOR.)
 - **Play uygulama imzalama anahtarı (Google'ınki):** SHA-1 `2A:11:3D:1A:9A:AB:92:84:CD:72:A7:70:A6:AF:53:C2:89:AD:19:09`, SHA-256 `29:70:93:DF:C5:C5:2A:5E:FD:72:...:5A:5B`.
