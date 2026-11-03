@@ -282,13 +282,19 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
     //   yürüyordu. ÇÖZÜM: konumu FLOAT olarak BİZ tutarız (poz) ve her kare el.scrollLeft = poz yazarız → poz sürekli büyüdüğü için
     //   iOS floor(poz) görüntülese bile şerit yürür. Kullanıcı parmakla kaydırınca poz gerçek konuma senkronlanır (oradan devam eder).
     let poz = el.scrollLeft || 0;
+    // ⚡ HIZ (B435): şerit genişliği her karede OKUNMAZ (scrollLeft yazıp scrollWidth okumak her karede sayfanın yerleşimini
+    //   yeniden hesaplatıyordu). Genişlik saklanır, sadece boyut değişince (ResizeObserver) ya da 2 sn'de bir tazelenir.
+    let yariSakli = el.scrollWidth / 2, yariZaman = Date.now();
+    let boyutGozlemci = null;
+    try { boyutGozlemci = new ResizeObserver(() => { yariSakli = el.scrollWidth / 2; yariZaman = Date.now(); }); boyutGozlemci.observe(el); if (el.firstElementChild) boyutGozlemci.observe(el.firstElementChild); } catch (e) {}
     const adim = () => {
       if (iptal) return;
       const d = durRef.current;
       // Üstte bir pencere açıkken (Sanal Ayna/detay/form), sekme gizliyken ya da şerit görünmezken YAZMA → sayfa parlamaz/titremez.
       const engel = d.pasif || d.detay || d.verAcik || !gorunur.current || (typeof document !== "undefined" && document.hidden);
       if (!engel) {
-        const yari = el.scrollWidth / 2; // tek set genişliği (liste iki kez basıldı)
+        if (Date.now() - yariZaman > 2000) { yariSakli = el.scrollWidth / 2; yariZaman = Date.now(); }
+        const yari = yariSakli; // tek set genişliği (liste iki kez basıldı)
         if (yari > 0) {
           const bosVakit = Date.now() - oto.current.sonEtkilesim > 1600; // bırakınca ~1.6 sn sonra devam
           if (!oto.current.dokunuyor && bosVakit) {
@@ -308,7 +314,7 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
       oto.current.raf = requestAnimationFrame(adim);
     };
     oto.current.raf = requestAnimationFrame(adim);
-    return () => { iptal = true; cancelAnimationFrame(oto.current.raf); try { gozlemci && gozlemci.disconnect(); } catch (e) {} };
+    return () => { iptal = true; cancelAnimationFrame(oto.current.raf); try { gozlemci && gozlemci.disconnect(); } catch (e) {} try { boyutGozlemci && boyutGozlemci.disconnect(); } catch (e) {} };
   }, [reklamlar.length]);
   const etkilesimBas = () => { oto.current.dokunuyor = true; oto.current.sonEtkilesim = Date.now(); };
   const etkilesimHar = () => { oto.current.sonEtkilesim = Date.now(); };

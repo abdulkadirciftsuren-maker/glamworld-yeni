@@ -73,6 +73,9 @@
       #gw-arka .gw-arka-logo{ width:94px; height:94px; border-radius:20px; box-shadow:0 10px 30px rgba(120,90,0,.28); }
       #gw-arka .gw-arka-ad{ font-family:Georgia,'Times New Roman',serif; font-weight:800; font-size:26px; letter-spacing:.16em; color:#6a4e00; }
       #gw-arka .gw-arka-halka{ width:40px; height:40px; border-radius:50%; border:4px solid rgba(120,90,0,.2); border-top-color:#8a6a00; animation:gwDon .85s linear infinite; }
+      /* ⚡ HIZ (B435): uygulama ekrana gelince (#root dolu) arkadaki yükleme ekranı GİZLENİR → görünmeyen halka arkada sürekli
+         dönüp her karede tüm sayfayı yeniden hazırlatmaz. #root boşalırsa (:has eşleşmez) yükleme ekranı yine kendiliğinden görünür. */
+      body:has(#root > *) #gw-arka{ display:none; }
       /* SOSYAL GİRİŞ YÜKLEME EKRANI — index.html'de (React'ten ÖNCE de görünür).
          Google/sosyal girişte sayfa bir an yeniden yüklenince BEYAZ flash olmasın diye,
          baştan sona TEK koyu ekran kalır. SADECE sosyal giriş bayrağı varsa gösterilir. */

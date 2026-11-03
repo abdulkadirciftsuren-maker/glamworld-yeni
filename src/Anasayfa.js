@@ -966,8 +966,19 @@ function saatAbone(fn) {
 }
 function SeritSaat({ tz }) {
   const [now, setNow] = useState(() => new Date());
-  useEffect(() => saatAbone(setNow), []);
-  return <span className="serit-saat notranslate" translate="no">{seritSaat(tz, now)}</span>;
+  const ref = useRef(null);
+  // ⚡ HIZ (B435): şeritte 116 saat var ama ekranda aynı anda ~4'ü görünür. Sadece GÖRÜNEN saat her saniye güncellenir;
+  //   ekrana girince hemen doğru saate geçer. (Eskiden 116 saat birden her saniye yazı değiştirip şeridi yeniden çizdiriyordu.)
+  useEffect(() => {
+    const el = ref.current;
+    let cik = null;
+    const ac = () => { if (!cik) { setNow(new Date()); cik = saatAbone(setNow); } };
+    const kapa = () => { if (cik) { cik(); cik = null; } };
+    let g = null;
+    try { g = new IntersectionObserver((e) => { if (e[0] && e[0].isIntersecting) ac(); else kapa(); }); if (el) g.observe(el); else ac(); } catch (e) { ac(); }
+    return () => { kapa(); try { g && g.disconnect(); } catch (e) {} };
+  }, []);
+  return <span ref={ref} className="serit-saat notranslate" translate="no">{seritSaat(tz, now)}</span>;
 }
 // ⚡ PARLAMA ÖNLEME (B216): Çevrimiçi sayacı KENDİ küçük bileşeninde — 6 sn'de bir SADECE bu rakam
 // yenilenir, ana sayfa (12.000 satır) çizilmez. Eskiden ana `cevrim` state'i 6 sn'de bir tüm sayfayı
