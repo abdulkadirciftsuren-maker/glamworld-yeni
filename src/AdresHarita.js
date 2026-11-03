@@ -7,10 +7,12 @@
 // Arkadaş haritasıyla AYNI boyutta önizleme. HERE köprüsü yoksa Nominatim yedeği.
 // ═══════════════════════════════════════════════════════════════════════════
 import React, { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import { haritaYukle } from "./agirKutuphaneler";
 import { useTranslation } from "react-i18next";
 import { ADRES_KOPRU } from "./hereConfig";
 import { mekanEkle, mekanlariOku, mekanSil, mekanGuncelle, gorselYukle } from "./veri";
+// Harita kütüphanesi (maplibre ~1 MB) ana pakette DEĞİL → ilk kullanımda yüklenir (agirKutuphaneler.js, B436).
+let maplibregl = null;
 
 // Dosyayı base64'e oku (sonra gorselYukle ile Firebase'e yüklenir)
 function dosyaOku(file) { return new Promise((res) => { try { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(""); r.readAsDataURL(file); } catch (e) { res(""); } }); }
@@ -46,6 +48,8 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
   const acikRef = useRef(false);
   const [acik, setAcik] = useState(false);
   const [hazir, setHazir] = useState(false);
+  const [kutupHazir, setKutupHazir] = useState(!!maplibregl); // harita kütüphanesi yüklendi mi
+  useEffect(() => { if (maplibregl) return; let iptal = false; haritaYukle().then((mm) => { maplibregl = mm; if (!iptal) setKutupHazir(true); }).catch(() => {}); return () => { iptal = true; }; }, []);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [yerAdi, setYerAdi] = useState("");   // dokunulan mekânın adı (banka/kafe…)
   const [yerel, setYerel] = useState("");     // o ülkenin dilinde adres
@@ -289,7 +293,7 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
   }
 
   useEffect(() => {
-    if (!kapRef.current || haritaRef.current) return;
+    if (!kutupHazir || !kapRef.current || haritaRef.current) return;
     const ben = benRef.current; const bLat = ben ? ben.lat : 39, bLon = ben ? ben.lon : 35;
     let map;
     try {
@@ -303,7 +307,7 @@ export default function AdresHarita({ benLat, benLon, onTam, uid, benAd }) {
     map.on("moveend", () => { if (!acikRef.current || map.getZoom() < 13) return; clearTimeout(poiZmnRef.current); poiZmnRef.current = setTimeout(() => { const c = map.getCenter(); poiYukle(c.lat, c.lng); }, 600); });
     if (ben) pinKoy(bLat, bLon);
     return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [kutupHazir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Harita tam ekran açılınca/kapanınca ANA UYGULAMAYA haber ver (geri tuşu = katman sistemine bağlanır)
   useEffect(() => { if (onTam) onTam(acik, () => setAcik(false)); }, [acik]); // eslint-disable-line react-hooks/exhaustive-deps

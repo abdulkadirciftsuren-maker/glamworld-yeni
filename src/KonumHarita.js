@@ -10,9 +10,11 @@
 // NOT: Adım-adım "git" navigasyonu KULLANICI İSTEMEDİĞİ İÇİN YOK.
 // ═══════════════════════════════════════════════════════════════════════════
 import React, { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import { haritaYukle } from "./agirKutuphaneler";
 import { useTranslation } from "react-i18next";
 import { ADRES_KOPRU } from "./hereConfig";
+// Harita kütüphanesi (maplibre ~1 MB) ana pakette DEĞİL → ilk kullanımda yüklenir (agirKutuphaneler.js, B436).
+let maplibregl = null;
 
 function kmArasi(la1, lo1, la2, lo2) {
   const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLo = (lo2 - lo1) * Math.PI / 180;
@@ -45,6 +47,8 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
   const pathKenarRef = useRef(null);
   const [acik, setAcik] = useState(false);
   const [hazir, setHazir] = useState(false);
+  const [kutupHazir, setKutupHazir] = useState(!!maplibregl); // harita kütüphanesi yüklendi mi
+  useEffect(() => { if (maplibregl) return; let iptal = false; haritaYukle().then((m) => { maplibregl = m; if (!iptal) setKutupHazir(true); }).catch(() => {}); return () => { iptal = true; }; }, []);
   const [ara, setAra] = useState("");
   const [sonuclar, setSonuclar] = useState(null);
   const [araniyor, setAraniyor] = useState(false);
@@ -211,7 +215,7 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
   }
 
   useEffect(() => {
-    if (!kapRef.current || haritaRef.current) return;
+    if (!kutupHazir || !kapRef.current || haritaRef.current) return;
     const ben = benRef.current; const bLat = ben ? ben.lat : 39, bLon = ben ? ben.lon : 35;
     let map;
     try {
@@ -232,7 +236,7 @@ export default function KonumHarita({ benLat, benLon, arkadaslar, arkadasaYaz, b
       setTimeout(hepsiniGoster, 150);
     }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
     return () => { try { clearTimeout(poiZmnRef.current); map.remove(); } catch (e) {} haritaRef.current = null; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [kutupHazir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Arkadaş listesi değişince (yüklenince) haritadaki fotoğrafları yenile
   useEffect(() => {

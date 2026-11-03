@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "firebase/auth";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import maplibregl from "maplibre-gl"; // GERÇEK döndürülebilir harita (Google Haritalar gibi: WebGL, iki parmakla döner)
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
@@ -19,8 +18,9 @@ import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KO
 import { mc, ulkeAdiCevir, meslekCevir, DILLER } from "./i18n";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // Gloxoo sohbetindeki ağır görselleri (üretilen resim + foto) IndexedDB'de KALICI sakla (localStorage'a sığmıyordu → kaybolmasın)
 import { isoToTelKod, NUM_TO_ISO2 } from "./ulkeKodlari";
-import { Room, RoomEvent, Track, createLocalTracks } from "livekit-client"; // KENDİ canlı görüşme sunucumuz (LiveKit) — Glome sesli/görüntülü arama artık buradan akar
-import { ZIL_GELEN, ZIL_GIDEN } from "./zilSesi"; // gelen arama zili (melodik/gür) + giden arama ringback tonu (ahize) — gömülü WAV
+// ⚡ AĞIR KÜTÜPHANELER (B436): harita (maplibre), canlı görüşme (LiveKit) ve zil sesleri ana pakette DEĞİL → açılıştan sonra
+//   arka planda yüklenir (arkaPlandaOnYukle), lazım olunca hazırdır. Açılış ~1.8 MB hafifler.
+import { haritaYukle, livekitYukle, livekitHemen, zilYukle, zilHemen, arkaPlandaOnYukle } from "./agirKutuphaneler";
 import { KKTC_RING, KIRIM_RING } from "./ozelBolgeler";
 import SurumRozeti from "./SurumRozeti";
 import DilSecici from "./DilSecici";
@@ -56,6 +56,9 @@ import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvar
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
+
+// GERÇEK döndürülebilir harita (MapLibre: WebGL, iki parmakla döner) — kütüphane ilk kullanımda yüklenir (haritaYukle).
+let maplibregl = null;
 
 // CANLI YAPAY ZEKÂ TANITIM KARTI — ana sayfa akışının ARASINA girer (kullanıcı: "ana sayfada canlı yapay zeka tanıtımı, akışta araya girsin").
 // Dönen örnekler + altın parıltı ile "canlı" durur; düğmeler Sanal Ayna'yı ve Gloxoo sohbetini açar.
@@ -250,10 +253,10 @@ function GrupKare({ p, genis }) {
     const bagla = () => {
       if (iptal) return;
       try {
-        const vp = p.getTrackPublication && p.getTrackPublication(Track.Source.Camera);
+        const TK = (livekitHemen() || {}).Track; const vp = p.getTrackPublication && p.getTrackPublication(TK ? TK.Source.Camera : "camera");
         if (vp && vp.videoTrack && vRef.current) { try { vp.videoTrack.attach(vRef.current); } catch (e) {} setKameraVar(!vp.isMuted); }
         else setKameraVar(false);
-        const apb = p.getTrackPublication && p.getTrackPublication(Track.Source.Microphone);
+        const apb = p.getTrackPublication && p.getTrackPublication(TK ? TK.Source.Microphone : "microphone");
         if (apb && apb.audioTrack && aRef.current) { try { apb.audioTrack.attach(aRef.current); } catch (e) {} }
       } catch (e) {}
     };
@@ -2298,6 +2301,8 @@ export default function Anasayfa({ pro = false }) {
   }, []);
   // SAYFA KAPANINCA/GİZLENİNCE GLOXOO SUSSUN (kullanıcı: "sayfayı kapatıyorum, çıkıyorum, Gloxoo hâlâ konuşuyor").
   // Uygulamadan çıkınca/arka plana atınca tüm Gloxoo sesini (tarayıcı okuması + mp3 zinciri) kes.
+  // AĞIR PARÇALAR (harita/canlı görüşme/zil) açılıştan birkaç saniye sonra arka planda iner → lazım olunca bekletmez (B436)
+  useEffect(() => { arkaPlandaOnYukle(); }, []);
   useEffect(() => {
     const durdur = () => { try { gloxSustur(); } catch (e) {} };
     const gizlenince = () => { if (document.hidden) durdur(); };
@@ -4124,7 +4129,7 @@ export default function Anasayfa({ pro = false }) {
     return d; // { token, url, kimlik }
   };
   const livekitBaglan = async (aramaId) => {
-    const { token, url } = await livekitTokenAl(aramaId);
+    const [{ Room, RoomEvent }, { token, url }] = await Promise.all([livekitHemen() || livekitYukle(), livekitTokenAl(aramaId)]);
     // ⚠️ 1'e1 görüşmede adaptiveStream/dynacast KAPALI: açıkken video geç geliyor/donuyor/siyah perde oluyordu
     //    (LiveKit elementi "görünür" saymıyordu çünkü track'i elle bağlıyoruz). Kapatınca video HEP tam gönderilir → hızlı ve net.
     const room = new Room({ adaptiveStream: false, dynacast: false });
@@ -4221,6 +4226,7 @@ export default function Anasayfa({ pro = false }) {
     setGrupArama(null); setGrupKatilimcilar([]); setGrupMik(false); setGrupKam(false); setGrupBaglaniyor(false); setGrupBiriKatildi(false);
   };
   const grupLivekitBaglan = async (oda, olusturan) => {
+    const { Room, RoomEvent, Track, createLocalTracks } = livekitHemen() || (await livekitYukle());
     // 📷 KAMERA/MİKROFONU DOKUNMA ANINDA İSTE (mobil getUserMedia için KULLANICI DOKUNUŞU şart; en başta çağır).
     const yerelTracksSozu = createLocalTracks({ audio: true, video: { resolution: { width: 480, height: 360, frameRate: 20 } } }).catch(() => []);
     let yerelTracks = [];
@@ -4399,7 +4405,9 @@ export default function Anasayfa({ pro = false }) {
   // Kullanıcı: sentetik bip boğuk/uzaktan geliyordu → gerçek zil sesine geçildi. Arayan da aranan da aynı gür zili duyar.
   const zilRef = useRef(null);
   const zilKapatRef = useRef(null);
+  const zilSiraRef = useRef(0); // her durdurma/başlatma bir artar → geç inen zil, durdurulmuş aramada ÇALMAZ
   const zilDurdur = () => {
+    zilSiraRef.current++;
     try { clearTimeout(zilKapatRef.current); } catch (e) {} zilKapatRef.current = null;
     const z = zilRef.current;
     if (z) { try { z.pause(); } catch (e) {} try { z.loop = false; } catch (e) {} try { z.currentTime = 0; } catch (e) {} try { z.src = ""; } catch (e) {} }
@@ -4407,9 +4415,15 @@ export default function Anasayfa({ pro = false }) {
   };
   const zilBaslat = (mod) => { // mod: "aranan" = beni arıyorlar (melodik/gür zil) · "arayan" = ben arıyorum (ahize ringback tonu)
     zilDurdur();
+    const zs = zilHemen();
+    if (!zs) { // zil sesleri henüz inmediyse (açılıştan hemen sonra) → indir, o arada zil durdurulmadıysa çal
+      const sira = zilSiraRef.current;
+      zilYukle().then(() => { if (zilSiraRef.current === sira) zilBaslat(mod); }).catch(() => {});
+      return;
+    }
     try {
       const gelen = (mod === "aranan");
-      const a = new Audio(gelen ? ZIL_GELEN : ZIL_GIDEN);
+      const a = new Audio(gelen ? zs.ZIL_GELEN : zs.ZIL_GIDEN);
       a.loop = true; a.volume = gelen ? 1.0 : 0.85; // gelen zil tam ses (dikkat çeksin); giden ringback biraz alçak (ahize hissi)
       try { a.setAttribute("playsinline", ""); } catch (e) {}
       zilRef.current = a;
@@ -5462,9 +5476,11 @@ export default function Anasayfa({ pro = false }) {
       if (ayarHaritaRef.current) { try { ayarHaritaRef.current.remove(); } catch (e) {} ayarHaritaRef.current = null; ayarPinRef.current = null; }
       return;
     }
-    const tid = setTimeout(() => {
+    const tid = setTimeout(async () => {
       try {
         if (ayarHaritaRef.current) { ayarHaritaRef.current.resize(); return; }
+        if (!maplibregl) maplibregl = await haritaYukle(); // harita kütüphanesi (genelde açılışta arka planda inmiş olur)
+        if (ayarHaritaRef.current) return;
         if (!document.getElementById("ayarTamHarita")) return;
         const bLat = konumLat != null ? konumLat : 39, bLon = konumLon != null ? konumLon : 35;
         const map = new maplibregl.Map({
