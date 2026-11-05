@@ -240,6 +240,17 @@ function _sureBicim(sn) {
   const iki = (n) => (n < 10 ? "0" + n : "" + n);
   return sa > 0 ? (sa + ":" + iki(dk) + ":" + iki(s)) : (iki(dk) + ":" + iki(s));
 }
+// TELEFON UYGULAMASINDA BİLDİRİM İZNİ: WebView'de Notification.permission YOK → menü/şerit hep "Kapalı" diyordu, oysa
+//   bildirimler uygulamada çalışıyor. Uygulama köprüsüne sorulur (yeni sürüm: bildirimIzniVar; eski sürüm: bildirim
+//   anahtarı varsa açık say). Tarayıcıda null döner → eski yol (Notification.permission) kullanılır.
+function nativeBildirimDurum() {
+  try {
+    const K = window.AndroidGlox; if (!K) return null;
+    if (typeof K.bildirimIzniVar === "function") return K.bildirimIzniVar() ? "granted" : "default";
+    if (typeof K.fcmToken === "function") return K.fcmToken() ? "granted" : "default";
+  } catch (e) {}
+  return null;
+}
 // ŞEFFAF VİDEO KAPAĞI (poster): Android uygulamasında (WebView) oynamayan videonun üstünde büyük gri ▶ simgesi çıkıyordu.
 //   1x1 şeffaf resim verilince simge hiç görünmez (arkadaki altın zemin görünür).
 const SEFFAF_POSTER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -1803,7 +1814,14 @@ export default function Anasayfa({ pro = false }) {
   const ayarPinRef = useRef(null);
   const [bildirimAcik, setBildirimAcik] = useState(false); // sol üst zil — bildirim penceresi
   const [bildirimListe, setBildirimListe] = useState([]);  // gerçek bildirimler (canlı)
-  const [bildirimIzin, setBildirimIzin] = useState(() => { try { return (typeof Notification !== "undefined") ? Notification.permission : "default"; } catch (e) { return "default"; } });
+  const [bildirimIzin, setBildirimIzin] = useState(() => { try { return nativeBildirimDurum() || ((typeof Notification !== "undefined") ? Notification.permission : "default"); } catch (e) { return "default"; } });
+  // Telefon uygulamasında: izin penceresinden/ayarlardan dönünce durumu tazele
+  useEffect(() => {
+    if (!nativeBildirimDurum()) return undefined;
+    const tazele = () => { if (!document.hidden) { const d = nativeBildirimDurum(); if (d) setBildirimIzin(d); } };
+    document.addEventListener("visibilitychange", tazele);
+    return () => document.removeEventListener("visibilitychange", tazele);
+  }, []);
   const [bildirimBandiKapat, setBildirimBandiKapat] = useState(false); // ana sayfadaki "Bildirimleri Aç" uyarı bandı kapatıldı mı (bu oturum)
   const gorulenBildirimRef = useRef(null);                 // ilk yüklemede sessiz, sonra yeni gelenler bildirilir
   // PENCERE-İÇİ BİLDİRİM ŞERİDİ (uygulama AÇIKKEN): sistem bildirimi sekme öndeyken çıkmaz → içeride güzel bir şerit göster
@@ -5709,7 +5727,8 @@ export default function Anasayfa({ pro = false }) {
       // NATIVE UYGULAMA (B431): bildirimleri uygulamanın kendisi alır (WebView'de Notification yok) → izni uygulama sorar
       if (typeof window !== "undefined" && window.AndroidGlox && typeof window.AndroidGlox.bildirimIzniIste === "function") {
         window.AndroidGlox.bildirimIzniIste();
-        bilgiBalonu(t("bildAcildi", "Telefon bildirimleri açıldı"));
+        // İzin penceresi kapanınca gerçek durumu oku (kullanıcı reddederse "Açık" demesin)
+        [1500, 4000, 9000].forEach((ms) => setTimeout(() => { const dd = nativeBildirimDurum(); if (dd) setBildirimIzin(dd); }, ms));
         return;
       }
       if (typeof Notification === "undefined") { bilgiBalonu(t("bildDesteklenmiyor", "Bu cihaz/tarayıcı bildirimi desteklemiyor")); return; }

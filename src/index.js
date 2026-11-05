@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './sesKoprusu'; // Gloxoo sesi: telefon uygulamasında telefonun kendi ses motoru (WebView'de speechSynthesis yok)
 import './i18n'; // çoklu dil sistemi (i18next) — uygulama açılışında başlar
 import App from './App';
 import reportWebVitals from './reportWebVitals';
