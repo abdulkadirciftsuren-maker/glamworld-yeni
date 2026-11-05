@@ -14,6 +14,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Environment
+import android.app.NotificationManager
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import java.util.Locale
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -78,6 +82,10 @@ class MainActivity : Activity() {
     // Chrome penceresinde Google girişi açıkken true: pencere anahtar vermeden kapanırsa (çarpı) sayfaya "vazgeçildi" denir
     private var chromeGirisBekliyor = false
     private var hataSayisi = 0
+    // GLOXOO SESİ (telefonun kendi ses motoru): WebView'de tarayıcının ses motoru (speechSynthesis) YOK → Gloxoo telefonda
+    //   konuşamıyor, balon ortada takılı kalıyordu. Sayfa, köprü üzerinden telefonun Türkçe sesiyle konuşur.
+    private var tts: TextToSpeech? = null
+    @Volatile private var ttsHazir = false
 
     private val BASLANGIC_URL = "https://gloxorg.com"
     private val DOSYA_SEC = 1001
@@ -99,6 +107,7 @@ class MainActivity : Activity() {
         yeniWebViewKur()
         root.addView(ortu) // örtü en üstte kalsın
         kenarBosluklariniAyarla(root)
+        sesMotorunuKur()
         // GERİ TUŞU (Android 13+): Android 16'yı hedefleyen uygulamalarda eski onBackPressed ÇAĞRILMAZ → yeni yöntemle kaydedilir.
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { geriBas() }
@@ -144,7 +153,12 @@ class MainActivity : Activity() {
      */
     private fun cubuklariAyarla() {
         try {
-            if (Build.VERSION.SDK_INT >= 28) {
+            if (Build.VERSION.SDK_INT >= 30) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                }
+            } else if (Build.VERSION.SDK_INT >= 28) {
+                @Suppress("DEPRECATION")
                 window.attributes = window.attributes.apply {
                     layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
                 }
@@ -278,6 +292,59 @@ class MainActivity : Activity() {
         fun googleGiris() {
             runOnUiThread { googleNativeGiris() }
         }
+
+        /** Menüdeki "Telefon bildirimleri" düğmesi doğru durumu göstersin (WebView'de Notification.permission yok). */
+        @JavascriptInterface
+        fun bildirimIzniVar(): Boolean = try {
+            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled()
+        } catch (e: Exception) { false }
+
+        /** Gloxoo konuşsun: metni telefonun ses motoruyla okur. Bitince sayfaya window.__gloxTts('bitti', id) haber verir. */
+        @JavascriptInterface
+        fun konus(metin: String, dil: String, hiz: Float, ton: Float, id: String): Boolean {
+            val t = tts ?: return false
+            if (!ttsHazir) return false
+            runOnUiThread {
+                try {
+                    val r = t.setLanguage(Locale.forLanguageTag(if (dil.isBlank()) "tr-TR" else dil))
+                    if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) t.setLanguage(Locale.forLanguageTag("tr-TR"))
+                    t.setSpeechRate(hiz.coerceIn(0.5f, 2f))
+                    t.setPitch(ton.coerceIn(0.5f, 2f))
+                    t.speak(metin, TextToSpeech.QUEUE_ADD, null, id)
+                } catch (e: Exception) { sayfayaSesOlayi("hata", id) }
+            }
+            return true
+        }
+
+        @JavascriptInterface
+        fun sustur() { runOnUiThread { try { tts?.stop() } catch (e: Exception) {} } }
+
+        @JavascriptInterface
+        fun sesHazir(): Boolean = ttsHazir
+    }
+
+    private fun sesMotorunuKur() {
+        if (tts != null) return
+        try {
+            tts = TextToSpeech(applicationContext) { durum ->
+                ttsHazir = (durum == TextToSpeech.SUCCESS)
+                if (!ttsHazir) return@TextToSpeech
+                try { tts?.setLanguage(Locale.forLanguageTag("tr-TR")) } catch (e: Exception) {}
+                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(id: String?) { sayfayaSesOlayi("basladi", id) }
+                    override fun onDone(id: String?) { sayfayaSesOlayi("bitti", id) }
+                    @Deprecated("Deprecated in Java")
+                    override fun onError(id: String?) { sayfayaSesOlayi("hata", id) }
+                    override fun onError(id: String?, kod: Int) { sayfayaSesOlayi("hata", id) }
+                    override fun onStop(id: String?, kesildi: Boolean) { sayfayaSesOlayi("durdu", id) }
+                })
+            }
+        } catch (e: Exception) { tts = null }
+    }
+
+    private fun sayfayaSesOlayi(olay: String, id: String?) {
+        val i = (id ?: "").replace(Regex("[^A-Za-z0-9_-]"), "")
+        runOnUiThread { try { web?.evaluateJavascript("window.__gloxTts&&window.__gloxTts('$olay','$i')", null) } catch (e: Exception) {} }
     }
 
     // Chrome Custom Tab (uygulama içinde açılan Chrome penceresi). Paketi AÇIKÇA seçiyoruz ki
@@ -615,6 +682,8 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         if (aktif?.get() === this) aktif = null
+        try { tts?.stop(); tts?.shutdown() } catch (e: Exception) {}
+        tts = null
         try {
             val w = web
             (w?.parent as? ViewGroup)?.removeView(w)
