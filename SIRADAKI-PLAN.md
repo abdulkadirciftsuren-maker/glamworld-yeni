@@ -4,6 +4,27 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🔴🔴 KALDIĞIMIZ YER — 5 KAS 2026 GECE (kullanıcı: "yarın unutma, eksiksiz kaldığımız yerden devam edelim")
+**Konu: KAPALIYKEN ARAMA (WhatsApp gibi) — web B447, test uygulaması 2.0.20 (derleme 5 Kas 21:36 UTC başladı).**
+Yapılanlar (bugün):
+- B445: sunucu `aramaZili/aramaZiliSustur/aramaZiliSilindi` (functions/index.js) → arama başlayınca SADECE `kullanicilar/{uid}.fcmTokensArama`
+  (yeni uygulama anahtarları) "arama-gelen" push; web'e GİTMEZ (B170 kuralı). Uygulama: AramaZili.kt (CallStyle Cevapla/Reddet, sürekli zil,
+  kilitliyken tam ekran), Cevapla → sayfa `gloxAramaCevapla` ile otomatik açar. Reddet = şimdilik SADECE zili susturur.
+- Sunucu yükleme artık OTOMATİK: `.github/workflows/firebase-functions.yml` (functions/** değişince). GitHub secret FIREBASE_SA (kullanıcı 5 Kas ekledi;
+  firebase-adminsdk-fbsvc hesabına "Dienstkontonutzer"+"Cloud Functions-Admin" rolleri verildi). Node 22. Eklenti kontrolü yamalı (403 oluyordu).
+- B446: telefon gelen aramayı GÖRMÜYORDU (300 kayıt sınırı, "kabul" kayıtları birikmişti) → sorgu `durum=="calliyor"` + eskiAramalariTemizle. ✅ kullanıcı: "artık arıyor".
+- 2.0.19: Android 14+ tam ekran izni penceresi ("📞 Aramalar ekrana gelsin"). ✅ kullanıcı: kilitliyken ekran açılıyor.
+- B447 + 2.0.20: (1) telefonda karşının (bilgisayarın) GÖRÜNTÜSÜ yoktu → her yeni izde yeni MediaStream. (2) kilitliyken ZİL yoktu + kullanıcı
+  "telefonun kendi zil sesi" istiyor → `AndroidGlox.telefonZili(true/false)` (RingtoneManager varsayılan zil + titreşim).
+YARIN İLK İŞ:
+1. 2.0.20 derlemesi başarılı mı kontrol et (android-release.yml), sitede GLOXORG-kurulum.apk güncel mi bak; kullanıcıya kur + dene adımları ver:
+   (a) kilitliyken ara → ekran açılsın + TELEFON ZİLİ çalsın, (b) uygulama açıkken ara → telefon zili, (c) cevaplayınca telefonda bilgisayarın görüntüsü geliyor mu.
+2. SONRAKİ İŞ: cevapladıktan sonra görüntünün 7–20 sn geç gelmesi (ölç + hızlandır; arayan "kabul"den SONRA kamera açıp yayınlıyor — erken hazırlık düşün).
+3. Sonra: Reddet düğmesi gerçekten reddetsin (şu an sadece zili susturuyor, arayan 30 sn bekliyor).
+4. Sonra: B444 geçici "🔎 Doğal ses hatası" teşhisini SİL (App Check zorunluluğu 5 Kas kaldırıldı; kullanıcı doğal sesi henüz onaylamadı — sor).
+5. Hepsi onaylanınca Play'e yeni AAB (GLOXORG-play.aab) yükle — Play "tam ekran bildirim (USE_FULL_SCREEN_INTENT)" beyanı soracak → "arama uygulaması".
+6. 7 Aralık hatırlatması kurulu: App Check kurulumu (21 Ocak 2027'de Google yeniden zorunlu yapacak).
+
 ## ✅ PLAY'E GÖNDERİLDİ — 1 KAS 2026 — GOOGLE İNCELEMESİ BEKLENİYOR (yeni oturum ÖNCE BUNU OKU)
 - Yükleme anahtarı sıfırlaması ONAYLANDI (yeni anahtar SHA1 11:90:52:6A… 28 Eki 19:07 UTC'den beri geçerli).
 - Native uygulama Play'deki MEVCUT uygulamanın (com.gloxorg.twa) GÜNCELLEMESİ olarak Üretim'e gönderildi:
