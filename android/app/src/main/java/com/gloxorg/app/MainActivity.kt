@@ -15,6 +15,8 @@ import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Environment
 import android.app.NotificationManager
+import android.app.AlertDialog
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import java.util.Locale
@@ -145,6 +147,34 @@ class MainActivity : Activity() {
             if (!zorla && tercih.getBoolean("bildirimSoruldu", false)) return
             tercih.edit().putBoolean("bildirimSoruldu", true).apply()
             requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), IZIN_BILDIRIM)
+        } catch (e: Exception) {}
+    }
+
+    /**
+     * 📞 TAM EKRAN ARAMA İZNİ (Android 14+): bu izin yoksa uygulama kapalıyken gelen arama sadece ZİL çalar, ekran KARANLIK
+     * kalır, arama yalnızca bildirim listesinde görünür (kullanıcı şikâyeti B445). İzin yoksa BİR KEZ Türkçe açıklayıp
+     * telefonun ilgili ayar sayfasını açarız. Bildirim izni henüz yoksa önce o sorulur (bu beklenir).
+     */
+    private fun tamEkranIzniSor() {
+        if (Build.VERSION.SDK_INT < 34 || isFinishing) return
+        try {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (!nm.areNotificationsEnabled() || nm.canUseFullScreenIntent()) return
+            val tercih = getSharedPreferences("glox", MODE_PRIVATE)
+            if (tercih.getBoolean("tamEkranSoruldu", false)) return
+            tercih.edit().putBoolean("tamEkranSoruldu", true).apply()
+            AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_LIGHT)
+                .setTitle("📞 Aramalar ekrana gelsin")
+                .setMessage("Biri seni GLOXORG'dan aradığında, telefon kilitliyken de arama WhatsApp gibi TAM EKRAN açılsın diye bir izin gerekiyor.\n\nAçılan sayfada GLOXORG'un yanındaki düğmeyi AÇ, sonra geri dön.")
+                .setPositiveButton("İzin ver") { _, _ ->
+                    try {
+                        startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName")))
+                    } catch (e: Exception) {
+                        try { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)) } catch (x: Exception) {}
+                    }
+                }
+                .setNegativeButton("Sonra", null)
+                .show()
         } catch (e: Exception) {}
     }
 
@@ -533,6 +563,7 @@ class MainActivity : Activity() {
                 val tok = GloxMesajServisi.tokenOku(this@MainActivity)
                 if (tok.isNotEmpty()) sayfayaTokenVer(tok)
                 view?.postDelayed({ bildirimIzniSor(false) }, 3000)
+                view?.postDelayed({ tamEkranIzniSor() }, 8000)
                 // Arama bildiriminden "Cevapla" ile açıldıysa sayfaya bildir
                 bekleyenAramaJs?.let { aj -> bekleyenAramaJs = null; view?.evaluateJavascript(aj, null) }
                 // Chrome'dan dönen Google anahtarı bekliyorsa şimdi ver
