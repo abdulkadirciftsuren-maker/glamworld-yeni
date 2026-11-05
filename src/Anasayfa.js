@@ -4125,13 +4125,24 @@ export default function Anasayfa({ pro = false }) {
   // 🔎 GEÇİCİ TEŞHİS (B438): sadece telefon uygulamasında, arama ekranının köşesinde karşının görüntü durumunu yazar
   //   (telefonda karşının görüntüsü çıkmıyor — sebebi kesin görmek için). Sebep bulununca SİLİNECEK.
   const [aramaTani, setAramaTani] = useState("");
+  const aboneHataRef = useRef(""); // karşının bir izine abone olunamazsa sebebi (teşhis)
   const taniYaz = () => {
     try {
       if (!/GloxorgApp/.test(navigator.userAgent || "")) return;
       const st = uzakStreamRef.current; const el = uzakVideoRef.current;
       const iz = st ? st.getTracks().map((t) => t.kind[0] + ":" + t.readyState + (t.muted ? "/sus" : "") + (t.enabled ? "" : "/kapali")).join(" ") : "akis-yok";
       const v = el ? ("rs" + el.readyState + " " + el.videoWidth + "x" + el.videoHeight + (el.paused ? " DURAKLI" : " oynuyor") + (el.srcObject === st ? "" : " BAGSIZ") + " t" + Math.round(el.currentTime || 0)) : "video-yok";
-      setAramaTani(iz + " | " + v);
+      // Karşının SUNUCUYA gönderdikleri: tür(a/v) + biçim + abone(+/-) + iz telefona geldi mi(T)
+      let karsi = "karsi-yok";
+      const room = roomRef.current;
+      if (room) {
+        const kl = []; const rp = room.remoteParticipants || room.participants;
+        if (rp) rp.forEach((pp) => { (pp.trackPublications || pp.tracks || new Map()).forEach((pub) => { kl.push((pub.kind || "?")[0] + ":" + String(pub.mimeType || "").replace(/^(audio|video)\//, "") + (pub.isSubscribed ? "+" : "-") + (pub.track ? "T" : "") + (pub.isMuted ? "/sus" : "")); }); });
+        karsi = "K[" + (kl.join(",") || "bos") + "]";
+        const ben = []; try { room.localParticipant.trackPublications.forEach((pub) => ben.push((pub.kind || "?")[0])); } catch (e) {}
+        karsi += " B[" + ben.join(",") + "] " + (room.state || "");
+      }
+      setAramaTani(iz + " | " + v + " | " + karsi + (aboneHataRef.current ? " | HATA:" + aboneHataRef.current : ""));
     } catch (e) { setAramaTani("hata:" + (e && e.message)); }
   };
   useEffect(() => {
@@ -4183,6 +4194,8 @@ export default function Anasayfa({ pro = false }) {
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
       try { if (uzakStreamRef.current && track && track.mediaStreamTrack) uzakStreamRef.current.removeTrack(track.mediaStreamTrack); } catch (e) {}
     });
+    aboneHataRef.current = "";
+    try { room.on(RoomEvent.TrackSubscriptionFailed, (sid, p, err) => { aboneHataRef.current = String((err && (err.message || err)) || sid || "abone-olunamadi").slice(0, 60); }); } catch (e) {}
     // Karşı taraf odadan çıkarsa / bağlantı koparsa → arama ekranını kendin kapat (takılı/donuk kalmasın)
     room.on(RoomEvent.ParticipantDisconnected, () => { if (roomRef.current === room) aramaKapat(false); });
     room.on(RoomEvent.Disconnected, () => { if (roomRef.current === room) aramaKapat(false); });
