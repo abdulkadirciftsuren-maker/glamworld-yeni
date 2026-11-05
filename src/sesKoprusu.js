@@ -33,6 +33,8 @@
       addEventListener() {}, removeEventListener() {},
       speak(u) {
         if (!u) return;
+        // İçinde harf/rakam yoksa ("." gibi) okunmaz — telefon motoru "nokta" diyordu; hemen bitti say.
+        if (!/[\p{L}\p{N}]/u.test(String(u.text || ""))) { setTimeout(() => { ates(u, "start"); ates(u, "end"); }, 0); return; }
         const id = "g" + (++sira);
         bekleyen.set(id, u);
         motor.pending = true;

@@ -2286,6 +2286,40 @@ export default function Anasayfa({ pro = false }) {
   // (Yükleniyor da sayılır → canlı sohbette mikrofon, ses gelmeden araya girip Gloxoo'yu kesmez.)
   // GLOME ARAMASI VAR MI (gelen/giden/konuşuyor) — Gloxoo okuma işlevleri buna bakıp arama sırasında SUSAR.
   const aramaVarRef = useRef(false);
+  // 🔄 YENİ SÜRÜM → BİR KEZ, GÜVENLİ ANDA OTOMATİK YENİLE (B443 — kullanıcı: "eskiden güncelleme otomatik geliyordu, şimdi
+  //   müşteri uygulamayı silip yeniden kurmak zorunda, hiçbir platformda böyle yok"). Telefon uygulaması (Facebook gibi)
+  //   açık kaldığı için sayfa hiç tazelenmiyordu. ARTIK: uygulamaya arka plandan dönünce (en az 20 sn arkada kaldıysa)
+  //   sunucudaki sürüme bakılır; yeni sürüm varsa sayfa O ANDA bir kez yenilenir. Kullanırken, yazarken ya da ARAMA
+  //   sürerken ASLA yenilenmez; aynı sürüm için ikinci kez denemez (döngü yok).
+  const otoGuncelEngelRef = useRef(false);
+  otoGuncelEngelRef.current = !!(aramaDurum || gelenArama || grupArama);
+  useEffect(() => {
+    let arkadaZaman = 0, bakiyor = false;
+    const simdikiSurum = () => { try { const sc = Array.from(document.scripts).map((x) => x.src || "").find((x) => /\/static\/js\/main\.[a-z0-9]+\.js/.test(x)); const m = sc && sc.match(/main\.([a-z0-9]+)\.js/); return m ? m[1] : ""; } catch (e) { return ""; } };
+    const bak = async () => {
+      if (bakiyor || otoGuncelEngelRef.current) return; bakiyor = true;
+      try {
+        const simdiki = simdikiSurum(); if (!simdiki) return;
+        const r = await fetch((process.env.PUBLIC_URL || "") + "/index.html?v=" + Date.now(), { cache: "no-store" });
+        if (!r || !r.ok) return;
+        const m = (await r.text()).match(/static\/js\/main\.([a-z0-9]+)\.js/);
+        if (!m || m[1] === simdiki || otoGuncelEngelRef.current) return;
+        const anahtar = "gloxOtoGuncel_" + m[1];
+        if (sessionStorage.getItem(anahtar)) return;
+        sessionStorage.setItem(anahtar, "1");
+        window.location.reload();
+      } catch (e) {} finally { bakiyor = false; }
+    };
+    const gitti = () => { if (!arkadaZaman) arkadaZaman = Date.now(); };
+    const geldi = () => { const z = arkadaZaman; arkadaZaman = 0; if (z && Date.now() - z > 20000) bak(); };
+    const gorunurluk = () => { if (document.hidden) gitti(); else geldi(); };
+    const dokunus = () => { if (arkadaZaman) geldi(); }; // eski uygulama sürümü dönüşü haber vermez → ilk dokunuşta bak
+    document.addEventListener("visibilitychange", gorunurluk);
+    window.addEventListener("glox-arka-plan", gitti);
+    window.addEventListener("glox-on-plan", geldi);
+    window.addEventListener("pointerdown", dokunus, true);
+    return () => { document.removeEventListener("visibilitychange", gorunurluk); window.removeEventListener("glox-arka-plan", gitti); window.removeEventListener("glox-on-plan", geldi); window.removeEventListener("pointerdown", dokunus, true); };
+  }, []);
   aramaVarRef.current = !!(aramaDurum || gelenArama);
   useEffect(() => { if (aramaDurum || gelenArama) { try { gloxSustur(); } catch (e) {} } }, [aramaDurum, gelenArama]); // arama başlayınca konuşan Gloxoo hemen sussun
   const gloxKonusuyor = () => {
@@ -7074,7 +7108,10 @@ export default function Anasayfa({ pro = false }) {
         .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, "")
         .replace(/[•★☆◆♦]/g, " ")
         .replace(/Gloxoo/gi, "Gloksu").replace(/GLOXORG/gi, "Gloksorg")
-        .replace(/\s+/g, " ").trim();
+        .replace(/\s+/g, " ").trim()
+        // İçinde HARF/RAKAM yoksa (sadece "." "…" "!" gibi işaret) BOŞ say → okunmaz. Kullanıcı: "konuşma bitince
+        //   Gloxoo'dan 'nokta' diye bir ses geliyor" — sondaki tek başına kalan nokta ayrı cümle olarak okunuyordu.
+        .replace(/^[^\p{L}\p{N}]+$/u, "");
       // ⛔ İMLEÇ KAYMASIN — TEK KAYNAK: cümleleri HAM metinden (metin) böl → ekrandaki renkliCumleler ile TAM AYNI dizi ve AYNI indeks.
       //   onCumle(idx) = ekrandaki data-ci=idx → imleç HER ZAMAN okunan cümlenin üstünde (geride/ileride kalmaz). Boş cümlelerin bile
       //   indeksi korunur (renkliCumleler onları görünmez bırakır ama indeks aynı). Eski TEMİZ-metin bölmesi/cumleBas/cumleBul/runDili/scriptTip SİLİNDİ.
