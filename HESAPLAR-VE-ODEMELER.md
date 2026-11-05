@@ -14,7 +14,7 @@
 |---|---|---|
 | **Glome aramaları açılmıyor / bağlanmıyor** | Hetzner sunucusunun bakiyesi bitti → sunucu kapandı | Hetzner (aşağıda #1) |
 | **Gloxoo cevap vermiyor / yazmıyor** | Anthropic kredisi bitti | Anthropic (#2) |
-| **Gloxoo konuşmuyor (sesi yok)** veya **"Üstümde Dene" resim üretmiyor** | Google Gemini ön ödemesi bitti | Google AI Studio (#3) |
+| **Gloxoo konuşmuyor (sesi yok / robot ses)** veya **"Üstümde Dene" resim üretmiyor** | Google Gemini ön ödemesi bitti **ya da Firebase App Check kilidi zorunlu** (aşağıda #4) | Google AI Studio (#3), Firebase App Check (#4) |
 | **Adres bulma çalışmıyor** | HERE kotası/kartı | HERE (#7) |
 | **Site hiç açılmıyor (gloxorg.com)** | Alan adı süresi doldu | Namecheap (#5) |
 | **Play'de uygulama kaldırıldı / güncelleme gönderilemiyor** | Play beyanları eksik | Play Console (#6) |
@@ -50,6 +50,8 @@
 - **⚠️ Not:** Telefon uygulamasında (Android) tarayıcının yedek "robot sesi" YOK → Gemini bakiyesi biterse Gloxoo uygulamada **hiç** konuşamaz.
 
 ### 4. Google Cloud / Firebase (proje `glamworld2`)
+- **⚠️ APP CHECK (5 Kas 2026):** Firebase → App Check → API'ler → **Firebase AI Logic** "Basic – erzwungen" (zorunlu) idi → Gloxoo doğal sesi ve "Üstümde Dene" isteklerini REDDEDİYORDU ("Firebase App Check token is invalid", 401; uygulamada "fetch-error"). Sitemizde App Check hiç kurulu değil. Kullanıcıyla **"Nicht erzwungen (nur Monitoring)"** yapıldı → tekrar çalışıyor.
+  - **⏰ GOOGLE 21 OCAK 2027'DE KİLİDİ OTOMATİK YENİDEN AÇACAK.** O güne kadar App Check kurulmalı: web = reCAPTCHA Enterprise (Firebase'de web uygulamasını kaydet + site anahtarı + `initializeAppCheck` firebase.js), Android = Play Integrity (com.gloxorg.twa + com.gloxorg.app kaydı + uygulamaya App Check SDK). Hatırlatma: 7 Aralık 2026.
 - **Ne işe yarar:** Üyelik/giriş, veritabanı (gönderiler, mesajlar, profiller), fotoğraf depolama, bildirim gönderen sunucu programı.
 - **Nereden girilir:** console.firebase.google.com → glamworld2
 - **Ödeme:** Kullandıkça öde (Blaze). Şu an küçük kullanımda ücret çok düşük veya sıfır. Ödeme profili: **4526-1126-8343 (Almanya, Kyreinstraße 7)**.
@@ -95,6 +97,7 @@
 | Ne zaman | Ne yapılacak |
 |---|---|
 | **Her ayın 1'i** | Hetzner bakiyesi + Anthropic kredisi + Gemini bakiyesi kontrol |
+| **7 Aralık 2026** | **App Check kurulumu** (Google 21 Ocak 2027'de AI Logic kilidini otomatik açacak → Gloxoo sesi/Üstümde Dene durur) |
 | **10 Ocak 2027** | Play: **satıcı durumu beyanı** (son gün 1 Şubat) + **konum beyanı** (son gün 27 Ocak) |
 | **1 Haziran 2027** | Namecheap: **gloxorg.com yenile** (bitiş 4 Temmuz 2027) |
 
@@ -106,5 +109,6 @@
 - **3 Kas 2026:** Taşınma → Kyreinstraße 7, 83646 Bad Tölz. Namecheap ✅, Google ödeme profili ✅, eski adresler silindi ✅, Visa 8979 fatura adresi ✅. Play geliştirici adresi Ukrayna'da bırakıldı.
 - **3 Kas 2026:** ABD vergi formu (W-8BEN) Google tarafından onaylandı.
 - **2 Kas 2026:** Native uygulama Play'de yayınlandı (115 / 2.0.15).
+- **5 Kas 2026:** Gloxoo doğal ses yok → sebep Firebase App Check (AI Logic zorunlu). Zorunluluk kaldırıldı (21 Oca 2027'ye kadar).
 - **5 Kas 2026:** Aramalar + Gloxoo durdu → kontrol: Hetzner sunucusu çalışıyor, LiveKit OK, Cloudflare köprüsü OK. Arama sorunu PARA DEĞİL: telefon uygulamasında karşının görüntüsü duraklıyordu (izin penceresi) → B437 ile düzeltildi. Anthropic/Gemini bakiyesi henüz kontrol edilmedi.
 - **Hızlı test (Gloxoo köprüsü):** tarayıcıda `https://gloxorg-ai.abdulkadirciftsuren.workers.dev` → `{"metin":"","hata":"Sadece POST"}` yazıyorsa köprü çalışıyor; "Error 1027" çıkarsa Cloudflare günlük sınırı dolmuş.
