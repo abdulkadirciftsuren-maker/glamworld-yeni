@@ -4126,9 +4126,10 @@ export default function Anasayfa({ pro = false }) {
   //   (telefonda karşının görüntüsü çıkmıyor — sebebi kesin görmek için). Sebep bulununca SİLİNECEK.
   const [aramaTani, setAramaTani] = useState("");
   const aboneHataRef = useRef(""); // karşının bir izine abone olunamazsa sebebi (teşhis)
+  const yayinHataRef = useRef(""); // kendi görüntümü/sesimi sunucuya yayınlayamazsam sebebi (teşhis)
   const taniYaz = () => {
     try {
-      if (!/GloxorgApp/.test(navigator.userAgent || "")) return;
+      if (!aktifAramaRef.current || aktifAramaRef.current.tip !== "goruntulu") { setAramaTani(""); return; }
       const st = uzakStreamRef.current; const el = uzakVideoRef.current;
       const iz = st ? st.getTracks().map((t) => t.kind[0] + ":" + t.readyState + (t.muted ? "/sus" : "") + (t.enabled ? "" : "/kapali")).join(" ") : "akis-yok";
       const v = el ? ("rs" + el.readyState + " " + el.videoWidth + "x" + el.videoHeight + (el.paused ? " DURAKLI" : " oynuyor") + (el.srcObject === st ? "" : " BAGSIZ") + " t" + Math.round(el.currentTime || 0)) : "video-yok";
@@ -4142,7 +4143,9 @@ export default function Anasayfa({ pro = false }) {
         const ben = []; try { room.localParticipant.trackPublications.forEach((pub) => ben.push((pub.kind || "?")[0])); } catch (e) {}
         karsi += " B[" + ben.join(",") + "] " + (room.state || "");
       }
-      setAramaTani(iz + " | " + v + " | " + karsi + (aboneHataRef.current ? " | HATA:" + aboneHataRef.current : ""));
+      const ys = yerelStreamRef.current;
+      const yerel = ys ? " Y[" + ys.getTracks().map((t) => t.kind[0] + ":" + t.readyState).join(",") + "]" : " Y[yok]";
+      setAramaTani(iz + " | " + v + " | " + karsi + yerel + (aboneHataRef.current ? " | ABONEHATA:" + aboneHataRef.current : "") + (yayinHataRef.current ? " | YAYINHATA:" + yayinHataRef.current : ""));
     } catch (e) { setAramaTani("hata:" + (e && e.message)); }
   };
   useEffect(() => {
@@ -4207,7 +4210,18 @@ export default function Anasayfa({ pro = false }) {
   const livekitYayinla = async () => {
     const room = roomRef.current, ys = yerelStreamRef.current;
     if (!room || !ys) return;
-    for (const tr of ys.getTracks()) { try { await room.localParticipant.publishTrack(tr); } catch (e) {} }
+    yayinHataRef.current = "";
+    // Her izi (ses/görüntü) yayınla; HATA YUTULMAZ → teşhise yazılır ve görüntü yayınlanamadıysa 1.5 sn sonra BİR KEZ daha denenir
+    //   (kullanıcı: "telefonda karşının görüntüsü yok" — teşhis: arayan taraf sunucuya SADECE SES gönderiyordu).
+    const yayinla = async (tr) => { try { await room.localParticipant.publishTrack(tr); return true; } catch (e) { yayinHataRef.current = (tr.kind || "?")[0] + ":" + String((e && (e.message || e.name)) || e).slice(0, 70); return false; } };
+    for (const tr of ys.getTracks()) await yayinla(tr);
+    setTimeout(async () => {
+      try {
+        if (roomRef.current !== room) return;
+        const yayinlanan = new Set(); room.localParticipant.trackPublications.forEach((pub) => { if (pub.track && pub.track.mediaStreamTrack) yayinlanan.add(pub.track.mediaStreamTrack.id); });
+        for (const tr of ys.getTracks()) { if (tr.readyState === "live" && !yayinlanan.has(tr.id)) await yayinla(tr); }
+      } catch (e) {}
+    }, 1500);
   };
   const aramaBaslat = async (kisi, tip) => {
     if (!kisi || !kisi.uid) return;
