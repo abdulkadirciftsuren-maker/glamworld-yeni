@@ -62,7 +62,9 @@
 
 ### 6. Google Play Console — Uygulama mağazası
 - **Hesap:** Kişisel hesap, kimlik 6524637860521605101. Tek seferlik ücret ödenmiş, **yıllık ücret YOK.**
-- **Uygulama:** GLOXORG (`com.gloxorg.twa`). 1 Kasım 2026'da yeni native sürüm (115 / 2.0.15) üretime gönderildi.
+- **Uygulama:** GLOXORG (`com.gloxorg.twa`). **2 Kasım 2026'dan beri YAYINDA** (115 / 2.0.15, %100, herkese). Eski uygulamayı kullananlara güncelleme olarak gitti.
+  - ⚠️ Not: yeni uygulamanın belleği ayrı → eski (Chrome tabanlı) uygulamada telefonda tutulan Gloxoo konuşmaları yeni uygulamaya geçmedi.
+  - Play'in "bir sonraki yayın için" önerileri (uçtan uca ekran + eski komutlar) bir sonraki sürümde düzeltildi (Kasım 2026).
 - **Yasal adres:** Ukrayna adresi (doğrulanmış; inceleme bitene kadar değiştirmiyoruz). İletişim tel: Ukrayna numarası (kullanıcıda).
 - **⏰ YAPILACAK BEYANLAR (yapılmazsa uygulama Play'den KALDIRILIR):**
   - **Satıcı (tüccar) durumu beyanı — SON GÜN 1 ŞUBAT 2027.** Hesabı yönet → Hesap ayrıntıları → Hakkınızda → Satıcı durumu.
@@ -103,5 +105,6 @@
 - **1 Kas 2026:** Native uygulama Play üretimine gönderildi (115 / 2.0.15, Android 16 hedefli). 178 ülke + dünyanın geri kalanı.
 - **3 Kas 2026:** Taşınma → Kyreinstraße 7, 83646 Bad Tölz. Namecheap ✅, Google ödeme profili ✅, eski adresler silindi ✅, Visa 8979 fatura adresi ✅. Play geliştirici adresi Ukrayna'da bırakıldı.
 - **3 Kas 2026:** ABD vergi formu (W-8BEN) Google tarafından onaylandı.
+- **2 Kas 2026:** Native uygulama Play'de yayınlandı (115 / 2.0.15).
 - **5 Kas 2026:** Aramalar + Gloxoo durdu → kontrol: Hetzner sunucusu çalışıyor, LiveKit OK, Cloudflare köprüsü OK. Arama sorunu PARA DEĞİL: telefon uygulamasında karşının görüntüsü duraklıyordu (izin penceresi) → B437 ile düzeltildi. Anthropic/Gemini bakiyesi henüz kontrol edilmedi.
 - **Hızlı test (Gloxoo köprüsü):** tarayıcıda `https://gloxorg-ai.abdulkadirciftsuren.workers.dev` → `{"metin":"","hata":"Sadece POST"}` yazıyorsa köprü çalışıyor; "Error 1027" çıkarsa Cloudflare günlük sınırı dolmuş.
