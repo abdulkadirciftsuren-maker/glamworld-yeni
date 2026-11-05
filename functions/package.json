@@ -1,7 +1,7 @@
 {
   "name": "gloxorg-functions",
   "description": "GLOXORG bildirim (push) sunucu programı — mesaj/beğeni/yorum/tepki/arama gelince telefona bildirim gönderir",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "main": "index.js",
   "private": true,
   "dependencies": {
