@@ -659,6 +659,8 @@ class MainActivity : Activity() {
         super.onResume()
         onPlanda = true
         try { web?.onResume() } catch (e: Exception) {}
+        // Sayfaya "öne geldim" haberi → yeni sürüm yayınlandıysa sayfa BU ANDA bir kez kendini yeniler (B443 otomatik güncelleme)
+        try { web?.evaluateJavascript("window.dispatchEvent(new Event('glox-on-plan'))", null) } catch (e: Exception) {}
         // Arka plandan dönüşte sayfa YENİLENMEZ (Facebook gibi: kaldığın yerden ANINDA devam).
         // Sadece telefon sayfanın motorunu öldürdüyse onRenderProcessGone yeniden kurar.
         // Chrome giriş penceresi anahtar getirmeden kapandıysa (çarpı/geri) → sayfadaki "giriş yapılıyor" beklemesi biter.
