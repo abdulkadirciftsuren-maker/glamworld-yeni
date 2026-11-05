@@ -453,32 +453,47 @@ export function aramaDinle(aramaId, cb) {
 export async function aramaGuncelle(aramaId, veri) {
   try { await setDoc(doc(db, "aramalar", aramaId), veri, { merge: true }); return true; } catch (e) { return false; }
 }
-// BANA GELEN çağrıları dinle (arananUid == ben, durum "calliyor"). Tek eşitlik sorgusu (index gerektirmez), istemcide filtre.
+// BANA GELEN çağrıları dinle — SADECE "çalıyor" durumundakiler (arananUid == ben VE durum == "calliyor").
+// ⛔ ESKİ HATA (B445'te 2. kez yaşandı, kullanıcı: "iki arama çaldı sonra hiç aramıyor"): sorgu bana ait TÜM kayıtları sınırla
+//    (önce 20, sonra 300) getiriyordu; konuşulan ("kabul") kayıtlar hiç silinmediği için birikip sınırı geçince YENİ çağrı
+//    pencerenin DIŞINDA kaldı → telefon aramayı hiç görmedi. ÇÖZÜM: sorguya durum == "calliyor" eklendi (iki eşitlik → index
+//    gerekmez) → kaç eski kayıt olursa olsun yeni çağrı HEP gelir. Eski kayıtlar ayrıca eskiAramalariTemizle ile silinir.
 export function gelenAramalariDinle(uid, cb) {
   if (!uid) return () => {};
   try {
-    // ⛔ ESKİ HATA (kullanıcı: "ilk arama çalıştı sonra tıkandı / 3. arama gelmiyor"): fsLimit(20) vardı ve ZAMAN sıralaması YOKTU.
-    //    Günlerce arama birikince Firestore rastgele 20 kaydı getiriyor, YENİ çağrı çoğu zaman o 20'nin DIŞINDA kalıyor → telefon
-    //    yeni aramayı HİÇ görmüyor. ÇÖZÜM: sınırı çok geniş tut (300 — iki kişilik uygulamada asla dolmaz, en yeni GARANTİ gelir)
-    //    + BİTMİŞ (bitti/red) ve 90 sn'den ESKİ takılı çağrıları otomatik SİL → liste hep küçük kalır, bir daha ASLA tıkanmaz.
-    const q = query(collection(db, "aramalar"), where("arananUid", "==", uid), fsLimit(300));
-    return onSnapshot(q, (snap) => {
+    const q = query(collection(db, "aramalar"), where("arananUid", "==", uid), where("durum", "==", "calliyor"), fsLimit(50));
+    eskiAramalariTemizle(uid);
+    const iv = setInterval(() => eskiAramalariTemizle(uid), 10 * 60 * 1000);
+    const iptal = onSnapshot(q, (snap) => {
       const simdi = Date.now();
       const hepsi = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      // OTOMATİK TEMİZLİK: aktif olmayan/eski kayıtları sil. AKTİF çağrıya DOKUNMA (taze "calliyor" ve "kabul"=konuşulan asla silinmez).
-      hepsi.forEach((a) => {
-        const eskiCalliyor = a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) >= 90000;
-        // RED kaydını HEMEN silme: arayan taraf "reddedildi" bilgisini görüp arama günlüğüne yazsın diye 10 sn bekle
-        // (aksi halde yarış oluyor: kayıt silinince arayan "cevapsız" sanıyor, "Reddedildi" yazamıyor).
-        const eskiRed = a.durum === "red" && (!a.redZaman || Math.abs(simdi - a.redZaman) >= 10000);
-        if (a.durum === "bitti" || eskiRed || eskiCalliyor) { try { deleteDoc(doc(db, "aramalar", a.id)); } catch (e) {} }
-      });
+      // 90 sn'den eski "çalıyor" kaydı takılı kalmıştır → sil (arayan kapatmadan çıkmış)
+      hepsi.forEach((a) => { if (Math.abs(simdi - (a.zamanMs || 0)) >= 90000) { try { deleteDoc(doc(db, "aramalar", a.id)); } catch (e) {} } });
       const liste = hepsi
-        .filter((a) => a.durum === "calliyor" && Math.abs(simdi - (a.zamanMs || 0)) < 90000) // aktif çağrı, son ~1.5 dk (saat kaymasına dayanıklı: Math.abs)
+        .filter((a) => Math.abs(simdi - (a.zamanMs || 0)) < 90000) // aktif çağrı, son ~1.5 dk (saat kaymasına dayanıklı: Math.abs)
         .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // EN YENİ arama İLK
       cb(liste);
     }, () => cb([]));
+    return () => { clearInterval(iv); try { iptal(); } catch (e) {} };
   } catch (e) { return () => {}; }
+}
+// Bana gelmiş ESKİ arama kayıtlarını sil (biten, reddedilen, takılı çalan, 3 saatten eski konuşulan) — koleksiyon şişmesin.
+// Her seferinde en çok 400 kayıt; birikmiş çok kayıt varsa birkaç açılışta temizlenir.
+export async function eskiAramalariTemizle(uid) {
+  if (!uid) return;
+  try {
+    const simdi = Date.now();
+    const snap = await getDocs(query(collection(db, "aramalar"), where("arananUid", "==", uid), fsLimit(400)));
+    snap.docs.forEach((d) => {
+      const a = d.data() || {};
+      const yas = Math.abs(simdi - (a.zamanMs || 0));
+      const sil = a.durum === "bitti"
+        || (a.durum === "red" && (!a.redZaman || Math.abs(simdi - a.redZaman) >= 10000))
+        || (a.durum === "calliyor" && yas >= 90000)
+        || (a.durum !== "calliyor" && yas >= 3 * 60 * 60 * 1000);
+      if (sil) { try { deleteDoc(doc(db, "aramalar", d.id)); } catch (e) {} }
+    });
+  } catch (e) {}
 }
 // Bir arama dokümanını SİL (arama bitince çağrılır — koleksiyon şişmesin, en yeni çağrı hep görünsün).
 export async function aramaSil(aramaId) {
