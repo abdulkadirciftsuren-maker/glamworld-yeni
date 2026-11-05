@@ -29,7 +29,8 @@
 - **Sunucu:** `ubuntu-4gb-nbg1-1`, tip CPX22 (2 işlemci / 4 GB), Nürnberg. Adres: `canli.gloxorg.com`
 - **Fiyat:** notlara göre **~24 € / ay**
 - **Ödeme şekli:** Hesaba **ön ödemeli bakiye** (Eylül'de 25 € yüklenmişti, ~1 ay yeter).
-- **⚠️ Durum (5 Kas 2026):** Eylül'den beri ödeme yapılmadı → **bakiye bitmiş olabilir, aramaların durma sebebi bu olabilir.** Kontrol edilecek.
+- **✅ Durum (5 Kas 2026):** Kullanıcı kontrol etti: sunucu **çalışıyor (yeşil)**, `canli.gloxorg.com` → **OK**. Fatura sayfası (accounts.hetzner.com/invoice) henüz kontrol edilmedi.
+- **Hızlı test:** tarayıcıda `https://canli.gloxorg.com` (noktalı **i**!) → "OK" yazıyorsa arama sunucusu çalışıyor.
 - **Kontrol:** Hetzner → sol üstte **Billing / Faturalar** → bakiye ve ödenmemiş fatura var mı? Sunucu listesinde sunucu **"Running" (çalışıyor)** mu?
 - **İpucu:** Her ay elle yüklemek yerine karta bağlı **otomatik aylık ödeme** açılabilir (sabit ~24 €, sürpriz yok).
 
@@ -102,4 +103,5 @@
 - **1 Kas 2026:** Native uygulama Play üretimine gönderildi (115 / 2.0.15, Android 16 hedefli). 178 ülke + dünyanın geri kalanı.
 - **3 Kas 2026:** Taşınma → Kyreinstraße 7, 83646 Bad Tölz. Namecheap ✅, Google ödeme profili ✅, eski adresler silindi ✅, Visa 8979 fatura adresi ✅. Play geliştirici adresi Ukrayna'da bırakıldı.
 - **3 Kas 2026:** ABD vergi formu (W-8BEN) Google tarafından onaylandı.
-- **5 Kas 2026:** Aramalar + Gloxoo durdu → Hetzner / Anthropic / Gemini bakiyeleri kontrol ediliyor.
+- **5 Kas 2026:** Aramalar + Gloxoo durdu → kontrol: Hetzner sunucusu çalışıyor, LiveKit OK, Cloudflare köprüsü OK. Arama sorunu PARA DEĞİL: telefon uygulamasında karşının görüntüsü duraklıyordu (izin penceresi) → B437 ile düzeltildi. Anthropic/Gemini bakiyesi henüz kontrol edilmedi.
+- **Hızlı test (Gloxoo köprüsü):** tarayıcıda `https://gloxorg-ai.abdulkadirciftsuren.workers.dev` → `{"metin":"","hata":"Sadece POST"}` yazıyorsa köprü çalışıyor; "Error 1027" çıkarsa Cloudflare günlük sınırı dolmuş.

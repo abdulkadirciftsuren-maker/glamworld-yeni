@@ -240,6 +240,9 @@ function _sureBicim(sn) {
   const iki = (n) => (n < 10 ? "0" + n : "" + n);
   return sa > 0 ? (sa + ":" + iki(dk) + ":" + iki(s)) : (iki(dk) + ":" + iki(s));
 }
+// ŞEFFAF VİDEO KAPAĞI (poster): Android uygulamasında (WebView) oynamayan videonun üstünde büyük gri ▶ simgesi çıkıyordu.
+//   1x1 şeffaf resim verilince simge hiç görünmez (arkadaki altın zemin görünür).
+const SEFFAF_POSTER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 // GRUP GÖRÜŞMESİ — her uzak katılımcının bir "karesi" (video+ses). LiveKit track'lerini kendi <video>/<audio>'suna bağlar.
 function GrupKare({ p, genis }) {
   const vRef = useRef(null); const aRef = useRef(null);
@@ -268,7 +271,7 @@ function GrupKare({ p, genis }) {
   }, [p]);
   return (
     <div className={"grup-kare" + (genis ? " grup-kare-genis" : "")}>
-      <video ref={vRef} autoPlay playsInline style={{ display: kameraVar ? "block" : "none" }} />
+      <video ref={vRef} autoPlay playsInline poster={SEFFAF_POSTER} style={{ display: kameraVar ? "block" : "none" }} />
       {!kameraVar && <span className="grup-kare-harf">{(ad || "?").trim()[0] ? (ad || "?").trim()[0].toUpperCase() : "?"}</span>}
       <audio ref={aRef} autoPlay playsInline />
       <span className="grup-kare-ad notranslate" translate="no">{ad}</span>
@@ -4114,6 +4117,26 @@ export default function Anasayfa({ pro = false }) {
     try { el.muted = !hoparlorAcikRef.current; el.volume = 1; } catch (e) {}
     try { const p = el.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
   };
+  // 🔁 ARAMA BEKÇİSİ (kullanıcı: "telefonda karşının görüntüsü çıkmıyor, büyük ▶ simgesi var; bilgisayarda çıkıyor").
+  //   SEBEP: Android uygulamasında aramayı açınca kamera/mikrofon İZİN penceresi çıkar → uygulama bir an arka plana geçmiş
+  //   sayılır, Android videoları DURAKLATIR; karşının görüntüsü tam o an gelince duraklatılmış kalıyordu. Ayrıca görüntü,
+  //   video kutusu ekrana gelmeden önce gelirse kutuya hiç bağlanmıyordu. ÇÖZÜM: konuşma sürdükçe 1.5 sn'de bir bak →
+  //   akış kutuya bağlı değilse bağla, duraklamışsa yeniden oynat; uygulama öne gelince de hemen aynısını yap.
+  useEffect(() => {
+    if (aramaDurum !== "konusuyor") return undefined;
+    const kontrol = () => {
+      try {
+        const st = uzakStreamRef.current; const el = uzakVideoRef.current || uzakSesRef.current;
+        if (!st || !el) return;
+        if (el.srcObject !== st) { baglaUzakMedya(); return; }
+        if (el.paused) { const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+      } catch (e) {}
+    };
+    const iv = setInterval(kontrol, 1500);
+    const gorununce = () => { if (!document.hidden) setTimeout(kontrol, 300); };
+    document.addEventListener("visibilitychange", gorununce);
+    return () => { clearInterval(iv); document.removeEventListener("visibilitychange", gorununce); };
+  }, [aramaDurum]); // eslint-disable-line react-hooks/exhaustive-deps
   // ---- KENDİ CANLI GÖRÜŞME SUNUCUMUZ (LiveKit) ----
   // Eski ham WebRTC (Metered — kotası doldu) yerine: köprüden (worker) imzalı bir "bilet" (token) alıp KENDİ sunucumuza bağlanırız.
   // Oda adı = arama id'si → iki taraf da AYNI odaya girer. Kendi kamera/mikrofonumu yayınlarım, karşınınkini dinlerim.
@@ -11454,7 +11477,7 @@ export default function Anasayfa({ pro = false }) {
         <div className={"arama-fon arama-aktif" + (aktifArama.tip === "goruntulu" ? " goruntulu" : " sesli") + (aramaKucuk ? " arama-mini" : "") + ((aktifArama.tip === "goruntulu" && aramaDurum === "konusuyor" && !aramaKontrol && !aramaKucuk) ? " kontrol-gizli" : "")}
           onClick={aramaEkranDokun} title={aramaKucuk ? t("aramaBuyut", "Aramayı büyüt") : undefined}>
           {aktifArama.tip === "goruntulu"
-            ? <video ref={uzakVideoRef} className={"arama-video " + (videoBuyuk === "uzak" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline
+            ? <video ref={uzakVideoRef} className={"arama-video " + (videoBuyuk === "uzak" ? "arama-buyuk" : "arama-kucuk")} autoPlay playsInline poster={SEFFAF_POSTER}
                 style={videoBuyuk !== "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
                 onPointerDown={videoBuyuk !== "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk !== "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk !== "uzak" ? kucukVideoBitir : undefined} />
             : <audio ref={uzakSesRef} autoPlay playsInline />}
@@ -11469,7 +11492,7 @@ export default function Anasayfa({ pro = false }) {
               <i className="notranslate" translate="no">{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : aramaSayacBicim(aramaSaniye)}</i>
             </div>
           )}
-          {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk") + (onKamera ? " ayna" : "")} autoPlay playsInline muted
+          {aktifArama.tip === "goruntulu" && <video ref={yerelVideoRef} className={"arama-video " + (videoBuyuk === "yerel" ? "arama-buyuk" : "arama-kucuk") + (onKamera ? " ayna" : "")} autoPlay playsInline muted poster={SEFFAF_POSTER}
             style={videoBuyuk === "uzak" && kucukYer ? { left: kucukYer.x + "px", top: kucukYer.y + "px", right: "auto", bottom: "auto" } : undefined}
             onPointerDown={videoBuyuk === "uzak" ? kucukVideoBas : undefined} onPointerMove={videoBuyuk === "uzak" ? kucukVideoGit : undefined} onPointerUp={videoBuyuk === "uzak" ? kucukVideoBitir : undefined} />}
           {/* SAĞ SÜTUN (havada, ayrı) — kullanıcı: "artı eksi düğmeleri havada dursun; Kapat'ı da sıradan al, artı eksinin ALTINA havada koy".
