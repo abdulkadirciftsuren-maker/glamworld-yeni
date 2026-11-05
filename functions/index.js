@@ -5,7 +5,7 @@
 //          ilgili kişinin kayıtlı telefon anahtarlarına (fcmTokens) push yollar.
 // KURULUM: Firebase Blaze planı gerekir. Bilgisayarda: firebase deploy --only functions
 
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -89,3 +89,69 @@ exports.genelBildirim = onDocumentCreated("bildirimler/{id}", async (event) => {
 //    geliyor, kime cevap vereyim? Bildirim sadece CEVAP VERİLMEZSE gelsin, 'seni aradı geri ara' diye").
 //    Artık arama gelince SADECE uygulama-içi arama EKRANI gelir (Firestore listener); telefon push'u yalnızca CEVAPSIZ kalınca
 //    "arama-cevapsiz" bildirimiyle (yukarıdaki genelBildirim) gider. Eski onDocumentCreated("aramalar/{id}") push'u KALDIRILDI.
+
+// 3) 📞 KAPALIYKEN ARAMA ZİLİ (WhatsApp gibi) — SADECE YENİ TELEFON UYGULAMASINA gider (kullanicilar/{uid}.fcmTokensArama).
+//    Bilgisayar/tarayıcı bu listeye HİÇ girmez → web'de "aramadan önce bildirim" (B170 şikâyeti) GERİ GELMEZ.
+//    Uygulama ekrandaysa bildirimi uygulama göstermez (sayfa zaten çalıyor); kapalı/arka plandaysa telefon ZİL ÇALAR,
+//    "Cevapla / Reddet" düğmeli tam ekran arama bildirimi çıkar. Arama bitince/reddedilince/açılınca "arama-bitti" ile susar.
+async function aramaPushGonder(uid, veri) {
+  if (!uid) return;
+  let tokens = [];
+  try {
+    const snap = await db.collection("kullanicilar").doc(uid).get();
+    const d = snap.exists ? snap.data() : {};
+    tokens = Array.isArray(d.fcmTokensArama) ? d.fcmTokensArama.filter(Boolean) : [];
+  } catch (e) { tokens = []; }
+  console.log(`[aramaPush] alici=${uid} | tip=${veri.tip} | uygulama anahtari=${tokens.length}`);
+  if (!tokens.length) return;
+  const data = {};
+  Object.keys(veri).forEach((k) => {
+    const v = veri[k];
+    if (v === undefined || v === null) return;
+    const s = String(v);
+    if (s.length > 700 || s.slice(0, 5) === "data:") return; // FCM 4KB sınırı (base64 foto atılır)
+    data[k] = s;
+  });
+  try {
+    // ttl 40 sn: telefon o an internetsizse, sonradan "eski" bir arama için zil ÇALMASIN.
+    const res = await getMessaging().sendEachForMulticast({ tokens, data, android: { priority: "high", ttl: 40000 } });
+    console.log(`[aramaPush] basarili=${res.successCount}, basarisiz=${res.failureCount}`);
+    const gecersiz = [];
+    res.responses.forEach((r, i) => {
+      const c = (!r.success && r.error && r.error.code) || "";
+      if (c === "messaging/registration-token-not-registered" || c === "messaging/invalid-argument" || c === "messaging/invalid-registration-token") gecersiz.push(tokens[i]);
+    });
+    if (gecersiz.length) await db.collection("kullanicilar").doc(uid).set({ fcmTokensArama: tokens.filter((t) => !gecersiz.includes(t)) }, { merge: true });
+  } catch (e) { console.error("aramaPush hata:", e); }
+}
+
+exports.aramaZili = onDocumentCreated("aramalar/{id}", async (event) => {
+  const a = event.data && event.data.data();
+  if (!a || a.durum !== "calliyor" || !a.arananUid || a.arananUid === a.arayanUid) return;
+  const video = a.tip === "goruntulu";
+  await aramaPushGonder(a.arananUid, {
+    tip: "arama-gelen",
+    aramaId: event.params.id,
+    arayanAd: a.arayanAd || "GLOXORG",
+    aramaTip: video ? "goruntulu" : "sesli",
+    baslik: a.arayanAd || "GLOXORG",
+    govde: video ? "📹 Görüntülü arıyor…" : "📞 Sesli arıyor…",
+    foto: a.arayanFoto || "",
+    zamanMs: a.zamanMs || Date.now(),
+  });
+});
+
+// Arama "çalıyor"dan çıktı (açıldı / reddedildi / arayan vazgeçti) → aranan telefonun zili SUSSUN.
+exports.aramaZiliSustur = onDocumentUpdated("aramalar/{id}", async (event) => {
+  const once = event.data && event.data.before && event.data.before.data();
+  const sonra = event.data && event.data.after && event.data.after.data();
+  if (!once || !sonra || once.durum !== "calliyor" || sonra.durum === "calliyor") return;
+  await aramaPushGonder(once.arananUid, { tip: "arama-bitti", aramaId: event.params.id });
+});
+
+// Çalarken kayıt silindiyse (eski/takılı arama temizliği) → zil sussun.
+exports.aramaZiliSilindi = onDocumentDeleted("aramalar/{id}", async (event) => {
+  const a = event.data && event.data.data();
+  if (!a || a.durum !== "calliyor") return;
+  await aramaPushGonder(a.arananUid, { tip: "arama-bitti", aramaId: event.params.id });
+});

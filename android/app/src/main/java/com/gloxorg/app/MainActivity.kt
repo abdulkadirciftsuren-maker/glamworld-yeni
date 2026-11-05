@@ -114,6 +114,7 @@ class MainActivity : Activity() {
         }
         cubuklariAyarla()
         girisDonusu(intent) // uygulama kapalıyken Chrome'dan anahtarla açıldıysa
+        aramaGirisi(intent) // telefon çalan arama bildiriminden açıldıysa
         aktif = WeakReference(this)
         bildirimAnahtariAl()
     }
@@ -203,6 +204,45 @@ class MainActivity : Activity() {
         super.onNewIntent(intent)
         if (intent != null) setIntent(intent)
         girisDonusu(intent)
+        aramaGirisi(intent)
+    }
+
+    // ===== 📞 ARAMA ZİLİNDEN AÇILIŞ =====
+    // Kilitli telefonda arama için açıldıysak uygulama KİLİDİN ÜSTÜNDE görünür; arama bitince kilidin arkasına çekilir
+    // (kilit açılmadan uygulamanın geri kalanı kullanılamasın).
+    private var bekleyenAramaJs: String? = null
+    private var kilitUstunde = false
+    private var aramaGoruldu = false
+
+    private fun aramaGirisi(intent: Intent?) {
+        val id = intent?.getStringExtra(AramaZili.EK_ARAMA) ?: return
+        val cevapla = intent.getStringExtra(AramaZili.EK_CEVAPLA)
+        intent.removeExtra(AramaZili.EK_ARAMA); intent.removeExtra(AramaZili.EK_CEVAPLA) // ikinci kez işlenmesin
+        AramaZili.kapat(this, null) // zil sussun (sayfa kendi arama ekranını gösterecek)
+        kilitUstundeGoster(true)
+        aramaGoruldu = false
+        // Sayfa arama ekranını hiç göstermezse (arama o arada bitmiş) 40 sn sonra kilidin arkasına çekil
+        kok?.postDelayed({ if (!aramaGoruldu) kilitUstundeGoster(false) }, 40000)
+        if (cevapla != null && Regex("^[A-Za-z0-9_-]+$").matches(cevapla)) {
+            val js = "(function f(n){if(window.gloxAramaCevapla){window.gloxAramaCevapla('" + cevapla + "')}else if(n>0){setTimeout(function(){f(n-1)},500)}})(120);"
+            val w = web
+            if (w != null && sayfaHazir) w.evaluateJavascript(js, null) else bekleyenAramaJs = js
+        }
+    }
+
+    private fun kilitUstundeGoster(acik: Boolean) {
+        if (kilitUstunde == acik) return
+        kilitUstunde = acik
+        try {
+            if (Build.VERSION.SDK_INT >= 27) {
+                setShowWhenLocked(acik)
+                setTurnScreenOn(acik)
+            } else {
+                @Suppress("DEPRECATION")
+                val bayrak = android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                if (acik) window.addFlags(bayrak) else window.clearFlags(bayrak)
+            }
+        } catch (e: Exception) {}
     }
 
     private fun girisDonusu(intent: Intent?) {
@@ -321,6 +361,15 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun sesHazir(): Boolean = ttsHazir
+
+        /** Sayfa: arama ekranı açık mı (gelen/aktif arama). Kilit üstünde açıldıysak arama bitince kilidin arkasına çekilir. */
+        @JavascriptInterface
+        fun aramaEkrani(var_: Boolean) {
+            runOnUiThread {
+                if (var_) aramaGoruldu = true
+                else if (kilitUstunde && aramaGoruldu) { aramaGoruldu = false; kilitUstundeGoster(false) }
+            }
+        }
     }
 
     private fun sesMotorunuKur() {
@@ -484,6 +533,8 @@ class MainActivity : Activity() {
                 val tok = GloxMesajServisi.tokenOku(this@MainActivity)
                 if (tok.isNotEmpty()) sayfayaTokenVer(tok)
                 view?.postDelayed({ bildirimIzniSor(false) }, 3000)
+                // Arama bildiriminden "Cevapla" ile açıldıysa sayfaya bildir
+                bekleyenAramaJs?.let { aj -> bekleyenAramaJs = null; view?.evaluateJavascript(aj, null) }
                 // Chrome'dan dönen Google anahtarı bekliyorsa şimdi ver
                 val js = bekleyenGirisJs
                 if (js != null) {
@@ -658,6 +709,7 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         onPlanda = true
+        AramaZili.kapat(this, null) // uygulama ekrana geldi → telefon zili sussun (sayfa kendi arama ekranını gösterir)
         try { web?.onResume() } catch (e: Exception) {}
         // Sayfaya "öne geldim" haberi → yeni sürüm yayınlandıysa sayfa BU ANDA bir kez kendini yeniler (B443 otomatik güncelleme)
         try { web?.evaluateJavascript("window.dispatchEvent(new Event('glox-on-plan'))", null) } catch (e: Exception) {}

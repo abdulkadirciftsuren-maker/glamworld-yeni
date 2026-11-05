@@ -4302,6 +4302,25 @@ export default function Anasayfa({ pro = false }) {
     const ab1 = aramaDinle(g.id, (a) => { if (!a || a.durum === "bitti") aramaKapat(false); });
     aramaAbonelikRef.current.push(ab1);
   };
+  // 📞 TELEFON BİLDİRİMİNDEN "CEVAPLA" (uygulama kapalıyken çalan zil): uygulama açılır ve window.gloxAramaCevapla(id) der →
+  //   o arama ekrana gelince KENDİLİĞİNDEN açılır (kullanıcı ikinci kez "kabul"e basmaz). 60 sn içinde gelmezse unutulur.
+  const cevaplaBekleyenRef = useRef({ id: "", zaman: 0 });
+  const [cevaplaTik, setCevaplaTik] = useState(0);
+  useEffect(() => {
+    window.gloxAramaCevapla = (id) => { cevaplaBekleyenRef.current = { id: String(id || ""), zaman: Date.now() }; setCevaplaTik((x) => x + 1); };
+    return () => { try { delete window.gloxAramaCevapla; } catch (e) {} };
+  }, []);
+  useEffect(() => {
+    const b = cevaplaBekleyenRef.current;
+    if (!b.id || !gelenArama || aramaDurum) return;
+    if (Date.now() - b.zaman > 60000) { cevaplaBekleyenRef.current = { id: "", zaman: 0 }; return; }
+    if (gelenArama.id === b.id) { cevaplaBekleyenRef.current = { id: "", zaman: 0 }; aramaKabulEt(); }
+  }, [gelenArama, cevaplaTik]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Uygulamaya "arama ekranı var/yok" haberi: kilit ekranında arama için açıldıysa arama bitince uygulama kilidin ARKASINA çekilir.
+  const aramaEkraniVar = !!(aramaDurum || gelenArama || grupArama);
+  useEffect(() => {
+    try { if (window.AndroidGlox && typeof window.AndroidGlox.aramaEkrani === "function") window.AndroidGlox.aramaEkrani(aramaEkraniVar); } catch (e) {}
+  }, [aramaEkraniVar]);
   const aramaReddet = async () => { const g = gelenArama; if (g && g.id) { try { await aramaGuncelle(g.id, { durum: "red", redZaman: Date.now() }); } catch (e) {} } setGelenArama(null); aramaBildirimKapat(); };
   // ================= GRUP GÖRÜŞMESİ (10 kişiye kadar) =================
   // Herkes AYNI LiveKit odasına girer; ekran ızgaraya bölünür. 1'e1 aramayı BOZMAZ (ayrı yol/ayrı durum).
@@ -5805,7 +5824,9 @@ export default function Anasayfa({ pro = false }) {
   // kullanıcıya kaydedilir (kullanicilar/{uid}.fcmTokens) → sunucu bildirimleri uygulama KAPALIYKEN de bu telefona gelir.
   useEffect(() => {
     if (!u) return undefined;
-    const kaydet = (tok) => { try { if (tok && auth.currentUser) fcmTokenKaydet(auth.currentUser.uid, tok); } catch (e) {} };
+    // Uygulama "kapalıyken arama zili"ni biliyorsa (AndroidGlox.aramaEkrani var) anahtar arama listesine de yazılır.
+    const zilVar = !!(window.AndroidGlox && typeof window.AndroidGlox.aramaEkrani === "function");
+    const kaydet = (tok) => { try { if (tok && auth.currentUser) fcmTokenKaydet(auth.currentUser.uid, tok, zilVar); } catch (e) {} };
     window.gloxNativeFcm = (tok) => { window.__gloxNativeFcmTok = tok; kaydet(tok); };
     try {
       const ilk = window.__gloxNativeFcmTok || (window.AndroidGlox && typeof window.AndroidGlox.fcmToken === "function" ? window.AndroidGlox.fcmToken() : "");

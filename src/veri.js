@@ -399,9 +399,13 @@ export async function mesajDuzelt(mesajId, metin) {
   try { await setDoc(doc(db, "mesajlar", mesajId), { metin: (metin || "").trim().slice(0, 2000), duzenlendi: true }, { merge: true }); return true; } catch (e) { return false; }
 }
 // PUSH BİLDİRİM anahtarı (fcmTokens) — kullanıcının cihazını kaydet (site kapalıyken bildirim gelebilsin). Çoklu cihaz: dizi.
-export async function fcmTokenKaydet(uid, token) {
+// aramaZili=true → bu anahtar YENİ telefon uygulamasına ait: ayrıca fcmTokensArama'ya yazılır (sunucu KAPALIYKEN ARAMA ZİLİNİ
+//   sadece buraya gönderir; bilgisayar/tarayıcı anahtarları bu listeye girmez → web'de arama öncesi bildirim çıkmaz).
+export async function fcmTokenKaydet(uid, token, aramaZili) {
   if (!uid || !token) return false;
-  try { await setDoc(doc(db, "kullanicilar", uid), { fcmTokens: arrayUnion(token) }, { merge: true }); return true; } catch (e) { return false; }
+  const v = { fcmTokens: arrayUnion(token) };
+  if (aramaZili) v.fcmTokensArama = arrayUnion(token);
+  try { await setDoc(doc(db, "kullanicilar", uid), v, { merge: true }); return true; } catch (e) { return false; }
 }
 export async function fcmTokenSil(uid, token) {
   if (!uid || !token) return false;

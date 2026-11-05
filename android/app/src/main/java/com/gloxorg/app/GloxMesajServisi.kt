@@ -30,6 +30,9 @@ class GloxMesajServisi : FirebaseMessagingService() {
 
     override fun onMessageReceived(mesaj: RemoteMessage) {
         val v = mesaj.data
+        // 📞 ARAMA ZİLİ (uygulama kapalıyken WhatsApp gibi çalar) / arama bitti → zili sustur
+        if (v["tip"] == "arama-bitti") { AramaZili.kapat(this, v["aramaId"]); return }
+        if (v["tip"] == "arama-gelen") { if (!MainActivity.onPlanda) AramaZili.goster(this, v); return }
         if (MainActivity.onPlanda) return // uygulama açık → sayfa zaten gösteriyor
         val baslik = v["baslik"] ?: mesaj.notification?.title ?: "GLOXORG"
         val govde = v["govde"] ?: mesaj.notification?.body ?: ""
@@ -58,22 +61,22 @@ class GloxMesajServisi : FirebaseMessagingService() {
                 .setAutoCancel(true)
                 .setContentIntent(pi)
             // Gönderenin fotoğrafı (WhatsApp gibi) — sadece http adresi; gelmezse fotoğrafsız gösterilir
-            fotoIndir(foto)?.let { b.setLargeIcon(it) }
+            Companion.fotoIndir(foto)?.let { b.setLargeIcon(it) }
             nm.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), b.build())
         } catch (e: Exception) {}
     }
 
-    private fun fotoIndir(adres: String?): Bitmap? {
-        if (adres == null || !adres.startsWith("http")) return null
-        return try {
-            val c = URL(adres).openConnection() as HttpURLConnection
-            c.connectTimeout = 4000; c.readTimeout = 4000
-            c.inputStream.use { BitmapFactory.decodeStream(it) }?.let { Bitmap.createScaledBitmap(it, 128, 128, true) }
-        } catch (e: Exception) { null }
-    }
-
     companion object {
         const val KANAL = "glox_bildirim"
+        /** Gönderenin fotoğrafı (sadece kısa http adresi; 4 sn'de gelmezse fotoğrafsız) — arama zili de kullanır */
+        fun fotoIndir(adres: String?): Bitmap? {
+            if (adres == null || !adres.startsWith("http")) return null
+            return try {
+                val c = URL(adres).openConnection() as HttpURLConnection
+                c.connectTimeout = 4000; c.readTimeout = 4000
+                c.inputStream.use { BitmapFactory.decodeStream(it) }?.let { Bitmap.createScaledBitmap(it, 128, 128, true) }
+            } catch (e: Exception) { null }
+        }
         fun tokenSakla(c: Context, token: String) {
             try { c.getSharedPreferences("glox", Context.MODE_PRIVATE).edit().putString("fcmToken", token).apply() } catch (e: Exception) {}
         }

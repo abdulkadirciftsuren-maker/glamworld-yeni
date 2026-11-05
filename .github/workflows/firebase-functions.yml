@@ -1,0 +1,33 @@
+# GLOXORG — SUNUCU PROGRAMINI (functions/: bildirimler + kapalıyken arama zili) Firebase'e yükler.
+# Eskiden kullanıcı bilgisayardan "firebase deploy --only functions" yapıyordu; artık GitHub'daki FIREBASE_SA
+# (hizmet hesabı) anahtarıyla otomatik yüklenir. sadece elle tetiklenince çalışır.
+name: GLOXORG sunucu programi (functions)
+# NOT: OTOMATİK ÇALIŞMAZ — sadece kullanıcı onay verince elle (workflow_dispatch) başlatılır.
+on:
+  workflow_dispatch: {}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+      - name: Node kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: firebase-tools kur
+        run: npm install -g firebase-tools@13.29.1
+      - name: Sunucu programinin paketlerini kur
+        working-directory: functions
+        run: npm install --no-audit --no-fund
+      - name: Hizmet hesabi anahtarini yaz
+        env:
+          SA: ${{ secrets.FIREBASE_SA }}
+        run: |
+          if [ -z "$SA" ]; then echo "HATA: FIREBASE_SA secret yok"; exit 1; fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+      - name: Sunucu programini yukle
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          firebase deploy --only functions --project glamworld2 --non-interactive

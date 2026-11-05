@@ -12,6 +12,9 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Bildirimler (Android 13+ izin ister) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 📞 Kapalıyken arama zili: kilitli telefonda arama ekranı tam ekran açılsın + titreşim -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Gloxoo sesi: Android 11+ uygulamanın telefondaki ses motorunu (TTS) görebilmesi için gerekli -->
     <queries>
@@ -60,6 +63,10 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <!-- Arama bildirimindeki "Reddet" düğmesi (zili susturur) -->
+        <receiver
+            android:name=".AramaAlici"
+            android:exported="false" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="glox_bildirim" />
