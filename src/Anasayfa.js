@@ -4122,10 +4122,23 @@ export default function Anasayfa({ pro = false }) {
   //   sayılır, Android videoları DURAKLATIR; karşının görüntüsü tam o an gelince duraklatılmış kalıyordu. Ayrıca görüntü,
   //   video kutusu ekrana gelmeden önce gelirse kutuya hiç bağlanmıyordu. ÇÖZÜM: konuşma sürdükçe 1.5 sn'de bir bak →
   //   akış kutuya bağlı değilse bağla, duraklamışsa yeniden oynat; uygulama öne gelince de hemen aynısını yap.
+  // 🔎 GEÇİCİ TEŞHİS (B438): sadece telefon uygulamasında, arama ekranının köşesinde karşının görüntü durumunu yazar
+  //   (telefonda karşının görüntüsü çıkmıyor — sebebi kesin görmek için). Sebep bulununca SİLİNECEK.
+  const [aramaTani, setAramaTani] = useState("");
+  const taniYaz = () => {
+    try {
+      if (!/GloxorgApp/.test(navigator.userAgent || "")) return;
+      const st = uzakStreamRef.current; const el = uzakVideoRef.current;
+      const iz = st ? st.getTracks().map((t) => t.kind[0] + ":" + t.readyState + (t.muted ? "/sus" : "") + (t.enabled ? "" : "/kapali")).join(" ") : "akis-yok";
+      const v = el ? ("rs" + el.readyState + " " + el.videoWidth + "x" + el.videoHeight + (el.paused ? " DURAKLI" : " oynuyor") + (el.srcObject === st ? "" : " BAGSIZ") + " t" + Math.round(el.currentTime || 0)) : "video-yok";
+      setAramaTani(iz + " | " + v);
+    } catch (e) { setAramaTani("hata:" + (e && e.message)); }
+  };
   useEffect(() => {
-    if (aramaDurum !== "konusuyor") return undefined;
+    if (aramaDurum !== "konusuyor") { setAramaTani(""); return undefined; }
     const kontrol = () => {
       try {
+        taniYaz();
         const st = uzakStreamRef.current; const el = uzakVideoRef.current || uzakSesRef.current;
         if (!st || !el) return;
         if (el.srcObject !== st) { baglaUzakMedya(); return; }
@@ -11484,6 +11497,9 @@ export default function Anasayfa({ pro = false }) {
           {/* GÖRÜNTÜLÜ konuşmada ÜST ORTADA canlı süre sayacı (dk:sn) — kullanıcı: ne kadar konuştuğumu göreyim */}
           {aramaDurum === "konusuyor" && aktifArama.tip === "goruntulu" && !aramaKucuk && (
             <div className="notranslate" translate="no" style={{ position: "absolute", top: "14px", left: "50%", transform: "translateX(-50%)", background: "rgba(255,215,0,0.92)", color: "#4a3600", fontWeight: 800, fontSize: "15px", padding: "4px 13px", borderRadius: "14px", zIndex: 6, letterSpacing: "0.5px", boxShadow: "0 2px 8px rgba(80,60,0,0.25)" }}>{aramaSayacBicim(aramaSaniye)}</div>
+          )}
+          {aramaTani && !aramaKucuk && (
+            <div className="notranslate" translate="no" style={{ position: "absolute", left: "8px", bottom: "8px", zIndex: 7, maxWidth: "70%", background: "rgba(255,215,0,0.92)", color: "#3a2a00", fontSize: "11px", fontWeight: 700, padding: "3px 7px", borderRadius: "6px", fontFamily: "monospace", wordBreak: "break-all" }}>{aramaTani}</div>
           )}
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
