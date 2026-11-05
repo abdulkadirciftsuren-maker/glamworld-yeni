@@ -4122,37 +4122,10 @@ export default function Anasayfa({ pro = false }) {
   //   sayılır, Android videoları DURAKLATIR; karşının görüntüsü tam o an gelince duraklatılmış kalıyordu. Ayrıca görüntü,
   //   video kutusu ekrana gelmeden önce gelirse kutuya hiç bağlanmıyordu. ÇÖZÜM: konuşma sürdükçe 1.5 sn'de bir bak →
   //   akış kutuya bağlı değilse bağla, duraklamışsa yeniden oynat; uygulama öne gelince de hemen aynısını yap.
-  // 🔎 GEÇİCİ TEŞHİS (B438): sadece telefon uygulamasında, arama ekranının köşesinde karşının görüntü durumunu yazar
-  //   (telefonda karşının görüntüsü çıkmıyor — sebebi kesin görmek için). Sebep bulununca SİLİNECEK.
-  const [aramaTani, setAramaTani] = useState("");
-  const aboneHataRef = useRef(""); // karşının bir izine abone olunamazsa sebebi (teşhis)
-  const yayinHataRef = useRef(""); // kendi görüntümü/sesimi sunucuya yayınlayamazsam sebebi (teşhis)
-  const taniYaz = () => {
-    try {
-      if (!aktifAramaRef.current || aktifAramaRef.current.tip !== "goruntulu") { setAramaTani(""); return; }
-      const st = uzakStreamRef.current; const el = uzakVideoRef.current;
-      const iz = st ? st.getTracks().map((t) => t.kind[0] + ":" + t.readyState + (t.muted ? "/sus" : "") + (t.enabled ? "" : "/kapali")).join(" ") : "akis-yok";
-      const v = el ? ("rs" + el.readyState + " " + el.videoWidth + "x" + el.videoHeight + (el.paused ? " DURAKLI" : " oynuyor") + (el.srcObject === st ? "" : " BAGSIZ") + " t" + Math.round(el.currentTime || 0)) : "video-yok";
-      // Karşının SUNUCUYA gönderdikleri: tür(a/v) + biçim + abone(+/-) + iz telefona geldi mi(T)
-      let karsi = "karsi-yok";
-      const room = roomRef.current;
-      if (room) {
-        const kl = []; const rp = room.remoteParticipants || room.participants;
-        if (rp) rp.forEach((pp) => { (pp.trackPublications || pp.tracks || new Map()).forEach((pub) => { kl.push((pub.kind || "?")[0] + ":" + String(pub.mimeType || "").replace(/^(audio|video)\//, "") + (pub.isSubscribed ? "+" : "-") + (pub.track ? "T" : "") + (pub.isMuted ? "/sus" : "")); }); });
-        karsi = "K[" + (kl.join(",") || "bos") + "]";
-        const ben = []; try { room.localParticipant.trackPublications.forEach((pub) => ben.push((pub.kind || "?")[0])); } catch (e) {}
-        karsi += " B[" + ben.join(",") + "] " + (room.state || "");
-      }
-      const ys = yerelStreamRef.current;
-      const yerel = ys ? " Y[" + ys.getTracks().map((t) => t.kind[0] + ":" + t.readyState).join(",") + "]" : " Y[yok]";
-      setAramaTani(iz + " | " + v + " | " + karsi + yerel + (aboneHataRef.current ? " | ABONEHATA:" + aboneHataRef.current : "") + (yayinHataRef.current ? " | YAYINHATA:" + yayinHataRef.current : ""));
-    } catch (e) { setAramaTani("hata:" + (e && e.message)); }
-  };
   useEffect(() => {
-    if (aramaDurum !== "konusuyor") { setAramaTani(""); return undefined; }
+    if (aramaDurum !== "konusuyor") return undefined;
     const kontrol = () => {
       try {
-        taniYaz();
         const st = uzakStreamRef.current; const el = uzakVideoRef.current || uzakSesRef.current;
         if (!st || !el) return;
         if (el.srcObject !== st) { baglaUzakMedya(); return; }
@@ -4197,8 +4170,6 @@ export default function Anasayfa({ pro = false }) {
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
       try { if (uzakStreamRef.current && track && track.mediaStreamTrack) uzakStreamRef.current.removeTrack(track.mediaStreamTrack); } catch (e) {}
     });
-    aboneHataRef.current = "";
-    try { room.on(RoomEvent.TrackSubscriptionFailed, (sid, p, err) => { aboneHataRef.current = String((err && (err.message || err)) || sid || "abone-olunamadi").slice(0, 60); }); } catch (e) {}
     // Karşı taraf odadan çıkarsa / bağlantı koparsa → arama ekranını kendin kapat (takılı/donuk kalmasın)
     room.on(RoomEvent.ParticipantDisconnected, () => { if (roomRef.current === room) aramaKapat(false); });
     room.on(RoomEvent.Disconnected, () => { if (roomRef.current === room) aramaKapat(false); });
@@ -4210,10 +4181,9 @@ export default function Anasayfa({ pro = false }) {
   const livekitYayinla = async () => {
     const room = roomRef.current, ys = yerelStreamRef.current;
     if (!room || !ys) return;
-    yayinHataRef.current = "";
-    // Her izi (ses/görüntü) yayınla; HATA YUTULMAZ → teşhise yazılır ve görüntü yayınlanamadıysa 1.5 sn sonra BİR KEZ daha denenir
-    //   (kullanıcı: "telefonda karşının görüntüsü yok" — teşhis: arayan taraf sunucuya SADECE SES gönderiyordu).
-    const yayinla = async (tr) => { try { await room.localParticipant.publishTrack(tr); return true; } catch (e) { yayinHataRef.current = (tr.kind || "?")[0] + ":" + String((e && (e.message || e.name)) || e).slice(0, 70); return false; } };
+    // Her izi (ses/görüntü) yayınla; görüntü/ses yayınlanamadıysa 1.5 sn sonra BİR KEZ daha denenir (B440 — kullanıcı:
+    //   "telefonda karşının görüntüsü yok"; teşhis: arayan taraf sunucuya SADECE SES gönderiyordu, ilk yayın sessizce başarısızdı).
+    const yayinla = async (tr) => { try { await room.localParticipant.publishTrack(tr); return true; } catch (e) { return false; } };
     for (const tr of ys.getTracks()) await yayinla(tr);
     setTimeout(async () => {
       try {
@@ -11524,9 +11494,6 @@ export default function Anasayfa({ pro = false }) {
           {/* GÖRÜNTÜLÜ konuşmada ÜST ORTADA canlı süre sayacı (dk:sn) — kullanıcı: ne kadar konuştuğumu göreyim */}
           {aramaDurum === "konusuyor" && aktifArama.tip === "goruntulu" && !aramaKucuk && (
             <div className="notranslate" translate="no" style={{ position: "absolute", top: "14px", left: "50%", transform: "translateX(-50%)", background: "rgba(255,215,0,0.92)", color: "#4a3600", fontWeight: 800, fontSize: "15px", padding: "4px 13px", borderRadius: "14px", zIndex: 6, letterSpacing: "0.5px", boxShadow: "0 2px 8px rgba(80,60,0,0.25)" }}>{aramaSayacBicim(aramaSaniye)}</div>
-          )}
-          {aramaTani && !aramaKucuk && (
-            <div className="notranslate" translate="no" style={{ position: "absolute", left: "8px", bottom: "8px", zIndex: 7, maxWidth: "70%", background: "rgba(255,215,0,0.92)", color: "#3a2a00", fontSize: "11px", fontWeight: 700, padding: "3px 7px", borderRadius: "6px", fontFamily: "monospace", wordBreak: "break-all" }}>{aramaTani}</div>
           )}
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
