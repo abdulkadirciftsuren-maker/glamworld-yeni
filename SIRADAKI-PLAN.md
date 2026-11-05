@@ -17,7 +17,7 @@ Yapılanlar (bugün):
 - B447 + 2.0.20: (1) telefonda karşının (bilgisayarın) GÖRÜNTÜSÜ yoktu → her yeni izde yeni MediaStream. (2) kilitliyken ZİL yoktu + kullanıcı
   "telefonun kendi zil sesi" istiyor → `AndroidGlox.telefonZili(true/false)` (RingtoneManager varsayılan zil + titreşim).
 YARIN İLK İŞ:
-1. 2.0.20 derlemesi başarılı mı kontrol et (android-release.yml), sitede GLOXORG-kurulum.apk güncel mi bak; kullanıcıya kur + dene adımları ver:
+1. ✅ 2.0.20 derlemesi BAŞARILI (5 Kas 21:39 UTC), sitede GLOXORG-kurulum.apk güncel. Kullanıcıya kur + dene adımları ver:
    (a) kilitliyken ara → ekran açılsın + TELEFON ZİLİ çalsın, (b) uygulama açıkken ara → telefon zili, (c) cevaplayınca telefonda bilgisayarın görüntüsü geliyor mu.
 2. SONRAKİ İŞ: cevapladıktan sonra görüntünün 7–20 sn geç gelmesi (ölç + hızlandır; arayan "kabul"den SONRA kamera açıp yayınlıyor — erken hazırlık düşün).
 3. Sonra: Reddet düğmesi gerçekten reddetsin (şu an sadece zili susturuyor, arayan 30 sn bekliyor).
