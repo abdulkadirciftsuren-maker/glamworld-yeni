@@ -7028,6 +7028,9 @@ export default function Anasayfa({ pro = false }) {
           if (idx === 0 && oncekiChar === 0) {                        // İLK parça hiç gelmedi → tarayıcı sesine düş
             const h = (sonuc && sonuc._hata ? String(sonuc._hata) : "").toLowerCase();
             if (/permission|denied|invalid|401|403|quota|billing|not.?enabled|not found|access|api key|unauthenticated|resource.?exhausted/.test(h)) gercekSesKapaliRef.current = true;
+            // 🔎 GEÇİCİ TEŞHİS (B444): doğal ses neden gelmiyor? (Gemini bakiyesi var ama 3 Kasım'dan beri hiç harcanmıyor → istek
+            //   Google'a ulaşmadan/izin hatasıyla düşüyor). SADECE yönetici hesabında hata yazısı 8 sn gösterilir. Sebep bulununca SİLİNECEK.
+            try { if (yoneticiMi()) { const tm = "🔎 Doğal ses hatası: " + (sonuc === null ? "ZAMAN AŞIMI (20 sn cevap yok)" : (String((sonuc && sonuc._hata) || "boş cevap").slice(0, 160))); setKucukMesaj(tm); setTimeout(() => setKucukMesaj((m) => (m === tm ? "" : m)), 8000); } } catch (e) {}
             dus(); return;
           }
           // ORTADAKİ parça gelmedi → CÜMLEYİ ATLAMA! Önce BİR KEZ taze dene; yine gelmezse bu cümleyi TARAYICI sesiyle oku.
