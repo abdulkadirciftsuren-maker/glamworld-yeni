@@ -10,6 +10,10 @@
 > "yarın unutursun" diye endişelendiği için oraya yazdım. Yeni sorun aramadan o listeden git,
 > her maddeyi bitirince kullanıcıya göster + onay al.
 
+> 💳 **HESAPLAR VE ÖDEMELER — her oturumda `HESAPLAR-VE-ODEMELER.md` dosyasını da oku.** Hangi hizmet nerede, hangisi
+> paralı, ne zaman bitiyor, ne zaman hatırlatılacak orada yazılı. Kullanıcı "arama/Gloxoo çalışmıyor" derse ÖNCE oradaki
+> "bir şey bozulursa" tablosuna bak (çoğu zaman bir bakiye bitmiştir). Hesapla ilgili yeni bir şey olunca o dosyayı güncelle.
+
 ---
 
 ## 1. ⛔ DİL KURALI — HER ZAMAN TÜRKÇE (EN KRİTİK — HER OTURUMDA TEKRARLANAN ŞİKÂYET)
