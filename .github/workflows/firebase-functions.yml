@@ -22,6 +22,13 @@ jobs:
           node-version: "22"
       - name: firebase-tools kur
         run: npm install -g firebase-tools@13.29.1
+      # Firebase aracı, HİÇ eklenti (extension) kullanmasak da her yüklemede eklenti listesine bakıyor; hizmet hesabının
+      # buna yetkisi yok → 403. Kontrolü sadece gerçekten eklenti tanımlıysa yapsın (bizde yok).
+      - name: Gereksiz eklenti kontrolunu kapat
+        run: |
+          P="$(npm root -g)/firebase-tools/lib/deploy/functions/prepare.js"
+          sed -i 's/\.some((b) => b\.extensions)/.some((b) => b.extensions \&\& Object.keys(b.extensions).length > 0)/' "$P"
+          grep -n "Object.keys(b.extensions).length" "$P"
       - name: Sunucu programinin paketlerini kur
         working-directory: functions
         run: npm install --no-audit --no-fund
