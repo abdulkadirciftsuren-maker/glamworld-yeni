@@ -4211,10 +4211,12 @@ export default function Anasayfa({ pro = false }) {
     roomRef.current = room;
     // Karşı tarafın ses/görüntüsü gelince: uzak akışa ekle + elemente bağla + "konuşuyor"a geç
     room.on(RoomEvent.TrackSubscribed, (track) => {
+      // ⚠️ HER YENİ İZDE YENİ AKIŞ (B447 — kullanıcı: "telefonda bilgisayarın görüntüsü yok, benimki gidiyor"): önce SES gelip
+      //   kutuya bağlanınca, sonradan AYNI akışa eklenen GÖRÜNTÜ telefonun tarayıcısında gösterilmiyordu (akış nesnesi aynı kaldığı
+      //   için bekçi de yeniden bağlamıyordu). Artık her yeni izde yeni MediaStream → srcObject değişir → görüntü kesin bağlanır.
       try {
-        if (!uzakStreamRef.current) uzakStreamRef.current = new MediaStream();
-        uzakStreamRef.current.getTracks().filter((tt) => tt.kind === track.kind).forEach((tt) => { try { uzakStreamRef.current.removeTrack(tt); } catch (e) {} });
-        try { uzakStreamRef.current.addTrack(track.mediaStreamTrack); } catch (e) {}
+        const eski = uzakStreamRef.current ? uzakStreamRef.current.getTracks().filter((tt) => tt.kind !== track.kind && tt.readyState === "live") : [];
+        uzakStreamRef.current = new MediaStream([...eski, track.mediaStreamTrack]);
       } catch (e) {}
       setAramaDurum("konusuyor");
       setTimeout(baglaUzakMedya, 30);
@@ -4510,8 +4512,12 @@ export default function Anasayfa({ pro = false }) {
   const zilRef = useRef(null);
   const zilKapatRef = useRef(null);
   const zilSiraRef = useRef(0); // her durdurma/başlatma bir artar → geç inen zil, durdurulmuş aramada ÇALMAZ
+  // 📞 Telefon uygulamasında (AndroidGlox.telefonZili varsa) gelen aramada telefonun KENDİ zil sesi çalar (kullanıcı: "eskiden
+  //   WhatsApp gibi telefonun zil sesi geliyordu, açıkken değişik ses geliyor"). Tarayıcıda gömülü zil sesi devam eder.
+  const telefonZiliRef = useRef(false);
   const zilDurdur = () => {
     zilSiraRef.current++;
+    if (telefonZiliRef.current) { telefonZiliRef.current = false; try { window.AndroidGlox.telefonZili(false); } catch (e) {} }
     try { clearTimeout(zilKapatRef.current); } catch (e) {} zilKapatRef.current = null;
     const z = zilRef.current;
     if (z) { try { z.pause(); } catch (e) {} try { z.loop = false; } catch (e) {} try { z.currentTime = 0; } catch (e) {} try { z.src = ""; } catch (e) {} }
@@ -4519,6 +4525,15 @@ export default function Anasayfa({ pro = false }) {
   };
   const zilBaslat = (mod) => { // mod: "aranan" = beni arıyorlar (melodik/gür zil) · "arayan" = ben arıyorum (ahize ringback tonu)
     zilDurdur();
+    if (mod === "aranan") {
+      try {
+        if (window.AndroidGlox && typeof window.AndroidGlox.telefonZili === "function" && window.AndroidGlox.telefonZili(true)) {
+          telefonZiliRef.current = true;
+          zilKapatRef.current = setTimeout(() => { try { zilDurdur(); } catch (e) {} }, 35000);
+          return;
+        }
+      } catch (e) {}
+    }
     const zs = zilHemen();
     if (!zs) { // zil sesleri henüz inmediyse (açılıştan hemen sonra) → indir, o arada zil durdurulmadıysa çal
       const sira = zilSiraRef.current;

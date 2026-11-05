@@ -237,6 +237,44 @@ class MainActivity : Activity() {
         aramaGirisi(intent)
     }
 
+    // ===== 📞 TELEFONUN KENDİ ZİL SESİ =====
+    private var zil: android.media.Ringtone? = null
+    private val zilSusturucu = Runnable { telefonZiliDurdur() }
+
+    private fun telefonZiliBaslat() {
+        try {
+            kok?.removeCallbacks(zilSusturucu)
+            kok?.postDelayed(zilSusturucu, 45000) // güvenlik: en çok 45 sn
+            if (zil?.isPlaying == true) return
+            val adres = android.media.RingtoneManager.getActualDefaultRingtoneUri(this, android.media.RingtoneManager.TYPE_RINGTONE)
+                ?: android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_RINGTONE)
+            val z = android.media.RingtoneManager.getRingtone(this, adres) ?: return
+            z.audioAttributes = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+            if (Build.VERSION.SDK_INT >= 28) z.isLooping = true
+            z.play()
+            zil = z
+            val ses = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            if (ses.ringerMode != android.media.AudioManager.RINGER_MODE_SILENT) {
+                val desen = longArrayOf(0, 800, 600, 800, 600)
+                @Suppress("DEPRECATION")
+                val v = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                if (Build.VERSION.SDK_INT >= 26) v.vibrate(android.os.VibrationEffect.createWaveform(desen, 0)) else eskiTitresim(v, desen)
+            }
+        } catch (e: Exception) {}
+    }
+
+    @Suppress("DEPRECATION")
+    private fun eskiTitresim(v: android.os.Vibrator, desen: LongArray) { v.vibrate(desen, 0) }
+
+    private fun telefonZiliDurdur() {
+        try { kok?.removeCallbacks(zilSusturucu) } catch (e: Exception) {}
+        try { zil?.stop() } catch (e: Exception) {}
+        zil = null
+        try { (getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator).cancel() } catch (e: Exception) {}
+    }
+
     // ===== 📞 ARAMA ZİLİNDEN AÇILIŞ =====
     // Kilitli telefonda arama için açıldıysak uygulama KİLİDİN ÜSTÜNDE görünür; arama bitince kilidin arkasına çekilir
     // (kilit açılmadan uygulamanın geri kalanı kullanılamasın).
@@ -248,9 +286,14 @@ class MainActivity : Activity() {
         val id = intent?.getStringExtra(AramaZili.EK_ARAMA) ?: return
         val cevapla = intent.getStringExtra(AramaZili.EK_CEVAPLA)
         intent.removeExtra(AramaZili.EK_ARAMA); intent.removeExtra(AramaZili.EK_CEVAPLA) // ikinci kez işlenmesin
-        AramaZili.kapat(this, null) // zil sussun (sayfa kendi arama ekranını gösterecek)
+        AramaZili.kapat(this, null) // bildirim zili susar; sayfa yüklenene kadar telefon zili BURADAN devam eder
         kilitUstundeGoster(true)
         aramaGoruldu = false
+        if (cevapla == null) {
+            telefonZiliBaslat()
+            // Sayfa 15 sn içinde arama ekranını göstermezse (arama bitmiş) zil sussun
+            kok?.postDelayed({ if (!aramaGoruldu) telefonZiliDurdur() }, 15000)
+        }
         // Sayfa arama ekranını hiç göstermezse (arama o arada bitmiş) 40 sn sonra kilidin arkasına çekil
         kok?.postDelayed({ if (!aramaGoruldu) kilitUstundeGoster(false) }, 40000)
         if (cevapla != null && Regex("^[A-Za-z0-9_-]+$").matches(cevapla)) {
@@ -391,6 +434,13 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun sesHazir(): Boolean = ttsHazir
+
+        /** Gelen aramada TELEFONUN KENDİ zil sesi (WhatsApp gibi). true → çalmaya başladı; false gelirse susar. */
+        @JavascriptInterface
+        fun telefonZili(cal: Boolean): Boolean {
+            runOnUiThread { if (cal) telefonZiliBaslat() else telefonZiliDurdur() }
+            return true
+        }
 
         /** Sayfa: arama ekranı açık mı (gelen/aktif arama). Kilit üstünde açıldıysak arama bitince kilidin arkasına çekilir. */
         @JavascriptInterface
@@ -767,6 +817,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         if (aktif?.get() === this) aktif = null
+        telefonZiliDurdur()
         try { tts?.stop(); tts?.shutdown() } catch (e: Exception) {}
         tts = null
         try {
