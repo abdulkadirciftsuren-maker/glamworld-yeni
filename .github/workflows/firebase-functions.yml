@@ -1,9 +1,14 @@
 # GLOXORG — SUNUCU PROGRAMINI (functions/: bildirimler + kapalıyken arama zili) Firebase'e yükler.
 # Eskiden kullanıcı bilgisayardan "firebase deploy --only functions" yapıyordu; artık GitHub'daki FIREBASE_SA
-# (hizmet hesabı) anahtarıyla otomatik yüklenir. sadece elle tetiklenince çalışır.
+# (hizmet hesabı) anahtarıyla otomatik yüklenir. functions/ değişince ya da elle tetiklenince çalışır.
 name: GLOXORG sunucu programi (functions)
-# NOT: OTOMATİK ÇALIŞMAZ — sadece kullanıcı onay verince elle (workflow_dispatch) başlatılır.
+# Kullanıcı 5 Kas 2026'da otomatik yüklemeye ONAY verdi ("Evet, otomatik yükle").
 on:
+  push:
+    branches: ["claude/glamworld-rules-review-0kzl0x"]
+    paths:
+      - "functions/**"
+      - ".github/workflows/firebase-functions.yml"
   workflow_dispatch: {}
 jobs:
   deploy:
