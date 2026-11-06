@@ -7,15 +7,18 @@
   - scroll/zoom/resize'da OYNAMAZ cunku fixed + inset:0 (viewport'a kilitli)
 */
 
-/* ALT BEYAZ SERIT ONLEME: html/body tam siyah, sayfa kaysa da beyaz cizgi cikmaz.
-   (overscroll-behavior YASAK - anayasa; arka plan rengiyle cozuyoruz) */
+/* ALT BEYAZ SERIT ONLEME: html/body tam ALTIN, sayfa kaysa da beyaz cizgi cikmaz.
+   (overscroll-behavior YASAK - anayasa; arka plan rengiyle cozuyoruz)
+   ⛔ B448: eskiden #0a0a0f (SIYAH) idi → Google girisinden sonra / zayif telefonda sayfa yuklenene kadar EKRAN SIMSIYAH
+   kaliyordu (kullanici: "siyah ekran 1 dakika kaliyor, musteri telefon kapandi saniyor"). Anayasa: HICBIR YERDE SIYAH YOK →
+   acilis ekraniyla (index.html #gw-arka) AYNI altin. */
 html, body {
-  background-color: #0a0a0f !important;
+  background-color: #f2df9f !important;
   margin: 0;
   padding: 0;
 }
 #root {
-  background-color: #0a0a0f;
+  background-color: #f2df9f;
   min-height: 100vh;
   min-height: 100dvh;
 }
