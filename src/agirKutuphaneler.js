@@ -6,8 +6,9 @@
 
 let haritaSozu = null;
 export function haritaYukle() {
-  // webpackPrefetch: tarayıcı bu parçayı boşta SADECE İNDİRİR (çalıştırmaz) → açılışta takılma yok; Konum açılınca diskten anında gelir.
-  if (!haritaSozu) haritaSozu = import(/* webpackPrefetch: true */ "maplibre-gl").then((m) => m.default || m).catch((e) => { haritaSozu = null; throw e; });
+  // B450: açılışta ÖN-İNDİRME (webpackPrefetch) KALDIRILDI — zayıf telefon/iPhone açılışta 1 MB'ı boşuna indiriyordu.
+  //   Harita artık SADECE Konum/harita açılınca iner (bir kez; sonra önbellekten).
+  if (!haritaSozu) haritaSozu = import("maplibre-gl").then((m) => m.default || m).catch((e) => { haritaSozu = null; throw e; });
   return haritaSozu;
 }
 
@@ -28,13 +29,14 @@ export function zilYukle() {
 export function zilHemen() { return zilHazir; }
 
 // Açılış bitince (sayfa ekrana geldikten sonra) zil + canlı görüşme parçalarını sırayla, işlemciyi boğmadan yükle.
-// (Harita parçası yukarıdaki webpackPrefetch ile boşta sadece indirilir; burada ÇALIŞTIRILMAZ — 1 MB'ı çalıştırmak takılma yapıyordu.)
+// (Harita parçası açılışta HİÇ inmez; sadece harita açılınca.)
 let onYuklendi = false;
 export function arkaPlandaOnYukle() {
   if (onYuklendi) return; onYuklendi = true;
   const bosta = (f) => { try { if (window.requestIdleCallback) return window.requestIdleCallback(f, { timeout: 4000 }); } catch (e) {} return setTimeout(f, 300); };
+  // B450: zayıf telefonda açılış işiyle yarışmasın diye 2.5 sn → 6 sn sonra (yine aramadan çok önce hazır olur).
   setTimeout(() => {
     bosta(() => { zilYukle().catch(() => {}); });
-    setTimeout(() => bosta(() => { livekitYukle().catch(() => {}); }), 1500);
-  }, 2500);
+    setTimeout(() => bosta(() => { livekitYukle().catch(() => {}); }), 2500);
+  }, 6000);
 }

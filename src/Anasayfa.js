@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment, Component, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment, Component, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -30,12 +30,6 @@ import DilSecici from "./DilSecici";
 //   bulamayıp (404) index.js kurtarması TÜM önbelleği silip KOMPLE yeniden yüklüyordu. İkisi de en büyük şikâyetti.
 //   ÇÖZÜM: hepsi ana pakete alındı (tek parça) → sarı perde YOK, parça-404 reload YOK, her sayfa ANINDA açılır.
 //   (İlk indirme biraz büyür ama SW önbelleğe alır → bir kez iner, sonra hep hızlı. B366'da Anasayfa için de yapılmıştı.)
-import ElitePazar from "./ElitePazar";
-import KonumHarita from "./KonumHarita";
-import AdresHarita from "./AdresHarita";
-import AkademiSayfa from "./AkademiSayfa";
-import SanalAyna from "./SanalAyna";
-import Muhasebe from "./Muhasebe";
 import Reklam from "./Reklam";
 import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
 import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
@@ -57,6 +51,18 @@ import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvar
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
 import "./Anasayfa.css";
+// B450 HAFİFLETME: az kullanılan alt sayfalar ana dosyadan AYRILDI — sadece AÇILINCA iner (zayıf telefon/iPhone açılışı hızlansın).
+// Yeni sürüm yayınlanınca eski parça bulunamazsa (eski sayfa açık kalmışsa) sayfa BİR KEZ kendini yeniler (takılı kalmaz).
+const tembel = (yukle) => lazy(() => yukle().catch((e) => {
+  try { if (!sessionStorage.getItem("gwParcaYenile")) { sessionStorage.setItem("gwParcaYenile", "1"); window.location.reload(); return new Promise(() => {}); } } catch (x) {}
+  throw e;
+}));
+const ElitePazar = tembel(() => import("./ElitePazar"));
+const KonumHarita = tembel(() => import("./KonumHarita"));
+const AdresHarita = tembel(() => import("./AdresHarita"));
+const AkademiSayfa = tembel(() => import("./AkademiSayfa"));
+const SanalAyna = tembel(() => import("./SanalAyna"));
+const Muhasebe = tembel(() => import("./Muhasebe"));
 
 // GERÇEK döndürülebilir harita (MapLibre: WebGL, iki parmakla döner) — kütüphane ilk kullanımda yüklenir (haritaYukle).
 let maplibregl = null;
@@ -998,18 +1004,6 @@ function SeritSaat({ tz }) {
   }, []);
   return <span ref={ref} className="serit-saat notranslate" translate="no">{seritSaat(tz, now)}</span>;
 }
-// ⚡ PARLAMA ÖNLEME (B216): Çevrimiçi sayacı KENDİ küçük bileşeninde — 6 sn'de bir SADECE bu rakam
-// yenilenir, ana sayfa (12.000 satır) çizilmez. Eskiden ana `cevrim` state'i 6 sn'de bir tüm sayfayı
-// çizip titremeye/kesilmeye katkı yapıyordu.
-function SeritCevrim({ dil }) {
-  const [c, setC] = useState(823450);
-  useEffect(() => {
-    const id = setInterval(() => setC((x) => Math.max(700000, x + Math.round((Math.random() - 0.45) * 900))), 6000);
-    return () => clearInterval(id);
-  }, []);
-  return <b translate="no" className="notranslate"><u className="ist-nokta" />{c.toLocaleString(dil || "tr")}</b>;
-}
-
 // HARİTA DÖNDÜRME: leaflet-rotate artık import ile GÖMÜLÜ (her zaman yüklü) → anında hazır.
 function leafletRotateYukle() { return Promise.resolve(); }
 
@@ -2973,7 +2967,9 @@ export default function Anasayfa({ pro = false }) {
   useEffect(() => {
     if (!araAcik || araHavuz !== null) return;
     setAraYukleniyor(true);
-    profesyonelAra({}, 150).then((liste) => { setAraHavuz(liste || []); setAraYukleniyor(false); })
+    // B450: eskiden SADECE "profesyonel" hesaplarda (en çok 150) arıyordu → normal üyeler (müşteriler) HİÇ bulunmuyordu
+    //   (kullanıcı: "insanları düzgün aramıyor"). Artık TÜM üyelerde (en yeni 600) arar; adı olmayan boş kayıtlar atlanır.
+    tumKullanicilar(600).then((liste) => { setAraHavuz((liste || []).map((x) => ({ ...x, uid: x.uid || x.id })).filter((x) => (x.isim || x.soyisim))); setAraYukleniyor(false); })
       .catch(() => { setAraHavuz([]); setAraYukleniyor(false); });
   }, [araAcik, araHavuz]);
   // Türkçe + tüm aksanları yok say (ANAYASA): ı/i, ş/s, ç/c, ğ/g, ü/u, ö/o ve diğer dillerin
@@ -3020,9 +3016,6 @@ export default function Anasayfa({ pro = false }) {
     window.addEventListener("touchmove", dokunHar, { passive: true });
     return () => { if (el) el.removeEventListener("scroll", scr); window.removeEventListener("wheel", wheel); window.removeEventListener("touchstart", dokunBas); window.removeEventListener("touchmove", dokunHar); };
   }, [araAcik]);
-  // Çevrimiçi sayacı — canlı nefes alır (hafifçe oynar). B216: state + interval ANA bileşenden ALINDI ->
-  // ayri <SeritCevrim/> bilesenine tasindi (izole saat kalibi). Boylece 6 sn'lik guncelleme TUM sayfayi
-  // degil sadece o kucuk rakami yeniden cizer -> titreme/kesilme azalir (kullanici: mesajlarda parlayinca kesiyor).
   const [aktifKod, setAktifKod] = useState("home");
 
   // Kullanıcı CANLI takip edilir — giriş çözülünce/foto gelince ekran güncellenir (yoksa foto boş kalıyordu).
@@ -9559,7 +9552,10 @@ export default function Anasayfa({ pro = false }) {
         {/* DİL — SADECE geniş ekranda header'da görünür (telefonda menüdedir) */}
         <span className="header-dil"><DilSecici /></span>
         <span className="ana-ince-bosluk" aria-hidden="true" />
-        {/* SAĞ: bildirim + Gloxoo + profil (hepsi küçük, tek şeride sığar) */}
+        {/* SAĞ: ARA (büyüteç) + bildirim + Gloxoo + profil (hepsi küçük, tek şeride sığar) */}
+        <button className="ana-ara-btn ana-ust-ara ana-ince-btn" onClick={() => { setAktifKod("home"); setAraAcik(true); try { if (kokRef.current) kokRef.current.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {} }} aria-label={t("tabAra", "Ara")} title={t("tabAra", "Ara")}>
+          {Ikon.ara}
+        </button>
         <button className="ana-menu-btn ana-zil ana-ince-btn" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}
           style={{ backgroundImage: `url(${bildirimListe.some((b) => !b.okundu) ? zilCerceveKirmiziResim : zilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
           {Ikon.bildirim}
@@ -9734,25 +9730,11 @@ export default function Anasayfa({ pro = false }) {
         </Suspense>
       ) : aktifKod === "home" ? (
         <div className="ana-pencere" key="home">
-          {/* TEK HİZA: 2 çip + ORTADA ufak ARAMA düğmesi + 2 çip (çipler ÇERÇEVESİZ, ufak).
-              Arama düğmesine basınca şerit AÇILIR (yazılır/aranır), ✕ ile kapanır. */}
+          {/* ARAMA KUTUSU — üstteki büyüteç düğmesine basınca burada açılır, ✕ ile kapanır. */}
           <div className="ana-ara-sar">
-            {!araAcik ? (
-              /* YAZILAR çevrilir; sadece RAKAMLAR (b) çevrilmez (translate=no) → sayı canlı kalır,
-                 donmaz. Düzen: uzun çeviride yazı alt satıra sarar, arama üstüne BİNMEZ. */
-              <div className="ana-istat">
-                {/* sol grup: yan yana yakın; ortada GENİŞ arama düğmesi (içinde açıklama yazısı); sağ grup yakın */}
-                <span className="ist-grup">
-                  <span className="ist i1"><b translate="no" className="notranslate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.3" /><path d="M16 14.5a4.6 4.6 0 0 1 4.5 4.5" /></svg>50K+</b><i>{t("istProf", "Profesyonel")}</i></span>
-                  <span className="ist i2"><b translate="no" className="notranslate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>195</b><i>{t("istUlke", "Ülke")}</i></span>
-                </span>
-                <button className="ara-mini" onClick={() => setAraAcik(true)} aria-label={t("anaAraPh")}>{Ikon.ara}<span>{t("tabAra", "Ara")}</span></button>
-                <span className="ist-grup">
-                  <span className="ist i3"><b translate="no" className="notranslate"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" /></svg>4.9</b><i>{t("istPuan", "Puan")}</i></span>
-                  <span className="ist i4"><SeritCevrim dil={dil} /><i>{t("istCevrim", "Çevrimiçi")}</i></span>
-                </span>
-              </div>
-            ) : (
+            {/* B450: kullanıcı isteğiyle ortadaki sayaç şeridi (50K+/195 Ülke/4.9/Çevrimiçi) ve büyük ARA düğmesi KALDIRILDI;
+                ARA artık üstte zilin yanında küçük büyüteç düğmesi. Basınca arama kutusu burada açılır. */}
+            {!araAcik ? null : (
               <>
                 <div className="ana-ara">
                   {Ikon.ara}
