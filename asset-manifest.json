@@ -1,12 +1,12 @@
 {
   "files": {
     "main.css": "./static/css/main.1bd1235c.css",
-    "main.js": "./static/js/main.01337164.js",
+    "main.js": "./static/js/main.030bbf83.js",
     "static/css/981.311870e4.chunk.css": "./static/css/981.311870e4.chunk.css",
     "static/js/981.6d5d6b99.chunk.js": "./static/js/981.6d5d6b99.chunk.js",
     "static/js/682.066674db.chunk.js": "./static/js/682.066674db.chunk.js",
     "static/js/317.ae1d1260.chunk.js": "./static/js/317.ae1d1260.chunk.js",
-    "static/js/185.de9230e3.chunk.js": "./static/js/185.de9230e3.chunk.js",
+    "static/js/185.31fbc52e.chunk.js": "./static/js/185.31fbc52e.chunk.js",
     "static/js/884.e19e152e.chunk.js": "./static/js/884.e19e152e.chunk.js",
     "static/js/759.ae4928d5.chunk.js": "./static/js/759.ae4928d5.chunk.js",
     "static/js/951.e5e57d0a.chunk.js": "./static/js/951.e5e57d0a.chunk.js",
@@ -18,28 +18,14 @@
     "static/js/795.0fd6653b.chunk.js": "./static/js/795.0fd6653b.chunk.js",
     "static/js/82.33c65f7e.chunk.js": "./static/js/82.33c65f7e.chunk.js",
     "static/js/239.3de960bc.chunk.js": "./static/js/239.3de960bc.chunk.js",
-    "static/media/gloxWordmarkKirmizi.png": "./static/media/gloxWordmarkKirmizi.f536e1822b8e4c8b4eb5.png",
-    "static/media/gloxWordmarkYesil.png": "./static/media/gloxWordmarkYesil.f50b8826249c05ddab6c.png",
-    "static/media/yesilZemin.jpg": "./static/media/yesilZemin.4e4af359a61b1c930b5d.jpg",
-    "static/media/gloxWordmarkMavi.png": "./static/media/gloxWordmarkMavi.f569ea73a4fcbb2d3f8a.png",
     "static/media/cerceve.png": "./static/media/cerceve.0e06bfcbd5c4953c4419.png",
-    "static/media/gloxWordmark.png": "./static/media/gloxWordmark.5af14558835c0fe14d05.png",
-    "static/media/yesilCerceve.png": "./static/media/yesilCerceve.4ab56c529835d73c5b0b.png",
-    "static/media/yakutZemin.jpg": "./static/media/yakutZemin.7c610c417a74441a170c.jpg",
-    "static/media/proCerceve.png": "./static/media/proCerceve.2b1bf2524f46fa474c64.png",
-    "static/media/maviZemin.jpg": "./static/media/maviZemin.0523758a7e363d07e212.jpg",
-    "static/media/profilCerceve.png": "./static/media/profilCerceve.0b3a3f7b134c4ec63488.png",
-    "static/media/profilCerceveMavi.png": "./static/media/profilCerceveMavi.4b1685ec1753f7888f23.png",
-    "static/media/profilCerceveYesil.png": "./static/media/profilCerceveYesil.7ac1a6396aa1de947a1a.png",
     "static/media/zilCerceveKirmizi.png": "./static/media/zilCerceveKirmizi.d3d95a1246fff693cb35.png",
     "static/media/ikonCerceve.png": "./static/media/ikonCerceve.89d839ca9185e1265242.png",
     "static/media/zilCerceve.png": "./static/media/zilCerceve.b7a43ba1a1e0b8f79813.png",
-    "static/media/ayiCervevePro.png": "./static/media/ayiCervevePro.740b822ec92719afd29b.png",
-    "static/media/ayiCerceve.png": "./static/media/ayiCerceve.715bb9122a07466bf0da.png",
     "index.html": "./index.html"
   },
   "entrypoints": [
     "static/css/main.1bd1235c.css",
-    "static/js/main.01337164.js"
+    "static/js/main.030bbf83.js"
   ]
 }
