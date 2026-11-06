@@ -8,10 +8,10 @@ import "leaflet/dist/leaflet.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { feature as topoFeature } from "topojson-client"; // ülke sınırları (GÖMÜLÜ — CDN değil; telefon haritası siyah çıkmasın)
 import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — davet linki için
-import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret, gloxooSesTani } from "./firebase";
+import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilOku, profilDinle, profilKaydet, profesyonelAra, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, yorumBegen, yorumDuzelt, yorumSil, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, gonderiBegeniOnar, begeniSayilariniOnarHepsi, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupGuncelle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
+import { profilDinle, profilKaydet, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, yorumBegen, yorumDuzelt, yorumSil, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, gonderiBegeniOnar, begeniSayilariniOnarHepsi, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -31,22 +31,8 @@ import DilSecici from "./DilSecici";
 //   ÇÖZÜM: hepsi ana pakete alındı (tek parça) → sarı perde YOK, parça-404 reload YOK, her sayfa ANINDA açılır.
 //   (İlk indirme biraz büyür ama SW önbelleğe alır → bir kez iner, sonra hep hızlı. B366'da Anasayfa için de yapılmıştı.)
 import Reklam from "./Reklam";
-import yakutZemin from "./yakutZemin.jpg"; // PRO (kırmızı) üye üstbar alt zemini = yakut pırlanta (3 aynalı)
-import maviZemin from "./maviZemin.jpg";   // MÜŞTERİ (beyaz/mavi üye) üstbar alt zemini = mavi pırlanta (3 aynalı)
-import yesilZemin from "./yesilZemin.jpg"; // ALTIN PIRLANTA üyeliği (max) üstbar alt zemini = yeşil pırlanta (3 aynalı)
-import gloxWordmark from "./gloxWordmark.png";                 // ALTIN(yeşil): KOYU içli GLOXORG → renkli zeminde belli
-import gloxWordmarkKirmizi from "./gloxWordmarkKirmizi.png";   // MÜŞTERİ(kırmızı): TÜM BLOK — GLOXORG kırmızı pırlanta üstünde (kesildi, kırmızı zemine karışır)
-import gloxWordmarkMavi from "./gloxWordmarkMavi.png";         // PRO(mavi): GLOXORG harfleri mavi safir banner'dan ŞEFFAF kesildi
-import gloxWordmarkYesil from "./gloxWordmarkYesil.png";       // ALTIN(yeşil): GLOXORG harfleri yeşil emerald banner'dan ŞEFFAF kesildi
 // B449: süs resimleri ekran boyutuna küçültüldü (1024px → 256px, çerçeveler %50; kesim ölçüleri yarıya indi) — zayıf telefon/iPhone hafızası
 import cerceveResim from "./cerceve.png";                     // ÜSTBAR işlemeli altın çerçeve (müşteri/altın) — border-image (9-slice)
-import proCerceveResim from "./proCerceve.png";               // PRO üstbar: işlemeli altın+mücevher çerçeve — border-image
-import yesilCerceveResim from "./yesilCerceve.png";           // ALTIN(yeşil) üstbar: işlemeli altın+mücevher çerçeve (kullanıcı) — border-image
-import profilCerceveResim from "./profilCerceve.png";         // PROFİL (müşteri=KIRMIZI yakut) yuvarlak pırlanta çerçevesi
-import profilCerceveMaviResim from "./profilCerceveMavi.png"; // PROFİL (pro=MAVİ safir)
-import profilCerceveYesilResim from "./profilCerceveYesil.png"; // PROFİL (altın=YEŞİL zümrüt)
-import ayiCerceveResim from "./ayiCerceve.png";               // EKSPERT (ayı) üst düğmesi — yuvarlak MAVİ safir çerçeve (müşteri/altın)
-import ayiCervevoProResim from "./ayiCervevePro.png";          // EKSPERT (ayı) PRO — MOR ametist çerçeve (pro profili mavi olduğu için ayı farklı renk)
 import ikonCerceveResim from "./ikonCerceve.png";             // MENÜ — yuvarlak YEŞİL zümrüt çerçeve (kod çizimi, lacivert madalyon)
 import zilCerceveResim from "./zilCerceve.png";               // ZİL (bildirim yok) — AÇIK kırmızı çerçeve
 import zilCerceveKirmiziResim from "./zilCerceveKirmizi.png"; // ZİL (bildirim VAR) — TAM kırmızı çerçeve + numara
@@ -67,19 +53,6 @@ const Muhasebe = tembel(() => import("./Muhasebe"));
 // GERÇEK döndürülebilir harita (MapLibre: WebGL, iki parmakla döner) — kütüphane ilk kullanımda yüklenir (haritaYukle).
 let maplibregl = null;
 
-// CANLI YAPAY ZEKÂ TANITIM KARTI — ana sayfa akışının ARASINA girer (kullanıcı: "ana sayfada canlı yapay zeka tanıtımı, akışta araya girsin").
-// Dönen örnekler + altın parıltı ile "canlı" durur; düğmeler Sanal Ayna'yı ve Gloxoo sohbetini açar.
-// 🎵 GÖNDERİ MÜZİĞİ — küçük "şarkılı" işareti (çirkin ses şeridi DEĞİL). Dokununca fotoğraf TAM EKRAN açılır ve şarkı ORADA çalar.
-function PostMuzik({ muzik, onAc, etiket }) {
-  if (!muzik || !muzik.url) return null;
-  return (
-    <button className="ana-post-muzik-cip" onClick={(e) => { e.stopPropagation(); onAc && onAc(); }}>
-      <span className="apmc-ik" aria-hidden="true">🎵</span>
-      <span className="apmc-ad notranslate" translate="no">{muzik.ad || "♪"}</span>
-      <span className="apmc-ac">{etiket || "▶"}</span>
-    </button>
-  );
-}
 function AiTanitimKart({ t, onAyna, onGloxoo }) {
   const ornekler = [
     { ik: "💇", ad: t("aitSac", "Saçını değiştir") },
@@ -137,8 +110,6 @@ class AramaHataSiniri extends Component {
   render() { return this.state.hata ? null : this.props.children; }
 }
 
-// Ayarlar konum haritası için altın damla pin (resim gerektirmez)
-const ayarPinIkon = () => L.divIcon({ className: "", html: '<div style="width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#FFD700;border:2px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.55)"></div>', iconSize: [20, 20], iconAnchor: [10, 20] });
 // AYARLAR akordeon bölümü — MODÜL seviyesinde (render içinde tanımlanırsa her tuşta remount olup TİTRER + odak kaybeder).
 // AÇIKLAMA (?) İKONU — her yerde müşteriyi bilgilendir (ANAYASA). Dokununca ne yapılacağını anlatan baloncuk açar.
 function BilgiBtn({ metin, onAc, className }) {
@@ -1004,8 +975,6 @@ function SeritSaat({ tz }) {
   }, []);
   return <span ref={ref} className="serit-saat notranslate" translate="no">{seritSaat(tz, now)}</span>;
 }
-// HARİTA DÖNDÜRME: leaflet-rotate artık import ile GÖMÜLÜ (her zaman yüklü) → anında hazır.
-function leafletRotateYukle() { return Promise.resolve(); }
 
 // Her nav ikonunun KÖŞE PIRLANTASI o ikonun renginde (gömülü taş, içerden yanar)
 const NAV_RENK = { home: "mavi", elite: "altin", topluluk: "yesil", video: "mor", konum: "turkuaz", akademi: "zeytin", profil: "beyaz" };
@@ -1396,16 +1365,6 @@ function MaskotYuz({ konusuyor = false, dinliyor = false, arastir = false, tur =
   );
 }
 
-// MASKOT AI ROZETİ — Gloxoo'nun KULAKLARI ARASINDA sabit duran küçük düğme; onunla küçülür/kaybolmaz.
-// İçinde DAİMA canlı hareketli altın AI ikonları (küçük eşitleyici çubukları). Konuşurken KIRMIZI,
-// dinlerken YEŞİL. buton=true ise tıklanır (büyük maskotta: bas → küçült, sohbet kapanmaz).
-function MaskotAiRozet({ konusuyor = false, dinliyor = false, mini = false, buton = false, onClick, etiket }) {
-  const durum = konusuyor ? "konus" : dinliyor ? "dinle" : "bos";
-  const cls = "maskot-ai-rozet " + durum + (mini ? " mini" : "") + (buton ? " btn" : "");
-  const ic = (<>{!mini && <span className="mar-ai">AI</span>}<span className="mar-bar" /><span className="mar-bar" /><span className="mar-bar" /></>);
-  if (buton) return <button type="button" className={cls} onClick={onClick} aria-label={etiket || "AI"}>{ic}</button>;
-  return <span className={cls} aria-hidden="true">{ic}</span>;
-}
 
 // GÜNLÜK ŞEHİR ARKA PLANI — her 24 saatte dünyadan farklı bir şehir; foto loremflickr'dan (sınırsız,
 // her gün ?lock=gün ile farklı kare). Liste dünya geneli (ANAYASA: belirli ülke öne çıkarma yok).
@@ -1453,19 +1412,6 @@ function paraBicim(deger, dil) {
   catch (e) { return Math.round(deger).toLocaleString(); }
 }
 
-// GLOXORG amblemi (ana sayfa) — yuvaya GÖMÜLÜ mavi taş: altın yuva (hafif parlar) + tırnaklar,
-// sabit durur, içten ışık ÜSTE doğru reflektör gibi çıkar (ANAYASA Madde 6). Yazıdan AYRI sayılır.
-// Sayfa temalı pırlanta paletleri — HER PENCEREDE marka pırlantası O SAYFANIN renginde (ANAYASA 6.15)
-const AMBLEM_PALET = {
-  mavi:    { t: ["#ffffff", "#bfe3ff", "#5aa6e0", "#2f6fa8"], yuz: ["#ffffff", "#dff1ff", "#9fd0ff", "#5aa6e0", "#3a86c9", "#4f9bd8", "#7fc0f5"], masa: "#eaf7ff", m: ["#ffffff", "#fdfbff", "#cfeaff", "rgba(120,190,255,.55)", "rgba(120,190,255,0)"] },
-  kirmizi: { t: ["#ffc2c9", "#ff8a94", "#e0353f", "#7a0f16"], yuz: ["#ffccd2", "#ffb0b8", "#ff8a94", "#e0353f", "#a01820", "#c02028", "#ff7a86"], masa: "#ffb6be", m: ["#ffb9c0", "#ff7d88", "#ff4a58", "rgba(255,50,70,.55)", "rgba(255,50,70,0)"] },
-  altin:   { t: ["#fff8dc", "#ffe9a8", "#e8c254", "#8a6a10"], yuz: ["#fff8dc", "#fff3c4", "#ffe084", "#e8c254", "#b8860b", "#d4a82c", "#ffd700"], masa: "#fff3c9", m: ["#fff3c9", "#ffe9a8", "#ffd700", "rgba(255,215,0,.55)", "rgba(255,215,0,0)"] },
-  yesil:   { t: ["#e8ffee", "#b8f0c8", "#46d37a", "#136e3a"], yuz: ["#e8ffee", "#d2f8dd", "#94e8b2", "#46d37a", "#1d9e54", "#2cb863", "#6fe098"], masa: "#dffae8", m: ["#dffae8", "#b8f0c8", "#5fe08a", "rgba(70,211,122,.55)", "rgba(70,211,122,0)"] },
-  mor:     { t: ["#f6ecff", "#e0c4ff", "#c98bff", "#5e2a8a"], yuz: ["#f6ecff", "#eedcff", "#ddb5ff", "#c98bff", "#9b5cd6", "#b070e8", "#d9a8ff"], masa: "#f1e3ff", m: ["#f1e3ff", "#e0c4ff", "#c98bff", "rgba(201,139,255,.55)", "rgba(201,139,255,0)"] },
-  turkuaz: { t: ["#e6fbff", "#b0ecf5", "#4fd0e0", "#136e7a"], yuz: ["#e6fbff", "#d4f6fb", "#92e4ef", "#4fd0e0", "#1d9aa8", "#2cb4c4", "#74dde8"], masa: "#defafd", m: ["#defafd", "#b0ecf5", "#4fd0e0", "rgba(79,208,224,.55)", "rgba(79,208,224,0)"] },
-  zeytin:  { t: ["#fbffe0", "#ecf5b0", "#d6e060", "#6e7013"], yuz: ["#fbffe0", "#f4fad0", "#e6ef94", "#d6e060", "#a8b41d", "#bcc82c", "#e0e874"], masa: "#f8fcd8", m: ["#f8fcd8", "#ecf5b0", "#d6e060", "rgba(214,224,96,.55)", "rgba(214,224,96,0)"] },
-  beyaz:   { t: ["#ffffff", "#eef2f8", "#cfd8e6", "#8a96a8"], yuz: ["#ffffff", "#f6f8fc", "#e2e8f2", "#cfd8e6", "#a8b4c4", "#bcc6d4", "#e8edf5"], masa: "#f4f7fb", m: ["#ffffff", "#f6f8fc", "#e2e8f2", "rgba(220,230,245,.55)", "rgba(220,230,245,0)"] },
-};
 
 // GLOXORG'e özel AYAR ikonu (dişli + ortasında pırlanta) — köşeye konur, hazır emoji DEĞİL (ANAYASA)
 function AyarIkon() {
@@ -1603,46 +1549,8 @@ export function Elmas4({ c = "#7ec8ff" }) {
   // güzel oldu, her yerde ONU kullan; düz ◆/baklava şekli YASAK (ANAYASA). Küçükte çerçevesiz (temiz).
   return <span className="elmas4"><GercekPirlanta c={c} cerceve={false} /></span>;
 }
-// ÇERÇEVE TAŞLARI — GERÇEK pırlanta (GercekPirlanta), renk renk, yan yana (ANAYASA: düz/basit elmas YASAK, gerçek taş).
-// Renkli palet (kenarlarda siyah YOK); siyah SADECE üst/alt şeritte, AZ (her ~9'da bir)
-// Çerçeve taşları: ALTIN şeritte görünmediği için altın YOK; ORTA taş SİYAH (altın üstünde belirgin);
-// renkler merkezden simetrik dağılır (sağ-sol ayna), her renk değişik.
-const CERCEVE_PAL = ["#2f7fd6", "#e0202c", "#1ea64f", "#9b4fd6", "#1fc2c2", "#ff7ab0"];
-function CerceveTas({ n }) {
-  const a = [];
-  const orta = Math.floor(n / 2);
-  for (let i = 0; i < n; i++) {
-    const d = Math.abs(i - orta); // merkeze uzaklık → ayna simetrisi
-    const c = (n % 2 === 1 && i === orta) ? "#1a1a1a" : CERCEVE_PAL[(d - 1 + CERCEVE_PAL.length) % CERCEVE_PAL.length];
-    a.push(<span className="hdr-tas-bir" key={i}><GercekPirlanta c={c} cerceve={false} /></span>);
-  }
-  return a;
-}
 // Tema adı → GERÇEK pırlanta rengi (referans 12 renkten). Marka amblemi + her yer aynı gerçek taşı kullanır.
 const TEMA_HEX = { mavi: "#2f6fd6", kirmizi: "#e0202c", altin: "#f2a900", yesil: "#1ea64f", mor: "#9b4fd6", turkuaz: "#1fc2c2", zeytin: "#d6e060", beyaz: "#dfeaff" };
-// GLOXORG marka amblemi (yazının iki yanı) — artık GERÇEK fasetli pırlanta + altın yüzük çerçeve (ANAYASA 6.15).
-// .ana-amblem sarmalı + konum/parıltı animasyonları korunur; renk sayfanın temasına göre değişir.
-function AmblemMavi({ konum = "sag", renk = "mavi" }) {
-  return (
-    <span className={"ana-amblem " + konum} aria-hidden="true">
-      <GercekPirlanta c={TEMA_HEX[renk] || TEMA_HEX.mavi} />
-    </span>
-  );
-}
-// Marka pırlantasının yanındaki IŞILDAYAN DESENLİ ÇİZGİ (kullanıcı: elmas değil, ÇİZGİ desenli ışıldayan).
-// Sağ ve sol tarafta; pırlantaya/isme dokunmaz (akış-dışı, absolute). İnce altın hat + desen düğümleri.
-function MarkaCizgi({ konum = "sag" }) {
-  return (
-    <span className={"marka-cizgi " + konum} aria-hidden="true">
-      <svg viewBox="0 0 46 12" fill="none" stroke="#e8c254" strokeLinecap="round">
-        <line x1="2" y1="6" x2="44" y2="6" strokeWidth="1" opacity=".85" />
-        <path d="M11 6 l3.4 -3 3.4 3 -3.4 3 z" fill="#e8c254" stroke="none" />
-        <path d="M23 6 l4 -3.6 4 3.6 -4 3.6 z" fill="#fff3c4" stroke="none" />
-        <path d="M35 6 l3.4 -3 3.4 3 -3.4 3 z" fill="#e8c254" stroke="none" />
-      </svg>
-    </span>
-  );
-}
 
 // Canlı 3D dünya küresi — TAMAMEN KENDİ çizimimiz (kopya/telif YOK): parlak mavi okyanus +
 // dolu yeşil kıtalar (gerçek konumlar) topun yüzeyinde; tüm kıta grubu döner = TOP kendisi döner.
@@ -1721,7 +1629,6 @@ export default function Anasayfa({ pro = false }) {
   // ŞEHİR/FOTO: her 6 SAATTE değişir (foto sabit kalmaz, hep güncel — kullanıcı isteği)
   const gunSayisi = Math.floor(Date.now() / (6 * 3600 * 1000));
   const buguninSehri = DUNYA_SEHIRLERI[gunSayisi % DUNYA_SEHIRLERI.length];
-  const sehirFotoUrl = `https://picsum.photos/seed/${buguninSehri.tag}${gunSayisi}/1080/1920`;
   // NOT: sehirGaleriUrl (galeri foto no'ya bağlı) AŞAĞIDA, sehirFotoNo state tanımından SONRA hesaplanır
   // (yukarıda hesaplanırsa "sehirFotoNo before initialization" TDZ hatası → açılışta siyah ekran).
   const [menuAcik, setMenuAcik] = useState(false);
@@ -1831,9 +1738,6 @@ export default function Anasayfa({ pro = false }) {
   const [araHavuz, setAraHavuz] = useState(null); // null=henüz okunmadı, []=boş
   const [araYukleniyor, setAraYukleniyor] = useState(false);
   const [araSecili, setAraSecili] = useState(null); // sonuçtan seçilen profesyonelin DETAY penceresi
-  // MESAJLAŞMA
-  const [mesajYazi, setMesajYazi] = useState("");      // detay penceresindeki mesaj kutusu
-  const [mesajDurum, setMesajDurum] = useState("");    // "gonderiliyor" | "ok" | "hata"
   const [mesajAcik, setMesajAcik] = useState(false);   // MESAJ MERKEZİ penceresi (tüm sohbetler — WhatsApp ana ekranı gibi)
   const [mesajlar, setMesajlar] = useState(null);      // null=okunmadı, []=boş (eski gelen kutusu — korunur)
   // WHATSAPP GİBİ SOHBET: tüm mesajlarım CANLI dinlenir; karşı kişiye göre gruplanıp merkez/sohbet türetilir
@@ -1936,12 +1840,8 @@ export default function Anasayfa({ pro = false }) {
   const uzakVideoRef = useRef(null);                   // karşının video elementi (büyük)
   const uzakSesRef = useRef(null);                     // karşının SESİ (sesli aramada — ses buradan çalar)
   const uzakStreamRef = useRef(null);                  // karşıdan gelen medya akışı (ses+görüntü)
-  // ARAMA SESİ YÜKSELTME (kullanıcı: "aramada/Gloxoo'da ses çok kısık, duyulmuyor"): <audio>/<video> sesi en fazla 1'dir → kısık kalıyor.
-  // WebAudio GainNode ile karşı tarafın sesini ~1.9 KAT güçlendiriyoruz. Element sessize alınır (çift ses olmasın), ses buradan çıkar.
-  const sesCtxRef = useRef(null);                      // WebAudio bağlamı (bir kez kurulur, aramalar arası yeniden kullanılır)
   const sesGainRef = useRef(null);                     // { source, gain } — karşı sesin geçtiği güçlendirici
   const hoparlorAcikRef = useRef(true);                // hoparlör açık mı (setTimeout/async içinde güncel değer için)
-  const SES_KAT = 1.9;                                 // ses kaç kat güçlensin (1.9 ≈ belirgin daha yüksek, bozulmadan)
   const aramaAbonelikRef = useRef([]);                 // arama dinleyicileri (temizlemek için)
   // ARAMA GÜNLÜĞÜ (WhatsApp gibi sohbete kayıt) için: ben mi aradım, karşı kim, ne zaman konuşmaya geçti
   const benAradimRef = useRef(false);                  // bu aramayı BEN mi başlattım (günlüğü arayan yazar → tek kayıt, mükerrer olmaz)
@@ -2028,8 +1928,6 @@ export default function Anasayfa({ pro = false }) {
   // TOPLULUK sayfası — üyelerle tanışma alanı (kişi kartları: takip + mesaj + profil aç)
   const [topKisiler, setTopKisiler] = useState(null); // null=henüz yüklenmedi, []=boş, [...]=üyeler
   const [topAra, setTopAra] = useState("");            // Topluluk arama kutusu
-  const [topFiltre, setTopFiltre] = useState("hepsi"); // "hepsi" | "pro" | "yakin"
-  const [topGoster, setTopGoster] = useState(24);      // kaç kişi gösterilsin (daha fazla ile artar)
   // TANIŞMA KARTI — kişi kendi fotoğraf(lar)ını + istediği ismi + tanıtımını girer (opt-in). Kendi profiline kaydedilir (yeni kural gerekmez).
   const [tanismaKartAcik, setTanismaKartAcik] = useState(false); // kart oluştur/düzenle formu açık mı
   const [tKAd, setTKAd] = useState("");           // tanışmada görünecek isim (istediği)
@@ -2077,7 +1975,6 @@ export default function Anasayfa({ pro = false }) {
   //    setState YOK → sayfa yeniden çizilmez → parlama biter. (Saat/çevrimiçi sayacındaki izole yöntemin aynısı.)
   const hikIlerleBarRef = useRef(null);
   const [hikayeDurdu, setHikayeDurdu] = useState(false);  // parmakla basılı tutunca DURAKLA
-  const hikayeInputRef = useRef(null);                    // hikaye foto/video seçici
   const hikayeGorulenRef = useRef(null);                  // localStorage görülen id kümesi
   const hikDuraklaRef = useRef(false);                    // ilerleme döngüsü duraklatıldı mı
   const hikVidRef = useRef(null);                         // görüntüleyicideki video (duraklat/oynat)
@@ -2135,8 +2032,6 @@ export default function Anasayfa({ pro = false }) {
   const [paylasBaslik, setPaylasBaslik] = useState("");     // gönderi BAŞLIĞI (profil şeridinin altında görünür)
   const [baslikAcikSet, setBaslikAcikSet] = useState(() => new Set()); // akışta başlığı "devamını oku" ile açılan gönderiler
   const [yaziAcikSet, setYaziAcikSet] = useState(() => new Set()); // akışta YAZIYI (alt yazı/gönderi metni) "devamını oku" ile YERİNDE açan gönderiler (fotoğrafın altında; tam ekran AÇMAZ)
-  // BAŞLIK/YAZI aç-kapa yardımcıları (kod tekrarı olmasın): id sette varsa çıkar, yoksa ekle
-  const baslikAcKapa = (id) => setBaslikAcikSet((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const yaziAcKapa = (id) => setYaziAcikSet((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   // ⛔ OTOMATİK KAPANMA (kullanıcı: "açtığım yazı ekrandan kaybolduğu zaman, ben kapatmasam bile kendiliğinden kapansın"):
   //   Genişletilmiş (başlık/yazı açık) gönderi EKRANDAN TAMAMEN ÇIKINCA IntersectionObserver ile o gönderinin açık metni toplanır.
@@ -2250,7 +2145,6 @@ export default function Anasayfa({ pro = false }) {
   const [gbEpostaKopya, setGbEpostaKopya] = useState(""); // yöneticide kopyalanan e-postanın kullanıcı id'si (geri bildirim)
   const [begenenModal, setBegenenModal] = useState(null);         // BEĞENENLER/YORUMCULAR listesi açık post id
   const [begenenModalListe, setBegenenModalListe] = useState([]);
-  const [yorumcuModalListe, setYorumcuModalListe] = useState([]);
   const [begenenModalYuk, setBegenenModalYuk] = useState(false);
   const [medyaMenu, setMedyaMenu] = useState("");               // "" | "foto" | "video" — çek/galeri mini menüsü
   const [turSecAcik, setTurSecAcik] = useState(false);          // Paylaş'a basınca çıkan "ne olarak?" seçimi
@@ -2403,11 +2297,6 @@ export default function Anasayfa({ pro = false }) {
   const [yardimciBaglam, setYardimciBaglam] = useState(""); // site asistanı BAĞLAM: o an hangi pencere/konu açık (asistan nerede olduğunu bilsin)
   const [sesliMod, setSesliMod] = useState(true); // AI cevapları OTOMATİK sesli okunur (kullanıcı: yazdığını da konuşsun, ne dediğini duyayım); hoparlör düğmesinden kapatılır
   const [dinliyor, setDinliyor] = useState(false);  // mikrofon o an dinliyor mu
-  // ŞARKI TANIMA — Gloxoo çalan müziği dinleyip hangi şarkı olduğunu TAHMİN eder (Shazam gibi kesin değil)
-  const [sarkiDinliyor, setSarkiDinliyor] = useState(false); // şarkı için mikrofon kaydı sürüyor mu
-  const sarkiRecRef = useRef(null);   // şarkı kaydı için MediaRecorder
-  const sarkiParcaRef = useRef([]);   // ses parçaları
-  const sarkiZamanRef = useRef(null); // otomatik durdurma zamanlayıcısı
   const [canliSohbet, setCanliSohbet] = useState(false); // DÜĞMESİZ canlı sohbet: konuş-dinle döngüsü
   const canliSohbetRef = useRef(false);
   const bosSesRef = useRef(0); // üst üste kaç kez "konuştu ama yazıya çevrilemedi" (worker/ses modeli sorunu) — üst üste olunca kullanıcıyı uyar
@@ -2462,7 +2351,6 @@ export default function Anasayfa({ pro = false }) {
   const recognitionRef = useRef(null);     // CANLI DİKTE (tarayıcı SpeechRecognition) — konuştukça şeride yazar
   const dinlemeMolaRef = useRef(false);    // ⏸ OKUMA MOLASI: bir mesaj sesli okunurken canlı dinleme DURUR (Gloxoo kendi sesini duymasın); okuma bitince otomatik devam
   const dikteTabanRef = useRef("");        // dikte başlarken şeritte olan metin (üzerine eklenir, silinmez)
-  const dikteBazRef = useRef("");          // dikte başlarken şeritte olan metin (üzerine eklenir)
   const dikteAcikRef = useRef(false);      // canlı dikte açık mı (onend'de yeniden başlat için)
   // DİL DEĞİŞİNCE çevirileri SIFIRLA: önceki dile (örn İngilizce) yapılan çeviri hafızada kalıp
   // yeni dilde (örn Türkçe) gönderiyi hâlâ İngilizce/eski dilde gösteriyordu. Dil değişince hepsi orijinaline döner.
@@ -2817,13 +2705,6 @@ export default function Anasayfa({ pro = false }) {
     canliSohbetRef.current = true; setCanliSohbet(true); setSesliMod(true);
     try { canliDevam(); } catch (e) {}
   };
-  // Büyük maskotu KAPAT/sustur: dokun = sus + canlı sohbeti durdur (mikrofon kapanır) + yerine çekil (panel AÇMAZ)
-  const maskotTanitGec = () => {
-    canliSohbetRef.current = false; setCanliSohbet(false); setDinliyor(false);
-    gloxSustur();
-    try { mediaRecorderRef.current && mediaRecorderRef.current.stop(); } catch (e) {}
-    setMaskotTanit(false); setMaskotMini(false); // TAM KAPAT (sadece ✕ ile)
-  };
   // KAYDIR (parmakla sağa/sola çek): BÜYÜK maskot köşesine iner AMA canlı dinleme SÜRER — kapatma yok, kullanıcı kapatana kadar dinler (istek #5)
   const maskotKucult = () => {
     setAiDuraklat(false);
@@ -2920,7 +2801,6 @@ export default function Anasayfa({ pro = false }) {
   const tfMuzikRef = useRef(null);
   const [muzOyn, setMuzOyn] = useState(false);
   const muzikAcKapa = () => { const a = tfMuzikRef.current; if (!a) return; try { if (a.paused) a.play().catch(() => {}); else a.pause(); } catch (e) {} };
-  const [tamYatay, setTamYatay] = useState(false);     // açılan görsel YATAY/geniş mi (fill mi contain mi)
   // TAM EKRAN parmakla ZOOM (pinch / çift dokunma / fare tekeri) — kullanıcı KENDİSİ yakınlaştırır
   const [zoom, setZoom] = useState({ s: 1, x: 0, y: 0 });
   const pinchRef = useRef(null); // aktif jest verisi (iki parmak mesafesi / tek parmak sürükleme)
@@ -3602,18 +3482,6 @@ export default function Anasayfa({ pro = false }) {
   // KENDİ taşımın rengi (üstbar/nav/profil penceresi) — kendi temama göre.
   const benimTasAd = uyeTema === "altin" ? "yesil" : uyeTema === "pro" ? "mavi" : "kirmizi";
   const benimTasHex = TEMA_HEX[benimTasAd];
-  const uyeZemin = uyeTema === "altin" ? yesilZemin : uyeTema === "pro" ? maviZemin : yakutZemin;
-  const uyeWordmark = uyeTema === "musteri" ? gloxWordmarkKirmizi : uyeTema === "pro" ? gloxWordmarkMavi : gloxWordmarkYesil; // müşteri=kırmızı blok; pro=mavi harfler; altın=yeşil harfler (banner'dan kesildi)
-  // ÜSTBAR ÇERÇEVESİ üyeye göre AYRI: pro=mavi banner işlemeli çerçeve, altın=yeşil banner işlemeli çerçeve, müşteri=eski çerçeve
-  const uyeCerceveStyle = uyeTema === "pro"
-    ? { borderWidth: "17px 16px", borderImage: `url(${proCerceveResim}) 36 37 29 37 / 17px 16px / 0 stretch` }
-    : uyeTema === "altin"
-    ? { borderWidth: "18px 17px", borderImage: `url(${yesilCerceveResim}) 44 49 44 49 / 18px 17px / 0 stretch` }
-    : { borderWidth: "15px 14px", borderImage: `url(${cerceveResim}) 46 43 48 43 / 15px 14px / 0 stretch` };
-  // PROFİL çerçevesi ÜYEYE göre: müşteri=KIRMIZI(yakut), pro=MAVİ(safir), altın=YEŞİL(zümrüt) — ortası o rengin taşı, halka beyaz pırlanta+altın
-  const uyeProfilCerceve = uyeTema === "altin" ? profilCerceveYesilResim : uyeTema === "pro" ? profilCerceveMaviResim : profilCerceveResim;
-  // AYI (Ekspert) düğmesi: PRO'da profil mavi olduğu için ayı MOR (farklı renk, profile benzemesin); müşteri/altın=mavi
-  const uyeAyiCerceve = uyeTema === "pro" ? ayiCervevoProResim : ayiCerceveResim;
   // ÇOKLU meslek: pro.meslekler (dizi) ana kaynak; geriye uyum için pro.meslek = ilk meslek.
   // pro.meslekler ANA kaynak; yoksa pro.meslek; yoksa ÜST düzey meslekler/meslek (eski ayarMeslekSec kayıtları için geriye uyum)
   const proMeslekDizi = (profilBilgi && profilBilgi.pro && Array.isArray(profilBilgi.pro.meslekler) && profilBilgi.pro.meslekler.length)
@@ -3978,20 +3846,6 @@ export default function Anasayfa({ pro = false }) {
       if (uu) profilKaydet(uu.uid, { pro }).catch(() => {});
       return { ...(p || {}), pro };
     });
-  }
-  // MESAJ GÖNDER — arama detayından seçilen profesyonele
-  function mesajGonderEt() {
-    const uu = auth.currentUser;
-    if (!uu || !araSecili || !mesajYazi.trim()) return;
-    setMesajDurum("gonderiliyor");
-    const benimAd = (profilBilgi && [profilBilgi.isim, profilBilgi.soyisim].filter(Boolean).join(" ")) || adTam || "";
-    mesajGonder({
-      aliciUid: araSecili.uid,
-      aliciAd: [araSecili.isim, araSecili.soyisim].filter(Boolean).join(" "),
-      metin: mesajYazi,
-      gonderen: { uid: uu.uid, ad: benimAd, foto: bildirimFotoUrl || foto || isFoto || "" },
-    }).then((ok) => { setMesajDurum(ok ? "ok" : "hata"); if (ok) setMesajYazi(""); })
-      .catch(() => setMesajDurum("hata"));
   }
   // Gelen kutusu açılınca mesajları oku (eski — korunur; artık Mesaj Merkezi canlı listeden besleniyor)
   useEffect(() => {
@@ -5012,12 +4866,6 @@ export default function Anasayfa({ pro = false }) {
       })
       .sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
   }, [mmKisiler, sohbetListesi, benUid, dil]);
-  // KİŞİYE ÖZEL RENK — her müşterinin ismi altındaki şerit KENDİ renginde (uid'den türetilir; herkes farklı görür).
-  const kisiVurgu = useMemo(() => {
-    const s = String(benUid || u?.uid || "gloxorg");
-    let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
-    return "hsl(" + h + ", 64%, 54%)";
-  }, [benUid, u]);
   // ANA SAYFA KEŞİF BÖLÜMLERİ (Yakındaki Profesyoneller / İş İlanları / Trend) — hem telefon hem bilgisayarda yatay şerit.
   // Üyeleri bir kez yükle (ana sayfa açılınca).
   useEffect(() => {
@@ -5117,36 +4965,6 @@ export default function Anasayfa({ pro = false }) {
       .sort((a, b) => a.yak - b.yak)
       .slice(0, 18);
   }, [homeUyeler, benUid, dil, profilBilgi, konumAdres]);
-  // TOPLULUK listesi — üyeler (kendisi hariç), arama + filtre (Herkes/Profesyoneller/Yakınımdakiler), yakınlık sıralı.
-  const topluluktakiler = useMemo(() => {
-    const benimSehir = ((profilBilgi && profilBilgi.konum && profilBilgi.konum.sehir) || konumAdres || "").toLowerCase();
-    const benimUlke = ((profilBilgi && profilBilgi.konum && profilBilgi.konum.ulke) || "").toLowerCase();
-    const q = topAra.trim().toLowerCase();
-    const yakin = (k) => {
-      const s = (k.sehir || "").toLowerCase(), u = (k.ulke || "").toLowerCase();
-      if (benimSehir && s && s === benimSehir) return 0;   // aynı şehir → en yakın
-      if (benimUlke && u && u === benimUlke) return 1;      // aynı ülke
-      return 2;
-    };
-    const liste = (topKisiler || [])
-      .map((k) => {
-        const id = k.id || k.uid;
-        const ad = [k.isim, k.soyisim].filter(Boolean).join(" ") || k.ad || "—";
-        const foto = k.foto || k.avatarFoto || k.isFoto || (k.pro && k.pro.foto) || "";
-        const meslekRaw = (k.pro && k.pro.meslek) || k.meslek || "";
-        const sehir = k.sehir || (k.konum && k.konum.sehir) || "";
-        const ulke = k.ulke || (k.konum && k.konum.ulke) || "";
-        return { uid: id, ad, foto, meslekRaw, meslek: mc(meslekRaw, dil), sehir, ulke,
-          bas: (String(ad).trim()[0] || "?").toUpperCase(), pro: !!(k.pro || meslekRaw),
-          renk: MESLEK_RENK[meslekRaw] || "#c9971f", bg: MESLEK_BG[meslekRaw] || "linear-gradient(135deg,#d9b64a,#b28e34)", ik: MESLEK_IK[meslekRaw] || "💎" };
-      })
-      .filter((k) => k.uid && k.uid !== benUid);
-    let f = liste;
-    if (topFiltre === "pro") f = f.filter((k) => k.pro);
-    else if (topFiltre === "yakin") f = f.filter((k) => yakin(k) < 2);
-    if (q) f = f.filter((k) => (k.ad + " " + k.meslek + " " + k.sehir).toLowerCase().indexOf(q) !== -1);
-    return f.sort((a, b) => yakin(a) - yakin(b));
-  }, [topKisiler, topAra, topFiltre, benUid, dil, profilBilgi, konumAdres]);
   // TANIŞANLAR — kartını oluşturmuş (opt-in) üyeler: kendi fotoğraf(lar)ı + istediği isim + tanıtım. Kendi kartım EN ÜSTTE.
   const tanismacilar = useMemo(() => {
     const q = topAra.trim().toLowerCase();
@@ -5337,7 +5155,6 @@ export default function Anasayfa({ pro = false }) {
       {TEPKILER.map((tp) => (<button key={tp.k} className="tepki-oge" title={t("tepki_" + tp.k, tp.ad)} onClick={(e) => { e.stopPropagation(); begeniTepkiVer(p, tp.k); }} onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); begeniTepkiVer(p, tp.k); }}>{tp.e}</button>))}
     </span>
   ) : null;
-  function begenenleriAc(p) { if (!p || !p.id) return; setBegeniListeAcik(p); setBegeniListe(null); begenenleriOku(p.id).then(setBegeniListe).catch(() => setBegeniListe([])); }
   // ANKET — bir gönderinin oylarını yükle (sayım + benim oyum). Feed'de anket ilk göründüğünde çağrılır (ref ile tek sefer).
   const anketYukle = (postId) => {
     if (!postId || anketYukRef.current.has(postId)) return;
@@ -7401,55 +7218,6 @@ export default function Anasayfa({ pro = false }) {
       setDinliyor(true);
     } catch (e) { setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); }
   };
-  // ŞARKI TANIMA — birkaç saniye çalan müziği dinle, Gloxoo'ya "hangi şarkı" diye sor, sonucu sohbete yaz + sesli söyle.
-  // Not: Shazam gibi kesin parmak-izi DEĞİL; Gloxoo (Google yapay zekâsı) tanıdığı şarkıyı bilir, bilmediğinde tahmin eder.
-  const sarkiDinle = async () => {
-    // İKİNCİ BASIŞ → kaydı hemen bitir, analiz başlasın
-    if (sarkiDinliyor && sarkiRecRef.current) { try { sarkiRecRef.current.stop(); } catch (e) {} return; }
-    if (!navigator.mediaDevices || !window.MediaRecorder) { setKucukMesaj(t("sesYok", "Bu tarayıcı sesli konuşmayı desteklemiyor")); return; }
-    // Gloxoo konuşuyorsa / canlı dinliyorsa / dikte açıksa önce KAPAT (mikrofon çakışmasın)
-    try { gloxSustur(); } catch (e) {}
-    if (canliSohbetRef.current) { try { canliSohbetToggle(); } catch (e) {} await new Promise((r) => setTimeout(r, 200)); }
-    if (dikteAcikRef.current) { try { dikteDurdur(); } catch (e) {} }
-    try {
-      // Müzik için gürültü bastırma/otomatik kazanç KAPALI → müzik bozulmadan gelsin
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
-      const mr = new MediaRecorder(stream);
-      sarkiRecRef.current = mr; sarkiParcaRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data && e.data.size) sarkiParcaRef.current.push(e.data); };
-      mr.onstop = async () => {
-        setSarkiDinliyor(false);
-        if (sarkiZamanRef.current) { try { clearTimeout(sarkiZamanRef.current); } catch (e) {} sarkiZamanRef.current = null; }
-        try { stream.getTracks().forEach((tr) => tr.stop()); } catch (e) {}
-        const blob = new Blob(sarkiParcaRef.current, { type: mr.mimeType || "audio/webm" });
-        sarkiRecRef.current = null;
-        if (!blob.size) { setKucukMesaj(t("sarkiDuyulmadi", "Ses alınamadı, tekrar dene")); return; }
-        const b64 = await new Promise((res) => { const fr = new FileReader(); fr.onloadend = () => res(((fr.result || "") + "").split(",")[1] || ""); fr.readAsDataURL(blob); });
-        if (!b64) { setKucukMesaj(t("sarkiDuyulmadi", "Ses alınamadı, tekrar dene")); return; }
-        const mime = (mr.mimeType || "audio/webm").split(";")[0];
-        // Panel kapalıysa aç (kullanıcı sonucu sohbette görsün); sohbet moduna geç
-        setYardimciMod("sohbet");
-        if (!yardimciAcik) setYardimciAcik(true);
-        setYardimciMesajlar((s) => [...s, { rol: "user", metin: "🎵 " + t("sarkiSoru", "Bu hangi şarkı / ne çalıyor?"), zamanMs: Date.now() }]);
-        setYardimciYukleniyor(true);
-        try {
-          const r = await gloxooSesTani(b64, mime);
-          setYardimciYukleniyor(false);
-          const cevap = (r && r.metin) ? r.metin : t("sarkiOlmadi", "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene.");
-          setYardimciMesajlar((s) => [...s, { rol: "ai", metin: cevap, zamanMs: Date.now() }]);
-          try { sesliOku(cevap); } catch (e) {}
-        } catch (e) {
-          setYardimciYukleniyor(false);
-          setYardimciMesajlar((s) => [...s, { rol: "ai", metin: t("sarkiOlmadi", "Şu an tanıyamadım. Sesi biraz açıp (müziğe yakın tutup) tekrar dene."), zamanMs: Date.now() }]);
-        }
-      };
-      mr.start();
-      setSarkiDinliyor(true);
-      setKucukMesaj(t("sarkiDinleniyor", "🎧 Müziği dinliyorum… (bitirmek için tekrar bas)"));
-      // ~9 sn sonra OTOMATİK dur (yeterli örnek toplanır)
-      sarkiZamanRef.current = setTimeout(() => { try { if (sarkiRecRef.current) sarkiRecRef.current.stop(); } catch (e) {} }, 9000);
-    } catch (e) { setSarkiDinliyor(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); }
-  };
   // DÜĞMESİZ CANLI SOHBET — mikrofonu otomatik aç, KONUŞMA bitince (sessizlik) otomatik gönder, cevap ver, tekrar dinle
   // CANLI döngüde: AI sesli cevabı BİTENE kadar bekle, sonra tekrar dinle (onend'e güvenme — bazen tetiklenmiyordu → döngü ölüyordu)
   const canliDevam = () => {
@@ -7612,33 +7380,6 @@ export default function Anasayfa({ pro = false }) {
       };
       mr.start(); setDinliyor(true);
     } catch (e) { canliSohbetRef.current = false; setCanliSohbet(false); setKucukMesaj(t("mikIzin", "Mikrofon izni gerekli — tarayıcı ayarından izin ver")); }
-  };
-  // AI seçili dilde İLK KARŞILAMA cümlesi (isimle hitap); sesli okunur, bitince (onend) dinlemeye geçer
-  const aiSelamMetni = () => {
-    const ad = (u && (u.displayName || u.ad)) ? String(u.displayName || u.ad).split(" ")[0] : "";
-    const m = {
-      tr: `Merhaba${ad ? " " + ad : ""}, ben Gloxoo, Gloxorg dünyasının sesli asistanıyım. Seni dinliyorum, nasıl yardımcı olabilirim?`,
-      en: `Hello${ad ? " " + ad : ""}, I'm Gloxoo, the voice assistant of the Gloxorg world. I'm listening — how can I help you?`,
-      de: `Hallo${ad ? " " + ad : ""}, ich bin Gloxoo, der Sprachassistent der Gloxorg-Welt. Ich höre zu — wie kann ich helfen?`,
-      fr: `Bonjour${ad ? " " + ad : ""}, je suis Gloxoo, l'assistant vocal du monde Gloxorg. Je t'écoute — comment puis-je aider ?`,
-      es: `Hola${ad ? " " + ad : ""}, soy Gloxoo, el asistente de voz del mundo Gloxorg. Te escucho, ¿en qué puedo ayudarte?`,
-      ru: `Здравствуйте${ad ? ", " + ad : ""}, я Gloxoo, голосовой помощник мира Gloxorg. Слушаю вас — чем могу помочь?`,
-      ar: `مرحبا${ad ? " " + ad : ""}، أنا Gloxoo، المساعد الصوتي لعالم Gloxorg. أنا أستمع إليك، كيف يمكنني المساعدة؟`,
-      it: `Ciao${ad ? " " + ad : ""}, sono Gloxoo, l'assistente vocale del mondo Gloxorg. Ti ascolto, come posso aiutarti?`,
-      pt: `Olá${ad ? " " + ad : ""}, sou o Gloxoo, o assistente de voz do mundo Gloxorg. Estou a ouvir — como posso ajudar?`,
-      zh: `你好${ad ? "，" + ad : ""}，我是 Gloxoo，Gloxorg 世界的语音助手。我在听，有什么可以帮你的？`,
-      ja: `こんにちは${ad ? "、" + ad : ""}。Gloxorg の世界の音声アシスタント、Gloxoo です。聞いています、どうされましたか？`,
-      hi: `नमस्ते${ad ? " " + ad : ""}, मैं Gloxoo हूँ, Gloxorg दुनिया का वॉइस असिस्टेंट। मैं सुन रहा हूँ, कैसे मदद करूँ?`,
-      uk: `Вітаю${ad ? ", " + ad : ""}, я Gloxoo, голосовий помічник світу Gloxorg. Слухаю вас — чим можу допомогти?`,
-    };
-    return m[aiDilRef.current] || m.tr;
-  };
-  // AI ÖNCE karşılar: karşılama mesajını listeye ekle + SESLİ oku (bitince otomatik dinler)
-  const aiKarsila = () => {
-    const selam = aiSelamMetni();
-    setYardimciMesajlar((s) => [...s, { rol: "ai", metin: selam, zamanMs: Date.now() }]);
-    // Karşılama OKUNUP BİTİNCE dinlemeye geç (okuma bitmeden mikrofon açılıp KESMESİN — cevaplardaki gibi).
-    sesliOku(selam, () => { if (canliSohbetRef.current) canliDevam(); });
   };
   // GÖRÜNTÜLÜ SOHBET: kameradan O ANKİ kareyi JPEG base64 olarak al (AI'nın "görmesi" için)
   const kameraKare = () => {
@@ -7857,18 +7598,6 @@ export default function Anasayfa({ pro = false }) {
     const s = (src || "").toString(); if (!s) return null;
     if (s.slice(0, 5) === "data:") return _dataUrlBlob(s);
     try { return await (await fetch(s, { mode: "cors" })).blob(); } catch (e) { return null; }
-  };
-  // RESMİ PAYLAŞ — telefonun paylaşım penceresini FOTOĞRAFLA açar (WhatsApp, Instagram, kime istersen)
-  const resimPaylas = async (dataUrl) => {
-    const blob = await _resimBlob(dataUrl); if (!blob) { setKucukMesaj(t("paylasilamadi", "Paylaşılamadı")); return; }
-    try {
-      const dosya = new File([blob], "GLOXORG-resim.png", { type: blob.type || "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [dosya] }) && navigator.share) {
-        await navigator.share({ files: [dosya], title: "GLOXORG" }); return;
-      }
-    } catch (e) { if (e && e.name === "AbortError") return; }
-    // Paylaşım desteklenmiyorsa → indir (kullanıcı oradan paylaşır)
-    resimIndir(dataUrl); setKucukMesaj(t("resimIndiPaylas", "Resim indirildi — oradan paylaşabilirsin 📤"));
   };
   // RESMİ KOPYALA — panoya PNG olarak koyar (destekleyen tarayıcıda), olmazsa indirir
   const resimKopyala = async (dataUrl) => {
@@ -8534,7 +8263,6 @@ export default function Anasayfa({ pro = false }) {
   function fotoSec(e) { fotoOku(e, "avatar"); }
   function isFotoSec(e) { fotoOku(e, "is"); }
   function galeriSec(e) { fotoOku(e, "galeri"); }
-  function fotoSifirla() { setKatmanlar([]); setSecili(-1); }
   function fotoOku(e, hedef) {
     const f = e.target.files && e.target.files[0];
     e.target.value = "";
@@ -9433,11 +9161,6 @@ export default function Anasayfa({ pro = false }) {
 
   // PENCERE TEMASI: marka pırlantası + W rengi + alt yazı O SAYFAYA göre (ANAYASA 6.15)
   const aktifEt = (navlar.find((n) => n.k === aktifKod) || navlar[0]).et;
-  const temaRenk = ({
-    home: pro ? "kirmizi" : "mavi",
-    elite: "altin", topluluk: "yesil", video: "mor",
-    konum: "turkuaz", akademi: "zeytin", profil: pro ? "kirmizi" : "beyaz",
-  })[aktifKod] || "mavi";
 
   // PARMAKLA SOLA/SAĞA KAYDIRINCA PENCERE DEĞİŞİR (gerçek dokunma takibi).
   // Üst piyasa şeridindeki kaydırma HARİÇ (onun kendi sürüklemesi var).
