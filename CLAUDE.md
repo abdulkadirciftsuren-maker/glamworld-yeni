@@ -39,7 +39,8 @@ Açıklamalar **numaralı adımlarla** ve sade olur (1, 2, 3…). Teknik jargon 
 ## 2. 🔒 ÇALIŞMA DÜZENİ (git / deploy)
 
 - **Geliştirme + push dalı:** `claude/glamworld-rules-review-0kzl0x` (yoksa oluştur, hep buraya push et).
-- **Deploy:** `CI=false npx react-scripts build` → `npx gh-pages -d build --dotfiles` (site: gloxorg.com, GitHub Pages).
+- **Deploy:** `node scripts/dilleriAyir.js` → `CI=false npx react-scripts build` → `npx gh-pages -d build --dotfiles` (site: gloxorg.com, GitHub Pages).
+- **⚠️ ÇEVİRİLER (B451'den beri):** Uygulama 13 dilin hepsini YÜKLEMEZ; her dil `public/diller/<dil>.<özet>.json` dosyasından ayrı iner (zayıf telefon/iPhone hızı için). Kaynak `src/dilKaynaklari.js` + `src/ceviri*.js`. **Çeviri ekleyip/değiştirince derlemeden ÖNCE `node scripts/dilleriAyir.js` çalıştır** (yoksa yeni çeviri görünmez). Yeni bir `ceviri*.js` dosyası eklenirse `src/i18n.js`'e DEĞİL `src/dilKaynaklari.js`'e bağla.
 - **Her deploy'da `public/sw.js` içindeki `SW_SURUM` bir artar** (B207→B208…) — yoksa tarayıcı eski sürümde takılır.
 - **Her deploy'da `src/buildGecmisi.js`'e Türkçe kayıt** eklenir (en üste, yeni build numarası). Commit'ten önce `node --check src/buildGecmisi.js` çalıştır.
 - Git commit sonuna şu satırlar eklenir:

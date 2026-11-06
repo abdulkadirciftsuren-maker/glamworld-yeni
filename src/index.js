@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './sesKoprusu'; // Gloxoo sesi: telefon uygulamasında telefonun kendi ses motoru (WebView'de speechSynthesis yok)
-import './i18n'; // çoklu dil sistemi (i18next) — uygulama açılışında başlar
+import { i18nHazir } from './i18n'; // çoklu dil sistemi (i18next) — B451: sadece seçili dilin çevirisi iner
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
@@ -123,5 +123,9 @@ try {
 } catch (x) {}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<KokHataSiniri><App /></KokHataSiniri>);
+// B451: önce kullanıcının dil dosyası insin (çok küçük, ~50 KB), sonra sayfa çizilsin → anahtar/yanlış dil yazısı görünmez.
+//   İnternet çok yavaşsa EN ÇOK 4 sn beklenir; sonra sayfa yine açılır, çeviri gelince yazılar kendiliğinden güncellenir.
+let _cizildi = false;
+const _ciz = () => { if (_cizildi) return; _cizildi = true; root.render(<KokHataSiniri><App /></KokHataSiniri>); };
+Promise.race([i18nHazir, new Promise((r) => setTimeout(r, 4000))]).then(_ciz, _ciz);
 reportWebVitals();
