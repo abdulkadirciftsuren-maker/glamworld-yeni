@@ -4,7 +4,7 @@
 import { db, storage } from "./firebase";
 import {
   doc, getDoc, setDoc, deleteDoc, updateDoc,
-  collection, collectionGroup, query, where, limit as fsLimit, orderBy, getDocs, getDocsFromCache, onSnapshot,
+  collection, collectionGroup, query, where, limit as fsLimit, orderBy, startAfter, getDocs, getDocsFromCache, onSnapshot,
   serverTimestamp, increment, deleteField, arrayUnion, arrayRemove,
 } from "firebase/firestore";
 import { ref as depoRef, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
@@ -1007,6 +1007,23 @@ export async function gonderileriOku({ ulke, meslek, hepsi } = {}, adet = 150) {
     const liste = Array.from(harita.values());
     liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // zamanMs yoksa 0 = en eski (en altta); yine ERİŞİLİR
     return liste;
+  } catch (e) { return []; }
+}
+
+// AKIŞ SAYFA SAYFA (B455) — kullanıcı aşağı kaydırdıkça "şu gönderiden DAHA ESKİ 20 gönderi". Eskiden açılışta 300'e kadar
+//   gönderi (içlerinde gömülü fotoğraflarla ~15 MB) indiriliyordu → S25 dışındaki HER telefonda (iPhone dahil) sayfa donuyor,
+//   yarım yükleniyordu. sonZamanMs: listedeki EN ESKİ gönderinin zamanMs'i. Dönen < adet ise zamanlı gönderiler bitti demektir.
+export async function gonderileriSonraki(sonZamanMs, adet = 20) {
+  try {
+    const snap = await getDocs(query(collection(db, "gonderiler"), orderBy("zamanMs", "desc"), startAfter(sonZamanMs), fsLimit(adet)));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((v) => !v.silindi);
+  } catch (e) { return null; } // null = okunamadı (tekrar denenebilir)
+}
+// zamanMs alanı OLMAYAN çok eski gönderiler (orderBy onları dışlar) — zamanlılar bitince BİR KEZ çağrılır.
+export async function gonderilerZamansiz(adet = 40) {
+  try {
+    const snap = await getDocs(query(collection(db, "gonderiler"), fsLimit(adet)));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((v) => !v.silindi && !v.zamanMs);
   } catch (e) { return []; }
 }
 

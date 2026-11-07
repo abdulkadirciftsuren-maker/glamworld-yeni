@@ -36,6 +36,22 @@ export default function TaniKutusu() {
       ekle("Sürüm", `${sonBuild.surum}.B${sonBuild.build} · ${navigator.userAgent.includes("GloxorgApp") ? "UYGULAMA" : "TARAYICI"} · internet: ${navigator.onLine ? "var" : "YOK"}`, true);
       let onar = ""; try { onar = localStorage.getItem("gwFsOnar") || "-"; } catch (e) {}
       ekle("Önbellek onarımı", onar, true);
+      // KAYITLI OTURUM (B455): oturum telefonda nereye yazılıyor, şu an orada var mı? (arka plandan dönünce giriş istiyor sorunu)
+      try {
+        const kalici = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : "?";
+        let lsOturum = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i) || ""; if (k.indexOf("firebase:authUser:") === 0) lsOturum++; }
+        let idbOturum = "?";
+        try {
+          idbOturum = await zamanAsimi(new Promise((ok) => {
+            const r = indexedDB.open("firebaseLocalStorageDb");
+            r.onsuccess = () => { try { const d = r.result; if (!d.objectStoreNames.contains("firebaseLocalStorage")) { d.close(); ok("depo yok"); return; } const c = d.transaction("firebaseLocalStorage", "readonly").objectStore("firebaseLocalStorage").count(); c.onsuccess = () => { ok(String(c.result)); d.close(); }; c.onerror = () => { ok("okunamadı"); d.close(); }; } catch (x) { ok("hata " + hataYaz(x)); } };
+            r.onerror = () => ok("açılamadı " + hataYaz(r.error));
+          }), 8000);
+        } catch (e) { idbOturum = hataYaz(e); }
+        let tur = "?"; try { tur = (auth._persistenceManager && auth._persistenceManager.persistence && auth._persistenceManager.persistence.type) || "?"; } catch (e) {}
+        let bayrak = ""; try { bayrak = "gw_oturum=" + (localStorage.getItem("gw_oturum") || "-") + " gw_cikis=" + (localStorage.getItem("gw_cikis") || "-"); } catch (e) {}
+        ekle("Kayıtlı oturum", "tür: " + tur + " · IndexedDB: " + idbOturum + " · localStorage: " + lsOturum + " · silinmez izni: " + kalici + " · " + bayrak, idbOturum !== "0" || lsOturum > 0);
+      } catch (e) { ekle("Kayıtlı oturum", "OLMADI: " + hataYaz(e), false); }
       const u = auth.currentUser;
       ekle("Giriş", u ? ("var · " + (u.email || u.uid).slice(0, 40)) : "YOK (giriş yapılmamış)", !!u);
       if (u) {

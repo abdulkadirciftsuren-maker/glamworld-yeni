@@ -11,7 +11,7 @@ import qrOlustur from "qrcode-generator"; // QR kod (GÖMÜLÜ, CDN yok) — dav
 import { auth, fcmTokenAl, fcmDurumAl, gloxooResimUret, gloxooSesUret } from "./firebase";
 import { TANISMA_AI, tanismaAIFotoIstem, tanismaAISistem, TANISMA_METINLER } from "./tanismaAI";
 import { ADRES_KOPRU } from "./hereConfig"; // adres köprüsü (worker) ayarlıysa adres haritası gösterilir
-import { profilDinle, profilKaydet, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, yorumBegen, yorumDuzelt, yorumSil, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, gonderiBegeniOnar, begeniSayilariniOnarHepsi, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
+import { profilDinle, profilKaydet, mesajGonder, mesajlariOku, mesajlarimiDinle, mesajOkunduYap, mesajTepkiVer, mesajSilGeriCek, mesajDuzelt, aramaOlustur, aramaDinle, aramaGuncelle, aramaSil, gelenAramalariDinle, gonderiEkle, gonderileriOku, gonderileriSonraki, gonderilerZamansiz, gonderilerimOku, gonderiSil, gonderiGuncelle, gonderiCopAt, gonderiGeriGetir, gonderiAvatarGuncelle, begeniAvatarGuncelle, yorumAvatarGuncelle, videoYukle, dosyaYukle, gorselYukle, yorumEkle, yorumlariOku, yorumBegen, yorumDuzelt, yorumSil, bildirimEkle, bildirimleriDinle, bildirimleriOkunduYap, bildirimSil, bildirimleriTemizle, takipEt, takiptenCik, takipEttiklerimOku, sayacDegistir, begeniYaz, begeniSilDoc, begenenleriOku, benimBegenilerim, gonderiBegeniOnar, begeniSayilariniOnarHepsi, geriBildirimEkle, geriBildirimOku, tumKullanicilar, canliKonumYaz, canliKonumSil, tumGonderiler, kullaniciSil, hikayeEkle, hikayeleriOku, hikayeSil, hikayeGorulduSay, hikayeGorenYaz, hikayeBegenKaydet, hikayeBegenenleriOku, anketOyVer, anketOylariOku, fcmTokenKaydet, gloxMuzikEkle, gloxMuzikOku, gloxMuzikSil, grupOlustur, gruplarimiDinle, grupUyeEkle, grupUyeCikar, grupMesajGonder, grupMesajlariDinle } from "./veri";
 import { MESLEK_LISTESI } from "./meslekler";
 import { buildGecmisi } from "./buildGecmisi";
 import { FABRIKA_LISTESI, TEDARIK_LISTESI, ISCI_LISTESI, DEVLET_LISTESI, ULKE_KOD } from "./sektorler";
@@ -5020,18 +5020,19 @@ export default function Anasayfa({ pro = false }) {
   // HIZ: ÖNCE az gönderi (24) çek → akış HEMEN dolsun (uzun bekleme biter). SONRA arkada tümünü (150) getir.
   useEffect(() => {
     let iptal = false, denedi = 0, doldu = false;
-    const yaz = (arr) => { if (iptal || !arr || !arr.length) return false; doldu = true; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {} return true; };
+    const yaz = (arr) => { if (iptal || !arr || !arr.length) return false; doldu = true; setGercekAkis(arr); try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 12))); } catch (e) {} return true; };
     // İLK DOLUM (24) — AĞ TAKILIP boş/başarısız dönerse TEKRAR DENE (artan bekleme). Böylece akış "Gönderiler geliyor…"da
     // sonsuza kadar TAKILI KALMAZ; bağlantı düzelince gönderiler gelir (kullanıcı: "sayfa hiç yüklemiyor").
     const cek = () => {
       if (iptal || doldu) return;
-      gonderileriOku({}, 24)
+      gonderileriOku({}, 15)
         .then((arr) => { if (!yaz(arr) && !iptal && !doldu && denedi < 6) { denedi++; setTimeout(cek, Math.min(8000, 1200 * denedi)); } })
         .catch(() => { if (!iptal && !doldu && denedi < 6) { denedi++; setTimeout(cek, Math.min(8000, 1200 * denedi)); } });
     };
     cek();
-    const zmn = setTimeout(() => { if (!iptal) gonderileriOku({ hepsi: true }, 150).then(yaz).catch(() => {}); }, 3000); // arkada TÜMÜ (150) — hepsi:true → zamanMs'siz ESKİ gönderiler de gelir (eski paylaşımlar kaybolmasın)
-    return () => { iptal = true; clearTimeout(zmn); };
+    // ⛔ B455: eskiden burada 3 sn sonra arkada 150+150 gönderi (gömülü fotoğraflarla ~15 MB) iniyordu → S25 dışında HER telefon
+    //   (iPhone dahil) donuyor/yarım yükleniyordu. KALDIRILDI: daha eski gönderiler kullanıcı aşağı KAYDIRDIKÇA 20'şer gelir (akisDahaFazla).
+    return () => { iptal = true; };
   }, []);
   // AKIŞ OTOMATİK TAZELEME (kullanıcı: "başkası paylaşınca/beğenince/yorum yapınca ben yenilemeden görmüyorum, saçma").
   // ⚠️ MASRAF DENGESİ: sürekli canlı dinleme (onSnapshot) çok para yakıyordu (senin en büyük derdin) → onun yerine:
@@ -5039,7 +5040,7 @@ export default function Anasayfa({ pro = false }) {
   //   sayısı kendiliğinden gelir (elle yenilemeye gerek yok), ama sürekli okuma yapmaz (ekonomik). Eskiler korunur (birleştirme).
   useEffect(() => {
     const tazele = () => {
-      gonderileriOku({}, 40).then((arr) => {
+      gonderileriOku({}, 15).then((arr) => {
         if (!arr || !arr.length) return;
         setGercekAkis((eski) => {
           const harita = new Map();
@@ -5047,7 +5048,7 @@ export default function Anasayfa({ pro = false }) {
           (eski || []).forEach((p) => { if (p && p.id && !harita.has(p.id)) harita.set(p.id, p); }); // alttaki eski gönderiler korunur
           return Array.from(harita.values());
         });
-        try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 40))); } catch (e) {}
+        try { localStorage.setItem("gw_feedCache", JSON.stringify(arr.slice(0, 12))); } catch (e) {}
       }).catch(() => {});
     };
     const gorunurTazele = () => { if (!document.hidden) tazele(); };
@@ -8686,13 +8687,38 @@ export default function Anasayfa({ pro = false }) {
     vids.forEach((v) => io.observe(v));
     return () => io.disconnect();
   }, [reelsAcik, reelListesi, reelSesAcik]);
+  // AKIŞ SUNUCUDAN SAYFA SAYFA (B455): gösterilen gönderiler elde olanların sonuna yaklaşınca 20 tane DAHA ESKİ getir.
+  //   Zamanlı gönderiler bitince zamanMs'siz çok eski gönderiler BİR KEZ getirilir, sonra durur.
+  const akisDurumRef = useRef({ yukleniyor: false, bitti: false, zamansizAlindi: false });
+  const akisDahaFazla = () => {
+    const d = akisDurumRef.current;
+    if (d.yukleniyor || d.bitti) return;
+    const liste = gercekAkis || [];
+    const zamanlilar = liste.filter((p) => p && p.zamanMs);
+    if (!zamanlilar.length) return;
+    const enEski = Math.min(...zamanlilar.map((p) => p.zamanMs));
+    const birlestir = (yeni) => setGercekAkis((eski) => { const h = new Map(); (eski || []).forEach((p) => p && p.id && h.set(p.id, p)); (yeni || []).forEach((p) => p && p.id && !h.has(p.id) && h.set(p.id, p)); return Array.from(h.values()).sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); });
+    d.yukleniyor = true;
+    gonderileriSonraki(enEski, 20).then(async (yeni) => {
+      if (yeni === null) return; // ağ hatası → sonra tekrar denenir
+      if (yeni.length) birlestir(yeni);
+      if (yeni.length < 20) {
+        if (!d.zamansizAlindi) { d.zamansizAlindi = true; const z = await gonderilerZamansiz(40); if (z && z.length) birlestir(z); }
+        d.bitti = true;
+      }
+    }).finally(() => { d.yukleniyor = false; });
+  };
   // AKIŞ SAYFALAMA: filtre değişince baştan (ilk 6)
   useEffect(() => { setFeedGoster(6); }, [feedFiltre]);
   // Aşağı kaydırınca DAHA FAZLA gönderi yükle — nöbetçi görününce +6 (tümünü birden yüklemez → ölçeklenir, donmaz)
   useEffect(() => {
     if (aktifKod !== "home") return;
     const el = feedSonRef.current; if (!el) return;
-    const io = new IntersectionObserver((girisler) => { if (girisler.some((g) => g.isIntersecting)) setFeedGoster((n) => n + 6); }, { rootMargin: "700px" });
+    const io = new IntersectionObserver((girisler) => {
+      if (!girisler.some((g) => g.isIntersecting)) return;
+      setFeedGoster((n) => n + 6);
+      if ((gercekAkis || []).length - feedGoster <= 12) akisDahaFazla(); // elde 12'den az gösterilmemiş gönderi kaldı → sunucudan 20 daha
+    }, { rootMargin: "700px" });
     io.observe(el);
     return () => io.disconnect();
   }, [aktifKod, feedGoster, feedFiltre, gercekAkis]);
