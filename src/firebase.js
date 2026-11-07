@@ -3,7 +3,7 @@
 // Giriş Yap → buradan doğrulanır. Anahtar genel web kimliğidir (gizli şifre değil).
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential } from "firebase/auth";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, collection, query, where, limit, getDocsFromServer } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 import { getAI, getGenerativeModel, GoogleAIBackend, VertexAIBackend, ResponseModality } from "firebase/ai";
@@ -35,13 +35,46 @@ export const auth = getAuth(app);
 //   kapatınca her şey İNTERNETTEN baştan iniyordu. Artık son görülen gönderiler/profiller telefonda (IndexedDB) saklanır:
 //   açılışta ÖNCE telefondaki içerik ANINDA gösterilir, yenileri internetten gelince sessizce eklenir.
 //   Birden fazla sekme/pencere aynı anda açık olabilir (persistentMultipleTabManager). Kurulamazsa eski usule düşer.
+// 🩺 BOZUK ÖNBELLEK KENDİNİ ONARIR (B453 — kullanıcı: Oppo'da Play uygulamasında HİÇBİR veri gelmiyor; aynı telefonun
+//   Chrome'unda bağlantı testi 6/6 geçti, WebView güncel). Telefondaki kalıcı veritabanı önbelleği bozulup takılınca her okuma
+//   sonsuza kadar bekliyordu. Açılışta küçük bir deneme okuması yapılır; 12 sn'de cevap yoksa (internet varken) önbellek
+//   SİLİNİR ve sayfa BİR KEZ yenilenir (günde en çok 1 kez — döngü olmaz). Onarım açılışında önbelleksiz (hafızada) çalışılır.
+const FS_ONAR = "gwFsOnar";
+let _onarimAcilisi = false;
+try { _onarimAcilisi = localStorage.getItem(FS_ONAR) === "sil"; } catch (e) {}
 let _db;
 try {
-  _db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+  _db = _onarimAcilisi
+    ? initializeFirestore(app, { localCache: memoryLocalCache() })
+    : initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
 } catch (e) {
   _db = getFirestore(app);
 }
 export const db = _db;
+if (_onarimAcilisi) {
+  // Eski bozuk önbellek veritabanlarını sil (Firestore bu açılışta onlara dokunmuyor)
+  try {
+    const sil = (ad) => new Promise((ok) => { try { const r = indexedDB.deleteDatabase(ad); r.onsuccess = r.onerror = r.onblocked = () => ok(); } catch (e) { ok(); } });
+    const adlar = ["firestore/[DEFAULT]/" + firebaseConfig.projectId + "/main", "firestore_clients", "firestore_mutations"];
+    const liste = indexedDB.databases ? indexedDB.databases().then((d) => (d || []).map((x) => x.name).filter((n) => n && n.indexOf("firestore") === 0)).catch(() => adlar) : Promise.resolve(adlar);
+    liste.then((l) => Promise.all([...new Set([...l, ...adlar])].map(sil))).then(() => { try { localStorage.setItem(FS_ONAR, "tamam:" + Date.now()); } catch (e) {} });
+  } catch (e) {}
+} else {
+  setTimeout(() => {
+    let cevap = false;
+    getDocsFromServer(query(collection(_db, "pazarUrunleri"), where("reklam", "==", true), limit(1)))
+      .then(() => { cevap = true; }).catch(() => { cevap = true; }); // hata da bir cevaptır (takılma değil)
+    setTimeout(() => {
+      if (cevap || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+      try {
+        const son = Number((localStorage.getItem(FS_ONAR) || "").split(":")[1] || 0);
+        if (Date.now() - son < 24 * 3600 * 1000) return; // son 24 saatte onarıldıysa tekrar deneme
+        localStorage.setItem(FS_ONAR, "sil");
+        window.location.reload();
+      } catch (e) {}
+    }, 12000);
+  }, 3000);
+}
 // VİDEO/büyük dosya deposu (Firestore 1MB sınırına takılmadan video yüklenir)
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
