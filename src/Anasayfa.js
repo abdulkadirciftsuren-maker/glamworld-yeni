@@ -12198,7 +12198,9 @@ export default function Anasayfa({ pro = false }) {
               ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()} style={tfMini && tfVidOran ? { aspectRatio: tfVidOran.toFixed(3) } : undefined}>
                   <video ref={tamVideoRef} className="tamfoto-video" src={vidBlob || videoSade(p.video)} autoPlay playsInline preload="auto"
                     muted={!!(p.muzik && p.muzik.url)}
-                    poster={p.videoPoster || undefined}
+                    poster={p.videoPoster || SEFFAF_POSTER}
+                    onLoadStart={(e) => { try { e.currentTarget.classList.remove("hazir"); } catch (x) {} }}
+                    onLoadedData={(e) => { try { e.currentTarget.classList.add("hazir"); } catch (x) {} }}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
                     onLoadedMetadata={(e) => { setVidHata(false); setVidSure(e.currentTarget.duration || 0); const w = e.currentTarget.videoWidth, h = e.currentTarget.videoHeight; if (w && h) setTfVidOran(w / h); }}

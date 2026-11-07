@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import L from "leaflet"; // haritadan konum seçmek için (iş yerini işaretle) — OSM, uygulamanın kullandığı kaynak
 import { gloxooResimUret } from "./firebase"; // Gloxoo amblem/logo çizimi
-import { pazarUrunEkle, pazarUrunGuncelle, pazarUrunleriOku, pazarUrunleriOnbellek, pazarUrunSil, gorselYukle, videoYukle } from "./veri";
+import { pazarUrunEkle, pazarUrunGuncelle, reklamlariOku, reklamlariOnbellek, pazarUrunSil, gorselYukle, videoYukle } from "./veri";
 const AI_KOPRU = "https://gloxorg-ai.abdulkadirciftsuren.workers.dev"; // Gloxoo yazı köprüsü (tanıtım yazısı)
 
 const KATEGORILER = [
@@ -94,6 +94,7 @@ const AMBLEM_STILLER = [
 export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, saticiyaYaz, pasif, yonetici, onKatman }) {
   const { t } = useTranslation();
   const [reklamlar, setReklamlar] = useState([]);
+  const [reklamYuklendi, setReklamYuklendi] = useState(false); // ilk okuma bitmeden "İlk reklamı sen ver" (boş) GÖSTERİLMEZ
   const [detay, setDetay] = useState(null);       // açık reklam (detay penceresi)
   const [ceviri, setCeviri] = useState({});        // metin on-demand çevirisi (anahtar → {metin,yuk,acik}) — akıştaki "Çevir" gibi
   // ON-DEMAND ÇEVİR — şirket açıklaması + ürün başlığını OKUYANIN diline çevirir (AI köprü). Metin kullanıcının (reklam veren) yazdığı Türkçe olabilir.
@@ -194,8 +195,12 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
 
   async function yukle() {
     // ÖNCE telefondaki önbellekten ANINDA göster (internet beklemeden), sonra internetten tazele (B429)
-    try { const yerel = await pazarUrunleriOnbellek(200); const r = (yerel || []).filter((p) => p.reklam); if (r.length) setReklamlar((a) => (a.length ? a : r)); } catch (e) {}
-    try { const hepsi = await pazarUrunleriOku(200); setReklamlar((hepsi || []).filter((p) => p.reklam)); } catch (e) {}
+    try { const yerel = await reklamlariOnbellek(60); if (yerel && yerel.length) { setReklamlar((a) => (a.length ? a : yerel)); setReklamYuklendi(true); } } catch (e) {}
+    // İnternetten oku; okunamazsa (zayıf bağlantı) 4 sn sonra BİR KEZ daha dene
+    let liste = await reklamlariOku(60);
+    if (liste === null) { await new Promise((ok) => setTimeout(ok, 4000)); liste = await reklamlariOku(60); }
+    if (liste) setReklamlar(liste);
+    setReklamYuklendi(true);
   }
   useEffect(() => { yukle(); }, []);
 
@@ -608,7 +613,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
           <span className="reklam-serit-ad">🛍️ {t("rkBaslik", "Vitrin — Reklam")}</span>
           <button className="reklam-ver-mini" onClick={() => { formSifirla(); setVerAcik(true); }}>＋ {t("rkVer", "Reklam Ver")}</button>
         </div>
-        {modaListe.length === 0 ? (
+        {modaListe.length === 0 && !reklamYuklendi ? (
+          <div className="reklam-bos reklam-yukleniyor" aria-live="polite"><span className="reklam-yuk-don" />{t("araYukleniyor", "Yükleniyor…")}</div>
+        ) : modaListe.length === 0 ? (
           <button className="reklam-bos" onClick={() => { formSifirla(); setVerAcik(true); }}>＋ {t("rkIlk", "İlk reklamı sen ver — ürününü buradan tanıt")}</button>
         ) : (
           <div className="reklam-akis" ref={akisRef}
@@ -635,7 +642,9 @@ export default function Reklam({ uid, benAd, benFoto, dil, paraSym, onDene, sati
           <span className="reklam-serit-ad">🏢 {t("fkBaslik", "Firma / İşletme Reklamları")}</span>
           <button className="reklam-ver-mini" onClick={() => { firmaFormSifirla(); setFirmaVerAcik(true); }}>＋ {t("fkVer", "Firma Reklamı Ver")}</button>
         </div>
-        {firmaListe.length === 0 ? (
+        {firmaListe.length === 0 && !reklamYuklendi ? (
+          <div className="reklam-bos reklam-yukleniyor" aria-live="polite"><span className="reklam-yuk-don" />{t("araYukleniyor", "Yükleniyor…")}</div>
+        ) : firmaListe.length === 0 ? (
           <button className="reklam-bos" onClick={() => { firmaFormSifirla(); setFirmaVerAcik(true); }}>＋ {t("fkIlk", "İşletmeni buradan tanıt — yemek, market, emlak, firma…")}</button>
         ) : (
           <div className="reklam-akis firma-akis">

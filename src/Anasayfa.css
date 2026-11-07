@@ -1212,7 +1212,10 @@ video.yrm-medya{ cursor:default; }
 /* TAM EKRAN VİDEO — orijinal en-boy (kırpma yok); NATIVE kontrol YOK, BİZE ÖZGÜ oynatıcı */
 .tf-vid-sar{ position:absolute; inset:0; z-index:1; display:flex; align-items:center; justify-content:center; }
 /* tam ekran VİDEO: TAMAMI görünür (contain) — kullanıcı: "yatayda video cover olunca ortası çıkıyor, hepsi çıkmıyor; videonun tümü görünsün" */
-.tamfoto-video{ width:100%; height:100%; object-fit:contain; background:transparent; }
+.tamfoto-video{ width:100%; height:100%; object-fit:contain; background:transparent; opacity:0; transition:opacity .25s ease; }
+/* B452: telefon video katmanı ilk kare gelene kadar SİYAH çiziyordu (kullanıcı Oppo: "video ilk başta siyah gösteriyor") →
+   ilk kare hazır olana kadar video GÖRÜNMEZ, altın zemin + yükleniyor işareti görünür; kapak yoksa şeffaf poster. */
+.tamfoto-video.hazir{ opacity:1; }
 /* ortadaki büyük PIRLANTA oynat (duraklatınca görünür) */
 .tf-vid-buyuk{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:3; width:62px; height:62px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;
   background:transparent; box-shadow:inset 0 0 0 2px rgba(255,215,0,.7); }
@@ -6153,3 +6156,8 @@ textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }
 .gb-ozet-oge.kullanici{ color:#2f7fd0; }
 .gb-kart-cihaz{ margin-top:5px; font-size:11px; color:#8a7a52; overflow-wrap:anywhere; }
 @media (min-width:560px){ .gbg-not{ font-size:16px; } .gbg-yaz{ font-size:17px; } .gbg-gonder{ font-size:17px; } }
+
+/* B452: Vitrin/Firma reklamları İNERKEN "İlk reklamı sen ver" yerine YÜKLENİYOR (dönen altın halka) — kullanıcı: "bunlar yüklenmiyor" */
+.reklam-yukleniyor{ display:flex; align-items:center; justify-content:center; gap:10px; cursor:default; }
+.reklam-yuk-don{ width:20px; height:20px; border-radius:50%; border:3px solid rgba(138,106,0,.25); border-top-color:#8a6a00; animation:reklamYukDon .8s linear infinite; flex:none; }
+@keyframes reklamYukDon{ to{ transform:rotate(360deg); } }

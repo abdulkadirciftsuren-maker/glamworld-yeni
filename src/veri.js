@@ -1027,16 +1027,21 @@ export async function pazarUrunleriOku(adet = 200) {
     return liste;
   } catch (e) { return []; }
 }
-// Aynı listeyi TELEFONDAKİ ÖNBELLEKTEN anında okur (internet beklemez). Önbellek boşsa [] döner.
-// Vitrin/Reklam şeridi önce bununla ANINDA dolar, sonra pazarUrunleriOku ile internetten tazelenir (B429).
-export async function pazarUrunleriOnbellek(adet = 200) {
-  try {
-    const q = query(collection(db, "pazarUrunleri"), fsLimit(adet));
-    const snap = await getDocsFromCache(q);
-    const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
-    liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
-    return liste;
-  } catch (e) { return []; }
+// VİTRİN / FİRMA REKLAMLARI — SADECE reklam:true kayıtlar (B452). Eskiden Vitrin TÜM pazar ürünlerinden 200 kaydı
+//   (içlerinde gömülü fotoğraflı ağır kayıtlar) indirip reklamları sonra ayıklıyordu → zayıf telefonda (Oppo) uzun sürüyor ya da
+//   hiç gelmiyordu, o sırada "İlk reklamı sen ver" (boş) görünüyordu. Tek eşitlik sorgusu → index gerekmez.
+function reklamSorgu(adet) { return query(collection(db, "pazarUrunleri"), where("reklam", "==", true), fsLimit(adet)); }
+function reklamListe(snap) {
+  const liste = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => !p.silindi);
+  liste.sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+  return liste;
+}
+export async function reklamlariOku(adet = 60) {
+  try { return reklamListe(await getDocs(reklamSorgu(adet))); } catch (e) { return null; } // null = okunamadı (boş değil)
+}
+// Aynı listeyi TELEFONDAKİ ÖNBELLEKTEN anında okur (internet beklemez); önbellek boşsa [].
+export async function reklamlariOnbellek(adet = 60) {
+  try { return reklamListe(await getDocsFromCache(reklamSorgu(adet))); } catch (e) { return []; }
 }
 export async function pazarUrunlerimOku(uid, adet = 100) {
   if (!uid) return [];

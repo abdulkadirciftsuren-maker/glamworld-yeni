@@ -18,7 +18,9 @@ html, body {
   padding: 0;
 }
 #root {
-  background-color: #f2df9f;
+  /* B452: ŞEFFAF — #root dolu zemin olunca index.html'deki logolu "yükleniyor" ekranının (#gw-arka) ÖNÜNÜ KAPATIYORDU
+     (kullanıcı: "açılışta düz açık sarı perde kalıyor"). Altın taban zaten html/body'de. */
+  background-color: transparent;
   min-height: 100vh;
   min-height: 100dvh;
 }
