@@ -4,6 +4,18 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+## 🟢 6–7 KAS 2026 — ZAYIF TELEFON / IPHONE HIZI + OPPO VERİ SORUNU (B448–B453) ✅ kullanıcı onayladı: "Oppo'da Elit Pazar'da ürünler geldi"
+- B448: siyah ekran → AltinCerceve.css html/body altın. B452'de #root ŞEFFAF + index.html #gw-arka z-index:0 (logolu yükleniyor görünür).
+- B449: süs resimleri 1024px→256px (çerçeve border-image kesimleri yarıya). B450: harita ön-indirmesi kalktı, ElitePazar/Konum/Adres/Akademi/
+  SanalAyna/Muhasebe React.lazy (tembel()), sayaç şeridi (50K/195/4.9/Çevrimiçi) KALDIRILDI, ARA zilin solunda büyüteç, arama TÜM üyelerde (tumKullanicilar 600).
+- B451: ⚠️ ÇEVİRİLER DİL BAŞINA AYRI DOSYA: src/dilKaynaklari.js + scripts/dilleriAyir.js → public/diller/<dil>.<özet>.json; ÇEVİRİ DEĞİŞİNCE
+  derlemeden önce `node scripts/dilleriAyir.js` (CLAUDE.md'de). main.js 4.2 MB → 2.4 MB. 59 ölü tanım silindi.
+- B452: tam ekran video ilk kareye kadar gizli (siyah değil), Vitrin reklamları sadece reklam:true (reklamlariOku), yüklenirken "Yükleniyor".
+  public/tani.html = telefon bağlantı testi (gloxorg.com/tani.html).
+- B453: OPPO KÖK SEBEP: Play uygulamasının kalıcı Firestore önbelleği bozulup takılıyordu → firebase.js 12 sn cevap yoksa önbelleği siler, 1 kez yeniler.
+SIRADAKİ: (1) arama: telefonda karşının görüntüsü + kilitliyken ekran (2.0.20 test edilmedi), cevaplayınca görüntü 7–20 sn geç, Reddet gerçek red;
+(2) Play'e yeni AAB (tam ekran bildirim beyanı = arama uygulaması); (3) gerekirse Anasayfa (805 KB) parçalara bölme; Anasayfa.css 632 KB inceltme.
+
 ## 🔴🔴 KALDIĞIMIZ YER — 5 KAS 2026 GECE (kullanıcı: "yarın unutma, eksiksiz kaldığımız yerden devam edelim")
 **Konu: KAPALIYKEN ARAMA (WhatsApp gibi) — web B447, test uygulaması 2.0.20 (derleme 5 Kas 21:36 UTC başladı).**
 Yapılanlar (bugün):
