@@ -67,7 +67,7 @@
       /* ===== MARKALI YÜKLEME EKRANI (#gw-arka) — "sarı perde" artık bomboş değil, GLOXORG logosu + dönen halka.
          En arkada (z-index:-1) durur; #root boşken görünür, içerik gelince ÖRTÜLÜR. Sadece CSS/HTML → JS gerektirmez,
          asla "takılı" kalmaz. Arka plandan dönüşte/yavaş açılışta bomboş sarı yerine düzgün bir yükleme ekranı gösterir. */
-      #gw-arka{ position:fixed; inset:0; z-index:-1; display:flex; align-items:center; justify-content:center; pointer-events:none;
+      #gw-arka{ position:fixed; inset:0; z-index:0; /* B452: -1 iken body altın zemini ÖRTÜYORDU (logo hiç görünmüyordu); #root z-index:1 üstünde kalır */ display:flex; align-items:center; justify-content:center; pointer-events:none;
         background:radial-gradient(ellipse at 50% 22%, #fbf0c9 0%, #f2df9f 42%, #e8c86a 72%, #d9b84a 100%); }
       #gw-arka .gw-arka-ic{ display:flex; flex-direction:column; align-items:center; gap:16px; }
       #gw-arka .gw-arka-logo{ width:94px; height:94px; border-radius:20px; box-shadow:0 10px 30px rgba(120,90,0,.28); }
