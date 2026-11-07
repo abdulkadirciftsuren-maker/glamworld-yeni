@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import TaniKutusu from "./TaniKutusu"; // B454: gizli teşhis kutusu (sol üst köşeye 5 dokunuş / ?tani=1)
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -224,6 +225,7 @@ function App() {
   return (
     <HashRouter>
       <AltinCerceve />
+      <TaniKutusu />
       <Routes>
         {/* Giriş yok → Giriş kartı. Giriş var + KAYIT YOK → üyeliğini tamamla (tür seç).
             Giriş var + kayıt var → ana sayfa. */}
