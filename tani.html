@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>GLOXORG Bağlantı Testi</title>
+<style>
+  /* GLOXORG — TELEFON BAĞLANTI TESTİ (B452). Başka telefonda (Oppo vb.) veriler hiç gelmiyorsa bu sayfa açılır,
+     veritabanı bağlantısını 4 farklı yolla dener ve sonucu BÜYÜK yazıyla gösterir. Kullanıcı ekran görüntüsü atar. */
+  body{ margin:0; font-family:Georgia,serif; background:radial-gradient(ellipse at 50% 20%,#fbf0c9,#f2df9f 45%,#e8c86a); color:#3a2a00; padding:16px; }
+  h1{ font-size:22px; margin:6px 0 12px; text-align:center; }
+  .satir{ background:#fffbe9; border:2px solid #c9a227; border-radius:12px; padding:12px; margin:10px 0; font-size:17px; line-height:1.4; }
+  .ok{ color:#147a2e; font-weight:800; } .kotu{ color:#b3141d; font-weight:800; } .bekle{ color:#8a6a00; font-weight:800; }
+  .kucuk{ font-size:13px; color:#6a5a2a; word-break:break-all; }
+</style>
+</head>
+<body>
+<h1>GLOXORG Bağlantı Testi</h1>
+<div id="liste"></div>
+<script type="module">
+const L = document.getElementById("liste");
+const satir = (ad) => { const d = document.createElement("div"); d.className = "satir"; d.innerHTML = "<b>" + ad + "</b><br><span class='bekle'>⏳ deneniyor…</span>"; L.appendChild(d); return (sonuc, iyi) => { d.querySelector("span").className = iyi ? "ok" : "kotu"; d.querySelector("span").textContent = (iyi ? "✅ " : "❌ ") + sonuc; }; };
+const zamanAsimi = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("ZAMAN AŞIMI " + ms / 1000 + " sn")), ms))]);
+const cfg = { apiKey: "AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw", authDomain: "auth.gloxorg.com", projectId: "glamworld2", storageBucket: "glamworld2.firebasestorage.app", messagingSenderId: "656498925104", appId: "1:656498925104:web:2b684fa8f2eafab97b57f5" };
+
+// 0) Telefon bilgisi + depolama doluluğu
+const s0 = satir("1) Telefon ve depolama");
+try {
+  let ek = "";
+  if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate(); ek = " · depolama: " + Math.round((e.usage || 0) / 1048576) + " MB kullanılmış / " + Math.round((e.quota || 0) / 1048576) + " MB izin"; }
+  s0("hafıza " + (navigator.deviceMemory || "?") + " GB · çekirdek " + (navigator.hardwareConcurrency || "?") + ek, true);
+  const k = document.createElement("div"); k.className = "kucuk"; k.textContent = navigator.userAgent; L.lastChild.appendChild(k);
+} catch (e) { s0(String(e.message || e), false); }
+
+// 1) Telefon hafızası (IndexedDB) açılıyor mu
+const s1 = satir("2) Telefon içi kayıt (IndexedDB)");
+try {
+  const t = Date.now();
+  await zamanAsimi(new Promise((ok, no) => { const r = indexedDB.open("gw_tani_test", 1); r.onsuccess = () => { r.result.close(); ok(); }; r.onerror = () => no(r.error); r.onblocked = () => no(new Error("engelli")); }), 8000);
+  s1("açıldı (" + (Date.now() - t) + " ms)", true);
+} catch (e) { s1(String(e.message || e), false); }
+
+// 2) Veritabanına düz internet isteği (REST)
+const s2 = satir("3) Veritabanı — düz istek");
+try {
+  const t = Date.now();
+  const r = await zamanAsimi(fetch("https://firestore.googleapis.com/v1/projects/glamworld2/databases/(default)/documents/pazarUrunleri?pageSize=3&mask.fieldPaths=baslik&key=" + cfg.apiKey), 15000);
+  const j = await r.json();
+  s2("HTTP " + r.status + " · " + ((j.documents || []).length) + " kayıt (" + (Date.now() - t) + " ms)", r.ok);
+} catch (e) { s2(String(e.message || e), false); }
+
+// 3) ve 4) Uygulamanın kullandığı kütüphane ile (önbelleksiz): normal + "uzun bekleme" bağlantısı
+// Kütüphane KENDİ sitemizden (glox-tani/, firebase 12.14.0 — uygulamanın kullandığı sürüm); dış sunucuya bağlı değil
+const { initializeApp } = await import("./glox-tani/firebase-app.js");
+const fs = await import("./glox-tani/firebase-firestore.js");
+async function dene(ad, ayar, adim) {
+  const s = satir(adim + ") " + ad);
+  try {
+    const app = initializeApp(cfg, "tani" + adim);
+    const db = fs.initializeFirestore(app, ayar);
+    const t = Date.now();
+    const snap = await zamanAsimi(fs.getDocs(fs.query(fs.collection(db, "pazarUrunleri"), fs.where("reklam", "==", true), fs.limit(3))), 20000);
+    s(snap.size + " kayıt geldi (" + (Date.now() - t) + " ms)", snap.size > 0);
+  } catch (e) { s(String(e.message || e), false); }
+}
+await dene("Veritabanı — normal bağlantı", {}, 4);
+await dene("Veritabanı — uzun bekleme bağlantısı", { experimentalForceLongPolling: true }, 5);
+await dene("Veritabanı — telefona kayıtlı önbellek ile", { localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }, 6);
+const son = document.createElement("h1"); son.textContent = "Bitti — bu ekranın fotoğrafını gönder 📸"; L.appendChild(son);
+</script>
+</body>
+</html>
