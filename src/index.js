@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './ceviriKorumasi'; // B457: Chrome otomatik çevirisi sayfayı çökertmesin
 import './sesKoprusu'; // Gloxoo sesi: telefon uygulamasında telefonun kendi ses motoru (WebView'de speechSynthesis yok)
 import { i18nHazir } from './i18n'; // çoklu dil sistemi (i18next) — B451: sadece seçili dilin çevirisi iner
 import App from './App';

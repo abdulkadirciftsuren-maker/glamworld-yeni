@@ -77,7 +77,11 @@ function yonAyarla(lng) {
   document.documentElement.dir = kod === "ar" ? "rtl" : "ltr";
   try { document.documentElement.lang = kod; } catch (e) {}
 }
-yonAyarla(i18n.language);
+// ⚠️ B457: dil dosyaları ayrı indiği için (B451) i18n.language açılışın İLK anında henüz BOŞ → sayfa "en" (İngilizce)
+//   işaretleniyordu → Chrome Türkçe sayfayı İngilizce sanıp OTOMATİK ÇEVİRİYE kalkıyor, sayfanın içini değiştirip React'i
+//   çökertiyordu ("removeChild... alt öğesi değil" hatası). Artık: önce tarayıcıda seçili/telefon dili, dil hazır olunca kesin dil.
+try { yonAyarla(localStorage.getItem("gw_dil2") || (navigator.language || "tr")); } catch (e) { yonAyarla("tr"); }
+i18nHazir.then(() => yonAyarla(i18n.resolvedLanguage || i18n.language)).catch(() => {});
 i18n.on("languageChanged", yonAyarla);
 
 // Ülke ISO kodundan o anki dildeki ülke adı (Intl.DisplayNames — ~250 ülke, 12 dil, otomatik).
