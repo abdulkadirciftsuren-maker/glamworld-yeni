@@ -458,6 +458,12 @@ export async function aramaGuncelle(aramaId, veri) {
 //    (önce 20, sonra 300) getiriyordu; konuşulan ("kabul") kayıtlar hiç silinmediği için birikip sınırı geçince YENİ çağrı
 //    pencerenin DIŞINDA kaldı → telefon aramayı hiç görmedi. ÇÖZÜM: sorguya durum == "calliyor" eklendi (iki eşitlik → index
 //    gerekmez) → kaç eski kayıt olursa olsun yeni çağrı HEP gelir. Eski kayıtlar ayrıca eskiAramalariTemizle ile silinir.
+// ⏱️ Aramanın zamanı: önce SUNUCU saati (olusturma), yoksa arayanın telefon saati (zamanMs). Arayan telefonun saati kaymışsa
+//   (8 Kas Oppo→S25) yeni arama "eski" sanılıp gizleniyor/siliniyordu.
+function aramaZamani(a) {
+  try { if (a && a.olusturma && typeof a.olusturma.toMillis === "function") return a.olusturma.toMillis(); } catch (e) {}
+  return (a && a.zamanMs) || 0;
+}
 export function gelenAramalariDinle(uid, cb) {
   if (!uid) return () => {};
   try {
@@ -468,10 +474,10 @@ export function gelenAramalariDinle(uid, cb) {
       const simdi = Date.now();
       const hepsi = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       // 90 sn'den eski "çalıyor" kaydı takılı kalmıştır → sil (arayan kapatmadan çıkmış)
-      hepsi.forEach((a) => { if (Math.abs(simdi - (a.zamanMs || 0)) >= 90000) { try { deleteDoc(doc(db, "aramalar", a.id)); } catch (e) {} } });
+      hepsi.forEach((a) => { if (Math.abs(simdi - aramaZamani(a)) >= 90000) { try { deleteDoc(doc(db, "aramalar", a.id)); } catch (e) {} } });
       const liste = hepsi
-        .filter((a) => Math.abs(simdi - (a.zamanMs || 0)) < 90000) // aktif çağrı, son ~1.5 dk (saat kaymasına dayanıklı: Math.abs)
-        .sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)); // EN YENİ arama İLK
+        .filter((a) => Math.abs(simdi - aramaZamani(a)) < 90000) // aktif çağrı, son ~1.5 dk (saat kaymasına dayanıklı: Math.abs)
+        .sort((a, b) => aramaZamani(b) - aramaZamani(a)); // EN YENİ arama İLK
       cb(liste);
     }, () => cb([]));
     return () => { clearInterval(iv); try { iptal(); } catch (e) {} };
@@ -486,7 +492,7 @@ export async function eskiAramalariTemizle(uid) {
     const snap = await getDocs(query(collection(db, "aramalar"), where("arananUid", "==", uid), fsLimit(400)));
     snap.docs.forEach((d) => {
       const a = d.data() || {};
-      const yas = Math.abs(simdi - (a.zamanMs || 0));
+      const yas = Math.abs(simdi - aramaZamani(a));
       const sil = a.durum === "bitti"
         || (a.durum === "red" && (!a.redZaman || Math.abs(simdi - a.redZaman) >= 10000))
         || (a.durum === "calliyor" && yas >= 90000)

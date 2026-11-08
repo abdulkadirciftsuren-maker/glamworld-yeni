@@ -28,7 +28,7 @@
 - **Nereden girilir:** console.hetzner.cloud (Gmail ile kayıtlı; sunucu şifresi Gmail'de)
 - **Sunucu:** `ubuntu-4gb-nbg1-1`, tip CPX22 (2 işlemci / 4 GB), Nürnberg. Adres: `canli.gloxorg.com`
 - **Fiyat:** notlara göre **~24 € / ay**
-- **Ödeme şekli:** Hesaba **ön ödemeli bakiye** (Eylül'de 25 € yüklenmişti, ~1 ay yeter).
+- **Ödeme şekli:** Hesaba **ön ödemeli bakiye** (Eylül'de 25 € yüklendi). ⚠️ Düzeltme (8 Kas): Hetzner arama sayısına göre DEĞİL, sunucunun açık kaldığı süreye göre (saatlik, ay sonunda fatura) keser. CPX22 için aylık birkaç € (kesin tutar Hetzner fiyat/fatura sayfasında). Yani 25 € büyük ihtimalle birkaç ay yeter; '~1 ay' tahmini yanlıştı. 8 Kas'ta sunucu çalışıyordu (GitHub'dan kontrol: canli.gloxorg.com OK + bilet kabul). Kalan bakiye için: accounts.hetzner.com → Faturalar.
 - **✅ Durum (5 Kas 2026):** Kullanıcı kontrol etti: sunucu **çalışıyor (yeşil)**, `canli.gloxorg.com` → **OK**. Fatura sayfası (accounts.hetzner.com/invoice) henüz kontrol edilmedi.
 - **Hızlı test:** tarayıcıda `https://canli.gloxorg.com` (noktalı **i**!) → "OK" yazıyorsa arama sunucusu çalışıyor.
 - **Kontrol:** Hetzner → sol üstte **Billing / Faturalar** → bakiye ve ödenmemiş fatura var mı? Sunucu listesinde sunucu **"Running" (çalışıyor)** mu?

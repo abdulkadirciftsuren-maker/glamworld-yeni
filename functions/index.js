@@ -137,7 +137,11 @@ exports.aramaZili = onDocumentCreated("aramalar/{id}", async (event) => {
     baslik: a.arayanAd || "GLOXORG",
     govde: video ? "📹 Görüntülü arıyor…" : "📞 Sesli arıyor…",
     foto: a.arayanFoto || "",
-    zamanMs: a.zamanMs || Date.now(),
+    // ⏱️ SUNUCU SAATİ (8 Kas — kullanıcı: "Oppo'dan S25'i arayınca kapalı telefonda çalmıyor, bilgisayardan çalıyor"):
+    //   eskiden ARAYAN telefonun kendi saati (a.zamanMs) yollanıyordu; uygulama 60 sn'den "eski" aramayı çalmıyor → arayan
+    //   telefonun saati 1 dk'dan fazla kaymışsa YENİ arama "eski" sanılıp hiç çalmıyordu. Bu kod arama oluştuğu an çalışır,
+    //   sunucu saati internet saatidir → hangi telefon ararsa arasın doğru.
+    zamanMs: Date.now(),
   });
 });
 
