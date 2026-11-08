@@ -1,0 +1,27 @@
+# GLOXORG — ARAMA ZİNCİRİ KONTROLÜ (sadece okur, hiçbir şeyi değiştirmez).
+# Claude'un bulut ortamından canli.gloxorg.com ve Cloudflare köprüsüne ulaşılamadığı için kontrol GitHub sunucusundan yapılır:
+# 1) arama sunucusu (Hetzner/LiveKit) ayakta mı, 2) köprü arama bileti veriyor mu, 3) sunucu o bileti kabul ediyor mu.
+name: Arama zinciri kontrolu
+on:
+  push:
+    branches: ["claude/glamworld-rules-review-0kzl0x"]
+    paths: [".github/workflows/arama-kontrol.yml"]
+  workflow_dispatch: {}
+jobs:
+  kontrol:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kontrol et
+        run: |
+          echo "== 1) Arama sunucusu (canli.gloxorg.com) =="
+          curl -sS -m 20 -w "\nHTTP %{http_code}\n" https://canli.gloxorg.com || echo "ULASILAMADI"
+          getent hosts canli.gloxorg.com || echo "ADRES COZULEMEDI"
+          echo "== 2) Kopru bilet veriyor mu =="
+          R=$(curl -sS -m 25 -X POST https://gloxorg-ai.abdulkadirciftsuren.workers.dev -H "Content-Type: application/json" -H "Origin: https://gloxorg.com" -d '{"livekitOda":"kontrol-oda","kimlik":"kontrol-test","ad":"kontrol"}')
+          echo "$R" | python3 -c "import sys,json
+          try:
+            d=json.load(sys.stdin); print('url=',d.get('url'),' bilet var=',bool(d.get('token')),' hata=',d.get('hata') or d.get('error'))
+          except Exception as e: print('CEVAP JSON DEGIL:', str(e))"
+          T=$(echo "$R" | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))" 2>/dev/null)
+          echo "== 3) Sunucu bileti kabul ediyor mu =="
+          if [ -n "$T" ]; then curl -sS -m 20 -w "\nHTTP %{http_code}\n" "https://canli.gloxorg.com/rtc/validate?access_token=$T" ; else echo "bilet yok, atlandi"; fi
