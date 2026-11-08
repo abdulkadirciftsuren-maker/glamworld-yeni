@@ -11072,7 +11072,7 @@ export default function Anasayfa({ pro = false }) {
         <div className="arama-fon arama-geliyor">
           <div className="arama-kisi">
             <span className="arama-avatar">{gelenArama.arayanFoto ? <img src={gelenArama.arayanFoto} alt="" referrerPolicy="no-referrer" /> : ((gelenArama.arayanAd || "?").trim()[0] || "?").toUpperCase()}</span>
-            <b className="notranslate" translate="no">{gelenArama.arayanAd || "—"}</b>
+            <b className="notranslate arama-ad" translate="no"><KayanYazi>{gelenArama.arayanAd || "—"}</KayanYazi></b>
             <i>{gelenArama.oda ? t("grupCagri", "📹 Grup görüşmesine çağırıyor…") : (gelenArama.tip === "goruntulu" ? t("goruntuluCagri", "📹 Görüntülü arıyor…") : t("sesliCagri", "📞 Sesli arıyor…"))}</i>
           </div>
           <div className="arama-cagri-dugmeler">
@@ -11324,7 +11324,7 @@ export default function Anasayfa({ pro = false }) {
           {(aktifArama.tip !== "goruntulu" || aramaDurum !== "konusuyor") && (
             <div className="arama-kisi arama-kisi-orta">
               <span className="arama-avatar">{aktifArama.karsiFoto ? <img src={aktifArama.karsiFoto} alt="" referrerPolicy="no-referrer" /> : ((aktifArama.karsiAd || "?").trim()[0] || "?").toUpperCase()}</span>
-              <b className="notranslate" translate="no">{aktifArama.karsiAd}</b>
+              <b className="notranslate arama-ad" translate="no"><KayanYazi>{aktifArama.karsiAd}</KayanYazi></b>
               <i className="notranslate" translate="no">{aramaDurum === "ariyor" ? t("araniyor", "Aranıyor…") : aramaSayacBicim(aramaSaniye)}</i>
             </div>
           )}

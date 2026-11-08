@@ -4713,6 +4713,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .arama-avatar{ width:120px; height:120px; border-radius:24px; overflow:hidden; background:#8a6b28; display:flex; align-items:center; justify-content:center; font-size:52px; font-weight:800; color:#fff; border:3px solid #ffe9a8; box-shadow:0 8px 26px rgba(60,40,8,.5); }
 .arama-avatar img{ width:100%; height:100%; object-fit:cover; }
 .arama-kisi b{ font-size:24px; font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,.4); }
+.arama-kisi b.arama-ad{ display:block; max-width:min(92vw, 640px); margin:0 auto; text-align:center; overflow:hidden; } /* uzun ad/e-posta KESİLMEZ → KayanYazi ile kayar */
 .arama-kisi i{ font-size:15px; font-style:normal; opacity:.95; text-shadow:0 1px 3px rgba(0,0,0,.4); }
 /* DURUM göstergesi (teşhis) — kullanıcı okuyup söyler: Bağlanıyor/Bağlandı/Bağlanamadı */
 .arama-teshis{ font-size:13px; font-weight:800; color:#FFE9A8; background:rgba(0,0,0,.28); padding:4px 12px; border-radius:10px; margin-top:4px; text-shadow:0 1px 3px rgba(0,0,0,.5); }

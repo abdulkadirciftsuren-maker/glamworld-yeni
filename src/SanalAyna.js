@@ -45,15 +45,18 @@ function tonHex(hex, ton) {
 // Yapay zekâya gidecek renk adı: "Açık Mavi" / "Koyu Kırmızı" (Normal ise sade "Mavi").
 function tonluRenkAd(renk, ton) { if (!renk) return ""; const on = TON_ADLARI[ton == null ? 2 : ton]; return (on && on !== "Normal" ? on + " " : "") + renk; }
 // TON ŞERİDİ — seçilen rengin AÇIK↔KOYU çizgisi; üstünde YÜRÜYEN imleç (dokununca kayar). Renk seçilince görünür.
+// Ten tonu adlarının çeviri anahtarları (TON_ADLARI ile aynı sıra; yapay zekâya giden Türkçe ad değişmez, sadece ekranda çevrilir)
+const TON_ANAHTAR = ["saTonCokAcik", "saTonAcik", "saTonNormal", "saTonKoyu", "saTonCokKoyu"];
 function TonSerit({ hex, ton, onSec }) {
+  const { t: c } = useTranslation();
   const t = (ton == null ? 2 : ton);
   return (
     <div className="sa-ton">
       <div className="sa-ton-serit" style={{ background: "linear-gradient(to right," + tonHex(hex, 0) + "," + tonHex(hex, 2) + "," + tonHex(hex, 4) + ")" }}>
-        {[0, 1, 2, 3, 4].map((i) => (<button key={i} type="button" className="sa-ton-hucre" onClick={() => onSec(i)} aria-label={TON_ADLARI[i]} />))}
+        {[0, 1, 2, 3, 4].map((i) => (<button key={i} type="button" className="sa-ton-hucre" onClick={() => onSec(i)} aria-label={c(TON_ANAHTAR[i], TON_ADLARI[i])} />))}
         <span className="sa-ton-imlec" style={{ left: (t * 20 + 10) + "%" }} />
       </div>
-      <div className="sa-ton-bilgi"><span>☀️ Açık</span><b className="notranslate">{TON_ADLARI[t]}</b><span>Koyu 🌙</span></div>
+      <div className="sa-ton-bilgi"><span>☀️ {c("saTonAcik", "Açık")}</span><b>{c(TON_ANAHTAR[t], TON_ADLARI[t])}</b><span>{c("saTonKoyu", "Koyu")} 🌙</span></div>
     </div>
   );
 }
