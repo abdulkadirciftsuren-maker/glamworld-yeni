@@ -232,6 +232,10 @@ function nativeBildirimDurum() {
 // ŞEFFAF VİDEO KAPAĞI (poster): Android uygulamasında (WebView) oynamayan videonun üstünde büyük gri ▶ simgesi çıkıyordu.
 //   1x1 şeffaf resim verilince simge hiç görünmez (arkadaki altın zemin görünür).
 const SEFFAF_POSTER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+// ⚫ SİYAH KAPAK FİLTRESİ (B459) — bazı telefonlarda video kapağı, video karesi daha çizilmeden çekilmiş → kapak SİMSİYAH
+// kaydedilmiş (kullanıcı: "videolarda siyah perde var, bütün telefonlarda"). Düz renk bir JPEG çok küçüktür (~4 KB), gerçek bir
+// kare 30 KB'tan büyük. Böyle kapak GÖSTERİLMEZ → yerine videonun KENDİ karesi altın zemin üstünde gelir.
+const kapakIyi = (k) => (k && !(String(k).slice(0, 10) === "data:image" && String(k).length < 9000)) ? k : "";
 // GRUP GÖRÜŞMESİ — her uzak katılımcının bir "karesi" (video+ses). LiveKit track'lerini kendi <video>/<audio>'suna bağlar.
 function GrupKare({ p, genis }) {
   const vRef = useRef(null); const aRef = useRef(null);
@@ -3518,9 +3522,9 @@ export default function Anasayfa({ pro = false }) {
     // Ham URL'i sakla; videoSade'yi render'da (<video src>) uygula.
     const kaynak = gercekAkis || [];
     const cikar = (p) => {
-      if (p.video) return { ...p, _reelVideo: p.video, _reelPoster: p.videoPoster || "" };
+      if (p.video) return { ...p, _reelVideo: p.video, _reelPoster: kapakIyi(p.videoPoster) };
       const m = Array.isArray(p.medyalar) ? p.medyalar.find((x) => x.tip === "video" && x.url) : null;
-      if (m) return { ...p, _reelVideo: m.url, _reelPoster: m.poster || "" };
+      if (m) return { ...p, _reelVideo: m.url, _reelPoster: kapakIyi(m.poster) };
       return null;
     };
     return kaynak.map(cikar).filter(Boolean);
@@ -4857,8 +4861,11 @@ export default function Anasayfa({ pro = false }) {
   // ANA SAYFA KEŞİF BÖLÜMLERİ (Yakındaki Profesyoneller / İş İlanları / Trend) — hem telefon hem bilgisayarda yatay şerit.
   // Üyeleri bir kez yükle (ana sayfa açılınca).
   useEffect(() => {
-    if (aktifKod !== "home" || homeUyeler.length) return;
-    tumKullanicilar(80).then((l) => setHomeUyeler(l || [])).catch(() => {});
+    if (aktifKod !== "home" || homeUyeler.length) return undefined;
+    // B458: 7 sn ERTELENDİ — tüm üye kayıtları (içlerinde gömülü profil fotoğraflarıyla ~1,9 MB) açılışta reklamlar/gönderilerle
+    //   aynı anda iniyor, Vitrin "Yükleniyor"da bekliyordu (kullanıcı: "geç yükleniyor"). Önce vitrin + akış gelsin.
+    const z = setTimeout(() => { tumKullanicilar(80).then((l) => setHomeUyeler(l || [])).catch(() => {}); }, 7000);
+    return () => clearTimeout(z);
   }, [aktifKod]); // eslint-disable-line react-hooks/exhaustive-deps
   // TOPLULUK açılınca üyeleri yükle (bir kez). Ayrı liste → Glome/ana sayfa listesini BOZMAZ.
   useEffect(() => {
@@ -5074,13 +5081,13 @@ export default function Anasayfa({ pro = false }) {
       setPaylasGorsel(fotolar[0] || g.gorsel || "");
       setPaylasEkFotolar(fotolar.slice(1));
       setPaylasVideo(vid ? (vid.url || "") : (g.video || ""));
-      setPaylasVideoPoster(vid ? (vid.poster || "") : (g.videoPoster || ""));
+      setPaylasVideoPoster(kapakIyi(vid ? vid.poster : g.videoPoster));
       setVideoBasta(meds[0] && meds[0].tip === "video"); // düzenlemede sıra korunur
     } else {
       setPaylasGorsel(g.gorsel || "");
       setPaylasEkFotolar([]);
       setPaylasVideo(g.video || "");
-      setPaylasVideoPoster(g.videoPoster || "");
+      setPaylasVideoPoster(kapakIyi(g.videoPoster));
     }
     setPaylasVideoFile(null); // yeni dosya yok; mevcut video URL'i korunur
     setPaylasMuzik(g.muzik && g.muzik.url ? { url: g.muzik.url, ad: g.muzik.ad || "Şarkı" } : null); setMuzikMenu("");
@@ -7830,7 +7837,7 @@ export default function Anasayfa({ pro = false }) {
       //   RESİM olarak gönder → Gloxoo kareye bakıp videoda ne olduğunu anlatır.
       (async () => {
         let kareUrl = "";
-        if (p.videoPoster && String(p.videoPoster).slice(0, 5) === "data:") kareUrl = p.videoPoster; // paylaşımda saklanan kapak (en garantisi)
+        if (kapakIyi(p.videoPoster) && String(p.videoPoster).slice(0, 5) === "data:") kareUrl = p.videoPoster; // paylaşımda saklanan kapak (en garantisi)
         if (!kareUrl) { try { kareUrl = await videoKareYakala(videoSade(p.video)); } catch (e) {} }     // yoksa videodan canlı kare çek
         let fotoObj = null;
         if (kareUrl && String(kareUrl).slice(0, 5) === "data:") {
@@ -8146,20 +8153,37 @@ export default function Anasayfa({ pro = false }) {
         const v = document.createElement("video");
         v.muted = true; v.playsInline = true; v.crossOrigin = "anonymous"; v.preload = "auto";
         let bitti = false;
+        // B459: bazı telefonlar (Samsung dışı çoğu) "seeked" geldiğinde kareyi henüz ÇİZMEMİŞ oluyor → kapak SİMSİYAH çıkıyordu.
+        // Artık çekilen kare ölçülür; karanlıksa videonun biraz daha ilerisinden tekrar denenir; hep siyahsa kapak HİÇ kaydedilmez.
+        const anlar = [0.3, 1, 2, 3.5];
+        let deneme = 0;
+        const karanlikMi = (c) => {
+          try {
+            const k = document.createElement("canvas"); k.width = 16; k.height = 16;
+            const x = k.getContext("2d"); x.drawImage(c, 0, 0, 16, 16);
+            const d = x.getImageData(0, 0, 16, 16).data; let top = 0;
+            for (let i = 0; i < d.length; i += 4) top += d[i] + d[i + 1] + d[i + 2];
+            return top / (d.length / 4 * 3) < 12;
+          } catch (e) { return false; }
+        };
         const cek = () => {
-          if (bitti) return; bitti = true;
+          if (bitti) return;
           try {
             const c = document.createElement("canvas");
             // 480px yeter (hem AI görme hem video KAPAK) → küçük dosya, Firestore dokümanını şişirmez.
             const w = Math.min(480, v.videoWidth || 480), h = Math.round((v.videoHeight || 480) * w / (v.videoWidth || 480));
             c.width = w; c.height = h; c.getContext("2d").drawImage(v, 0, 0, w, h);
-            resolve(c.toDataURL("image/jpeg", 0.72));
-          } catch (e) { resolve(null); }
+            if (karanlikMi(c)) {
+              if (deneme < anlar.length - 1) { deneme++; v.currentTime = Math.min(anlar[deneme], Math.max(0, (v.duration || 4) - 0.1)); return; }
+              bitti = true; resolve(null); return;
+            }
+            bitti = true; resolve(c.toDataURL("image/jpeg", 0.72));
+          } catch (e) { bitti = true; resolve(null); }
         };
-        v.onloadeddata = () => { try { v.currentTime = Math.min(0.3, (v.duration || 1) / 3); } catch (e) { cek(); } };
-        v.onseeked = cek;
+        v.onloadeddata = () => { try { v.currentTime = Math.min(anlar[0], (v.duration || 1) / 3); } catch (e) { cek(); } };
+        v.onseeked = () => setTimeout(cek, 150); // kareye çizilme payı
         v.onerror = () => { if (!bitti) { bitti = true; resolve(null); } };
-        setTimeout(() => { if (!bitti) { bitti = true; resolve(null); } }, 4000);
+        setTimeout(() => { if (!bitti) { bitti = true; resolve(null); } }, 8000);
         v.src = url;
       } catch (e) { resolve(null); }
     });
@@ -9290,9 +9314,10 @@ export default function Anasayfa({ pro = false }) {
         <span className="header-dil"><DilSecici /></span>
         <span className="ana-ince-bosluk" aria-hidden="true" />
         {/* SAĞ: ARA (büyüteç) + bildirim + Gloxoo + profil (hepsi küçük, tek şeride sığar) */}
-        <button className="ana-ara-btn ana-ust-ara ana-ince-btn" onClick={() => { setAktifKod("home"); setAraAcik(true); try { if (kokRef.current) kokRef.current.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {} }} aria-label={t("tabAra", "Ara")} title={t("tabAra", "Ara")}>
+        {aktifKod !== "profil" && <button className="ana-ara-btn ana-ust-ara ana-ince-btn" onClick={() => { setAktifKod("home"); setAraAcik(true); try { if (kokRef.current) kokRef.current.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {} }} aria-label={t("tabAra", "Ara")} title={t("tabAra", "Ara")}>
           {Ikon.ara}
-        </button>
+        </button>}
+        {/* B458: PROFİL sayfasında sağ üstte 4 düğme GLOXORG yazısının üstüne biniyordu → orada büyüteç YOK (alt menüde "Ara" var). */}
         <button className="ana-menu-btn ana-zil ana-ince-btn" onClick={() => { setBildirimAcik(true); bildirimleriOkunduYap(bildirimListe); setBildirimListe((l) => l.map((b) => ({ ...b, okundu: true }))); }} aria-label={t("bildirimBaslik")}
           style={{ backgroundImage: `url(${bildirimListe.some((b) => !b.okundu) ? zilCerceveKirmiziResim : zilCerceveResim})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
           {Ikon.bildirim}
@@ -9781,7 +9806,7 @@ export default function Anasayfa({ pro = false }) {
                     <div className={"apr-medya" + (p.video && !postMedyalar ? " video" : "") + (postMedyalar ? " kolaj-sar" : "") + (muzikVar ? " akis-muzikli" : "")} data-muzik={muzikVar ? p.muzik.url : undefined} onClick={() => { if (!postMedyalar) setTamFoto(p); }}>
                       {postMedyalar
                         ? (() => {
-                            const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: x.poster }));
+                            const liste = postMedyalar.map((x) => ({ tip: x.tip, src: x.tip === "video" ? videoSade(x.url) : (x.data || x.url), poster: kapakIyi(x.poster) }));
                             const ac = (idx) => setOnizGaleri({ liste, i: idx });
                             // PENCERE FOTOĞRAFA GÖRE AYARLANIR: her medyanın oranını ölç → kolaj kutusunun EN-BOY oranını ona göre kur
                             // (pencere büyür/kısalır, alt-üst SİYAH BANT olmaz, medya cover ile doldurur → net). Kullanıcı: "pencere fotoğraflara göre büyüsün kısalsın".
@@ -9811,7 +9836,7 @@ export default function Anasayfa({ pro = false }) {
                                 // TEMEL (ilk/büyük) kare → cover (pencereyi doldurur, o zaten baz); YAN kareler → contain + ALTIN TOZU zemin (kendi yönünde tam, kesilmez)
                                 <div className={"apr-kolaj-oge" + (m.tip === "video" ? " vid" : "") + (ana ? " temel" : " yan-oge")} key={idx} onClick={(e) => { e.stopPropagation(); ac(idx); }}>
                                   {m.tip === "video"
-                                    ? <><video className="apr-kolaj-fg akis-video" src={src} poster={m.poster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
+                                    ? <><video className="apr-kolaj-fg akis-video" src={src} poster={kapakIyi(m.poster) || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={yonAyarla} /><span className="apr-kolaj-oynat" aria-hidden="true">▶</span><span className="apr-kolaj-glox" aria-hidden="true">◈ GLOXORG</span></>
                                     : <img className="apr-kolaj-fg" src={src} alt="" referrerPolicy="no-referrer" onLoad={yonAyarla} />}
                                   {fazla > 0 && <span className="apr-kolaj-fazla">+{fazla}</span>}
                                 </div>
@@ -9834,7 +9859,7 @@ export default function Anasayfa({ pro = false }) {
                             );
                           })()
                         : p.video
-                        ? <><video className="akis-video" src={videoSade(p.video)} poster={p.videoPoster || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
+                        ? <><video className="akis-video" src={videoSade(p.video)} poster={kapakIyi(p.videoPoster) || undefined} preload="metadata" muted loop playsInline tabIndex={-1} onLoadedMetadata={videoIlkKareBoya} /><span className="akis-video-oynat" aria-hidden="true">▶</span></>
                         : <img src={resimKucult(p.gorsel)} alt="" referrerPolicy="no-referrer" onLoad={(e) => {
                             // DİKEY FOTO: pencereyi fotoğrafın GERÇEK oranına ayarla ama BOYUNU SINIRLA (telefon ekranına sığsın).
                             // NORMAL dikey (~5:8'e kadar): tam görünür, alt-üst KIRPILMAZ (GLOXORG kesilmez).
@@ -10160,7 +10185,7 @@ export default function Anasayfa({ pro = false }) {
                           {g.gorsel
                             ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" onClick={() => setTamFoto(g)} />
                             : g.video
-                              ? <span className="apf-pay-foto apf-pay-vid" onClick={() => setTamFoto(g)}>{g.videoPoster ? <img src={g.videoPoster} alt="" loading="lazy" decoding="async" /> : <video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} />}<span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
+                              ? <span className="apf-pay-foto apf-pay-vid" onClick={() => setTamFoto(g)}>{kapakIyi(g.videoPoster) ? <img src={g.videoPoster} alt="" loading="lazy" decoding="async" /> : <video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} />}<span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
                           <div className="apf-pay-icerik">
                             {(g.tur || ga) && <span className="apf-pay-tur" style={{ background: gk }}>{ga && <span className="apf-pay-turik"><TurAmblem tip={ga.tip} /></span>}{g.tur ? turGoster(g.tur) : (g.video ? t("paylasVideoTur", "Video") : t("paylasFotoTur", "Fotoğraf"))}</span>}
@@ -12182,9 +12207,7 @@ export default function Anasayfa({ pro = false }) {
               ? <div className="tf-vid-sar" onClick={(e) => e.stopPropagation()} style={tfMini && tfVidOran ? { aspectRatio: tfVidOran.toFixed(3) } : undefined}>
                   <video ref={tamVideoRef} className="tamfoto-video" src={vidBlob || videoSade(p.video)} autoPlay playsInline preload="auto"
                     muted={!!(p.muzik && p.muzik.url)}
-                    poster={p.videoPoster || SEFFAF_POSTER}
-                    onLoadStart={(e) => { try { e.currentTarget.classList.remove("hazir"); } catch (x) {} }}
-                    onLoadedData={(e) => { try { e.currentTarget.classList.add("hazir"); } catch (x) {} }}
+                    poster={kapakIyi(p.videoPoster) || SEFFAF_POSTER}
                     onClick={vidTikla}
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
                     onLoadedMetadata={(e) => { setVidHata(false); setVidSure(e.currentTarget.duration || 0); const w = e.currentTarget.videoWidth, h = e.currentTarget.videoHeight; if (w && h) setTfVidOran(w / h); }}
@@ -12364,7 +12387,7 @@ export default function Anasayfa({ pro = false }) {
                           {g.gorsel
                             ? <img className="apf-pay-foto" src={g.gorsel} alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" onClick={ac} />
                             : g.video
-                              ? <span className="apf-pay-foto apf-pay-vid" onClick={ac}>{g.videoPoster ? <img src={g.videoPoster} alt="" loading="lazy" decoding="async" /> : <video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} />}<span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
+                              ? <span className="apf-pay-foto apf-pay-vid" onClick={ac}>{kapakIyi(g.videoPoster) ? <img src={g.videoPoster} alt="" loading="lazy" decoding="async" /> : <video src={videoSade(g.video)} preload="metadata" muted playsInline tabIndex={-1} />}<span className="apf-pay-oynat" aria-hidden="true"><GercekPirlanta cerceve={false} c="#e0202c" /></span></span>
                               : null}
                           <div className="apf-pay-icerik" onClick={ac}>
                             {(g.tur || ga) && <span className="apf-pay-tur" style={{ background: gk }}>{ga && <span className="apf-pay-turik"><TurAmblem tip={ga.tip} /></span>}{g.tur ? turGoster(g.tur) : (g.video ? t("paylasVideoTur", "Video") : t("paylasFotoTur", "Fotoğraf"))}</span>}
