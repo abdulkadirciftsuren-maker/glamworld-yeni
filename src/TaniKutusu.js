@@ -4,7 +4,8 @@
 // Müşteriye zarar vermez; açılmadıkça hiçbir şey çalıştırmaz. Kullanıcı ekran görüntüsü atar.
 import { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
-import { collection, query, where, limit, getDocs, getDocsFromServer } from "firebase/firestore";
+import { collection, query, where, limit, getDocs, getDocsFromServer, doc, getDocFromServer } from "firebase/firestore";
+import { livekitYukle } from "./agirKutuphaneler";
 import { sonBuild } from "./buildGecmisi";
 
 const zamanAsimi = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("ZAMAN AŞIMI " + ms / 1000 + " sn")), ms))]);
@@ -68,6 +69,58 @@ export default function TaniKutusu() {
         const r = await zamanAsimi(fetch("https://firestore.googleapis.com/v1/projects/glamworld2/databases/(default)/documents/pazarUrunleri?pageSize=2&mask.fieldPaths=baslik&key=AIzaSyBMMMMcHl5IGsUc7k6n5vLvSn_vNruKspw"), 15000);
         ekle("Veritabanı — düz istek", "HTTP " + r.status + " (" + (Date.now() - t) + " ms)", r.ok);
       } catch (e) { ekle("Veritabanı — düz istek", "OLMADI: " + hataYaz(e), false); }
+      // 📞 ARAMA TESTİ (B461 — kullanıcı: "hiçbir arama yapamıyorum, bildirimler de bozuldu"). Sunucu tarafı GitHub'dan
+      //   kontrol edildi (sunucu + bilet + bilet kabulü SAĞLAM). Burada aynı zincir TELEFONUN İÇİNDEN, kullanıcının kendi
+      //   hesabıyla denenir; hangi satır kırmızıysa bozuk halka orası. Kimseyi aramaz, kayıt oluşturmaz.
+      try {
+        const nat = window.AndroidGlox || null;
+        let izin = typeof Notification !== "undefined" ? Notification.permission : "yok";
+        try { if (nat && typeof nat.bildirimIzniVar === "function") izin = "telefon: " + (nat.bildirimIzniVar() ? "VAR" : "YOK"); } catch (x) {}
+        ekle("📞 Bildirim izni", String(izin), /VAR|granted/.test(String(izin)));
+      } catch (e) { ekle("📞 Bildirim izni", "OLMADI: " + hataYaz(e), false); }
+      if (u) {
+        try {
+          const d = await zamanAsimi(getDocFromServer(doc(db, "kullanicilar", u.uid)), 15000); const x = d.data() || {};
+          const n1 = (x.fcmTokens || []).length, n2 = (x.fcmTokensArama || []).length;
+          ekle("📞 Kayıtlı bildirim anahtarı", "bildirim: " + n1 + " · arama zili: " + n2, n1 > 0);
+        } catch (e) { ekle("📞 Kayıtlı bildirim anahtarı", "OLMADI: " + hataYaz(e), false); }
+        try {
+          const t = Date.now();
+          const s = await zamanAsimi(getDocsFromServer(query(collection(db, "aramalar"), where("arananUid", "==", u.uid), where("durum", "==", "calliyor"), limit(50))), 15000);
+          ekle("📞 Gelen arama dinleyicisi", "çalışıyor · şu an çalan: " + s.size + " (" + (Date.now() - t) + " ms)", true);
+        } catch (e) { ekle("📞 Gelen arama dinleyicisi", "OLMADI: " + hataYaz(e), false); }
+        const sonlar = async (alan, ad) => {
+          try {
+            const s = await zamanAsimi(getDocsFromServer(query(collection(db, "aramalar"), where(alan, "==", u.uid), limit(40))), 15000);
+            const l = s.docs.map((d) => d.data()).sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0)).slice(0, 4)
+              .map((a) => { const dk = Math.round((Date.now() - (a.zamanMs || 0)) / 60000); return (a.durum || "?") + " (" + (dk < 120 ? dk + " dk" : Math.round(dk / 60) + " sa") + " önce)"; });
+            ekle(ad, s.size + " kayıt · son: " + (l.join(", ") || "yok"), true);
+          } catch (e) { ekle(ad, "OLMADI: " + hataYaz(e), false); }
+        };
+        await sonlar("arayanUid", "📞 Benim aradıklarım");
+        await sonlar("arananUid", "📞 Beni arayanlar");
+      }
+      let lk = null;
+      try { const t = Date.now(); lk = await zamanAsimi(livekitYukle(), 20000); ekle("📞 Arama motoru", "yüklendi (" + (Date.now() - t) + " ms)", true); }
+      catch (e) { ekle("📞 Arama motoru", "OLMADI: " + hataYaz(e), false); }
+      let bilet = null;
+      try {
+        const t = Date.now();
+        const r = await zamanAsimi(fetch("https://gloxorg-ai.abdulkadirciftsuren.workers.dev", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ livekitOda: "tani-" + ((u && u.uid) || "x"), kimlik: "tani-" + ((u && u.uid) || Math.random().toString(36).slice(2, 8)), ad: "teshis" }) }), 15000);
+        const j = await r.json().catch(() => null);
+        if (j && j.token && j.url) { bilet = j; ekle("📞 Arama bileti", "alındı (" + (Date.now() - t) + " ms)", true); }
+        else ekle("📞 Arama bileti", "GELMEDİ · HTTP " + r.status, false);
+      } catch (e) { ekle("📞 Arama bileti", "OLMADI: " + hataYaz(e), false); }
+      if (lk && bilet) {
+        let oda = null;
+        try { const t = Date.now(); oda = new lk.Room(); await zamanAsimi(oda.connect(bilet.url, bilet.token), 20000); ekle("📞 Arama sunucusuna bağlantı", "BAĞLANDI (" + (Date.now() - t) + " ms)", true); }
+        catch (e) { ekle("📞 Arama sunucusuna bağlantı", "OLMADI: " + hataYaz(e), false); }
+        try { if (oda) oda.disconnect(); } catch (x) {}
+      }
+      try {
+        const m = navigator.permissions && navigator.permissions.query ? await navigator.permissions.query({ name: "microphone" }) : null;
+        ekle("📞 Mikrofon izni", m ? m.state : "sorulamıyor", !m || m.state !== "denied");
+      } catch (e) { ekle("📞 Mikrofon izni", "sorulamıyor", true); }
       ekle("✔", "Bitti — bu kutunun fotoğrafını gönder 📸", true);
     })();
     return () => { iptal = true; };

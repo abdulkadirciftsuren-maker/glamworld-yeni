@@ -4,6 +4,13 @@
 > sıfırdan anlattırmaz ve düzeltilenleri bozmaz. **En güncel tam kayıt: `src/buildGecmisi.js` (en üstteki maddeler).**
 
 ---
+
+## 📌 8 Kas 2026 — kullanıcının notları (SONRA konuşulacak)
+- ✅ Videolardaki siyah/gri perde B459+B460 ile ÇÖZÜLDÜ, kullanıcı onayladı ("normaldir şimdi"). **DOKUNMA:** `kapakIyi`, `src/videoKapak.js`, kapak onarımı.
+- 🎬 **Canlı Akış sayfası** (Kısa Videolar + Canlı yayın): kullanıcı "çok basit kalıyor, videoların hepsi görünmüyor; TikTok gibi düşündük ama olmadı" dedi → sayfayı başka bir şeye çevirmeyi **kullanıcıyla SONRA konuşacağız**. Kendiliğinden değiştirme.
+- 🐢 Başka telefonlarda hâlâ S25 kadar hızlı değil (kullanıcı yoruldu, şimdilik bekliyor). Asıl çözüm: gönderilerdeki base64 resimleri Storage'a taşımak (kullanıcı onayı gerekli).
+- 📞 **Aramalar hiç çalışmıyor + bildirimler bozuk** (8 Kas akşamı): sunucu/bilet/LiveKit GitHub'dan kontrol edildi → SAĞLAM. Kodda 5 Kas'tan beri arama değişikliği yok. B461 teşhis kutusuna ARAMA TESTİ eklendi → kullanıcının fotoğrafı bekleniyor; kırmızı satır bozuk halkayı gösterecek.
+
 ## 🟢 6–7 KAS 2026 — ZAYIF TELEFON / IPHONE HIZI + OPPO VERİ SORUNU (B448–B453) ✅ kullanıcı onayladı: "Oppo'da Elit Pazar'da ürünler geldi"
 - B448: siyah ekran → AltinCerceve.css html/body altın. B452'de #root ŞEFFAF + index.html #gw-arka z-index:0 (logolu yükleniyor görünür).
 - B449: süs resimleri 1024px→256px (çerçeve border-image kesimleri yarıya). B450: harita ön-indirmesi kalktı, ElitePazar/Konum/Adres/Akademi/
