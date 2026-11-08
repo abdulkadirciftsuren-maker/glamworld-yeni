@@ -168,12 +168,6 @@ function KayanYazi({ children, className }) {
 // küçük bir currentTime'a atla → tarayıcı İLK KAREYİ boyar (poster gibi). Ekrana gelince zaten otomatik oynar/canlanır.
 function videoIlkKareBoya(e) {
   const v = e && e.target; if (!v) return;
-  try {
-    if (!v.getAttribute("poster") && v.paused && (!v.currentTime || v.currentTime < 0.05)) {
-      const hedef = (v.duration && isFinite(v.duration)) ? Math.min(0.12, v.duration / 2) : 0.12;
-      v.currentTime = hedef;
-    }
-  } catch (x) {}
   // AKIŞ TEK VİDEOSU: kutuyu videonun GERÇEK EN-BOY oranına göre ayarla → YATAY video YATAY gelsin, kenarlardan ağır
   // kırpılmasın (kullanıcı: "yatay video dik/kırpık geliyor; tam ekrandaki gibi gelsin"). Aşırıya kaçmasın diye sınırlı.
   try {
@@ -4860,6 +4854,28 @@ export default function Anasayfa({ pro = false }) {
   }, [mmKisiler, sohbetListesi, benUid, dil]);
   // ANA SAYFA KEŞİF BÖLÜMLERİ (Yakındaki Profesyoneller / İş İlanları / Trend) — hem telefon hem bilgisayarda yatay şerit.
   // Üyeleri bir kez yükle (ana sayfa açılınca).
+  // 🖼️ KAPAK ONARIMI (B460) — eski paylaşımlarda kapak SİMSİYAH kaydedilmişti (B459'da gizlendi). Sahibi (giriş yapan) profilini
+  // açınca, bozuk kapaklı videolarının GERÇEK karesi sırayla (açılışı yavaşlatmasın diye 4 sn sonra, en çok 6 tane) çekilir ve
+  // paylaşıma KALICI kaydedilir → herkes, her telefonda doğru kapağı görür. Sadece kapak alanı değişir (paylaşım tarihi değişmez).
+  const kapakDenendiRef = useRef(new Set());
+  useEffect(() => {
+    const bozuk = (gonderilerim || []).filter((g) => g && g.id && g.video && !kapakIyi(g.videoPoster) && !kapakDenendiRef.current.has(g.id)).slice(0, 6);
+    if (!bozuk.length) return undefined;
+    let iptal = false;
+    const z = setTimeout(async () => {
+      for (const g of bozuk) {
+        if (iptal) return;
+        kapakDenendiRef.current.add(g.id);
+        let k = null; try { k = await videoKareYakala(videoSade(g.video)); } catch (e) {}
+        if (iptal) { kapakDenendiRef.current.delete(g.id); return; }
+        if (!k) continue;
+        let ok = false; try { ok = await gonderiGuncelle(g.id, { videoPoster: k }); } catch (e) {}
+        if (ok) { const yama = (a) => a.map((x) => (x.id === g.id ? { ...x, videoPoster: k } : x)); setGonderilerim(yama); setGercekAkis(yama); }
+      }
+    }, 4000);
+    return () => { iptal = true; clearTimeout(z); };
+  }, [gonderilerim]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (aktifKod !== "home" || homeUyeler.length) return undefined;
     // B458: 7 sn ERTELENDİ — tüm üye kayıtları (içlerinde gömülü profil fotoğraflarıyla ~1,9 MB) açılışta reklamlar/gönderilerle
