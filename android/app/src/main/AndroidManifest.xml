@@ -63,10 +63,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <!-- Arama bildirimindeki "Reddet" düğmesi (zili susturur) -->
-        <receiver
-            android:name=".AramaAlici"
-            android:exported="false" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="glox_bildirim" />

@@ -5,7 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Person
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
@@ -19,7 +18,7 @@ import android.os.Build
  * telefon ZİL SESİYLE çalar (durmadan, en çok 45 sn), "Cevapla / Reddet" düğmeli arama bildirimi çıkar; telefon kilitliyse
  * tam ekran açılır. Arama açılınca/reddedilince/arayan vazgeçince "arama-bitti" gelir → zil susar.
  *  - CEVAPLA → uygulama açılır, sayfa aramayı KENDİLİĞİNDEN açar (window.gloxAramaCevapla).
- *  - REDDET  → zil susar (arayan tarafta arama süre dolunca "cevapsız" biter).
+ *  - REDDET  → uygulama arka planda kısaca açılır, sayfa aramayı "red" yapar (arayan "reddetti" görür), uygulama arkaya çekilir.
  *  - Bildirime dokunma / kilit ekranında tam ekran → uygulama açılır, sayfanın kendi arama ekranı (Cevapla/Reddet) görünür.
  */
 object AramaZili {
@@ -27,7 +26,7 @@ object AramaZili {
     const val BILDIRIM_ID = 4242
     const val EK_CEVAPLA = "glox_cevapla"
     const val EK_ARAMA = "glox_arama"
-    private const val EYLEM_REDDET = "com.gloxorg.ARAMA_REDDET"
+    const val EK_REDDET = "glox_reddet"
     @Volatile private var aktifId: String? = null
 
     private fun kanalKur(nm: NotificationManager) {
@@ -47,11 +46,12 @@ object AramaZili {
         nm.createNotificationChannel(k)
     }
 
-    private fun acIntent(c: Context, aramaId: String, cevapla: Boolean, istek: Int): PendingIntent {
+    private fun acIntent(c: Context, aramaId: String, cevapla: Boolean, istek: Int, reddet: Boolean = false): PendingIntent {
         val i = Intent(c, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             .putExtra(EK_ARAMA, aramaId)
         if (cevapla) i.putExtra(EK_CEVAPLA, aramaId)
+        if (reddet) i.putExtra(EK_REDDET, aramaId)
         return PendingIntent.getActivity(c, istek, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
@@ -69,11 +69,9 @@ object AramaZili {
 
             val ac = acIntent(c, aramaId, false, 7101)
             val cevapla = acIntent(c, aramaId, true, 7102)
-            val reddet = PendingIntent.getBroadcast(
-                c, 7103,
-                Intent(c, AramaAlici::class.java).setAction(EYLEM_REDDET).putExtra(EK_ARAMA, aramaId),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+            // REDDET (8 Kas — kullanıcı: "reddettiğim zaman karşı taraf hâlâ arıyor"): eskiden sadece zili susturuyordu.
+            // Artık uygulamayı açar → sayfa aramayı veritabanında "red" yapar → arayan "reddetti" görür.
+            val reddet = acIntent(c, aramaId, false, 7103, reddet = true)
 
             val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(c, KANAL) else {
                 @Suppress("DEPRECATION")
@@ -121,12 +119,5 @@ object AramaZili {
             (c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(BILDIRIM_ID)
             aktifId = null
         } catch (e: Exception) {}
-    }
-}
-
-/** "Reddet" düğmesi → zili sustur (uygulamayı açmadan). */
-class AramaAlici : BroadcastReceiver() {
-    override fun onReceive(c: Context, i: Intent) {
-        AramaZili.kapat(c, null)
     }
 }

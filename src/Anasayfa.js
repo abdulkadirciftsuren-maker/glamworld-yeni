@@ -4146,6 +4146,21 @@ export default function Anasayfa({ pro = false }) {
     window.gloxAramaCevapla = (id) => { cevaplaBekleyenRef.current = { id: String(id || ""), zaman: Date.now() }; setCevaplaTik((x) => x + 1); };
     return () => { try { delete window.gloxAramaCevapla; } catch (e) {} };
   }, []);
+  // 📵 TELEFON BİLDİRİMİNDEN "REDDET" (8 Kas — kullanıcı: "reddettiğim zaman karşı taraf hâlâ arıyor"): uygulama arka planda
+  //   açılır ve window.gloxAramaReddet(id) der → giriş hazır olunca arama veritabanında "red" yapılır (arayan "reddetti" görür,
+  //   zili susar), sonra uygulamaya "bitti" denir → uygulama kendini arkaya çeker. Giriş 20 sn'de gelmezse vazgeçilir.
+  useEffect(() => {
+    window.gloxAramaReddet = async (id) => {
+      const aid = String(id || ""); if (!aid) return;
+      for (let i = 0; i < 40 && !auth.currentUser; i++) await new Promise((r) => setTimeout(r, 500));
+      if (auth.currentUser) { try { await aramaGuncelle(aid, { durum: "red", redZaman: Date.now() }); } catch (e) {} }
+      setGelenArama((g) => (g && g.id === aid ? null : g));
+      try { zilDurdur(); } catch (e) {}
+      try { aramaBildirimKapat(); } catch (e) {}
+      try { if (window.AndroidGlox && typeof window.AndroidGlox.reddetBitti === "function") window.AndroidGlox.reddetBitti(); } catch (e) {}
+    };
+    return () => { try { delete window.gloxAramaReddet; } catch (e) {} };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const b = cevaplaBekleyenRef.current;
     if (!b.id || !gelenArama || aramaDurum) return;

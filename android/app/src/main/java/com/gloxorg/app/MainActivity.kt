@@ -288,11 +288,25 @@ class MainActivity : Activity() {
     private var bekleyenAramaJs: String? = null
     private var kilitUstunde = false
     private var aramaGoruldu = false
+    private var reddetIcinAcildi = false // bildirimdeki "Reddet" ile açıldıysa iş bitince arkaya çekil
 
     private fun aramaGirisi(intent: Intent?) {
         val id = intent?.getStringExtra(AramaZili.EK_ARAMA) ?: return
         val cevapla = intent.getStringExtra(AramaZili.EK_CEVAPLA)
-        intent.removeExtra(AramaZili.EK_ARAMA); intent.removeExtra(AramaZili.EK_CEVAPLA) // ikinci kez işlenmesin
+        val reddet = intent.getStringExtra(AramaZili.EK_REDDET)
+        intent.removeExtra(AramaZili.EK_ARAMA); intent.removeExtra(AramaZili.EK_CEVAPLA); intent.removeExtra(AramaZili.EK_REDDET) // ikinci kez işlenmesin
+        // 📵 REDDET: zil hemen susar; kilit üstünde GÖSTERİLMEZ. Sayfa aramayı "red" yapınca (reddetBitti) uygulama arkaya çekilir.
+        if (reddet != null) {
+            AramaZili.kapat(this, null)
+            telefonZiliDurdur()
+            if (!Regex("^[A-Za-z0-9_-]+$").matches(reddet)) return
+            reddetIcinAcildi = true
+            kok?.postDelayed({ if (reddetIcinAcildi) { reddetIcinAcildi = false; try { moveTaskToBack(true) } catch (e: Exception) {} } }, 25000) // güvenlik
+            val js = "(function f(n){if(window.gloxAramaReddet){window.gloxAramaReddet('" + reddet + "')}else if(n>0){setTimeout(function(){f(n-1)},500)}})(60);"
+            val w = web
+            if (w != null && sayfaHazir) w.evaluateJavascript(js, null) else bekleyenAramaJs = js
+            return
+        }
         AramaZili.kapat(this, null) // bildirim zili susar; sayfa yüklenene kadar telefon zili BURADAN devam eder
         kilitUstundeGoster(true)
         aramaGoruldu = false
@@ -458,6 +472,16 @@ class MainActivity : Activity() {
         fun telefonZili(cal: Boolean): Boolean {
             runOnUiThread { if (cal) telefonZiliBaslat() else telefonZiliDurdur() }
             return true
+        }
+
+        /** Sayfa: bildirimdeki "Reddet" ile açılan arama veritabanında reddedildi → uygulama arkaya çekilsin. */
+        @JavascriptInterface
+        fun reddetBitti() {
+            runOnUiThread {
+                if (!reddetIcinAcildi) return@runOnUiThread
+                reddetIcinAcildi = false
+                try { moveTaskToBack(true) } catch (e: Exception) {}
+            }
         }
 
         /** Sayfa: arama ekranı açık mı (gelen/aktif arama). Kilit üstünde açıldıysak arama bitince kilidin arkasına çekilir. */
