@@ -160,22 +160,29 @@ class MainActivity : Activity() {
         try {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (!nm.areNotificationsEnabled() || nm.canUseFullScreenIntent()) return
+            // ESKİDEN ömür boyu BİR KEZ soruluyordu → "Sonra" denince bir daha hiç sorulmuyor, kilitte arama ekranı hiç açılmıyordu
+            // (kullanıcı 8 Kas: "telefon kapalıyken zil geliyor ama ekran siyah, açamıyorum"). Artık izin yoksa 3 günde bir sorulur.
             val tercih = getSharedPreferences("glox", MODE_PRIVATE)
-            if (tercih.getBoolean("tamEkranSoruldu", false)) return
-            tercih.edit().putBoolean("tamEkranSoruldu", true).apply()
+            val son = tercih.getLong("tamEkranSonSoru", 0L)
+            if (System.currentTimeMillis() - son < 3L * 24 * 3600 * 1000) return
+            tercih.edit().putLong("tamEkranSonSoru", System.currentTimeMillis()).apply()
             AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_LIGHT)
                 .setTitle("📞 Aramalar ekrana gelsin")
                 .setMessage("Biri seni GLOXORG'dan aradığında, telefon kilitliyken de arama WhatsApp gibi TAM EKRAN açılsın diye bir izin gerekiyor.\n\nAçılan sayfada GLOXORG'un yanındaki düğmeyi AÇ, sonra geri dön.")
-                .setPositiveButton("İzin ver") { _, _ ->
-                    try {
-                        startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName")))
-                    } catch (e: Exception) {
-                        try { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)) } catch (x: Exception) {}
-                    }
-                }
+                .setPositiveButton("İzin ver") { _, _ -> tamEkranAyariniAc() }
                 .setNegativeButton("Sonra", null)
                 .show()
         } catch (e: Exception) {}
+    }
+
+    /** Telefonun "tam ekran bildirim" ayar sayfasını aç (yoksa uygulamanın bildirim ayarları). */
+    private fun tamEkranAyariniAc() {
+        try {
+            if (Build.VERSION.SDK_INT >= 34) startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName")))
+            else startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
+        } catch (e: Exception) {
+            try { startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)) } catch (x: Exception) {}
+        }
     }
 
     /**
@@ -411,6 +418,17 @@ class MainActivity : Activity() {
         fun bildirimIzniVar(): Boolean = try {
             (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled()
         } catch (e: Exception) { false }
+
+        /** Kilitli/kapalı ekranda gelen arama TAM EKRAN açılabilir mi (Android 14+ izni). Teşhis kutusu gösterir. */
+        @JavascriptInterface
+        fun tamEkranIzniVar(): Boolean = try {
+            if (Build.VERSION.SDK_INT < 34) true
+            else (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).canUseFullScreenIntent()
+        } catch (e: Exception) { true }
+
+        /** Tam ekran arama izninin ayar sayfasını aç (teşhis kutusundaki "İzin ver" düğmesi). */
+        @JavascriptInterface
+        fun tamEkranIzniAc() { runOnUiThread { tamEkranAyariniAc() } }
 
         /** Gloxoo konuşsun: metni telefonun ses motoruyla okur. Bitince sayfaya window.__gloxTts('bitti', id) haber verir. */
         @JavascriptInterface

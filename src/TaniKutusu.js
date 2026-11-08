@@ -14,6 +14,7 @@ const hataYaz = (e) => String((e && (e.code || e.message)) || e).slice(0, 140);
 export default function TaniKutusu() {
   const [acik, setAcik] = useState(() => { try { return /[?&]tani=1/.test(window.location.search) || sessionStorage.getItem("gwTani") === "1"; } catch (e) { return false; } });
   const [satirlar, setSatirlar] = useState([]);
+  const [izinDugmesi, setIzinDugmesi] = useState(false); // kilit ekranı arama izni yoksa "İzin ver" düğmesi
 
   // Sol üst köşeye 5 hızlı dokunuş → aç
   useEffect(() => {
@@ -77,6 +78,11 @@ export default function TaniKutusu() {
         let izin = typeof Notification !== "undefined" ? Notification.permission : "yok";
         try { if (nat && typeof nat.bildirimIzniVar === "function") izin = "telefon: " + (nat.bildirimIzniVar() ? "VAR" : "YOK"); } catch (x) {}
         ekle("📞 Bildirim izni", String(izin), /VAR|granted/.test(String(izin)));
+        if (nat && typeof nat.tamEkranIzniVar === "function") {
+          const te = !!nat.tamEkranIzniVar();
+          ekle("📞 Kilit ekranında arama izni", te ? "VAR" : "YOK → ekran kapalıyken arama açılamaz. Aşağıdaki düğmeye bas, GLOXORG'u AÇ", te);
+          if (!te) setIzinDugmesi(true);
+        } else if (nat) ekle("📞 Kilit ekranında arama izni", "bu uygulama sürümü bilmiyor (yeni uygulama gerekli)", false);
       } catch (e) { ekle("📞 Bildirim izni", "OLMADI: " + hataYaz(e), false); }
       if (u) {
         try {
@@ -134,6 +140,9 @@ export default function TaniKutusu() {
         <button onClick={() => { try { sessionStorage.removeItem("gwTani"); } catch (e) {} setAcik(false); setSatirlar([]); }} style={{ border: "2px solid #a9781f", background: "#ffd700", borderRadius: 8, fontWeight: 900, padding: "4px 10px" }}>✕</button>
       </div>
       {satirlar.length === 0 && <div>⏳ deneniyor…</div>}
+      {izinDugmesi && (
+        <button onClick={() => { try { window.AndroidGlox.tamEkranIzniAc(); } catch (e) {} }} style={{ width: "100%", margin: "6px 0", border: "2px solid #a9781f", background: "#ffd700", borderRadius: 10, fontWeight: 900, fontSize: 16, padding: "10px 8px", color: "#3a2a00" }}>📞 Kilit ekranında arama için İZİN VER</button>
+      )}
       {satirlar.map((s) => (
         <div key={s.ad} style={{ padding: "6px 0", borderTop: "1px solid #ead9a0", fontSize: 15 }}>
           <b>{s.ad}:</b> <span style={{ color: s.iyi ? "#147a2e" : "#b3141d", fontWeight: 800 }}>{s.sonuc}</span>
