@@ -826,17 +826,6 @@ const Ikon = {
   daha: <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 3.4l1.7 2.2L12 7.8 10.3 5.6z" /><path d="M12 9.8l1.7 2.2L12 14.2 10.3 12z" /><path d="M12 16.2l1.7 2.2L12 20.6 10.3 18.4z" /></svg>,
 };
 
-// HER SAYFAYA AİT üst-sağ ikon (Google profil sadece ana sayfada; diğer pencerelerde bunlar)
-// SAĞ ÜST SAYFA İKONLARI — İÇİ DOLU ve RENKLİ (kullanıcı: "o ikonlar boş kalmasın, içini doldur").
-// Her sayfanın kendi ikonu; artık boş çizgi değil, o sayfanın rengiyle DOLU.
-const SayfaIkon = {
-  elite: <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#FFC83D" d="M6 2h12l4 6-10 13L2 8z" /><path fill="#FFE7A6" d="M2 8h20L12 21z" opacity=".5" /><path fill="#8a5a00" opacity=".25" d="M6 2h12l-2 6H8z" /></svg>,
-  topluluk: <svg width="24" height="24" viewBox="0 0 24 24" fill="#2fb96a"><circle cx="9" cy="8" r="3.6" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0v.8h-13z" /><circle cx="17.8" cy="9" r="2.7" /><path d="M15.4 14.6c3 0 5.6 2 5.6 4.6v.6h-4.2z" /></svg>,
-  video: <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#8b5cf6" /><path fill="#fff" d="M10 8.2l6.2 3.8L10 15.8z" /><circle className="ik-canli" cx="19" cy="5" r="2.6" fill="#FF4444" /></svg>,
-  konum: <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#16b5c2" d="M12 2a7.2 7.2 0 0 0-7.2 7.2C4.8 14.6 12 22 12 22s7.2-7.4 7.2-12.8A7.2 7.2 0 0 0 12 2z" /><circle cx="12" cy="9.2" r="2.7" fill="#fff" /></svg>,
-  akademi: <svg width="24" height="24" viewBox="0 0 24 24" fill="#caa62c"><path d="M12 3 1 8l11 5 8-3.64V15h2V8z" /><path d="M5 12.2V16c0 1.7 3.1 3.1 7 3.1s7-1.4 7-3.1v-3.8l-7 3.2z" /></svg>,
-  profil: <svg width="24" height="24" viewBox="0 0 24 24" fill="#e6c25a"><circle cx="12" cy="7.6" r="4.1" /><path d="M4 20.5a8 8 0 0 1 16 0v.7H4z" /></svg>,
-};
 
 // Şeritteki ülkeler (40+): altın yuvarlak KOD + DALGALI bayrak + ŞEHİR(ülke renginde) + saat + kur. Ülke adı YAZILMAZ.
 const ULKELER_SERIT = [
@@ -1662,7 +1651,6 @@ export default function Anasayfa({ pro = false }) {
   const [telKodAra, setTelKodAra] = useState("");
   const [telKodu, setTelKodu] = useState("+90");
   const [aciklama, setAciklama] = useState(""); // açıklama (?) ikonu → ne yapılacağını anlatan baloncuk (ANAYASA: her yerde bilgilendirme)
-  const [sayfaBilgiAcik, setSayfaBilgiAcik] = useState(false); // sağ üst SAYFA İKONU'na basınca → o sayfa NE İŞE YARAR + ipucu (her dilde)
   // SANAL AYNA artık PENCERE değil, SAYFA (aktifKod === "ayna"). Eski sanalAynaAcik durumu kaldırıldı.
   const [sanalAynaBaslangic, setSanalAynaBaslangic] = useState(null); // reklamdan gelen ürünle açılırsa ön dolgu
   const [telHaritaAcik, setTelHaritaAcik] = useState(false); // TAM EKRAN telefon kodu HARİTASI (ülkeye dokun → kod)
@@ -9316,44 +9304,14 @@ export default function Anasayfa({ pro = false }) {
           {okunmamisMesaj > 0 && <span className="ana-zil-rozet">{okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}</span>}
         </button>
         {/* SAĞ ÜST KÖŞE: Profil sayfasında KARE Google profili (dokununca hesap penceresi açılır — istersen Google, istemezsen durur).
-            Ana sayfada boş; diğer sayfalarda o sayfanın bilgi ikonu. (Yuvarlak Google avatarı kaldırıldı — kullanıcı: kalabalık, dört köşe olsun.) */}
+            Diğer sayfalarda BOŞ — B456: eski "sayfa bilgi" ikonu KALDIRILDI (kullanıcı: boşuna, dar ekranda GLOXORG yazısını kapatıyordu). */}
         {aktifKod === "profil" ? (
           <button className="ana-google-kare ana-ince-btn" onClick={() => setProfilAcik(true)} aria-label={t("profGoogleHesap", "Google hesabım")} title={t("profGoogleHesap", "Google hesabım")}>
             {googleFoto ? <img className="ana-google-kare-foto" src={googleFoto} alt="" referrerPolicy="no-referrer" /> : <span className="ana-google-kare-harf">{harf}</span>}
           </button>
-        ) : aktifKod !== "home" ? (
-          <button className="ana-ara-btn ana-sayfa-ikon ana-ince-btn" aria-label={aktifEt} title={aktifEt} onClick={() => setSayfaBilgiAcik(true)}>{SayfaIkon[aktifKod] || Ikon.ara}</button>
         ) : null}
       </header>
 
-      {/* SAYFA BİLGİ PENCERESİ — sağ üst sayfa ikonuna basınca: o sayfa NE İŞE YARAR + ne yapabilirsin (her dilde).
-          Açıklamalar SAYFA_ACIKLAMA'dan gelir (13 dil). Boş ikon artık faydalı: dokununca sayfayı anlatır. */}
-      {sayfaBilgiAcik && (() => {
-        const _ak = SAYFA_ACIKLAMA[aktifKod] ? aktifKod : "home";
-        const bilgi = (SAYFA_ACIKLAMA[_ak] && (SAYFA_ACIKLAMA[_ak][dil] || SAYFA_ACIKLAMA[_ak].en || SAYFA_ACIKLAMA[_ak].tr)) || "";
-        return (
-          <>
-            <div className="ana-profil-fon" onClick={() => setSayfaBilgiAcik(false)} />
-            <div className="sayfa-bilgi-pop" role="dialog" aria-label={aktifEt}>
-              <div className="sbp-ust">
-                <span className="sbp-ikon">{SayfaIkon[aktifKod] || Ikon.ara}</span>
-                <span className="sbp-baslik">{aktifEt}</span>
-                <button className="sbp-kapat" onClick={() => setSayfaBilgiAcik(false)} aria-label={t("kapat", "Kapat")}>✕</button>
-              </div>
-              <div className="sbp-metin">{bilgi}</div>
-              <div className="sbp-dugmeler">
-                <button className="sbp-sor" onClick={() => {
-                  setSayfaBilgiAcik(false);
-                  setYardimciBaglam(`Kullanıcı şu an GLOXORG "${aktifEt}" sayfasında ve bu sayfa hakkında soru sormak istiyor. Bu sayfanın uzmanı gibi, kullanıcının dilinde yardım et. Sayfanın ne işe yaradığı: ${bilgi}`);
-                  setYardimciMod("site");
-                  setYardimciAcik(true);
-                }}>💬 {t("sbpGloxooSor", "Gloxoo'ya sor")}</button>
-                <button className="sbp-tamam" onClick={() => setSayfaBilgiAcik(false)}>{t("anladim", "Anladım")}</button>
-              </div>
-            </div>
-          </>
-        );
-      })()}
 
       {/* SANAL AYNA artık PENCERE değil, SAYFA (aktifKod === "ayna") — üst şerit + ikonlar açık kalır, diğer sayfalar gibi.
           İçerik aşağıda, sayfa akış koşulunun başında render edilir. (Eski tam ekran X'li pencere kaldırıldı.) */}

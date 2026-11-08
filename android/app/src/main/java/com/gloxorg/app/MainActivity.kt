@@ -555,6 +555,10 @@ class MainActivity : Activity() {
         s.setGeolocationEnabled(true)
         s.cacheMode = WebSettings.LOAD_DEFAULT
         s.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+        // YAZI BOYUTU SABİT (B456, kullanıcı Redmi: "her şey iri, yazılar birbirine girmiş, GLOXORG yazısını düğmeler kapatıyor"):
+        //   telefonun "yazı boyutu" ayarı büyükse WebView sayfanın yazılarını da büyütüyordu → tasarım taşıyordu. Artık her
+        //   telefonda sayfa TASARLANDIĞI boyutta (%100) görünür.
+        s.textZoom = 100
 
         CookieManager.getInstance().setAcceptCookie(true)
         CookieManager.getInstance().setAcceptThirdPartyCookies(w, true)
@@ -571,6 +575,12 @@ class MainActivity : Activity() {
         } catch (e: Exception) {}
 
         w.setBackgroundColor(ALTIN) // yüklenirken WebView'in kendi zemini de altın (beyaz/siyah flaş yok)
+        // ARKA PLANDA SAYFA ÖLDÜRÜLMESİN (B456, kullanıcı: "bir dakika arka pencerede kalsa açınca gene baştan yükleniyor"):
+        //   sayfanın motoru (renderer) "önemli" işaretlenir; uygulama görünmezken de bu öncelik korunur → telefon hafıza
+        //   kazanmak için onu daha geç kapatır. (Telefon yine de kapatırsa onRenderProcessGone sayfayı yeniden kurar.)
+        if (Build.VERSION.SDK_INT >= 26) {
+            try { w.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false) } catch (e: Exception) {}
+        }
         w.addJavascriptInterface(GloxKopru(), "AndroidGlox") // sayfa → uygulama: Google girişi
         sayfaHazir = false
 
