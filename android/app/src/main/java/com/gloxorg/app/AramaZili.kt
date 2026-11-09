@@ -112,6 +112,32 @@ object AramaZili {
         } catch (e: Exception) {}
     }
 
+    private const val SESSIZ_KANAL = "glox_arama_sessiz"
+    private const val SESSIZ_ID = 4243
+
+    /**
+     * Uygulama açıkken gelen arama haberi için SESSİZ, kısa bir bildirim (2 sn sonra kendiliğinden kalkar).
+     * Amaç: Google'a "acil haber bildirime dönüştü" sinyali vermek → acil haberlerimiz uyuyan telefona GECİKMEDEN ulaşsın.
+     */
+    fun sessizIsaret(c: Context) {
+        try {
+            val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel(SESSIZ_KANAL) == null) {
+                val k = NotificationChannel(SESSIZ_KANAL, "GLOXORG arama (sessiz)", NotificationManager.IMPORTANCE_MIN)
+                k.setSound(null, null); k.enableVibration(false); k.setShowBadge(false)
+                nm.createNotificationChannel(k)
+            }
+            val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(c, SESSIZ_KANAL) else {
+                @Suppress("DEPRECATION") Notification.Builder(c).setPriority(Notification.PRIORITY_MIN)
+            }
+            b.setSmallIcon(R.drawable.ic_bildirim).setContentTitle("GLOXORG").setContentText("📞")
+                .setCategory(Notification.CATEGORY_CALL).setAutoCancel(true)
+            if (Build.VERSION.SDK_INT >= 26) b.setTimeoutAfter(2000)
+            nm.notify(SESSIZ_ID, b.build())
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { nm.cancel(SESSIZ_ID) } catch (e: Exception) {} }, 2000)
+        } catch (e: Exception) {}
+    }
+
     /** Zili sustur. aramaId verilirse sadece O arama çalıyorsa susturur (başka yeni arama çalıyorsa dokunmaz). */
     fun kapat(c: Context, aramaId: String?) {
         try {

@@ -32,7 +32,10 @@ class GloxMesajServisi : FirebaseMessagingService() {
         val v = mesaj.data
         // 📞 ARAMA ZİLİ (uygulama kapalıyken WhatsApp gibi çalar) / arama bitti → zili sustur
         if (v["tip"] == "arama-bitti") { AramaZili.kapat(this, v["aramaId"]); return }
-        if (v["tip"] == "arama-gelen") { if (!MainActivity.onPlanda) AramaZili.goster(this, v); return }
+        // Uygulama ekrandaysa sayfa zaten çalıyor → zil göstermeyiz, AMA sessiz bir bildirim gösterip hemen kaldırırız:
+        // Google, acil haber bildirime dönüşmezse uygulamanın acil haberlerini geciktiriyor (kullanıcı 9 Kas: "ilk arama gelmiyor,
+        // zaman aşımından sonra geliyor, sonrakiler düzgün").
+        if (v["tip"] == "arama-gelen") { if (!MainActivity.onPlanda) AramaZili.goster(this, v) else AramaZili.sessizIsaret(this); return }
         if (MainActivity.onPlanda) return // uygulama açık → sayfa zaten gösteriyor
         val baslik = v["baslik"] ?: mesaj.notification?.title ?: "GLOXORG"
         val govde = v["govde"] ?: mesaj.notification?.body ?: ""
