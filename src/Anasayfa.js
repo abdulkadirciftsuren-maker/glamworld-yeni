@@ -8938,7 +8938,9 @@ export default function Anasayfa({ pro = false }) {
     const p = pinchRef.current;
     if (p && p.tip === "kaydir" && e.changedTouches && e.changedTouches[0]) {
       const dx = e.changedTouches[0].clientX - p.x0, dy = e.changedTouches[0].clientY - p.y0;
-      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.3) tfGit(dx < 0 ? 1 : -1); // sola kaydır = sonraki
+      // YUKARI kaydır = sonraki, AŞAĞI = önceki (Reels gibi — kullanıcı 9 Kas: "aşağı yukarı yapsak daha iyi"); sağa/sola da çalışır.
+      if (Math.abs(dy) > 70 && Math.abs(dy) > Math.abs(dx) * 1.3) tfGit(dy < 0 ? 1 : -1);
+      else if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.3) tfGit(dx < 0 ? 1 : -1); // sola kaydır = sonraki
     }
     if (e.touches.length === 0) pinchRef.current = null;
   }
@@ -8992,7 +8994,7 @@ export default function Anasayfa({ pro = false }) {
   // Bilgisayarda klavye OK tuşları ile gezinme
   useEffect(() => {
     if (!tamFoto) return undefined;
-    const tus = (e) => { if (e.key === "ArrowRight") tfGit(1); else if (e.key === "ArrowLeft") tfGit(-1); };
+    const tus = (e) => { if (e.key === "ArrowRight" || e.key === "ArrowDown") tfGit(1); else if (e.key === "ArrowLeft" || e.key === "ArrowUp") tfGit(-1); };
     window.addEventListener("keydown", tus);
     return () => window.removeEventListener("keydown", tus);
   }, [tamFoto]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -12354,10 +12356,10 @@ export default function Anasayfa({ pro = false }) {
             <button className="tamfoto-kapat" onClick={() => setTamFoto("")} aria-label="Kapat">✕</button>
             {/* ‹ › ÖNCEKİ / SONRAKİ FOTOĞRAF (bilgisayar için; telefonda parmakla kaydırılır). KARE düğme, yazısız → üstünde ipucu var. */}
             {!p.video && !metinPost && !tfMini && tfSira.i > 0 && (
-              <button className="tf-gez tf-gez-sol" onClick={(e) => { e.stopPropagation(); tfGit(-1); }} aria-label={t("onceki", "Önceki")} title={t("onceki", "Önceki")}>‹</button>
+              <button key={"gs-" + (p.id || "")} className="tf-gez tf-gez-sol" onClick={(e) => { e.stopPropagation(); tfGit(-1); }} aria-label={t("onceki", "Önceki")} title={t("onceki", "Önceki")}>‹</button>
             )}
             {!p.video && !metinPost && !tfMini && tfSira.i >= 0 && tfSira.i < tfSira.n - 1 && (
-              <button className="tf-gez tf-gez-sag" onClick={(e) => { e.stopPropagation(); tfGit(1); }} aria-label={t("sonraki", "Sonraki")} title={t("sonraki", "Sonraki")}>›</button>
+              <button key={"gg-" + (p.id || "")} className="tf-gez tf-gez-sag" onClick={(e) => { e.stopPropagation(); tfGit(1); }} aria-label={t("sonraki", "Sonraki")} title={t("sonraki", "Sonraki")}>›</button>
             )}
             {/* ÜST — yazan (şeffaf) */}
             <div className="tf-ust" onClick={(e) => e.stopPropagation()}>
