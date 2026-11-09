@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { gloxooResimUret, filigranEkle } from "./firebase";
 import { medyaYaz, medyaOku } from "./medyaDepo"; // üretilen modelleri KALICI sakla (IndexedDB) → "Modellerim" galerisi
 import { AYNA_CEV } from "./ceviriAyna"; // saç modeli/renk/kıyafet çiplerini kullanıcının diline çevir (değer Türkçe kalır, sadece görünüm çevrilir)
+import { AYNA_CEV2 } from "./ceviriAyna2"; // B468: eksik kalan 158 seçeneğin 12 dil çevirisi
+const AYNA_TUM = { ...AYNA_CEV, ...AYNA_CEV2 };
 
 // KİM İÇİN — bayan/erkek/kız/erkek çocuk/bebek (saç kesimi + kıyafet önerileri buna göre değişir)
 const KISILER = [
@@ -210,7 +212,7 @@ function Buyut({ url, onKapat }) {
 export default function SanalAyna({ onKapat, baslangic, onKatman, sayfaModu, onGloxorgPaylas, onGloxorgVideoPaylas }) {
   const { t, i18n } = useTranslation();
   // Çip yazısını kullanıcının diline çevir; değer (state) Türkçe kalır ki yapay zekâ istemi bozulmasın.
-  const ac = (etiket) => { const d = (i18n && i18n.language ? String(i18n.language).slice(0, 2) : "tr"); return (AYNA_CEV[etiket] && AYNA_CEV[etiket][d]) || etiket; };
+  const ac = (etiket) => { const d = (i18n && i18n.language ? String(i18n.language).slice(0, 2) : "tr"); return (AYNA_TUM[etiket] && AYNA_TUM[etiket][d]) || etiket; };
   const [buyuk, setBuyuk] = useState(""); // tam ekran açılan sonuç fotoğrafı
   const [foto, setFoto] = useState("");            // kullanıcı fotoğrafı (dataURL)
   const [fotoMime, setFotoMime] = useState("image/jpeg");
