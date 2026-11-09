@@ -30,6 +30,7 @@
 - **Fiyat:** notlara göre **~24 € / ay**
 - **Ödeme şekli:** Hesaba **ön ödemeli bakiye** (Eylül'de 25 € yüklendi). ⚠️ Düzeltme (8 Kas): Hetzner arama sayısına göre DEĞİL, sunucunun açık kaldığı süreye göre (saatlik, ay sonunda fatura) keser. CPX22 için aylık birkaç € (kesin tutar Hetzner fiyat/fatura sayfasında). Yani 25 € büyük ihtimalle birkaç ay yeter; '~1 ay' tahmini yanlıştı. 8 Kas'ta sunucu çalışıyordu (GitHub'dan kontrol: canli.gloxorg.com OK + bilet kabul). Kalan bakiye için: accounts.hetzner.com → Faturalar.
 - **✅ Durum (5 Kas 2026):** Kullanıcı kontrol etti: sunucu **çalışıyor (yeşil)**, `canli.gloxorg.com` → **OK**. Fatura sayfası (accounts.hetzner.com/invoice) henüz kontrol edilmedi.
+- **💶 Bakiye (9 Kas 2026):** **15,41 €** kaldı (Eylül'de 25 € yüklenmişti → ~2 ayda ~9,6 € harcandı, ayda ~5 €). Bu hızla **Ocak sonu – Şubat 2027** civarına kadar yeter. **Ocak 2027 başında tekrar bak**, gerekirse Hetzner → faturalar → kredi → Şarj ile yükle.
 - **🔐 Güvenlik (9 Kas 2026):** Hetzner hesabında **iki faktörlü doğrulama AÇIK** (Google Authenticator, telefonda). Kurtarma anahtarı kullanıcıda KÂĞITTA (buraya YAZILMAZ). Girişte şifreden sonra Authenticator'daki 6 haneli sayı istenir. Telefon değişirse kurtarma anahtarı gerekir.
 - **Hızlı test:** tarayıcıda `https://canli.gloxorg.com` (noktalı **i**!) → "OK" yazıyorsa arama sunucusu çalışıyor.
 - **Kontrol:** Hetzner → sol üstte **Billing / Faturalar** → bakiye ve ödenmemiş fatura var mı? Sunucu listesinde sunucu **"Running" (çalışıyor)** mu?
