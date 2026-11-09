@@ -4653,14 +4653,17 @@ export default function Anasayfa({ pro = false }) {
   // AKTİF sohbetteki mesajlar (iki taraf) — zamana göre artan
   const aktifSohbetMesajlari = useMemo(() => {
     if (!sohbetKisi) return [];
+    // Senin sildiğin arama kayıtları (gizliAramalar — Glome "Aramalar" listesiyle AYNI liste) sohbette de görünmez.
     return mesajlarimTum.filter((m) =>
+      !(m.arama && gizliAramalar.has(m.id)) && (
       (m.gonderenUid === sohbetKisi.uid && m.aliciUid === benUid) ||
-      (m.gonderenUid === benUid && m.aliciUid === sohbetKisi.uid));
-  }, [mesajlarimTum, sohbetKisi, benUid]);
+      (m.gonderenUid === benUid && m.aliciUid === sohbetKisi.uid)));
+  }, [mesajlarimTum, sohbetKisi, benUid, gizliAramalar]);
   // MESAJ MERKEZİ listesi — karşı kişiye göre gruplanmış sohbetler (son mesaj + okunmamış sayısı), en yeni üstte
   const sohbetListesi = useMemo(() => {
     const harita = new Map();
     mesajlarimTum.forEach((m) => {
+      if (m.arama && gizliAramalar.has(m.id)) return; // sildiğin arama kaydı listede de sayılmaz
       const karsiUid = m.gonderenUid === benUid ? m.aliciUid : m.gonderenUid;
       if (!karsiUid || karsiUid === benUid) return;
       const karsiAd = m.gonderenUid === benUid ? (m.aliciAd || "") : (m.gonderenAd || "");
@@ -4672,7 +4675,7 @@ export default function Anasayfa({ pro = false }) {
       if (m.aliciUid === benUid && !m.okundu && (!m.arama || m.arama.durum === "cevapsiz")) g.okunmamis++; // Gerçek mesajlar + SADECE CEVAPSIZ (kaçan) aramalar rozette sayılır; CEVAPLANAN ve REDDEDİLEN aramalar sayılmaz (takılmasın).
     });
     return Array.from(harita.values()).sort((a, b) => (b.son.zamanMs || 0) - (a.son.zamanMs || 0));
-  }, [mesajlarimTum, benUid]);
+  }, [mesajlarimTum, benUid, gizliAramalar]);
   const okunmamisMesaj = useMemo(() => sohbetListesi.reduce((s, g) => s + g.okunmamis, 0), [sohbetListesi]);
   // KONUM HARİTASI İÇİN ARKADAŞLAR — takip ettiklerimden KONUMU olanlar → haritada fotoğraflarıyla görünecekler.
   // (Sadece profilinde konum girmiş olanlar çıkar; konum girmemiş arkadaş haritada görünmez.)
@@ -13960,7 +13963,9 @@ export default function Anasayfa({ pro = false }) {
               {/* KOPYALA — mesaj yazısını panoya kopyala (hem gelen hem giden mesaj). Basılı tut → menüden Kopyala. */}
               {!tm.silindi && tm.metin && <button className="sts-islem" onClick={() => { panoyaKopyala(tm.metin); setTepkiMesaj(null); }} title={t("kopyala", "Kopyala")}>📋</button>}
               {benimMsj && !tm.silindi && tm.metin && <button className="sts-islem" onClick={() => mesajDuzenleBaslat(tm)} title={t("duzenle", "Düzenle")}>✏️</button>}
-              {benimMsj && !tm.silindi && <button className="sts-islem sts-sil" onClick={() => mesajSilEt(tm.id)} title={t("sil", "Geri çek / Sil")}>🗑️</button>}
+              {benimMsj && !tm.silindi && !tm.arama && <button className="sts-islem sts-sil" onClick={() => mesajSilEt(tm.id)} title={t("sil", "Geri çek / Sil")}>🗑️</button>}
+              {/* ARAMA KAYDI — gelen de giden de SENDEN silinir (kullanıcı 9 Kas: "buradaki aramaları silemiyorum"); karşı tarafta kalır */}
+              {tm.arama && <button className="sts-islem sts-sil" onClick={() => { aramaTekSil(tm.id); setTepkiMesaj(null); }} title={t("sil", "Sil")}>🗑️</button>}
             </div>
           </div>
         ), document.body);
