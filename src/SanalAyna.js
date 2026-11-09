@@ -624,7 +624,7 @@ IMPORTANT: the result MUST look different from image 1 — ${OO} is now wearing 
                   {modeller.map((o) => (
                     <div key={o.id} className="sa-galeri-oge">
                       {galeriResim[o.id] ? <img src={galeriResim[o.id]} alt="" onClick={() => setBuyuk(galeriResim[o.id])} /> : <div className="sa-galeri-yuk">⏳</div>}
-                      <div className="sa-galeri-ad notranslate">{ac(o.ad)}</div>
+                      <div className="sa-galeri-ad notranslate">{(() => { const kt = KATEGORILER.find((x) => x.k === o.ad); return kt ? t(kt.ck, kt.ad) : ac(o.ad); })()}</div>
                       <div className="sa-galeri-dug">
                         <button className="sa-galeri-duzenle" onClick={() => modeliDuzenle(o.id)} title={t("saDuzenle", "Bunu düzenle / başka şey giydir")}>✏️</button>
                         <button onClick={() => galeriResim[o.id] && paylasVer(galeriResim[o.id], o.ad)} title={t("saPaylas", "Paylaş")}>📤</button>
