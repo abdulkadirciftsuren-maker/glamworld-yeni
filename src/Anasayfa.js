@@ -8949,7 +8949,7 @@ export default function Anasayfa({ pro = false }) {
   //   paylaşımları (yeniden eskiye), sonra diğerleri (akıştaki sırayla). Kaynak: üye sayfası + kendi paylaşımlarım + akış.
   const tfListeRef = useRef([]);
   const [tfSira, setTfSira] = useState({ i: -1, n: 0 });
-  const tfFotoMu = (x) => !!(x && x.id && x.gorsel && !x.video && !x.silindi);
+  const tfFotoMu = (x) => !!(x && x.id && (x.gorsel || x.video) && !x.silindi); // fotoğraf VE video paylaşımları (B471: videolar da sırada)
   useEffect(() => {
     const p = tamFoto;
     if (!p) { tfListeRef.current = []; setTfSira({ i: -1, n: 0 }); return; }
@@ -12312,6 +12312,7 @@ export default function Anasayfa({ pro = false }) {
                     muted={!!(p.muzik && p.muzik.url)}
                     poster={kapakIyi(p.videoPoster) || SEFFAF_POSTER}
                     onClick={vidTikla}
+                    onTouchStart={fotoTouchStart} onTouchEnd={fotoTouchEnd} /* video üstünde de yukarı/aşağı/sağa/sola KAYDIR → sonraki/önceki (dokunup oynatma aynen) */
                     onTimeUpdate={(e) => setVidT(e.currentTarget.currentTime)}
                     onLoadedMetadata={(e) => { setVidHata(false); setVidSure(e.currentTarget.duration || 0); const w = e.currentTarget.videoWidth, h = e.currentTarget.videoHeight; if (w && h) setTfVidOran(w / h); }}
                     onError={() => { if (!vidBlob) videoBlobDene(videoSade(p.video)); else setVidHata(true); }}
@@ -12355,10 +12356,10 @@ export default function Anasayfa({ pro = false }) {
             {p.ustYazi && p.ustYazi.metin && <span className={"tf-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
             <button className="tamfoto-kapat" onClick={() => setTamFoto("")} aria-label="Kapat">✕</button>
             {/* ‹ › ÖNCEKİ / SONRAKİ FOTOĞRAF (bilgisayar için; telefonda parmakla kaydırılır). KARE düğme, yazısız → üstünde ipucu var. */}
-            {!p.video && !metinPost && !tfMini && tfSira.i > 0 && (
+            {!metinPost && !tfMini && tfSira.i > 0 && (
               <button key={"gs-" + (p.id || "")} className="tf-gez tf-gez-sol" onClick={(e) => { e.stopPropagation(); tfGit(-1); }} aria-label={t("onceki", "Önceki")} title={t("onceki", "Önceki")}>‹</button>
             )}
-            {!p.video && !metinPost && !tfMini && tfSira.i >= 0 && tfSira.i < tfSira.n - 1 && (
+            {!metinPost && !tfMini && tfSira.i >= 0 && tfSira.i < tfSira.n - 1 && (
               <button key={"gg-" + (p.id || "")} className="tf-gez tf-gez-sag" onClick={(e) => { e.stopPropagation(); tfGit(1); }} aria-label={t("sonraki", "Sonraki")} title={t("sonraki", "Sonraki")}>›</button>
             )}
             {/* ÜST — yazan (şeffaf) */}
