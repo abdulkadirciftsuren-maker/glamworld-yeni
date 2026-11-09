@@ -8907,8 +8907,11 @@ export default function Anasayfa({ pro = false }) {
         pinchRef.current = { tip: "pinch", d0: (d > 1 ? d : 1), s0: zoom.s }; // d0 asla 0 olmasın (bölme/çökme önlenir)
       } else if (e.touches.length === 1 && zoom.s > 1) {
         pinchRef.current = { tip: "pan", x0: e.touches[0].clientX, y0: e.touches[0].clientY, ox: zoom.x, oy: zoom.y };
+      } else if (e.touches.length === 1) {
+        // YAKINLAŞTIRILMAMIŞKEN tek parmak = sağa/sola KAYDIR → önceki/sonraki fotoğraf (9 Kas). Dokunuş yine alt sayfaya GEÇMEZ.
+        pinchRef.current = { tip: "kaydir", x0: e.touches[0].clientX, y0: e.touches[0].clientY };
       } else {
-        pinchRef.current = null; // YAKINLAŞTIRILMAMIŞKEN kaydırma YOK → alt sayfayı algılayıp ayna/profil açması/kapatması biter (kullanıcı isteği)
+        pinchRef.current = null;
       }
     } catch (x) { pinchRef.current = null; }
   }
@@ -8932,8 +8935,67 @@ export default function Anasayfa({ pro = false }) {
   }
   function fotoTouchEnd(e) {
     try { e.stopPropagation(); } catch (x) {}
+    const p = pinchRef.current;
+    if (p && p.tip === "kaydir" && e.changedTouches && e.changedTouches[0]) {
+      const dx = e.changedTouches[0].clientX - p.x0, dy = e.changedTouches[0].clientY - p.y0;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.3) tfGit(dx < 0 ? 1 : -1); // sola kaydır = sonraki
+    }
     if (e.touches.length === 0) pinchRef.current = null;
   }
+  // 🖼️ TAM EKRAN GEZİNME (9 Kas — kullanıcı: "bir fotoğrafı açınca o kullanıcının fotoğraflarını sırayla gezeyim, bitince başka
+  //   paylaşımların fotoğrafları gelsin"). Fotoğraf DIŞARIDAN açıldığında sıra BİR KEZ kurulur: önce AYNI kişinin fotoğraflı
+  //   paylaşımları (yeniden eskiye), sonra diğerleri (akıştaki sırayla). Kaynak: üye sayfası + kendi paylaşımlarım + akış.
+  const tfListeRef = useRef([]);
+  const [tfSira, setTfSira] = useState({ i: -1, n: 0 });
+  const tfFotoMu = (x) => !!(x && x.id && x.gorsel && !x.video && !x.silindi);
+  useEffect(() => {
+    const p = tamFoto;
+    if (!p) { tfListeRef.current = []; setTfSira({ i: -1, n: 0 }); return; }
+    if (!p.id) { setTfSira({ i: -1, n: 0 }); return; }
+    if (!tfListeRef.current.some((x) => x.id === p.id)) {
+      const sahip = p.uid || p.sahipUid || "";
+      const kur = (ekler) => {
+        const gor = new Set(); const hepsi = [];
+        [...(ekler || []), ...(uyePostlar || []), ...(gonderilerim || []), ...(gercekAkis || [])].forEach((x) => { if (tfFotoMu(x) && !gor.has(x.id)) { gor.add(x.id); hepsi.push(x); } });
+        const sahipMi = (x) => !!sahip && (x.uid === sahip || x.sahipUid === sahip);
+        const ayni = hepsi.filter(sahipMi).sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
+        const diger = hepsi.filter((x) => !sahipMi(x));
+        if (tfFotoMu(p) && !ayni.some((x) => x.id === p.id)) ayni.unshift(p);
+        return [...ayni, ...diger];
+      };
+      const kurulan = kur(null);
+      tfListeRef.current = kurulan;
+      // Akış ilk açılışta az paylaşım yüklediği için o kişinin DİĞER fotoğrafları listede olmayabilir → kişinin paylaşımlarını
+      //   arka planda getirip sıraya ekle (üye sayfasından açıldıysa zaten hepsi var, getirme).
+      const uyeYuklu = uyePostlar && uyePostlar.length && (uyePostlar[0].uid === sahip || uyePostlar[0].sahipUid === sahip);
+      if (sahip && !uyeYuklu) {
+        gonderilerimOku(sahip, 40).then((l) => {
+          if (tfListeRef.current !== kurulan || !l || !l.length) return; // bu arada kapandı / başka sıra kuruldu
+          const yeni = kur(l);
+          tfListeRef.current = yeni;
+          const su = tamFotoRef.current;
+          setTfSira({ i: su ? yeni.findIndex((x) => x.id === su.id) : -1, n: yeni.length });
+        }).catch(() => {});
+      }
+    }
+    const L = tfListeRef.current;
+    setTfSira({ i: L.findIndex((x) => x.id === p.id), n: L.length });
+  }, [tamFoto]); // eslint-disable-line react-hooks/exhaustive-deps
+  function tfGit(yon) {
+    const L = tfListeRef.current, p = tamFotoRef.current;
+    if (!p || !p.id) return;
+    const i = L.findIndex((x) => x.id === p.id);
+    if (i < 0) return;
+    const y = L[i + yon];
+    if (y) setTamFoto(y);
+  }
+  // Bilgisayarda klavye OK tuşları ile gezinme
+  useEffect(() => {
+    if (!tamFoto) return undefined;
+    const tus = (e) => { if (e.key === "ArrowRight") tfGit(1); else if (e.key === "ArrowLeft") tfGit(-1); };
+    window.addEventListener("keydown", tus);
+    return () => window.removeEventListener("keydown", tus);
+  }, [tamFoto]); // eslint-disable-line react-hooks/exhaustive-deps
   function fotoCiftDokun() { setZoom((z) => (z.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 })); }
   function fotoTeker(e) {
     e.preventDefault();
@@ -12290,6 +12352,13 @@ export default function Anasayfa({ pro = false }) {
                 </>}
             {p.ustYazi && p.ustYazi.metin && <span className={"tf-ustyazi yer-" + (p.ustYazi.yer || "alt") + " boy-" + (p.ustYazi.boyut || "orta")} style={{ color: p.ustYazi.renk || "#fff" }}>{p.ustYazi.metin}</span>}
             <button className="tamfoto-kapat" onClick={() => setTamFoto("")} aria-label="Kapat">✕</button>
+            {/* ‹ › ÖNCEKİ / SONRAKİ FOTOĞRAF (bilgisayar için; telefonda parmakla kaydırılır). KARE düğme, yazısız → üstünde ipucu var. */}
+            {!p.video && !metinPost && !tfMini && tfSira.i > 0 && (
+              <button className="tf-gez tf-gez-sol" onClick={(e) => { e.stopPropagation(); tfGit(-1); }} aria-label={t("onceki", "Önceki")} title={t("onceki", "Önceki")}>‹</button>
+            )}
+            {!p.video && !metinPost && !tfMini && tfSira.i >= 0 && tfSira.i < tfSira.n - 1 && (
+              <button className="tf-gez tf-gez-sag" onClick={(e) => { e.stopPropagation(); tfGit(1); }} aria-label={t("sonraki", "Sonraki")} title={t("sonraki", "Sonraki")}>›</button>
+            )}
             {/* ÜST — yazan (şeffaf) */}
             <div className="tf-ust" onClick={(e) => e.stopPropagation()}>
               <span className={"tf-avatar uye-ac" + (p.amblem ? " amblem" : "")} onClick={(e) => { e.stopPropagation(); uyeyiAc(p); }}>{tfFoto ? <img src={tfFoto} alt="" referrerPolicy="no-referrer" /> : bas}</span>

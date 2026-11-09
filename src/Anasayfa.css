@@ -1259,6 +1259,10 @@ video.yrm-medya{ cursor:default; }
   .tf-vid-seek::-webkit-slider-thumb{ width:22px; height:22px; }
 }
 .tamfoto-kapat{ position:absolute; top:7px; right:7px; width:30px; height:30px; border-radius:50%; border:none; background:rgba(0,0,0,.45); color:#fff; font-size:16px; cursor:pointer; z-index:6; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; }
+.tf-gez{ position:absolute; top:50%; transform:translateY(-50%); z-index:6; width:40px; height:56px; border-radius:10px; border:2px solid #c9a227; background:rgba(255,236,160,.82); color:#5a3d00; font-size:34px; font-weight:900; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 12px rgba(90,60,10,.35); padding:0 0 4px; } /* ‹ › önceki/sonraki fotoğraf — KARE (yuvarlak yok), altın */
+.tf-gez-sol{ left:8px; } .tf-gez-sag{ right:8px; }
+.tf-gez:active{ transform:translateY(-50%) scale(.94); }
+@media (min-width:560px){ .tf-gez{ width:52px; height:72px; font-size:42px; } .tf-gez-sol{ left:16px; } .tf-gez-sag{ right:16px; } }
 /* ÜST yazan (şeffaf, fotoğrafın içinde) */
 /* ÜST yazan TAM ŞEFFAF — koyu panel/ekran YOK (okunurluk text-shadow ile) */
 /* tam ekran üst şerit KOMPAKT tek satır → yukarıda, üst üste binmez (kullanıcı: dağınık, ✕ büyük, yukarı al) */
