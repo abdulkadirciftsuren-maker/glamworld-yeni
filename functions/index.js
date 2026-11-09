@@ -94,12 +94,10 @@ exports.genelBildirim = onDocumentCreated("bildirimler/{id}", async (event) => {
 //    Bilgisayar/tarayıcı bu listeye HİÇ girmez → web'de "aramadan önce bildirim" (B170 şikâyeti) GERİ GELMEZ.
 //    Uygulama ekrandaysa bildirimi uygulama göstermez (sayfa zaten çalıyor); kapalı/arka plandaysa telefon ZİL ÇALAR,
 //    "Cevapla / Reddet" düğmeli tam ekran arama bildirimi çıkar. Arama bitince/reddedilince/açılınca "arama-bitti" ile susar.
-// ⚠️ ÖNCELİK (8 Kas — kullanıcı: "bazen çalıyor bazen çalmıyor; telefonu açınca çalmaya başlıyor, arayan çoktan vazgeçmiş"):
-//   Firebase kuralı: "high" (acil) haberlerin çoğu ekranda bildirim GÖSTERMİYORSA Google o uygulamanın acil haberlerini
-//   "normal"e düşürür → uyuyan telefona GEÇ teslim edilir. Her aramada 1 "arama-gelen" + 1-2 "arama-bitti" (bildirimsiz,
-//   sadece zili susturur) gidiyordu → acil haberlerin yarısından fazlası bildirimsizdi. Artık SADECE zil çaldıran
-//   "arama-gelen" acil; "arama-bitti" normal öncelikli (zil çalarken ekran zaten açık → hemen ulaşır).
-async function aramaPushGonder(uid, veri, oncelik) {
+// ÖNCELİK: hepsi ACİL (high). 9 Kas'ta "arama-bitti" normal önceliğe alınmıştı → ekranı kapalı telefona GEÇ ulaştı, arayan
+//   kapatınca zil DURMADI (kullanıcı: "aramayı sonlandırıyorum ama zil sesi devam ediyor"). Google'ın "bildirimsiz acil haber"
+//   cezası için çözüm uygulamada (açıkken gelen aramada sessiz kısa bildirim, 2.0.24) → burada öncelik DÜŞÜRÜLMEZ.
+async function aramaPushGonder(uid, veri) {
   if (!uid) return;
   let tokens = [];
   try {
@@ -119,7 +117,7 @@ async function aramaPushGonder(uid, veri, oncelik) {
   });
   try {
     // ttl 40 sn: telefon o an internetsizse, sonradan "eski" bir arama için zil ÇALMASIN.
-    const res = await getMessaging().sendEachForMulticast({ tokens, data, android: { priority: oncelik === "normal" ? "normal" : "high", ttl: 40000 } });
+    const res = await getMessaging().sendEachForMulticast({ tokens, data, android: { priority: "high", ttl: 40000 } });
     console.log(`[aramaPush] basarili=${res.successCount}, basarisiz=${res.failureCount}`);
     const gecersiz = [];
     res.responses.forEach((r, i) => {
@@ -155,12 +153,12 @@ exports.aramaZiliSustur = onDocumentUpdated("aramalar/{id}", async (event) => {
   const once = event.data && event.data.before && event.data.before.data();
   const sonra = event.data && event.data.after && event.data.after.data();
   if (!once || !sonra || once.durum !== "calliyor" || sonra.durum === "calliyor") return;
-  await aramaPushGonder(once.arananUid, { tip: "arama-bitti", aramaId: event.params.id }, "normal");
+  await aramaPushGonder(once.arananUid, { tip: "arama-bitti", aramaId: event.params.id });
 });
 
 // Çalarken kayıt silindiyse (eski/takılı arama temizliği) → zil sussun.
 exports.aramaZiliSilindi = onDocumentDeleted("aramalar/{id}", async (event) => {
   const a = event.data && event.data.data();
   if (!a || a.durum !== "calliyor") return;
-  await aramaPushGonder(a.arananUid, { tip: "arama-bitti", aramaId: event.params.id }, "normal");
+  await aramaPushGonder(a.arananUid, { tip: "arama-bitti", aramaId: event.params.id });
 });
