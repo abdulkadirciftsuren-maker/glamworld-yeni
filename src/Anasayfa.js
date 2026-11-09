@@ -4653,9 +4653,9 @@ export default function Anasayfa({ pro = false }) {
   // AKTİF sohbetteki mesajlar (iki taraf) — zamana göre artan
   const aktifSohbetMesajlari = useMemo(() => {
     if (!sohbetKisi) return [];
-    // Senin sildiğin arama kayıtları (gizliAramalar — Glome "Aramalar" listesiyle AYNI liste) sohbette de görünmez.
+    // "Senden sil" ile sildiklerin (arama kaydı, gelen mesaj/fotoğraf — gizliAramalar listesi, cihazda) sohbette görünmez.
     return mesajlarimTum.filter((m) =>
-      !(m.arama && gizliAramalar.has(m.id)) && (
+      !gizliAramalar.has(m.id) && (
       (m.gonderenUid === sohbetKisi.uid && m.aliciUid === benUid) ||
       (m.gonderenUid === benUid && m.aliciUid === sohbetKisi.uid)));
   }, [mesajlarimTum, sohbetKisi, benUid, gizliAramalar]);
@@ -4663,7 +4663,7 @@ export default function Anasayfa({ pro = false }) {
   const sohbetListesi = useMemo(() => {
     const harita = new Map();
     mesajlarimTum.forEach((m) => {
-      if (m.arama && gizliAramalar.has(m.id)) return; // sildiğin arama kaydı listede de sayılmaz
+      if (gizliAramalar.has(m.id)) return; // senden sildiğin kayıt (arama/mesaj) listede de sayılmaz
       const karsiUid = m.gonderenUid === benUid ? m.aliciUid : m.gonderenUid;
       if (!karsiUid || karsiUid === benUid) return;
       const karsiAd = m.gonderenUid === benUid ? (m.aliciAd || "") : (m.gonderenAd || "");
@@ -4836,6 +4836,11 @@ export default function Anasayfa({ pro = false }) {
   // UZUN BAS → o aramaya özel "Sil" düğmesi çıkar (hızlı tek silme; seç moduna girmeden)
   const aramaBas = (id) => { if (aramaSecModu) return; aramaUzunRef.current = false; aramaBasRef.current = setTimeout(() => { aramaUzunRef.current = true; setAramaHizliSil(id); try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) {} }, 480); };
   const aramaBasBirak = () => { if (aramaBasRef.current) { clearTimeout(aramaBasRef.current); aramaBasRef.current = null; } };
+  // GELEN mesajı/fotoğrafı SENDEN sil (gizle) — karşı tarafta kalır (kullanıcı 9 Kas: "fotoğraf ve mesajları da sileyim")
+  const mesajBendenSil = (id) => {
+    if (!id) return;
+    setGizliAramalar((onceki) => { const y = new Set(onceki); y.add(id); try { localStorage.setItem("groxGizliAramalar", JSON.stringify([...y])); } catch (e) {} return y; });
+  };
   // Tek aramayı SENİN listenden sil (gizle) — karşı tarafı etkilemez
   const aramaTekSil = (id) => {
     setGizliAramalar((onceki) => { const y = new Set(onceki); y.add(id); try { localStorage.setItem("groxGizliAramalar", JSON.stringify([...y])); } catch (e) {} return y; });
@@ -13966,6 +13971,7 @@ export default function Anasayfa({ pro = false }) {
               {benimMsj && !tm.silindi && !tm.arama && <button className="sts-islem sts-sil" onClick={() => mesajSilEt(tm.id)} title={t("sil", "Geri çek / Sil")}>🗑️</button>}
               {/* ARAMA KAYDI — gelen de giden de SENDEN silinir (kullanıcı 9 Kas: "buradaki aramaları silemiyorum"); karşı tarafta kalır */}
               {tm.arama && <button className="sts-islem sts-sil" onClick={() => { aramaTekSil(tm.id); setTepkiMesaj(null); }} title={t("sil", "Sil")}>🗑️</button>}
+              {!benimMsj && !tm.arama && <button className="sts-islem sts-sil" onClick={() => { mesajBendenSil(tm.id); setTepkiMesaj(null); }} title={t("sil", "Sil")}>🗑️</button>}
             </div>
           </div>
         ), document.body);

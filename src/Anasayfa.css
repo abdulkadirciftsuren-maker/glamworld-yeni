@@ -4584,7 +4584,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
 .sohbet-balon-sar.benim .sohbet-tepkiler{ align-self:flex-end; }
 .sohbet-tepkiler b{ font-size:11px; color:#6b5417; margin-left:2px; }
 /* Tepki seçici: PORTAL + fixed → parmakla BASTIĞIN mesajın tam üstünde açılır, ekran köşesine kaçmaz, kenardan taşmaz */
-.sohbet-tepki-fon{ position:fixed; inset:0; z-index:12500; }
+.sohbet-tepki-fon{ position:fixed; inset:0; z-index:12500; -webkit-user-select:none; user-select:none; }
+.sohbet-tepki-fon *{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; } /* emoji paneli SEÇİLMEZ → tarayıcının "Kopyala" kutusu kalbin üstüne çıkmaz; mesaj yazısı ise sürükleyerek seçilip kopyalanabilir */
 /* Tepki kutusu: DAR, İKİ SATIR (5'li ızgara), ekran DIŞINA taşmaz — parmağın üstünde ortalanır */
 .sohbet-tepki-secici{ position:fixed; transform:translate(-50%,-100%); z-index:12600; display:grid; grid-template-columns:repeat(5, 1fr); justify-items:center; align-items:center; gap:2px; width:max-content; max-width:270px; background:#fffef8; border:1.5px solid #d9b64a; border-radius:18px; padding:6px 8px; box-shadow:0 8px 26px rgba(90,60,10,.5); }
 .sohbet-tepki-secici.alt{ transform:translate(-50%,0); } /* parmak en üstteyse ALTINA aç (yukarı taşmasın) */
