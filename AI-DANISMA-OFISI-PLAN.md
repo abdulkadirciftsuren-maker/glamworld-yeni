@@ -134,3 +134,12 @@
 
 ## 13. KAYITLAR
 - Nerede, ne zaman, ne şekilde kayıt/satın alma yapıldıysa `AI-DANISMA-KAYITLAR.md` dosyasına yazılır (her oturumda okunur).
+
+## 14. ÖDEME KONUSU (10 Kas 2026 konuşması — karar bekliyor)
+- Code kullanıcıya anlattı: Gewerbe kaydı, Kleinunternehmer (§19 UStG: önceki yıl ≤ 25.000 €, bu yıl ≤ 100.000 €),
+  AB içi dijital satışta 10.000 € sınırı/OSS, gelir vergisi; Steuerberater'a bir kez danışma önerildi.
+- İki yol: (A) Stripe — vergi (KDV) işini kendimiz yönetiriz; (B) "satıcıyı biz değil aracı şirket yapar" (Merchant of Record:
+  Paddle / Lemon Squeezy gibi) — dünya çapındaki KDV'yi onlar öder, kesinti biraz yüksek (~%5 + 0,50 $). Code önerisi: B ile başla.
+- Kullanıcıya sorulanlar: oturum izni serbest çalışmaya izin veriyor mu, Alman banka hesabı (IBAN) var mı,
+  fincanla/bebelumo'da daha önce satış/Gewerbe oldu mu.
+- ⚠️ Kullanıcı Namecheap'i Ukrayna kartıyla ödedi; kart bilgisi DOSYALARA yazılmaz.

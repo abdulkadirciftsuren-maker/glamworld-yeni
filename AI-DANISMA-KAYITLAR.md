@@ -24,7 +24,8 @@
 - Alınmayanlar (bilerek): hosting, e-posta, PremiumDNS, SSL, SEO vb. — site barındırma ücretsiz olarak bizim tarafta kurulacak.
 - YAPILACAKLAR:
   1. [x] Doğrulama: Domain List'te uyarı YOK (10 Kas 2026) → gerek yok (aynı hesapta bebelumo.com da var, e-posta zaten doğrulu).
-  2. [ ] Namecheap Profil → varsayılan adres yeni adrese güncellenecek (alan adı sahip bilgisi için).
+  2. [x] Namecheap Profil → Birincil Adres yeni adrese güncellendi (10 Kas 2026).
+  2b. [ ] dokumentem.com'un kendi sahip bilgisi (Manage → Contacts) eski adreste kalmış olabilir → acil değil, sonra kontrol.
   3. [ ] DNS ayarı — site kurulunca (şimdi DOKUNMA).
 
 ## 2. Hesaplar (henüz açılmadı)
