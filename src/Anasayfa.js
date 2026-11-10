@@ -8956,9 +8956,13 @@ export default function Anasayfa({ pro = false }) {
     if (!p.id) { setTfSira({ i: -1, n: 0 }); return; }
     if (!tfListeRef.current.some((x) => x.id === p.id)) {
       const sahip = p.uid || p.sahipUid || "";
+      // AYRI SIRALAR (10 Kas — kullanıcı: "videolar ayrı, fotoğraflar ayrı olsun"): video açıldıysa sırada SADECE videolar,
+      //   fotoğraf açıldıysa SADECE fotoğraflar gezilir.
+      const videoSirasi = !!p.video;
+      const ayniTur = (x) => (videoSirasi ? !!x.video : !x.video);
       const kur = (ekler) => {
         const gor = new Set(); const hepsi = [];
-        [...(ekler || []), ...(uyePostlar || []), ...(gonderilerim || []), ...(gercekAkis || [])].forEach((x) => { if (tfFotoMu(x) && !gor.has(x.id)) { gor.add(x.id); hepsi.push(x); } });
+        [...(ekler || []), ...(uyePostlar || []), ...(gonderilerim || []), ...(gercekAkis || [])].forEach((x) => { if (tfFotoMu(x) && ayniTur(x) && !gor.has(x.id)) { gor.add(x.id); hepsi.push(x); } });
         const sahipMi = (x) => !!sahip && (x.uid === sahip || x.sahipUid === sahip);
         const ayni = hepsi.filter(sahipMi).sort((a, b) => (b.zamanMs || 0) - (a.zamanMs || 0));
         const diger = hepsi.filter((x) => !sahipMi(x));
