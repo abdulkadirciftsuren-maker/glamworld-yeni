@@ -148,3 +148,51 @@
   kimlik doğrulama kodu girildi). Şu an o sitelerde gelir YOK. Gewerbe kaydı yok.
 - Code önerisi: TEK Gewerbe kaydı üç siteyi de kapsar (reklam/ortaklık gelirleri + dijital ürün satışı), Kleinunternehmer seçilir;
   ilk gelirden ÖNCE yapılır. Para toplama: aracı satıcı (Paddle / Lemon Squeezy gibi) → Alman IBAN'a ödeme. Kullanıcı onayı bekleniyor.
+
+## 15. ✅ ONAYLANAN KARARLAR (10 Kas 2026)
+1. **Marka:** Dokumentem — dokumentem.com (alındı).
+2. **Ödeme:** tek Gewerbe kaydı (3 siteyi kapsar) + Kleinunternehmer; para aracı satıcıyla (Paddle / Lemon Squeezy gibi) → Alman IBAN.
+3. **İlk ülke:** Almanya formları; açıklama dilleri Türkçe, Ukraynaca, Rusça, Arapça, İngilizce (+ Almanca). Türkiye formları sonra.
+4. **Fiyatlar:** boş form + açıklama ücretsiz · doldurulmuş tek form 2,99 € · abonelik 5,99 €/ay · yıllık 49 €.
+5. **Tasarım:** siyah yasağı YOK; yuvarlak düğme/avatar yok, yazı kesilmez kayar (CLAUDE.md kuralları geçerli).
+
+## 16. 📋 AŞAMA 1 — İŞ LİSTESİ (kullanıcı onayı BEKLİYOR)
+Kural: TEK seferde TEK iş → Code yapar → önizleme görüntüsü gösterir → kullanıcı onaylar → sonraki.
+
+### A) Kullanıcının yapacakları (Code adım adım anlatır)
+- K1. GitHub'da yeni boş depo: `dokumentem` (Code oturuma bağlar).
+- K2. Firebase'de yeni proje `dokumentem` (Avrupa/Frankfurt) + kullandıkça öde planı (kart) + 5 € bütçe uyarısı.
+- K3. Yapay zekâ (Claude API) hesabı + ~10 $ ön yükleme; anahtar güvenli formla verilir (sohbete yazılmaz).
+- K4. Namecheap'te DNS: dokumentem.com → site (Code hangi kutuya ne yazılacağını söyler).
+- K5. Impressum adresi kararı: Almanya'da sitede ad + adres yazmak ZORUNLU. Ev adresi mi, yoksa ücretli
+  "Impressum/sanal adres" hizmeti mi (~5–15 €/ay)?
+- K6. Gewerbe + Kleinunternehmer (ödeme açılmadan önce).
+- K7. Aracı satıcı başvurusu (site + yasal sayfalar yayında olunca).
+- K8. (Önerilir) Avukat/Steuerberater kısa kontrol: gizlilik metni + vergi.
+
+### B) Code'un yapacakları (sırayla)
+1. **İskelet + "Yakında" sayfası** — ayrı depo, hızlı ve Google'ın okuyabildiği site (her sayfa hazır HTML), Firebase Hosting.
+2. **Tasarım önerisi** — 3 renk/logo seçeneği görüntü olarak; kullanıcı seçer.
+3. **Dil altyapısı** — 6 dil, Arapça sağdan sola; adres yapısı `/tr/...`, `/de/...`.
+4. **Ana sayfa + arama** — "Ne yapmak istiyorsun?" kutusu, kategoriler (aile, iş, oturum, vergi, sağlık, konut).
+5. **Form kataloğu (ilk ~30 Almanya formu)** — her formun ayrı sayfası, 6 dilde: ne işe yarar, kim doldurur, gerekli belgeler,
+   nereye/nasıl gönderilir, son tarih, resmi bağlantı, "son kontrol tarihi". Önce ülke çapındaki formlar
+   (örn. Kindergeld, Kinderzuschlag, Wohngeld, Bürgergeld, Rundfunkbeitrag, Anmeldung, Unterhaltsvorschuss, BAföG,
+   Familienversicherung, Schwerbehindertenausweis, Pflegegrad…); şehre göre değişenler sonra.
+6. **"Formunu yükle → yapay zekâ doldursun"** — kutulu PDF; yapay zekâ kutuları kullanıcının dilinde sorar, forma Almanca yazar.
+7. **Filigranlı önizleme + parmakla imza.**
+8. **"Resmi yazını anla"** — mektup fotoğrafı → ne diyor, son tarih, ne yapmalı (kendi dilinde).
+9. **Giriş** — e-posta / Google (tek form için şart değil).
+10. **Ödeme** — önce deneme modunda; temiz PDF ödeme doğrulanınca sunucuda üretilir.
+11. **Gizlilik** — açık onay kutusu, belgeler 24 saat sonra otomatik silinir, "her şeyimi sil" düğmesi, Avrupa sunucusu.
+12. **Yasal sayfalar (taslak)** — Impressum, Datenschutz, AGB, Widerruf, "resmi kurum değiliz / hukuki danışmanlık değildir".
+13. **Deneme** — telefon + bilgisayar görünümü, Playwright ile kontrol; kullanıcı kendi telefonunda dener.
+14. **Yayın** — dokumentem.com açılır, Google Search Console + site haritası.
+
+### C) Aşama 1'de OLMAYANLAR (Aşama 2–3)
+Abonelik + kişisel dosya + hatırlatmalar, düz PDF/fotoğraf form, hazır mektuplar (Kündigung/Widerspruch), Türkiye formları,
+Play Store uygulaması, gerçek uzmana sor.
+
+### D) Tahmini maliyet ve süre
+- Aylık: hosting/sunucu ~0 €, yapay zekâ kullanım kadar (başta birkaç €), alan adı yıllık ~14 €.
+- Süre: ~2–3 hafta (adım adım, her adımda kullanıcı onayı).
