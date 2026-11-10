@@ -5,11 +5,12 @@
 //          ilgili kişinin kayıtlı telefon anahtarlarına (fcmTokens) push yollar.
 // KURULUM: Firebase Blaze planı gerekir. Bilgisayarda: firebase deploy --only functions
 
-const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const { getStorage } = require("firebase-admin/storage");
 
 initializeApp();
 const db = getFirestore();
@@ -162,3 +163,91 @@ exports.aramaZiliSilindi = onDocumentDeleted("aramalar/{id}", async (event) => {
   if (!a || a.durum !== "calliyor") return;
   await aramaPushGonder(a.arananUid, { tip: "arama-bitti", aramaId: event.params.id });
 });
+
+// ===================================================================================================================
+// 🎬 VİDEO ÇEVİRİCİ (10 Kas 2026 — kullanıcı onayı: "Evet, videoları çevir, onay veriyorum").
+//   Sorun: yeni telefonlar videoyu HEVC 10-bit HDR (HLG) çekiyor; Redmi gibi telefonların tarayıcısı bu biçimi ÇÖZEMİYOR
+//   (sarı perde, oynamıyor), S25 geç açıyor; dosyalar da çok büyük (99 MB). Çözüm: paylaşımdaki video HEVC / çok büyük /
+//   1280 pikselden büyükse sunucu onu HER TELEFONUN açabildiği H.264 720p'ye çevirir (HDR renkleri ton eşlemeyle doğru
+//   dönüştürülür), yeni dosyayı paylaşıma bağlar. ORİJİNAL DOSYA SİLİNMEZ (paylaşımda videoOrijinal alanında kayıtlı).
+//   Kontrol edilen ve sorunsuz bulunan video "videoKontrol" ile işaretlenir → bir daha bakılmaz.
+const KOVA = "glamworld2.firebasestorage.app";
+const { spawn } = require("child_process");
+const os = require("os");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+
+function calistir(bin, args) {
+  return new Promise((ok, no) => {
+    const p = spawn(bin, args);
+    let cikti = "", hata = "";
+    p.stdout.on("data", (d) => { cikti += d; });
+    p.stderr.on("data", (d) => { hata += d; if (hata.length > 20000) hata = hata.slice(-8000); });
+    p.on("error", no);
+    p.on("close", (k) => (k === 0 ? ok(cikti) : no(new Error("kod " + k + ": " + hata.slice(-600)))));
+  });
+}
+function depoYolu(url) {
+  if (!url || url.indexOf(KOVA) < 0) return null;
+  const m = /\/o\/([^?]+)/.exec(url);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+// Video gerekiyorsa çevirir → yeni adres; gerekmiyorsa "" döner.
+async function videoyuCevir(url) {
+  const yol = depoYolu(url);
+  if (!yol || /_h264\.mp4$/.test(yol)) return "";
+  const ffmpeg = require("ffmpeg-static");
+  const ffprobe = require("ffprobe-static").path;
+  const kova = getStorage().bucket(KOVA);
+  const kaynak = kova.file(yol);
+  const [meta] = await kaynak.getMetadata();
+  const boyut = Number(meta.size || 0);
+  const ad = crypto.randomBytes(6).toString("hex");
+  const giris = path.join(os.tmpdir(), "glox-" + ad + ".in");
+  const cikis = path.join(os.tmpdir(), "glox-" + ad + ".mp4");
+  try {
+    await kaynak.download({ destination: giris });
+    const bilgi = JSON.parse(await calistir(ffprobe, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=codec_name,width,height,color_transfer", "-of", "json", giris]));
+    const v = (bilgi.streams && bilgi.streams[0]) || {};
+    const enUzun = Math.max(Number(v.width || 0), Number(v.height || 0));
+    const gerek = v.codec_name !== "h264" || enUzun > 1280 || boyut > 20 * 1024 * 1024;
+    console.log(`[videoCevir] ${yol} | ${v.codec_name} ${v.width}x${v.height} ${v.color_transfer || ""} | ${Math.round(boyut / 1048576)} MB | cevrilecek=${gerek}`);
+    if (!gerek) return "";
+    const olcek = "scale=w='if(gte(iw,ih),min(iw,1280),-2)':h='if(gte(iw,ih),-2,min(ih,1280))'";
+    const hdr = /arib-std-b67|smpte2084/.test(v.color_transfer || "");
+    const tonEsle = "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv," + olcek + ",format=yuv420p";
+    const duz = olcek + ",format=yuv420p";
+    const kodla = (vf) => calistir(ffmpeg, ["-v", "error", "-y", "-i", giris, "-map", "0:v:0", "-map", "0:a:0?", "-vf", vf,
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "25", "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", cikis]);
+    try { await kodla(hdr ? tonEsle : duz); }
+    catch (e) { if (!hdr) throw e; console.log("[videoCevir] ton eşleme olmadı, düz çeviriliyor:", e.message); await kodla(duz); }
+    const yeniYol = yol.replace(/\.[A-Za-z0-9]+$/, "") + "_h264.mp4";
+    const anahtar = crypto.randomUUID();
+    await kova.upload(cikis, { destination: yeniYol, metadata: { contentType: "video/mp4", cacheControl: "public,max-age=31536000", metadata: { firebaseStorageDownloadTokens: anahtar, gloxKaynak: yol } } });
+    const yeni = `https://firebasestorage.googleapis.com/v0/b/${KOVA}/o/${encodeURIComponent(yeniYol)}?alt=media&token=${anahtar}`;
+    console.log(`[videoCevir] TAMAM ${yol} → ${yeniYol} | ${Math.round(fs.statSync(cikis).size / 1048576)} MB`);
+    return yeni;
+  } finally {
+    try { fs.unlinkSync(giris); } catch (e) {}
+    try { fs.unlinkSync(cikis); } catch (e) {}
+  }
+}
+
+exports.videoCevir = onDocumentWritten({ document: "gonderiler/{id}", memory: "2GiB", cpu: 2, timeoutSeconds: 540, maxInstances: 3 }, async (event) => {
+  const sonra = event.data && event.data.after && event.data.after.exists ? event.data.after.data() : null;
+  if (!sonra || !sonra.video || typeof sonra.video !== "string") return;
+  if (sonra.videoKontrol === sonra.video) return; // bu video zaten kontrol edildi / çevrildi
+  const ref = event.data.after.ref;
+  const eski = sonra.video;
+  let yeni = "";
+  try { yeni = await videoyuCevir(eski); }
+  catch (e) { console.error("[videoCevir] HATA", event.params.id, e.message); return; } // bir sonraki güncellemede tekrar denenir
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(ref);
+    if (!s.exists || s.get("video") !== eski) return; // bu arada video değiştiyse dokunma
+    if (yeni) tx.update(ref, { video: yeni, videoOrijinal: eski, videoKontrol: yeni });
+    else tx.update(ref, { videoKontrol: eski });
+  });
+});
+
