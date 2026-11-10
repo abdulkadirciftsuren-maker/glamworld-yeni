@@ -143,3 +143,8 @@
 - Kullanıcıya sorulanlar: oturum izni serbest çalışmaya izin veriyor mu, Alman banka hesabı (IBAN) var mı,
   fincanla/bebelumo'da daha önce satış/Gewerbe oldu mu.
 - ⚠️ Kullanıcı Namecheap'i Ukrayna kartıyla ödedi; kart bilgisi DOSYALARA yazılmaz.
+- 10 Kas 2026 kullanıcı cevabı: Ukrayna'dan geldi, Almanya'da çalışma izni VAR (daha önce 2 yıl çalıştı).
+  Alman banka hesabı/kartı VAR (fincanla.com ve bebelumo.com'a bağlı; Amazon ortaklık + Google reklam başvurusu,
+  kimlik doğrulama kodu girildi). Şu an o sitelerde gelir YOK. Gewerbe kaydı yok.
+- Code önerisi: TEK Gewerbe kaydı üç siteyi de kapsar (reklam/ortaklık gelirleri + dijital ürün satışı), Kleinunternehmer seçilir;
+  ilk gelirden ÖNCE yapılır. Para toplama: aracı satıcı (Paddle / Lemon Squeezy gibi) → Alman IBAN'a ödeme. Kullanıcı onayı bekleniyor.
