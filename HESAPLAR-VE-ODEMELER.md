@@ -55,6 +55,7 @@
 - **⚠️ APP CHECK (5 Kas 2026):** Firebase → App Check → API'ler → **Firebase AI Logic** "Basic – erzwungen" (zorunlu) idi → Gloxoo doğal sesi ve "Üstümde Dene" isteklerini REDDEDİYORDU ("Firebase App Check token is invalid", 401; uygulamada "fetch-error"). Sitemizde App Check hiç kurulu değil. Kullanıcıyla **"Nicht erzwungen (nur Monitoring)"** yapıldı → tekrar çalışıyor.
   - **⏰ GOOGLE 21 OCAK 2027'DE KİLİDİ OTOMATİK YENİDEN AÇACAK.** O güne kadar App Check kurulmalı: web = reCAPTCHA Enterprise (Firebase'de web uygulamasını kaydet + site anahtarı + `initializeAppCheck` firebase.js), Android = Play Integrity (com.gloxorg.twa + com.gloxorg.app kaydı + uygulamaya App Check SDK). Hatırlatma: 7 Aralık 2026.
 - **Ne işe yarar:** Üyelik/giriş, veritabanı (gönderiler, mesajlar, profiller), fotoğraf depolama, bildirim gönderen sunucu programı.
+- **🎬 Video çevirici (10 Kas 2026):** Sunucu programı (videoCevir) videoları H.264 720p'ye çeviriyor (2 GB bellek, video başına ~10–60 sn). Firebase faturasına küçük bir ek getirir. Orijinal videolar silinmediği için depolama biraz büyür.
 - **Nereden girilir:** console.firebase.google.com → glamworld2
 - **Ödeme:** Kullandıkça öde (Blaze). Şu an küçük kullanımda ücret çok düşük veya sıfır. Ödeme profili: **4526-1126-8343 (Almanya, Kyreinstraße 7)**.
 
