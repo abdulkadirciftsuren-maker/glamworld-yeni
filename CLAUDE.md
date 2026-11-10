@@ -10,6 +10,8 @@
 > "yarın unutursun" diye endişelendiği için oraya yazdım. Yeni sorun aramadan o listeden git,
 > her maddeyi bitirince kullanıcıya göster + onay al.
 
+> 📑 **YENİ PROJE — `AI-DANISMA-OFISI-PLAN.md`:** Canlı Akış'ın yerine gelecek bağımsız "AI Danışma Ofisi" (dünyadaki formları bul/AI ile doldur/öde-indir) planı. Konu açılınca önce bu dosyayı oku.
+
 > 💳 **HESAPLAR VE ÖDEMELER — her oturumda `HESAPLAR-VE-ODEMELER.md` dosyasını da oku.** Hangi hizmet nerede, hangisi
 > paralı, ne zaman bitiyor, ne zaman hatırlatılacak orada yazılı. Kullanıcı "arama/Gloxoo çalışmıyor" derse ÖNCE oradaki
 > "bir şey bozulursa" tablosuna bak (çoğu zaman bir bakiye bitmiştir). Hesapla ilgili yeni bir şey olunca o dosyayı güncelle.
