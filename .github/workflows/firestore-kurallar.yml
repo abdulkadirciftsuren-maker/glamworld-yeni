@@ -1,0 +1,60 @@
+# GLOXORG — VERİTABANI KURALLARINI (firestore.rules) Firebase'e yükler (B474, Canlı Ders için yeni "canliYayinlar" kuralı).
+# Eskiden kullanıcı kuralları Firebase sitesine elle yapıştırıyordu. GÜVENLİK: yüklemeden ÖNCE sitedeki GEÇERLİ kurallar
+# indirilir; depodaki dosyanın yeni bölümler (B474+) çıkarılmış hâliyle AYNI değilse (yani biri sitede elle başka bir şey
+# değiştirdiyse) YÜKLEME YAPILMAZ, fark ekrana yazılır → hiçbir kural yanlışlıkla ezilmez.
+name: GLOXORG veritabani kurallari
+on:
+  push:
+    branches: ["claude/glamworld-rules-review-0kzl0x"]
+    paths: ["firestore.rules", ".github/workflows/firestore-kurallar.yml"]
+  workflow_dispatch: {}
+jobs:
+  kurallar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Hizmet hesabi anahtarini yaz
+        env:
+          SA: ${{ secrets.FIREBASE_SA }}
+        run: |
+          if [ -z "$SA" ]; then echo "HATA: FIREBASE_SA secret yok"; exit 1; fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+      - name: Sitedeki gecerli kurallari indir ve karsilastir
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          mkdir -p /tmp/k && cd /tmp/k && npm init -y >/dev/null && npm i google-auth-library@9 --no-audit --no-fund >/dev/null 2>&1
+          cat > k.js <<'JS'
+          const { GoogleAuth } = require("google-auth-library");
+          const fs = require("fs");
+          (async () => {
+            const c = await new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/cloud-platform"] }).getClient();
+            const r = await c.request({ url: "https://firebaserules.googleapis.com/v1/projects/glamworld2/releases/cloud.firestore" });
+            const rs = await c.request({ url: "https://firebaserules.googleapis.com/v1/" + r.data.rulesetName });
+            fs.writeFileSync("/tmp/k/canli.rules", rs.data.source.files[0].content);
+            console.log("gecerli kural seti:", r.data.rulesetName, "| guncelleme:", r.data.updateTime);
+          })().catch((e) => { console.log("HATA:", e.message); process.exit(1); });
+          JS
+          node k.js
+          python3 - <<'PY'
+          import re, sys
+          canli = open("/tmp/k/canli.rules", encoding="utf-8").read()
+          depo = open("${{ github.workspace }}/firestore.rules", encoding="utf-8").read()
+          eski = re.sub(r"    // CANLI DERS \(B474\).*?\n\n(?=    // Cüzdanlar)", "", depo, flags=re.S)
+          n = lambda s: re.sub(r"\s+", " ", s).strip()
+          if n(canli) in (n(eski), n(depo)):
+              print("TAMAM: sitedeki kurallar depodakiyle ayni (yeni bolumler haric) -> yuklenebilir"); sys.exit(0)
+          import difflib
+          print("DUR: sitedeki kurallar depodakinden FARKLI. Fark:")
+          for s in difflib.unified_diff(eski.splitlines(), canli.splitlines(), "depo", "site", lineterm=""): print(s)
+          sys.exit(1)
+          PY
+      - name: Kurallari yukle
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          npm install -g firebase-tools@13.29.1
+          firebase deploy --only firestore:rules --project glamworld2 --non-interactive

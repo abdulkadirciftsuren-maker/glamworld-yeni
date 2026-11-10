@@ -207,6 +207,28 @@ service cloud.firestore {
       }
     }
 
+    // CANLI DERS (B474) — canlı yayınlar: herkes OKUR (listede görünsün); yayıncı KENDİ yayınını açar/günceller/bitirir.
+    // Başkaları SADECE kalp sayacını artırabilir. Yayıncı yorum silebilir, kişiyi çıkarabilir (engelliler); çıkarılan yorum yazamaz.
+    match /canliYayinlar/{id} {
+      allow read: if true;
+      allow create: if girisli() && request.resource.data.yayinciUid == request.auth.uid && request.resource.data.durum == "canli";
+      allow update: if girisli() && (
+        resource.data.yayinciUid == request.auth.uid
+        || yonetici()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kalp'])
+      );
+      allow delete: if girisli() && (resource.data.yayinciUid == request.auth.uid || yonetici());
+      match /yorumlar/{yid} {
+        allow read: if true;
+        allow create: if girisli() && request.resource.data.uid == request.auth.uid
+                      && request.resource.data.metin is string && request.resource.data.metin.size() <= 300
+                      && !(request.auth.uid in get(/databases/$(database)/documents/canliYayinlar/$(id)).data.get('engelliler', []));
+        allow delete: if girisli() && (resource.data.uid == request.auth.uid || yonetici()
+                      || get(/databases/$(database)/documents/canliYayinlar/$(id)).data.yayinciUid == request.auth.uid);
+        allow update: if false;
+      }
+    }
+
     // Cüzdanlar — sadece sahibi OKUR; yazma SADECE sunucu (Cloud Functions) (FAZ 3)
     match /cuzdanlar/{uid} {
       allow read: if sahip(uid);

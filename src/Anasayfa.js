@@ -44,6 +44,7 @@ const tembel = (yukle) => lazy(() => yukle().catch((e) => {
   throw e;
 }));
 const ElitePazar = tembel(() => import("./ElitePazar"));
+const CanliDers = tembel(() => import("./CanliDers")); // B474: Canlı Akış yerine canlı ders/danışmanlık
 const KonumHarita = tembel(() => import("./KonumHarita"));
 const AdresHarita = tembel(() => import("./AdresHarita"));
 const AkademiSayfa = tembel(() => import("./AkademiSayfa"));
@@ -1205,19 +1206,19 @@ const SAYFA_ACIKLAMA = {
     hi: "यह समुदाय है — साथियों से मिलने की जगह। जल्द आ रहा है।",
   },
   video: {
-    tr: "Burası Canlı Akış — kısa videolar. Yukarı kaydırarak izler, beğenir ve paylaşırsın.",
-    en: "This is Live Feed — short videos. Swipe up to watch, like and share.",
-    de: "Das ist der Live-Feed — kurze Videos. Nach oben wischen zum Ansehen, Liken und Teilen.",
-    fr: "C'est le Flux Live — des vidéos courtes. Glisse vers le haut pour regarder, aimer et partager.",
-    es: "Esto es Feed en Vivo — vídeos cortos. Desliza hacia arriba para ver, dar me gusta y compartir.",
-    it: "Questo è il Feed Live — video brevi. Scorri in alto per guardare, mettere mi piace e condividere.",
-    pt: "Isto é o Feed ao Vivo — vídeos curtos. Desliza para cima para ver, gostar e partilhar.",
-    ru: "Это Живая лента — короткие видео. Смахивай вверх, чтобы смотреть, лайкать и делиться.",
-    uk: "Це Жива стрічка — короткі відео. Гортай угору, щоб дивитися, вподобати й ділитися.",
-    ar: "هذه صفحة البث المباشر — مقاطع قصيرة. اسحب للأعلى للمشاهدة والإعجاب والمشاركة.",
-    zh: "这里是直播流——短视频。向上滑动即可观看、点赞和分享。",
-    ja: "ここはライブフィード——短い動画です。上にスワイプして視聴・いいね・共有。",
-    hi: "यह लाइव फ़ीड है — छोटे वीडियो। देखने, लाइक और शेयर करने के लिए ऊपर स्वाइप करो।",
+    tr: "Burası Canlı Ders — uzmanlar canlı yayında ders veriyor. İzle, soru sor, kalp at; meslek sahibiysen sen de canlı yayın aç.",
+    en: "This is Live Classes — experts teach live. Watch, ask questions, send hearts; if you are a professional, go live yourself.",
+    de: "Das ist Live-Kurse — Experten unterrichten live. Schau zu, stell Fragen, schick Herzen; als Profi kannst du selbst live gehen.",
+    fr: "Voici Cours en direct — des experts enseignent en direct. Regarde, pose des questions, envoie des cœurs ; pro ? lance ton direct.",
+    es: "Esto es Clases en vivo — expertos enseñan en directo. Mira, pregunta, envía corazones; si eres profesional, emite tú también.",
+    it: "Questo è Lezioni dal vivo — esperti insegnano in diretta. Guarda, fai domande, invia cuori; se sei un professionista, vai in diretta.",
+    pt: "Isto é Aulas ao vivo — especialistas ensinam em direto. Vê, pergunta, envia corações; se és profissional, faz tu um direto.",
+    ru: "Это Живые уроки — эксперты ведут эфиры. Смотри, задавай вопросы, ставь сердечки; если ты профессионал — выходи в эфир сам.",
+    uk: "Це Живі уроки — експерти ведуть ефіри. Дивись, питай, став сердечка; якщо ти професіонал — виходь в ефір сам.",
+    ar: "هذه الدروس المباشرة — خبراء يعلّمون على الهواء. شاهد واسأل وأرسل القلوب؛ وإن كنت محترفًا فابدأ بثّك المباشر.",
+    zh: "这里是直播课堂——专家在线直播授课。观看、提问、送爱心；如果你是专业人士，也可以开直播。",
+    ja: "ここはライブ講座——専門家がライブで教えています。見て、質問して、ハートを送ろう。プロならあなたも配信できます。",
+    hi: "यह लाइव क्लास है — विशेषज्ञ लाइव सिखाते हैं। देखो, सवाल पूछो, दिल भेजो; अगर तुम प्रोफ़ेशनल हो तो खुद लाइव जाओ।",
   },
   akademi: {
     tr: "Burası Akademi — her meslek için eğitim. Bir mesleğe gir: Gloxoo temel eğitimi verir, çeşitleri tek tek ölçüsüyle öğretir, imalathane/fabrika kurulumu ve fizibiliteyi anlatır, ciddi bir sınavdan geçirir; işini gösterip doğrulanabilir GLOXORG sertifikanı alırsın.",
@@ -1888,7 +1889,6 @@ export default function Anasayfa({ pro = false }) {
   const akisMuzikUrlRef = useRef("");                           // o an çalan müziğin url'i (boşuna baştan başlatmayalım)
   const [reelAktif, setReelAktif] = useState(0);                // o an ekranda olan reel index
   const reelsAcikRef = useRef(reelsAcik); useEffect(() => { reelsAcikRef.current = reelsAcik; }, [reelsAcik]);
-  const [canliYayinBilgi, setCanliYayinBilgi] = useState(false); // "Canlı yayın başlat" bilgi kutusu (gerçek canlı yayın yakında)
   const reelSarRef = useRef(null);                              // reels kaydırma kabı
   const [kaydetSet, setKaydetSet] = useState(() => { try { return new Set(JSON.parse(localStorage.getItem("groxKaydet") || "[]")); } catch (e) { return new Set(); } });
   const [yorumAcik, setYorumAcik] = useState(null);    // yorum penceresi açık gönderi
@@ -2744,7 +2744,7 @@ export default function Anasayfa({ pro = false }) {
   // otomatik=true → ilk-giriş otomatik anlatımı: mikrofonu ZORLA açmaz (kullanıcıyı boğmaz); düğmeyle açılınca canlı dinler.
   const eksperTanitYap = (otomatik) => {
     const ak = mevcutSayfaKodu();
-    const sayfaAdlar = { home: "Ana sayfa / Keşfet", ara: "Arama", konum: "Konum", mesaj: "Mesajlar", profil: "Profil", paylas: "Paylaşım", ayarlar: "Ayarlar", bildirim: "Bildirimler", elite: "Elite", topluluk: "Topluluk", video: "Canlı Akış", akademi: "Akademi", ayna: "Sanal Ayna", muhasebe: "Muhasebe" };
+    const sayfaAdlar = { home: "Ana sayfa / Keşfet", ara: "Arama", konum: "Konum", mesaj: "Mesajlar", profil: "Profil", paylas: "Paylaşım", ayarlar: "Ayarlar", bildirim: "Bildirimler", elite: "Elite", topluluk: "Topluluk", video: "Canlı Ders", akademi: "Akademi", ayna: "Sanal Ayna", muhasebe: "Muhasebe" };
     const sayfaAd = sayfaAdlar[ak] || "Ana sayfa / Keşfet";
     setYardimciBaglam(`Kullanıcı şu an GLOXORG "${sayfaAd}" sayfasında; bu sayfanın uzmanı gibi yardım et.`);
     const ad = hitapAdi(); const _ea = (ad && ad.indexOf("@") < 0 && ad !== "dostum") ? " " + ad.split(" ")[0] : "";
@@ -9312,7 +9312,7 @@ export default function Anasayfa({ pro = false }) {
     { k: "home", et: t("navAnaSayfa"), aktif: true },
     { k: "elite", et: t("navElite") },
     { k: "topluluk", et: t("navTopluluk") },
-    { k: "video", et: t("navCanli", "Canlı Akış") },
+    { k: "video", et: t("navCanliDers", "Canlı Ders") },
     { k: "konum", et: t("navKonum") },
     { k: "akademi", et: t("navAkademi") },
     { k: "profil", et: t("navProfil") },
@@ -10431,49 +10431,23 @@ export default function Anasayfa({ pro = false }) {
           )}
         </div>
       ) : aktifKod === "video" ? (
-        /* CANLI AKIŞ — (1) kısa videolar (şimdi) + (2) gerçek canlı yayın (yakında, paralı servis) */
-        <div className="ana-pencere cy-pencere" key="video">
-          {/* CANLI YAYIN bölümü */}
-          <div className="cy-hero">
-            <div className="cy-hero-sol">
-              <div className="cy-hero-ust"><span className="cy-nokta" aria-hidden="true" /> {t("cyCanli", "CANLI YAYIN")}</div>
-              <div className="cy-hero-alt">{t("cyHeroAlt", "Telefonundan canlı yayın aç, herkes seni anlık izlesin.")}</div>
-            </div>
-            <button className="cy-baslat" onClick={() => setCanliYayinBilgi((v) => !v)}>🔴 {t("cyBaslat", "Canlı yayın başlat")}</button>
-          </div>
-          {canliYayinBilgi && (
-            <div className="cy-bilgi">
-              <b>🔴 {t("cyYakindaBas", "Gerçek canlı yayın çok yakında!")}</b>
-              <p>{t("cyYakinda", "Bunun için özel bir canlı-yayın servisi kuruluyor (izleyicilere anlık, kesintisiz video). Hazır olunca buradan tek dokunuşla canlı yayın açacaksın. Şimdilik aşağıdaki kısa videoları izle, kendi videonu paylaş.")}</p>
-              <button className="cy-bilgi-kapat" onClick={() => setCanliYayinBilgi(false)}>{t("anladim", "Anladım")}</button>
-            </div>
-          )}
-          {/* KISA VİDEOLAR */}
-          <div className="cy-bas-satir">
-            <div className="cy-bas">📹 {t("cyKisaVideolar", "Kısa Videolar")}</div>
-            <button className="cy-paylas" onClick={() => setPaylasAcik(true)}>＋ {t("cyVideoPaylas", "Video paylaş")}</button>
-          </div>
-          {reelListesi.length === 0 ? (
-            <div className="cy-bos">
-              <span className="cy-bos-ik" aria-hidden="true">🎬</span>
-              <div className="cy-bos-yazi">{t("cyBosYazi", "Henüz kısa video yok. İlk videoyu sen paylaş!")}</div>
-              <button className="cy-bos-btn" onClick={() => setPaylasAcik(true)}>＋ {t("cyVideoPaylas", "Video paylaş")}</button>
-            </div>
-          ) : (
-            <div className="cy-izgara">
-              {reelListesi.map((r, i) => (
-                <button className="cy-kare" key={r.id || i} onClick={() => { setReelAktif(i); setReelsAcik(true); }}>
-                  <video className="cy-vid" src={videoSade(r._reelVideo)} poster={r._reelPoster || undefined} muted playsInline preload="metadata" tabIndex={-1} />
-                  <span className="cy-oynat" aria-hidden="true">▶</span>
-                  {typeof r.begeni === "number" && r.begeni > 0 && <span className="cy-begeni">❤ {r.begeni}</span>}
-                  <span className="cy-alt">
-                    <span className="cy-avatar">{r.foto ? <img src={r.foto} alt="" referrerPolicy="no-referrer" /> : (r.ad || "?").slice(0, 1).toUpperCase()}</span>
-                    <span className="cy-ad">{r.ad || ""}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+        /* GLOXORG CANLI — canlı ders + canlı danışmanlık (B474; eski "kısa videolar" kaldırıldı, videolar Makara'da) */
+        <div className="ana-pencere" key="video">
+          <Suspense fallback={<div style={{ padding: "48px 20px", textAlign: "center", color: "#c9bdf5", fontWeight: 800, fontSize: 16 }}>🎥 …</div>}>
+            <CanliDers
+              uid={(u && u.uid) || ""}
+              benAd={benimAdGetir()}
+              benFoto={(profilBilgi && profilBilgi.fotoUrl) || ""}
+              meslekler={proMeslekDizi}
+              dil={dil}
+              tokenAl={livekitTokenAl}
+              uyeyiAc={uyeyiAc}
+              profilimeGit={() => setAktifKod("profil")}
+              onPencere={setPazarPencereAcik}
+              kapatRef={pazarKapatRef}
+              bilgi={bilgiBalonu}
+            />
+          </Suspense>
         </div>
       ) : aktifKod === "elite" ? (
         /* ELİTE PAZAR — ürün ilanları (al, sat, kazan) + Gloxoo her yerde */

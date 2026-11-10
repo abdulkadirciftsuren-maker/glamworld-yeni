@@ -252,3 +252,19 @@ exports.videoCevir = onDocumentWritten({ document: "gonderiler/{id}", memory: "2
   });
 });
 
+
+// 🎥 CANLI DERS (B474) — biri canlı yayın açınca TAKİPÇİLERİNE "X şu an canlı yayında" bildirimi (en çok 400 kişi).
+exports.canliYayinBildirim = onDocumentCreated("canliYayinlar/{id}", async (event) => {
+  const y = event.data && event.data.data();
+  if (!y || !y.yayinciUid || y.durum !== "canli") return;
+  let takipciler = [];
+  try {
+    const s = await db.collection("takipler").where("hedefUid", "==", y.yayinciUid).limit(400).get();
+    takipciler = s.docs.map((d) => d.get("takipciUid")).filter((u) => u && u !== y.yayinciUid);
+  } catch (e) { console.error("[canliYayin] takipci okunamadi:", e); return; }
+  console.log(`[canliYayin] yayin=${event.params.id} | takipci=${takipciler.length}`);
+  const govde = "🔴 şu an canlı yayında" + (y.baslik ? ": " + String(y.baslik).slice(0, 80) : "") + " — izlemek için dokun";
+  for (let i = 0; i < takipciler.length; i += 20) {
+    await Promise.all(takipciler.slice(i, i + 20).map((u) => pushGonder(u, y.ad || "GLOXORG", govde, { tip: "canli", yayinId: event.params.id, foto: y.foto || "" })));
+  }
+});
