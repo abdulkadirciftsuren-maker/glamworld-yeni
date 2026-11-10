@@ -1,0 +1,45 @@
+# GLOXORG — ESKİ VİDEOLARI BİR KEZ ÇEVİRT (kullanıcı onayı 10 Kas 2026: "Evet, videoları çevir, onay veriyorum").
+# Sunucudaki videoCevir programı bir paylaşım DEĞİŞİNCE çalışır. Eski videolu paylaşımlar kendiliğinden değişmediği için
+# bu iş her birine SADECE "videoKontrolIste" (zaman) alanını yazar → sunucu videoyu kontrol eder, gerekiyorsa H.264'e çevirir.
+# Başka HİÇBİR alana dokunmaz, video dosyası silinmez. Sunucu boğulmasın diye dakikada bir paylaşım. Kişisel bilgi yazdırılmaz.
+name: Eski videolari cevirt (bir kerelik)
+on:
+  push:
+    branches: ["claude/glamworld-rules-review-0kzl0x"]
+    paths: [".github/workflows/video-cevir-eski.yml"]
+  workflow_dispatch: {}
+jobs:
+  durt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Eski videolu paylasimlari sirayla durt
+        env:
+          SA: ${{ secrets.FIREBASE_SA }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          mkdir -p /tmp/k && cd /tmp/k && npm init -y >/dev/null && npm i firebase-admin@12 --no-audit --no-fund >/dev/null 2>&1
+          cat > k.js <<'JS'
+          const admin = require("firebase-admin");
+          admin.initializeApp({ credential: admin.credential.cert(require(process.env.RUNNER_TEMP + "/sa.json")) });
+          const db = admin.firestore();
+          const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
+          (async () => {
+            const snap = await db.collection("gonderiler").where("video", ">", "").select("video", "videoKontrol").get();
+            const liste = snap.docs.filter((d) => d.get("video") && d.get("videoKontrol") !== d.get("video"));
+            console.log("videolu paylasim:", snap.size, "| kontrol edilecek:", liste.length);
+            let i = 0;
+            for (const d of liste) {
+              i++;
+              await d.ref.update({ videoKontrolIste: admin.firestore.FieldValue.serverTimestamp() });
+              console.log(i + "/" + liste.length, "durtuldu:", d.id.slice(0, 6) + "…");
+              if (i < liste.length) await bekle(60000);
+            }
+            await bekle(120000);
+            const son = await db.collection("gonderiler").where("video", ">", "").select("video", "videoKontrol", "videoOrijinal").get();
+            let cevrildi = 0, sorunsuz = 0, bekliyor = 0;
+            son.docs.forEach((d) => { if (d.get("videoOrijinal")) cevrildi++; else if (d.get("videoKontrol") === d.get("video")) sorunsuz++; else bekliyor++; });
+            console.log("SONUC -> cevrildi:", cevrildi, "| zaten uygun:", sorunsuz, "| henuz bitmedi:", bekliyor);
+          })().catch((e) => { console.log("HATA:", e.message); process.exit(1); });
+          JS
+          node k.js
