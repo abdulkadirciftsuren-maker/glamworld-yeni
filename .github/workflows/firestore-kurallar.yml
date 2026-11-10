@@ -44,7 +44,8 @@ jobs:
           canli = open("/tmp/k/canli.rules", encoding="utf-8").read()
           depo = open("${{ github.workspace }}/firestore.rules", encoding="utf-8").read()
           eski = re.sub(r"    // CANLI DERS \(B474\).*?\n\n(?=    // Cüzdanlar)", "", depo, flags=re.S)
-          n = lambda s: re.sub(r"\s+", " ", s).strip()
+          # Açıklama satırları (//) karşılaştırmaya girmez: site elle yapıştırılırken açıklamasız yüklenmiş olabilir.
+          n = lambda s: re.sub(r"\s+", " ", re.sub(r"//[^\n]*", "", s)).strip()
           if n(canli) in (n(eski), n(depo)):
               print("TAMAM: sitedeki kurallar depodakiyle ayni (yeni bolumler haric) -> yuklenebilir"); sys.exit(0)
           import difflib
