@@ -13,6 +13,7 @@
 | 10 Kas 2026 | Namecheap (bakıldı) | mydokuments.com | Boş görünüyor | Aday |
 | 10 Kas 2026 | Namecheap (bakıldı) | dokumentem.com | Boş görünüyor | Aday |
 | 10 Kas 2026 | Namecheap (bakıldı) | dokumentler.com | Boş görünüyor | Aday |
+| 10 Kas 2026 | Namecheap (bakıldı) | documentss.com | Soruldu | Code önermedi: "documents" yazım hatası gibi duruyor, güven/sahte site izlenimi |
 
 - Satın alınınca buraya yazılacak: tarih, kaç yıllık, ücret, otomatik yenileme açık mı, bitiş tarihi.
 
