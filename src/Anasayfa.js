@@ -4097,16 +4097,30 @@ export default function Anasayfa({ pro = false }) {
     const id = await aramaOlustur({ arayanUid: uu.uid, arayanAd: benimAd, arayanFoto: bildirimFotoUrl || "", arananUid: kisi.uid, arananAd: kisi.ad || "", tip, offer: null });
     if (!id) { aramaKapat(false); return; }
     setAktifArama({ id, karsiAd: kisi.ad || "—", karsiFoto: kisi.foto || "", tip });
+    // ⚠️ DURUMU HEMEN DİNLE (10 Kas — kullanıcı: "S25'ten reddettim, Redmi gördü ama BİLGİSAYAR hâlâ arıyor"): eskiden önce
+    //   arama sunucusuna bağlanmak BEKLENİYOR, red/bitti dinlemesi ancak SONRA başlıyordu → bilgisayarda bağlantı uzayınca/takılınca
+    //   "reddetti" haberi hiç duyulmuyordu. Artık dinleme arama oluşur oluşmaz başlar; bağlantı YANDA sürer, KABUL gelince beklenir.
     // Odaya mikrofonsuz bağlan (yerelStreamRef henüz boş → yayın yapmaz, sadece bağlanır). Karşı taraf açınca yayınlayacağız.
-    try { await livekitBaglan(id); } catch (e) { bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); return; }
-    // Firebase = ZİL/DURUM sinyali: KABUL → mikrofonu aç + yayınla; RED/BİTTİ → kapat.
+    let bitti = false;
+    const baglantiP = livekitBaglan(id).then((oda) => {
+      // Arama bu arada reddedildi/bitti ise geç tamamlanan bağlantıyı açık bırakma
+      if (bitti && !(aktifAramaRef.current && aktifAramaRef.current.id === id)) { try { if (oda) oda.disconnect(); } catch (e) {} return false; }
+      return true;
+    }, () => {
+      if (!bitti && aktifAramaRef.current && aktifAramaRef.current.id === id) { bitti = true; bilgiBalonu(t("aramaSunucu", "Arama sunucusuna bağlanılamadı, tekrar deneyin.")); aramaKapat(); }
+      return false;
+    });
+    // Firebase = ZİL/DURUM sinyali: KABUL → (bağlantıyı bekle) mikrofonu aç + yayınla; RED/BİTTİ → kapat.
     let baglandi = false;
     const ab1 = aramaDinle(id, async (a) => {
-      if (!a) { aramaKapat(false); return; }
-      if (a.durum === "red") { aramaReddedildiRef.current = true; bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); return; }
-      if (a.durum === "bitti") { aramaKapat(false); return; }
+      if (bitti) return;
+      if (!a) { bitti = true; aramaKapat(false); return; }
+      if (a.durum === "red") { bitti = true; aramaReddedildiRef.current = true; bilgiBalonu((kisi.ad || "Kişi") + " " + t("aramaReddetti", "aramayı reddetti")); aramaKapat(false); return; }
+      if (a.durum === "bitti") { bitti = true; aramaKapat(false); return; }
       if (a.durum === "kabul" && !baglandi) {
         baglandi = true;
+        const odaTamam = await baglantiP;
+        if (!odaTamam || bitti) return;
         try { await medyaAl(tip); } catch (e) { bilgiBalonu(t("aramaIzin", "Arama için kamera/mikrofon izni gerekli.")); aramaKapat(); return; }
         await livekitYayinla();
       }
