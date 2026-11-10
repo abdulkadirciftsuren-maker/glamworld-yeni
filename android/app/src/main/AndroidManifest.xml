@@ -55,6 +55,16 @@
             </intent-filter>
         </activity>
 
+        <!-- 📞 Anında açılan arama ekranı (kilitte de görünür, ekranı yakar; son uygulamalarda görünmez) -->
+        <activity
+            android:name=".AramaEkraniActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity="com.gloxorg.arama"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true" />
+
         <!-- Bildirim servisi: uygulama kapalı/arka plandayken gelen bildirimleri gösterir -->
         <service
             android:name=".GloxMesajServisi"

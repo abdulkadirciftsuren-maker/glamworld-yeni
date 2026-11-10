@@ -19,7 +19,7 @@ import android.os.Build
  * tam ekran açılır. Arama açılınca/reddedilince/arayan vazgeçince "arama-bitti" gelir → zil susar.
  *  - CEVAPLA → uygulama açılır, sayfa aramayı KENDİLİĞİNDEN açar (window.gloxAramaCevapla).
  *  - REDDET  → uygulama arka planda kısaca açılır, sayfa aramayı "red" yapar (arayan "reddetti" görür), uygulama arkaya çekilir.
- *  - Bildirime dokunma / kilit ekranında tam ekran → uygulama açılır, sayfanın kendi arama ekranı (Cevapla/Reddet) görünür.
+ *  - Bildirime dokunma / kilit ekranında tam ekran → ANINDA açılan AramaEkraniActivity (Cevapla/Reddet), sayfayı beklemez.
  */
 object AramaZili {
     const val KANAL = "glox_arama_zili"
@@ -67,7 +67,14 @@ object AramaZili {
             val govde = v["govde"] ?: "📞 Arıyor…"
             val foto = GloxMesajServisi.fotoIndir(v["foto"])
 
-            val ac = acIntent(c, aramaId, false, 7101)
+            // ANINDA AÇILAN arama ekranı (AramaEkraniActivity) — kilitte tam ekran + bildirime dokununca; sayfa yüklenmesini beklemez
+            val ekranI = Intent(c, AramaEkraniActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+                .putExtra(EK_ARAMA, aramaId)
+                .putExtra(AramaEkraniActivity.EK_AD, ad)
+                .putExtra(AramaEkraniActivity.EK_GOVDE, govde)
+                .putExtra(AramaEkraniActivity.EK_FOTO, v["foto"] ?: "")
+            val ac = PendingIntent.getActivity(c, 7101, ekranI, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             val cevapla = acIntent(c, aramaId, true, 7102)
             // REDDET (8 Kas — kullanıcı: "reddettiğim zaman karşı taraf hâlâ arıyor"): eskiden sadece zili susturuyordu.
             // Artık uygulamayı açar → sayfa aramayı veritabanında "red" yapar → arayan "reddetti" görür.
@@ -144,6 +151,7 @@ object AramaZili {
             if (aramaId != null && aktifId != null && aktifId != aramaId) return
             (c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(BILDIRIM_ID)
             aktifId = null
+            AramaEkraniActivity.kapat(aramaId) // açık anında-arama ekranı da kapansın
         } catch (e: Exception) {}
     }
 }
