@@ -19,10 +19,11 @@
 - Satın alma: **10 Kas 2026, 14:38** (Namecheap saati) · Sipariş no: **219179283**
 - Ödenen: **12,28 $** (≈ 10,97 €) = 12,08 $ alan adı + 0,20 $ ICANN ücreti; gizlilik 0 $.
 - Ödeme: kullanıcının **Ukrayna kredi kartı** (bu yüzden makbuzda ülke "UA" görünüyor — sorun değil).
-- Hesap: kullanıcının kendi Namecheap hesabı (kişi adına; şirket yok).
+- Hesap: kullanıcının kendi Namecheap hesabı (kişi adına; şirket yok). Aynı hesapta bebelumo.com da var.
+- Namecheap'te bulma yolu: sağ üst ad → **Kontrol Paneli** → Domain List → dokumentem.com → "Üstesinden gelmek" (Manage).
 - Alınmayanlar (bilerek): hosting, e-posta, PremiumDNS, SSL, SEO vb. — site barındırma ücretsiz olarak bizim tarafta kurulacak.
 - YAPILACAKLAR:
-  1. [ ] Namecheap doğrulama e-postasındaki bağlantıya basıldı mı? (basılmazsa alan adı durdurulur)
+  1. [x] Doğrulama: Domain List'te uyarı YOK (10 Kas 2026) → gerek yok (aynı hesapta bebelumo.com da var, e-posta zaten doğrulu).
   2. [ ] Namecheap Profil → varsayılan adres yeni adrese güncellenecek (alan adı sahip bilgisi için).
   3. [ ] DNS ayarı — site kurulunca (şimdi DOKUNMA).
 
