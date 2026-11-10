@@ -5,17 +5,26 @@
 > ⚠️ Buraya ŞİFRE, kart numarası, kimlik numarası YAZILMAZ — sadece "hangi e-postayla, hangi sitede" yazılır.
 
 ## 1. Alan adları (domain)
-> ⚠️ 10 Kas 2026: HENÜZ HİÇBİR ALAN ADI SATIN ALINMADI. Kullanıcı Namecheap'te bakıyor, Code'a danışıp TEK birini alacak.
+> ✅ 10 Kas 2026: **dokumentem.com SATIN ALINDI** (Namecheap). Diğerlerine sadece bakıldı, alınmadı.
 
 | Tarih | Nerede | Alan adı | Durum | Not |
 |---|---|---|---|---|
 | 10 Kas 2026 | Namecheap (bakıldı) | dokuments.com | ❌ Başkası almış, boş değil | Kullanılamaz |
 | 10 Kas 2026 | Namecheap (bakıldı) | mydokuments.com | Boş görünüyor | Aday |
-| 10 Kas 2026 | Namecheap | **dokumentem.com** | ✅ SEÇİLDİ, sepete kondu (satın alma sürüyor) | İlk yıl 10,79 €/yıl (+ küçük ICANN ücreti = 10,97 €), sonraki yıllar 14,28 €/yıl |
+| 10 Kas 2026 | Namecheap | **dokumentem.com** | ✅ SATIN ALINDI (1 yıl) | Bitiş ≈ 10 Kas 2027 · otomatik yenileme AÇIK · ücretsiz WHOIS gizliliği AÇIK · yenileme ~14,28 €/yıl |
 | 10 Kas 2026 | Namecheap (bakıldı) | dokumentler.com | Boş görünüyor | Aday |
 | 10 Kas 2026 | Namecheap (bakıldı) | documentss.com | Soruldu | Code önermedi: "documents" yazım hatası gibi duruyor, güven/sahte site izlenimi |
 
-- Satın alınınca buraya yazılacak: tarih, kaç yıllık, ücret, otomatik yenileme açık mı, bitiş tarihi.
+### dokumentem.com ayrıntıları
+- Satın alma: **10 Kas 2026, 14:38** (Namecheap saati) · Sipariş no: **219179283**
+- Ödenen: **12,28 $** (≈ 10,97 €) = 12,08 $ alan adı + 0,20 $ ICANN ücreti; gizlilik 0 $.
+- Ödeme: kullanıcının **Ukrayna kredi kartı** (bu yüzden makbuzda ülke "UA" görünüyor — sorun değil).
+- Hesap: kullanıcının kendi Namecheap hesabı (kişi adına; şirket yok).
+- Alınmayanlar (bilerek): hosting, e-posta, PremiumDNS, SSL, SEO vb. — site barındırma ücretsiz olarak bizim tarafta kurulacak.
+- YAPILACAKLAR:
+  1. [ ] Namecheap doğrulama e-postasındaki bağlantıya basıldı mı? (basılmazsa alan adı durdurulur)
+  2. [ ] Namecheap Profil → varsayılan adres yeni adrese güncellenecek (alan adı sahip bilgisi için).
+  3. [ ] DNS ayarı — site kurulunca (şimdi DOKUNMA).
 
 ## 2. Hesaplar (henüz açılmadı)
 | Hizmet | Ne için | Durum |
@@ -29,8 +38,9 @@
 ## 3. Ödemeler / abonelikler
 | Tarih | Ne | Nereye | Tutar | Sonraki ödeme |
 |---|---|---|---|---|
-| — | (henüz ödeme yok) | — | — | — |
+| 10 Kas 2026 | dokumentem.com (1 yıl) | Namecheap | 12,28 $ (≈10,97 €) | ≈ 10 Kas 2027, otomatik (~14,28 €) |
 
 ## 4. Değişiklik geçmişi (bu dosya)
 - 10 Kas 2026 — Dosya oluşturuldu.
 - 10 Kas 2026 — Düzeltme: alan adları ALINMADI, sadece bakıldı; dokuments.com dolu.
+- 10 Kas 2026 — dokumentem.com satın alındı (sipariş 219179283).
