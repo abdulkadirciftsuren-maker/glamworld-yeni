@@ -101,6 +101,7 @@
 |---|---|
 | **Her ayın 1'i** | Hetzner bakiyesi + Anthropic kredisi + Gemini bakiyesi kontrol |
 | **7 Aralık 2026** | **App Check kurulumu** (Google 21 Ocak 2027'de AI Logic kilidini otomatik açacak → Gloxoo sesi/Üstümde Dene durur) |
+| **10 Kas 2026** | Play'e 2.0.25 + tam ekran intent beyanı gönderildi (inceleme bekleniyor) |
 | **10 Ocak 2027** | Play: **satıcı durumu beyanı** (son gün 1 Şubat) + **konum beyanı** (son gün 27 Ocak) |
 | **1 Haziran 2027** | Namecheap: **gloxorg.com yenile** (bitiş 4 Temmuz 2027) |
 
