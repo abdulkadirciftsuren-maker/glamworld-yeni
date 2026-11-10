@@ -11,7 +11,7 @@
 |---|---|---|---|---|
 | 10 Kas 2026 | Namecheap (bakıldı) | dokuments.com | ❌ Başkası almış, boş değil | Kullanılamaz |
 | 10 Kas 2026 | Namecheap (bakıldı) | mydokuments.com | Boş görünüyor | Aday |
-| 10 Kas 2026 | Namecheap (bakıldı) | dokumentem.com | Boş görünüyor | Aday |
+| 10 Kas 2026 | Namecheap | **dokumentem.com** | ✅ SEÇİLDİ, sepete kondu (satın alma sürüyor) | İlk yıl 10,79 €/yıl (+ küçük ICANN ücreti = 10,97 €), sonraki yıllar 14,28 €/yıl |
 | 10 Kas 2026 | Namecheap (bakıldı) | dokumentler.com | Boş görünüyor | Aday |
 | 10 Kas 2026 | Namecheap (bakıldı) | documentss.com | Soruldu | Code önermedi: "documents" yazım hatası gibi duruyor, güven/sahte site izlenimi |
 

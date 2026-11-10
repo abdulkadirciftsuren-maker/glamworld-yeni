@@ -123,7 +123,8 @@
 ## 11. MARKA ADI
 - İlk öneriler: Antrago · Formigo · Amtly · Papeo · Dokumo · Formalo.
 - **10 Kas 2026 — kullanıcı "Dokument" yönünü seçti.** Henüz alan adı ALINMADI. dokuments.com dolu (başkası almış).
-  Adaylar: mydokuments.com, dokumentem.com, dokumentler.com (ayrıntı: `AI-DANISMA-KAYITLAR.md`). Karar bekleniyor.
+  Adaylar: mydokuments.com, dokumentem.com, dokumentler.com.
+- ✅ **KARAR (10 Kas 2026): marka adı DOKUMENTEM, alan adı dokumentem.com** (Namecheap'ten alınıyor; ayrıntı `AI-DANISMA-KAYITLAR.md`).
 
 ## 12. TASARIM KURALLARI (bu proje için — GLOXORG'dan farklı)
 - **Siyah/koyu renk YASAĞI BU PROJEDE YOK** (kullanıcı 10 Kas 2026'da kaldırdı: "siyahı başka sayfada uyguladım, burada
