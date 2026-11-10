@@ -22,6 +22,7 @@
 - ✅ **ONAYLANDI (9 Kas akşam):** Kapalı ekranda arama penceresi AÇILIYOR, arayan kapatınca zil HEMEN duruyor. **Kalan küçük iş:** uzun süre sonra ilk arama biraz geç gidiyor.
 - ✅ **ONAYLANDI (9 Kas):** Sohbetteki arama kayıtlarını silme (B466, basılı tut → 🗑️, gizliAramalar) — kullanıcı denedi, çalışıyor. **DOKUNMA.**
 - ✅ **YAPILDI (9 Kas, B468):** Sanal Ayna model seçeneklerinin TAMAMI 12 dile çevrildi (src/ceviriAyna2.js); Ayna taraması eksik 0, genel t() taraması eksik 0.
+- 🎓 **CANLI AKIŞ YERİNE: CANLI DERS VE DANIŞMANLIK (10 Kas)** — plan: **`CANLI-DERS-PLAN.md`** (kullanıcı kararları bekleniyor: kim yayın açar, Aşama 1 ücretsiz mi, oranlar). AI Danışma Ofisi ayrı konuşmada yürüyor (oturum: 'AI Danışma Ofisi — yeni bağımsız proje').
 - 📑 **YENİ BÜYÜK PROJE (10 Kas): AI DANIŞMA OFİSİ** — Canlı Akış'ın yerine, GLOXORG'dan BAĞIMSIZ, Google'da çıkan form bulma/doldurma/indirme sitesi. Ayrıntılı plan: **`AI-DANISMA-OFISI-PLAN.md`** (her oturumda oku). Kullanıcı kararları bekleniyor (marka/alan adı, Stripe, ilk ülkeler, fiyat). Karar gelmeden KOD YAZMA; Canlı Akış sayfasına DOKUNMA.
 - 🎬 **Canlı Akış sayfası** (Kısa Videolar + Canlı yayın): kullanıcı "çok basit kalıyor, videoların hepsi görünmüyor; TikTok gibi düşündük ama olmadı" dedi → sayfayı başka bir şeye çevirmeyi **kullanıcıyla SONRA konuşacağız**. Kendiliğinden değiştirme.
 - 🐢 Başka telefonlarda hâlâ S25 kadar hızlı değil (kullanıcı yoruldu, şimdilik bekliyor). Asıl çözüm: gönderilerdeki base64 resimleri Storage'a taşımak (kullanıcı onayı gerekli).
