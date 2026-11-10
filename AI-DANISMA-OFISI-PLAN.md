@@ -120,5 +120,17 @@
 - Yapay zekâ: Claude (anlama/doldurma/öneri) + yedek; kişisel veriler sadece gerektiği kadar gönderilir.
 - 13 dil arayüz; formlar kendi dilinde, açıklamalar kullanıcının dilinde.
 
-## 11. MARKA ADI ÖNERİLERİ (müsaitlik henüz kontrol EDİLMEDİ)
-Antrago · Formigo · Amtly · Papeo · Dokumo · Formalo — kullanıcı seçecek, sonra alan adı müsaitliği kontrol edilecek.
+## 11. MARKA ADI
+- İlk öneriler: Antrago · Formigo · Amtly · Papeo · Dokumo · Formalo.
+- **10 Kas 2026 — kullanıcı "Dokument" yönünü seçti** ve Namecheap'ten 3 alan adı aldı: **dokumentler.com, dokumentem.com, dokuments.com**
+  (ayrıntı: `AI-DANISMA-KAYITLAR.md`). Hangisinin ANA ad olacağı kararı bekleniyor (Code'un önerisi: dokuments.com ana,
+  ötekiler ona yönlendirilir).
+
+## 12. TASARIM KURALLARI (bu proje için — GLOXORG'dan farklı)
+- **Siyah/koyu renk YASAĞI BU PROJEDE YOK** (kullanıcı 10 Kas 2026'da kaldırdı: "siyahı başka sayfada uyguladım, burada
+  uygulama; nerede hangi renk lazımsa kullan"). Renkler okunaklılık ve güven hissine göre serbestçe seçilir.
+- Hedef: **güzel, sade, insanların rahat kullandığı bir rehber/belge sayfası.**
+- Dil kuralı aynen geçerli: kullanıcıyla her şey Türkçe.
+
+## 13. KAYITLAR
+- Nerede, ne zaman, ne şekilde kayıt/satın alma yapıldıysa `AI-DANISMA-KAYITLAR.md` dosyasına yazılır (her oturumda okunur).

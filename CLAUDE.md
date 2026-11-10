@@ -10,7 +10,7 @@
 > "yarın unutursun" diye endişelendiği için oraya yazdım. Yeni sorun aramadan o listeden git,
 > her maddeyi bitirince kullanıcıya göster + onay al.
 
-> 📑 **YENİ PROJE — `AI-DANISMA-OFISI-PLAN.md`:** Canlı Akış'ın yerine gelecek bağımsız "AI Danışma Ofisi" (dünyadaki formları bul/AI ile doldur/öde-indir) planı. Konu açılınca önce bu dosyayı oku.
+> 📑 **YENİ PROJE — `AI-DANISMA-OFISI-PLAN.md`:** Canlı Akış'ın yerine gelecek bağımsız "AI Danışma Ofisi" (dünyadaki formları bul/AI ile doldur/öde-indir) planı. Konu açılınca önce bu dosyayı oku. Bu projenin bütün kayıtları (alan adı, hesap, ödeme) `AI-DANISMA-KAYITLAR.md`'de. ⚠️ Siyah yasağı BU projede YOK (kullanıcı kaldırdı).
 
 > 💳 **HESAPLAR VE ÖDEMELER — her oturumda `HESAPLAR-VE-ODEMELER.md` dosyasını da oku.** Hangi hizmet nerede, hangisi
 > paralı, ne zaman bitiyor, ne zaman hatırlatılacak orada yazılı. Kullanıcı "arama/Gloxoo çalışmıyor" derse ÖNCE oradaki
