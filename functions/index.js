@@ -214,7 +214,8 @@ async function videoyuCevir(url) {
     const gerek = v.codec_name !== "h264" || enUzun > 1280 || boyut > 20 * 1024 * 1024;
     console.log(`[videoCevir] ${yol} | ${v.codec_name} ${v.width}x${v.height} ${v.color_transfer || ""} | ${Math.round(boyut / 1048576)} MB | cevrilecek=${gerek}`);
     if (!gerek) return "";
-    const olcek = "scale=w='if(gte(iw,ih),min(iw,1280),-2)':h='if(gte(iw,ih),-2,min(ih,1280))'";
+    // Boyutlar ÇİFT sayı olmalı (H.264 tek sayıyı kabul etmez — 987 px yükseklikli Ayna klipleri bu yüzden çevrilemiyordu)
+    const olcek = "scale=w='if(gte(iw,ih),trunc(min(iw,1280)/2)*2,-2)':h='if(gte(iw,ih),-2,trunc(min(ih,1280)/2)*2)'";
     const hdr = /arib-std-b67|smpte2084/.test(v.color_transfer || "");
     const tonEsle = "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv," + olcek + ",format=yuv420p";
     const duz = olcek + ",format=yuv420p";
