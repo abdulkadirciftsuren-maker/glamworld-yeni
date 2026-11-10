@@ -86,3 +86,39 @@
 2. Stripe hesabını kim, hangi şirket/kişi adına açacak? (Gewerbe/şirket var mı?)
 3. İlk hangi ülkeler? (Öneri: Almanya + Türkiye)
 4. Fiyatlar (öneri: 2,99 € tek form, 5,99 €/ay abonelik).
+
+## 8. KULLANICININ EK İSTEKLERİ (10 Kas, 2. konuşma)
+1. **Kişisel dosya (abone):** Abone bütün bilgilerini bir kez yükler → sayfa her evrakı onun istediği gibi yazar, evrakları
+   orada **saklar** (kişinin dosyası). Kişinin kaydı ve **durumu** (örn. Almanya'da nasıl kalıyor: AB vatandaşı, oturum izni,
+   süresiz oturum, Mavi Kart, öğrenci, iltica, vatandaş…) bilinir; sayfadaki yapay zekâ buna göre **öneriler ve
+   hatırlatmalar** yapar (örn. "oturum iznin 3 ay sonra bitiyor, uzatma formun hazır", "vergi beyannamesi son tarihi",
+   "Kindergeld yenileme").
+   → Bu, en hassas veri türü (kimlik, oturum durumu, sağlık). ŞART: uçtan uca şifreleme, Avrupa sunucusu, açık onay,
+   kullanıcı her an "her şeyimi sil" diyebilmeli, AI sağlayıcılarında veri saklamama ayarı. Yayından önce Datenschutz avukatı.
+2. **GLOXORG'dan tamamen ayrı:** ayrı marka, ayrı site, **ayrı Firebase projesi** (hassas veriler sosyal ağdan ayrı dursun;
+   biri sorun yaşarsa öteki etkilenmesin), **ayrı GitHub deposu**, kendi Android uygulaması → **Play Store'da ayrı yayın**
+   (mevcut geliştirici hesabıyla; ek ücret yok).
+3. **Ödeme durumu:** Kullanıcının fincanla.com ve bebelumo.com sitelerine bağlı Alman kartı var; **şirketi yok**,
+   vergi kimlik numarası (Steuer-ID) verilmiş. Not: Almanya'da düzenli satış için genelde **Gewerbe kaydı** gerekir
+   (Kleinunternehmer olarak; birkaç on euro). Satışa başlamadan önce Steuerberater'a sorulmalı. Stripe kişi adına da açılabilir.
+   ⚠️ Play Store uygulamasının İÇİNDEN abonelik satılırsa Google Play ödeme sistemi zorunlu (abonelikte %15 kesinti).
+   Web sitesinde Stripe. İkisi aynı hesaba bağlanır (web'de ya da uygulamada abone olan her yerde abone sayılır).
+
+## 9. MALİYET (ayrı kurulursa, tahmini)
+- Alan adı: ~10–20 €/yıl.
+- Sunucu (ayrı Firebase projesi, Avrupa): başta **neredeyse 0** (ücretsiz kotalar); kullanıcı arttıkça az ölçüde artar.
+- Yapay zekâ: form başına birkaç kuruş – ~10 kuruş; kişisel dosya özetleri/hatırlatmalar için aylık abone başına birkaç kuruş.
+  → Ücretler (2,99 € / 5,99 €) bunu rahat karşılar.
+- Ödeme kesintisi: Stripe kart başına ~%1,5 + 0,25 € (Avrupa kartları); Play aboneliğinde %15.
+- Play Store: mevcut geliştirici hesabı → ek ücret yok. (iPhone App Store ileride: yıllık ~99 $.)
+- Avukat/vergi danışmanı kontrolü: bir kerelik (kullanıcının kararı).
+
+## 10. YAPI ÖNERİSİ (sağlam)
+- Google'ın okuyabildiği hızlı web sitesi (her form için ayrı sayfa) + aynı kodla telefon uygulaması (Play).
+- Ayrı Firebase projesi: giriş (e-posta/Google), şifreli veritabanı, belge deposu, sunucu programları (doldurma, ödeme doğrulama,
+  hatırlatma), Avrupa bölgesi.
+- Yapay zekâ: Claude (anlama/doldurma/öneri) + yedek; kişisel veriler sadece gerektiği kadar gönderilir.
+- 13 dil arayüz; formlar kendi dilinde, açıklamalar kullanıcının dilinde.
+
+## 11. MARKA ADI ÖNERİLERİ (müsaitlik henüz kontrol EDİLMEDİ)
+Antrago · Formigo · Amtly · Papeo · Dokumo · Formalo — kullanıcı seçecek, sonra alan adı müsaitliği kontrol edilecek.
