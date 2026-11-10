@@ -5,13 +5,16 @@
 > ⚠️ Buraya ŞİFRE, kart numarası, kimlik numarası YAZILMAZ — sadece "hangi e-postayla, hangi sitede" yazılır.
 
 ## 1. Alan adları (domain)
-| Tarih | Nerede | Alan adı | Durum | Bitiş / yenileme | Not |
-|---|---|---|---|---|---|
-| 10 Kas 2026 | Namecheap | dokumentler.com | Alındı (kullanıcı bildirdi) | ? (kullanıcıdan öğrenilecek) | — |
-| 10 Kas 2026 | Namecheap | dokumentem.com | Alındı (kullanıcı bildirdi) | ? | — |
-| 10 Kas 2026 | Namecheap | dokuments.com | Alındı (kullanıcı bildirdi) | ? | Önerilen ANA ad (karar bekliyor) |
+> ⚠️ 10 Kas 2026: HENÜZ HİÇBİR ALAN ADI SATIN ALINMADI. Kullanıcı Namecheap'te bakıyor, Code'a danışıp TEK birini alacak.
 
-- Bütün alan adları **Namecheap**'ten alındı. Otomatik yenileme açık mı → kullanıcıya sorulacak.
+| Tarih | Nerede | Alan adı | Durum | Not |
+|---|---|---|---|---|
+| 10 Kas 2026 | Namecheap (bakıldı) | dokuments.com | ❌ Başkası almış, boş değil | Kullanılamaz |
+| 10 Kas 2026 | Namecheap (bakıldı) | mydokuments.com | Boş görünüyor | Aday |
+| 10 Kas 2026 | Namecheap (bakıldı) | dokumentem.com | Boş görünüyor | Aday |
+| 10 Kas 2026 | Namecheap (bakıldı) | dokumentler.com | Boş görünüyor | Aday |
+
+- Satın alınınca buraya yazılacak: tarih, kaç yıllık, ücret, otomatik yenileme açık mı, bitiş tarihi.
 
 ## 2. Hesaplar (henüz açılmadı)
 | Hizmet | Ne için | Durum |
@@ -25,7 +28,8 @@
 ## 3. Ödemeler / abonelikler
 | Tarih | Ne | Nereye | Tutar | Sonraki ödeme |
 |---|---|---|---|---|
-| 10 Kas 2026 | 3 alan adı | Namecheap | ? | ? |
+| — | (henüz ödeme yok) | — | — | — |
 
 ## 4. Değişiklik geçmişi (bu dosya)
-- 10 Kas 2026 — Dosya oluşturuldu; Namecheap'ten alınan 3 alan adı yazıldı.
+- 10 Kas 2026 — Dosya oluşturuldu.
+- 10 Kas 2026 — Düzeltme: alan adları ALINMADI, sadece bakıldı; dokuments.com dolu.
