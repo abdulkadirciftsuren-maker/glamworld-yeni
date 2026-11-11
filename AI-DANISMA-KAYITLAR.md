@@ -31,7 +31,7 @@
 ## 2. Hesaplar (henüz açılmadı)
 | Hizmet | Ne için | Durum |
 |---|---|---|
-| GitHub (yeni depo) | Yeni projenin kodu | Açılmadı |
+| GitHub (yeni depo) | Yeni projenin kodu | ✅ 11 Kas 2026 açıldı: `abdulkadirciftsuren-maker/dokumentem` (ÖZEL) |
 | Firebase (yeni proje, Avrupa) | Giriş, veritabanı, belge deposu | Açılmadı |
 | Stripe | Web'de ödeme | Açılmadı (Gewerbe kararı bekleniyor) |
 | Google Play (mevcut geliştirici hesabı) | Ayrı uygulama | Mevcut hesap kullanılacak |
@@ -46,3 +46,4 @@
 - 10 Kas 2026 — Dosya oluşturuldu.
 - 10 Kas 2026 — Düzeltme: alan adları ALINMADI, sadece bakıldı; dokuments.com dolu.
 - 10 Kas 2026 — dokumentem.com satın alındı (sipariş 219179283).
+- 11 Kas 2026 — GitHub'da özel `dokumentem` deposu açıldı; plan + kayıtlar oraya da kopyalandı.
