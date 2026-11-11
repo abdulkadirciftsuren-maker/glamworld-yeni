@@ -248,7 +248,7 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
     try {
       const lk = livekitHemen() || (await livekitYukle());
       const { token, url } = await tokenAl("canli_" + ref.id);
-      const room = new lk.Room({ adaptiveStream: false, dynacast: true, publishDefaults: { simulcast: true, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
+      const room = new lk.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: true, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
       await room.connect(url, token);
       for (const iz of izlerRef.current) { try { await room.localParticipant.publishTrack(iz); } catch (e) {} }
       const foto = fotoIyi(benFoto);
@@ -384,19 +384,31 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         const lk = livekitHemen() || (await livekitYukle());
         const { token, url } = await tokenAl("canli_" + yayinId);
         if (iptal) return;
-        const room = new lk.Room({ adaptiveStream: true, dynacast: true });
+        // ⚠️ 11 Kas (kullanıcı: "bilgisayardan canlı yayın açtım, telefondan açılmıyor" — "bağlanıyor…"da kaldı): telefondaki uygulama
+        //   tarayıcısında adaptiveStream açıkken LiveKit görüntü kutusunu "görünmüyor" sayıp görüntüyü HİÇ göndermiyordu (Glome 1'e1
+        //   aramalarda da aynı sorun vardı, orada da kapalı). İzleyicide ve yayıncıda adaptiveStream/dynacast KAPALI → görüntü hep gelir.
+        const room = new lk.Room({ adaptiveStream: false, dynacast: false });
         roomRef.current = room;
-        room.on(lk.RoomEvent.TrackSubscribed, (track) => {
-          if (track.kind === "video") { if (vidRef.current) { track.attach(vidRef.current); setGoruntuVar(true); } }
-          else if (track.kind === "audio") { const el = track.attach(); el.className = "cd-gizli-ses"; if (sesKutuRef.current) sesKutuRef.current.appendChild(el); }
-        });
-        room.on(lk.RoomEvent.TrackUnsubscribed, (track) => { try { track.detach().forEach((el) => { if (el.className === "cd-gizli-ses") el.remove(); }); } catch (e) {} });
+        const bagliIzler = new Set(); // aynı iz iki kez bağlanmasın (ses iki kez çalıp yankı yapmasın)
+        const izBagla = (track) => {
+          if (!track) return;
+          const kimlik = track.sid || track.mediaStreamTrack;
+          if (bagliIzler.has(kimlik)) return; bagliIzler.add(kimlik);
+          if (track.kind === "video") {
+            const bagla = (deneme) => { if (vidRef.current) { track.attach(vidRef.current); try { const pr = vidRef.current.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} setGoruntuVar(true); } else if (deneme < 20) setTimeout(() => bagla(deneme + 1), 150); };
+            bagla(0);
+          } else if (track.kind === "audio") { const el = track.attach(); el.className = "cd-gizli-ses"; if (sesKutuRef.current) sesKutuRef.current.appendChild(el); }
+        };
+        room.on(lk.RoomEvent.TrackSubscribed, izBagla);
+        room.on(lk.RoomEvent.TrackUnsubscribed, (track) => { try { bagliIzler.delete(track.sid || track.mediaStreamTrack); } catch (e) {} try { track.detach().forEach((el) => { if (el.className === "cd-gizli-ses") el.remove(); }); } catch (e) {} });
         room.on(lk.RoomEvent.DataReceived, veriGeldi);
         room.on(lk.RoomEvent.AudioPlaybackStatusChanged, () => setSesKilit(!room.canPlaybackAudio));
         room.on(lk.RoomEvent.Disconnected, () => { if (!kapandiRef.current) setBaglanti("hata"); });
         await room.connect(url, token, { autoSubscribe: true });
         if (iptal) { room.disconnect(); return; }
         setBaglanti("tamam");
+        // Bağlanmadan ÖNCE yayına eklenmiş izler olay kaçmışsa yine bağla (güvenlik)
+        try { (room.remoteParticipants || new Map()).forEach((rp) => { (rp.trackPublications || new Map()).forEach((pub) => { if (pub && pub.track) izBagla(pub.track); }); }); } catch (e) {}
         try { await room.startAudio(); } catch (e) {}
         setSesKilit(!room.canPlaybackAudio);
       } catch (e) { if (!iptal) setBaglanti("hata"); }
