@@ -1,7 +1,7 @@
 # GLOXORG — CANLI YAYIN TESTİ (sadece deneme odası kullanır, hiçbir kullanıcı verisine dokunmaz).
 # Kullanıcı 11 Kas: "bilgisayardan canlı yayın açtım, telefondan açılmıyor (bağlanıyor'da kalıyor)".
 # Claude'un bulut ortamı canli.gloxorg.com'a ulaşamadığı için test GitHub sunucusunda yapılır:
-#  - Tarayıcı A: sahte kamera+mikrofonla, uygulamadaki AYNI ayarlarla yayın yapar (11 Kas: katmansız, 960x540).
+#  - Tarayıcı A: sahte kamera+mikrofonla, uygulamadaki AYNI ayarlarla yayın yapar (11 Kas: katmansız, H.264, 960x540).
 #  - Tarayıcı B: izleyici olarak bağlanır; görüntü/ses izi geliyor mu, görüntü gerçekten oynuyor mu ölçer.
 name: Canli yayin testi
 on:
@@ -43,7 +43,7 @@ jobs:
               try {
                 const izler = await L.createLocalTracks({ audio: { echoCancellation: true, noiseSuppression: true }, video: { facingMode: "user", resolution: { width: 960, height: 540, frameRate: 24 } } });
                 sonuc.izler = izler.map((x) => x.kind);
-                const room = new L.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: false, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
+                const room = new L.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: false, videoCodec: "h264", backupCodec: false, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
                 window.oda = room;
                 const t0 = Date.now(); await room.connect(url, token); sonuc.baglanmaMs = Date.now() - t0;
                 sonuc.yayinlanan = [];
