@@ -308,6 +308,12 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const [yazi, setYazi] = useState("");
   const [baglanti, setBaglanti] = useState(yayinci ? "tamam" : "baglaniyor"); // baglaniyor | tamam | hata
   const [goruntuVar, setGoruntuVar] = useState(!!yayinci);
+  // 11 Kas (B483 denemesi: telefonda görüntü izi geldi ama ekran BOŞ): bekleme ekranı görüntü GERÇEKTEN oynayana kadar kalır;
+  // iki tarafta da sayılar görünür → sorun gönderende mi, yolda mı, alanda mı kesin anlaşılır.
+  const [oynuyor, setOynuyor] = useState(!!yayinci);
+  const [gelen, setGelen] = useState(null);     // izleyici: { kb, kare, w, h }
+  const [gonderim, setGonderim] = useState(null); // yayıncı: { kb, kare, w, h, neden }
+  const gelenIzRef = useRef(null);
   // TEŞHİS (11 Kas, telefonda "bağlanıyor"da kalıyordu; sunucu testi GitHub'da sorunsuz): hangi adımda kaldığı ekranda yazar
   const [asama, setAsama] = useState("bilet"); // bilet | sunucu | bekle
   const [teshis, setTeshis] = useState({ yayinci: false, goruntuIzi: false, sesIzi: false, goruntuYayini: false, abonelikHata: false });
@@ -331,6 +337,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const kalpBirikRef = useRef(0);
   const enCokRef = useRef(0);
   const yoklamaRef = useRef(null);
+  const gonderimRef = useRef(null);
   const kapandiRef = useRef(false);
   const akisRef = useRef(null);
 
@@ -415,6 +422,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           } catch (e) { return true; }
         };
         let kontrolde = false;
+        let yenilemeSayisi = 0; // kamera kaçıncı kez sıfırdan açıldı (2. seferden itibaren H.264 sıkıştırma denenir)
         const kontrol = async (n) => {
           if (iptal || kapandiRef.current || kontrolde) return;
           kontrolde = true;
@@ -433,7 +441,9 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
                 try { iz.stop(); } catch (e) {}
                 izlerRef.current = (izlerRef.current || []).map((x) => (x === iz ? yeni : x));
                 if (vidRef.current) { try { yeni.attach(vidRef.current); } catch (e) {} }
-                await room.localParticipant.publishTrack(yeni, { simulcast: false });
+                const kodek = yenilemeSayisi >= 1 ? { videoCodec: "h264" } : {};
+                yenilemeSayisi++;
+                await room.localParticipant.publishTrack(yeni, { simulcast: false, ...kodek });
               } catch (e) { sonHata = "video: " + ((e && e.message) || String(e)).slice(0, 120); }
             } else {
               try { await room.localParticipant.publishTrack(iz, { simulcast: false }); } catch (e) { sonHata = iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120); }
@@ -446,11 +456,24 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           kontrolde = false;
         };
         [1500, 4000, 8000, 14000].forEach((ms, n) => setTimeout(() => kontrol(n), ms));
+        const gonderimOlc = setInterval(async () => {
+          if (iptal) { clearInterval(gonderimOlc); return; }
+          try {
+            let iz = null; room.localParticipant.trackPublications.forEach((pub) => { if (pub.kind === "video" && pub.track) iz = pub.track; });
+            if (!iz || !iz.getSenderStats) return;
+            const dizi = [].concat(await iz.getSenderStats()).filter(Boolean);
+            if (!dizi.length) return;
+            const top = (k) => dizi.reduce((t, x) => t + (x[k] || 0), 0);
+            const ilk = dizi[0];
+            setGonderim({ kb: Math.round(top("bytesSent") / 1024), kare: top("framesSent"), w: ilk.frameWidth || 0, h: ilk.frameHeight || 0, neden: ilk.qualityLimitationReason && ilk.qualityLimitationReason !== "none" ? ilk.qualityLimitationReason : "" });
+          } catch (e) {}
+        }, 2000);
+        gonderimRef.current = gonderimOlc;
       }
       const nabiz = setInterval(izleyiciYaz, NABIZ_MS);
       const sayfaKapan = () => { try { updateDoc(doc(db, "canliYayinlar", yayinId), { durum: "bitti", bitis: serverTimestamp() }); } catch (e) {} };
       window.addEventListener("pagehide", sayfaKapan);
-      return () => { iptal = true; clearInterval(nabiz); window.removeEventListener("pagehide", sayfaKapan); };
+      return () => { iptal = true; clearInterval(nabiz); clearInterval(gonderimRef.current); window.removeEventListener("pagehide", sayfaKapan); };
     }
     (async () => {
       try {
@@ -471,6 +494,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           if (bagliIzler.has(kimlik)) return; bagliIzler.add(kimlik);
           if (track.kind === "video") {
             setTeshis((d) => ({ ...d, goruntuIzi: true }));
+            gelenIzRef.current = track;
             // Glome aramasındaki gibi: kütüphanenin attach'i olmazsa görüntüyü YENİ bir MediaStream ile elle bağla
             const bagla = (n) => {
               const el = vidRef.current;
@@ -528,12 +552,27 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
     }, 4000);
     return () => { iptal = true; clearInterval(kalpYaz); clearInterval(yoklamaRef.current); try { roomRef.current && roomRef.current.disconnect(); } catch (e) {} };
   }, [deneme]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Bekleme süresini say (15 sn'de görüntü gelmezse "Yeniden dene" görünür)
+  // Bekleme süresini say (15 sn'de görüntü oynamazsa "Yeniden dene" görünür)
   useEffect(() => {
-    if (yayinci || goruntuVar) return undefined;
+    if (yayinci || oynuyor) return undefined;
     const z = setInterval(() => setBeklemeSn((n) => n + 1), 1000);
     return () => clearInterval(z);
-  }, [yayinci, goruntuVar, deneme]);
+  }, [yayinci, oynuyor, deneme]);
+  // İzleyici: görüntü gerçekten oynuyor mu (kutuda en/boy var mı) + gelen bayt/kare sayıları
+  useEffect(() => {
+    if (yayinci) return undefined;
+    const z = setInterval(async () => {
+      const el = vidRef.current;
+      if (el && el.videoWidth > 0 && el.readyState >= 2) setOynuyor(true);
+      const iz = gelenIzRef.current;
+      if (!iz || !iz.getReceiverStats) return;
+      try {
+        const st = await iz.getReceiverStats();
+        if (st) setGelen({ kb: Math.round((st.bytesReceived || 0) / 1024), kare: st.framesDecoded || 0, w: st.frameWidth || 0, h: st.frameHeight || 0 });
+      } catch (e) {}
+    }, 2000);
+    return () => clearInterval(z);
+  }, [yayinci, deneme]);
 
   // Kalp gönder: ekranda uçar + herkese (veri kanalı) + sayaç (birikip 4 sn'de bir yazılır)
   const kalpAt = () => {
@@ -579,14 +618,16 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
     <div className="cd-tam cd-yayin">
       <video ref={vidRef} className={"cd-yayin-vid" + (yayinci && onKamera ? " ayna" : "")} muted playsInline autoPlay />
       <div ref={sesKutuRef} className="cd-gizli" aria-hidden="true" />
-      {!goruntuVar && !bitti && !engellendim && (
-        <div className="cd-yukleniyor">
+      {!(yayinci ? goruntuVar : oynuyor) && !bitti && !engellendim && (
+        // Dokununca görüntüyü oynatmayı dene (bazı telefonlar oynatmayı dokunuşa kadar bekletiyor)
+        <div className="cd-yukleniyor" onClick={() => { try { const el = vidRef.current; if (el) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); } } catch (e) {} }}>
           {y && <KareAvatar foto={y.foto} ad={y.ad} boy={96} />}
           {baglanti === "hata" ? <b>{t("cdBaglantiKoptu", "Bağlantı kurulamadı.")}</b> : <><span className="cd-donen" /><KayanYazi>{t("cdYayinaBaglaniyor", "Canlı yayına bağlanıyor…")}</KayanYazi></>}
           {!yayinci && (
             <div className="cd-teshis">
               <span>{asama === "bilet" ? t("cdAsamaBilet", "1/3 Bilet alınıyor") : asama === "sunucu" ? t("cdAsamaSunucu", "2/3 Sunucuya bağlanıyor") : t("cdAsamaBekle", "3/3 Bağlandı, görüntü bekleniyor")} · {beklemeSn} sn</span>
               {asama === "bekle" && <span>{t("cdTeshisYayinci", "Yayıncı")}: {teshis.yayinci ? "✓" : "✗"} · {t("cdTeshisGoruntuYayini", "Görüntü yayını")}: {teshis.goruntuYayini ? "✓" : "✗"} · {t("cdTeshisGoruntu", "Görüntü")}: {teshis.goruntuIzi ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {teshis.sesIzi ? "✓" : "✗"}</span>}
+              {gelen && <span>⬇️ {t("cdGelen", "Gelen")}: {gelen.kb} KB · {gelen.kare} {t("cdKare", "kare")} · {gelen.w}x{gelen.h}</span>}
               {teshis.abonelikHata && <span>⚠️ {t("cdTeshisAbonelik", "Görüntü bu cihaza açılamadı")}</span>}
             </div>
           )}
@@ -619,6 +660,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       {yayinci && yayinDurum.goruntu !== null && (
         <div className={"cd-yayin-durum" + (yayinDurum.goruntu && yayinDurum.ses ? " iyi" : " kotu")}>
           📡 {t("cdTeshisGoruntu", "Görüntü")}: {yayinDurum.goruntu ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {yayinDurum.ses ? "✓" : "✗"}
+          {gonderim ? <small>⬆️ {t("cdGonderilen", "Gönderilen")}: {gonderim.kb} KB · {gonderim.kare} {t("cdKare", "kare")} · {gonderim.w}x{gonderim.h}{gonderim.neden ? " · " + gonderim.neden : ""}</small> : null}
           {yayinDurum.hata ? <small>{yayinDurum.hata}</small> : null}
         </div>
       )}

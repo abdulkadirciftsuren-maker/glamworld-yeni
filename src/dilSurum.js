@@ -1,16 +1,16 @@
 // OTOMATİK ÜRETİLDİ (scripts/dilleriAyir.js) — ELLE DEĞİŞTİRME. Her dilin çeviri dosyasının özeti.
 export const DIL_SURUM = {
- "ar": "76460c31",
- "de": "f6c02244",
- "en": "57c05fe8",
- "es": "e89e7307",
- "fr": "20729987",
- "hi": "376e864a",
- "it": "c3ecb2e1",
- "ja": "2423fa1d",
- "pt": "426643fb",
- "ru": "9578dca1",
- "tr": "0a121c86",
- "uk": "15b1f9d7",
- "zh": "cbde68fb"
+ "ar": "f9128421",
+ "de": "9573ac78",
+ "en": "012d74c2",
+ "es": "fedb262f",
+ "fr": "ef55a10b",
+ "hi": "ea08ce9c",
+ "it": "8381e379",
+ "ja": "16bc9465",
+ "pt": "4912b846",
+ "ru": "20714ce2",
+ "tr": "a7e26a1f",
+ "uk": "243b0134",
+ "zh": "9ad4de2d"
 };
