@@ -248,7 +248,9 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
     try {
       const lk = livekitHemen() || (await livekitYukle());
       const { token, url } = await tokenAl("canli_" + ref.id);
-      const room = new lk.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: true, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
+      // ⚠️ 11 Kas: KATMANLI (simulcast) yayın KAPALI — bilgisayarda yayıncı "Görüntü ✓" derken telefon sunucuda görüntü yayını
+      //   GÖRMÜYORDU (bazı bilgisayar görüntü kodlayıcıları katmanlı gönderimde takılıp hiç görüntü göndermiyor). Glome gibi tek kopya.
+      const room = new lk.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: false, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
       await room.connect(url, token);
       // Önce GÖRÜNTÜ sonra ses yayınlanır; hata olursa mesajı saklanır (yayıncının ekranındaki durum satırında görünür)
       const hatalar = [];
@@ -399,13 +401,30 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       //   gitmediyse yeniden gönder (2. denemeden itibaren simulcast'siz — bazı bilgisayar kodlayıcıları katmanlı yayında takılıyor).
       if (room) {
         const izGidiyorMu = (tur) => { let var_ = false; try { room.localParticipant.trackPublications.forEach((pub) => { if (pub.kind === tur && pub.track) var_ = true; }); } catch (e) {} return var_; };
+        // "Yayında" görünen görüntünün GERÇEKTEN bayt gönderip göndermediği (gönderim istatistiği); ölçülemezse "gidiyor" sayılır
+        const sonBayt = { n: -1 };
+        const goruntuAkiyorMu = async () => {
+          try {
+            let iz = null; room.localParticipant.trackPublications.forEach((pub) => { if (pub.kind === "video" && pub.track) iz = pub.track; });
+            if (!iz || !iz.getSenderStats) return true;
+            const st = await iz.getSenderStats();
+            const dizi = (Array.isArray(st) ? st : [st]).filter(Boolean);
+            if (!dizi.length || dizi.every((x) => typeof x.bytesSent !== "number")) return true; // istatistik yoksa karar verme
+            const bayt = dizi.reduce((t, x) => t + (x.bytesSent || 0), 0);
+            const akiyor = bayt > 0 && bayt > sonBayt.n; sonBayt.n = bayt; return akiyor;
+          } catch (e) { return true; }
+        };
         let kontrolde = false;
         const kontrol = async (n) => {
           if (iptal || kapandiRef.current || kontrolde) return;
           kontrolde = true;
           let sonHata = "";
+          // Görüntü yayında görünüyor ama bayt gitmiyorsa (2. kontrolden itibaren) takılmış say → aşağıda kamera sıfırdan açılır
+          let takili = false;
+          if (n >= 1 && izGidiyorMu("video") && !(await goruntuAkiyorMu())) { takili = true; sonHata = "video: gönderim durdu (0 bayt)"; }
+          else if (n === 0) { await goruntuAkiyorMu(); }
           for (const iz of [...(izlerRef.current || [])]) {
-            if (izGidiyorMu(iz.kind)) continue;
+            if (izGidiyorMu(iz.kind) && !(takili && iz.kind === "video")) continue;
             if (iz.kind === "video" && n >= 1 && lk && lk.createLocalVideoTrack) {
               // 2. denemeden itibaren: kamerayı SIFIRDAN yeniden aç (eski iz takılmış olabilir), daha basit ayarla, katmansız gönder
               try {
@@ -420,6 +439,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
               try { await room.localParticipant.publishTrack(iz, { simulcast: false }); } catch (e) { sonHata = iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120); }
             }
           }
+          if (takili) sonBayt.n = -1;
           const g = izGidiyorMu("video"), sesVar = izGidiyorMu("audio");
           setGoruntuGitmiyor(!g);
           setYayinDurum((d) => ({ goruntu: g, ses: sesVar, hata: g && sesVar ? "" : (sonHata || d.hata) }));
@@ -588,7 +608,12 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         </button>
         <span className="cd-rozet-canli">● {t("cdCanliRozet", "CANLI")} {sure}</span>
         <span className="cd-rozet-izl" title={t("cdIzleyici", "İzleyici")}>👁 {(y && y.izleyici) || 0}</span>
-        <button className="cd-kapat" onClick={geriTus} aria-label={yayinci ? t("cdBitir", "Yayını bitir") : t("cdKapat", "Kapat")} title={yayinci ? t("cdBitir", "Yayını bitir") : t("cdKapat", "Kapat")}>✕</button>
+        {yayinci ? (
+          // 11 Kas (kullanıcı): "x işaretini daha belirgin yap, değişik olsun, yayını sonlandır" → kırmızı yazılı düğme
+          <button className="cd-bitir-btn" onClick={geriTus} aria-label={t("cdBitir", "Yayını bitir")} title={t("cdBitir", "Yayını bitir")}><span aria-hidden="true">⏹</span><KayanYazi>{t("cdBitir", "Yayını bitir")}</KayanYazi></button>
+        ) : (
+          <button className="cd-kapat cd-kapat-belirgin" onClick={geriTus} aria-label={t("cdKapat", "Kapat")} title={t("cdKapat", "Kapat")}>✕</button>
+        )}
       </div>
 
       {yayinci && yayinDurum.goruntu !== null && (
