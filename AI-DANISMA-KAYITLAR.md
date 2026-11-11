@@ -32,7 +32,7 @@
 | Hizmet | Ne için | Durum |
 |---|---|---|
 | GitHub (yeni depo) | Yeni projenin kodu | ✅ 11 Kas 2026 açıldı: `abdulkadirciftsuren-maker/dokumentem` (ÖZEL) |
-| Firebase (yeni proje, Avrupa) | Giriş, veritabanı, belge deposu | Açılmadı |
+| Firebase (yeni proje) | Giriş, veritabanı, belge deposu | ✅ 11 Kas 2026 açıldı: proje kimliği **dokumentem-2d80f** · ücretsiz Spark planı (kart yok) · Gemini KAPALI · Analytics KAPALI · bölge henüz seçilmedi (Frankfurt seçilecek) |
 | Stripe | Web'de ödeme | Açılmadı (Gewerbe kararı bekleniyor) |
 | Google Play (mevcut geliştirici hesabı) | Ayrı uygulama | Mevcut hesap kullanılacak |
 | Yapay zekâ (Claude API) | Doldurma / anlama | Açılmadı |
@@ -47,3 +47,4 @@
 - 10 Kas 2026 — Düzeltme: alan adları ALINMADI, sadece bakıldı; dokuments.com dolu.
 - 10 Kas 2026 — dokumentem.com satın alındı (sipariş 219179283).
 - 11 Kas 2026 — GitHub'da özel `dokumentem` deposu açıldı; plan + kayıtlar oraya da kopyalandı.
+- 11 Kas 2026 — Firebase projesi açıldı: dokumentem-2d80f (tarayıcı çevirisi adı "belge" gösteriyor, gerçek ad dokumentem).
