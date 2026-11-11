@@ -250,7 +250,10 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
       const { token, url } = await tokenAl("canli_" + ref.id);
       const room = new lk.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: true, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
       await room.connect(url, token);
-      for (const iz of izlerRef.current) { try { await room.localParticipant.publishTrack(iz); } catch (e) {} }
+      // Önce GÖRÜNTÜ sonra ses yayınlanır; hata olursa mesajı saklanır (yayıncının ekranındaki durum satırında görünür)
+      const hatalar = [];
+      const sirali = [...izlerRef.current].sort((a, b) => (a.kind === "video" ? -1 : 1) - (b.kind === "video" ? -1 : 1));
+      for (const iz of sirali) { try { await room.localParticipant.publishTrack(iz); } catch (e) { hatalar.push(iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120)); } }
       const foto = fotoIyi(benFoto);
       await setDoc(ref, {
         yayinciUid: uid, ad: epostaMi(benAd) ? "" : (benAd || ""), foto: foto && foto.length < 2000 ? foto : "", baslik: baslik.trim().slice(0, 80),
@@ -258,7 +261,7 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
         baslangic: serverTimestamp(), sonNabiz: serverTimestamp(),
       });
       devredildi.current = true;
-      basladi(ref.id, { room, izler: izlerRef.current, lk });
+      basladi(ref.id, { room, izler: izlerRef.current, lk, hatalar });
     } catch (e) {
       setDurum("hazir");
       if (bilgi) bilgi(t("cdBaglanamadi", "Canlı yayın sunucusuna bağlanılamadı. İnterneti kontrol edip tekrar dene."));
@@ -315,6 +318,8 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const [bitirSor, setBitirSor] = useState(false);
   const [yayinSikayetSor, setYayinSikayetSor] = useState(false);
   const [goruntuGitmiyor, setGoruntuGitmiyor] = useState(false); // yayıncı: görüntü sunucuya gitmiyorsa uyarı
+  // Yayıncı durum satırı: görüntü/ses gerçekten sunucuya gidiyor mu + son hata (11 Kas: izleyici teşhisinde "Görüntü yayını ✗" çıktı)
+  const [yayinDurum, setYayinDurum] = useState({ goruntu: null, ses: null, hata: (oturum && oturum.hatalar && oturum.hatalar[0]) || "" });
   const [sesKilit, setSesKilit] = useState(false);
   const [simdi, setSimdi] = useState(Date.now());
   const vidRef = useRef(null);
@@ -394,15 +399,33 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       //   gitmediyse yeniden gönder (2. denemeden itibaren simulcast'siz — bazı bilgisayar kodlayıcıları katmanlı yayında takılıyor).
       if (room) {
         const izGidiyorMu = (tur) => { let var_ = false; try { room.localParticipant.trackPublications.forEach((pub) => { if (pub.kind === tur && pub.track) var_ = true; }); } catch (e) {} return var_; };
+        let kontrolde = false;
         const kontrol = async (n) => {
-          if (iptal || kapandiRef.current) return;
-          for (const iz of (izlerRef.current || [])) {
+          if (iptal || kapandiRef.current || kontrolde) return;
+          kontrolde = true;
+          let sonHata = "";
+          for (const iz of [...(izlerRef.current || [])]) {
             if (izGidiyorMu(iz.kind)) continue;
-            try { await room.localParticipant.publishTrack(iz, n >= 1 ? { simulcast: false } : undefined); } catch (e) {}
+            if (iz.kind === "video" && n >= 1 && lk && lk.createLocalVideoTrack) {
+              // 2. denemeden itibaren: kamerayı SIFIRDAN yeniden aç (eski iz takılmış olabilir), daha basit ayarla, katmansız gönder
+              try {
+                try { await room.localParticipant.unpublishTrack(iz, false); } catch (e) {}
+                const yeni = await lk.createLocalVideoTrack({ facingMode: onKamera ? "user" : "environment", resolution: { width: 640, height: 480, frameRate: 24 } });
+                try { iz.stop(); } catch (e) {}
+                izlerRef.current = (izlerRef.current || []).map((x) => (x === iz ? yeni : x));
+                if (vidRef.current) { try { yeni.attach(vidRef.current); } catch (e) {} }
+                await room.localParticipant.publishTrack(yeni, { simulcast: false });
+              } catch (e) { sonHata = "video: " + ((e && e.message) || String(e)).slice(0, 120); }
+            } else {
+              try { await room.localParticipant.publishTrack(iz, { simulcast: false }); } catch (e) { sonHata = iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120); }
+            }
           }
-          setGoruntuGitmiyor(!izGidiyorMu("video"));
+          const g = izGidiyorMu("video"), sesVar = izGidiyorMu("audio");
+          setGoruntuGitmiyor(!g);
+          setYayinDurum((d) => ({ goruntu: g, ses: sesVar, hata: g && sesVar ? "" : (sonHata || d.hata) }));
+          kontrolde = false;
         };
-        [1500, 4000, 8000].forEach((ms, n) => setTimeout(() => kontrol(n), ms));
+        [1500, 4000, 8000, 14000].forEach((ms, n) => setTimeout(() => kontrol(n), ms));
       }
       const nabiz = setInterval(izleyiciYaz, NABIZ_MS);
       const sayfaKapan = () => { try { updateDoc(doc(db, "canliYayinlar", yayinId), { durum: "bitti", bitis: serverTimestamp() }); } catch (e) {} };
@@ -568,6 +591,12 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         <button className="cd-kapat" onClick={geriTus} aria-label={yayinci ? t("cdBitir", "Yayını bitir") : t("cdKapat", "Kapat")} title={yayinci ? t("cdBitir", "Yayını bitir") : t("cdKapat", "Kapat")}>✕</button>
       </div>
 
+      {yayinci && yayinDurum.goruntu !== null && (
+        <div className={"cd-yayin-durum" + (yayinDurum.goruntu && yayinDurum.ses ? " iyi" : " kotu")}>
+          📡 {t("cdTeshisGoruntu", "Görüntü")}: {yayinDurum.goruntu ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {yayinDurum.ses ? "✓" : "✗"}
+          {yayinDurum.hata ? <small>{yayinDurum.hata}</small> : null}
+        </div>
+      )}
       {yayinci && goruntuGitmiyor && (
         <div className="cd-uyari-serit">⚠️ {t("cdGoruntuGitmiyor", "Görüntün izleyicilere gitmiyor. Yayını bitirip yeniden başlatmayı dene.")}</div>
       )}
