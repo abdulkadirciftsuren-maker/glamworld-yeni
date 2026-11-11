@@ -22,6 +22,7 @@
 - ✅ **ONAYLANDI (9 Kas akşam):** Kapalı ekranda arama penceresi AÇILIYOR, arayan kapatınca zil HEMEN duruyor. **Kalan küçük iş:** uzun süre sonra ilk arama biraz geç gidiyor.
 - ✅ **ONAYLANDI (9 Kas):** Sohbetteki arama kayıtlarını silme (B466, basılı tut → 🗑️, gizliAramalar) — kullanıcı denedi, çalışıyor. **DOKUNMA.**
 - ✅ **YAPILDI (9 Kas, B468):** Sanal Ayna model seçeneklerinin TAMAMI 12 dile çevrildi (src/ceviriAyna2.js); Ayna taraması eksik 0, genel t() taraması eksik 0.
+- 🧷 **SAYFA KAYDIRMA KURALI (B488) — BOZMA:** kaydirBas'ta `yanaKayanSeritMi()` — kendi içinde yana kayan HER şeritte (overflow-x auto/scroll + taşıyor) parmakla kaydırınca sayfa DEĞİŞMEZ. Yeni şerit eklerken ayrıca listeye yazmaya gerek yok (kullanıcı: "bu hatayı hep yapıyorsun").
 - ✅ **CANLI DERS ÇALIŞIYOR — KULLANICI ONAYLADI (11 Kas, B480) — DOKUNMA:** telefon→bilgisayar ve bilgisayar→telefon yayın açılıyor, yorum + kalp + bitirme özeti + Geçmiş yayınlarım çalışıyor.
   KRİTİK (bozma): (1) izleyici ve yayıncıda `adaptiveStream:false, dynacast:false` (telefon uygulamasında açıkken görüntü gelmiyordu);
   (2) yayıncı 1.5/4/8 sn'de izlerin sunucuya gittiğini kontrol edip gitmeyeni YENİDEN yayınlar (bilgisayarda ilk görüntü yayını sessizce

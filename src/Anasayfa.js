@@ -9349,6 +9349,20 @@ export default function Anasayfa({ pro = false }) {
 
   // PARMAKLA SOLA/SAĞA KAYDIRINCA PENCERE DEĞİŞİR (gerçek dokunma takibi).
   // Üst piyasa şeridindeki kaydırma HARİÇ (onun kendi sürüklemesi var).
+  // Dokunulan öğe ya da üst öğelerinden biri yana kayabilen bir şerit mi? (sayfa kaydırmayı engellemek için)
+  const yanaKayanSeritMi = (el) => {
+    try {
+      let n = el, adim = 0;
+      while (n && n.nodeType === 1 && adim < 12) {
+        if (n.scrollWidth > n.clientWidth + 4) {
+          const ox = window.getComputedStyle(n).overflowX;
+          if (ox === "auto" || ox === "scroll") return true;
+        }
+        n = n.parentElement; adim++;
+      }
+    } catch (x) {}
+    return false;
+  };
   const kaydirBas = (e) => {
     // ARTIK her dokunuşta katman EKLENMEZ — eskiden ana sayfada SÜREKLİ tampon kalıyordu,
     // geri tuşu önce o tamponu (sekmeyi) görüyordu. Tampon SADECE pencere/panel açıkken eklenir
@@ -9376,6 +9390,10 @@ export default function Anasayfa({ pro = false }) {
       // SADECE yatay kayan ŞERİTLER (kategori şeridi .ep-kats) ve HARİTA (.leaflet-container) hariç — onlar kendi içinde kayar/gezer, sayfayı değiştirmez.
       // .ak-foto-buyut: tam ekran Akademi fotoğrafı — üstünde parmak gezince ZOOM/pan yapılır, sayfa DEĞİŞMEZ.
       if (e.target && e.target.closest && e.target.closest(".ana-serit, .hik-serit, .reels-serit, .reklam-serit, .reklam-akis, .reklam-fon, .reklam-buyukfoto-fon, .reklam-harita-fon, .tamfoto-fon, .sa-fon, .sa-sayfa, .muh-sayfa, .ak-foto-buyut, .alt-kaydir, .alt-bolumler, .apf-bolumler, .tan-ai-serit, input, textarea, select, .apf-ayar-panel, .uye-sayfa, .pyl-pencere, .msj-pencere, .apr-galeri, .tf-galeri, .ep-kats, .leaflet-container, .knh-harita-tam, .adh-harita-tam, .knh-tam, .adh-tam, .arama-fon, .sohbet-fon")) { dokunRef.current = null; return; }
+      // GENEL KURAL (11 Kas, kullanıcı: "Canlı Ders'te Tümü/Kuaför şeridini sola kaydırınca sayfa değişiyor; böyle sola kayan yer
+      //   varsa sayfayı değiştirmesin, bu hatayı hep yapıyorsun"): parmak, KENDİ İÇİNDE YANA KAYABİLEN herhangi bir şeridin
+      //   (overflow-x auto/scroll ve içeriği taşıyor) üstündeyse sayfa DEĞİŞMEZ. Böylece ileride eklenen her şerit de korunur.
+      if (yanaKayanSeritMi(e.target)) { dokunRef.current = null; return; }
       const d = e.touches[0];
       dokunRef.current = { x: d.clientX, y: d.clientY };
     } catch (err) { dokunRef.current = null; }
