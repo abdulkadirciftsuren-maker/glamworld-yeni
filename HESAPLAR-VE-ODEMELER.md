@@ -116,3 +116,7 @@
 - **5 Kas 2026:** Gloxoo doğal ses yok → sebep Firebase App Check (AI Logic zorunlu). Zorunluluk kaldırıldı (21 Oca 2027'ye kadar).
 - **5 Kas 2026:** Aramalar + Gloxoo durdu → kontrol: Hetzner sunucusu çalışıyor, LiveKit OK, Cloudflare köprüsü OK. Arama sorunu PARA DEĞİL: telefon uygulamasında karşının görüntüsü duraklıyordu (izin penceresi) → B437 ile düzeltildi. Anthropic/Gemini bakiyesi henüz kontrol edilmedi.
 - **Hızlı test (Gloxoo köprüsü):** tarayıcıda `https://gloxorg-ai.abdulkadirciftsuren.workers.dev` → `{"metin":"","hata":"Sadece POST"}` yazıyorsa köprü çalışıyor; "Error 1027" çıkarsa Cloudflare günlük sınırı dolmuş.
+
+## 🌐 Dokumenten.com (11 Kas 2026)
+- Kullanıcı AI Danışma Ofisi projesi için **Dokumenten.com** alan adını aldı (hangi firmadan, yenileme tarihi: kullanıcıya sorulup buraya yazılacak — kart/şifre bilgisi YAZILMAZ).
+- Alan adları genelde **yıllık yenilenir** → yenileme tarihinden 1 ay önce hatırlat.

@@ -1,5 +1,7 @@
 # 📑 AI DANIŞMA OFİSİ — PLAN (taslak, kullanıcı onayı bekliyor)
 
+> 🌐 **11 Kas 2026 — MARKA/ALAN ADI: kullanıcı `Dokumenten.com` alan adını aldı.** Bu proje bundan sonra bu adla geliştirilecek (ayrı konuşma: "AI Danışma Ofisi — yeni bağımsız proje", dal `claude/ai-danisma-ofisi`).
+
 > 10 Kasım 2026. Kullanıcı: "Canlı Akış sayfasını hepten değiştireceğiz, para kazandıran, insanların girmek için nedeni olan
 > bir şey koyacağız → AI Danışma Ofisi." Bu dosya her oturumda okunmalı; karar verilmeden KOD YAZILMAZ.
 
