@@ -22,6 +22,13 @@
 - ✅ **ONAYLANDI (9 Kas akşam):** Kapalı ekranda arama penceresi AÇILIYOR, arayan kapatınca zil HEMEN duruyor. **Kalan küçük iş:** uzun süre sonra ilk arama biraz geç gidiyor.
 - ✅ **ONAYLANDI (9 Kas):** Sohbetteki arama kayıtlarını silme (B466, basılı tut → 🗑️, gizliAramalar) — kullanıcı denedi, çalışıyor. **DOKUNMA.**
 - ✅ **YAPILDI (9 Kas, B468):** Sanal Ayna model seçeneklerinin TAMAMI 12 dile çevrildi (src/ceviriAyna2.js); Ayna taraması eksik 0, genel t() taraması eksik 0.
+- ✅ **CANLI DERS ÇALIŞIYOR — KULLANICI ONAYLADI (11 Kas, B480) — DOKUNMA:** telefon→bilgisayar ve bilgisayar→telefon yayın açılıyor, yorum + kalp + bitirme özeti + Geçmiş yayınlarım çalışıyor.
+  KRİTİK (bozma): (1) izleyici ve yayıncıda `adaptiveStream:false, dynacast:false` (telefon uygulamasında açıkken görüntü gelmiyordu);
+  (2) yayıncı 1.5/4/8 sn'de izlerin sunucuya gittiğini kontrol edip gitmeyeni YENİDEN yayınlar (bilgisayarda ilk görüntü yayını sessizce
+  başarısız oluyordu — asıl sebep buydu; Glome B440 ile aynı); (3) izleyici 2 sn'de bir görüntü yayınını yoklar, abone değilse ister.
+  Bekleme ekranındaki teşhis satırı (1/3-3/3, Yayıncı/Görüntü yayını/Görüntü/Ses) + "Yeniden dene" kalsın (sorun olursa kullanıcı foto atar).
+  Sunucu testi: `.github/workflows/canli-yayin-testi.yml` (GitHub'da sahte kameralı yayıncı + izleyici; dosyaya dokunup push'layınca çalışır).
+  Sıradaki olası işler (kullanıcı isterse): "kim kalp attı" isim isim (kural değişikliği gerekir → kullanıcı Firebase'e yapıştırır), video kaydı (Aşama 3).
 - ✅ **CANLI DERS KURALLARI YAYINDA (11 Kas):** kullanıcı firestore.rules'u Firebase Console'a yapıştırıp yayınladı (canliYayinlar okuma 200 doğrulandı). Otomatik kural yükleme YOK (GitHub hesabının yetkisi yok) → kural değişirse kullanıcıya GitHub'daki firestore.rules'u kopyala-yapıştır yaptır (Rules sekmesi Chrome çevirisinde "Düzenlemek" görünür). SIRADA: telefonla canlı yayın aç + başka telefondan izle/yorum/kalp testi.
 - 🎓 **CANLI AKIŞ YERİNE: CANLI DERS VE DANIŞMANLIK (10 Kas)** — plan: **`CANLI-DERS-PLAN.md`** (kullanıcı kararları bekleniyor: kim yayın açar, Aşama 1 ücretsiz mi, oranlar). AI Danışma Ofisi ayrı konuşmada yürüyor (oturum: 'AI Danışma Ofisi — yeni bağımsız proje').
 - 📑 **YENİ BÜYÜK PROJE (10 Kas): AI DANIŞMA OFİSİ** — Canlı Akış'ın yerine, GLOXORG'dan BAĞIMSIZ, Google'da çıkan form bulma/doldurma/indirme sitesi. Ayrıntılı plan: **`AI-DANISMA-OFISI-PLAN.md`** (her oturumda oku). Kullanıcı kararları bekleniyor (marka/alan adı, Stripe, ilk ülkeler, fiyat). Karar gelmeden KOD YAZMA; Canlı Akış sayfasına DOKUNMA.
