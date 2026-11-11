@@ -250,7 +250,10 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
       const { token, url } = await tokenAl("canli_" + ref.id);
       // ⚠️ 11 Kas: KATMANLI (simulcast) yayın KAPALI — bilgisayarda yayıncı "Görüntü ✓" derken telefon sunucuda görüntü yayını
       //   GÖRMÜYORDU (bazı bilgisayar görüntü kodlayıcıları katmanlı gönderimde takılıp hiç görüntü göndermiyor). Glome gibi tek kopya.
-      const room = new lk.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: false, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
+      // ⚠️ 11 Kas (B484 sayıları: bilgisayarda "Gönderilen: 0 KB · 0 kare · 0x0" — VP8 kodlayıcısı hiç kare üretmedi; kamera yeniden
+      //   açılınca geç de olsa açıldı). Görüntü EN BAŞTAN H.264 ile gönderilir (bilgisayar/Android/iPhone'da en yaygın destek);
+      //   gitmezse aşağıdaki kontrol kamerayı öbür biçimle (VP8) yeniden açar.
+      const room = new lk.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: false, videoCodec: "h264", backupCodec: false, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
       await room.connect(url, token);
       // Önce GÖRÜNTÜ sonra ses yayınlanır; hata olursa mesajı saklanır (yayıncının ekranındaki durum satırında görünür)
       const hatalar = [];
@@ -313,6 +316,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const [oynuyor, setOynuyor] = useState(!!yayinci);
   const [gelen, setGelen] = useState(null);     // izleyici: { kb, kare, w, h }
   const [gonderim, setGonderim] = useState(null); // yayıncı: { kb, kare, w, h, neden }
+  const [kodekAdi, setKodekAdi] = useState("h264"); // yayıncı: kullanılan sıkıştırma biçimi (durum satırında görünür)
   const gelenIzRef = useRef(null);
   // TEŞHİS (11 Kas, telefonda "bağlanıyor"da kalıyordu; sunucu testi GitHub'da sorunsuz): hangi adımda kaldığı ekranda yazar
   const [asama, setAsama] = useState("bilet"); // bilet | sunucu | bekle
@@ -422,7 +426,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           } catch (e) { return true; }
         };
         let kontrolde = false;
-        let yenilemeSayisi = 0; // kamera kaçıncı kez sıfırdan açıldı (2. seferden itibaren H.264 sıkıştırma denenir)
+        let aktifKodek = "h264"; // şu an kullanılan sıkıştırma biçimi; kamera yeniden açılırken öbürüne geçilir (h264 <-> vp8)
         const kontrol = async (n) => {
           if (iptal || kapandiRef.current || kontrolde) return;
           kontrolde = true;
@@ -441,9 +445,9 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
                 try { iz.stop(); } catch (e) {}
                 izlerRef.current = (izlerRef.current || []).map((x) => (x === iz ? yeni : x));
                 if (vidRef.current) { try { yeni.attach(vidRef.current); } catch (e) {} }
-                const kodek = yenilemeSayisi >= 1 ? { videoCodec: "h264" } : {};
-                yenilemeSayisi++;
-                await room.localParticipant.publishTrack(yeni, { simulcast: false, ...kodek });
+                aktifKodek = aktifKodek === "h264" ? "vp8" : "h264";
+                setKodekAdi(aktifKodek);
+                await room.localParticipant.publishTrack(yeni, { simulcast: false, videoCodec: aktifKodek, backupCodec: false });
               } catch (e) { sonHata = "video: " + ((e && e.message) || String(e)).slice(0, 120); }
             } else {
               try { await room.localParticipant.publishTrack(iz, { simulcast: false }); } catch (e) { sonHata = iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120); }
@@ -455,7 +459,8 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           setYayinDurum((d) => ({ goruntu: g, ses: sesVar, hata: g && sesVar ? "" : (sonHata || d.hata) }));
           kontrolde = false;
         };
-        [1500, 4000, 8000, 14000].forEach((ms, n) => setTimeout(() => kontrol(n), ms));
+        // 1.5 sn: ilk ölçüm; 3.5 sn'den itibaren hâlâ 0 bayt ise kamera öbür biçimle yeniden açılır (önceden 4/8/14 sn → geç açılıyordu)
+        [1500, 3500, 6500, 10000, 15000].forEach((ms, n) => setTimeout(() => kontrol(n), ms));
         const gonderimOlc = setInterval(async () => {
           if (iptal) { clearInterval(gonderimOlc); return; }
           try {
@@ -660,7 +665,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       {yayinci && yayinDurum.goruntu !== null && (
         <div className={"cd-yayin-durum" + (yayinDurum.goruntu && yayinDurum.ses ? " iyi" : " kotu")}>
           📡 {t("cdTeshisGoruntu", "Görüntü")}: {yayinDurum.goruntu ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {yayinDurum.ses ? "✓" : "✗"}
-          {gonderim ? <small>⬆️ {t("cdGonderilen", "Gönderilen")}: {gonderim.kb} KB · {gonderim.kare} {t("cdKare", "kare")} · {gonderim.w}x{gonderim.h}{gonderim.neden ? " · " + gonderim.neden : ""}</small> : null}
+          {gonderim ? <small>⬆️ {t("cdGonderilen", "Gönderilen")}: {gonderim.kb} KB · {gonderim.kare} {t("cdKare", "kare")} · {gonderim.w}x{gonderim.h} · {kodekAdi.toUpperCase()}{gonderim.neden ? " · " + gonderim.neden : ""}</small> : null}
           {yayinDurum.hata ? <small>{yayinDurum.hata}</small> : null}
         </div>
       )}
