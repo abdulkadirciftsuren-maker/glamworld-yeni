@@ -327,10 +327,17 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const kapandiRef = useRef(false);
   const akisRef = useRef(null);
 
+  // ── KALP KAYDI: yayının toplam sayacı + KİM KAÇ KALP ATTI (kalpler/{uid}; 11 Kas, kullanıcı: "kalp atanları isim isim görelim")
+  const kalpKaydet = (n) => {
+    updateDoc(doc(db, "canliYayinlar", yayinId), { kalp: increment(n) }).catch(() => {});
+    if (!uid) return;
+    const f = fotoIyi(benFoto) || "";
+    setDoc(doc(db, "canliYayinlar", yayinId, "kalpler", uid), { uid, ad: epostaMi(benAd) ? "" : (benAd || ""), foto: f.length < 2000 ? f : "", n: increment(n), son: serverTimestamp() }, { merge: true }).catch(() => {});
+  };
   // ── ÇIKIŞ (yayıncı: yayını BİTİRİR; izleyici: sadece ayrılır)
   const cik = async () => {
     if (kapandiRef.current) return; kapandiRef.current = true;
-    try { if (kalpBirikRef.current > 0) { const n = kalpBirikRef.current; kalpBirikRef.current = 0; updateDoc(doc(db, "canliYayinlar", yayinId), { kalp: increment(n) }).catch(() => {}); } } catch (e) {}
+    try { if (kalpBirikRef.current > 0) { const n = kalpBirikRef.current; kalpBirikRef.current = 0; kalpKaydet(n); } } catch (e) {}
     if (yayinci) { try { await updateDoc(doc(db, "canliYayinlar", yayinId), { durum: "bitti", bitis: serverTimestamp() }); } catch (e) {} }
     try { roomRef.current && roomRef.current.disconnect(); } catch (e) {}
     try { izlerRef.current.forEach((x) => { try { x.stop(); } catch (e) {} }); } catch (e) {}
@@ -474,7 +481,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
     })();
     const kalpYaz = setInterval(() => {
       const n = kalpBirikRef.current; if (!n) return; kalpBirikRef.current = 0;
-      updateDoc(doc(db, "canliYayinlar", yayinId), { kalp: increment(n) }).catch(() => {});
+      kalpKaydet(n);
     }, 4000);
     return () => { iptal = true; clearInterval(kalpYaz); clearInterval(yoklamaRef.current); try { roomRef.current && roomRef.current.disconnect(); } catch (e) {} };
   }, [deneme]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -674,6 +681,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
 // ───────────── GEÇMİŞ YAYIN AYRINTISI: özet + tüm yorumlar (kim ne yazdı) + kaydı silme ─────────────
 function GecmisDetay({ t, dil, y, uyeyiAc, bilgi, kapat }) {
   const [yorumlar, setYorumlar] = useState(null);
+  const [kalpciler, setKalpciler] = useState(null);
   const [silSor, setSilSor] = useState(false);
   const [siliniyor, setSiliniyor] = useState(false);
   useEffect(() => {
@@ -681,12 +689,16 @@ function GecmisDetay({ t, dil, y, uyeyiAc, bilgi, kapat }) {
     getDocs(query(collection(db, "canliYayinlar", y.id, "yorumlar"), orderBy("zaman", "asc"), limit(500)))
       .then((s) => { if (!iptal) setYorumlar(s.docs.map((d) => adTemiz({ id: d.id, ...d.data() }))); })
       .catch(() => { if (!iptal) setYorumlar([]); });
+    getDocs(query(collection(db, "canliYayinlar", y.id, "kalpler"), limit(500)))
+      .then((s) => { if (!iptal) setKalpciler(s.docs.map((d) => adTemiz({ id: d.id, ...d.data() })).sort((a, b) => (b.n || 0) - (a.n || 0))); })
+      .catch(() => { if (!iptal) setKalpciler([]); });
     return () => { iptal = true; };
   }, [y.id]);
   const sil = async () => {
     setSiliniyor(true);
     try {
       for (const yr of (yorumlar || [])) { try { await deleteDoc(doc(db, "canliYayinlar", y.id, "yorumlar", yr.id)); } catch (e) {} }
+      for (const k of (kalpciler || [])) { try { await deleteDoc(doc(db, "canliYayinlar", y.id, "kalpler", k.id)); } catch (e) {} }
       await deleteDoc(doc(db, "canliYayinlar", y.id));
       if (bilgi) bilgi(t("cdSilindi", "Kayıt silindi."));
       kapat();
@@ -707,6 +719,20 @@ function GecmisDetay({ t, dil, y, uyeyiAc, bilgi, kapat }) {
           <span><i>💬</i><b>{yorumlar ? yorumlar.length : "…"}</b><em>{t("cdYorumlar", "Yorumlar")}</em></span>
         </div>
         <div className="cd-gd-not">ℹ️ {t("cdVideoYok", "Görüntü (video) kaydı şimdilik saklanmıyor; yorumlar ve sayılar burada kalır.")}</div>
+        {/* KALP ATANLAR — en çok kalp atan en üstte (ada/fotoğrafa dokununca profili) */}
+        <div className="cd-gd-alt-bas">♥ <KayanYazi>{t("cdKalpAtanlar", "Kalp atanlar")}</KayanYazi></div>
+        <div className="cd-gd-kalpciler">
+          {kalpciler === null ? <span className="cd-donen kucuk" />
+            : kalpciler.length === 0 ? <div className="cd-gd-bos kucuk">{t("cdKalpAtanYok", "Kalp atanların adı bu özellik eklendikten sonraki yayınlarda görünür.")}</div>
+            : kalpciler.map((k) => (
+              <button key={k.id} className="cd-gd-kalpci" onClick={() => { if (uyeyiAc && k.uid) { kapat(); uyeyiAc({ uid: k.uid, ad: k.ad, foto: k.foto }); } }}>
+                <KareAvatar foto={k.foto} ad={k.ad || t("cdUye", "Üye")} boy={30} />
+                <b><KayanYazi>{k.ad || t("cdUye", "Üye")}</KayanYazi></b>
+                <span>♥ {k.n || 0}</span>
+              </button>
+            ))}
+        </div>
+        <div className="cd-gd-alt-bas">💬 <KayanYazi>{t("cdYorumlar", "Yorumlar")}</KayanYazi></div>
         <div className="cd-gd-liste">
           {yorumlar === null ? <div className="cd-gd-bos"><span className="cd-donen kucuk" /></div>
             : yorumlar.length === 0 ? <div className="cd-gd-bos">{t("cdYorumYok", "Bu yayına yorum yazılmadı.")}</div>

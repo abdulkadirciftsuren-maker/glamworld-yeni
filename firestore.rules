@@ -227,6 +227,14 @@ service cloud.firestore {
                       || get(/databases/$(database)/documents/canliYayinlar/$(id)).data.yayinciUid == request.auth.uid);
         allow update: if false;
       }
+      // KALP ATANLAR (B481) — kişi SADECE kendi kaydını (belge adı = kendi kimliği) yazar; herkes okur; yayıncı/yönetici siler
+      match /kalpler/{kid} {
+        allow read: if true;
+        allow create, update: if girisli() && kid == request.auth.uid && request.resource.data.uid == request.auth.uid
+                              && request.resource.data.keys().hasOnly(['uid', 'ad', 'foto', 'n', 'son']);
+        allow delete: if girisli() && (kid == request.auth.uid || yonetici()
+                      || get(/databases/$(database)/documents/canliYayinlar/$(id)).data.yayinciUid == request.auth.uid);
+      }
     }
 
     // Cüzdanlar — sadece sahibi OKUR; yazma SADECE sunucu (Cloud Functions) (FAZ 3)
