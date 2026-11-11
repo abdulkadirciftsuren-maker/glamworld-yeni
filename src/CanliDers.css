@@ -127,8 +127,10 @@
 .cd-ust-serit{ position:absolute; top:0; left:0; right:0; z-index:3; display:flex; align-items:center; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 10px 10px; }
 .cd-ust-yazi{ flex:1; min-width:0; font-weight:900; font-size:16px; }
 .cd-kapat{ flex:0 0 auto; width:40px; height:40px; border-radius:11px; border:1px solid rgba(255,255,255,.25); background:rgba(20,10,50,.55); color:#fff; font-size:17px; font-weight:900; backdrop-filter:blur(8px); margin-left:auto; }
-.cd-bitir-btn{ flex:0 1 auto; min-width:0; margin-left:auto; display:flex; align-items:center; gap:5px; max-width:31%; height:42px; padding:0 10px; border-radius:12px; border:2px solid #fff; background:linear-gradient(135deg,#ff2d55,#e11d48); color:#fff; font-size:14.5px; font-weight:900; box-shadow:0 6px 18px rgba(255,45,85,.55); }
+.cd-bitir-btn{ flex:0 0 auto; margin-left:auto; display:flex; align-items:center; gap:5px; height:42px; padding:0 10px; border-radius:12px; border:2px solid #fff; background:linear-gradient(135deg,#ff2d55,#e11d48); color:#fff; font-size:14.5px; font-weight:900; box-shadow:0 6px 18px rgba(255,45,85,.55); }
 .cd-bitir-btn span{ font-size:16px; }
+/* Telefonda kısa 'Bitir' (tam görünsün, 11 Kas: 'Yay' diye kesik görünüyordu); bilgisayarda 'Yayını bitir' */
+.cd-bitir-btn b{ font-weight:900; } .cd-bitir-uzun{ display:none; min-width:0; } .cd-bitir-kisa{ white-space:nowrap; }
 .cd-kapat-belirgin{ background:rgba(255,255,255,.92); color:#2a1660; border:2px solid #fff; box-shadow:0 4px 14px rgba(0,0,0,.35); }
 .cd-kimlik{ flex:1 1 auto; min-width:96px; display:flex; align-items:center; gap:8px; padding:4px 10px 4px 4px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(20,10,50,.5); color:#fff; text-align:left; backdrop-filter:blur(8px); }
 .cd-kimlik-yazi{ display:flex; flex-direction:column; min-width:0; }
@@ -246,7 +248,8 @@ body:has(.cd-tam) .sr{ display:none !important; }
   .cd-tam .cd-kimlik .cd-avatar{ width:54px !important; height:54px !important; }
   .cd-tam .cd-rozet-canli,.cd-tam .cd-rozet-izl{ height:40px; font-size:16px; padding:0 12px; }
   .cd-kapat{ width:52px; height:52px; font-size:22px; }
-  .cd-bitir-btn{ height:52px; font-size:18px; padding:0 20px; max-width:none; flex:0 0 auto; } .cd-bitir-btn span{ font-size:20px; }
+  .cd-bitir-btn{ height:52px; font-size:18px; padding:0 20px; max-width:none; flex:0 0 auto; }
+  .cd-bitir-uzun{ display:inline-flex; } .cd-bitir-kisa{ display:none; } .cd-bitir-btn span{ font-size:20px; }
     .cd-uyari-serit{ top:96px; left:18px; right:auto; max-width:560px; font-size:16px; }
   .cd-yayin-sikayet{ top:96px; right:18px; height:44px; font-size:16px; }
   .cd-ikon{ width:58px; height:58px; font-size:24px; } .cd-kalp-btn{ font-size:28px; }

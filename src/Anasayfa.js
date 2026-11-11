@@ -9354,10 +9354,11 @@ export default function Anasayfa({ pro = false }) {
     try {
       let n = el, adim = 0;
       while (n && n.nodeType === 1 && adim < 12) {
-        if (n.scrollWidth > n.clientWidth + 4) {
-          const ox = window.getComputedStyle(n).overflowX;
-          if (ox === "auto" || ox === "scroll") return true;
-        }
+        // Yana kaydırmalı tasarlanmış şerit (overflow-x auto/scroll) TAŞMASA bile korunur (11 Kas: bilgisayarın geniş ekranında
+        //   Canlı Ders şeridi sığdığı için taşmıyor, kural devreye girmiyordu → sayfa değişiyordu). Tek istisna: KayanYazi etiketleri
+        //   (.kayan-dis) — sadece yazısı gerçekten taşıyorsa korunur, yoksa her düğme yazısı sayfa kaydırmayı engellerdi.
+        const ox = window.getComputedStyle(n).overflowX;
+        if ((ox === "auto" || ox === "scroll") && (n.scrollWidth > n.clientWidth + 4 || !(n.classList && n.classList.contains("kayan-dis")))) return true;
         n = n.parentElement; adim++;
       }
     } catch (x) {}

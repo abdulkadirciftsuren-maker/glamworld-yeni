@@ -2,6 +2,7 @@
 // + B476: Ayarlar telefon ülke kodu hedefi (ayarKodHedef1/2).
 export const CEVIRI_CANLI = {
  tr: {
+  cdBitirKisa: "Bitir",
   cdGelen: "Gelen", cdGonderilen: "Gönderilen", cdKare: "kare",
   cdKalpAtanlar: "Kalp atanlar", cdKalpAtanYok: "Kalp atanların adı bu özellik eklendikten sonraki yayınlarda görünür.",
   cdTeshisGoruntuYayini: "Görüntü yayını", cdTeshisAbonelik: "Görüntü bu cihaza açılamadı", cdGoruntuGitmiyor: "Bu cihazdan görüntü izleyicilere ulaşmıyor. Telefondan yayın açmayı dene.",
@@ -38,6 +39,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Yorum gönderilemedi.", cdYorumSil: "Yorumu sil", cdYorumYaz: "Bir şey sor ya da yaz…",
  },
  en: {
+  cdBitirKisa: "End",
   cdGelen: "Received", cdGonderilen: "Sent", cdKare: "frames",
   cdKalpAtanlar: "Who sent hearts", cdKalpAtanYok: "Names of people who sent hearts appear in streams after this feature was added.",
   cdTeshisGoruntuYayini: "Video stream", cdTeshisAbonelik: "Video could not be opened on this device", cdGoruntuGitmiyor: "Video from this device is not reaching viewers. Try going live from a phone.",
@@ -74,6 +76,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Comment could not be sent.", cdYorumSil: "Delete comment", cdYorumYaz: "Ask or write something…",
  },
  de: {
+  cdBitirKisa: "Beenden",
   cdGelen: "Empfangen", cdGonderilen: "Gesendet", cdKare: "Bilder",
   cdKalpAtanlar: "Wer Herzen geschickt hat", cdKalpAtanYok: "Die Namen erscheinen in Streams, die nach Einführung dieser Funktion stattfinden.",
   cdTeshisGoruntuYayini: "Bildübertragung", cdTeshisAbonelik: "Bild konnte auf diesem Gerät nicht geöffnet werden", cdGoruntuGitmiyor: "Das Bild dieses Geräts erreicht die Zuschauer nicht. Versuche, vom Handy aus live zu gehen.",
@@ -110,6 +113,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Kommentar konnte nicht gesendet werden.", cdYorumSil: "Kommentar löschen", cdYorumYaz: "Frag oder schreib etwas…",
  },
  ar: {
+  cdBitirKisa: "إنهاء",
   cdGelen: "المستلم", cdGonderilen: "المُرسَل", cdKare: "إطار",
   cdKalpAtanlar: "من أرسل القلوب", cdKalpAtanYok: "تظهر أسماء من أرسلوا القلوب في البثوث التي تلي إضافة هذه الميزة.",
   cdTeshisGoruntuYayini: "بث الصورة", cdTeshisAbonelik: "تعذّر فتح الصورة على هذا الجهاز", cdGoruntuGitmiyor: "لا تصل الصورة من هذا الجهاز إلى المشاهدين. جرّب البث من الهاتف.",
@@ -146,6 +150,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "تعذّر إرسال التعليق.", cdYorumSil: "حذف التعليق", cdYorumYaz: "اسأل أو اكتب شيئًا…",
  },
  ru: {
+  cdBitirKisa: "Завершить",
   cdGelen: "Получено", cdGonderilen: "Отправлено", cdKare: "кадров",
   cdKalpAtanlar: "Кто ставил сердечки", cdKalpAtanYok: "Имена появятся в эфирах после добавления этой функции.",
   cdTeshisGoruntuYayini: "Видеопоток", cdTeshisAbonelik: "Видео не открылось на этом устройстве", cdGoruntuGitmiyor: "Видео с этого устройства не доходит до зрителей. Попробуй начать эфир с телефона.",
@@ -182,6 +187,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не удалось отправить комментарий.", cdYorumSil: "Удалить комментарий", cdYorumYaz: "Спроси или напиши что-нибудь…",
  },
  uk: {
+  cdBitirKisa: "Завершити",
   cdGelen: "Отримано", cdGonderilen: "Надіслано", cdKare: "кадрів",
   cdKalpAtanlar: "Хто ставив сердечка", cdKalpAtanYok: "Імена з'являться в ефірах після додавання цієї функції.",
   cdTeshisGoruntuYayini: "Відеопотік", cdTeshisAbonelik: "Відео не відкрилося на цьому пристрої", cdGoruntuGitmiyor: "Відео з цього пристрою не доходить до глядачів. Спробуй почати ефір з телефона.",
@@ -218,6 +224,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не вдалося надіслати коментар.", cdYorumSil: "Видалити коментар", cdYorumYaz: "Запитай або напиши щось…",
  },
  es: {
+  cdBitirKisa: "Terminar",
   cdGelen: "Recibido", cdGonderilen: "Enviado", cdKare: "fotogramas",
   cdKalpAtanlar: "Quién envió corazones", cdKalpAtanYok: "Los nombres aparecen en los directos posteriores a esta función.",
   cdTeshisGoruntuYayini: "Señal de vídeo", cdTeshisAbonelik: "El vídeo no se pudo abrir en este dispositivo", cdGoruntuGitmiyor: "El vídeo de este dispositivo no llega a los espectadores. Prueba a emitir desde un teléfono.",
@@ -254,6 +261,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "No se pudo enviar el comentario.", cdYorumSil: "Eliminar comentario", cdYorumYaz: "Pregunta o escribe algo…",
  },
  fr: {
+  cdBitirKisa: "Terminer",
   cdGelen: "Reçu", cdGonderilen: "Envoyé", cdKare: "images",
   cdKalpAtanlar: "Qui a envoyé des cœurs", cdKalpAtanYok: "Les noms apparaissent dans les directs qui suivent l'ajout de cette fonction.",
   cdTeshisGoruntuYayini: "Flux vidéo", cdTeshisAbonelik: "La vidéo n'a pas pu s'ouvrir sur cet appareil", cdGoruntuGitmiyor: "La vidéo de cet appareil n'atteint pas les spectateurs. Essaie de lancer le direct depuis un téléphone.",
@@ -290,6 +298,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Le commentaire n'a pas pu être envoyé.", cdYorumSil: "Supprimer le commentaire", cdYorumYaz: "Pose une question ou écris…",
  },
  it: {
+  cdBitirKisa: "Termina",
   cdGelen: "Ricevuto", cdGonderilen: "Inviato", cdKare: "fotogrammi",
   cdKalpAtanlar: "Chi ha inviato cuori", cdKalpAtanYok: "I nomi compaiono nelle dirette successive all'aggiunta di questa funzione.",
   cdTeshisGoruntuYayini: "Flusso video", cdTeshisAbonelik: "Il video non si è potuto aprire su questo dispositivo", cdGoruntuGitmiyor: "Il video da questo dispositivo non arriva agli spettatori. Prova ad andare in diretta dal telefono.",
@@ -326,6 +335,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Impossibile inviare il commento.", cdYorumSil: "Elimina commento", cdYorumYaz: "Chiedi o scrivi qualcosa…",
  },
  zh: {
+  cdBitirKisa: "结束",
   cdGelen: "已接收", cdGonderilen: "已发送", cdKare: "帧",
   cdKalpAtanlar: "送爱心的人", cdKalpAtanYok: "此功能上线后的直播才会显示送爱心者的名字。",
   cdTeshisGoruntuYayini: "视频流", cdTeshisAbonelik: "此设备无法打开画面", cdGoruntuGitmiyor: "此设备的画面无法传到观众。请尝试用手机开播。",
@@ -362,6 +372,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "评论发送失败。", cdYorumSil: "删除评论", cdYorumYaz: "提问或说点什么…",
  },
  hi: {
+  cdBitirKisa: "खत्म",
   cdGelen: "प्राप्त", cdGonderilen: "भेजा गया", cdKare: "फ़्रेम",
   cdKalpAtanlar: "किसने दिल भेजे", cdKalpAtanYok: "यह सुविधा जुड़ने के बाद के लाइव में नाम दिखेंगे।",
   cdTeshisGoruntuYayini: "वीडियो स्ट्रीम", cdTeshisAbonelik: "इस डिवाइस पर वीडियो नहीं खुल सका", cdGoruntuGitmiyor: "इस डिवाइस का वीडियो दर्शकों तक नहीं पहुँच रहा। फ़ोन से लाइव करके देखो।",
@@ -398,6 +409,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "टिप्पणी नहीं भेजी जा सकी।", cdYorumSil: "टिप्पणी हटाओ", cdYorumYaz: "कुछ पूछो या लिखो…",
  },
  pt: {
+  cdBitirKisa: "Terminar",
   cdGelen: "Recebido", cdGonderilen: "Enviado", cdKare: "fotogramas",
   cdKalpAtanlar: "Quem enviou corações", cdKalpAtanYok: "Os nomes aparecem nos diretos feitos depois desta funcionalidade.",
   cdTeshisGoruntuYayini: "Transmissão de vídeo", cdTeshisAbonelik: "Não foi possível abrir o vídeo neste dispositivo", cdGoruntuGitmiyor: "O vídeo deste dispositivo não está a chegar aos espectadores. Tenta fazer o direto a partir do telemóvel.",
@@ -434,6 +446,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Não foi possível enviar o comentário.", cdYorumSil: "Apagar comentário", cdYorumYaz: "Pergunta ou escreve algo…",
  },
  ja: {
+  cdBitirKisa: "終了",
   cdGelen: "受信", cdGonderilen: "送信", cdKare: "フレーム",
   cdKalpAtanlar: "ハートを送った人", cdKalpAtanYok: "この機能の追加後の配信から名前が表示されます。",
   cdTeshisGoruntuYayini: "映像配信", cdTeshisAbonelik: "この端末で映像を開けませんでした", cdGoruntuGitmiyor: "この端末の映像が視聴者に届いていません。スマホから配信してみてください。",

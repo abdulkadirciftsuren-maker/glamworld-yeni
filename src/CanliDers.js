@@ -654,7 +654,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         <span className="cd-rozet-izl" title={t("cdIzleyici", "İzleyici")}>👁 {(y && y.izleyici) || 0}</span>
         {yayinci ? (
           // 11 Kas (kullanıcı): "x işaretini daha belirgin yap, değişik olsun, yayını sonlandır" → kırmızı yazılı düğme
-          <button className="cd-bitir-btn" onClick={geriTus} aria-label={t("cdBitir", "Yayını bitir")} title={t("cdBitir", "Yayını bitir")}><span aria-hidden="true">⏹</span><KayanYazi>{t("cdBitir", "Yayını bitir")}</KayanYazi></button>
+          <button className="cd-bitir-btn" onClick={geriTus} aria-label={t("cdBitir", "Yayını bitir")} title={t("cdBitir", "Yayını bitir")}><span aria-hidden="true">⏹</span><b className="cd-bitir-kisa">{t("cdBitirKisa", "Bitir")}</b><b className="cd-bitir-uzun"><KayanYazi>{t("cdBitir", "Yayını bitir")}</KayanYazi></b></button>
         ) : (
           <button className="cd-kapat cd-kapat-belirgin" onClick={geriTus} aria-label={t("cdKapat", "Kapat")} title={t("cdKapat", "Kapat")}>✕</button>
         )}
