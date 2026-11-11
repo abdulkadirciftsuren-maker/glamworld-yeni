@@ -2,6 +2,7 @@
 // + B476: Ayarlar telefon ülke kodu hedefi (ayarKodHedef1/2).
 export const CEVIRI_CANLI = {
  tr: {
+  cdGecmis: "Geçmiş yayınlarım", cdSure: "Süre", cdEnCok: "En çok izleyici", cdKalpSayisi: "Kalp", cdYorumlar: "Yorumlar", cdVideoYok: "Görüntü (video) kaydı şimdilik saklanmıyor; yorumlar ve sayılar burada kalır.", cdYorumYok: "Bu yayına yorum yazılmadı.", cdKayitSil: "Bu yayının kaydını sil", cdKayitSilSor: "Bu yayının kaydı ve tüm yorumları silinsin mi? Geri alınamaz.", cdSil: "Sil", cdSilindi: "Kayıt silindi.", cdSilinemedi: "Silinemedi, tekrar dene.",
   ayarKodHedef1: "Ülke kodu 1. numaraya uygulanır", ayarKodHedef2: "Ülke kodu 2. numaraya uygulanır",
   cdUye: "Üye",
   navCanliDers: "Canlı Ders",
@@ -32,6 +33,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Yorum gönderilemedi.", cdYorumSil: "Yorumu sil", cdYorumYaz: "Bir şey sor ya da yaz…",
  },
  en: {
+  cdGecmis: "My past streams", cdSure: "Duration", cdEnCok: "Peak viewers", cdKalpSayisi: "Hearts", cdYorumlar: "Comments", cdVideoYok: "The video itself is not saved for now; comments and numbers stay here.", cdYorumYok: "No comments were written on this stream.", cdKayitSil: "Delete this stream's record", cdKayitSilSor: "Delete this stream's record and all its comments? This cannot be undone.", cdSil: "Delete", cdSilindi: "Record deleted.", cdSilinemedi: "Could not delete, try again.",
   ayarKodHedef1: "Country code applies to number 1", ayarKodHedef2: "Country code applies to number 2",
   cdUye: "Member",
   navCanliDers: "Live Classes",
@@ -62,6 +64,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Comment could not be sent.", cdYorumSil: "Delete comment", cdYorumYaz: "Ask or write something…",
  },
  de: {
+  cdGecmis: "Meine früheren Streams", cdSure: "Dauer", cdEnCok: "Meiste Zuschauer", cdKalpSayisi: "Herzen", cdYorumlar: "Kommentare", cdVideoYok: "Das Video selbst wird vorerst nicht gespeichert; Kommentare und Zahlen bleiben hier.", cdYorumYok: "Zu diesem Stream wurden keine Kommentare geschrieben.", cdKayitSil: "Aufzeichnung dieses Streams löschen", cdKayitSilSor: "Aufzeichnung und alle Kommentare dieses Streams löschen? Das kann nicht rückgängig gemacht werden.", cdSil: "Löschen", cdSilindi: "Eintrag gelöscht.", cdSilinemedi: "Löschen fehlgeschlagen, bitte erneut versuchen.",
   ayarKodHedef1: "Ländervorwahl gilt für Nummer 1", ayarKodHedef2: "Ländervorwahl gilt für Nummer 2",
   cdUye: "Mitglied",
   navCanliDers: "Live-Kurse",
@@ -92,6 +95,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Kommentar konnte nicht gesendet werden.", cdYorumSil: "Kommentar löschen", cdYorumYaz: "Frag oder schreib etwas…",
  },
  ar: {
+  cdGecmis: "بثوثي السابقة", cdSure: "المدة", cdEnCok: "أعلى عدد مشاهدين", cdKalpSayisi: "القلوب", cdYorumlar: "التعليقات", cdVideoYok: "لا يُحفظ الفيديو نفسه حاليًا؛ تبقى التعليقات والأرقام هنا.", cdYorumYok: "لم تُكتب تعليقات على هذا البث.", cdKayitSil: "حذف سجل هذا البث", cdKayitSilSor: "هل تريد حذف سجل هذا البث وجميع تعليقاته؟ لا يمكن التراجع.", cdSil: "حذف", cdSilindi: "تم حذف السجل.", cdSilinemedi: "تعذّر الحذف، حاول مجددًا.",
   ayarKodHedef1: "يُطبَّق رمز الدولة على الرقم 1", ayarKodHedef2: "يُطبَّق رمز الدولة على الرقم 2",
   cdUye: "عضو",
   navCanliDers: "دروس مباشرة",
@@ -122,6 +126,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "تعذّر إرسال التعليق.", cdYorumSil: "حذف التعليق", cdYorumYaz: "اسأل أو اكتب شيئًا…",
  },
  ru: {
+  cdGecmis: "Мои прошлые эфиры", cdSure: "Длительность", cdEnCok: "Больше всего зрителей", cdKalpSayisi: "Сердечки", cdYorumlar: "Комментарии", cdVideoYok: "Само видео пока не сохраняется; комментарии и цифры остаются здесь.", cdYorumYok: "К этому эфиру не было комментариев.", cdKayitSil: "Удалить запись эфира", cdKayitSilSor: "Удалить запись эфира и все комментарии? Это нельзя отменить.", cdSil: "Удалить", cdSilindi: "Запись удалена.", cdSilinemedi: "Не удалось удалить, попробуй ещё раз.",
   ayarKodHedef1: "Код страны применяется к номеру 1", ayarKodHedef2: "Код страны применяется к номеру 2",
   cdUye: "Участник",
   navCanliDers: "Живые уроки",
@@ -152,6 +157,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не удалось отправить комментарий.", cdYorumSil: "Удалить комментарий", cdYorumYaz: "Спроси или напиши что-нибудь…",
  },
  uk: {
+  cdGecmis: "Мої минулі ефіри", cdSure: "Тривалість", cdEnCok: "Найбільше глядачів", cdKalpSayisi: "Сердечка", cdYorumlar: "Коментарі", cdVideoYok: "Саме відео поки не зберігається; коментарі й цифри залишаються тут.", cdYorumYok: "До цього ефіру не було коментарів.", cdKayitSil: "Видалити запис ефіру", cdKayitSilSor: "Видалити запис ефіру та всі коментарі? Це не можна скасувати.", cdSil: "Видалити", cdSilindi: "Запис видалено.", cdSilinemedi: "Не вдалося видалити, спробуй ще раз.",
   ayarKodHedef1: "Код країни застосовується до номера 1", ayarKodHedef2: "Код країни застосовується до номера 2",
   cdUye: "Учасник",
   navCanliDers: "Живі уроки",
@@ -182,6 +188,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не вдалося надіслати коментар.", cdYorumSil: "Видалити коментар", cdYorumYaz: "Запитай або напиши щось…",
  },
  es: {
+  cdGecmis: "Mis directos anteriores", cdSure: "Duración", cdEnCok: "Máximo de espectadores", cdKalpSayisi: "Corazones", cdYorumlar: "Comentarios", cdVideoYok: "El vídeo en sí no se guarda por ahora; los comentarios y los números quedan aquí.", cdYorumYok: "No se escribieron comentarios en este directo.", cdKayitSil: "Eliminar el registro de este directo", cdKayitSilSor: "¿Eliminar el registro de este directo y todos sus comentarios? No se puede deshacer.", cdSil: "Eliminar", cdSilindi: "Registro eliminado.", cdSilinemedi: "No se pudo eliminar, inténtalo de nuevo.",
   ayarKodHedef1: "El prefijo se aplica al número 1", ayarKodHedef2: "El prefijo se aplica al número 2",
   cdUye: "Miembro",
   navCanliDers: "Clases en vivo",
@@ -212,6 +219,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "No se pudo enviar el comentario.", cdYorumSil: "Eliminar comentario", cdYorumYaz: "Pregunta o escribe algo…",
  },
  fr: {
+  cdGecmis: "Mes directs passés", cdSure: "Durée", cdEnCok: "Pic de spectateurs", cdKalpSayisi: "Cœurs", cdYorumlar: "Commentaires", cdVideoYok: "La vidéo elle-même n'est pas enregistrée pour l'instant ; les commentaires et les chiffres restent ici.", cdYorumYok: "Aucun commentaire n'a été écrit sur ce direct.", cdKayitSil: "Supprimer l'enregistrement de ce direct", cdKayitSilSor: "Supprimer l'enregistrement de ce direct et tous ses commentaires ? C'est irréversible.", cdSil: "Supprimer", cdSilindi: "Enregistrement supprimé.", cdSilinemedi: "Suppression impossible, réessaie.",
   ayarKodHedef1: "L'indicatif s'applique au numéro 1", ayarKodHedef2: "L'indicatif s'applique au numéro 2",
   cdUye: "Membre",
   navCanliDers: "Cours en direct",
@@ -242,6 +250,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Le commentaire n'a pas pu être envoyé.", cdYorumSil: "Supprimer le commentaire", cdYorumYaz: "Pose une question ou écris…",
  },
  it: {
+  cdGecmis: "Le mie dirette passate", cdSure: "Durata", cdEnCok: "Picco di spettatori", cdKalpSayisi: "Cuori", cdYorumlar: "Commenti", cdVideoYok: "Il video in sé per ora non viene salvato; commenti e numeri restano qui.", cdYorumYok: "Nessun commento è stato scritto in questa diretta.", cdKayitSil: "Elimina il registro di questa diretta", cdKayitSilSor: "Eliminare il registro di questa diretta e tutti i commenti? Non si può annullare.", cdSil: "Elimina", cdSilindi: "Registro eliminato.", cdSilinemedi: "Impossibile eliminare, riprova.",
   ayarKodHedef1: "Il prefisso si applica al numero 1", ayarKodHedef2: "Il prefisso si applica al numero 2",
   cdUye: "Membro",
   navCanliDers: "Lezioni dal vivo",
@@ -272,6 +281,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Impossibile inviare il commento.", cdYorumSil: "Elimina commento", cdYorumYaz: "Chiedi o scrivi qualcosa…",
  },
  zh: {
+  cdGecmis: "我的往期直播", cdSure: "时长", cdEnCok: "最高观众数", cdKalpSayisi: "爱心", cdYorumlar: "评论", cdVideoYok: "视频本身暂不保存；评论和数据会保留在这里。", cdYorumYok: "这场直播没有评论。", cdKayitSil: "删除这场直播的记录", cdKayitSilSor: "要删除这场直播的记录及所有评论吗？此操作无法撤销。", cdSil: "删除", cdSilindi: "记录已删除。", cdSilinemedi: "删除失败，请重试。",
   ayarKodHedef1: "国家代码用于第1个号码", ayarKodHedef2: "国家代码用于第2个号码",
   cdUye: "成员",
   navCanliDers: "直播课堂",
@@ -302,6 +312,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "评论发送失败。", cdYorumSil: "删除评论", cdYorumYaz: "提问或说点什么…",
  },
  hi: {
+  cdGecmis: "मेरे पिछले लाइव", cdSure: "अवधि", cdEnCok: "सबसे ज़्यादा दर्शक", cdKalpSayisi: "दिल", cdYorumlar: "टिप्पणियाँ", cdVideoYok: "वीडियो अभी सहेजा नहीं जाता; टिप्पणियाँ और गिनती यहाँ रहती हैं।", cdYorumYok: "इस लाइव पर कोई टिप्पणी नहीं लिखी गई।", cdKayitSil: "इस लाइव का रिकॉर्ड हटाओ", cdKayitSilSor: "इस लाइव का रिकॉर्ड और सारी टिप्पणियाँ हटाएँ? यह वापस नहीं होगा।", cdSil: "हटाओ", cdSilindi: "रिकॉर्ड हटा दिया गया।", cdSilinemedi: "हटाया नहीं जा सका, फिर कोशिश करो।",
   ayarKodHedef1: "देश कोड नंबर 1 पर लागू होगा", ayarKodHedef2: "देश कोड नंबर 2 पर लागू होगा",
   cdUye: "सदस्य",
   navCanliDers: "लाइव क्लास",
@@ -332,6 +343,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "टिप्पणी नहीं भेजी जा सकी।", cdYorumSil: "टिप्पणी हटाओ", cdYorumYaz: "कुछ पूछो या लिखो…",
  },
  pt: {
+  cdGecmis: "Os meus diretos anteriores", cdSure: "Duração", cdEnCok: "Pico de espectadores", cdKalpSayisi: "Corações", cdYorumlar: "Comentários", cdVideoYok: "O vídeo em si ainda não é guardado; os comentários e os números ficam aqui.", cdYorumYok: "Não foram escritos comentários neste direto.", cdKayitSil: "Apagar o registo deste direto", cdKayitSilSor: "Apagar o registo deste direto e todos os comentários? Não pode ser desfeito.", cdSil: "Apagar", cdSilindi: "Registo apagado.", cdSilinemedi: "Não foi possível apagar, tenta de novo.",
   ayarKodHedef1: "O indicativo aplica-se ao número 1", ayarKodHedef2: "O indicativo aplica-se ao número 2",
   cdUye: "Membro",
   navCanliDers: "Aulas ao vivo",
@@ -362,6 +374,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Não foi possível enviar o comentário.", cdYorumSil: "Apagar comentário", cdYorumYaz: "Pergunta ou escreve algo…",
  },
  ja: {
+  cdGecmis: "過去の配信", cdSure: "配信時間", cdEnCok: "最多視聴者数", cdKalpSayisi: "ハート", cdYorumlar: "コメント", cdVideoYok: "映像そのものは今のところ保存されません。コメントと数字はここに残ります。", cdYorumYok: "この配信にはコメントがありませんでした。", cdKayitSil: "この配信の記録を削除", cdKayitSilSor: "この配信の記録とすべてのコメントを削除しますか？元に戻せません。", cdSil: "削除", cdSilindi: "記録を削除しました。", cdSilinemedi: "削除できませんでした。もう一度お試しください。",
   ayarKodHedef1: "国番号は番号1に適用されます", ayarKodHedef2: "国番号は番号2に適用されます",
   cdUye: "メンバー",
   navCanliDers: "ライブ講座",

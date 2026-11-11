@@ -173,6 +173,31 @@
 .cd-ses-ac{ position:absolute; z-index:6; top:50%; left:50%; transform:translate(-50%,-50%); display:flex; align-items:center; gap:8px; max-width:80%; height:50px; padding:0 18px; border-radius:14px; border:0; color:#fff; font-weight:900; font-size:15.5px; background:linear-gradient(135deg,#8b5cf6,#ec4899); box-shadow:0 10px 26px rgba(139,92,246,.5); }
 .cd-yayin-sikayet{ position:absolute; z-index:3; right:10px; top:calc(62px + env(safe-area-inset-top)); width:36px; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background:rgba(20,10,50,.45); font-size:15px; }
 
+/* GEÇMİŞ YAYINLARIM */
+.cd-gecmis-liste{ display:flex; flex-direction:column; gap:8px; }
+.cd-gecmis-kart{ display:flex; flex-direction:column; gap:8px; width:100%; padding:12px 14px; border-radius:14px; border:1px solid var(--cd-cizgi); background:var(--cd-cam); color:#fff; text-align:left; }
+.cd-gecmis-ust{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.cd-gecmis-ust b{ font-size:15px; font-weight:900; color:#FFD700; min-width:0; }
+.cd-gecmis-ust i{ font-style:normal; font-size:12.5px; color:var(--cd-yazi2); }
+.cd-gecmis-sayilar{ display:flex; gap:14px; flex-wrap:wrap; font-size:13.5px; font-weight:800; color:#f6f3ff; }
+.cd-gecmis-detay{ max-width:560px; max-height:88vh; display:flex; flex-direction:column; text-align:left; padding:16px; }
+.cd-gd-bas{ display:flex; align-items:center; gap:10px; }
+.cd-gd-bas b{ flex:1; min-width:0; font-size:17px; color:#FFD700; }
+.cd-gd-tarih{ margin-top:4px; font-size:13px; color:#c9bdf5; }
+.cd-gd-ozet{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.cd-gd-ozet span{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 4px; border-radius:12px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); min-width:0; }
+.cd-gd-ozet i{ font-style:normal; font-size:16px; } .cd-gd-ozet b{ font-size:18px; color:#fff; } .cd-gd-ozet em{ font-style:normal; font-size:11px; color:#c9bdf5; text-align:center; }
+.cd-gd-not{ margin-top:10px; font-size:12px; color:#c9bdf5; line-height:1.4; }
+.cd-gd-liste{ flex:1; min-height:80px; overflow-y:auto; margin-top:10px; display:flex; flex-direction:column; gap:8px; padding-right:2px; }
+.cd-gd-bos{ display:flex; justify-content:center; padding:18px; color:#c9bdf5; font-size:14px; }
+.cd-gd-yorum{ display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.06); }
+.cd-gd-kim{ border:0; background:transparent; padding:0; flex:0 0 auto; }
+.cd-gd-yazi{ min-width:0; flex:1; }
+.cd-gd-yazi b{ display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; font-size:14px; color:#FFD700; }
+.cd-gd-yazi em{ font-style:normal; color:#ff9ec0; font-size:12px; } .cd-gd-yazi small{ margin-left:auto; font-size:11.5px; color:#c9bdf5; font-weight:600; }
+.cd-gd-yazi p{ margin:3px 0 0 !important; font-size:14.5px; color:#f6f3ff !important; word-break:break-word; }
+.cd-gd-silsor p{ margin:12px 0 0 !important; color:#ffb3c3 !important; font-weight:700; }
+
 /* BİLGİSAYAR — telefondan küçük OLMAZ, büyür */
 @media (min-width:560px){
   .cd-sayfa{ padding:18px 20px 110px; }
@@ -191,6 +216,7 @@
   .cd-oz p{ font-size:14px; }
   .cd-ofis b{ font-size:17px; } .cd-ofis p{ font-size:14px; }
   .cd-pencere b{ font-size:19px; } .cd-pencere p{ font-size:15.5px; }
+  .cd-gecmis-ust b{ font-size:17px; } .cd-gecmis-sayilar{ font-size:15px; } .cd-gd-yazi b{ font-size:15.5px; } .cd-gd-yazi p{ font-size:16px; }
   .cd-hazirlik-kutu{ left:50%; right:auto; width:560px; transform:translateX(-50%); border-radius:20px 20px 0 0; }
   .cd-onizleme,.cd-yayin-vid{ object-fit:contain; }
   .cd-akis{ right:auto; width:420px; }

@@ -7,7 +7,7 @@
 //  - Takipçilere "X canlı yayında" bildirimi sunucudan gider (functions/index.js canliYayinBildirim).
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, increment, arrayUnion } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, orderBy, limit, serverTimestamp, increment, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase";
 import { livekitYukle, livekitHemen } from "./agirKutuphaneler";
 import KayanYazi from "./KayanYazi";
@@ -24,6 +24,11 @@ const fotoIyi = (f) => (f && typeof f === "string" && f.slice(0, 5) !== "data:" 
 // geliyordu. Canlı yayın herkese açık → e-posta ASLA gösterilmez/kaydedilmez; yerine "Üye" yazılır (eski kayıtlarda da).
 const epostaMi = (a) => /@/.test(String(a || ""));
 const adTemiz = (d) => (d && epostaMi(d.ad) ? { ...d, ad: "" } : d);
+const tarihYaz = (z, dil) => { const ms = zamanMs(z); if (!ms) return ""; try { return new Date(ms).toLocaleString(dil || "tr", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return new Date(ms).toLocaleString(); } };
+const saatYaz = (z, dil) => { const ms = zamanMs(z); if (!ms) return ""; try { return new Date(ms).toLocaleTimeString(dil || "tr", { hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } };
+// Yayın süresi: bitiş − başlangıç (bitiş yoksa son nabız; telefon kapanmış olabilir)
+const yayinSuresi = (y) => Math.max(0, (zamanMs(y.bitis) || zamanMs(y.sonNabiz)) - zamanMs(y.baslangic));
+const enCokIzl = (y) => Math.max(y.enCokIzleyici || 0, y.izleyici || 0);
 const sureYaz = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); const d = Math.floor(s / 60), h = Math.floor(d / 60); return h ? h + ":" + String(d % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0") : d + ":" + String(s % 60).padStart(2, "0"); };
 
 function KareAvatar({ foto, ad, boy }) {
@@ -44,6 +49,9 @@ export default function CanliDers({ uid, benAd, benFoto, meslekler, dil, tokenAl
   const [hazirlik, setHazirlik] = useState(false); // "Canlı yayın başlat" penceresi
   const [izlenen, setIzlenen] = useState(null);    // { id, yayinci: bool }
   const [bilgiAcik, setBilgiAcik] = useState("");  // "meslek" → meslek gerekli uyarısı
+  // GEÇMİŞ YAYINLARIM (11 Kas, kullanıcı: "canlı yayınım hiçbir yerde gözükmüyor; kim yazmış, kim kalp atmış değerlendirmem lazım")
+  const [gecmis, setGecmis] = useState([]);
+  const [gecmisSecili, setGecmisSecili] = useState(null);
 
   // ŞU AN CANLI olan yayınları dinle (tek alan sorgusu → ek dizin gerekmez)
   useEffect(() => {
@@ -53,12 +61,19 @@ export default function CanliDers({ uid, benAd, benFoto, meslekler, dil, tokenAl
     return () => { un(); clearInterval(z); };
   }, []);
 
+  // Benim (yayıncı olarak) açtığım yayınlar — biten ya da nabzı kesilmiş olanlar geçmişte listelenir
+  useEffect(() => {
+    if (!uid) { setGecmis([]); return undefined; }
+    const q = query(collection(db, "canliYayinlar"), where("yayinciUid", "==", uid), limit(60));
+    return onSnapshot(q, (s) => setGecmis(s.docs.map((d) => ({ id: d.id, ...d.data() }))), () => {});
+  }, [uid]);
+
   // Geri tuşu: açık pencereyi/yayını kapatsın (sayfadan atmasın) — Elite Pazar ile aynı düzen
   useEffect(() => {
-    const acik = hazirlik || !!izlenen || !!bilgiAcik;
+    const acik = hazirlik || !!izlenen || !!bilgiAcik || !!gecmisSecili;
     if (onPencere) onPencere(acik);
-    if (kapatRef) kapatRef.current = acik ? () => { if (izlenen && izlenen.kapat) izlenen.kapat(); else { setHazirlik(false); setIzlenen(null); setBilgiAcik(""); } } : null;
-  }, [hazirlik, izlenen, bilgiAcik]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (kapatRef) kapatRef.current = acik ? () => { if (izlenen && izlenen.kapat) izlenen.kapat(); else { setHazirlik(false); setIzlenen(null); setBilgiAcik(""); setGecmisSecili(null); } } : null;
+  }, [hazirlik, izlenen, bilgiAcik, gecmisSecili]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (onPencere) onPencere(false); if (kapatRef) kapatRef.current = null; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canli = yayinlar
@@ -66,6 +81,8 @@ export default function CanliDers({ uid, benAd, benFoto, meslekler, dil, tokenAl
     .sort((a, b) => (b.izleyici || 0) - (a.izleyici || 0) || zamanMs(b.baslangic) - zamanMs(a.baslangic));
   const gorunen = filtre ? canli.filter((y) => y.meslek === filtre) : canli;
   const proMu = Array.isArray(meslekler) && meslekler.length > 0;
+  const bitmisMi = (y) => y.durum === "bitti" || (simdi - (zamanMs(y.sonNabiz) || zamanMs(y.baslangic))) >= OLU_MS;
+  const gecmisListe = gecmis.filter(bitmisMi).sort((a, b) => zamanMs(b.baslangic) - zamanMs(a.baslangic));
 
   const baslatTik = () => {
     if (!uid) { if (bilgi) bilgi(t("cdGirisGerek", "Canlı yayın için giriş yapmalısın.")); return; }
@@ -128,6 +145,28 @@ export default function CanliDers({ uid, benAd, benFoto, meslekler, dil, tokenAl
         </div>
       )}
 
+      {/* GEÇMİŞ YAYINLARIM — sadece kendi yayınlarım (yorumlar, kalp, izleyici, süre) */}
+      {gecmisListe.length > 0 && (
+        <>
+          <div className="cd-bolum-bas"><span aria-hidden="true">🗂️</span><KayanYazi>{t("cdGecmis", "Geçmiş yayınlarım")}</KayanYazi></div>
+          <div className="cd-gecmis-liste">
+            {gecmisListe.map((y) => (
+              <button key={y.id} className="cd-gecmis-kart" onClick={() => setGecmisSecili(y)}>
+                <span className="cd-gecmis-ust">
+                  <b><KayanYazi>{y.baslik || (y.meslek ? mc(y.meslek, dil) : t("cdCanliDers", "Canlı ders"))}</KayanYazi></b>
+                  <i>{tarihYaz(y.baslangic, dil)}</i>
+                </span>
+                <span className="cd-gecmis-sayilar">
+                  <span title={t("cdSure", "Süre")}>⏱️ {sureYaz(yayinSuresi(y))}</span>
+                  <span title={t("cdEnCok", "En çok izleyici")}>👁 {enCokIzl(y)}</span>
+                  <span title={t("cdKalp", "Kalp gönder")}>♥ {y.kalp || 0}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* NASIL ÇALIŞIR / NELER GELİYOR */}
       <div className="cd-bolum-bas"><KayanYazi>{t("cdNeler", "Burada neler var?")}</KayanYazi></div>
       <div className="cd-ozellik">
@@ -160,6 +199,9 @@ export default function CanliDers({ uid, benAd, benFoto, meslekler, dil, tokenAl
         <YayinHazirlik t={t} dil={dil} uid={uid} benAd={benAd} benFoto={benFoto} meslekler={meslekler} tokenAl={tokenAl} bilgi={bilgi}
           kapat={() => setHazirlik(false)}
           basladi={(id, oturum) => { setHazirlik(false); setIzlenen({ id, yayinci: true, oturum }); }} />
+      )}
+      {gecmisSecili && (
+        <GecmisDetay t={t} dil={dil} y={gecmisSecili} uyeyiAc={uyeyiAc} bilgi={bilgi} kapat={() => setGecmisSecili(null)} />
       )}
       {izlenen && (
         <YayinEkrani key={izlenen.id} t={t} dil={dil} uid={uid} benAd={benAd} benFoto={benFoto} yayinId={izlenen.id} yayinci={izlenen.yayinci}
@@ -212,7 +254,7 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
       const foto = fotoIyi(benFoto);
       await setDoc(ref, {
         yayinciUid: uid, ad: epostaMi(benAd) ? "" : (benAd || ""), foto: foto && foto.length < 2000 ? foto : "", baslik: baslik.trim().slice(0, 80),
-        meslek: meslek || "", durum: "canli", izleyici: 0, kalp: 0, engelliler: [],
+        meslek: meslek || "", durum: "canli", izleyici: 0, enCokIzleyici: 0, kalp: 0, engelliler: [],
         baslangic: serverTimestamp(), sonNabiz: serverTimestamp(),
       });
       devredildi.current = true;
@@ -273,6 +315,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const roomRef = useRef(oturum ? oturum.room : null);
   const izlerRef = useRef(oturum ? oturum.izler : []);
   const kalpBirikRef = useRef(0);
+  const enCokRef = useRef(0);
   const kapandiRef = useRef(false);
   const akisRef = useRef(null);
 
@@ -315,7 +358,9 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
     const izleyiciYaz = () => {
       if (!yayinci || !roomRef.current) return;
       const n = (roomRef.current.remoteParticipants || new Map()).size;
-      updateDoc(doc(db, "canliYayinlar", yayinId), { izleyici: n, sonNabiz: serverTimestamp() }).catch(() => {});
+      const guncel = { izleyici: n, sonNabiz: serverTimestamp() };
+      if (n > enCokRef.current) { enCokRef.current = n; guncel.enCokIzleyici = n; } // geçmişte "en çok izleyici" olarak görünür
+      updateDoc(doc(db, "canliYayinlar", yayinId), guncel).catch(() => {});
     };
     if (yayinci) {
       const room = roomRef.current;
@@ -443,7 +488,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         <div className="cd-akis-bilgi">🛡️ {t("cdKural", "Saygılı ol. Hakaret, spam ve uygunsuz içerik kaldırılır.")}</div>
         {yorumlar.map((yr) => (
           <button key={yr.id} className="cd-yorum" onClick={() => setSecili(yr)}>
-            <KareAvatar foto={yr.foto} ad={yr.ad} boy={28} />
+            <KareAvatar foto={yr.foto} ad={yr.ad || t("cdUye", "Üye")} boy={28} />
             <span><b>{yr.ad || t("cdUye", "Üye")}{y && yr.uid === y.yayinciUid ? <em> · {t("cdYayinciEtiket", "yayıncı")}</em> : null}</b> {yr.metin}</span>
           </button>
         ))}
@@ -468,7 +513,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       {secili && (
         <div className="cd-perde" onClick={(e) => { if (e.target === e.currentTarget) setSecili(null); }}>
           <div className="cd-pencere cd-menu">
-            <div className="cd-menu-kim"><KareAvatar foto={secili.foto} ad={secili.ad} boy={36} /><b><KayanYazi>{secili.ad || t("cdUye", "Üye")}</KayanYazi></b></div>
+            <div className="cd-menu-kim"><KareAvatar foto={secili.foto} ad={secili.ad || t("cdUye", "Üye")} boy={36} /><b><KayanYazi>{secili.ad || t("cdUye", "Üye")}</KayanYazi></b></div>
             <p className="cd-menu-metin">{secili.metin}</p>
             {yayinci ? (
               <>
@@ -518,6 +563,73 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       {!yayinci && !bitti && !engellendim && (
         <button className="cd-yayin-sikayet" onClick={() => sikayet(null)} aria-label={t("cdYayiniBildir", "Yayını bildir")} title={t("cdYayiniBildir", "Yayını bildir")}>⚠️</button>
       )}
+    </div>
+  );
+}
+
+// ───────────── GEÇMİŞ YAYIN AYRINTISI: özet + tüm yorumlar (kim ne yazdı) + kaydı silme ─────────────
+function GecmisDetay({ t, dil, y, uyeyiAc, bilgi, kapat }) {
+  const [yorumlar, setYorumlar] = useState(null);
+  const [silSor, setSilSor] = useState(false);
+  const [siliniyor, setSiliniyor] = useState(false);
+  useEffect(() => {
+    let iptal = false;
+    getDocs(query(collection(db, "canliYayinlar", y.id, "yorumlar"), orderBy("zaman", "asc"), limit(500)))
+      .then((s) => { if (!iptal) setYorumlar(s.docs.map((d) => adTemiz({ id: d.id, ...d.data() }))); })
+      .catch(() => { if (!iptal) setYorumlar([]); });
+    return () => { iptal = true; };
+  }, [y.id]);
+  const sil = async () => {
+    setSiliniyor(true);
+    try {
+      for (const yr of (yorumlar || [])) { try { await deleteDoc(doc(db, "canliYayinlar", y.id, "yorumlar", yr.id)); } catch (e) {} }
+      await deleteDoc(doc(db, "canliYayinlar", y.id));
+      if (bilgi) bilgi(t("cdSilindi", "Kayıt silindi."));
+      kapat();
+    } catch (e) { setSiliniyor(false); setSilSor(false); if (bilgi) bilgi(t("cdSilinemedi", "Silinemedi, tekrar dene.")); }
+  };
+  return (
+    <div className="cd-perde" onClick={(e) => { if (e.target === e.currentTarget) kapat(); }}>
+      <div className="cd-pencere cd-gecmis-detay">
+        <div className="cd-gd-bas">
+          <b><KayanYazi>{y.baslik || (y.meslek ? mc(y.meslek, dil) : t("cdCanliDers", "Canlı ders"))}</KayanYazi></b>
+          <button className="cd-kapat" onClick={kapat} aria-label={t("cdKapat", "Kapat")} title={t("cdKapat", "Kapat")}>✕</button>
+        </div>
+        <div className="cd-gd-tarih">{tarihYaz(y.baslangic, dil)}</div>
+        <div className="cd-gd-ozet">
+          <span><i>⏱️</i><b>{sureYaz(yayinSuresi(y))}</b><em>{t("cdSure", "Süre")}</em></span>
+          <span><i>👁</i><b>{enCokIzl(y)}</b><em>{t("cdEnCok", "En çok izleyici")}</em></span>
+          <span><i>♥</i><b>{y.kalp || 0}</b><em>{t("cdKalpSayisi", "Kalp")}</em></span>
+          <span><i>💬</i><b>{yorumlar ? yorumlar.length : "…"}</b><em>{t("cdYorumlar", "Yorumlar")}</em></span>
+        </div>
+        <div className="cd-gd-not">ℹ️ {t("cdVideoYok", "Görüntü (video) kaydı şimdilik saklanmıyor; yorumlar ve sayılar burada kalır.")}</div>
+        <div className="cd-gd-liste">
+          {yorumlar === null ? <div className="cd-gd-bos"><span className="cd-donen kucuk" /></div>
+            : yorumlar.length === 0 ? <div className="cd-gd-bos">{t("cdYorumYok", "Bu yayına yorum yazılmadı.")}</div>
+            : yorumlar.map((yr) => (
+              <div key={yr.id} className="cd-gd-yorum">
+                <button className="cd-gd-kim" onClick={() => { if (uyeyiAc && yr.uid && yr.uid !== y.yayinciUid) { kapat(); uyeyiAc({ uid: yr.uid, ad: yr.ad, foto: yr.foto }); } }}>
+                  <KareAvatar foto={yr.foto} ad={yr.ad || t("cdUye", "Üye")} boy={34} />
+                </button>
+                <div className="cd-gd-yazi">
+                  <b>{yr.ad || t("cdUye", "Üye")}{yr.uid === y.yayinciUid ? <em> · {t("cdYayinciEtiket", "yayıncı")}</em> : null}<small>{saatYaz(yr.zaman, dil)}</small></b>
+                  <p>{yr.metin}</p>
+                </div>
+              </div>
+            ))}
+        </div>
+        {!silSor ? (
+          <button className="cd-menu-btn tehlike" onClick={() => setSilSor(true)}>🗑️ <KayanYazi>{t("cdKayitSil", "Bu yayının kaydını sil")}</KayanYazi></button>
+        ) : (
+          <div className="cd-gd-silsor">
+            <p>{t("cdKayitSilSor", "Bu yayının kaydı ve tüm yorumları silinsin mi? Geri alınamaz.")}</p>
+            <div className="cd-pencere-dugmeler">
+              <button className="cd-ikincil" onClick={() => setSilSor(false)} disabled={siliniyor}><KayanYazi>{t("cdVazgec", "Vazgeç")}</KayanYazi></button>
+              <button className="cd-birincil kirmizi" onClick={sil} disabled={siliniyor}>{siliniyor ? <span className="cd-donen kucuk" /> : <KayanYazi>{t("cdSil", "Sil")}</KayanYazi>}</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
