@@ -1,7 +1,7 @@
 # GLOXORG — CANLI YAYIN TESTİ (sadece deneme odası kullanır, hiçbir kullanıcı verisine dokunmaz).
 # Kullanıcı 11 Kas: "bilgisayardan canlı yayın açtım, telefondan açılmıyor (bağlanıyor'da kalıyor)".
 # Claude'un bulut ortamı canli.gloxorg.com'a ulaşamadığı için test GitHub sunucusunda yapılır:
-#  - Tarayıcı A: sahte kamera+mikrofonla, uygulamadaki AYNI ayarlarla yayın yapar (11 Kas: katmansız, H.264, 960x540).
+#  - Tarayıcı A: sahte kamera+mikrofonla, uygulamadaki AYNI ayarlarla yayın yapar (11 Kas: Glome ile aynı — getUserMedia 640x480, ek yayın ayarı yok).
 #  - Tarayıcı B: izleyici olarak bağlanır; görüntü/ses izi geliyor mu, görüntü gerçekten oynuyor mu ölçer.
 name: Canli yayin testi
 on:
@@ -41,9 +41,9 @@ jobs:
             const ya = await pa.evaluate(async ({ url, token }) => {
               const L = window.LivekitClient; const sonuc = {};
               try {
-                const izler = await L.createLocalTracks({ audio: { echoCancellation: true, noiseSuppression: true }, video: { facingMode: "user", resolution: { width: 960, height: 540, frameRate: 24 } } });
+                const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24, max: 30 } } }); const izler = st.getTracks().map((mt) => mt.kind === "video" ? new L.LocalVideoTrack(mt, undefined, true) : new L.LocalAudioTrack(mt, undefined, true));
                 sonuc.izler = izler.map((x) => x.kind);
-                const room = new L.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: false, videoCodec: "h264", backupCodec: false, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
+                const room = new L.Room({ adaptiveStream: false, dynacast: false });
                 window.oda = room;
                 const t0 = Date.now(); await room.connect(url, token); sonuc.baglanmaMs = Date.now() - t0;
                 sonuc.yayinlanan = [];
