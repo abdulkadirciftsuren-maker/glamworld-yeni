@@ -1,3 +1,5 @@
+> ⚠️ 11 Kas 2026'dan beri GÜNCEL sürüm ayrı depoda: `abdulkadirciftsuren-maker/dokumentem` (KAYITLAR.md / PLAN.md). Bu dosya artık güncellenmiyor.
+
 # 🗂️ AI DANIŞMA OFİSİ — BÜTÜN KAYITLAR (hesaplar, alan adları, ödemeler)
 
 > Bu dosya yeni projenin (GLOXORG'dan AYRI) **bütün kayıtlarını** tutar: nerede, ne zaman, hangi hizmete, ne şekilde kayıt yapıldı.

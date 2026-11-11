@@ -1,3 +1,5 @@
+> ⚠️ 11 Kas 2026'dan beri GÜNCEL sürüm ayrı depoda: `abdulkadirciftsuren-maker/dokumentem` (KAYITLAR.md / PLAN.md). Bu dosya artık güncellenmiyor.
+
 # 📑 AI DANIŞMA OFİSİ — PLAN (taslak, kullanıcı onayı bekliyor)
 
 > 10 Kasım 2026. Kullanıcı: "Canlı Akış sayfasını hepten değiştireceğiz, para kazandıran, insanların girmek için nedeni olan
