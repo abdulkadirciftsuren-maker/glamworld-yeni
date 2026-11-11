@@ -1635,6 +1635,10 @@ export default function Anasayfa({ pro = false }) {
   // AD / SOYAD (Ayarlar) — ilk girişte yazılan ad; buradan düzeltilir, Gloxoo yeni adı bilir
   const [ayarIsim, setAyarIsim] = useState("");
   const [ayarSoyisim, setAyarSoyisim] = useState("");
+  // 11 Kas (kullanıcı): "Konumumdan otomatik al / Ülke adı yaz / Haritadan seç" EN SON DOKUNULAN telefon kutusuna uygulanır (1 = ana numara, 2 = 2. numara)
+  const [telHedef, setTelHedef] = useState(1);
+  const telHedefRef = useRef(1);
+  const telHedefSec = (n) => { telHedefRef.current = n; setTelHedef(n); };
   // HABER / İLGİ KONUMLARI (Ayarlar — adresten AYRI): Gloxoo bu yerlerin haber/spor/gündemini bilir
   const [haberYerler, setHaberYerler] = useState([]); // [{ulke, sehir, ilce}] — en çok 3
   // CİNSİYET + DOĞUM TARİHİ (Ayarlar) — Gloxoo hitabı (Bey/Hanım) ve yaşı buradan bilir
@@ -5328,6 +5332,15 @@ export default function Anasayfa({ pro = false }) {
       if (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && /^(text|search|)$/.test(a.type || "")))) a.blur();
     } catch (x) {}
   }
+  // KAYDEDİLDİ DURUMU (11 Kas, kullanıcı: "kaydettim ama hâlâ Adımı kaydet yazıyor"): kutulardaki değer kayıtlıyla aynıysa
+  // düğme "Kaydedildi ✓" (yeşil) olur; bir şey değiştirilince yeniden "Kaydet"e döner.
+  const pbA = profilBilgi || {};
+  const adKayitli = !!(ayarIsim || "").trim() && (ayarIsim || "").trim() === (pbA.isim || "") && (ayarSoyisim || "").trim() === (pbA.soyisim || "");
+  const iletisimKayitli = !!((ekTelefon || "").trim() || (ekTelefon2 || "").trim() || (ek2Eposta || "").trim())
+    && (ekTelefon || "").trim() === (pbA.telefon || "") && (ekTelefon2 || "").trim() === (pbA.telefon2 || "")
+    && (ek2Eposta || "").trim() === (pbA.eposta2 || "") && (telKodu || "").trim() === (pbA.telefonKodu || "+90");
+  const dgA = pbA.dogum || {};
+  const dogumKayitli = !!(dogumGun && dogumAy && dogumYil) && String(dgA.gun || "") === String(dogumGun) && String(dgA.ay || "") === String(dogumAy) && String(dgA.yil || "") === String(dogumYil);
   // AYARLAR açılınca formu profilden doldur
   useEffect(() => {
     if (!ayarlarAcik) return;
@@ -5341,7 +5354,7 @@ export default function Anasayfa({ pro = false }) {
     setKonumLat(typeof k.lat === "number" ? k.lat : null); setKonumLon(typeof k.lon === "number" ? k.lon : null); setKonumAdres(k.adres || "");
     setSrtUlke(k.ulke || ""); setSrtSehir(k.sehir || ""); setSrtIlce(k.ilce || ""); setSrtPosta(k.postaKodu || "");
     setTelKodu(b.telefonKodu || "+90"); setSektorListe(""); setSektorEkle(""); setTelKodAcik(false); setTelKodAra("");
-    setMeslekAra(""); setAyarMsg("");
+    setMeslekAra(""); setAyarMsg(""); telHedefSec(1);
   }, [ayarlarAcik]); // eslint-disable-line react-hooks/exhaustive-deps
   // Meslek/sektör seç (Ayarlar) → profile kaydet (grup: meslek|fabrika|tedarik|isci|devlet)
   // ÇOKLU meslek + TOGGLE: dokun=ekle, tekrar dokun=iptal. profil.meslekler (dizi, aramalarda) + meslek (ANA, profilde/paylaşımda görünen). Panel AÇIK kalır.
@@ -5376,6 +5389,19 @@ export default function Anasayfa({ pro = false }) {
   }
   // Telefon ülke kodu seç
   function ayarTelKodSec(k) {
+    // 2. numara seçiliyse: kod o numaranın BAŞINA yazılır (varsa eski "+kod" değiştirilir); kullanıcı Kaydet'e basar
+    if (telHedefRef.current === 2) {
+      setTelKodAcik(false); setTelKodAra("");
+      setEkTelefon2((eski) => {
+        let n = String(eski || "").replace(/\s+/g, "");
+        if (n.startsWith("+")) {
+          const eslesen = ULKE_KOD.map((c) => c.k).filter((kk) => n.startsWith(kk)).sort((a, b) => b.length - a.length)[0];
+          n = eslesen ? n.slice(eslesen.length) : n.replace(/^\+/, "");
+        } else if (n.startsWith("00")) n = n.slice(2);
+        return k + n.replace(/^0+/, "");
+      });
+      return;
+    }
     setTelKodu(k); setTelKodAcik(false); setTelKodAra("");
     const uu = auth.currentUser; if (uu) { setProfilBilgi((p) => ({ ...(p || {}), telefonKodu: k })); profilKaydet(uu.uid, { telefonKodu: k }).catch(() => {}); }
   }
@@ -13360,16 +13386,17 @@ export default function Anasayfa({ pro = false }) {
                     <input className="ayar-input" type="text" value={ayarIsim} onChange={(e) => setAyarIsim(e.target.value)} placeholder={t("ayarIsimPh", "Adın")} />
                     <input className="ayar-input" type="text" value={ayarSoyisim} onChange={(e) => setAyarSoyisim(e.target.value)} placeholder={t("ayarSoyisimPh", "Soyadın")} />
                   </div>
-                  <button className="ayar-btn" onClick={ayarAdKaydet}>{t("ayarAdKaydet", "Adımı kaydet")}</button>
+                  <button className={"ayar-btn" + (adKayitli ? " kayitli" : "")} onClick={ayarAdKaydet}>{adKayitli ? t("ayarKaydedildi", "Kaydedildi ✓") : t("ayarAdKaydet", "Adımı kaydet")}</button>
                   <label className="ayar-et">{t("ayar2Eposta", "2. e-posta (iletişim)")} <BilgiBtn metin={t("aciklama2Eposta", "Bu, İSTEĞE BAĞLI ikinci bir İLETİŞİM e-postasıdır — müşteriler sana ulaşsın diye profiline eklenir. Giriş/şifre kurtarma e-postan DEĞİLDİR (o, hesabını açtığın ana e-postandır). Boş bırakabilirsin; istersen ikinci bir e-posta yazıp Kaydet'e bas.")} onAc={setAciklama} /></label>
                   <input className="ayar-input" type="email" value={ek2Eposta} onChange={(e) => setEk2Eposta(e.target.value)} placeholder={t("epostaOrnek", "ornek@gloxorg.com")} />
                   <label className="ayar-et">{t("ayarTelefon", "Telefon")} <BilgiBtn metin={t("aciklamaTelefonNeden", "Telefon numaran müşterilerin sana ulaşması, hesabını kurtarman ve güvenlik için profiline eklenir — istersen boş bırakabilirsin. Önce ülke kodunu seç (soldaki kutuya yaz, ülke adı yaz ya da 'Konumumdan al'), sonra numaranı yaz. İkinci bir numaran varsa (iş / WhatsApp) onu da alttaki '2. numara' kutusuna ekleyebilirsin. Bitince Kaydet'e bas.")} onAc={setAciklama} /></label>
                   <div className="ayar-tel-satir">
-                    <input className="ayar-input ayar-telkod-input" type="text" value={telKodu} onChange={(e) => setTelKodu(e.target.value)} placeholder="+90" aria-label={t("ayarTelKodu", "Ülke kodu")} />
-                    <input className="ayar-input ayar-tel-input" type="tel" value={ekTelefon} onChange={(e) => setEkTelefon(e.target.value)} placeholder={t("ayarTelPh", "Numara")} />
+                    <input className={"ayar-input ayar-telkod-input" + (telHedef === 1 ? " tel-hedef" : "")} type="text" value={telKodu} onFocus={() => telHedefSec(1)} onChange={(e) => setTelKodu(e.target.value)} placeholder="+90" aria-label={t("ayarTelKodu", "Ülke kodu")} />
+                    <input className={"ayar-input ayar-tel-input" + (telHedef === 1 ? " tel-hedef" : "")} type="tel" value={ekTelefon} onFocus={() => telHedefSec(1)} onChange={(e) => setEkTelefon(e.target.value)} placeholder={t("ayarTelPh", "Numara")} />
                   </div>
                   <label className="ayar-et ayar-et-ikinci">{t("ayarTelefon2", "2. numara (isteğe bağlı)")} <BilgiBtn metin={t("aciklamaTelefon2", "İkinci bir telefon numarası ekleyebilirsin — örneğin iş numaran ya da WhatsApp hattın. İsteğe bağlıdır, boş bırakabilirsin.")} onAc={setAciklama} /></label>
-                  <input className="ayar-input ayar-tel-input" type="tel" value={ekTelefon2} onChange={(e) => setEkTelefon2(e.target.value)} placeholder={t("ayarTel2Ph", "İkinci numara")} />
+                  <input className={"ayar-input ayar-tel-input" + (telHedef === 2 ? " tel-hedef" : "")} type="tel" value={ekTelefon2} onFocus={() => telHedefSec(2)} onChange={(e) => setEkTelefon2(e.target.value)} placeholder={t("ayarTel2Ph", "İkinci numara")} />
+                  <div className="ayar-tel-hedef-yazi">👉 {telHedef === 2 ? t("ayarKodHedef2", "Ülke kodu 2. numaraya uygulanır") : t("ayarKodHedef1", "Ülke kodu 1. numaraya uygulanır")}</div>
                   <button className="ayar-btn ayar-konumkod-btn" onClick={() => { const k = isoToTelKod[(myKod || "tr").toLowerCase()]; if (k) { ayarTelKodSec(k); setAyarMsg(t("ayarKodAlindi", "Konumundan kod alındı ✓")); setTimeout(() => setAyarMsg(""), 2000); } }}>📍 {t("ayarKonumdanKod", "Konumumdan otomatik al")}</button>
                   <div className="ayar-telkod-yollar">
                     <input className="ayar-input" type="text" value={telKodAra} onChange={(e) => setTelKodAra(e.target.value)} placeholder={t("ayarUlkeYaz", "Ülke adı yaz, kod gelsin...")} />
@@ -13382,7 +13409,7 @@ export default function Anasayfa({ pro = false }) {
                       ))}
                     </div>
                   )}
-                  <button className="ayar-btn" onClick={ayarIletisimKaydet}>{t("kaydet", "Kaydet")}</button>
+                  <button className={"ayar-btn" + (iletisimKayitli ? " kayitli" : "")} onClick={ayarIletisimKaydet}>{iletisimKayitli ? t("ayarKaydedildi", "Kaydedildi ✓") : t("kaydet", "Kaydet")}</button>
                   {/* CİNSİYET — Gloxoo hitabı (Bey/Hanım) buna göre olur */}
                   <label className="ayar-et">{t("ayarCinsiyet", "Cinsiyet")} <BilgiBtn metin={t("aciklamaCinsiyet", "Gloxoo sana DOĞRU hitap edebilsin diye (örn 'Bey' / 'Hanım') cinsiyetini seç. İstemiyorsan 'Belirtmek istemiyorum'a bas — o zaman Gloxoo nötr, ismiyle hitap eder. İstediğin zaman değiştirebilirsin, bu bilgi gizli kalır.")} onAc={setAciklama} /></label>
                   <div className="ayar-cinsiyet-grup">
@@ -13406,7 +13433,7 @@ export default function Anasayfa({ pro = false }) {
                       {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 6 - i).map((y) => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
-                  <button className="ayar-btn" onClick={dogumKaydet}>{t("ayarDogumKaydet", "Doğum tarihini kaydet")}</button>
+                  <button className={"ayar-btn" + (dogumKayitli ? " kayitli" : "")} onClick={dogumKaydet}>{dogumKayitli ? t("ayarKaydedildi", "Kaydedildi ✓") : t("ayarDogumKaydet", "Doğum tarihini kaydet")}</button>
                 </AyarBolum>
 
                 <AyarBolum acik={ayarBolum==="profil"} onTik={()=>setAyarBolum(b=>b==="profil"?null:"profil")} renk="#1ea64f" ad={t("ayarProfilFoto", "Profil / Amblem fotoğrafı")} ikon="🖼️" onAcBilgi={setAciklama} bilgi={t("aciklamaProfilAyar", "Burası GLOXORG profilin — Google hesabınla DEĞİL. Profil fotoğrafın ve şirket amblemin burada görünür. Paylaşım yaparken hangisinin (fotoğraf mı, amblem mi) kullanılacağını buradan seçersin. 'Düzenle / yükle' ile yeni görsel ekleyip ayarlayabilirsin.")}>

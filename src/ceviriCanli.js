@@ -1,6 +1,8 @@
 // GLOXORG CANLI DERS sayfası (B474) — CanliDers.js yazıları + menü adı (navCanliDers), 13 dil.
+// + B476: Ayarlar telefon ülke kodu hedefi (ayarKodHedef1/2).
 export const CEVIRI_CANLI = {
  tr: {
+  ayarKodHedef1: "Ülke kodu 1. numaraya uygulanır", ayarKodHedef2: "Ülke kodu 2. numaraya uygulanır",
   cdUye: "Üye",
   navCanliDers: "Canlı Ders",
   cdAlt: "Uzmanlar şu an canlı: işini gösteriyor, ders veriyor, sorularını cevaplıyor. İzle, sor, öğren.",
@@ -30,6 +32,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Yorum gönderilemedi.", cdYorumSil: "Yorumu sil", cdYorumYaz: "Bir şey sor ya da yaz…",
  },
  en: {
+  ayarKodHedef1: "Country code applies to number 1", ayarKodHedef2: "Country code applies to number 2",
   cdUye: "Member",
   navCanliDers: "Live Classes",
   cdAlt: "Experts are live right now: showing their work, teaching, answering your questions. Watch, ask, learn.",
@@ -59,6 +62,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Comment could not be sent.", cdYorumSil: "Delete comment", cdYorumYaz: "Ask or write something…",
  },
  de: {
+  ayarKodHedef1: "Ländervorwahl gilt für Nummer 1", ayarKodHedef2: "Ländervorwahl gilt für Nummer 2",
   cdUye: "Mitglied",
   navCanliDers: "Live-Kurse",
   cdAlt: "Experten sind gerade live: Sie zeigen ihre Arbeit, unterrichten und beantworten deine Fragen. Schau zu, frag, lerne.",
@@ -88,6 +92,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Kommentar konnte nicht gesendet werden.", cdYorumSil: "Kommentar löschen", cdYorumYaz: "Frag oder schreib etwas…",
  },
  ar: {
+  ayarKodHedef1: "يُطبَّق رمز الدولة على الرقم 1", ayarKodHedef2: "يُطبَّق رمز الدولة على الرقم 2",
   cdUye: "عضو",
   navCanliDers: "دروس مباشرة",
   cdAlt: "الخبراء على الهواء الآن: يعرضون عملهم ويعلّمون ويجيبون عن أسئلتك. شاهد واسأل وتعلّم.",
@@ -117,6 +122,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "تعذّر إرسال التعليق.", cdYorumSil: "حذف التعليق", cdYorumYaz: "اسأل أو اكتب شيئًا…",
  },
  ru: {
+  ayarKodHedef1: "Код страны применяется к номеру 1", ayarKodHedef2: "Код страны применяется к номеру 2",
   cdUye: "Участник",
   navCanliDers: "Живые уроки",
   cdAlt: "Эксперты сейчас в эфире: показывают работу, учат, отвечают на вопросы. Смотри, спрашивай, учись.",
@@ -146,6 +152,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не удалось отправить комментарий.", cdYorumSil: "Удалить комментарий", cdYorumYaz: "Спроси или напиши что-нибудь…",
  },
  uk: {
+  ayarKodHedef1: "Код країни застосовується до номера 1", ayarKodHedef2: "Код країни застосовується до номера 2",
   cdUye: "Учасник",
   navCanliDers: "Живі уроки",
   cdAlt: "Експерти зараз в ефірі: показують роботу, навчають, відповідають на питання. Дивись, питай, навчайся.",
@@ -175,6 +182,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не вдалося надіслати коментар.", cdYorumSil: "Видалити коментар", cdYorumYaz: "Запитай або напиши щось…",
  },
  es: {
+  ayarKodHedef1: "El prefijo se aplica al número 1", ayarKodHedef2: "El prefijo se aplica al número 2",
   cdUye: "Miembro",
   navCanliDers: "Clases en vivo",
   cdAlt: "Expertos en directo ahora: muestran su trabajo, enseñan y responden tus preguntas. Mira, pregunta, aprende.",
@@ -204,6 +212,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "No se pudo enviar el comentario.", cdYorumSil: "Eliminar comentario", cdYorumYaz: "Pregunta o escribe algo…",
  },
  fr: {
+  ayarKodHedef1: "L'indicatif s'applique au numéro 1", ayarKodHedef2: "L'indicatif s'applique au numéro 2",
   cdUye: "Membre",
   navCanliDers: "Cours en direct",
   cdAlt: "Des experts sont en direct : ils montrent leur travail, enseignent et répondent à tes questions. Regarde, demande, apprends.",
@@ -233,6 +242,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Le commentaire n'a pas pu être envoyé.", cdYorumSil: "Supprimer le commentaire", cdYorumYaz: "Pose une question ou écris…",
  },
  it: {
+  ayarKodHedef1: "Il prefisso si applica al numero 1", ayarKodHedef2: "Il prefisso si applica al numero 2",
   cdUye: "Membro",
   navCanliDers: "Lezioni dal vivo",
   cdAlt: "Esperti in diretta ora: mostrano il loro lavoro, insegnano e rispondono alle tue domande. Guarda, chiedi, impara.",
@@ -262,6 +272,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Impossibile inviare il commento.", cdYorumSil: "Elimina commento", cdYorumYaz: "Chiedi o scrivi qualcosa…",
  },
  zh: {
+  ayarKodHedef1: "国家代码用于第1个号码", ayarKodHedef2: "国家代码用于第2个号码",
   cdUye: "成员",
   navCanliDers: "直播课堂",
   cdAlt: "专家正在直播：展示作品、授课、回答你的问题。观看、提问、学习。",
@@ -291,6 +302,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "评论发送失败。", cdYorumSil: "删除评论", cdYorumYaz: "提问或说点什么…",
  },
  hi: {
+  ayarKodHedef1: "देश कोड नंबर 1 पर लागू होगा", ayarKodHedef2: "देश कोड नंबर 2 पर लागू होगा",
   cdUye: "सदस्य",
   navCanliDers: "लाइव क्लास",
   cdAlt: "विशेषज्ञ अभी लाइव हैं: अपना काम दिखा रहे हैं, सिखा रहे हैं, तुम्हारे सवालों के जवाब दे रहे हैं। देखो, पूछो, सीखो।",
@@ -320,6 +332,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "टिप्पणी नहीं भेजी जा सकी।", cdYorumSil: "टिप्पणी हटाओ", cdYorumYaz: "कुछ पूछो या लिखो…",
  },
  pt: {
+  ayarKodHedef1: "O indicativo aplica-se ao número 1", ayarKodHedef2: "O indicativo aplica-se ao número 2",
   cdUye: "Membro",
   navCanliDers: "Aulas ao vivo",
   cdAlt: "Especialistas ao vivo agora: mostram o seu trabalho, ensinam e respondem às tuas perguntas. Vê, pergunta, aprende.",
@@ -349,6 +362,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Não foi possível enviar o comentário.", cdYorumSil: "Apagar comentário", cdYorumYaz: "Pergunta ou escreve algo…",
  },
  ja: {
+  ayarKodHedef1: "国番号は番号1に適用されます", ayarKodHedef2: "国番号は番号2に適用されます",
   cdUye: "メンバー",
   navCanliDers: "ライブ講座",
   cdAlt: "専門家が今ライブ中：作品を見せ、教え、質問に答えています。見て、聞いて、学ぼう。",
