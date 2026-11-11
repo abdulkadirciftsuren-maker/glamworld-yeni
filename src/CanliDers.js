@@ -305,7 +305,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const [goruntuVar, setGoruntuVar] = useState(!!yayinci);
   // TEŞHİS (11 Kas, telefonda "bağlanıyor"da kalıyordu; sunucu testi GitHub'da sorunsuz): hangi adımda kaldığı ekranda yazar
   const [asama, setAsama] = useState("bilet"); // bilet | sunucu | bekle
-  const [teshis, setTeshis] = useState({ yayinci: false, goruntuIzi: false, sesIzi: false });
+  const [teshis, setTeshis] = useState({ yayinci: false, goruntuIzi: false, sesIzi: false, goruntuYayini: false, abonelikHata: false });
   const [beklemeSn, setBeklemeSn] = useState(0);
   const [deneme, setDeneme] = useState(0); // "Yeniden dene" → bağlantı baştan kurulur
   const [mikAcik, setMikAcik] = useState(true);
@@ -314,6 +314,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const [secili, setSecili] = useState(null); // dokunulan yorum (menü)
   const [bitirSor, setBitirSor] = useState(false);
   const [yayinSikayetSor, setYayinSikayetSor] = useState(false);
+  const [goruntuGitmiyor, setGoruntuGitmiyor] = useState(false); // yayıncı: görüntü sunucuya gitmiyorsa uyarı
   const [sesKilit, setSesKilit] = useState(false);
   const [simdi, setSimdi] = useState(Date.now());
   const vidRef = useRef(null);
@@ -322,6 +323,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const izlerRef = useRef(oturum ? oturum.izler : []);
   const kalpBirikRef = useRef(0);
   const enCokRef = useRef(0);
+  const yoklamaRef = useRef(null);
   const kapandiRef = useRef(false);
   const akisRef = useRef(null);
 
@@ -380,6 +382,21 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       const v = (izlerRef.current || []).find((x) => x.kind === "video");
       const bagla = () => { if (v && vidRef.current) v.attach(vidRef.current); else if (!iptal) setTimeout(bagla, 150); };
       bagla();
+      // ⚠️ 11 Kas (telefon izleyicide teşhis: Yayıncı ✓ · Ses ✓ · Görüntü ✗ — bilgisayardan yayında görüntü gitmiyordu). Glome'da da
+      //   "ilk görüntü yayını sessizce başarısız" sorunu yaşanmıştı (B440). Görüntü sunucuya gerçekten gitti mi 1.5/4/8 sn'de bak;
+      //   gitmediyse yeniden gönder (2. denemeden itibaren simulcast'siz — bazı bilgisayar kodlayıcıları katmanlı yayında takılıyor).
+      if (room) {
+        const izGidiyorMu = (tur) => { let var_ = false; try { room.localParticipant.trackPublications.forEach((pub) => { if (pub.kind === tur && pub.track) var_ = true; }); } catch (e) {} return var_; };
+        const kontrol = async (n) => {
+          if (iptal || kapandiRef.current) return;
+          for (const iz of (izlerRef.current || [])) {
+            if (izGidiyorMu(iz.kind)) continue;
+            try { await room.localParticipant.publishTrack(iz, n >= 1 ? { simulcast: false } : undefined); } catch (e) {}
+          }
+          setGoruntuGitmiyor(!izGidiyorMu("video"));
+        };
+        [1500, 4000, 8000].forEach((ms, n) => setTimeout(() => kontrol(n), ms));
+      }
       const nabiz = setInterval(izleyiciYaz, NABIZ_MS);
       const sayfaKapan = () => { try { updateDoc(doc(db, "canliYayinlar", yayinId), { durum: "bitti", bitis: serverTimestamp() }); } catch (e) {} };
       window.addEventListener("pagehide", sayfaKapan);
@@ -429,9 +446,26 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         const yayinciVarMi = () => setTeshis((d) => ({ ...d, yayinci: (room.remoteParticipants || new Map()).size > 0 }));
         room.on(lk.RoomEvent.ParticipantConnected, yayinciVarMi);
         room.on(lk.RoomEvent.ParticipantDisconnected, yayinciVarMi);
+        try { room.on(lk.RoomEvent.TrackSubscriptionFailed, () => setTeshis((d) => ({ ...d, abonelikHata: true }))); } catch (e) {}
         await room.connect(url, token, { autoSubscribe: true });
         if (iptal) { room.disconnect(); return; }
         setBaglanti("tamam"); setAsama("bekle"); yayinciVarMi();
+        // Görüntü gelmediyse her 2 sn: sunucuda yayıncının görüntü yayını var mı bak; varsa ama abone olunmamışsa kendimiz iste
+        const yoklama = setInterval(() => {
+          if (iptal) { clearInterval(yoklama); return; }
+          try {
+            let goruntuYayini = false;
+            (room.remoteParticipants || new Map()).forEach((rp) => (rp.trackPublications || new Map()).forEach((pub) => {
+              if (pub.kind !== "video") return;
+              goruntuYayini = true;
+              if (pub.track) izBagla(pub.track);
+              else if (!pub.isSubscribed && pub.setSubscribed) { try { pub.setSubscribed(true); } catch (e) {} }
+            }));
+            setTeshis((d) => (d.goruntuYayini === goruntuYayini ? d : { ...d, goruntuYayini }));
+            if (bagliIzler.size >= 2) clearInterval(yoklama);
+          } catch (e) {}
+        }, 2000);
+        yoklamaRef.current = yoklama;
         // Bağlanmadan ÖNCE yayına eklenmiş izler olay kaçmışsa yine bağla (güvenlik)
         try { (room.remoteParticipants || new Map()).forEach((rp) => { (rp.trackPublications || new Map()).forEach((pub) => { if (pub && pub.track) izBagla(pub.track); }); }); } catch (e) {}
         try { await room.startAudio(); } catch (e) {}
@@ -442,7 +476,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       const n = kalpBirikRef.current; if (!n) return; kalpBirikRef.current = 0;
       updateDoc(doc(db, "canliYayinlar", yayinId), { kalp: increment(n) }).catch(() => {});
     }, 4000);
-    return () => { iptal = true; clearInterval(kalpYaz); try { roomRef.current && roomRef.current.disconnect(); } catch (e) {} };
+    return () => { iptal = true; clearInterval(kalpYaz); clearInterval(yoklamaRef.current); try { roomRef.current && roomRef.current.disconnect(); } catch (e) {} };
   }, [deneme]); // eslint-disable-line react-hooks/exhaustive-deps
   // Bekleme süresini say (15 sn'de görüntü gelmezse "Yeniden dene" görünür)
   useEffect(() => {
@@ -502,7 +536,8 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           {!yayinci && (
             <div className="cd-teshis">
               <span>{asama === "bilet" ? t("cdAsamaBilet", "1/3 Bilet alınıyor") : asama === "sunucu" ? t("cdAsamaSunucu", "2/3 Sunucuya bağlanıyor") : t("cdAsamaBekle", "3/3 Bağlandı, görüntü bekleniyor")} · {beklemeSn} sn</span>
-              {asama === "bekle" && <span>{t("cdTeshisYayinci", "Yayıncı")}: {teshis.yayinci ? "✓" : "✗"} · {t("cdTeshisGoruntu", "Görüntü")}: {teshis.goruntuIzi ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {teshis.sesIzi ? "✓" : "✗"}</span>}
+              {asama === "bekle" && <span>{t("cdTeshisYayinci", "Yayıncı")}: {teshis.yayinci ? "✓" : "✗"} · {t("cdTeshisGoruntuYayini", "Görüntü yayını")}: {teshis.goruntuYayini ? "✓" : "✗"} · {t("cdTeshisGoruntu", "Görüntü")}: {teshis.goruntuIzi ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {teshis.sesIzi ? "✓" : "✗"}</span>}
+              {teshis.abonelikHata && <span>⚠️ {t("cdTeshisAbonelik", "Görüntü bu cihaza açılamadı")}</span>}
             </div>
           )}
           {!yayinci && (baglanti === "hata" || beklemeSn >= 15) && (
@@ -526,6 +561,9 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         <button className="cd-kapat" onClick={geriTus} aria-label={yayinci ? t("cdBitir", "Yayını bitir") : t("cdKapat", "Kapat")} title={yayinci ? t("cdBitir", "Yayını bitir") : t("cdKapat", "Kapat")}>✕</button>
       </div>
 
+      {yayinci && goruntuGitmiyor && (
+        <div className="cd-uyari-serit">⚠️ {t("cdGoruntuGitmiyor", "Görüntün izleyicilere gitmiyor. Yayını bitirip yeniden başlatmayı dene.")}</div>
+      )}
       {sesKilit && !yayinci && (
         <button className="cd-ses-ac" onClick={async () => { try { await roomRef.current.startAudio(); setSesKilit(false); } catch (e) {} }}>🔊 <KayanYazi>{t("cdSesAc", "Sesi açmak için dokun")}</KayanYazi></button>
       )}
