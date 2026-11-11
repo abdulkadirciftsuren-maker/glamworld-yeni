@@ -1,6 +1,7 @@
 // GLOXORG CANLI DERS sayfası (B474) — CanliDers.js yazıları + menü adı (navCanliDers), 13 dil.
 export const CEVIRI_CANLI = {
  tr: {
+  cdUye: "Üye",
   navCanliDers: "Canlı Ders",
   cdAlt: "Uzmanlar şu an canlı: işini gösteriyor, ders veriyor, sorularını cevaplıyor. İzle, sor, öğren.",
   cdBaglanamadi: "Canlı yayın sunucusuna bağlanılamadı. İnterneti kontrol edip tekrar dene.",
@@ -29,6 +30,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Yorum gönderilemedi.", cdYorumSil: "Yorumu sil", cdYorumYaz: "Bir şey sor ya da yaz…",
  },
  en: {
+  cdUye: "Member",
   navCanliDers: "Live Classes",
   cdAlt: "Experts are live right now: showing their work, teaching, answering your questions. Watch, ask, learn.",
   cdBaglanamadi: "Could not connect to the live server. Check your internet and try again.",
@@ -57,6 +59,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Comment could not be sent.", cdYorumSil: "Delete comment", cdYorumYaz: "Ask or write something…",
  },
  de: {
+  cdUye: "Mitglied",
   navCanliDers: "Live-Kurse",
   cdAlt: "Experten sind gerade live: Sie zeigen ihre Arbeit, unterrichten und beantworten deine Fragen. Schau zu, frag, lerne.",
   cdBaglanamadi: "Keine Verbindung zum Live-Server. Prüfe dein Internet und versuche es erneut.",
@@ -85,6 +88,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Kommentar konnte nicht gesendet werden.", cdYorumSil: "Kommentar löschen", cdYorumYaz: "Frag oder schreib etwas…",
  },
  ar: {
+  cdUye: "عضو",
   navCanliDers: "دروس مباشرة",
   cdAlt: "الخبراء على الهواء الآن: يعرضون عملهم ويعلّمون ويجيبون عن أسئلتك. شاهد واسأل وتعلّم.",
   cdBaglanamadi: "تعذّر الاتصال بخادم البث المباشر. تحقّق من الإنترنت وحاول مجددًا.",
@@ -113,6 +117,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "تعذّر إرسال التعليق.", cdYorumSil: "حذف التعليق", cdYorumYaz: "اسأل أو اكتب شيئًا…",
  },
  ru: {
+  cdUye: "Участник",
   navCanliDers: "Живые уроки",
   cdAlt: "Эксперты сейчас в эфире: показывают работу, учат, отвечают на вопросы. Смотри, спрашивай, учись.",
   cdBaglanamadi: "Не удалось подключиться к серверу эфира. Проверь интернет и попробуй снова.",
@@ -141,6 +146,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не удалось отправить комментарий.", cdYorumSil: "Удалить комментарий", cdYorumYaz: "Спроси или напиши что-нибудь…",
  },
  uk: {
+  cdUye: "Учасник",
   navCanliDers: "Живі уроки",
   cdAlt: "Експерти зараз в ефірі: показують роботу, навчають, відповідають на питання. Дивись, питай, навчайся.",
   cdBaglanamadi: "Не вдалося підключитися до сервера ефіру. Перевір інтернет і спробуй ще раз.",
@@ -169,6 +175,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не вдалося надіслати коментар.", cdYorumSil: "Видалити коментар", cdYorumYaz: "Запитай або напиши щось…",
  },
  es: {
+  cdUye: "Miembro",
   navCanliDers: "Clases en vivo",
   cdAlt: "Expertos en directo ahora: muestran su trabajo, enseñan y responden tus preguntas. Mira, pregunta, aprende.",
   cdBaglanamadi: "No se pudo conectar al servidor en directo. Revisa tu internet e inténtalo de nuevo.",
@@ -197,6 +204,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "No se pudo enviar el comentario.", cdYorumSil: "Eliminar comentario", cdYorumYaz: "Pregunta o escribe algo…",
  },
  fr: {
+  cdUye: "Membre",
   navCanliDers: "Cours en direct",
   cdAlt: "Des experts sont en direct : ils montrent leur travail, enseignent et répondent à tes questions. Regarde, demande, apprends.",
   cdBaglanamadi: "Connexion au serveur du direct impossible. Vérifie ta connexion et réessaie.",
@@ -225,6 +233,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Le commentaire n'a pas pu être envoyé.", cdYorumSil: "Supprimer le commentaire", cdYorumYaz: "Pose une question ou écris…",
  },
  it: {
+  cdUye: "Membro",
   navCanliDers: "Lezioni dal vivo",
   cdAlt: "Esperti in diretta ora: mostrano il loro lavoro, insegnano e rispondono alle tue domande. Guarda, chiedi, impara.",
   cdBaglanamadi: "Impossibile connettersi al server della diretta. Controlla internet e riprova.",
@@ -253,6 +262,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Impossibile inviare il commento.", cdYorumSil: "Elimina commento", cdYorumYaz: "Chiedi o scrivi qualcosa…",
  },
  zh: {
+  cdUye: "成员",
   navCanliDers: "直播课堂",
   cdAlt: "专家正在直播：展示作品、授课、回答你的问题。观看、提问、学习。",
   cdBaglanamadi: "无法连接直播服务器。请检查网络后重试。",
@@ -281,6 +291,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "评论发送失败。", cdYorumSil: "删除评论", cdYorumYaz: "提问或说点什么…",
  },
  hi: {
+  cdUye: "सदस्य",
   navCanliDers: "लाइव क्लास",
   cdAlt: "विशेषज्ञ अभी लाइव हैं: अपना काम दिखा रहे हैं, सिखा रहे हैं, तुम्हारे सवालों के जवाब दे रहे हैं। देखो, पूछो, सीखो।",
   cdBaglanamadi: "लाइव सर्वर से कनेक्ट नहीं हो सका। इंटरनेट जाँचकर फिर कोशिश करो।",
@@ -309,6 +320,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "टिप्पणी नहीं भेजी जा सकी।", cdYorumSil: "टिप्पणी हटाओ", cdYorumYaz: "कुछ पूछो या लिखो…",
  },
  pt: {
+  cdUye: "Membro",
   navCanliDers: "Aulas ao vivo",
   cdAlt: "Especialistas ao vivo agora: mostram o seu trabalho, ensinam e respondem às tuas perguntas. Vê, pergunta, aprende.",
   cdBaglanamadi: "Não foi possível ligar ao servidor do direto. Verifica a internet e tenta de novo.",
@@ -337,6 +349,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Não foi possível enviar o comentário.", cdYorumSil: "Apagar comentário", cdYorumYaz: "Pergunta ou escreve algo…",
  },
  ja: {
+  cdUye: "メンバー",
   navCanliDers: "ライブ講座",
   cdAlt: "専門家が今ライブ中：作品を見せ、教え、質問に答えています。見て、聞いて、学ぼう。",
   cdBaglanamadi: "ライブサーバーに接続できませんでした。ネット接続を確認してもう一度お試しください。",

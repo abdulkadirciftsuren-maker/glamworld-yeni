@@ -20,6 +20,10 @@ const ONE_CIKAN = ["Kuaför", "Makyaj Sanatçısı", "Berber", "Aşçı", "Öğr
 
 const zamanMs = (z) => { try { return z && z.toMillis ? z.toMillis() : (typeof z === "number" ? z : 0); } catch (e) { return 0; } };
 const fotoIyi = (f) => (f && typeof f === "string" && f.slice(0, 5) !== "data:" ? f : (f && f.length < 60000 ? f : ""));
+// GİZLİLİK (11 Kas, kullanıcı testinde yorumda e-posta adresi göründü): profilinde adı olmayan hesapta ad yerine e-posta
+// geliyordu. Canlı yayın herkese açık → e-posta ASLA gösterilmez/kaydedilmez; yerine "Üye" yazılır (eski kayıtlarda da).
+const epostaMi = (a) => /@/.test(String(a || ""));
+const adTemiz = (d) => (d && epostaMi(d.ad) ? { ...d, ad: "" } : d);
 const sureYaz = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); const d = Math.floor(s / 60), h = Math.floor(d / 60); return h ? h + ":" + String(d % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0") : d + ":" + String(s % 60).padStart(2, "0"); };
 
 function KareAvatar({ foto, ad, boy }) {
@@ -44,7 +48,7 @@ export default function CanliDers({ uid, benAd, benFoto, meslekler, dil, tokenAl
   // ŞU AN CANLI olan yayınları dinle (tek alan sorgusu → ek dizin gerekmez)
   useEffect(() => {
     const q = query(collection(db, "canliYayinlar"), where("durum", "==", "canli"), limit(60));
-    const un = onSnapshot(q, (s) => setYayinlar(s.docs.map((d) => ({ id: d.id, ...d.data() }))), () => {});
+    const un = onSnapshot(q, (s) => setYayinlar(s.docs.map((d) => adTemiz({ id: d.id, ...d.data() }))), () => {});
     const z = setInterval(() => setSimdi(Date.now()), 15000);
     return () => { un(); clearInterval(z); };
   }, []);
@@ -117,7 +121,7 @@ export default function CanliDers({ uid, benAd, benFoto, meslekler, dil, tokenAl
               <span className="cd-kart-orta"><KareAvatar foto={y.foto} ad={y.ad} boy={64} /></span>
               <span className="cd-kart-alt">
                 <b className="cd-kart-baslik"><KayanYazi>{y.baslik || t("cdCanliDers", "Canlı ders")}</KayanYazi></b>
-                <span className="cd-kart-kim"><KayanYazi>{(y.ad || "") + (y.meslek ? " · " + mc(y.meslek, dil) : "")}</KayanYazi></span>
+                <span className="cd-kart-kim"><KayanYazi>{(y.ad || t("cdUye", "Üye")) + (y.meslek ? " · " + mc(y.meslek, dil) : "")}</KayanYazi></span>
               </span>
             </button>
           ))}
@@ -207,7 +211,7 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
       for (const iz of izlerRef.current) { try { await room.localParticipant.publishTrack(iz); } catch (e) {} }
       const foto = fotoIyi(benFoto);
       await setDoc(ref, {
-        yayinciUid: uid, ad: benAd || "", foto: foto && foto.length < 2000 ? foto : "", baslik: baslik.trim().slice(0, 80),
+        yayinciUid: uid, ad: epostaMi(benAd) ? "" : (benAd || ""), foto: foto && foto.length < 2000 ? foto : "", baslik: baslik.trim().slice(0, 80),
         meslek: meslek || "", durum: "canli", izleyici: 0, kalp: 0, engelliler: [],
         baslangic: serverTimestamp(), sonNabiz: serverTimestamp(),
       });
@@ -286,9 +290,9 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
 
   // ── Yayın kaydını + yorumları dinle
   useEffect(() => {
-    const un1 = onSnapshot(doc(db, "canliYayinlar", yayinId), (s) => setY(s.exists() ? { id: s.id, ...s.data() } : { durum: "bitti" }), () => {});
+    const un1 = onSnapshot(doc(db, "canliYayinlar", yayinId), (s) => setY(s.exists() ? adTemiz({ id: s.id, ...s.data() }) : { durum: "bitti" }), () => {});
     const un2 = onSnapshot(query(collection(db, "canliYayinlar", yayinId, "yorumlar"), orderBy("zaman", "desc"), limit(40)),
-      (s) => setYorumlar(s.docs.map((d) => ({ id: d.id, ...d.data() })).reverse()), () => {});
+      (s) => setYorumlar(s.docs.map((d) => adTemiz({ id: d.id, ...d.data() })).reverse()), () => {});
     const z = setInterval(() => setSimdi(Date.now()), 1000);
     return () => { un1(); un2(); clearInterval(z); };
   }, [yayinId]);
@@ -369,7 +373,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const yorumGonder = async () => {
     const m = yazi.trim(); if (!m || !uid) return;
     setYazi("");
-    try { await addDoc(collection(db, "canliYayinlar", yayinId, "yorumlar"), { uid, ad: benAd || "", foto: (fotoIyi(benFoto) || "").length < 2000 ? fotoIyi(benFoto) || "" : "", metin: m.slice(0, 300), zaman: serverTimestamp() }); }
+    try { await addDoc(collection(db, "canliYayinlar", yayinId, "yorumlar"), { uid, ad: epostaMi(benAd) ? "" : (benAd || ""), foto: (fotoIyi(benFoto) || "").length < 2000 ? fotoIyi(benFoto) || "" : "", metin: m.slice(0, 300), zaman: serverTimestamp() }); }
     catch (e) { if (bilgi) bilgi(t("cdYorumOlmadi", "Yorum gönderilemedi.")); }
   };
 
@@ -416,7 +420,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         <button className="cd-kimlik" onClick={() => { if (!yayinci && y && y.yayinciUid && uyeyiAc) { cik(); uyeyiAc({ uid: y.yayinciUid, ad: y.ad, foto: y.foto, meslek: y.meslek }); } }}>
           <KareAvatar foto={y && y.foto} ad={y && y.ad} boy={40} />
           <span className="cd-kimlik-yazi">
-            <b><KayanYazi>{(y && y.ad) || ""}</KayanYazi></b>
+            <b><KayanYazi>{(y && y.ad) || t("cdUye", "Üye")}</KayanYazi></b>
             <i><KayanYazi>{(y && y.baslik) || (y && y.meslek ? mc(y.meslek, dil) : t("cdCanliDers", "Canlı ders"))}</KayanYazi></i>
           </span>
         </button>
@@ -440,7 +444,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         {yorumlar.map((yr) => (
           <button key={yr.id} className="cd-yorum" onClick={() => setSecili(yr)}>
             <KareAvatar foto={yr.foto} ad={yr.ad} boy={28} />
-            <span><b>{yr.ad || "—"}{y && yr.uid === y.yayinciUid ? <em> · {t("cdYayinciEtiket", "yayıncı")}</em> : null}</b> {yr.metin}</span>
+            <span><b>{yr.ad || t("cdUye", "Üye")}{y && yr.uid === y.yayinciUid ? <em> · {t("cdYayinciEtiket", "yayıncı")}</em> : null}</b> {yr.metin}</span>
           </button>
         ))}
       </div>
@@ -464,7 +468,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       {secili && (
         <div className="cd-perde" onClick={(e) => { if (e.target === e.currentTarget) setSecili(null); }}>
           <div className="cd-pencere cd-menu">
-            <div className="cd-menu-kim"><KareAvatar foto={secili.foto} ad={secili.ad} boy={36} /><b><KayanYazi>{secili.ad || "—"}</KayanYazi></b></div>
+            <div className="cd-menu-kim"><KareAvatar foto={secili.foto} ad={secili.ad} boy={36} /><b><KayanYazi>{secili.ad || t("cdUye", "Üye")}</KayanYazi></b></div>
             <p className="cd-menu-metin">{secili.metin}</p>
             {yayinci ? (
               <>
