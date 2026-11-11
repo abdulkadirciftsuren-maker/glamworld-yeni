@@ -22,12 +22,7 @@
 - ✅ **ONAYLANDI (9 Kas akşam):** Kapalı ekranda arama penceresi AÇILIYOR, arayan kapatınca zil HEMEN duruyor. **Kalan küçük iş:** uzun süre sonra ilk arama biraz geç gidiyor.
 - ✅ **ONAYLANDI (9 Kas):** Sohbetteki arama kayıtlarını silme (B466, basılı tut → 🗑️, gizliAramalar) — kullanıcı denedi, çalışıyor. **DOKUNMA.**
 - ✅ **YAPILDI (9 Kas, B468):** Sanal Ayna model seçeneklerinin TAMAMI 12 dile çevrildi (src/ceviriAyna2.js); Ayna taraması eksik 0, genel t() taraması eksik 0.
-- 🔴 **BEKLEYEN — CANLI DERS KURALLARI (10 Kas, B474):** Canlı Ders sayfası YAYINDA ama yayın açmak için `firestore.rules`'taki yeni
-  "CANLI DERS (B474)" bölümünün Firebase'e yüklenmesi lazım. Otomatik yükleme DENENDİ: GitHub hizmet hesabının kural yetkisi YOK
-  (403) → o iş (firestore-kurallar.yml) SİLİNDİ (kullanıcıya her seferinde "Run failed" e-postası gidiyordu). YAPILACAK: kullanıcı
-  `firestore.rules` içeriğini Firebase Console → Firestore → Kurallar'a yapıştırıp Yayınla diyecek (dosyayı ona gönderdim, henüz
-  YAPMADI). Sonra: telefonla yayın aç + başka telefondan izle/yorum/kalp testi, ekran görüntüsü iste. Takipçi bildirimi
-  (functions canliYayinBildirim) zaten yüklendi.
+- ✅ **CANLI DERS KURALLARI YAYINDA (11 Kas):** kullanıcı firestore.rules'u Firebase Console'a yapıştırıp yayınladı (canliYayinlar okuma 200 doğrulandı). Otomatik kural yükleme YOK (GitHub hesabının yetkisi yok) → kural değişirse kullanıcıya GitHub'daki firestore.rules'u kopyala-yapıştır yaptır (Rules sekmesi Chrome çevirisinde "Düzenlemek" görünür). SIRADA: telefonla canlı yayın aç + başka telefondan izle/yorum/kalp testi.
 - 🎓 **CANLI AKIŞ YERİNE: CANLI DERS VE DANIŞMANLIK (10 Kas)** — plan: **`CANLI-DERS-PLAN.md`** (kullanıcı kararları bekleniyor: kim yayın açar, Aşama 1 ücretsiz mi, oranlar). AI Danışma Ofisi ayrı konuşmada yürüyor (oturum: 'AI Danışma Ofisi — yeni bağımsız proje').
 - 📑 **YENİ BÜYÜK PROJE (10 Kas): AI DANIŞMA OFİSİ** — Canlı Akış'ın yerine, GLOXORG'dan BAĞIMSIZ, Google'da çıkan form bulma/doldurma/indirme sitesi. Ayrıntılı plan: **`AI-DANISMA-OFISI-PLAN.md`** (her oturumda oku). Kullanıcı kararları bekleniyor (marka/alan adı, Stripe, ilk ülkeler, fiyat). Karar gelmeden KOD YAZMA; Canlı Akış sayfasına DOKUNMA.
 - 🎬 **Canlı Akış sayfası** (Kısa Videolar + Canlı yayın): kullanıcı "çok basit kalıyor, videoların hepsi görünmüyor; TikTok gibi düşündük ama olmadı" dedi → sayfayı başka bir şeye çevirmeyi **kullanıcıyla SONRA konuşacağız**. Kendiliğinden değiştirme.
