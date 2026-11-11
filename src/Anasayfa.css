@@ -1549,7 +1549,8 @@ video.yrm-medya{ cursor:default; }
 .header-dil{ display:none; }
 .header-dil .dil-kose{ position:static; inset:auto; flex-direction:row; gap:0; }
 .header-dil .dil-etiket{ display:none; }
-.header-dil .dil-dugme{ width:auto; height:auto; background:none; border:none; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
+.header-dil .dil-dugme{ width:42px; height:42px; border-radius:11px; background:linear-gradient(160deg,#2f6fe0,#1b3a8a); border:2px solid #FFD700; box-shadow:0 3px 10px rgba(27,58,138,.35), 0 0 10px rgba(255,215,0,.35); -webkit-backdrop-filter:none; backdrop-filter:none; }
+.header-dil{ align-items:center; margin-right:6px; }
 /* Pusula da AYNI boy (önceki .ana-ara-btn svg kuralı ufaltıyordu) + profile yakın */
 .ana-site-ai .ana-site-ai-pusula{ width:19px; height:19px; } /* ayı biraz daha küçüldü (kullanıcı) */
 .ana-site-ai{ margin-left:6px; margin-right:-2px; width:28px; height:28px; min-width:28px; } /* ayı profilden KÜÇÜK + mavi safir çerçeve */
@@ -2659,7 +2660,7 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ana-menu-durum{ font-size:14px; }
   /* Geniş ekran: dil ikonu HEADER'da (yer var), menüdeki gizlenir */
   .header-dil{ display:inline-flex; }
-  .header-dil .dil-dugme svg{ width:29px; height:29px; }
+  .header-dil .dil-dugme svg{ width:27px; height:27px; }
   .menu-dil{ display:none; }
   .ana-site-ai{ width:32px; height:32px; min-width:32px; } /* ayı profilden KÜÇÜK (iPad) */
   .ana-site-ai .ana-site-ai-pusula{ width:22px; height:22px; }
@@ -2721,7 +2722,8 @@ html[dir="rtl"] .ana-menu{ left:auto; right:0; border-right:none; border-left:1p
   .ana-menu-ik{ font-size:37px; width:46px; }
   .ana-menu-cikis{ font-size:22px; padding:19px; }
   .ana-menu-durum{ font-size:16px; }
-  .header-dil .dil-dugme svg{ width:31px; height:31px; }
+  .header-dil .dil-dugme svg{ width:29px; height:29px; }
+  .header-dil .dil-dugme{ width:46px; height:46px; }
   .ana-site-ai{ width:36px; height:36px; min-width:36px; } /* ayı profilden KÜÇÜK (bilgisayar) */
   .ana-site-ai .ana-site-ai-pusula{ width:25px; height:25px; }
   .ana-profil{ width:48px; height:48px; } /* profil ayıdan büyük */

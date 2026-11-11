@@ -303,11 +303,17 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const [yazi, setYazi] = useState("");
   const [baglanti, setBaglanti] = useState(yayinci ? "tamam" : "baglaniyor"); // baglaniyor | tamam | hata
   const [goruntuVar, setGoruntuVar] = useState(!!yayinci);
+  // TEŞHİS (11 Kas, telefonda "bağlanıyor"da kalıyordu; sunucu testi GitHub'da sorunsuz): hangi adımda kaldığı ekranda yazar
+  const [asama, setAsama] = useState("bilet"); // bilet | sunucu | bekle
+  const [teshis, setTeshis] = useState({ yayinci: false, goruntuIzi: false, sesIzi: false });
+  const [beklemeSn, setBeklemeSn] = useState(0);
+  const [deneme, setDeneme] = useState(0); // "Yeniden dene" → bağlantı baştan kurulur
   const [mikAcik, setMikAcik] = useState(true);
   const [onKamera, setOnKamera] = useState(true);
   const [kalpler, setKalpler] = useState([]);
   const [secili, setSecili] = useState(null); // dokunulan yorum (menü)
   const [bitirSor, setBitirSor] = useState(false);
+  const [yayinSikayetSor, setYayinSikayetSor] = useState(false);
   const [sesKilit, setSesKilit] = useState(false);
   const [simdi, setSimdi] = useState(Date.now());
   const vidRef = useRef(null);
@@ -381,9 +387,11 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
     }
     (async () => {
       try {
+        setAsama("bilet"); setBeklemeSn(0); setBaglanti("baglaniyor");
         const lk = livekitHemen() || (await livekitYukle());
         const { token, url } = await tokenAl("canli_" + yayinId);
         if (iptal) return;
+        setAsama("sunucu");
         // ⚠️ 11 Kas (kullanıcı: "bilgisayardan canlı yayın açtım, telefondan açılmıyor" — "bağlanıyor…"da kaldı): telefondaki uygulama
         //   tarayıcısında adaptiveStream açıkken LiveKit görüntü kutusunu "görünmüyor" sayıp görüntüyü HİÇ göndermiyordu (Glome 1'e1
         //   aramalarda da aynı sorun vardı, orada da kapalı). İzleyicide ve yayıncıda adaptiveStream/dynacast KAPALI → görüntü hep gelir.
@@ -395,18 +403,35 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           const kimlik = track.sid || track.mediaStreamTrack;
           if (bagliIzler.has(kimlik)) return; bagliIzler.add(kimlik);
           if (track.kind === "video") {
-            const bagla = (deneme) => { if (vidRef.current) { track.attach(vidRef.current); try { const pr = vidRef.current.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} setGoruntuVar(true); } else if (deneme < 20) setTimeout(() => bagla(deneme + 1), 150); };
+            setTeshis((d) => ({ ...d, goruntuIzi: true }));
+            // Glome aramasındaki gibi: kütüphanenin attach'i olmazsa görüntüyü YENİ bir MediaStream ile elle bağla
+            const bagla = (n) => {
+              const el = vidRef.current;
+              if (!el) { if (n < 20) setTimeout(() => bagla(n + 1), 150); return; }
+              try { track.attach(el); } catch (e) {}
+              try { if (!el.srcObject && track.mediaStreamTrack) el.srcObject = new MediaStream([track.mediaStreamTrack]); } catch (e) {}
+              try { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {}
+              setGoruntuVar(true);
+            };
             bagla(0);
-          } else if (track.kind === "audio") { const el = track.attach(); el.className = "cd-gizli-ses"; if (sesKutuRef.current) sesKutuRef.current.appendChild(el); }
+          } else if (track.kind === "audio") {
+            setTeshis((d) => ({ ...d, sesIzi: true }));
+            let el = null;
+            try { el = track.attach(); } catch (e) { try { el = document.createElement("audio"); el.autoplay = true; el.srcObject = new MediaStream([track.mediaStreamTrack]); } catch (x) {} }
+            if (el) { el.className = "cd-gizli-ses"; if (sesKutuRef.current) sesKutuRef.current.appendChild(el); }
+          }
         };
         room.on(lk.RoomEvent.TrackSubscribed, izBagla);
         room.on(lk.RoomEvent.TrackUnsubscribed, (track) => { try { bagliIzler.delete(track.sid || track.mediaStreamTrack); } catch (e) {} try { track.detach().forEach((el) => { if (el.className === "cd-gizli-ses") el.remove(); }); } catch (e) {} });
         room.on(lk.RoomEvent.DataReceived, veriGeldi);
         room.on(lk.RoomEvent.AudioPlaybackStatusChanged, () => setSesKilit(!room.canPlaybackAudio));
-        room.on(lk.RoomEvent.Disconnected, () => { if (!kapandiRef.current) setBaglanti("hata"); });
+        room.on(lk.RoomEvent.Disconnected, () => { if (!kapandiRef.current && !iptal) setBaglanti("hata"); });
+        const yayinciVarMi = () => setTeshis((d) => ({ ...d, yayinci: (room.remoteParticipants || new Map()).size > 0 }));
+        room.on(lk.RoomEvent.ParticipantConnected, yayinciVarMi);
+        room.on(lk.RoomEvent.ParticipantDisconnected, yayinciVarMi);
         await room.connect(url, token, { autoSubscribe: true });
         if (iptal) { room.disconnect(); return; }
-        setBaglanti("tamam");
+        setBaglanti("tamam"); setAsama("bekle"); yayinciVarMi();
         // Bağlanmadan ÖNCE yayına eklenmiş izler olay kaçmışsa yine bağla (güvenlik)
         try { (room.remoteParticipants || new Map()).forEach((rp) => { (rp.trackPublications || new Map()).forEach((pub) => { if (pub && pub.track) izBagla(pub.track); }); }); } catch (e) {}
         try { await room.startAudio(); } catch (e) {}
@@ -418,7 +443,13 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       updateDoc(doc(db, "canliYayinlar", yayinId), { kalp: increment(n) }).catch(() => {});
     }, 4000);
     return () => { iptal = true; clearInterval(kalpYaz); try { roomRef.current && roomRef.current.disconnect(); } catch (e) {} };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [deneme]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Bekleme süresini say (15 sn'de görüntü gelmezse "Yeniden dene" görünür)
+  useEffect(() => {
+    if (yayinci || goruntuVar) return undefined;
+    const z = setInterval(() => setBeklemeSn((n) => n + 1), 1000);
+    return () => clearInterval(z);
+  }, [yayinci, goruntuVar, deneme]);
 
   // Kalp gönder: ekranda uçar + herkese (veri kanalı) + sayaç (birikip 4 sn'de bir yazılır)
   const kalpAt = () => {
@@ -468,6 +499,15 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         <div className="cd-yukleniyor">
           {y && <KareAvatar foto={y.foto} ad={y.ad} boy={96} />}
           {baglanti === "hata" ? <b>{t("cdBaglantiKoptu", "Bağlantı kurulamadı.")}</b> : <><span className="cd-donen" /><KayanYazi>{t("cdYayinaBaglaniyor", "Canlı yayına bağlanıyor…")}</KayanYazi></>}
+          {!yayinci && (
+            <div className="cd-teshis">
+              <span>{asama === "bilet" ? t("cdAsamaBilet", "1/3 Bilet alınıyor") : asama === "sunucu" ? t("cdAsamaSunucu", "2/3 Sunucuya bağlanıyor") : t("cdAsamaBekle", "3/3 Bağlandı, görüntü bekleniyor")} · {beklemeSn} sn</span>
+              {asama === "bekle" && <span>{t("cdTeshisYayinci", "Yayıncı")}: {teshis.yayinci ? "✓" : "✗"} · {t("cdTeshisGoruntu", "Görüntü")}: {teshis.goruntuIzi ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {teshis.sesIzi ? "✓" : "✗"}</span>}
+            </div>
+          )}
+          {!yayinci && (baglanti === "hata" || beklemeSn >= 15) && (
+            <button className="cd-yeniden" onClick={() => { setTeshis({ yayinci: false, goruntuIzi: false, sesIzi: false }); setDeneme((n) => n + 1); }}>🔄 <KayanYazi>{t("cdYenidenDene", "Yeniden dene")}</KayanYazi></button>
+          )}
         </div>
       )}
       <div className="cd-golge-ust" aria-hidden="true" /><div className="cd-golge-alt" aria-hidden="true" />
@@ -573,7 +613,21 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         </div>
       )}
       {!yayinci && !bitti && !engellendim && (
-        <button className="cd-yayin-sikayet" onClick={() => sikayet(null)} aria-label={t("cdYayiniBildir", "Yayını bildir")} title={t("cdYayiniBildir", "Yayını bildir")}>⚠️</button>
+        // 11 Kas (kullanıcı: "sağ üstteki üçgen ikon ne demek?") → yazılı düğme + yanlışlıkla basılmasın diye onay
+        <button className="cd-yayin-sikayet" onClick={() => setYayinSikayetSor(true)} aria-label={t("cdYayiniBildir", "Yayını bildir")} title={t("cdYayiniBildir", "Yayını bildir")}>⚠️ <KayanYazi>{t("cdBildir", "Bildir")}</KayanYazi></button>
+      )}
+      {yayinSikayetSor && (
+        <div className="cd-perde" onClick={(e) => { if (e.target === e.currentTarget) setYayinSikayetSor(false); }}>
+          <div className="cd-pencere">
+            <div className="cd-pencere-ik" aria-hidden="true">⚠️</div>
+            <b>{t("cdYayiniBildirSor", "Bu yayını uygunsuz olarak bildirmek istiyor musun?")}</b>
+            <p>{t("cdYayiniBildirAlt", "Hakaret, şiddet, çıplaklık ya da dolandırıcılık varsa bildir; inceleyip gerekirse yayını kapatırız.")}</p>
+            <div className="cd-pencere-dugmeler">
+              <button className="cd-ikincil" onClick={() => setYayinSikayetSor(false)}><KayanYazi>{t("cdVazgec", "Vazgeç")}</KayanYazi></button>
+              <button className="cd-birincil kirmizi" onClick={() => { setYayinSikayetSor(false); sikayet(null); }}><KayanYazi>{t("cdBildir", "Bildir")}</KayanYazi></button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

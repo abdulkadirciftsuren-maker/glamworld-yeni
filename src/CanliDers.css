@@ -171,7 +171,12 @@
 .cd-kalp-btn{ color:#fff; font-size:24px; background:linear-gradient(135deg,#ff2d55,#ff4fa3); border:0; box-shadow:0 8px 20px rgba(255,45,85,.45); }
 .cd-kalp-btn:active{ transform:scale(.9); }
 .cd-ses-ac{ position:absolute; z-index:6; top:50%; left:50%; transform:translate(-50%,-50%); display:flex; align-items:center; gap:8px; max-width:80%; height:50px; padding:0 18px; border-radius:14px; border:0; color:#fff; font-weight:900; font-size:15.5px; background:linear-gradient(135deg,#8b5cf6,#ec4899); box-shadow:0 10px 26px rgba(139,92,246,.5); }
-.cd-yayin-sikayet{ position:absolute; z-index:3; right:10px; top:calc(62px + env(safe-area-inset-top)); width:36px; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background:rgba(20,10,50,.45); font-size:15px; }
+.cd-yayin-sikayet{ position:absolute; z-index:3; right:10px; top:calc(62px + env(safe-area-inset-top)); display:flex; align-items:center; gap:5px; max-width:45%; height:36px; padding:0 11px; border-radius:10px; border:1px solid rgba(255,140,160,.45); background:rgba(20,10,50,.55); color:#ffd0dc; font-size:13.5px; font-weight:800; backdrop-filter:blur(6px); }
+/* Yönetici sürüm rozeti tam ekran canlı yayında Kapat/izleyici düğmelerinin üstüne biniyordu → yayın ekranı açıkken gizli */
+body:has(.cd-tam) .sr{ display:none !important; }
+
+.cd-teshis{ display:flex; flex-direction:column; align-items:center; gap:4px; font-size:13px; font-weight:700; color:#c9bdf5; }
+.cd-yeniden{ display:flex; align-items:center; gap:8px; max-width:80%; height:46px; padding:0 18px; border:0; border-radius:12px; color:#fff; font-weight:900; font-size:15px; background:linear-gradient(135deg,#8b5cf6,#ec4899); box-shadow:0 8px 20px rgba(139,92,246,.4); }
 
 /* GEÇMİŞ YAYINLARIM */
 .cd-gecmis-liste{ display:flex; flex-direction:column; gap:8px; }
@@ -224,5 +229,6 @@
   .cd-alt-cubuk{ left:50%; right:auto; width:min(720px,100%); transform:translateX(-50%); }
   .cd-yorum-gir{ font-size:16.5px; }
   .cd-kimlik{ flex:0 1 360px; }
+  .cd-yayin-sikayet{ font-size:15px; height:40px; }
   .cd-kimlik-yazi b{ font-size:15.5px; } .cd-kimlik-yazi i{ font-size:13.5px; }
 }

@@ -9457,9 +9457,10 @@ export default function Anasayfa({ pro = false }) {
             {aktifKod === "home" && <DunyaKure />}
           </span>
         </div>
-        {/* DİL — SADECE geniş ekranda header'da görünür (telefonda menüdedir) */}
-        <span className="header-dil"><DilSecici /></span>
         <span className="ana-ince-bosluk" aria-hidden="true" />
+        {/* DİL — SADECE geniş ekranda header'da görünür (telefonda menüdedir). 11 Kas (kullanıcı): logonun yanında soluk kalıp
+            görünmüyordu → SAĞ tarafa (büyütecin soluna) alındı, belirgin KARE düğme. */}
+        <span className="header-dil" title="Dil / Language"><DilSecici /></span>
         {/* SAĞ: ARA (büyüteç) + bildirim + Gloxoo + profil (hepsi küçük, tek şeride sığar) */}
         {aktifKod !== "profil" && <button className="ana-ara-btn ana-ust-ara ana-ince-btn" onClick={() => { setAktifKod("home"); setAraAcik(true); try { if (kokRef.current) kokRef.current.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {} }} aria-label={t("tabAra", "Ara")} title={t("tabAra", "Ara")}>
           {Ikon.ara}
