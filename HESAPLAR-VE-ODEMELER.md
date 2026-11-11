@@ -118,5 +118,6 @@
 - **Hızlı test (Gloxoo köprüsü):** tarayıcıda `https://gloxorg-ai.abdulkadirciftsuren.workers.dev` → `{"metin":"","hata":"Sadece POST"}` yazıyorsa köprü çalışıyor; "Error 1027" çıkarsa Cloudflare günlük sınırı dolmuş.
 
 ## 🌐 Dokumenten.com (11 Kas 2026)
-- Kullanıcı AI Danışma Ofisi projesi için **Dokumenten.com** alan adını aldı (hangi firmadan, yenileme tarihi: kullanıcıya sorulup buraya yazılacak — kart/şifre bilgisi YAZILMAZ).
+- Kullanıcı AI Danışma Ofisi projesi için **Dokumenten.com** alan adını aldı.
+- **Kullanıcının BÜTÜN alan adları Namecheap'te** (11 Kas 2026, kullanıcı söyledi): Dokumenten.com, fincanla.com, bebelumo.com vb. Yenileme tarihleri Namecheap hesabında (Domain List) görünür — tarihler henüz buraya yazılmadı; kart/şifre bilgisi YAZILMAZ.
 - Alan adları genelde **yıllık yenilenir** → yenileme tarihinden 1 ay önce hatırlat.
