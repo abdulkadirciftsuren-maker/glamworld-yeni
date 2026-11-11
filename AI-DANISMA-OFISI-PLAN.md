@@ -196,3 +196,35 @@ Play Store uygulaması, gerçek uzmana sor.
 ### D) Tahmini maliyet ve süre
 - Aylık: hosting/sunucu ~0 €, yapay zekâ kullanım kadar (başta birkaç €), alan adı yıllık ~14 €.
 - Süre: ~2–3 hafta (adım adım, her adımda kullanıcı onayı).
+
+## 17. 🗄️ KULLANICININ YENİ İSTEKLERİ (11 Kas 2026) — BELGE KASASI ASIL ÖZELLİK OLDU
+1. **Belge kasası (herkesin bütün evrakı):** resmi dairelerden gelen mektuplar, maaş bordrosu, vergi dairesi yazıları…
+   Almanya için EKSİK bırakılmayacak.
+   - **Önemli** ve **önemsiz** belgeler AYRI tutulur; ikisi de korunur.
+   - Belgeler **hangi daireye aitse o dairenin klasörüne** kendiliğinden konur (Finanzamt, Jobcenter, Familienkasse…).
+   - Kişi **fotoğraf atar** → yapay zekâ okur, değerlendirir → "ne yapman lazım, son tarih ne" söyler → gerekeni hazırlar
+     (cevap mektubu, form, itiraz) → belgeyi kasaya kaydeder.
+   - Kişi isterse **silme** (tek belge / klasör / her şey).
+   - Her belge ve form **PDF olarak kolayca indirilir, gönderilir (paylaş), yazdırılır.** Fotoğraf → temiz "taranmış" PDF.
+   - Sınır (dürüst not): resmi daireye kişi adına göndermeyiz; hazırlarız, adresi/online yolu söyleriz, kişi gönderir.
+2. **Gezinme:** Ülkeler → ülkeye bas → o ülkenin BÜTÜN daireleri → daireye bas → o dairenin formları.
+3. **Çalışma kuralı:** Code her iş bitince kullanıcıya **"sırada ne var, nerede ne yapacağız"** diye açıkça söyler.
+
+→ PLAN DEĞİŞİKLİĞİ: Belge kasası + abonelik (5,99 €/ay) Aşama 2'den **Aşama 1'e alındı** (asıl değer bu).
+   Güvenlik buna göre: şifreli depolama, Avrupa sunucusu, giriş zorunlu (kasa için), "her şeyimi sil".
+
+### Almanya daire listesi (ilk katalog — ülke çapı + Bayern; şehre özel olanlar yapay zekâ bulucuyla)
+Bürgeramt/Einwohnermeldeamt · Ausländerbehörde · BAMF · Finanzamt · Familienkasse · Jobcenter · Agentur für Arbeit ·
+Deutsche Rentenversicherung · Krankenkasse / Pflegekasse · Elterngeldstelle · Wohngeldstelle · Sozialamt · Jugendamt ·
+BAföG-Amt · Standesamt · Kfz-Zulassungsstelle · Führerscheinstelle · Beitragsservice (Rundfunkbeitrag) ·
+Versorgungsamt (Schwerbehinderung) · Gewerbeamt · Amtsgericht · Schule/Kita · İşveren (bordro, Lohnsteuerbescheinigung) ·
+Banka · Ev sahibi (Vermieter) · Sigortalar · Elektrik/gaz · Telefon/internet.
+
+## 18. 💳 PARA NEREYE GELECEK (11 Kas 2026)
+- Kullanıcının Alman **Sparkasse hesabı** var (sadece IBAN, Mastercard yok) + Ukrayna banka kartları var.
+  Almanya'da ne kadar kalacağı belli değil (savaş biterse oturum değişebilir).
+- Code'un açıklaması: aracı satıcı parayı **karta değil, banka hesabına (IBAN) ya da PayPal'a** gönderir; ödeme hesabı
+  her zaman değiştirilebilir. Vergi, kişinin **yaşadığı ülkeye** ödenir: Almanya'dayken Gewerbe + Sparkasse IBAN;
+  Ukrayna'ya dönülürse Almanya'da Gewerbe kapatılır (Gewerbeabmeldung), Ukrayna'da FOP açılır, ödeme hesabı
+  Ukrayna'ya çevrilir. Site/alan adı/sunucu kişiye ait, ülkeye bağlı değil — taşınabilir.
+- Öneri: şimdi Sparkasse IBAN; yedek olarak PayPal (Ukrayna kartına çekilebilir). Aracı başvurusunda ödeme yolları teyit edilecek.
