@@ -29,6 +29,20 @@ const saatYaz = (z, dil) => { const ms = zamanMs(z); if (!ms) return ""; try { r
 // Yayın süresi: bitiş − başlangıç (bitiş yoksa son nabız; telefon kapanmış olabilir)
 const yayinSuresi = (y) => Math.max(0, (zamanMs(y.bitis) || zamanMs(y.sonNabiz)) - zamanMs(y.baslangic));
 const enCokIzl = (y) => Math.max(y.enCokIzleyici || 0, y.izleyici || 0);
+// KAMERA — GLOME ARAMASIYLA BİREBİR AYNI YÖNTEM (11 Kas: B482-B485 denemelerinde bilgisayar canlı yayında "Gönderilen: 0 KB · 0 kare"
+// gösterdi — kütüphanenin createLocalTracks + sabit 960x540 + biçim/bitrate ayarlarıyla bu bilgisayarın kodlayıcısı hiç kare
+// üretmedi; AYNI bilgisayardan Glome görüntüsü sorunsuz gidiyor). Glome: tarayıcının getUserMedia'sı + "yaklaşık" 640x480/24 kare,
+// ham iz ek ayar verilmeden yayınlanır. Burada da aynısı (ham iz LiveKit'in LocalTrack'ine sarılır, kütüphane de içeride böyle yapar).
+const GLOME_SES = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+const kameraKisit = (yuz) => ({ facingMode: yuz || "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24, max: 30 } });
+const glomeIzleri = async (lk) => {
+  const st = await navigator.mediaDevices.getUserMedia({ audio: GLOME_SES, video: kameraKisit("user") });
+  return st.getTracks().map((mt) => (mt.kind === "video" ? new lk.LocalVideoTrack(mt, undefined, true) : new lk.LocalAudioTrack(mt, undefined, true)));
+};
+const glomeKamerasi = async (yuz) => {
+  const st = await navigator.mediaDevices.getUserMedia({ video: kameraKisit(yuz) });
+  return st.getVideoTracks()[0];
+};
 const sureYaz = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); const d = Math.floor(s / 60), h = Math.floor(d / 60); return h ? h + ":" + String(d % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0") : d + ":" + String(s % 60).padStart(2, "0"); };
 
 function KareAvatar({ foto, ad, boy }) {
@@ -228,7 +242,7 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
     (async () => {
       try {
         const lk = livekitHemen() || (await livekitYukle());
-        const izler = await lk.createLocalTracks({ audio: { echoCancellation: true, noiseSuppression: true }, video: { facingMode: "user", resolution: { width: 960, height: 540, frameRate: 24 } } });
+        const izler = await glomeIzleri(lk);
         if (iptal) { izler.forEach((x) => { try { x.stop(); } catch (e) {} }); return; }
         izlerRef.current = izler;
         const v = izler.find((x) => x.kind === "video");
@@ -248,17 +262,12 @@ function YayinHazirlik({ t, dil, uid, benAd, benFoto, meslekler, tokenAl, bilgi,
     try {
       const lk = livekitHemen() || (await livekitYukle());
       const { token, url } = await tokenAl("canli_" + ref.id);
-      // ⚠️ 11 Kas: KATMANLI (simulcast) yayın KAPALI — bilgisayarda yayıncı "Görüntü ✓" derken telefon sunucuda görüntü yayını
-      //   GÖRMÜYORDU (bazı bilgisayar görüntü kodlayıcıları katmanlı gönderimde takılıp hiç görüntü göndermiyor). Glome gibi tek kopya.
-      // ⚠️ 11 Kas (B484 sayıları: bilgisayarda "Gönderilen: 0 KB · 0 kare · 0x0" — VP8 kodlayıcısı hiç kare üretmedi; kamera yeniden
-      //   açılınca geç de olsa açıldı). Görüntü EN BAŞTAN H.264 ile gönderilir (bilgisayar/Android/iPhone'da en yaygın destek);
-      //   gitmezse aşağıdaki kontrol kamerayı öbür biçimle (VP8) yeniden açar.
-      const room = new lk.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: false, videoCodec: "h264", backupCodec: false, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
+      // Oda ve yayınlama GLOME İLE AYNI: sadece adaptiveStream/dynacast kapalı, ek yayın ayarı (biçim/katman/bitrate) YOK.
+      const room = new lk.Room({ adaptiveStream: false, dynacast: false });
       await room.connect(url, token);
-      // Önce GÖRÜNTÜ sonra ses yayınlanır; hata olursa mesajı saklanır (yayıncının ekranındaki durum satırında görünür)
+      // Hata olursa mesajı saklanır (yayıncının ekranındaki durum satırında görünür)
       const hatalar = [];
-      const sirali = [...izlerRef.current].sort((a, b) => (a.kind === "video" ? -1 : 1) - (b.kind === "video" ? -1 : 1));
-      for (const iz of sirali) { try { await room.localParticipant.publishTrack(iz); } catch (e) { hatalar.push(iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120)); } }
+      for (const iz of izlerRef.current) { try { await room.localParticipant.publishTrack(iz); } catch (e) { hatalar.push(iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120)); } }
       const foto = fotoIyi(benFoto);
       await setDoc(ref, {
         yayinciUid: uid, ad: epostaMi(benAd) ? "" : (benAd || ""), foto: foto && foto.length < 2000 ? foto : "", baslik: baslik.trim().slice(0, 80),
@@ -316,7 +325,6 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   const [oynuyor, setOynuyor] = useState(!!yayinci);
   const [gelen, setGelen] = useState(null);     // izleyici: { kb, kare, w, h }
   const [gonderim, setGonderim] = useState(null); // yayıncı: { kb, kare, w, h, neden }
-  const [kodekAdi, setKodekAdi] = useState("h264"); // yayıncı: kullanılan sıkıştırma biçimi (durum satırında görünür)
   const gelenIzRef = useRef(null);
   // TEŞHİS (11 Kas, telefonda "bağlanıyor"da kalıyordu; sunucu testi GitHub'da sorunsuz): hangi adımda kaldığı ekranda yazar
   const [asama, setAsama] = useState("bilet"); // bilet | sunucu | bekle
@@ -420,37 +428,36 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
             if (!iz || !iz.getSenderStats) return true;
             const st = await iz.getSenderStats();
             const dizi = (Array.isArray(st) ? st : [st]).filter(Boolean);
-            if (!dizi.length || dizi.every((x) => typeof x.bytesSent !== "number")) return true; // istatistik yoksa karar verme
-            const bayt = dizi.reduce((t, x) => t + (x.bytesSent || 0), 0);
+            if (!dizi.length) return true; // istatistik hiç yoksa karar verme
+            const bayt = dizi.reduce((t, x) => t + (x.bytesSent || 0), 0); // alan yoksa 0 sayılır (ekranda da 0 görünüyordu)
             const akiyor = bayt > 0 && bayt > sonBayt.n; sonBayt.n = bayt; return akiyor;
           } catch (e) { return true; }
         };
         let kontrolde = false;
-        let aktifKodek = "h264"; // şu an kullanılan sıkıştırma biçimi; kamera yeniden açılırken öbürüne geçilir (h264 <-> vp8)
+        let yenileme = 0; // kamera kaç kez yeniden açıldı (en fazla 3; sonsuz döngü olmasın)
         const kontrol = async (n) => {
           if (iptal || kapandiRef.current || kontrolde) return;
           kontrolde = true;
           let sonHata = "";
           // Görüntü yayında görünüyor ama bayt gitmiyorsa (2. kontrolden itibaren) takılmış say → aşağıda kamera sıfırdan açılır
           let takili = false;
-          if (n >= 1 && izGidiyorMu("video") && !(await goruntuAkiyorMu())) { takili = true; sonHata = "video: gönderim durdu (0 bayt)"; }
+          if (n >= 1 && yenileme < 3 && izGidiyorMu("video") && !(await goruntuAkiyorMu())) { takili = true; sonHata = "video: gönderim durdu (0 bayt)"; }
           else if (n === 0) { await goruntuAkiyorMu(); }
           for (const iz of [...(izlerRef.current || [])]) {
             if (izGidiyorMu(iz.kind) && !(takili && iz.kind === "video")) continue;
-            if (iz.kind === "video" && n >= 1 && lk && lk.createLocalVideoTrack) {
-              // 2. denemeden itibaren: kamerayı SIFIRDAN yeniden aç (eski iz takılmış olabilir), daha basit ayarla, katmansız gönder
+            if (iz.kind === "video" && n >= 1 && lk && lk.LocalVideoTrack) {
+              // 2. kontrolden itibaren: kamerayı Glome yöntemiyle SIFIRDAN yeniden aç (eski iz takılmış olabilir), ayarsız yayınla
               try {
+                yenileme++;
                 try { await room.localParticipant.unpublishTrack(iz, false); } catch (e) {}
-                const yeni = await lk.createLocalVideoTrack({ facingMode: onKamera ? "user" : "environment", resolution: { width: 640, height: 480, frameRate: 24 } });
                 try { iz.stop(); } catch (e) {}
+                const yeni = new lk.LocalVideoTrack(await glomeKamerasi(onKamera ? "user" : "environment"), undefined, true);
                 izlerRef.current = (izlerRef.current || []).map((x) => (x === iz ? yeni : x));
                 if (vidRef.current) { try { yeni.attach(vidRef.current); } catch (e) {} }
-                aktifKodek = aktifKodek === "h264" ? "vp8" : "h264";
-                setKodekAdi(aktifKodek);
-                await room.localParticipant.publishTrack(yeni, { simulcast: false, videoCodec: aktifKodek, backupCodec: false });
+                await room.localParticipant.publishTrack(yeni);
               } catch (e) { sonHata = "video: " + ((e && e.message) || String(e)).slice(0, 120); }
             } else {
-              try { await room.localParticipant.publishTrack(iz, { simulcast: false }); } catch (e) { sonHata = iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120); }
+              try { await room.localParticipant.publishTrack(iz); } catch (e) { sonHata = iz.kind + ": " + ((e && e.message) || String(e)).slice(0, 120); }
             }
           }
           if (takili) sonBayt.n = -1;
@@ -599,7 +606,14 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   };
   const kameraCevir = async () => {
     const v = (izlerRef.current || []).find((x) => x.kind === "video"); if (!v) return;
-    try { await v.restartTrack({ facingMode: onKamera ? "environment" : "user", resolution: { width: 960, height: 540, frameRate: 24 } }); setOnKamera(!onKamera); } catch (e) { if (bilgi) bilgi(t("cdKameraCevrilmedi", "Kamera çevrilemedi.")); }
+    try {
+      const eskiMt = v.mediaStreamTrack;
+      const yeniMt = await glomeKamerasi(onKamera ? "environment" : "user");
+      await v.replaceTrack(yeniMt, true);
+      try { if (eskiMt && eskiMt !== yeniMt) eskiMt.stop(); } catch (e) {}
+      if (vidRef.current) { try { v.attach(vidRef.current); } catch (e) {} }
+      setOnKamera(!onKamera);
+    } catch (e) { if (bilgi) bilgi(t("cdKameraCevrilmedi", "Kamera çevrilemedi.")); }
   };
 
   const yorumSil = async (yr) => { setSecili(null); try { await deleteDoc(doc(db, "canliYayinlar", yayinId, "yorumlar", yr.id)); } catch (e) {} };
@@ -665,7 +679,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
       {yayinci && yayinDurum.goruntu !== null && (
         <div className={"cd-yayin-durum" + (yayinDurum.goruntu && yayinDurum.ses ? " iyi" : " kotu")}>
           📡 {t("cdTeshisGoruntu", "Görüntü")}: {yayinDurum.goruntu ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {yayinDurum.ses ? "✓" : "✗"}
-          {gonderim ? <small>⬆️ {t("cdGonderilen", "Gönderilen")}: {gonderim.kb} KB · {gonderim.kare} {t("cdKare", "kare")} · {gonderim.w}x{gonderim.h} · {kodekAdi.toUpperCase()}{gonderim.neden ? " · " + gonderim.neden : ""}</small> : null}
+          {gonderim ? <small>⬆️ {t("cdGonderilen", "Gönderilen")}: {gonderim.kb} KB · {gonderim.kare} {t("cdKare", "kare")} · {gonderim.w}x{gonderim.h}{gonderim.neden ? " · " + gonderim.neden : ""}</small> : null}
           {yayinDurum.hata ? <small>{yayinDurum.hata}</small> : null}
         </div>
       )}
