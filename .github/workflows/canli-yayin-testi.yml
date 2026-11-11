@@ -1,0 +1,80 @@
+# GLOXORG — CANLI YAYIN TESTİ (sadece deneme odası kullanır, hiçbir kullanıcı verisine dokunmaz).
+# Kullanıcı 11 Kas: "bilgisayardan canlı yayın açtım, telefondan açılmıyor (bağlanıyor'da kalıyor)".
+# Claude'un bulut ortamı canli.gloxorg.com'a ulaşamadığı için test GitHub sunucusunda yapılır:
+#  - Tarayıcı A: sahte kamera+mikrofonla, uygulamadaki AYNI ayarlarla yayın yapar (simulcast, 960x540).
+#  - Tarayıcı B: izleyici olarak bağlanır; görüntü/ses izi geliyor mu, görüntü gerçekten oynuyor mu ölçer.
+name: Canli yayin testi
+on:
+  push:
+    branches: ["claude/glamworld-rules-review-0kzl0x"]
+    paths: [".github/workflows/canli-yayin-testi.yml"]
+  workflow_dispatch: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Araclari kur
+        run: |
+          mkdir -p /tmp/t && cd /tmp/t && npm init -y >/dev/null
+          npm i livekit-client@2.22.3 playwright@1.49.1 --no-audit --no-fund >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null 2>&1
+          cp node_modules/livekit-client/dist/livekit-client.umd.js .
+          echo '<!doctype html><html><body><video id="v" muted playsinline autoplay></video><script src="livekit-client.umd.js"></script></body></html>' > test.html
+      - name: Yayinci ve izleyici ile dene
+        run: |
+          cd /tmp/t
+          ODA="tani-canli-${GITHUB_RUN_ID}"
+          bilet() { curl -sS -m 25 -X POST https://gloxorg-ai.abdulkadirciftsuren.workers.dev -H "Content-Type: application/json" -H "Origin: https://gloxorg.com" -d "{\"livekitOda\":\"$ODA\",\"kimlik\":\"$1\",\"ad\":\"$1\"}"; }
+          bilet tani-yayinci > a.json; bilet tani-izleyici1 > b.json; bilet tani-izleyici2 > c.json
+          python3 -c "import json; [print(f, 'bilet var=', bool(json.load(open(f)).get('token'))) for f in ['a.json','b.json','c.json']]"
+          (python3 -m http.server 8080 >/dev/null 2>&1 &) ; sleep 1
+          cat > t.js <<'JS'
+          const { chromium } = require("playwright");
+          const fs = require("fs");
+          const A = JSON.parse(fs.readFileSync("a.json")), B = JSON.parse(fs.readFileSync("b.json")), C = JSON.parse(fs.readFileSync("c.json"));
+          (async () => {
+            const b = await chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
+            const sayfa = async (ad) => { const p = await (await b.newContext()).newPage(); p.on("console", (m) => console.log(`[${ad}]`, m.text())); p.on("pageerror", (e) => console.log(`[${ad} HATA]`, e.message)); await p.goto("http://localhost:8080/test.html"); return p; };
+            // A — YAYINCI (uygulamadaki ayarların aynısı)
+            const pa = await sayfa("YAYINCI");
+            const ya = await pa.evaluate(async ({ url, token }) => {
+              const L = window.LivekitClient; const sonuc = {};
+              try {
+                const izler = await L.createLocalTracks({ audio: { echoCancellation: true, noiseSuppression: true }, video: { facingMode: "user", resolution: { width: 960, height: 540, frameRate: 24 } } });
+                sonuc.izler = izler.map((x) => x.kind);
+                const room = new L.Room({ adaptiveStream: false, dynacast: false, publishDefaults: { simulcast: true, videoEncoding: { maxBitrate: 1200000, maxFramerate: 24 } } });
+                window.oda = room;
+                const t0 = Date.now(); await room.connect(url, token); sonuc.baglanmaMs = Date.now() - t0;
+                sonuc.yayinlanan = [];
+                for (const iz of izler) { try { const pub = await room.localParticipant.publishTrack(iz); sonuc.yayinlanan.push(iz.kind + ":" + (pub && pub.trackSid)); } catch (e) { sonuc.yayinlanan.push(iz.kind + ":HATA " + e.message); } }
+              } catch (e) { sonuc.hata = e.message; }
+              return sonuc;
+            }, A);
+            console.log("YAYINCI SONUC:", JSON.stringify(ya));
+            // İzleyici testi (aynı fonksiyon, farklı ayar)
+            const izle = async (ad, bilet, ayar) => {
+              const p = await sayfa(ad);
+              const r = await p.evaluate(async ({ url, token, ayar }) => {
+                const L = window.LivekitClient; const sonuc = { gelen: [] };
+                try {
+                  const room = new L.Room(ayar);
+                  room.on(L.RoomEvent.TrackSubscribed, (t) => { sonuc.gelen.push(t.kind); if (t.kind === "video") t.attach(document.getElementById("v")); });
+                  const t0 = Date.now(); await room.connect(url, token, { autoSubscribe: true }); sonuc.baglanmaMs = Date.now() - t0;
+                  sonuc.katilimci = room.remoteParticipants.size;
+                  await new Promise((r) => setTimeout(r, 12000));
+                  const v = document.getElementById("v");
+                  sonuc.video = { genislik: v.videoWidth, yukseklik: v.videoHeight, oynuyor: !v.paused && v.readyState >= 2 };
+                  const yayinlar = []; room.remoteParticipants.forEach((rp) => rp.trackPublications.forEach((pub) => yayinlar.push(pub.kind + " abone=" + pub.isSubscribed + " iz=" + !!pub.track)));
+                  sonuc.yayinlar = yayinlar;
+                } catch (e) { sonuc.hata = e.message; }
+                return sonuc;
+              }, { ...bilet, ayar });
+              console.log(ad + " SONUC:", JSON.stringify(r));
+            };
+            await izle("IZLEYICI-yeni-ayar", B, { adaptiveStream: false, dynacast: false });
+            await izle("IZLEYICI-eski-ayar", C, { adaptiveStream: true, dynacast: true });
+            await b.close();
+          })().catch((e) => { console.log("GENEL HATA:", e.message); process.exit(1); });
+          JS
+          node t.js
