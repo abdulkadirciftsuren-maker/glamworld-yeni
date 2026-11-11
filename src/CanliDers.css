@@ -178,11 +178,7 @@
 /* Yönetici sürüm rozeti tam ekran canlı yayında Kapat/izleyici düğmelerinin üstüne biniyordu → yayın ekranı açıkken gizli */
 body:has(.cd-tam) .sr{ display:none !important; }
 
-.cd-teshis{ display:flex; flex-direction:column; align-items:center; gap:4px; font-size:13px; font-weight:700; color:#c9bdf5; }
-.cd-yayin-durum{ position:absolute; z-index:4; left:10px; top:calc(62px + env(safe-area-inset-top)); max-width:70%; display:flex; flex-direction:column; gap:2px; padding:6px 10px; border-radius:10px; font-size:12.5px; font-weight:800; color:#fff; background:rgba(20,10,50,.6); border:1px solid rgba(255,255,255,.2); backdrop-filter:blur(6px); }
-.cd-yayin-durum.iyi{ border-color:rgba(52,211,153,.6); } .cd-yayin-durum.kotu{ border-color:rgba(255,45,85,.8); background:rgba(255,45,85,.35); }
-.cd-yayin-durum small{ font-size:11px; font-weight:600; opacity:.9; word-break:break-word; }
-.cd-uyari-serit{ position:absolute; z-index:4; left:10px; right:10px; top:calc(118px + env(safe-area-inset-top)); padding:10px 12px; border-radius:12px; background:rgba(255,45,85,.88); color:#fff; font-weight:800; font-size:14px; line-height:1.35; }
+.cd-uyari-serit{ position:absolute; z-index:4; left:10px; right:10px; top:calc(62px + env(safe-area-inset-top)); padding:10px 12px; border-radius:12px; background:rgba(255,45,85,.88); color:#fff; font-weight:800; font-size:14px; line-height:1.35; }
 .cd-yeniden{ display:flex; align-items:center; gap:8px; max-width:80%; height:46px; padding:0 18px; border:0; border-radius:12px; color:#fff; font-weight:900; font-size:15px; background:linear-gradient(135deg,#8b5cf6,#ec4899); box-shadow:0 8px 20px rgba(139,92,246,.4); }
 
 /* GEÇMİŞ YAYINLARIM */
@@ -251,16 +247,14 @@ body:has(.cd-tam) .sr{ display:none !important; }
   .cd-tam .cd-rozet-canli,.cd-tam .cd-rozet-izl{ height:40px; font-size:16px; padding:0 12px; }
   .cd-kapat{ width:52px; height:52px; font-size:22px; }
   .cd-bitir-btn{ height:52px; font-size:18px; padding:0 20px; max-width:none; flex:0 0 auto; } .cd-bitir-btn span{ font-size:20px; }
-  .cd-yayin-durum{ top:96px; left:18px; font-size:15px; padding:8px 12px; } .cd-yayin-durum small{ font-size:13px; }
-  .cd-uyari-serit{ top:160px; left:18px; right:auto; max-width:560px; font-size:16px; }
+    .cd-uyari-serit{ top:96px; left:18px; right:auto; max-width:560px; font-size:16px; }
   .cd-yayin-sikayet{ top:96px; right:18px; height:44px; font-size:16px; }
   .cd-ikon{ width:58px; height:58px; font-size:24px; } .cd-kalp-btn{ font-size:28px; }
   .cd-yorum-gir{ height:58px; font-size:18px; }
   .cd-yorum{ font-size:17px; } .cd-yorum b{ font-size:17px; }
   .cd-akis{ width:480px; bottom:96px; }
   .cd-akis-bilgi{ font-size:14px; }
-  .cd-teshis{ font-size:15px; } .cd-yukleniyor{ font-size:18px; }
-  .cd-yeniden{ height:52px; font-size:17px; }
+    .cd-yeniden{ height:52px; font-size:17px; }
   .cd-ses-ac{ height:56px; font-size:18px; }
   .cd-kalp{ font-size:38px; }
 }

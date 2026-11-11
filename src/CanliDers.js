@@ -323,9 +323,8 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
   // 11 Kas (B483 denemesi: telefonda görüntü izi geldi ama ekran BOŞ): bekleme ekranı görüntü GERÇEKTEN oynayana kadar kalır;
   // iki tarafta da sayılar görünür → sorun gönderende mi, yolda mı, alanda mı kesin anlaşılır.
   const [oynuyor, setOynuyor] = useState(!!yayinci);
-  const [gelen, setGelen] = useState(null);     // izleyici: { kb, kare, w, h }
   const [gonderim, setGonderim] = useState(null); // yayıncı: { kb, kare, w, h, neden }
-  const gelenIzRef = useRef(null);
+
   // TEŞHİS (11 Kas, telefonda "bağlanıyor"da kalıyordu; sunucu testi GitHub'da sorunsuz): hangi adımda kaldığı ekranda yazar
   const [asama, setAsama] = useState("bilet"); // bilet | sunucu | bekle
   const [teshis, setTeshis] = useState({ yayinci: false, goruntuIzi: false, sesIzi: false, goruntuYayini: false, abonelikHata: false });
@@ -506,7 +505,6 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
           if (bagliIzler.has(kimlik)) return; bagliIzler.add(kimlik);
           if (track.kind === "video") {
             setTeshis((d) => ({ ...d, goruntuIzi: true }));
-            gelenIzRef.current = track;
             // Glome aramasındaki gibi: kütüphanenin attach'i olmazsa görüntüyü YENİ bir MediaStream ile elle bağla
             const bagla = (n) => {
               const el = vidRef.current;
@@ -570,19 +568,13 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
     const z = setInterval(() => setBeklemeSn((n) => n + 1), 1000);
     return () => clearInterval(z);
   }, [yayinci, oynuyor, deneme]);
-  // İzleyici: görüntü gerçekten oynuyor mu (kutuda en/boy var mı) + gelen bayt/kare sayıları
+  // İzleyici: görüntü gerçekten oynuyor mu (kutuda en/boy var mı) — oynayana kadar bekleme ekranı kalır
   useEffect(() => {
     if (yayinci) return undefined;
-    const z = setInterval(async () => {
+    const z = setInterval(() => {
       const el = vidRef.current;
       if (el && el.videoWidth > 0 && el.readyState >= 2) setOynuyor(true);
-      const iz = gelenIzRef.current;
-      if (!iz || !iz.getReceiverStats) return;
-      try {
-        const st = await iz.getReceiverStats();
-        if (st) setGelen({ kb: Math.round((st.bytesReceived || 0) / 1024), kare: st.framesDecoded || 0, w: st.frameWidth || 0, h: st.frameHeight || 0 });
-      } catch (e) {}
-    }, 2000);
+    }, 1000);
     return () => clearInterval(z);
   }, [yayinci, deneme]);
 
@@ -642,14 +634,6 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         <div className="cd-yukleniyor" onClick={() => { try { const el = vidRef.current; if (el) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); } } catch (e) {} }}>
           {y && <KareAvatar foto={y.foto} ad={y.ad} boy={96} />}
           {baglanti === "hata" ? <b>{t("cdBaglantiKoptu", "Bağlantı kurulamadı.")}</b> : <><span className="cd-donen" /><KayanYazi>{t("cdYayinaBaglaniyor", "Canlı yayına bağlanıyor…")}</KayanYazi></>}
-          {!yayinci && (
-            <div className="cd-teshis">
-              <span>{asama === "bilet" ? t("cdAsamaBilet", "1/3 Bilet alınıyor") : asama === "sunucu" ? t("cdAsamaSunucu", "2/3 Sunucuya bağlanıyor") : t("cdAsamaBekle", "3/3 Bağlandı, görüntü bekleniyor")} · {beklemeSn} sn</span>
-              {asama === "bekle" && <span>{t("cdTeshisYayinci", "Yayıncı")}: {teshis.yayinci ? "✓" : "✗"} · {t("cdTeshisGoruntuYayini", "Görüntü yayını")}: {teshis.goruntuYayini ? "✓" : "✗"} · {t("cdTeshisGoruntu", "Görüntü")}: {teshis.goruntuIzi ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {teshis.sesIzi ? "✓" : "✗"}</span>}
-              {gelen && <span>⬇️ {t("cdGelen", "Gelen")}: {gelen.kb} KB · {gelen.kare} {t("cdKare", "kare")} · {gelen.w}x{gelen.h}</span>}
-              {teshis.abonelikHata && <span>⚠️ {t("cdTeshisAbonelik", "Görüntü bu cihaza açılamadı")}</span>}
-            </div>
-          )}
           {!yayinci && (baglanti === "hata" || beklemeSn >= 15) && (
             <button className="cd-yeniden" onClick={() => { setTeshis({ yayinci: false, goruntuIzi: false, sesIzi: false }); setDeneme((n) => n + 1); }}>🔄 <KayanYazi>{t("cdYenidenDene", "Yeniden dene")}</KayanYazi></button>
           )}
@@ -676,14 +660,7 @@ function YayinEkrani({ t, dil, uid, benAd, benFoto, yayinId, yayinci, oturum, to
         )}
       </div>
 
-      {yayinci && yayinDurum.goruntu !== null && (
-        <div className={"cd-yayin-durum" + (yayinDurum.goruntu && yayinDurum.ses ? " iyi" : " kotu")}>
-          📡 {t("cdTeshisGoruntu", "Görüntü")}: {yayinDurum.goruntu ? "✓" : "✗"} · {t("cdTeshisSes", "Ses")}: {yayinDurum.ses ? "✓" : "✗"}
-          {gonderim ? <small>⬆️ {t("cdGonderilen", "Gönderilen")}: {gonderim.kb} KB · {gonderim.kare} {t("cdKare", "kare")} · {gonderim.w}x{gonderim.h}{gonderim.neden ? " · " + gonderim.neden : ""}</small> : null}
-          {yayinDurum.hata ? <small>{yayinDurum.hata}</small> : null}
-        </div>
-      )}
-      {yayinci && goruntuGitmiyor && (
+      {yayinci && (goruntuGitmiyor || (gonderim && gonderim.kare === 0 && simdi - zamanMs(y && y.baslangic) > 12000)) && (
         <div className="cd-uyari-serit">⚠️ {t("cdGoruntuGitmiyor", "Görüntün izleyicilere gitmiyor. Yayını bitirip yeniden başlatmayı dene.")}</div>
       )}
       {sesKilit && !yayinci && (

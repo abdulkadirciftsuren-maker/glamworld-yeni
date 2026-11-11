@@ -4,7 +4,7 @@ export const CEVIRI_CANLI = {
  tr: {
   cdGelen: "Gelen", cdGonderilen: "Gönderilen", cdKare: "kare",
   cdKalpAtanlar: "Kalp atanlar", cdKalpAtanYok: "Kalp atanların adı bu özellik eklendikten sonraki yayınlarda görünür.",
-  cdTeshisGoruntuYayini: "Görüntü yayını", cdTeshisAbonelik: "Görüntü bu cihaza açılamadı", cdGoruntuGitmiyor: "Görüntün izleyicilere gitmiyor. Yayını bitirip yeniden başlatmayı dene.",
+  cdTeshisGoruntuYayini: "Görüntü yayını", cdTeshisAbonelik: "Görüntü bu cihaza açılamadı", cdGoruntuGitmiyor: "Bu cihazdan görüntü izleyicilere ulaşmıyor. Telefondan yayın açmayı dene.",
   cdAsamaBilet: "1/3 Bilet alınıyor", cdAsamaSunucu: "2/3 Sunucuya bağlanıyor", cdAsamaBekle: "3/3 Bağlandı, görüntü bekleniyor", cdTeshisYayinci: "Yayıncı", cdTeshisGoruntu: "Görüntü", cdTeshisSes: "Ses", cdYenidenDene: "Yeniden dene",
   cdBildir: "Bildir", cdYayiniBildirSor: "Bu yayını uygunsuz olarak bildirmek istiyor musun?", cdYayiniBildirAlt: "Hakaret, şiddet, çıplaklık ya da dolandırıcılık varsa bildir; inceleyip gerekirse yayını kapatırız.",
   cdGecmis: "Geçmiş yayınlarım", cdSure: "Süre", cdEnCok: "En çok izleyici", cdKalpSayisi: "Kalp", cdYorumlar: "Yorumlar", cdVideoYok: "Görüntü (video) kaydı şimdilik saklanmıyor; yorumlar ve sayılar burada kalır.", cdYorumYok: "Bu yayına yorum yazılmadı.", cdKayitSil: "Bu yayının kaydını sil", cdKayitSilSor: "Bu yayının kaydı ve tüm yorumları silinsin mi? Geri alınamaz.", cdSil: "Sil", cdSilindi: "Kayıt silindi.", cdSilinemedi: "Silinemedi, tekrar dene.",
@@ -40,7 +40,7 @@ export const CEVIRI_CANLI = {
  en: {
   cdGelen: "Received", cdGonderilen: "Sent", cdKare: "frames",
   cdKalpAtanlar: "Who sent hearts", cdKalpAtanYok: "Names of people who sent hearts appear in streams after this feature was added.",
-  cdTeshisGoruntuYayini: "Video stream", cdTeshisAbonelik: "Video could not be opened on this device", cdGoruntuGitmiyor: "Your video is not reaching viewers. Try ending and restarting the stream.",
+  cdTeshisGoruntuYayini: "Video stream", cdTeshisAbonelik: "Video could not be opened on this device", cdGoruntuGitmiyor: "Video from this device is not reaching viewers. Try going live from a phone.",
   cdAsamaBilet: "1/3 Getting ticket", cdAsamaSunucu: "2/3 Connecting to server", cdAsamaBekle: "3/3 Connected, waiting for video", cdTeshisYayinci: "Host", cdTeshisGoruntu: "Video", cdTeshisSes: "Audio", cdYenidenDene: "Try again",
   cdBildir: "Report", cdYayiniBildirSor: "Do you want to report this stream as inappropriate?", cdYayiniBildirAlt: "Report insults, violence, nudity or fraud; we will review it and close the stream if needed.",
   cdGecmis: "My past streams", cdSure: "Duration", cdEnCok: "Peak viewers", cdKalpSayisi: "Hearts", cdYorumlar: "Comments", cdVideoYok: "The video itself is not saved for now; comments and numbers stay here.", cdYorumYok: "No comments were written on this stream.", cdKayitSil: "Delete this stream's record", cdKayitSilSor: "Delete this stream's record and all its comments? This cannot be undone.", cdSil: "Delete", cdSilindi: "Record deleted.", cdSilinemedi: "Could not delete, try again.",
@@ -76,7 +76,7 @@ export const CEVIRI_CANLI = {
  de: {
   cdGelen: "Empfangen", cdGonderilen: "Gesendet", cdKare: "Bilder",
   cdKalpAtanlar: "Wer Herzen geschickt hat", cdKalpAtanYok: "Die Namen erscheinen in Streams, die nach Einführung dieser Funktion stattfinden.",
-  cdTeshisGoruntuYayini: "Bildübertragung", cdTeshisAbonelik: "Bild konnte auf diesem Gerät nicht geöffnet werden", cdGoruntuGitmiyor: "Dein Bild erreicht die Zuschauer nicht. Beende den Stream und starte ihn neu.",
+  cdTeshisGoruntuYayini: "Bildübertragung", cdTeshisAbonelik: "Bild konnte auf diesem Gerät nicht geöffnet werden", cdGoruntuGitmiyor: "Das Bild dieses Geräts erreicht die Zuschauer nicht. Versuche, vom Handy aus live zu gehen.",
   cdAsamaBilet: "1/3 Ticket wird geholt", cdAsamaSunucu: "2/3 Verbinde mit Server", cdAsamaBekle: "3/3 Verbunden, warte auf Bild", cdTeshisYayinci: "Gastgeber", cdTeshisGoruntu: "Bild", cdTeshisSes: "Ton", cdYenidenDene: "Erneut versuchen",
   cdBildir: "Melden", cdYayiniBildirSor: "Möchtest du diesen Stream als unangemessen melden?", cdYayiniBildirAlt: "Melde Beleidigungen, Gewalt, Nacktheit oder Betrug; wir prüfen es und beenden den Stream bei Bedarf.",
   cdGecmis: "Meine früheren Streams", cdSure: "Dauer", cdEnCok: "Meiste Zuschauer", cdKalpSayisi: "Herzen", cdYorumlar: "Kommentare", cdVideoYok: "Das Video selbst wird vorerst nicht gespeichert; Kommentare und Zahlen bleiben hier.", cdYorumYok: "Zu diesem Stream wurden keine Kommentare geschrieben.", cdKayitSil: "Aufzeichnung dieses Streams löschen", cdKayitSilSor: "Aufzeichnung und alle Kommentare dieses Streams löschen? Das kann nicht rückgängig gemacht werden.", cdSil: "Löschen", cdSilindi: "Eintrag gelöscht.", cdSilinemedi: "Löschen fehlgeschlagen, bitte erneut versuchen.",
@@ -112,7 +112,7 @@ export const CEVIRI_CANLI = {
  ar: {
   cdGelen: "المستلم", cdGonderilen: "المُرسَل", cdKare: "إطار",
   cdKalpAtanlar: "من أرسل القلوب", cdKalpAtanYok: "تظهر أسماء من أرسلوا القلوب في البثوث التي تلي إضافة هذه الميزة.",
-  cdTeshisGoruntuYayini: "بث الصورة", cdTeshisAbonelik: "تعذّر فتح الصورة على هذا الجهاز", cdGoruntuGitmiyor: "صورتك لا تصل إلى المشاهدين. جرّب إنهاء البث وإعادة تشغيله.",
+  cdTeshisGoruntuYayini: "بث الصورة", cdTeshisAbonelik: "تعذّر فتح الصورة على هذا الجهاز", cdGoruntuGitmiyor: "لا تصل الصورة من هذا الجهاز إلى المشاهدين. جرّب البث من الهاتف.",
   cdAsamaBilet: "1/3 جارٍ الحصول على التذكرة", cdAsamaSunucu: "2/3 جارٍ الاتصال بالخادم", cdAsamaBekle: "3/3 متصل، بانتظار الصورة", cdTeshisYayinci: "صاحب البث", cdTeshisGoruntu: "الصورة", cdTeshisSes: "الصوت", cdYenidenDene: "أعد المحاولة",
   cdBildir: "إبلاغ", cdYayiniBildirSor: "هل تريد الإبلاغ عن هذا البث كمحتوى غير لائق؟", cdYayiniBildirAlt: "أبلغ عن الإهانات أو العنف أو العري أو الاحتيال؛ سنراجعه ونغلق البث إذا لزم الأمر.",
   cdGecmis: "بثوثي السابقة", cdSure: "المدة", cdEnCok: "أعلى عدد مشاهدين", cdKalpSayisi: "القلوب", cdYorumlar: "التعليقات", cdVideoYok: "لا يُحفظ الفيديو نفسه حاليًا؛ تبقى التعليقات والأرقام هنا.", cdYorumYok: "لم تُكتب تعليقات على هذا البث.", cdKayitSil: "حذف سجل هذا البث", cdKayitSilSor: "هل تريد حذف سجل هذا البث وجميع تعليقاته؟ لا يمكن التراجع.", cdSil: "حذف", cdSilindi: "تم حذف السجل.", cdSilinemedi: "تعذّر الحذف، حاول مجددًا.",
@@ -148,7 +148,7 @@ export const CEVIRI_CANLI = {
  ru: {
   cdGelen: "Получено", cdGonderilen: "Отправлено", cdKare: "кадров",
   cdKalpAtanlar: "Кто ставил сердечки", cdKalpAtanYok: "Имена появятся в эфирах после добавления этой функции.",
-  cdTeshisGoruntuYayini: "Видеопоток", cdTeshisAbonelik: "Видео не открылось на этом устройстве", cdGoruntuGitmiyor: "Твоё видео не доходит до зрителей. Заверши эфир и начни заново.",
+  cdTeshisGoruntuYayini: "Видеопоток", cdTeshisAbonelik: "Видео не открылось на этом устройстве", cdGoruntuGitmiyor: "Видео с этого устройства не доходит до зрителей. Попробуй начать эфир с телефона.",
   cdAsamaBilet: "1/3 Получаем билет", cdAsamaSunucu: "2/3 Подключение к серверу", cdAsamaBekle: "3/3 Подключено, ждём видео", cdTeshisYayinci: "Ведущий", cdTeshisGoruntu: "Видео", cdTeshisSes: "Звук", cdYenidenDene: "Повторить",
   cdBildir: "Пожаловаться", cdYayiniBildirSor: "Пожаловаться на этот эфир как на неуместный?", cdYayiniBildirAlt: "Сообщи об оскорблениях, насилии, обнажённости или мошенничестве; мы проверим и при необходимости закроем эфир.",
   cdGecmis: "Мои прошлые эфиры", cdSure: "Длительность", cdEnCok: "Больше всего зрителей", cdKalpSayisi: "Сердечки", cdYorumlar: "Комментарии", cdVideoYok: "Само видео пока не сохраняется; комментарии и цифры остаются здесь.", cdYorumYok: "К этому эфиру не было комментариев.", cdKayitSil: "Удалить запись эфира", cdKayitSilSor: "Удалить запись эфира и все комментарии? Это нельзя отменить.", cdSil: "Удалить", cdSilindi: "Запись удалена.", cdSilinemedi: "Не удалось удалить, попробуй ещё раз.",
@@ -184,7 +184,7 @@ export const CEVIRI_CANLI = {
  uk: {
   cdGelen: "Отримано", cdGonderilen: "Надіслано", cdKare: "кадрів",
   cdKalpAtanlar: "Хто ставив сердечка", cdKalpAtanYok: "Імена з'являться в ефірах після додавання цієї функції.",
-  cdTeshisGoruntuYayini: "Відеопотік", cdTeshisAbonelik: "Відео не відкрилося на цьому пристрої", cdGoruntuGitmiyor: "Твоє відео не доходить до глядачів. Заверши ефір і почни знову.",
+  cdTeshisGoruntuYayini: "Відеопотік", cdTeshisAbonelik: "Відео не відкрилося на цьому пристрої", cdGoruntuGitmiyor: "Відео з цього пристрою не доходить до глядачів. Спробуй почати ефір з телефона.",
   cdAsamaBilet: "1/3 Отримуємо квиток", cdAsamaSunucu: "2/3 Підключення до сервера", cdAsamaBekle: "3/3 Підключено, чекаємо відео", cdTeshisYayinci: "Ведучий", cdTeshisGoruntu: "Відео", cdTeshisSes: "Звук", cdYenidenDene: "Спробувати знову",
   cdBildir: "Поскаржитися", cdYayiniBildirSor: "Поскаржитися на цей ефір як на недоречний?", cdYayiniBildirAlt: "Повідом про образи, насильство, оголеність чи шахрайство; ми перевіримо й за потреби закриємо ефір.",
   cdGecmis: "Мої минулі ефіри", cdSure: "Тривалість", cdEnCok: "Найбільше глядачів", cdKalpSayisi: "Сердечка", cdYorumlar: "Коментарі", cdVideoYok: "Саме відео поки не зберігається; коментарі й цифри залишаються тут.", cdYorumYok: "До цього ефіру не було коментарів.", cdKayitSil: "Видалити запис ефіру", cdKayitSilSor: "Видалити запис ефіру та всі коментарі? Це не можна скасувати.", cdSil: "Видалити", cdSilindi: "Запис видалено.", cdSilinemedi: "Не вдалося видалити, спробуй ще раз.",
@@ -220,7 +220,7 @@ export const CEVIRI_CANLI = {
  es: {
   cdGelen: "Recibido", cdGonderilen: "Enviado", cdKare: "fotogramas",
   cdKalpAtanlar: "Quién envió corazones", cdKalpAtanYok: "Los nombres aparecen en los directos posteriores a esta función.",
-  cdTeshisGoruntuYayini: "Señal de vídeo", cdTeshisAbonelik: "El vídeo no se pudo abrir en este dispositivo", cdGoruntuGitmiyor: "Tu vídeo no llega a los espectadores. Termina el directo y vuelve a empezarlo.",
+  cdTeshisGoruntuYayini: "Señal de vídeo", cdTeshisAbonelik: "El vídeo no se pudo abrir en este dispositivo", cdGoruntuGitmiyor: "El vídeo de este dispositivo no llega a los espectadores. Prueba a emitir desde un teléfono.",
   cdAsamaBilet: "1/3 Obteniendo acceso", cdAsamaSunucu: "2/3 Conectando al servidor", cdAsamaBekle: "3/3 Conectado, esperando vídeo", cdTeshisYayinci: "Anfitrión", cdTeshisGoruntu: "Vídeo", cdTeshisSes: "Audio", cdYenidenDene: "Reintentar",
   cdBildir: "Denunciar", cdYayiniBildirSor: "¿Quieres denunciar este directo como inapropiado?", cdYayiniBildirAlt: "Denuncia insultos, violencia, desnudos o fraude; lo revisaremos y cerraremos el directo si hace falta.",
   cdGecmis: "Mis directos anteriores", cdSure: "Duración", cdEnCok: "Máximo de espectadores", cdKalpSayisi: "Corazones", cdYorumlar: "Comentarios", cdVideoYok: "El vídeo en sí no se guarda por ahora; los comentarios y los números quedan aquí.", cdYorumYok: "No se escribieron comentarios en este directo.", cdKayitSil: "Eliminar el registro de este directo", cdKayitSilSor: "¿Eliminar el registro de este directo y todos sus comentarios? No se puede deshacer.", cdSil: "Eliminar", cdSilindi: "Registro eliminado.", cdSilinemedi: "No se pudo eliminar, inténtalo de nuevo.",
@@ -256,7 +256,7 @@ export const CEVIRI_CANLI = {
  fr: {
   cdGelen: "Reçu", cdGonderilen: "Envoyé", cdKare: "images",
   cdKalpAtanlar: "Qui a envoyé des cœurs", cdKalpAtanYok: "Les noms apparaissent dans les directs qui suivent l'ajout de cette fonction.",
-  cdTeshisGoruntuYayini: "Flux vidéo", cdTeshisAbonelik: "La vidéo n'a pas pu s'ouvrir sur cet appareil", cdGoruntuGitmiyor: "Ta vidéo n'atteint pas les spectateurs. Termine le direct et relance-le.",
+  cdTeshisGoruntuYayini: "Flux vidéo", cdTeshisAbonelik: "La vidéo n'a pas pu s'ouvrir sur cet appareil", cdGoruntuGitmiyor: "La vidéo de cet appareil n'atteint pas les spectateurs. Essaie de lancer le direct depuis un téléphone.",
   cdAsamaBilet: "1/3 Obtention du ticket", cdAsamaSunucu: "2/3 Connexion au serveur", cdAsamaBekle: "3/3 Connecté, attente de la vidéo", cdTeshisYayinci: "Animateur", cdTeshisGoruntu: "Vidéo", cdTeshisSes: "Son", cdYenidenDene: "Réessayer",
   cdBildir: "Signaler", cdYayiniBildirSor: "Veux-tu signaler ce direct comme inapproprié ?", cdYayiniBildirAlt: "Signale les insultes, la violence, la nudité ou l'arnaque ; nous vérifierons et fermerons le direct si nécessaire.",
   cdGecmis: "Mes directs passés", cdSure: "Durée", cdEnCok: "Pic de spectateurs", cdKalpSayisi: "Cœurs", cdYorumlar: "Commentaires", cdVideoYok: "La vidéo elle-même n'est pas enregistrée pour l'instant ; les commentaires et les chiffres restent ici.", cdYorumYok: "Aucun commentaire n'a été écrit sur ce direct.", cdKayitSil: "Supprimer l'enregistrement de ce direct", cdKayitSilSor: "Supprimer l'enregistrement de ce direct et tous ses commentaires ? C'est irréversible.", cdSil: "Supprimer", cdSilindi: "Enregistrement supprimé.", cdSilinemedi: "Suppression impossible, réessaie.",
@@ -292,7 +292,7 @@ export const CEVIRI_CANLI = {
  it: {
   cdGelen: "Ricevuto", cdGonderilen: "Inviato", cdKare: "fotogrammi",
   cdKalpAtanlar: "Chi ha inviato cuori", cdKalpAtanYok: "I nomi compaiono nelle dirette successive all'aggiunta di questa funzione.",
-  cdTeshisGoruntuYayini: "Flusso video", cdTeshisAbonelik: "Il video non si è potuto aprire su questo dispositivo", cdGoruntuGitmiyor: "Il tuo video non arriva agli spettatori. Termina la diretta e riavviala.",
+  cdTeshisGoruntuYayini: "Flusso video", cdTeshisAbonelik: "Il video non si è potuto aprire su questo dispositivo", cdGoruntuGitmiyor: "Il video da questo dispositivo non arriva agli spettatori. Prova ad andare in diretta dal telefono.",
   cdAsamaBilet: "1/3 Ottengo il biglietto", cdAsamaSunucu: "2/3 Connessione al server", cdAsamaBekle: "3/3 Connesso, attendo il video", cdTeshisYayinci: "Host", cdTeshisGoruntu: "Video", cdTeshisSes: "Audio", cdYenidenDene: "Riprova",
   cdBildir: "Segnala", cdYayiniBildirSor: "Vuoi segnalare questa diretta come inappropriata?", cdYayiniBildirAlt: "Segnala insulti, violenza, nudità o truffe; controlleremo e chiuderemo la diretta se necessario.",
   cdGecmis: "Le mie dirette passate", cdSure: "Durata", cdEnCok: "Picco di spettatori", cdKalpSayisi: "Cuori", cdYorumlar: "Commenti", cdVideoYok: "Il video in sé per ora non viene salvato; commenti e numeri restano qui.", cdYorumYok: "Nessun commento è stato scritto in questa diretta.", cdKayitSil: "Elimina il registro di questa diretta", cdKayitSilSor: "Eliminare il registro di questa diretta e tutti i commenti? Non si può annullare.", cdSil: "Elimina", cdSilindi: "Registro eliminato.", cdSilinemedi: "Impossibile eliminare, riprova.",
@@ -328,7 +328,7 @@ export const CEVIRI_CANLI = {
  zh: {
   cdGelen: "已接收", cdGonderilen: "已发送", cdKare: "帧",
   cdKalpAtanlar: "送爱心的人", cdKalpAtanYok: "此功能上线后的直播才会显示送爱心者的名字。",
-  cdTeshisGoruntuYayini: "视频流", cdTeshisAbonelik: "此设备无法打开画面", cdGoruntuGitmiyor: "你的画面没有传到观众那里。请结束直播后重新开始。",
+  cdTeshisGoruntuYayini: "视频流", cdTeshisAbonelik: "此设备无法打开画面", cdGoruntuGitmiyor: "此设备的画面无法传到观众。请尝试用手机开播。",
   cdAsamaBilet: "1/3 正在获取凭证", cdAsamaSunucu: "2/3 正在连接服务器", cdAsamaBekle: "3/3 已连接，等待画面", cdTeshisYayinci: "主播", cdTeshisGoruntu: "画面", cdTeshisSes: "声音", cdYenidenDene: "重试",
   cdBildir: "举报", cdYayiniBildirSor: "要将这场直播举报为不当内容吗？", cdYayiniBildirAlt: "如有辱骂、暴力、裸露或诈骗请举报；我们会审核并在必要时关闭直播。",
   cdGecmis: "我的往期直播", cdSure: "时长", cdEnCok: "最高观众数", cdKalpSayisi: "爱心", cdYorumlar: "评论", cdVideoYok: "视频本身暂不保存；评论和数据会保留在这里。", cdYorumYok: "这场直播没有评论。", cdKayitSil: "删除这场直播的记录", cdKayitSilSor: "要删除这场直播的记录及所有评论吗？此操作无法撤销。", cdSil: "删除", cdSilindi: "记录已删除。", cdSilinemedi: "删除失败，请重试。",
@@ -364,7 +364,7 @@ export const CEVIRI_CANLI = {
  hi: {
   cdGelen: "प्राप्त", cdGonderilen: "भेजा गया", cdKare: "फ़्रेम",
   cdKalpAtanlar: "किसने दिल भेजे", cdKalpAtanYok: "यह सुविधा जुड़ने के बाद के लाइव में नाम दिखेंगे।",
-  cdTeshisGoruntuYayini: "वीडियो स्ट्रीम", cdTeshisAbonelik: "इस डिवाइस पर वीडियो नहीं खुल सका", cdGoruntuGitmiyor: "तुम्हारा वीडियो दर्शकों तक नहीं पहुँच रहा। लाइव खत्म करके फिर से शुरू करो।",
+  cdTeshisGoruntuYayini: "वीडियो स्ट्रीम", cdTeshisAbonelik: "इस डिवाइस पर वीडियो नहीं खुल सका", cdGoruntuGitmiyor: "इस डिवाइस का वीडियो दर्शकों तक नहीं पहुँच रहा। फ़ोन से लाइव करके देखो।",
   cdAsamaBilet: "1/3 टिकट ले रहे हैं", cdAsamaSunucu: "2/3 सर्वर से जुड़ रहे हैं", cdAsamaBekle: "3/3 जुड़ गए, वीडियो का इंतज़ार", cdTeshisYayinci: "होस्ट", cdTeshisGoruntu: "वीडियो", cdTeshisSes: "आवाज़", cdYenidenDene: "फिर कोशिश करो",
   cdBildir: "रिपोर्ट करो", cdYayiniBildirSor: "क्या तुम इस लाइव को अनुचित बताकर रिपोर्ट करना चाहते हो?", cdYayiniBildirAlt: "अपमान, हिंसा, नग्नता या धोखाधड़ी हो तो रिपोर्ट करो; हम जाँच कर ज़रूरत पड़ने पर लाइव बंद कर देंगे।",
   cdGecmis: "मेरे पिछले लाइव", cdSure: "अवधि", cdEnCok: "सबसे ज़्यादा दर्शक", cdKalpSayisi: "दिल", cdYorumlar: "टिप्पणियाँ", cdVideoYok: "वीडियो अभी सहेजा नहीं जाता; टिप्पणियाँ और गिनती यहाँ रहती हैं।", cdYorumYok: "इस लाइव पर कोई टिप्पणी नहीं लिखी गई।", cdKayitSil: "इस लाइव का रिकॉर्ड हटाओ", cdKayitSilSor: "इस लाइव का रिकॉर्ड और सारी टिप्पणियाँ हटाएँ? यह वापस नहीं होगा।", cdSil: "हटाओ", cdSilindi: "रिकॉर्ड हटा दिया गया।", cdSilinemedi: "हटाया नहीं जा सका, फिर कोशिश करो।",
@@ -400,7 +400,7 @@ export const CEVIRI_CANLI = {
  pt: {
   cdGelen: "Recebido", cdGonderilen: "Enviado", cdKare: "fotogramas",
   cdKalpAtanlar: "Quem enviou corações", cdKalpAtanYok: "Os nomes aparecem nos diretos feitos depois desta funcionalidade.",
-  cdTeshisGoruntuYayini: "Transmissão de vídeo", cdTeshisAbonelik: "Não foi possível abrir o vídeo neste dispositivo", cdGoruntuGitmiyor: "O teu vídeo não está a chegar aos espectadores. Termina o direto e recomeça.",
+  cdTeshisGoruntuYayini: "Transmissão de vídeo", cdTeshisAbonelik: "Não foi possível abrir o vídeo neste dispositivo", cdGoruntuGitmiyor: "O vídeo deste dispositivo não está a chegar aos espectadores. Tenta fazer o direto a partir do telemóvel.",
   cdAsamaBilet: "1/3 A obter acesso", cdAsamaSunucu: "2/3 A ligar ao servidor", cdAsamaBekle: "3/3 Ligado, à espera do vídeo", cdTeshisYayinci: "Anfitrião", cdTeshisGoruntu: "Vídeo", cdTeshisSes: "Som", cdYenidenDene: "Tentar de novo",
   cdBildir: "Denunciar", cdYayiniBildirSor: "Queres denunciar este direto como impróprio?", cdYayiniBildirAlt: "Denuncia insultos, violência, nudez ou fraude; vamos analisar e fechar o direto se for preciso.",
   cdGecmis: "Os meus diretos anteriores", cdSure: "Duração", cdEnCok: "Pico de espectadores", cdKalpSayisi: "Corações", cdYorumlar: "Comentários", cdVideoYok: "O vídeo em si ainda não é guardado; os comentários e os números ficam aqui.", cdYorumYok: "Não foram escritos comentários neste direto.", cdKayitSil: "Apagar o registo deste direto", cdKayitSilSor: "Apagar o registo deste direto e todos os comentários? Não pode ser desfeito.", cdSil: "Apagar", cdSilindi: "Registo apagado.", cdSilinemedi: "Não foi possível apagar, tenta de novo.",
@@ -436,7 +436,7 @@ export const CEVIRI_CANLI = {
  ja: {
   cdGelen: "受信", cdGonderilen: "送信", cdKare: "フレーム",
   cdKalpAtanlar: "ハートを送った人", cdKalpAtanYok: "この機能の追加後の配信から名前が表示されます。",
-  cdTeshisGoruntuYayini: "映像配信", cdTeshisAbonelik: "この端末で映像を開けませんでした", cdGoruntuGitmiyor: "映像が視聴者に届いていません。配信を終了して再開してください。",
+  cdTeshisGoruntuYayini: "映像配信", cdTeshisAbonelik: "この端末で映像を開けませんでした", cdGoruntuGitmiyor: "この端末の映像が視聴者に届いていません。スマホから配信してみてください。",
   cdAsamaBilet: "1/3 チケット取得中", cdAsamaSunucu: "2/3 サーバーに接続中", cdAsamaBekle: "3/3 接続済み、映像を待っています", cdTeshisYayinci: "配信者", cdTeshisGoruntu: "映像", cdTeshisSes: "音声", cdYenidenDene: "再試行",
   cdBildir: "報告", cdYayiniBildirSor: "この配信を不適切として報告しますか？", cdYayiniBildirAlt: "誹謗中傷・暴力・わいせつ・詐欺があれば報告してください。確認のうえ必要なら配信を終了します。",
   cdGecmis: "過去の配信", cdSure: "配信時間", cdEnCok: "最多視聴者数", cdKalpSayisi: "ハート", cdYorumlar: "コメント", cdVideoYok: "映像そのものは今のところ保存されません。コメントと数字はここに残ります。", cdYorumYok: "この配信にはコメントがありませんでした。", cdKayitSil: "この配信の記録を削除", cdKayitSilSor: "この配信の記録とすべてのコメントを削除しますか？元に戻せません。", cdSil: "削除", cdSilindi: "記録を削除しました。", cdSilinemedi: "削除できませんでした。もう一度お試しください。",
