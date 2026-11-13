@@ -42,6 +42,7 @@
 - **Ödeme şekli:** **Ön ödemeli kredi.** Otomatik yükleme (auto-reload) **KAPALI tutulsun** → bitince durur, sürpriz fatura olmaz.
 - **⚠️ Temmuz 2026'da bir kez bitmişti.** Şimdi Gloxoo susuyorsa ilk bakılacak yerlerden biri.
 - **Not:** Bu, Claude Code (bu kodlama asistanı) aboneliğinden AYRI bir hesaptır.
+- **13 Kas 2026:** Hesaba AYLIK HARCAMA SINIRI konuldu: kuruluş toplamı **50 $** (eskiden sınırsız/200.000 $). Aynı hesapta ayrı çalışma alanı "Dokumentem" (kendi sınırı 10 $) — Gloxoo'yu etkilemez. **Gloxoo susarsa:** kredi bitmiş mi + bu ay 50 $ sınırına dayanılmış mı, ikisine de bak (Harcama ve kullanım → Harcama sınırları).
 
 ### 3. Google AI Studio / Gemini — Gloxoo'nun sesi + resim üretme
 - **Ne işe yarar:** Gloxoo'nun doğal insan sesi (konuşması) ve "Üstümde Dene" resimleri.
