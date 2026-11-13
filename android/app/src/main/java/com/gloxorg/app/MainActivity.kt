@@ -74,6 +74,9 @@ class MainActivity : Activity() {
     private var ortu: View? = null
     private var web: WebView? = null
     private var dosyaCallback: ValueCallback<Array<Uri>>? = null
+    // Kamerayla çekilen fotoğraf/videonun yazılacağı dosya (kamera bitince sayfaya bu verilir)
+    private var kameraCikti: Uri? = null
+    private var bekleyenKameraVideo = false
     private var bekleyenIzinIstegi: PermissionRequest? = null
     private var bekleyenKonum: Pair<String?, GeolocationPermissions.Callback?>? = null
     // Google girişi Chrome'dan dönünce sayfaya verilecek komut (sayfa henüz hazır değilse burada bekler)
@@ -94,6 +97,7 @@ class MainActivity : Activity() {
     private val IZIN_KAMERA_MIC = 2001
     private val IZIN_KONUM = 2002
     private val IZIN_BILDIRIM = 2003
+    private val IZIN_KAMERA_CEK = 2004
     private val ALTIN = 0xFFF2DF9F.toInt()
     // Firebase projesinin (glamworld2) Google "Web client ID"si — telefondan alınan Google anahtarı bu kimlik için üretilir
     private val WEB_CLIENT_ID = "656498925104-45kvtat6gar0b57ei9jbs88c4oplrv6v.apps.googleusercontent.com"
@@ -694,6 +698,20 @@ class MainActivity : Activity() {
             ): Boolean {
                 dosyaCallback?.onReceiveValue(null)
                 dosyaCallback = callback
+                kameraCikti = null
+                // "Kamerayla çek" (sayfadaki capture="...") → GALERİ DEĞİL doğrudan KAMERA açılır (13 Kas düzeltmesi:
+                //   eskiden createIntent() capture'ı yok sayıyor, her seferinde galeri açılıyordu).
+                if (params?.isCaptureEnabled == true) {
+                    val turler = (params.acceptTypes ?: emptyArray()).joinToString(",").lowercase()
+                    bekleyenKameraVideo = turler.contains("video") && !turler.contains("image")
+                    if (izinVar(Manifest.permission.CAMERA)) {
+                        if (kameraAc(bekleyenKameraVideo)) return true
+                        dosyaCallback = null
+                        return false
+                    }
+                    requestPermissions(arrayOf(Manifest.permission.CAMERA), IZIN_KAMERA_CEK)
+                    return true
+                }
                 val intent = params?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "*/*"
@@ -789,6 +807,13 @@ class MainActivity : Activity() {
                     } catch (e: Exception) {}
                 }
             }
+            IZIN_KAMERA_CEK -> {
+                val verildi = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+                if (!(verildi && kameraAc(bekleyenKameraVideo))) {
+                    dosyaCallback?.onReceiveValue(null)
+                    dosyaCallback = null
+                }
+            }
             IZIN_KONUM -> {
                 val (origin, cb) = bekleyenKonum ?: Pair(null, null)
                 bekleyenKonum = null
@@ -805,6 +830,22 @@ class MainActivity : Activity() {
             val cb = dosyaCallback
             dosyaCallback = null
             if (cb == null) return
+            val cikti = kameraCikti
+            kameraCikti = null
+            if (cikti != null) {
+                // Kameradan dönüş: çekilen dosya (bazı video uygulamaları kendi adresini data ile verir)
+                val sonucK: Array<Uri>? = if (resultCode == Activity.RESULT_OK) {
+                    val dosyaDolu = try { contentResolver.openFileDescriptor(cikti, "r")?.use { it.statSize > 0 } ?: false } catch (e: Exception) { false }
+                    val donen = data?.data
+                    when {
+                        dosyaDolu -> arrayOf(cikti)
+                        donen != null -> arrayOf(donen)
+                        else -> null
+                    }
+                } else null
+                cb.onReceiveValue(sonucK)
+                return
+            }
             val sonuc: Array<Uri>? = if (resultCode == Activity.RESULT_OK && data != null) {
                 val clip = data.clipData
                 when {
@@ -814,6 +855,26 @@ class MainActivity : Activity() {
                 }
             } else null
             cb.onReceiveValue(sonuc)
+        }
+    }
+
+    // Telefonun kamera uygulamasını açar; çekilen dosya uygulamanın kendi klasörüne yazılır (FileProvider ile paylaşılır).
+    private fun kameraAc(video: Boolean): Boolean {
+        return try {
+            val klasor = java.io.File(cacheDir, "kamera").apply { mkdirs() }
+            val dosya = java.io.File(klasor, "cekim_" + System.currentTimeMillis() + if (video) ".mp4" else ".jpg")
+            val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.dosyalar", dosya)
+            val niyet = Intent(if (video) android.provider.MediaStore.ACTION_VIDEO_CAPTURE else android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(android.provider.MediaStore.EXTRA_OUTPUT, uri)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                clipData = android.content.ClipData.newRawUri("", uri)
+            }
+            kameraCikti = uri
+            startActivityForResult(niyet, DOSYA_SEC)
+            true
+        } catch (e: Exception) {
+            kameraCikti = null
+            false
         }
     }
 
