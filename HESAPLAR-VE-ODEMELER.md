@@ -49,6 +49,7 @@
 - **Ödeme şekli:** **Ön ödeme (Cloud Prepay).** Otomatik yükleme **KAPALI** (böyle kalsın).
 - **Son yükleme:** 18 Eylül 2026 → **20 €**. Bitince "Kredi satın al" ile 10-20 € yüklenir.
 - **Bütçe uyarısı:** Google Cloud'da 15 €/ay uyarısı var (e-posta gelir).
+- **⏰ SES MODELİ KAPANIYOR (20 Kas 2026 Google e-postası):** Gloxoo'nun sesi `gemini-2.5-flash-preview-tts` modelini kullanıyor (src/firebase.js `_sesDene`). Bu model **18 Aralık 2026'da kapanıyor** → yerine `gemini-3.8-flash-tts` (Google önerisi). Muhasebe PDF onayından sonra YAPILACAK; 18 Aralık'tan sonra Gloxoo susarsa sebep budur.
 - **⚠️ Not:** Telefon uygulamasında (Android) tarayıcının yedek "robot sesi" YOK → Gemini bakiyesi biterse Gloxoo uygulamada **hiç** konuşamaz.
 
 ### 4. Google Cloud / Firebase (proje `glamworld2`)

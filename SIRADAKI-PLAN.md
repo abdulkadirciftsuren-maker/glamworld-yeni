@@ -6,6 +6,7 @@
 ---
 
 > ✅ **20 Kas 2026 — KAMERA ONAYLANDI:** Telefon uygulamasında "Kamerayla çek" artık kamerayı açıyor (MainActivity onShowFileChooser capture → ACTION_IMAGE/VIDEO_CAPTURE + FileProvider `${applicationId}.dosyalar`). DOKUNMA.
+> ⏰ **SIRADAKİ İŞ (B490 onayından sonra): Gloxoo ses modeli** `gemini-2.5-flash-preview-tts` → `gemini-3.8-flash-tts` (src/firebase.js). Eski model **18 Aralık 2026'da kapanıyor** (Google e-postası 20 Kas). Yeni model önce denenir, kullanıcı sesi onaylayınca eski ad silinir.
 > 🧾 **20 Kas 2026 — B490 Muhasebe PDF/Excel/Yazdır (onay bekliyor):** ortak `src/dosyaVer.js` (uygulamada AndroidGlox.dosyaVer → İndirilenler/GLOXORG + Aç/Gönder; AndroidGlox.yazdir → PrintManager). Muhasebe/Belgeler tüm dosya çıkışları bu yoldan. Yeni dosya indirme kodu yazarken `dosyaVer` KULLAN (blob indirme uygulamada çalışmaz).
 
 ## 📌 8 Kas 2026 — kullanıcının notları (SONRA konuşulacak)
