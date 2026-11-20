@@ -5,6 +5,9 @@
 
 ---
 
+> ✅ **20 Kas 2026 — KAMERA ONAYLANDI:** Telefon uygulamasında "Kamerayla çek" artık kamerayı açıyor (MainActivity onShowFileChooser capture → ACTION_IMAGE/VIDEO_CAPTURE + FileProvider `${applicationId}.dosyalar`). DOKUNMA.
+> 🧾 **20 Kas 2026 — B490 Muhasebe PDF/Excel/Yazdır (onay bekliyor):** ortak `src/dosyaVer.js` (uygulamada AndroidGlox.dosyaVer → İndirilenler/GLOXORG + Aç/Gönder; AndroidGlox.yazdir → PrintManager). Muhasebe/Belgeler tüm dosya çıkışları bu yoldan. Yeni dosya indirme kodu yazarken `dosyaVer` KULLAN (blob indirme uygulamada çalışmaz).
+
 ## 📌 8 Kas 2026 — kullanıcının notları (SONRA konuşulacak)
 - ✅ Videolardaki siyah/gri perde B459+B460 ile ÇÖZÜLDÜ, kullanıcı onayladı ("normaldir şimdi"). **DOKUNMA:** `kapakIyi`, `src/videoKapak.js`, kapak onarımı.
 - 📞 **ARAMA — 8 Kas gece son durum:** Kapalı ekranda arama izin açılınca ÇALIŞTI (bilgisayar→S25). Sonra "bazen çalıyor bazen çalmıyor, telefonu açınca çalmaya başlıyor" (zil haberi uyuyan telefona GEÇ ulaşıyor). Yapılanlar: (1) B464 arama zamanı sunucu saatinden; (2) sunucu: 'arama-bitti' haberleri normal öncelik (Google, bildirimsiz acil haberleri görünce uygulamanın acil haberlerini geciktiriyor). Kullanıcıya: S25 → Ayarlar → Uygulamalar → Gloxorg → Pil → **Kısıtlamasız**. **SIRADAKİ:** yarın tekrar denensin; hâlâ gecikirse uygulamaya "pil kısıtlamasını kaldır" (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS) Türkçe sorusu + Play'de tam ekran amacı beyanı.
