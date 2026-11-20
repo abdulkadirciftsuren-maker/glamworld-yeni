@@ -5668,11 +5668,33 @@ select.muh-inp{ appearance:none; -webkit-appearance:none; background-image:linea
 .bel-foto-liste{ display:flex; flex-wrap:wrap; gap:9px; margin:10px 0; }
 .bel-foto-oge{ position:relative; width:calc(33.33% - 6px); border-radius:11px; overflow:hidden; border:1.6px solid rgba(160,120,0,.5); background:#fff; }
 .bel-foto-oge img{ width:100%; height:110px; object-fit:cover; display:block; }
+/* B491 Foto→PDF: küçük resme basınca büyür; belge tarayıcı (köşe ayarı) — altın zemin, KARE tutamaç/düğme */
+.bt-kucuk{ display:block; width:100%; padding:0; border:0; background:#fff; cursor:pointer; position:relative; }
+.bt-kucuk img{ width:100%; height:130px; object-fit:contain; background:#fffdf3; display:block; }
+.bt-no{ position:absolute; left:5px; top:5px; min-width:22px; height:22px; border-radius:6px; background:#b8860b; color:#fff; font-weight:900; font-size:12.5px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+.bt-galeri{ background:linear-gradient(90deg,#ffe58a,#f5c542) !important; }
+.bt-uc .muh-btn{ min-width:0; }
+.bt-gonder{ background:linear-gradient(90deg,#2f9e5b,#1d7a43) !important; color:#fff !important; }
+.bt-ekran, .bt-onizle{ position:fixed; inset:0; z-index:100300; display:flex; flex-direction:column; background:linear-gradient(170deg,#ffe9a0,#f2c94c 55%,#d9a520); }
+.bt-ust{ padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 10px; font-weight:900; font-size:16px; color:#3a2a05; text-align:center; }
+.bt-alan{ position:relative; flex:1; margin:0 10px; touch-action:none; overflow:hidden; }
+.bt-resim{ position:absolute; display:block; box-shadow:0 4px 18px rgba(90,60,0,.35); user-select:none; -webkit-user-drag:none; pointer-events:none; }
+.bt-cizgi{ position:absolute; inset:0; pointer-events:none; }
+.bt-tutamac{ position:absolute; width:40px; height:40px; border-radius:8px; border:3px solid #FFD700; background:rgba(184,134,11,.35); box-shadow:0 0 0 2px #3a2a05, 0 3px 10px rgba(0,0,0,.35); touch-action:none; cursor:grab; }
+.bt-tutamac.aktif{ background:rgba(255,215,0,.55); transform:scale(1.15); }
+.bt-buyutec{ position:absolute; left:10px; top:10px; width:120px; height:120px; border-radius:12px; border:3px solid #FFD700; box-shadow:0 0 0 2px #3a2a05, 0 6px 18px rgba(0,0,0,.35); background-repeat:no-repeat; background-color:#fff; pointer-events:none; }
+.bt-buyutec span{ position:absolute; left:50%; top:50%; width:16px; height:16px; margin:-8px 0 0 -8px; border:2px solid #d00; border-radius:3px; }
+.bt-alt{ display:flex; gap:8px; padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 14px); }
+.bt-btn{ flex:1; min-height:52px; border-radius:12px; border:2px solid rgba(90,60,0,.35); font-weight:900; font-size:15px; padding:6px 8px; cursor:pointer; background:#fff8e1; color:#3a2a05; overflow-wrap:anywhere; }
+.bt-btn.tamam{ background:linear-gradient(90deg,#2f9e5b,#1d7a43); color:#fff; flex:1.4; }
+.bt-btn.iptal{ background:#fff2f0; color:#b0291d; border-color:#e0a79f; }
+.bt-btn:disabled{ opacity:.6; }
+.bt-onizle-ust{ display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 8px; color:#3a2a05; font-size:18px; }
+.bt-onizle-ust .bt-btn{ flex:0 0 52px; width:52px; }
+.bt-onizle > img{ flex:1; min-height:0; width:calc(100% - 20px); margin:0 10px; object-fit:contain; background:#fffdf3; border-radius:10px; box-shadow:0 4px 18px rgba(90,60,0,.3); }
+@media (min-width:560px){ .bt-ust{ font-size:20px; } .bt-btn{ font-size:18px; min-height:60px; } .bt-kucuk img{ height:170px; } .bt-onizle-ust{ font-size:22px; } }
 .bel-foto-dug{ display:flex; justify-content:center; gap:4px; padding:4px; background:#fffbe9; }
 .bel-foto-dug button{ background:#fff7db; border:1.2px solid rgba(184,134,11,.5); border-radius:7px; width:28px; height:26px; font-size:13px; font-weight:900; color:#7a5a00; cursor:pointer; }
-.bel-fotopdf-yazdir{ position:absolute; left:-99999px; top:0; width:740px; background:#fff; color:#111; padding:28px; font-family:Arial,sans-serif; }
-.fp-baslik{ font-size:22px; font-weight:900; color:#7a5a00; text-align:center; margin-bottom:16px; }
-.fp-img{ width:100%; display:block; margin:0 auto 16px; }
 .bel-yeni-btn.sablon{ background:linear-gradient(150deg,#8e7cc3,#5b4a9e); }
 .bel-yeni-btn.meslek{ background:linear-gradient(150deg,#1aa3a3,#0f7a7a); }
 textarea.muh-inp{ resize:vertical; min-height:44px; line-height:1.4; }

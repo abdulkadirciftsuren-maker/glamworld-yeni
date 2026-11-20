@@ -3,6 +3,7 @@
 // Ağır kütüphaneler (xlsx/jspdf/html2canvas) SADECE indirirken dinamik yüklenir.
 import { useState, useRef, useEffect } from "react";
 import { dosyaVer, yazdirBaslat } from "./dosyaVer";
+import { KoseAyar, dosyadanResim, fotoPdfBlob } from "./BelgeTarayici";
 
 const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
@@ -438,65 +439,109 @@ function YaziEditor({ t, belge, onKapat, onKaydet, bilgi }) {
   );
 }
 
-// ===================== FOTO → PDF ÇEVİRİCİ =====================
+// ===================== FOTO → PDF ÇEVİRİCİ (B491 yeniden) =====================
+// ⛔ ESKİ HATA (kullanıcı 20 Kas): fotoğraflar uzun TEK bir alana diziliyor, sonra A4 boyunda KESİLİYORDU → bir fotoğrafın
+//   yarısı bir sayfada yarısı öbüründe. DOĞRUSU: her fotoğraf KENDİ A4 sayfası (BelgeTarayici.fotoPdfBlob).
+// + Kamerayla çek (kâğıdın köşeleri bulunur, kare tutamaçla düzeltilir, düz A4'e çevrilir) + Galeriden ekle
+// + küçük resme basınca TAM EKRAN önizleme (köşeleri yeniden ayarla / sil) + ayrı "PDF indir" ve "PDF gönder".
+function fotolariYazdir(fotolar, baslik) {
+  let stil = document.getElementById("gw-foto-yazdir-stil");
+  if (!stil) {
+    stil = document.createElement("style"); stil.id = "gw-foto-yazdir-stil";
+    stil.textContent = "#gw-foto-yazdir{display:none}@media print{body>*{display:none !important}#gw-foto-yazdir{display:block !important}.fy-sayfa{break-after:page;page-break-after:always;display:flex;align-items:center;justify-content:center;height:270mm}.fy-sayfa:last-child{break-after:auto;page-break-after:auto}.fy-sayfa img{max-width:100%;max-height:270mm;object-fit:contain;display:block}@page{size:A4;margin:12mm}}";
+    document.head.appendChild(stil);
+  }
+  let alan = document.getElementById("gw-foto-yazdir");
+  if (!alan) { alan = document.createElement("div"); alan.id = "gw-foto-yazdir"; document.body.appendChild(alan); }
+  alan.innerHTML = "";
+  const yuklemeler = fotolar.map((f) => new Promise((res) => { const d = document.createElement("div"); d.className = "fy-sayfa"; const im = new Image(); im.onload = res; im.onerror = res; im.src = f.d; d.appendChild(im); alan.appendChild(d); }));
+  const temizle = () => { try { alan.innerHTML = ""; } catch (e) {} try { window.removeEventListener("afterprint", temizle); } catch (e) {} };
+  try { window.addEventListener("afterprint", temizle); } catch (e) {}
+  Promise.all(yuklemeler).then(() => setTimeout(() => yazdirBaslat(baslik), 150));
+}
+
 function FotoPdfEditor({ t, onKapat, bilgi }) {
-  const [fotolar, setFotolar] = useState([]); // {d:dataURL}
+  const [fotolar, setFotolar] = useState([]); // {d: son hali (dataURL), o: orijinal, k: köşeler|null}
   const [baslik, setBaslik] = useState("");
   const [yuk, setYuk] = useState(false);
-  const inpRef = useRef(null); const yazdirRef = useRef(null);
-  const dosyaSec = (e) => {
-    const files = Array.from(e.target.files || []);
-    files.forEach((f) => {
-      const r = new FileReader();
-      r.onload = () => { const im = new Image(); im.onload = () => {
-        let w = im.naturalWidth || 800, h = im.naturalHeight || 800; const max = 1500;
-        if (w > max || h > max) { if (w >= h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
-        const cv = document.createElement("canvas"); cv.width = w; cv.height = h; cv.getContext("2d").drawImage(im, 0, 0, w, h);
-        try { setFotolar((a) => [...a, { d: cv.toDataURL("image/jpeg", 0.85) }]); } catch (x) { setFotolar((a) => [...a, { d: String(r.result) }]); }
-      }; im.src = String(r.result); };
-      r.readAsDataURL(f);
-    });
-    e.target.value = "";
+  const [kose, setKose] = useState(null); // köşe ayar ekranı: {src, i (düzeltilen sıra; yoksa yeni), k}
+  const [bak, setBak] = useState(-1); // tam ekran önizlenen fotoğraf sırası
+  const galeriRef = useRef(null); const kameraRef = useRef(null);
+
+  const galeridenSec = async (e) => {
+    const files = Array.from(e.target.files || []); e.target.value = "";
+    for (const f of files) { try { const d = await dosyadanResim(f); setFotolar((a) => [...a, { d, o: d, k: null }]); } catch (x) {} }
   };
-  const sil = (i) => setFotolar((a) => a.filter((_, j) => j !== i));
+  // Kamerayla çekilen belge → doğrudan KÖŞE AYAR ekranı
+  const kameradan = async (e) => {
+    const f = (e.target.files || [])[0]; e.target.value = ""; if (!f) return;
+    try { const d = await dosyadanResim(f); setKose({ src: d, i: -1, k: null }); } catch (x) {}
+  };
+  const koseBitti = (d, k) => {
+    const src = kose.src, i = kose.i;
+    setFotolar((a) => (i >= 0 ? a.map((f, j) => (j === i ? { d, o: src, k } : f)) : [...a, { d, o: src, k }]));
+    setKose(null);
+  };
+  const olduguGibi = () => {
+    const src = kose.src, i = kose.i;
+    setFotolar((a) => (i >= 0 ? a.map((f, j) => (j === i ? { d: src, o: src, k: null } : f)) : [...a, { d: src, o: src, k: null }]));
+    setKose(null);
+  };
+  const sil = (i) => { setFotolar((a) => a.filter((_, j) => j !== i)); setBak(-1); };
   const tasi = (i, y) => setFotolar((a) => { const j = i + y; if (j < 0 || j >= a.length) return a; const b = [...a]; const tmp = b[i]; b[i] = b[j]; b[j] = tmp; return b; });
-  const pdfYap = async () => {
+  const pdfVer = async (islem) => {
     if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; }
     setYuk(true);
-    try { await elemPdf(yazdirRef.current, baslik || "foto"); bilgi(t("belPdfHazir", "PDF hazır 📄")); }
+    try { const blob = await fotoPdfBlob(fotolar, baslik); await dosyaVer(blob, dosyaAd(baslik || "foto", "pdf"), baslik || "GLOXORG", islem); bilgi(t("belPdfHazir", "PDF hazır 📄")); }
     catch (e) { bilgi(t("belOlmadi", "Olmadı")); }
     setYuk(false);
   };
+
+  if (kose) return <KoseAyar t={t} src={kose.src} ilkKoseler={kose.k} onTamam={koseBitti} onOlduguGibi={olduguGibi} onIptal={() => setKose(null)} />;
+  const onizlenen = bak >= 0 ? fotolar[bak] : null;
   return (
     <div className="bel-editor">
       <div className="bel-ust">
         <button className="muh-geri" onClick={onKapat}>‹ {t("belGeri", "Belgeler")}</button>
         <input className="bel-ad-inp" value={baslik} onChange={(e) => setBaslik(e.target.value)} placeholder={t("belFotoBaslik", "Başlık (isteğe bağlı)")} /><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button>
       </div>
-      <button className="muh-btn muh-ekle" onClick={() => inpRef.current && inpRef.current.click()}>📷 {t("belFotoEkle", "Fotoğraf ekle")}</button>
-      <input ref={inpRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={dosyaSec} />
+      <div className="bel-alt-dugmeler">
+        <button className="muh-btn muh-ekle" onClick={() => kameraRef.current && kameraRef.current.click()}>📷 {t("belKamerayla", "Kamerayla çek")}</button>
+        <button className="muh-btn muh-ekle bt-galeri" onClick={() => galeriRef.current && galeriRef.current.click()}>🖼️ {t("belGaleriden", "Galeriden ekle")}</button>
+      </div>
+      <input ref={kameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={kameradan} />
+      <input ref={galeriRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={galeridenSec} />
       <div className="bel-foto-liste">
-        {fotolar.length === 0 ? <div className="muh-bos">💛 {t("belFotoAlt", "Fotoğraf ekle (birden çok olabilir). Sıralayıp tek PDF yap, indir/paylaş.")}</div>
+        {fotolar.length === 0 ? <div className="muh-bos">💛 {t("belFotoAlt2", "Belgeyi kamerayla çek ya da galeriden ekle. Her fotoğraf PDF'te ayrı bir A4 sayfa olur.")}</div>
           : fotolar.map((f, i) => (
             <div className="bel-foto-oge" key={i}>
-              <img src={f.d} alt="" />
+              <button className="bt-kucuk" onClick={() => setBak(i)} title={t("belBuyut", "Büyüt")}><img src={f.d} alt="" /><span className="bt-no">{i + 1}</span></button>
               <div className="bel-foto-dug">
-                <button onClick={() => tasi(i, -1)} aria-label="Yukarı">↑</button>
-                <button onClick={() => tasi(i, 1)} aria-label="Aşağı">↓</button>
-                <button onClick={() => sil(i)} aria-label="Sil">🗑️</button>
+                <button onClick={() => tasi(i, -1)} aria-label="Yukarı" title={t("belYukari", "Öne al")}>↑</button>
+                <button onClick={() => tasi(i, 1)} aria-label="Aşağı" title={t("belAsagi", "Geri al")}>↓</button>
+                <button onClick={() => sil(i)} aria-label="Sil" title={t("sil", "Sil")}>🗑️</button>
               </div>
             </div>
           ))}
       </div>
-      <div className="bel-alt-dugmeler">
-        <button className="muh-btn muh-pdf" disabled={yuk} onClick={pdfYap}>📄 {t("belPdfYapPaylas", "PDF yap — indir / paylaş")}</button>
-        <button className="muh-btn muh-yazdir-btn" disabled={yuk} onClick={() => { if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; } yazdirElem(yazdirRef.current, baslik || "foto"); }}>🖨️ {t("belYazdir", "Yazdır")}</button>
+      <div className="bel-alt-dugmeler bt-uc">
+        <button className="muh-btn muh-pdf" disabled={yuk} onClick={() => pdfVer("indir")}>📥 {t("belPdfIndir", "PDF indir")}</button>
+        <button className="muh-btn muh-pdf bt-gonder" disabled={yuk} onClick={() => pdfVer("gonder")}>📤 {t("belPdfGonder", "PDF gönder")}</button>
+        <button className="muh-btn muh-yazdir-btn" disabled={yuk} onClick={() => { if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; } fotolariYazdir(fotolar, baslik || "GLOXORG"); }}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
-      {/* YAZDIRILACAK (ekran dışında) — Türkçe başlık + fotoğraflar tek PDF */}
-      <div ref={yazdirRef} className="bel-fotopdf-yazdir" aria-hidden="true">
-        {baslik.trim() ? <div className="fp-baslik">{baslik}</div> : null}
-        {fotolar.map((f, i) => <img key={i} src={f.d} className="fp-img" alt="" />)}
-      </div>
+      {onizlenen ? (
+        <div className="bt-onizle" onClick={() => setBak(-1)}>
+          <div className="bt-onizle-ust" onClick={(e) => e.stopPropagation()}>
+            <b>{bak + 1} / {fotolar.length}</b>
+            <button className="bt-btn iptal" onClick={() => setBak(-1)} title={t("kapat", "Kapat")}>✕</button>
+          </div>
+          <img src={onizlenen.d} alt="" onClick={(e) => e.stopPropagation()} />
+          <div className="bt-alt" onClick={(e) => e.stopPropagation()}>
+            <button className="bt-btn oldugu" onClick={() => { const f = onizlenen; setBak(-1); setKose({ src: f.o || f.d, i: bak, k: f.k }); }}>✂️ {t("belKoseAyarla", "Köşeleri ayarla")}</button>
+            <button className="bt-btn iptal" onClick={() => sil(bak)}>🗑️ {t("sil", "Sil")}</button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

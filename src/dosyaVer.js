@@ -18,17 +18,24 @@ function base64Yap(blob) {
 }
 
 // blob: dosyanın kendisi, ad: "GLOXORG-....pdf", baslik: paylaş başlığı
-export async function dosyaVer(blob, ad, baslik) {
+// islem: "indir" (kaydet + aç) | "gonder" (doğrudan gönder) | boş (uygulamada "Aç / Gönder" sorar; tarayıcıda paylaş/indir)
+export async function dosyaVer(blob, ad, baslik, islem) {
   const tur = blob.type || "application/octet-stream";
   const k = kopru();
-  if (k && typeof k.dosyaVer === "function") {
+  if (k && typeof k.dosyaIslem === "function") {
+    try {
+      const b64 = await base64Yap(blob);
+      const ok = k.dosyaIslem(b64, ad, tur, islem || "", ceviri("dosyaHazir", "Dosya hazır ✓ (İndirilenler/GLOXORG)"), ceviri("dosyaAc", "Aç"), ceviri("dosyaGonder", "Gönder"));
+      if (ok) return;
+    } catch (e) {}
+  } else if (k && typeof k.dosyaVer === "function") { // B490 uygulaması (ayrı indir/gönder yok → sorar)
     try {
       const b64 = await base64Yap(blob);
       const ok = k.dosyaVer(b64, ad, tur, ceviri("dosyaHazir", "Dosya hazır ✓ (İndirilenler/GLOXORG)"), ceviri("dosyaAc", "Aç"), ceviri("dosyaGonder", "Gönder"));
       if (ok) return;
     } catch (e) {}
   }
-  try {
+  if (islem !== "indir") try {
     const dosya = new File([blob], ad, { type: tur });
     if (navigator.canShare && navigator.canShare({ files: [dosya] })) { await navigator.share({ files: [dosya], title: baslik || "GLOXORG" }); return; }
   } catch (e) {} // paylaş kapatıldı/olmadı → yedek: İndirilenler'e iner (eskisi gibi)

@@ -505,6 +505,37 @@ class MainActivity : Activity() {
             } catch (e: Exception) { false }
         }
 
+        /** Ayrı düğmeler (B491): islem="indir" → İndirilenler/GLOXORG'a kaydet + PDF'i AÇ (görsün);
+         *  islem="gonder" → doğrudan gönder penceresi (WhatsApp vb.); başka → "Aç / Gönder" sorar. */
+        @JavascriptInterface
+        fun dosyaIslem(b64: String, ad: String, tur: String, islem: String, kayitYazi: String, acYazi: String, gonderYazi: String): Boolean {
+            return try {
+                val bayt = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
+                val temizAd = ad.replace(Regex("[\\\\/:*?\"<>|]"), "_").ifBlank { "GLOXORG" }
+                val klasor = java.io.File(cacheDir, "paylas").apply { mkdirs() }
+                val dosya = java.io.File(klasor, temizAd)
+                dosya.writeBytes(bayt)
+                val uri = androidx.core.content.FileProvider.getUriForFile(this@MainActivity, "$packageName.dosyalar", dosya)
+                when (islem) {
+                    "gonder" -> runOnUiThread { gonderAc(uri, tur, gonderYazi) }
+                    "indir" -> {
+                        indirilenlereKaydet(bayt, temizAd, tur)
+                        runOnUiThread {
+                            try { android.widget.Toast.makeText(this@MainActivity, kayitYazi, android.widget.Toast.LENGTH_LONG).show() } catch (e: Exception) {}
+                            try {
+                                startActivity(Intent(Intent.ACTION_VIEW).apply { setDataAndType(uri, tur); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) })
+                            } catch (e: Exception) {}
+                        }
+                    }
+                    else -> {
+                        indirilenlereKaydet(bayt, temizAd, tur)
+                        runOnUiThread { dosyaSecenekleri(uri, tur, kayitYazi, acYazi, gonderYazi) }
+                    }
+                }
+                true
+            } catch (e: Exception) { false }
+        }
+
         /** Sayfa "Yazdır" dedi: WebView'de window.print() ÇALIŞMAZ → telefonun yazıcı ekranını biz açarız
          *  (sayfadaki @media print kuralları geçerli: sadece hazırlanan yazdır alanı basılır). */
         @JavascriptInterface
