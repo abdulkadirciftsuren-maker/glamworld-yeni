@@ -488,6 +488,38 @@ class MainActivity : Activity() {
             }
         }
 
+        /** Sayfa PDF/Excel/foto üretti (WebView sayfa-içi dosyayı İNDİREMİYOR, "paylaş" da yok) → uygulama dosyayı
+         *  İndirilenler/GLOXORG'a kaydeder ve "Aç / Gönder" sorar. Yazılar sayfadan gelir (kullanıcının dili). */
+        @JavascriptInterface
+        fun dosyaVer(b64: String, ad: String, tur: String, baslik: String, acYazi: String, gonderYazi: String): Boolean {
+            return try {
+                val bayt = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
+                val temizAd = ad.replace(Regex("[\\\\/:*?\"<>|]"), "_").ifBlank { "GLOXORG" }
+                val klasor = java.io.File(cacheDir, "paylas").apply { mkdirs() }
+                val dosya = java.io.File(klasor, temizAd)
+                dosya.writeBytes(bayt)
+                indirilenlereKaydet(bayt, temizAd, tur)
+                val uri = androidx.core.content.FileProvider.getUriForFile(this@MainActivity, "$packageName.dosyalar", dosya)
+                runOnUiThread { dosyaSecenekleri(uri, tur, baslik, acYazi, gonderYazi) }
+                true
+            } catch (e: Exception) { false }
+        }
+
+        /** Sayfa "Yazdır" dedi: WebView'de window.print() ÇALIŞMAZ → telefonun yazıcı ekranını biz açarız
+         *  (sayfadaki @media print kuralları geçerli: sadece hazırlanan yazdır alanı basılır). */
+        @JavascriptInterface
+        fun yazdir(baslik: String) {
+            runOnUiThread {
+                try {
+                    val w = web ?: return@runOnUiThread
+                    val ad = baslik.ifBlank { "GLOXORG" }
+                    val pm = getSystemService(Context.PRINT_SERVICE) as android.print.PrintManager
+                    pm.print(ad, w.createPrintDocumentAdapter(ad), android.print.PrintAttributes.Builder()
+                        .setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).build())
+                } catch (e: Exception) {}
+            }
+        }
+
         /** Sayfa: arama ekranı açık mı (gelen/aktif arama). Kilit üstünde açıldıysak arama bitince kilidin arkasına çekilir. */
         @JavascriptInterface
         fun aramaEkrani(var_: Boolean) {
@@ -856,6 +888,51 @@ class MainActivity : Activity() {
             } else null
             cb.onReceiveValue(sonuc)
         }
+    }
+
+    // Dosyanın bir kopyası İndirilenler/GLOXORG klasörüne (Android 10+; izin gerekmez). Eski telefonlarda atlanır.
+    private fun indirilenlereKaydet(bayt: ByteArray, ad: String, tur: String) {
+        if (Build.VERSION.SDK_INT < 29) return
+        try {
+            val d = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, ad)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, tur)
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/GLOXORG")
+            }
+            val u = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, d) ?: return
+            contentResolver.openOutputStream(u)?.use { it.write(bayt) }
+        } catch (e: Exception) {}
+    }
+
+    // "Aç" → PDF okuyucuda TAM EKRAN açılır; "Gönder" → WhatsApp/e-posta vb.
+    private fun dosyaSecenekleri(uri: Uri, tur: String, baslik: String, acYazi: String, gonderYazi: String) {
+        val ac = {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, tur)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                })
+            } catch (e: Exception) { gonderAc(uri, tur, gonderYazi) }
+        }
+        try {
+            AlertDialog.Builder(this)
+                .setTitle(baslik.ifBlank { "GLOXORG" })
+                .setPositiveButton(acYazi.ifBlank { "Aç" }) { _, _ -> ac() }
+                .setNegativeButton(gonderYazi.ifBlank { "Gönder" }) { _, _ -> gonderAc(uri, tur, gonderYazi) }
+                .show()
+        } catch (e: Exception) { ac() }
+    }
+
+    private fun gonderAc(uri: Uri, tur: String, gonderYazi: String) {
+        try {
+            val n = Intent(Intent.ACTION_SEND).apply {
+                type = tur
+                putExtra(Intent.EXTRA_STREAM, uri)
+                clipData = android.content.ClipData.newRawUri("", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(n, gonderYazi.ifBlank { "Gönder" }))
+        } catch (e: Exception) {}
     }
 
     // Telefonun kamera uygulamasını açar; çekilen dosya uygulamanın kendi klasörüne yazılır (FileProvider ile paylaşılır).

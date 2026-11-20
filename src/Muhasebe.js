@@ -5,37 +5,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { muhasebeDinle, muhasebeEkle, muhasebeGuncelle, muhasebeCopeAt, muhasebeGeriYukle, muhasebeKaliciSil, MUH_COP_GUN } from "./veri";
-import Belgeler from "./Belgeler";
+import Belgeler, { elemPdf, yazdirElem, excelVer } from "./Belgeler";
 
 const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g && a && y ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
 const sayi = (n) => Number(String(n).replace(",", ".")) || 0;
 const para = (n, sym) => (Number(n) || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + (sym || "₺");
-// YAZDIR (printer): ANA SAYFAYI yazdırır — Android yazıcı servisi bunu RICOH vb. yazıcıya sorunsuz gönderir.
-// (Açılır-pencere/iframe içeriğini Android basamıyordu → "Bu yazı kullanılamıyor". Artık sayfanın net resmini
-//  gizli bir alana koyup @media print ile SADECE onu bastırıyoruz; window.print() ana pencerede → dolu çıkar.)
-async function yazdirElem(el, baslik) {
-  if (!el) return;
-  try {
-    const html2canvas = (await import("html2canvas")).default;
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-    const img = canvas.toDataURL("image/png");
-    let stil = document.getElementById("gw-yazdir-stil");
-    if (!stil) {
-      stil = document.createElement("style"); stil.id = "gw-yazdir-stil";
-      stil.textContent = "#gw-yazdir-alan{display:none}@media print{body>*{display:none !important}#gw-yazdir-alan{display:block !important;position:static !important}#gw-yazdir-alan img{width:100%;height:auto;display:block}@page{margin:10mm}}";
-      document.head.appendChild(stil);
-    }
-    let alan = document.getElementById("gw-yazdir-alan");
-    if (!alan) { alan = document.createElement("div"); alan.id = "gw-yazdir-alan"; document.body.appendChild(alan); }
-    alan.innerHTML = "";
-    const im = new Image(); im.src = img; im.alt = baslik || "GLOXORG"; alan.appendChild(im);
-    const bas = () => { try { window.focus(); } catch (e) {} try { window.print(); } catch (e) {} };
-    const temizle = () => { try { alan.innerHTML = ""; } catch (e) {} try { window.removeEventListener("afterprint", temizle); } catch (e) {} };
-    try { window.addEventListener("afterprint", temizle); } catch (e) {}
-    if (im.complete) setTimeout(bas, 150); else { im.onload = () => setTimeout(bas, 120); im.onerror = () => setTimeout(bas, 120); }
-  } catch (e) {}
-}
 const mik = (n, birim) => (Number(n) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 3 }) + (birim ? " " + birim : "");
 
 export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", onKatman, onGloxordaPaylas }) {
@@ -112,7 +87,7 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
       ws["!pageSetup"] = { paperSize: 9, orientation: "portrait", fitToWidth: 1, fitToHeight: 0, scale: 100 };
       ws["!margins"] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Muhasebe");
-      XLSX.writeFile(wb, ("GLOXORG-" + baslik).replace(/[^\wğüşıöçĞÜŞİÖÇ ]/gi, "").replace(/\s+/g, "-").slice(0, 40) + ".xlsx");
+      await excelVer(XLSX, wb, ("GLOXORG-" + baslik).replace(/[^\wğüşıöçĞÜŞİÖÇ -]/gi, "").replace(/\s+/g, "-").slice(0, 40) + ".xlsx");
       bilgi(t("muhExcelIndi", "Excel indirildi 📊"));
     } catch (e) { bilgi(t("muhOlmadi", "Olmadı, tekrar dener misin?")); }
     setIslemYok(false);
@@ -122,30 +97,8 @@ export default function Muhasebe({ onKapat, uid, paraSym = "₺", benAd = "", on
     setIslemYok(true);
     await new Promise((r) => setTimeout(r, 60)); // yazdır alanı render olsun
     try {
-      const el = yazdirRef.current; if (!el) throw new Error("no el");
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
-      const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-      const pdf = new jsPDF({ unit: "pt", format: "a4" });
-      const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-      const kenar = 28, iw = pw - kenar * 2;
-      // TEMIZ DILIMLEME (üst üste binme YOK) + JPEG (küçük/uyumlu PDF) — Belgeler.elemPdf ile aynı yöntem.
-      const pxPerPt = canvas.width / iw, sayfaIcPx = Math.max(1, Math.floor((ph - kenar * 2) * pxPerPt));
-      let srcY = 0, ilk = true;
-      while (srcY < canvas.height - 1) {
-        const dilimPx = Math.min(sayfaIcPx, canvas.height - srcY);
-        const pc = document.createElement("canvas"); pc.width = canvas.width; pc.height = dilimPx;
-        const pctx = pc.getContext("2d"); pctx.fillStyle = "#ffffff"; pctx.fillRect(0, 0, pc.width, pc.height);
-        pctx.drawImage(canvas, 0, srcY, canvas.width, dilimPx, 0, 0, canvas.width, dilimPx);
-        if (!ilk) pdf.addPage();
-        pdf.addImage(pc.toDataURL("image/jpeg", 0.92), "JPEG", kenar, kenar, iw, dilimPx / pxPerPt);
-        srcY += dilimPx; ilk = false;
-      }
-      const ad = ("GLOXORG-" + (data.baslik || "muhasebe")).replace(/[^\wğüşıöçĞÜŞİÖÇ ]/gi, "").replace(/\s+/g, "-").slice(0, 40) + ".pdf";
-      // PAYLAŞ (gönder) — kullanıcı PDF'i kime isterse DOĞRUDAN gönderebilsin (KORUNUR); olmazsa İndirilenler'e kaydeder.
-      const blob = pdf.output("blob"); const dosya = new File([blob], ad, { type: "application/pdf" });
-      if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG Muhasebe" }); } catch (e) { pdf.save(ad); } }
-      else pdf.save(ad);
+      // Belgeler ile AYNI ortak PDF yolu (telefon uygulamasında da kaydeder/açar/gönderir)
+      await elemPdf(yazdirRef.current, data.baslik || "muhasebe", 0);
       bilgi(t("muhPdfHazir", "PDF hazır 📄"));
     } catch (e) { bilgi(t("muhOlmadi", "Olmadı, tekrar dener misin?")); }
     setYazdirData(null); setIslemYok(false);

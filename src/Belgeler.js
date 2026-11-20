@@ -2,22 +2,25 @@
 // Hepsi .xlsx / .docx(.doc) / PDF indirilir & paylaşılır, Firebase'de saklanır (⋮ menü + çöp kutusu ile silinir).
 // Ağır kütüphaneler (xlsx/jspdf/html2canvas) SADECE indirirken dinamik yüklenir.
 import { useState, useRef, useEffect } from "react";
+import { dosyaVer, yazdirBaslat } from "./dosyaVer";
 
 const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
 const sayi = (n) => Number(String(n == null ? "" : n).replace(/\./g, "").replace(",", ".")) || 0;
 const para2 = (n) => (Number(n) || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const dosyaAd = (ad, uz) => ("GLOXORG-" + (ad || "belge")).replace(/[^\wğüşıöçĞÜŞİÖÇ ]/gi, "").replace(/\s+/g, "-").slice(0, 40) + "." + uz;
+const dosyaAd = (ad, uz) => ("GLOXORG-" + (ad || "belge")).replace(/[^\wğüşıöçĞÜŞİÖÇ -]/gi, "").replace(/\s+/g, "-").slice(0, 40) + "." + uz;
 
 // ---- ortak: bir HTML öğesini PDF yap (Türkçe doğru çıkar) ve indir/paylaş
-async function elemPdf(el, ad) {
+export async function elemPdf(el, ad, kenar = 28) {
   if (!el) throw new Error("no el");
   const html2canvas = (await import("html2canvas")).default;
   const { jsPDF } = await import("jspdf");
   const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
   const pdf = new jsPDF({ unit: "pt", format: "a4" });
   const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-  const kenar = 28, iw = pw - kenar * 2;
+  // SAYFAYI KAPLASIN (20 Kas): A4 ölçülü, kendi beyaz kenarı olan alanlar (fatura, muhasebe raporu) kenar=0 ile çağrılır
+  //   → PDF'te ikinci kenar YOK, içerik A4'ü tam kaplar. Kenarsız alanlar (tablo, kart) 28pt kenarla kalır.
+  const iw = pw - kenar * 2;
   // ⛔ ESKİ HATA: tüm uzun resmi her sayfada yukarı KAYDIRARAK ekliyordu → sayfalar ÜST ÜSTE BİNİYORDU (kullanıcı şikâyeti).
   //   DOĞRUSU: kaynağı sayfa-boyu DİLİMLERE böl, HER dilimi AYRI sayfaya tam yerleştir → binme YOK, kısa içerik TEK sayfa.
   const pxPerPt = canvas.width / iw;                   // kaynak piksel / pdf-pt
@@ -35,16 +38,14 @@ async function elemPdf(el, ad) {
   }
   // PAYLAŞ (gönder) — kullanıcı PDF'i WhatsApp/kime isterse DOĞRUDAN gönderebilsin (bu düğme eskiden böyleydi, KORUNUR).
   //   Paylaş iptal edilir/olmazsa İndirilenler'e kaydeder (yedek). PDF geçerli bir A4 belgesidir, PDF okuyucuda açılır.
-  const blob = pdf.output("blob"); const dosya = new File([blob], dosyaAd(ad, "pdf"), { type: "application/pdf" });
-  if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG" }); return; } catch (e) {} }
-  pdf.save(dosyaAd(ad, "pdf"));
+  await dosyaVer(pdf.output("blob"), dosyaAd(ad, "pdf"), "GLOXORG");
 }
 // ---- YAZDIR (printer): ANA SAYFAYI yazdırır (Android yazıcı servisi bunu RICOH vb. yazıcılara sorunsuz gönderir).
 // ⛔ ESKİ HATA: açılır-pencere / gizli iframe (about:blank) içeriğini Android yazıcı servisi BASAMIYOR →
 //   "Bu yazı şu anda kullanılamıyor" çıkıyordu. ÇÖZÜM: sayfanın NET resmini (html2canvas, PDF ile aynı) alıp
 //   ana sayfaya gizli bir "yazdır alanı"na koyarız; @media print ile SADECE o resim basılır (gerisi gizlenir),
 //   sonra window.print() ana pencerede çağrılır → gerçek yazıcıya bağlanır, dolu ve doğru çıkar.
-async function yazdirElem(el, baslik) {
+export async function yazdirElem(el, baslik) {
   if (!el) return;
   try {
     const html2canvas = (await import("html2canvas")).default;
@@ -61,7 +62,7 @@ async function yazdirElem(el, baslik) {
     if (!alan) { alan = document.createElement("div"); alan.id = "gw-yazdir-alan"; document.body.appendChild(alan); }
     alan.innerHTML = "";
     const im = new Image(); im.src = img; im.alt = baslik || "GLOXORG"; alan.appendChild(im);
-    const bas = () => { try { window.focus(); } catch (e) {} try { window.print(); } catch (e) {} };
+    const bas = () => yazdirBaslat(baslik);
     const temizle = () => { try { alan.innerHTML = ""; } catch (e) {} try { window.removeEventListener("afterprint", temizle); } catch (e) {} };
     try { window.addEventListener("afterprint", temizle); } catch (e) {}
     if (im.complete) setTimeout(bas, 150); else { im.onload = () => setTimeout(bas, 120); im.onerror = () => setTimeout(bas, 120); }
@@ -71,8 +72,7 @@ async function yazdirElem(el, baslik) {
 function wordIndir(ad, htmlIc) {
   const html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>" + htmlIc + "</body></html>";
   const blob = new Blob(["﻿", html], { type: "application/msword" });
-  const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = dosyaAd(ad, "doc");
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 1500);
+  dosyaVer(blob, dosyaAd(ad, "doc"), "GLOXORG");
 }
 // ---- Excel (.xlsx) indir: 2B diziden
 async function excelIndirAoa(ad, aoa) {
@@ -84,7 +84,11 @@ async function excelIndirAoa(ad, aoa) {
   ws["!pageSetup"] = { paperSize: 9, orientation: "portrait", fitToWidth: 1, fitToHeight: 0, scale: 100 };
   ws["!margins"] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Sayfa1");
-  XLSX.writeFile(wb, dosyaAd(ad, "xlsx"));
+  await excelVer(XLSX, wb, dosyaAd(ad, "xlsx"));
+}
+export async function excelVer(XLSX, wb, ad) {
+  const dizi = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  await dosyaVer(new Blob([dizi], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), ad, "GLOXORG");
 }
 
 // Belge tarih arşiv grubu (Bugün / Bu Ay / Bu Yıl / Daha Eski)
@@ -560,7 +564,7 @@ function FaturaEditor({ t, belge, onKapat, onKaydet, bilgi, paraSym, benAd }) {
         <button className="muh-btn muh-kaydet" onClick={() => onKaydet(veri())}>💾 {t("belKaydet", "Kaydet")}</button>
         <button className="muh-btn muh-excel" onClick={() => excelIndirAoa(ad || no, aoa()).then(() => bilgi(t("belExcelIndi", "Excel indirildi 📊"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📊 Excel</button>
         <button className="muh-btn muh-pdf" style={{ background: "linear-gradient(90deg,#3f6fd0,#274ea0)" }} onClick={() => { wordIndir(ad || no, faturaHtml()); bilgi(t("belWordIndi", "Word indirildi 📘")); }}>📘 Word</button>
-        <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || no).then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
+        <button className="muh-btn muh-pdf" onClick={() => elemPdf(yazdirRef.current, ad || no, 0).then(() => bilgi(t("belPdfHazir", "PDF hazır 📄"))).catch(() => bilgi(t("belOlmadi", "Olmadı")))}>📄 PDF</button>
         <button className="muh-btn muh-yazdir-btn" onClick={() => yazdirElem(yazdirRef.current, ad || no)}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
 
@@ -593,10 +597,7 @@ async function elemFotoPaylas(el, ad) {
   const html2canvas = (await import("html2canvas")).default;
   const canvas = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true });
   const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
-  const dosya = new File([blob], dosyaAd(ad, "png"), { type: "image/png" });
-  if (navigator.canShare && navigator.canShare({ files: [dosya] })) { try { await navigator.share({ files: [dosya], title: "GLOXORG" }); return; } catch (e) {} }
-  const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = dosyaAd(ad, "png");
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 1500);
+  await dosyaVer(blob, dosyaAd(ad, "png"), "GLOXORG");
 }
 
 // ===================== HAZIR ŞABLONLAR (mesleğe göre) =====================

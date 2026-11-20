@@ -1,7 +1,9 @@
 // GLOXORG CANLI DERS sayfası (B474) — CanliDers.js yazıları + menü adı (navCanliDers), 13 dil.
 // + B476: Ayarlar telefon ülke kodu hedefi (ayarKodHedef1/2).
+// + B490: ortak dosya ver penceresi (dosyaHazir/dosyaAc/dosyaGonder — telefon uygulamasında PDF/Excel kaydet-aç-gönder).
 export const CEVIRI_CANLI = {
  tr: {
+  dosyaHazir: "Dosya hazır ✓ (İndirilenler/GLOXORG)", dosyaAc: "Aç", dosyaGonder: "Gönder",
   cdBitirKisa: "Bitir",
   cdGelen: "Gelen", cdGonderilen: "Gönderilen", cdKare: "kare",
   cdKalpAtanlar: "Kalp atanlar", cdKalpAtanYok: "Kalp atanların adı bu özellik eklendikten sonraki yayınlarda görünür.",
@@ -39,6 +41,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Yorum gönderilemedi.", cdYorumSil: "Yorumu sil", cdYorumYaz: "Bir şey sor ya da yaz…",
  },
  en: {
+  dosyaHazir: "File ready ✓ (Downloads/GLOXORG)", dosyaAc: "Open", dosyaGonder: "Send",
   cdBitirKisa: "End",
   cdGelen: "Received", cdGonderilen: "Sent", cdKare: "frames",
   cdKalpAtanlar: "Who sent hearts", cdKalpAtanYok: "Names of people who sent hearts appear in streams after this feature was added.",
@@ -76,6 +79,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Comment could not be sent.", cdYorumSil: "Delete comment", cdYorumYaz: "Ask or write something…",
  },
  de: {
+  dosyaHazir: "Datei fertig ✓ (Downloads/GLOXORG)", dosyaAc: "Öffnen", dosyaGonder: "Senden",
   cdBitirKisa: "Beenden",
   cdGelen: "Empfangen", cdGonderilen: "Gesendet", cdKare: "Bilder",
   cdKalpAtanlar: "Wer Herzen geschickt hat", cdKalpAtanYok: "Die Namen erscheinen in Streams, die nach Einführung dieser Funktion stattfinden.",
@@ -113,6 +117,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Kommentar konnte nicht gesendet werden.", cdYorumSil: "Kommentar löschen", cdYorumYaz: "Frag oder schreib etwas…",
  },
  ar: {
+  dosyaHazir: "الملف جاهز ✓ (التنزيلات/GLOXORG)", dosyaAc: "فتح", dosyaGonder: "إرسال",
   cdBitirKisa: "إنهاء",
   cdGelen: "المستلم", cdGonderilen: "المُرسَل", cdKare: "إطار",
   cdKalpAtanlar: "من أرسل القلوب", cdKalpAtanYok: "تظهر أسماء من أرسلوا القلوب في البثوث التي تلي إضافة هذه الميزة.",
@@ -150,6 +155,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "تعذّر إرسال التعليق.", cdYorumSil: "حذف التعليق", cdYorumYaz: "اسأل أو اكتب شيئًا…",
  },
  ru: {
+  dosyaHazir: "Файл готов ✓ (Загрузки/GLOXORG)", dosyaAc: "Открыть", dosyaGonder: "Отправить",
   cdBitirKisa: "Завершить",
   cdGelen: "Получено", cdGonderilen: "Отправлено", cdKare: "кадров",
   cdKalpAtanlar: "Кто ставил сердечки", cdKalpAtanYok: "Имена появятся в эфирах после добавления этой функции.",
@@ -187,6 +193,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не удалось отправить комментарий.", cdYorumSil: "Удалить комментарий", cdYorumYaz: "Спроси или напиши что-нибудь…",
  },
  uk: {
+  dosyaHazir: "Файл готовий ✓ (Завантаження/GLOXORG)", dosyaAc: "Відкрити", dosyaGonder: "Надіслати",
   cdBitirKisa: "Завершити",
   cdGelen: "Отримано", cdGonderilen: "Надіслано", cdKare: "кадрів",
   cdKalpAtanlar: "Хто ставив сердечка", cdKalpAtanYok: "Імена з'являться в ефірах після додавання цієї функції.",
@@ -224,6 +231,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Не вдалося надіслати коментар.", cdYorumSil: "Видалити коментар", cdYorumYaz: "Запитай або напиши щось…",
  },
  es: {
+  dosyaHazir: "Archivo listo ✓ (Descargas/GLOXORG)", dosyaAc: "Abrir", dosyaGonder: "Enviar",
   cdBitirKisa: "Terminar",
   cdGelen: "Recibido", cdGonderilen: "Enviado", cdKare: "fotogramas",
   cdKalpAtanlar: "Quién envió corazones", cdKalpAtanYok: "Los nombres aparecen en los directos posteriores a esta función.",
@@ -261,6 +269,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "No se pudo enviar el comentario.", cdYorumSil: "Eliminar comentario", cdYorumYaz: "Pregunta o escribe algo…",
  },
  fr: {
+  dosyaHazir: "Fichier prêt ✓ (Téléchargements/GLOXORG)", dosyaAc: "Ouvrir", dosyaGonder: "Envoyer",
   cdBitirKisa: "Terminer",
   cdGelen: "Reçu", cdGonderilen: "Envoyé", cdKare: "images",
   cdKalpAtanlar: "Qui a envoyé des cœurs", cdKalpAtanYok: "Les noms apparaissent dans les directs qui suivent l'ajout de cette fonction.",
@@ -298,6 +307,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Le commentaire n'a pas pu être envoyé.", cdYorumSil: "Supprimer le commentaire", cdYorumYaz: "Pose une question ou écris…",
  },
  it: {
+  dosyaHazir: "File pronto ✓ (Download/GLOXORG)", dosyaAc: "Apri", dosyaGonder: "Invia",
   cdBitirKisa: "Termina",
   cdGelen: "Ricevuto", cdGonderilen: "Inviato", cdKare: "fotogrammi",
   cdKalpAtanlar: "Chi ha inviato cuori", cdKalpAtanYok: "I nomi compaiono nelle dirette successive all'aggiunta di questa funzione.",
@@ -335,6 +345,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Impossibile inviare il commento.", cdYorumSil: "Elimina commento", cdYorumYaz: "Chiedi o scrivi qualcosa…",
  },
  zh: {
+  dosyaHazir: "文件已就绪 ✓（下载/GLOXORG）", dosyaAc: "打开", dosyaGonder: "发送",
   cdBitirKisa: "结束",
   cdGelen: "已接收", cdGonderilen: "已发送", cdKare: "帧",
   cdKalpAtanlar: "送爱心的人", cdKalpAtanYok: "此功能上线后的直播才会显示送爱心者的名字。",
@@ -372,6 +383,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "评论发送失败。", cdYorumSil: "删除评论", cdYorumYaz: "提问或说点什么…",
  },
  hi: {
+  dosyaHazir: "फ़ाइल तैयार ✓ (डाउनलोड/GLOXORG)", dosyaAc: "खोलें", dosyaGonder: "भेजें",
   cdBitirKisa: "खत्म",
   cdGelen: "प्राप्त", cdGonderilen: "भेजा गया", cdKare: "फ़्रेम",
   cdKalpAtanlar: "किसने दिल भेजे", cdKalpAtanYok: "यह सुविधा जुड़ने के बाद के लाइव में नाम दिखेंगे।",
@@ -409,6 +421,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "टिप्पणी नहीं भेजी जा सकी।", cdYorumSil: "टिप्पणी हटाओ", cdYorumYaz: "कुछ पूछो या लिखो…",
  },
  pt: {
+  dosyaHazir: "Arquivo pronto ✓ (Downloads/GLOXORG)", dosyaAc: "Abrir", dosyaGonder: "Enviar",
   cdBitirKisa: "Terminar",
   cdGelen: "Recebido", cdGonderilen: "Enviado", cdKare: "fotogramas",
   cdKalpAtanlar: "Quem enviou corações", cdKalpAtanYok: "Os nomes aparecem nos diretos feitos depois desta funcionalidade.",
@@ -446,6 +459,7 @@ export const CEVIRI_CANLI = {
   cdYorumOlmadi: "Não foi possível enviar o comentário.", cdYorumSil: "Apagar comentário", cdYorumYaz: "Pergunta ou escreve algo…",
  },
  ja: {
+  dosyaHazir: "ファイル準備完了 ✓（ダウンロード/GLOXORG）", dosyaAc: "開く", dosyaGonder: "送信",
   cdBitirKisa: "終了",
   cdGelen: "受信", cdGonderilen: "送信", cdKare: "フレーム",
   cdKalpAtanlar: "ハートを送った人", cdKalpAtanYok: "この機能の追加後の配信から名前が表示されます。",
