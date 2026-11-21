@@ -6,6 +6,8 @@
 ---
 
 > ✅ **20 Kas 2026 — KAMERA ONAYLANDI:** Telefon uygulamasında "Kamerayla çek" artık kamerayı açıyor (MainActivity onShowFileChooser capture → ACTION_IMAGE/VIDEO_CAPTURE + FileProvider `${applicationId}.dosyalar`). DOKUNMA.
+> 🧷 **GENEL KURAL (kullanıcı 21 Kas, HER YERDE):** Hiçbir şey KENDİLİĞİNDEN silinmez. Sayfa yenilenince, Android geri tuşunda, uygulamadan çıkınca yazılan/çekilen her şey hafızada (IndexedDB/localStorage) kalır ve açıldığı yerden devam eder. SİLME her yerde İKİ ADIMLI (önce "silinsin mi?" sorusu). Küçük resme dokunmak AÇAR, asla silmez. ✅ Foto→PDF (B493) yapıldı. ⏳ Sırayla kontrol edilecek: Ayarlar, Glome sohbet taslakları, Gloxoo, Sanal Ayna, diğer Belgeler editörleri.
+> 🧾 **B491–B493 Foto→PDF + belge kamerası** (onay bekliyor): `src/BelgeTarayici.js` (çerçeveli kamera, köşe bulma, düzleştirme, pdf-lib ile PDF). Yayın adımında `node scripts/apkKoru.js` UNUTMA.
 > ⏰ **SIRADAKİ İŞ (B490 onayından sonra): Gloxoo ses modeli** `gemini-2.5-flash-preview-tts` → `gemini-3.8-flash-tts` (src/firebase.js). Eski model **18 Aralık 2026'da kapanıyor** (Google e-postası 20 Kas). Yeni model önce denenir, kullanıcı sesi onaylayınca eski ad silinir.
 > 🧾 **20 Kas 2026 — B490 Muhasebe PDF/Excel/Yazdır (onay bekliyor):** ortak `src/dosyaVer.js` (uygulamada AndroidGlox.dosyaVer → İndirilenler/GLOXORG + Aç/Gönder; AndroidGlox.yazdir → PrintManager). Muhasebe/Belgeler tüm dosya çıkışları bu yoldan. Yeni dosya indirme kodu yazarken `dosyaVer` KULLAN (blob indirme uygulamada çalışmaz).
 

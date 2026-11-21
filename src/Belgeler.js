@@ -3,7 +3,8 @@
 // Ağır kütüphaneler (xlsx/jspdf/html2canvas) SADECE indirirken dinamik yüklenir.
 import { useState, useRef, useEffect } from "react";
 import { dosyaVer, yazdirBaslat } from "./dosyaVer";
-import { KoseAyar, KameraTarayici, dosyadanResim, fotoPdfBlob } from "./BelgeTarayici";
+import { KoseAyar, KameraTarayici, dosyadanResim, fotoPdfBlob, pdfDosyasiOku, SayfaKucuk } from "./BelgeTarayici";
+import { medyaYaz, medyaOku } from "./medyaDepo";
 
 const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
@@ -104,7 +105,9 @@ function _arsivGrup(ms) {
 
 // ===================== BELGELER LİSTESİ + ARŞİV + YÖNLENDİRME =====================
 export default function Belgeler({ t, uid, belgeler, ekle, guncelle, copeAt, UcNokta, bilgi, paraSym = "₺", benAd = "", onGloxordaPaylas, onBelgeKatman }) {
-  const [acik, setAcik] = useState(null); // {mod, belge?, on?}
+  // Foto→PDF açıksa HATIRLANIR: sayfa yenilense / uygulamadan çıkılsa da aynı yerden açılır (kullanıcı 21 Kas)
+  const [acik, setAcik] = useState(() => { try { return localStorage.getItem("gw_bel_acik") === "fotopdf" ? { mod: "fotopdf" } : null; } catch (e) { return null; } }); // {mod, belge?, on?}
+  useEffect(() => { try { if (acik && acik.mod === "fotopdf") localStorage.setItem("gw_bel_acik", "fotopdf"); else localStorage.removeItem("gw_bel_acik"); } catch (e) {} }, [acik]);
   const [sablonAcik, setSablonAcik] = useState(false);
   const [ara, setAra] = useState("");
   // GERİ TUŞU: bir editör/şablon penceresi açıkken Android geri → o pencereyi kapat, MUHASEBEDE KAL (ana sayfaya atma).
@@ -460,12 +463,21 @@ function fotolariYazdir(fotolar, baslik) {
   Promise.all(yuklemeler).then(() => setTimeout(() => yazdirBaslat(baslik), 150));
 }
 
+const TASLAK_ANAHTAR = "fotopdf_taslak";
 function FotoPdfEditor({ t, onKapat, bilgi }) {
-  const [fotolar, setFotolar] = useState([]); // {d: son hali (dataURL), o: orijinal, k: köşeler|null}
+  // fotoğraf: {d: son hali, o: orijinal, k: köşeler|null, oran, mm} · yüklenen PDF: {tur:"pdf", ad, veri, sayfa}
+  // ⛔ HİÇBİR ŞEY KENDİLİĞİNDEN SİLİNMEZ (kullanıcı 21 Kas): liste + başlık telefonun hafızasına (IndexedDB) yazılır;
+  //   geri tuşu, çıkış, sayfa yenileme sonrası aynen geri gelir. Sadece kullanıcı "Sil"e basıp ONAYLARSA silinir.
+  const [fotolar, setFotolar] = useState([]);
   const [baslik, setBaslik] = useState("");
+  const [yuklendi, setYuklendi] = useState(false);
+  useEffect(() => { medyaOku(TASLAK_ANAHTAR).then((v) => { if (v && Array.isArray(v.fotolar)) { setFotolar(v.fotolar); setBaslik(v.baslik || ""); } setYuklendi(true); }); }, []);
+  useEffect(() => { if (yuklendi) medyaYaz(TASLAK_ANAHTAR, { fotolar, baslik, zaman: Date.now() }); }, [fotolar, baslik, yuklendi]);
+  const dosyaRef = useRef(null);
   const [yuk, setYuk] = useState(false);
   const [kose, setKose] = useState(null); // köşe ayar ekranı: {src, i (düzeltilen sıra; yoksa yeni), k, oran, mm}
-  const [kamera, setKamera] = useState(false); // uygulama içi çerçeveli kamera açık mı
+  const [kamera, setKamera] = useState(() => { try { return localStorage.getItem("gw_bel_kamera") === "1"; } catch (e) { return false; } }); // uygulama içi kamera (yenilemede yine açılır)
+  useEffect(() => { try { if (kamera) localStorage.setItem("gw_bel_kamera", "1"); else localStorage.removeItem("gw_bel_kamera"); } catch (e) {} }, [kamera]);
   const [bak, setBak] = useState(-1); // tam ekran önizlenen fotoğraf sırası
   const galeriRef = useRef(null); const kameraRef = useRef(null);
 
@@ -488,7 +500,23 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
     setFotolar((a) => (i >= 0 ? a.map((f, j) => (j === i ? { d: src, o: src, k: null } : f)) : [...a, { d: src, o: src, k: null }]));
     setKose(null);
   };
-  const sil = (i) => { setFotolar((a) => a.filter((_, j) => j !== i)); setBak(-1); };
+  // SİL: her zaman ÖNCE SOR (iki adım). Onaylanırsa true döner.
+  const sil = (i) => {
+    if (!window.confirm(t("belSayfaSilSor", "{{n}}. sayfa silinsin mi?", { n: i + 1 }))) return false;
+    setFotolar((a) => a.filter((_, j) => j !== i)); setBak(-1); return true;
+  };
+  const hepsiniTemizle = () => { if (window.confirm(t("belHepsiSilSor", "Tüm sayfalar silinsin ve yeni belgeye başlansın mı?"))) { setFotolar([]); setBaslik(""); } };
+  // DOSYA / BELGE YÜKLE: telefondaki belgeler (PDF ya da resim) açılır
+  const dosyaSec = async (e) => {
+    const files = Array.from(e.target.files || []); e.target.value = "";
+    for (const f of files) {
+      try {
+        if ((f.type || "").indexOf("pdf") >= 0 || /\.pdf$/i.test(f.name || "")) { const pd = await pdfDosyasiOku(f); setFotolar((a) => [...a, pd]); }
+        else if ((f.type || "").indexOf("image") === 0) { const d = await dosyadanResim(f); setFotolar((a) => [...a, { d, o: d, k: null }]); }
+        else bilgi(t("belDosyaDesteklenmez", "Bu dosya türü eklenemedi (PDF ya da fotoğraf seç)"));
+      } catch (x) { bilgi(t("belDosyaOkunamadi", "Dosya açılamadı")); }
+    }
+  };
   const tasi = (i, y) => setFotolar((a) => { const j = i + y; if (j < 0 || j >= a.length) return a; const b = [...a]; const tmp = b[i]; b[i] = b[j]; b[j] = tmp; return b; });
   const pdfVer = async (islem) => {
     if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; }
@@ -501,7 +529,7 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
   };
 
   if (kose) return <KoseAyar t={t} src={kose.src} ilkKoseler={kose.k} hedefOran={kose.oran} onTamam={koseBitti} onOlduguGibi={olduguGibi} onIptal={() => setKose(null)} />;
-  if (kamera) return <KameraTarayici t={t} onIptal={() => setKamera(false)} onBitti={(sayfalar) => { setFotolar((a) => [...a, ...sayfalar]); setKamera(false); }}
+  if (kamera) return <KameraTarayici t={t} fotolar={fotolar} onEkle={(f) => setFotolar((a) => [...a, f])} onSil={sil} onKapat={() => setKamera(false)}
     onKameraYok={() => { setKamera(false); if (kameraRef.current) kameraRef.current.click(); }} />;
   const onizlenen = bak >= 0 ? fotolar[bak] : null;
   return (
@@ -513,14 +541,16 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
       <div className="bel-alt-dugmeler">
         <button className="muh-btn muh-ekle" onClick={() => setKamera(true)}>📷 {t("belKamerayla", "Kamerayla çek")}</button>
         <button className="muh-btn muh-ekle bt-galeri" onClick={() => galeriRef.current && galeriRef.current.click()}>🖼️ {t("belGaleriden", "Galeriden ekle")}</button>
+        <button className="muh-btn muh-ekle bt-dosya" onClick={() => dosyaRef.current && dosyaRef.current.click()}>📁 {t("belDosyaYukle", "Dosya / belge yükle")}</button>
       </div>
+      <input ref={dosyaRef} type="file" accept="application/pdf,.pdf,image/*" multiple style={{ display: "none" }} onChange={dosyaSec} />
       <input ref={kameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={kameradan} />
       <input ref={galeriRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={galeridenSec} />
       <div className="bel-foto-liste">
         {fotolar.length === 0 ? <div className="muh-bos">💛 {t("belFotoAlt2", "Belgeyi kamerayla çek ya da galeriden ekle. Her fotoğraf PDF'te ayrı bir A4 sayfa olur.")}</div>
           : fotolar.map((f, i) => (
             <div className="bel-foto-oge" key={i}>
-              <button className="bt-kucuk" onClick={() => setBak(i)} title={t("belBuyut", "Büyüt")}><img src={f.d} alt="" /><span className="bt-no">{i + 1}</span></button>
+              <button className="bt-kucuk" onClick={() => setBak(i)} title={t("belBuyut", "Büyüt")}><SayfaKucuk f={f} /><span className="bt-no">{i + 1}</span></button>
               <div className="bel-foto-dug">
                 <button onClick={() => tasi(i, -1)} aria-label="Yukarı" title={t("belYukari", "Öne al")}>↑</button>
                 <button onClick={() => tasi(i, 1)} aria-label="Aşağı" title={t("belAsagi", "Geri al")}>↓</button>
@@ -529,10 +559,11 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
             </div>
           ))}
       </div>
+      {fotolar.length ? <button className="bt-temizle" onClick={hepsiniTemizle}>🗑️ {t("belYeniBelge", "Hepsini sil — yeni belge")}</button> : null}
       <div className="bel-alt-dugmeler bt-uc">
         <button className="muh-btn muh-pdf" disabled={yuk} onClick={() => pdfVer("indir")}>📥 {t("belPdfIndir", "PDF indir")}</button>
         <button className="muh-btn muh-pdf bt-gonder" disabled={yuk} onClick={() => pdfVer("gonder")}>📤 {t("belPdfGonder", "PDF gönder")}</button>
-        <button className="muh-btn muh-yazdir-btn" disabled={yuk} onClick={() => { if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; } fotolariYazdir(fotolar, baslik || "GLOXORG"); }}>🖨️ {t("belYazdir", "Yazdır")}</button>
+        <button className="muh-btn muh-yazdir-btn" disabled={yuk} onClick={() => { if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; } if (fotolar.some((f) => f.tur === "pdf")) pdfVer("indir"); else fotolariYazdir(fotolar, baslik || "GLOXORG"); }}>🖨️ {t("belYazdir", "Yazdır")}</button>
       </div>
       {onizlenen ? (
         <div className="bt-onizle" onClick={() => setBak(-1)}>
@@ -540,9 +571,9 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
             <b>{bak + 1} / {fotolar.length}</b>
             <button className="bt-btn iptal" onClick={() => setBak(-1)} title={t("kapat", "Kapat")}>✕</button>
           </div>
-          <img src={onizlenen.d} alt="" onClick={(e) => e.stopPropagation()} />
+          {onizlenen.tur === "pdf" ? <div className="bt-pdf-buyuk" onClick={(e) => e.stopPropagation()}><SayfaKucuk f={onizlenen} /></div> : <img src={onizlenen.d} alt="" onClick={(e) => e.stopPropagation()} />}
           <div className="bt-alt" onClick={(e) => e.stopPropagation()}>
-            <button className="bt-btn oldugu" onClick={() => { const f = onizlenen; setBak(-1); setKose({ src: f.o || f.d, i: bak, k: f.k, oran: f.oran, mm: f.mm }); }}>✂️ {t("belKoseAyarla", "Köşeleri ayarla")}</button>
+            {onizlenen.tur === "pdf" ? null : <button className="bt-btn oldugu" onClick={() => { const f = onizlenen; setBak(-1); setKose({ src: f.o || f.d, i: bak, k: f.k, oran: f.oran, mm: f.mm }); }}>✂️ {t("belKoseAyarla", "Köşeleri ayarla")}</button>}
             <button className="bt-btn iptal" onClick={() => sil(bak)}>🗑️ {t("sil", "Sil")}</button>
           </div>
         </div>

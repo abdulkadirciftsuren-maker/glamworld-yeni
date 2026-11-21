@@ -5706,7 +5706,15 @@ select.muh-inp{ appearance:none; -webkit-appearance:none; background-image:linea
 .bt-serit-oge b{ position:absolute; left:2px; top:2px; background:#b8860b; color:#fff; font-size:11px; border-radius:4px; padding:0 4px; }
 .bt-serit-oge button{ position:absolute; right:2px; top:2px; width:20px; height:20px; border-radius:5px; border:0; background:#fff2f0; color:#b0291d; font-weight:900; font-size:11px; padding:0; cursor:pointer; }
 .bt-btn.cek{ background:linear-gradient(90deg,#ffd84d,#f2b705); color:#3a2a05; flex:1.4; }
-@media (min-width:560px){ .bt-ust{ font-size:20px; } .bt-tip{ font-size:17px; min-height:52px; } .bt-serit-oge{ width:72px; height:88px; } .bt-btn{ font-size:18px; min-height:60px; } .bt-kucuk img{ height:170px; } .bt-onizle-ust{ font-size:22px; } }
+.bt-dosya{ background:linear-gradient(90deg,#cfe3ff,#9cc3f5) !important; color:#173d8a !important; }
+.bt-serit-oge{ padding:0; cursor:pointer; }
+.bt-pdf-kutu{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; width:100%; height:100%; min-height:60px; background:linear-gradient(160deg,#fff2f0,#ffd9d2); color:#9a2416; padding:4px; box-sizing:border-box; text-align:center; }
+.bt-pdf-kutu b{ font-size:13px; } .bt-pdf-kutu i{ font-style:normal; font-size:10.5px; color:#5a2a1a; overflow-wrap:anywhere; max-height:2.6em; overflow:hidden; } .bt-pdf-kutu em{ font-style:normal; font-weight:900; font-size:11px; }
+.bel-foto-oge .bt-pdf-kutu{ height:130px; }
+.bt-pdf-buyuk{ flex:1; margin:0 10px; display:flex; border-radius:10px; overflow:hidden; }
+.bt-pdf-buyuk .bt-pdf-kutu b{ font-size:30px; } .bt-pdf-buyuk .bt-pdf-kutu i{ font-size:17px; max-height:none; } .bt-pdf-buyuk .bt-pdf-kutu em{ font-size:18px; }
+.bt-temizle{ display:block; margin:0 0 8px auto; background:#fff2f0; color:#b0291d; border:1.5px solid #e0a79f; border-radius:10px; font-weight:800; font-size:13.5px; padding:7px 10px; cursor:pointer; }
+@media (min-width:560px){ .bt-ust{ font-size:20px; } .bt-temizle{ font-size:16px; } .bel-foto-oge .bt-pdf-kutu{ height:170px; } .bt-tip{ font-size:17px; min-height:52px; } .bt-serit-oge{ width:72px; height:88px; } .bt-btn{ font-size:18px; min-height:60px; } .bt-kucuk img{ height:170px; } .bt-onizle-ust{ font-size:22px; } }
 .bel-foto-dug{ display:flex; justify-content:center; gap:4px; padding:4px; background:#fffbe9; }
 .bel-foto-dug button{ background:#fff7db; border:1.2px solid rgba(184,134,11,.5); border-radius:7px; width:28px; height:26px; font-size:13px; font-weight:900; color:#7a5a00; cursor:pointer; }
 .bel-yeni-btn.sablon{ background:linear-gradient(150deg,#8e7cc3,#5b4a9e); }

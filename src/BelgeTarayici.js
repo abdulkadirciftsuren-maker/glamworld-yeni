@@ -135,28 +135,49 @@ export function duzlestir(im, k, hedefOran) {
   return out.toDataURL("image/jpeg", 0.9);
 }
 
-// ---- 4) PDF: her fotoğraf AYRI A4 sayfa (yatay fotoğraf → yatay sayfa), sayfaya sığdır + ortala
+// ---- 4) PDF (pdf-lib): her fotoğraf AYRI A4 sayfa (yatay foto → yatay sayfa), sığdır + ortala; kimlik/pasaport gerçek
+//   boyutunda; YÜKLENEN PDF dosyalarının sayfaları olduğu gibi (kalite bozulmadan) araya eklenir.
+const A4_PT = [595.28, 841.89], MM_PT = 72 / 25.4;
+const dataUrlBayt = (d) => { const b = atob(String(d).slice(String(d).indexOf(",") + 1)); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
 export async function fotoPdfBlob(fotolar, baslik) {
-  const { jsPDF } = await import("jspdf");
-  let pdf = null;
+  const { PDFDocument } = await import("pdf-lib");
+  const doc = await PDFDocument.create();
   for (const f of fotolar) {
-    const im = await resimYukle(f.d);
-    if (f.mm) { // KİMLİK / PASAPORT: dikey A4 üstünde GERÇEK boyutunda (fotokopi gibi), ortada
-      if (!pdf) pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" }); else pdf.addPage("a4", "portrait");
-      const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), mm = 72 / 25.4;
-      const cw = f.mm.w * mm, ch = f.mm.h * mm;
-      pdf.addImage(f.d, "JPEG", (pw - cw) / 2, (ph - ch) / 3, cw, ch);
+    if (f.tur === "pdf") {
+      const kaynak = await PDFDocument.load(f.veri, { ignoreEncryption: true });
+      const sayfalar = await doc.copyPages(kaynak, kaynak.getPageIndices());
+      sayfalar.forEach((sp) => doc.addPage(sp));
       continue;
     }
-    const yon = im.naturalWidth > im.naturalHeight ? "landscape" : "portrait";
-    if (!pdf) pdf = new jsPDF({ unit: "pt", format: "a4", orientation: yon }); else pdf.addPage("a4", yon);
-    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), kenar = 14;
-    const olc = Math.min((pw - kenar * 2) / im.naturalWidth, (ph - kenar * 2) / im.naturalHeight);
-    const w = im.naturalWidth * olc, h = im.naturalHeight * olc;
-    pdf.addImage(f.d, "JPEG", (pw - w) / 2, (ph - h) / 2, w, h);
+    const bayt = dataUrlBayt(f.d);
+    const resim = String(f.d).indexOf("image/png") > 0 ? await doc.embedPng(bayt) : await doc.embedJpg(bayt);
+    if (f.mm) { // KİMLİK / PASAPORT: dikey A4 üstünde GERÇEK boyutunda (fotokopi gibi), üst üçte birde ortalı
+      const sp = doc.addPage(A4_PT), cw = f.mm.w * MM_PT, ch = f.mm.h * MM_PT;
+      sp.drawImage(resim, { x: (A4_PT[0] - cw) / 2, y: A4_PT[1] - (A4_PT[1] - ch) / 3 - ch, width: cw, height: ch });
+      continue;
+    }
+    const yatay = resim.width > resim.height, pw = yatay ? A4_PT[1] : A4_PT[0], ph = yatay ? A4_PT[0] : A4_PT[1], kenar = 14;
+    const sp = doc.addPage([pw, ph]);
+    const olc = Math.min((pw - kenar * 2) / resim.width, (ph - kenar * 2) / resim.height), w = resim.width * olc, h = resim.height * olc;
+    sp.drawImage(resim, { x: (pw - w) / 2, y: (ph - h) / 2, width: w, height: h });
   }
-  try { pdf.setProperties({ title: baslik || "GLOXORG" }); } catch (e) {}
-  return pdf.output("blob");
+  try { doc.setTitle(baslik || "GLOXORG"); doc.setCreator("GLOXORG"); } catch (e) {}
+  const bytes = await doc.save();
+  return new Blob([bytes], { type: "application/pdf" });
+}
+
+// PDF dosyasını oku (yükle düğmesi) → {tur:"pdf", ad, veri, sayfa}
+export async function pdfDosyasiOku(f) {
+  const veri = new Uint8Array(await f.arrayBuffer());
+  let sayfa = 0;
+  try { const { PDFDocument } = await import("pdf-lib"); sayfa = (await PDFDocument.load(veri, { ignoreEncryption: true })).getPageCount(); } catch (e) { throw new Error("pdf okunamadı"); }
+  return { tur: "pdf", ad: f.name || "belge.pdf", veri, sayfa };
+}
+
+// Küçük resim kutusu (fotoğraf ya da yüklenen PDF)
+export function SayfaKucuk({ f }) {
+  if (f.tur === "pdf") return <span className="bt-pdf-kutu"><b>📄 PDF</b><i>{f.ad}</i><em>📃 × {f.sayfa}</em></span>;
+  return <img src={f.d} alt="" />;
 }
 
 // ---- 2) KÖŞE AYAR EKRANI (tam ekran, altın zemin, 4 kare tutamaç + büyüteç)
@@ -233,14 +254,16 @@ export const BELGE_TIPLERI = [
   { id: "a4", anahtar: "btTipA4", ad: "A4 / dikey belge", oran: 297 / 210 },
   { id: "yatay", anahtar: "btTipYatay", ad: "Yatay kâğıt (A4/A3 yatay)", oran: 210 / 297 },
   { id: "kimlik", anahtar: "btTipKimlik", ad: "Kimlik / kart", oran: 54 / 85.6, mm: { w: 85.6, h: 54 } },
-  { id: "pasaport", anahtar: "btTipPasaport", ad: "Pasaport", oran: 88 / 125, mm: { w: 125, h: 88 } },
+  // Pasaport AÇIK (iki sayfa, bilgi sayfası altta) → DİKEY: 125 mm genişlik × 2×88 mm yükseklik (kullanıcı 21 Kas)
+  { id: "pasaport", anahtar: "btTipPasaport", ad: "Pasaport (açık, 2 sayfa)", oran: 176 / 125, mm: { w: 125, h: 176 } },
 ];
 
-export function KameraTarayici({ t, onBitti, onIptal, onKameraYok }) {
+export function KameraTarayici({ t, fotolar, onEkle, onSil, onKapat, onKameraYok }) {
   const [tipId, setTipId] = useState(() => { try { return localStorage.getItem("gw_bt_tip") || "a4"; } catch (e) { return "a4"; } });
   const tip = BELGE_TIPLERI.find((x) => x.id === tipId) || BELGE_TIPLERI[0];
   useEffect(() => { try { localStorage.setItem("gw_bt_tip", tipId); } catch (e) {} }, [tipId]);
-  const [sayfalar, setSayfalar] = useState([]);
+  const sayfalar = fotolar || []; // çekilen her sayfa ANINDA ana listeye (hafızaya) eklenir → çıkınca/yenilenince kaybolmaz
+  const [bak, setBak] = useState(-1); // şeritte dokunulan sayfa → büyük önizleme
   const [hazir, setHazir] = useState(false);
   const [isliyor, setIsliyor] = useState(false);
   const [flas, setFlas] = useState(false);
@@ -270,7 +293,7 @@ export function KameraTarayici({ t, onBitti, onIptal, onKameraYok }) {
   }, [tip.oran]);
   useEffect(() => { olcu(); window.addEventListener("resize", olcu); return () => window.removeEventListener("resize", olcu); }, [olcu]);
 
-  const sayfaEkle = (d, o, k, tp) => setSayfalar((a) => [...a, { d, o, k, mm: tp.mm || null, oran: tp.oran }]);
+  const sayfaEkle = (d, o, k, tp) => onEkle({ d, o, k, mm: tp.mm || null, oran: tp.oran });
 
   const cek = async () => {
     const v = videoRef.current; if (!v || !v.videoWidth || !cerceve || isliyor) return;
@@ -301,6 +324,17 @@ export function KameraTarayici({ t, onBitti, onIptal, onKameraYok }) {
     onOlduguGibi={() => { sayfaEkle(manuel.src, manuel.src, null, manuel.tip); setManuel(null); }}
     onIptal={() => setManuel(null)} />;
 
+  const onizlenen = bak >= 0 ? sayfalar[bak] : null;
+  if (onizlenen) return (
+    <div className="bt-onizle">
+      <div className="bt-onizle-ust"><b>{bak + 1} / {sayfalar.length}</b><button className="bt-btn iptal" onClick={() => setBak(-1)} title={t("kapat", "Kapat")}>✕</button></div>
+      {onizlenen.tur === "pdf" ? <div className="bt-pdf-buyuk"><SayfaKucuk f={onizlenen} /></div> : <img src={onizlenen.d} alt="" />}
+      <div className="bt-alt">
+        <button className="bt-btn oldugu" onClick={() => setBak(-1)}>‹ {t("btKameraya", "Kameraya dön")}</button>
+        <button className="bt-btn iptal" onClick={() => { if (onSil(bak)) setBak(-1); }}>🗑️ {t("sil", "Sil")}</button>
+      </div>
+    </div>
+  );
   return (
     <div className="bt-ekran">
       <div className="bt-ust">{t("btKameraYazi", "Belgeyi sarı çerçevenin içine al ve Çek'e bas. Arka yüzü ve diğer sayfaları da çek, sonra Bitti'ye bas.")}</div>
@@ -315,13 +349,13 @@ export function KameraTarayici({ t, onBitti, onIptal, onKameraYok }) {
       </div>
       {sayfalar.length ? (
         <div className="bt-seritler">
-          {sayfalar.map((f, i) => <div key={i} className="bt-serit-oge"><img src={f.d} alt="" /><b>{i + 1}</b><button onClick={() => setSayfalar((a) => a.filter((_, j) => j !== i))} title={t("sil", "Sil")}>✕</button></div>)}
+          {sayfalar.map((f, i) => <button key={i} className="bt-serit-oge" onClick={() => setBak(i)} title={t("belBuyut", "Büyüt")}><SayfaKucuk f={f} /><b>{i + 1}</b></button>)}
         </div>
       ) : null}
       <div className="bt-alt">
-        <button className="bt-btn iptal" onClick={onIptal}>{t("btVazgec", "Vazgeç")}</button>
+        <button className="bt-btn iptal" onClick={onKapat}>✕ {t("kapat", "Kapat")}</button>
         <button className="bt-btn cek" disabled={!hazir || isliyor} onClick={cek}>{isliyor ? "⏳" : "📸"} {t("btSayfayiCek", "{{n}}. sayfayı çek", { n: sayfalar.length + 1 })}</button>
-        <button className="bt-btn tamam" disabled={!sayfalar.length} onClick={() => onBitti(sayfalar)}>✓ {t("btBitti", "Bitti")}{sayfalar.length ? " (" + sayfalar.length + ")" : ""}</button>
+        <button className="bt-btn tamam" disabled={!sayfalar.length} onClick={onKapat}>✓ {t("btBitti", "Bitti")}{sayfalar.length ? " (" + sayfalar.length + ")" : ""}</button>
       </div>
     </div>
   );
