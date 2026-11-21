@@ -33,9 +33,10 @@ export function dosyadanResim(f, max = 2000) {
 }
 
 // ---- 1) KÖŞE BUL: küçült → gri → Otsu eşiği → en büyük AÇIK renkli bölge → uç noktalar = köşeler
-export function koseBul(im) {
+// minOran: bulunan kâğıt fotoğrafın en az bu kadarını kaplamalı (çerçeveli kamerada 0.35). Bulamazsa dönen dizide bulunamadi=true.
+export function koseBul(im, minOran = 0.12) {
   const W0 = im.naturalWidth, H0 = im.naturalHeight;
-  const varsayilan = () => { const dx = W0 * 0.06, dy = H0 * 0.06; return [{ x: dx, y: dy }, { x: W0 - dx, y: dy }, { x: W0 - dx, y: H0 - dy }, { x: dx, y: H0 - dy }]; };
+  const varsayilan = () => { const dx = W0 * 0.06, dy = H0 * 0.06; const v = [{ x: dx, y: dy }, { x: W0 - dx, y: dy }, { x: W0 - dx, y: H0 - dy }, { x: dx, y: H0 - dy }]; v.bulunamadi = true; return v; };
   try {
     const olc = Math.min(1, 360 / Math.max(W0, H0));
     const w = Math.max(8, Math.round(W0 * olc)), h = Math.max(8, Math.round(H0 * olc));
@@ -77,7 +78,7 @@ export function koseBul(im) {
     const k = [tl, tr, br, bl].map((q) => ({ x: Math.min(W0, Math.max(0, (q.x + 0.5) / olc)), y: Math.min(H0, Math.max(0, (q.y + 0.5) / olc)) }));
     // Dörtgen alanı çok küçükse (yanlış bulduysa) varsayılan
     const alan = Math.abs((k[0].x * k[1].y - k[1].x * k[0].y) + (k[1].x * k[2].y - k[2].x * k[1].y) + (k[2].x * k[3].y - k[3].x * k[2].y) + (k[3].x * k[0].y - k[0].x * k[3].y)) / 2;
-    if (alan < W0 * H0 * 0.12) return varsayilan();
+    if (alan < W0 * H0 * Math.max(0.12, minOran)) return varsayilan();
     return k;
   } catch (e) { return varsayilan(); }
 }
@@ -102,9 +103,10 @@ function homografi(kaynak, W, H) {
 }
 const uzak = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
 
-export function duzlestir(im, k) {
+// hedefOran (yükseklik/genişlik): seçilen çerçeve türü (A4, kimlik, pasaport…) → sayfa tam o orana oturur
+export function duzlestir(im, k, hedefOran) {
   const gen = (uzak(k[0], k[1]) + uzak(k[3], k[2])) / 2, yuk = (uzak(k[0], k[3]) + uzak(k[1], k[2])) / 2;
-  let oran = yuk / Math.max(1, gen);
+  let oran = hedefOran || yuk / Math.max(1, gen);
   // A4'e yakınsa tam A4 oranına oturt (dikey ya da yatay); değilse (fiş, kart) kendi oranı kalır
   if (Math.abs(oran - A4_ORAN) / A4_ORAN < 0.22) oran = A4_ORAN; else if (Math.abs(oran - 1 / A4_ORAN) * A4_ORAN < 0.22) oran = 1 / A4_ORAN;
   const uzun = 1754; let W, H;
@@ -139,6 +141,13 @@ export async function fotoPdfBlob(fotolar, baslik) {
   let pdf = null;
   for (const f of fotolar) {
     const im = await resimYukle(f.d);
+    if (f.mm) { // KİMLİK / PASAPORT: dikey A4 üstünde GERÇEK boyutunda (fotokopi gibi), ortada
+      if (!pdf) pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" }); else pdf.addPage("a4", "portrait");
+      const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), mm = 72 / 25.4;
+      const cw = f.mm.w * mm, ch = f.mm.h * mm;
+      pdf.addImage(f.d, "JPEG", (pw - cw) / 2, (ph - ch) / 3, cw, ch);
+      continue;
+    }
     const yon = im.naturalWidth > im.naturalHeight ? "landscape" : "portrait";
     if (!pdf) pdf = new jsPDF({ unit: "pt", format: "a4", orientation: yon }); else pdf.addPage("a4", yon);
     const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), kenar = 14;
@@ -151,7 +160,7 @@ export async function fotoPdfBlob(fotolar, baslik) {
 }
 
 // ---- 2) KÖŞE AYAR EKRANI (tam ekran, altın zemin, 4 kare tutamaç + büyüteç)
-export function KoseAyar({ t, src, ilkKoseler, onTamam, onOlduguGibi, onIptal }) {
+export function KoseAyar({ t, src, ilkKoseler, hedefOran, onTamam, onOlduguGibi, onIptal }) {
   const [im, setIm] = useState(null);
   const [k, setK] = useState(null);
   const [kutu, setKutu] = useState(null); // resmin ekrandaki yeri {x,y,w,h,olc}
@@ -180,7 +189,7 @@ export function KoseAyar({ t, src, ilkKoseler, onTamam, onOlduguGibi, onIptal })
   const tamam = async () => {
     if (!im || !k) return; setIsliyor(true);
     await new Promise((r) => setTimeout(r, 30)); // "hazırlanıyor" yazısı görünsün
-    try { onTamam(duzlestir(im, k), k); } catch (e) { onOlduguGibi && onOlduguGibi(); }
+    try { onTamam(duzlestir(im, k, hedefOran), k); } catch (e) { onOlduguGibi && onOlduguGibi(); }
     setIsliyor(false);
   };
 
@@ -212,6 +221,107 @@ export function KoseAyar({ t, src, ilkKoseler, onTamam, onOlduguGibi, onIptal })
         <button className="bt-btn iptal" onClick={onIptal}>✕ {t("belIptal", "İptal")}</button>
         <button className="bt-btn oldugu" onClick={onOlduguGibi}>{t("belOlduguGibi", "Olduğu gibi")}</button>
         <button className="bt-btn tamam" disabled={isliyor || !k} onClick={tamam}>{isliyor ? "⏳" : "✓"} {t("belKirpKaydet", "Kırp ve kaydet")}</button>
+      </div>
+    </div>
+  );
+}
+
+// ---- 5) UYGULAMA İÇİ KAMERA (kullanıcı 21 Kas, Dokumentem gibi): belge türüne göre ÇERÇEVE seç, belgeyi çerçeveye al, Çek.
+//   Sadece çerçeve bölgesi (+ küçük pay) alınır → "her tarafı almasın". Köşeler OTOMATİK bulunup kırpılır;
+//   bulunamazsa köşe ayar ekranı açılır (tutamaçlar çerçevenin köşelerinde başlar). Birden çok sayfa çekilir, sonra Bitti.
+export const BELGE_TIPLERI = [
+  { id: "a4", anahtar: "btTipA4", ad: "A4 / dikey belge", oran: 297 / 210 },
+  { id: "yatay", anahtar: "btTipYatay", ad: "Yatay kâğıt (A4/A3 yatay)", oran: 210 / 297 },
+  { id: "kimlik", anahtar: "btTipKimlik", ad: "Kimlik / kart", oran: 54 / 85.6, mm: { w: 85.6, h: 54 } },
+  { id: "pasaport", anahtar: "btTipPasaport", ad: "Pasaport", oran: 88 / 125, mm: { w: 125, h: 88 } },
+];
+
+export function KameraTarayici({ t, onBitti, onIptal, onKameraYok }) {
+  const [tipId, setTipId] = useState(() => { try { return localStorage.getItem("gw_bt_tip") || "a4"; } catch (e) { return "a4"; } });
+  const tip = BELGE_TIPLERI.find((x) => x.id === tipId) || BELGE_TIPLERI[0];
+  useEffect(() => { try { localStorage.setItem("gw_bt_tip", tipId); } catch (e) {} }, [tipId]);
+  const [sayfalar, setSayfalar] = useState([]);
+  const [hazir, setHazir] = useState(false);
+  const [isliyor, setIsliyor] = useState(false);
+  const [flas, setFlas] = useState(false);
+  const [manuel, setManuel] = useState(null); // {src, k, tip} köşe bulunamadı → elle
+  const [cerceve, setCerceve] = useState(null); // ekranda çerçeve {x,y,w,h} + video yeri {vx,vy,vw,vh,olc}
+  const videoRef = useRef(null), alanRef = useRef(null), akisRef = useRef(null);
+
+  useEffect(() => {
+    let iptal = false;
+    (async () => {
+      try {
+        const akis = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1440 } } });
+        if (iptal) { akis.getTracks().forEach((x) => x.stop()); return; }
+        akisRef.current = akis;
+        const v = videoRef.current; if (v) { v.srcObject = akis; try { await v.play(); } catch (e) {} }
+      } catch (e) { if (!iptal && onKameraYok) onKameraYok(); }
+    })();
+    return () => { iptal = true; try { ((akisRef.current && akisRef.current.getTracks()) || []).forEach((x) => x.stop()); } catch (e) {} };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const olcu = useCallback(() => {
+    const v = videoRef.current, a = alanRef.current; if (!v || !a || !v.videoWidth) return;
+    const r = a.getBoundingClientRect(), olc = Math.min(r.width / v.videoWidth, r.height / v.videoHeight);
+    const vw = v.videoWidth * olc, vh = v.videoHeight * olc, vx = (r.width - vw) / 2, vy = (r.height - vh) / 2;
+    let w = vw * 0.88, h = w * tip.oran; if (h > vh * 0.88) { h = vh * 0.88; w = h / tip.oran; }
+    setCerceve({ x: vx + (vw - w) / 2, y: vy + (vh - h) / 2, w, h, vx, vy, vw, vh, olc });
+  }, [tip.oran]);
+  useEffect(() => { olcu(); window.addEventListener("resize", olcu); return () => window.removeEventListener("resize", olcu); }, [olcu]);
+
+  const sayfaEkle = (d, o, k, tp) => setSayfalar((a) => [...a, { d, o, k, mm: tp.mm || null, oran: tp.oran }]);
+
+  const cek = async () => {
+    const v = videoRef.current; if (!v || !v.videoWidth || !cerceve || isliyor) return;
+    setIsliyor(true); setFlas(true); setTimeout(() => setFlas(false), 160);
+    try {
+      const c = cerceve, pay = 0.08;
+      // Çerçeveyi video piksellerine çevir, her yandan %8 pay bırak (belge biraz taşsa da köşeler kaybolmasın)
+      const fx = (c.x - c.vx) / c.olc, fy = (c.y - c.vy) / c.olc, fw = c.w / c.olc, fh = c.h / c.olc;
+      const px = fw * pay, py = fh * pay;
+      const sx = Math.max(0, fx - px), sy = Math.max(0, fy - py);
+      const sw = Math.min(v.videoWidth - sx, fw + px * 2), sh = Math.min(v.videoHeight - sy, fh + py * 2);
+      const cv = document.createElement("canvas"); cv.width = Math.round(sw); cv.height = Math.round(sh);
+      cv.getContext("2d").drawImage(v, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+      const src = cv.toDataURL("image/jpeg", 0.92);
+      const im = await resimYukle(src);
+      const k = koseBul(im, 0.35);
+      if (!k.bulunamadi) sayfaEkle(duzlestir(im, k, tip.oran), src, k, tip);
+      else { // bulunamadı → tutamaçlar ÇERÇEVENİN köşelerinde başlar, kullanıcı düzeltir
+        const x0 = fx - sx, y0 = fy - sy;
+        setManuel({ src, tip, k: [{ x: x0, y: y0 }, { x: x0 + fw, y: y0 }, { x: x0 + fw, y: y0 + fh }, { x: x0, y: y0 + fh }] });
+      }
+    } catch (e) {}
+    setIsliyor(false);
+  };
+
+  if (manuel) return <KoseAyar t={t} src={manuel.src} ilkKoseler={manuel.k} hedefOran={manuel.tip.oran}
+    onTamam={(d, k) => { sayfaEkle(d, manuel.src, k, manuel.tip); setManuel(null); }}
+    onOlduguGibi={() => { sayfaEkle(manuel.src, manuel.src, null, manuel.tip); setManuel(null); }}
+    onIptal={() => setManuel(null)} />;
+
+  return (
+    <div className="bt-ekran">
+      <div className="bt-ust">{t("btKameraYazi", "Belgeyi sarı çerçevenin içine al ve Çek'e bas. Arka yüzü ve diğer sayfaları da çek, sonra Bitti'ye bas.")}</div>
+      <div className="bt-tipler">
+        {BELGE_TIPLERI.map((x) => <button key={x.id} className={"bt-tip" + (x.id === tipId ? " secili" : "")} onClick={() => setTipId(x.id)}>{t(x.anahtar, x.ad)}</button>)}
+      </div>
+      <div className="bt-alan" ref={alanRef}>
+        <video ref={videoRef} className="bt-video" playsInline muted autoPlay onLoadedMetadata={() => { olcu(); setHazir(true); }} />
+        {cerceve ? <div className="bt-cerceve" style={{ left: cerceve.x, top: cerceve.y, width: cerceve.w, height: cerceve.h }}><span /></div> : null}
+        {!hazir ? <div className="bt-bekle">📷 {t("btKameraAciliyor", "Kamera açılıyor…")}</div> : null}
+        {flas ? <div className="bt-flas" /> : null}
+      </div>
+      {sayfalar.length ? (
+        <div className="bt-seritler">
+          {sayfalar.map((f, i) => <div key={i} className="bt-serit-oge"><img src={f.d} alt="" /><b>{i + 1}</b><button onClick={() => setSayfalar((a) => a.filter((_, j) => j !== i))} title={t("sil", "Sil")}>✕</button></div>)}
+        </div>
+      ) : null}
+      <div className="bt-alt">
+        <button className="bt-btn iptal" onClick={onIptal}>{t("btVazgec", "Vazgeç")}</button>
+        <button className="bt-btn cek" disabled={!hazir || isliyor} onClick={cek}>{isliyor ? "⏳" : "📸"} {t("btSayfayiCek", "{{n}}. sayfayı çek", { n: sayfalar.length + 1 })}</button>
+        <button className="bt-btn tamam" disabled={!sayfalar.length} onClick={() => onBitti(sayfalar)}>✓ {t("btBitti", "Bitti")}{sayfalar.length ? " (" + sayfalar.length + ")" : ""}</button>
       </div>
     </div>
   );

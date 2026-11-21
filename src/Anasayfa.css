@@ -5692,7 +5692,21 @@ select.muh-inp{ appearance:none; -webkit-appearance:none; background-image:linea
 .bt-onizle-ust{ display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 8px; color:#3a2a05; font-size:18px; }
 .bt-onizle-ust .bt-btn{ flex:0 0 52px; width:52px; }
 .bt-onizle > img{ flex:1; min-height:0; width:calc(100% - 20px); margin:0 10px; object-fit:contain; background:#fffdf3; border-radius:10px; box-shadow:0 4px 18px rgba(90,60,0,.3); }
-@media (min-width:560px){ .bt-ust{ font-size:20px; } .bt-btn{ font-size:18px; min-height:60px; } .bt-kucuk img{ height:170px; } .bt-onizle-ust{ font-size:22px; } }
+.bt-tipler{ display:flex; flex-wrap:wrap; gap:7px; padding:0 12px 8px; }
+.bt-tip{ flex:1 1 40%; min-height:44px; border-radius:12px; border:2px solid rgba(90,60,0,.35); background:#fff8e1; color:#3a2a05; font-weight:800; font-size:14px; padding:5px 8px; cursor:pointer; overflow-wrap:anywhere; }
+.bt-tip.secili{ background:linear-gradient(90deg,#2f6fe0,#1f4fb0); color:#fff; border-color:#173d8a; }
+.bt-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.bt-cerceve{ position:absolute; border:4px solid #FFD700; border-radius:12px; box-shadow:0 0 0 2px #3a2a05, 0 0 0 9999px rgba(255,236,170,.42); pointer-events:none; }
+.bt-cerceve span{ position:absolute; inset:8px; border:2px dashed rgba(255,255,255,.9); border-radius:6px; }
+.bt-bekle{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:18px; color:#3a2a05; }
+.bt-flas{ position:absolute; inset:0; background:#fff; opacity:.85; pointer-events:none; }
+.bt-seritler{ display:flex; gap:8px; overflow-x:auto; padding:8px 12px 0; }
+.bt-serit-oge{ position:relative; flex:0 0 auto; width:58px; height:70px; border-radius:8px; overflow:hidden; border:2px solid #b8860b; background:#fff; }
+.bt-serit-oge img{ width:100%; height:100%; object-fit:contain; display:block; }
+.bt-serit-oge b{ position:absolute; left:2px; top:2px; background:#b8860b; color:#fff; font-size:11px; border-radius:4px; padding:0 4px; }
+.bt-serit-oge button{ position:absolute; right:2px; top:2px; width:20px; height:20px; border-radius:5px; border:0; background:#fff2f0; color:#b0291d; font-weight:900; font-size:11px; padding:0; cursor:pointer; }
+.bt-btn.cek{ background:linear-gradient(90deg,#ffd84d,#f2b705); color:#3a2a05; flex:1.4; }
+@media (min-width:560px){ .bt-ust{ font-size:20px; } .bt-tip{ font-size:17px; min-height:52px; } .bt-serit-oge{ width:72px; height:88px; } .bt-btn{ font-size:18px; min-height:60px; } .bt-kucuk img{ height:170px; } .bt-onizle-ust{ font-size:22px; } }
 .bel-foto-dug{ display:flex; justify-content:center; gap:4px; padding:4px; background:#fffbe9; }
 .bel-foto-dug button{ background:#fff7db; border:1.2px solid rgba(184,134,11,.5); border-radius:7px; width:28px; height:26px; font-size:13px; font-weight:900; color:#7a5a00; cursor:pointer; }
 .bel-yeni-btn.sablon{ background:linear-gradient(150deg,#8e7cc3,#5b4a9e); }

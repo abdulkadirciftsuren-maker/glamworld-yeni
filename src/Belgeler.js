@@ -3,7 +3,7 @@
 // Ağır kütüphaneler (xlsx/jspdf/html2canvas) SADECE indirirken dinamik yüklenir.
 import { useState, useRef, useEffect } from "react";
 import { dosyaVer, yazdirBaslat } from "./dosyaVer";
-import { KoseAyar, dosyadanResim, fotoPdfBlob } from "./BelgeTarayici";
+import { KoseAyar, KameraTarayici, dosyadanResim, fotoPdfBlob } from "./BelgeTarayici";
 
 const bugunStr = () => { const d = new Date(); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); };
 const trTarih = (s) => { try { const [y, a, g] = (s || "").split("-"); return g ? `${g}.${a}.${y}` : (s || ""); } catch (e) { return s || ""; } };
@@ -464,7 +464,8 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
   const [fotolar, setFotolar] = useState([]); // {d: son hali (dataURL), o: orijinal, k: köşeler|null}
   const [baslik, setBaslik] = useState("");
   const [yuk, setYuk] = useState(false);
-  const [kose, setKose] = useState(null); // köşe ayar ekranı: {src, i (düzeltilen sıra; yoksa yeni), k}
+  const [kose, setKose] = useState(null); // köşe ayar ekranı: {src, i (düzeltilen sıra; yoksa yeni), k, oran, mm}
+  const [kamera, setKamera] = useState(false); // uygulama içi çerçeveli kamera açık mı
   const [bak, setBak] = useState(-1); // tam ekran önizlenen fotoğraf sırası
   const galeriRef = useRef(null); const kameraRef = useRef(null);
 
@@ -478,12 +479,12 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
     try { const d = await dosyadanResim(f); setKose({ src: d, i: -1, k: null }); } catch (x) {}
   };
   const koseBitti = (d, k) => {
-    const src = kose.src, i = kose.i;
-    setFotolar((a) => (i >= 0 ? a.map((f, j) => (j === i ? { d, o: src, k } : f)) : [...a, { d, o: src, k }]));
+    const { src, i, oran, mm } = kose;
+    setFotolar((a) => (i >= 0 ? a.map((f, j) => (j === i ? { d, o: src, k, oran, mm } : f)) : [...a, { d, o: src, k, oran, mm }]));
     setKose(null);
   };
   const olduguGibi = () => {
-    const src = kose.src, i = kose.i;
+    const { src, i } = kose;
     setFotolar((a) => (i >= 0 ? a.map((f, j) => (j === i ? { d: src, o: src, k: null } : f)) : [...a, { d: src, o: src, k: null }]));
     setKose(null);
   };
@@ -491,13 +492,17 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
   const tasi = (i, y) => setFotolar((a) => { const j = i + y; if (j < 0 || j >= a.length) return a; const b = [...a]; const tmp = b[i]; b[i] = b[j]; b[j] = tmp; return b; });
   const pdfVer = async (islem) => {
     if (!fotolar.length) { bilgi(t("belFotoYok", "Önce fotoğraf ekle")); return; }
+    // Eski telefon uygulamasında ayrı İndir/Gönder yok (hep "Aç / Gönder" sorar) → güncellemeyi söyle
+    try { const k = window.AndroidGlox; if (k && typeof k.dosyaIslem !== "function") window.alert(t("belUygGuncelle", "Ayrı \"İndir\" ve \"Gönder\" için telefon uygulamasını güncelle: Chrome'da gloxorg.com/GLOXORG-kurulum.apk?v=492 adresini aç, indir ve Güncelle'ye bas.")); } catch (e) {}
     setYuk(true);
     try { const blob = await fotoPdfBlob(fotolar, baslik); await dosyaVer(blob, dosyaAd(baslik || "foto", "pdf"), baslik || "GLOXORG", islem); bilgi(t("belPdfHazir", "PDF hazır 📄")); }
     catch (e) { bilgi(t("belOlmadi", "Olmadı")); }
     setYuk(false);
   };
 
-  if (kose) return <KoseAyar t={t} src={kose.src} ilkKoseler={kose.k} onTamam={koseBitti} onOlduguGibi={olduguGibi} onIptal={() => setKose(null)} />;
+  if (kose) return <KoseAyar t={t} src={kose.src} ilkKoseler={kose.k} hedefOran={kose.oran} onTamam={koseBitti} onOlduguGibi={olduguGibi} onIptal={() => setKose(null)} />;
+  if (kamera) return <KameraTarayici t={t} onIptal={() => setKamera(false)} onBitti={(sayfalar) => { setFotolar((a) => [...a, ...sayfalar]); setKamera(false); }}
+    onKameraYok={() => { setKamera(false); if (kameraRef.current) kameraRef.current.click(); }} />;
   const onizlenen = bak >= 0 ? fotolar[bak] : null;
   return (
     <div className="bel-editor">
@@ -506,7 +511,7 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
         <input className="bel-ad-inp" value={baslik} onChange={(e) => setBaslik(e.target.value)} placeholder={t("belFotoBaslik", "Başlık (isteğe bağlı)")} /><button className="bel-kapat-x" onClick={onKapat} title={t("kapat", "Kapat")}>✕</button>
       </div>
       <div className="bel-alt-dugmeler">
-        <button className="muh-btn muh-ekle" onClick={() => kameraRef.current && kameraRef.current.click()}>📷 {t("belKamerayla", "Kamerayla çek")}</button>
+        <button className="muh-btn muh-ekle" onClick={() => setKamera(true)}>📷 {t("belKamerayla", "Kamerayla çek")}</button>
         <button className="muh-btn muh-ekle bt-galeri" onClick={() => galeriRef.current && galeriRef.current.click()}>🖼️ {t("belGaleriden", "Galeriden ekle")}</button>
       </div>
       <input ref={kameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={kameradan} />
@@ -537,7 +542,7 @@ function FotoPdfEditor({ t, onKapat, bilgi }) {
           </div>
           <img src={onizlenen.d} alt="" onClick={(e) => e.stopPropagation()} />
           <div className="bt-alt" onClick={(e) => e.stopPropagation()}>
-            <button className="bt-btn oldugu" onClick={() => { const f = onizlenen; setBak(-1); setKose({ src: f.o || f.d, i: bak, k: f.k }); }}>✂️ {t("belKoseAyarla", "Köşeleri ayarla")}</button>
+            <button className="bt-btn oldugu" onClick={() => { const f = onizlenen; setBak(-1); setKose({ src: f.o || f.d, i: bak, k: f.k, oran: f.oran, mm: f.mm }); }}>✂️ {t("belKoseAyarla", "Köşeleri ayarla")}</button>
             <button className="bt-btn iptal" onClick={() => sil(bak)}>🗑️ {t("sil", "Sil")}</button>
           </div>
         </div>
