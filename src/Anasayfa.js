@@ -8834,8 +8834,10 @@ export default function Anasayfa({ pro = false }) {
     const sesUygula = () => {
       let enEl = null, enOran = 0.5;
       medyalar.forEach((el) => { const r = oranlar.get(el) || 0; if (r >= enOran) { enOran = r; enEl = el; } });
-      const aktifVideo = (enEl && enEl.tagName === "VIDEO") ? enEl : null;
-      const aktifMuzik = (enEl && enEl.classList && enEl.classList.contains("akis-muzikli")) ? enEl : null;
+      let aktifVideo = (enEl && enEl.tagName === "VIDEO") ? enEl : null;
+      let aktifMuzik = (enEl && enEl.classList && enEl.classList.contains("akis-muzikli")) ? enEl : null;
+      // Müzikli paylaşımın VİDEOSU öndeyse: video SESSİZ oynar, paylaşımın MÜZİĞİ çalar (tam ekrandaki gibi)
+      if (aktifVideo && aktifVideo.closest) { const kutu = aktifVideo.closest(".akis-muzikli"); if (kutu) { aktifMuzik = kutu; aktifVideo = null; } }
       // Videolar: sadece aktif video sesli (ses açıkken); gerisi sessiz
       vids.forEach((v) => { try { v.muted = !(akisSesAcikRef.current && v === aktifVideo); if (!v.muted && v.paused) v.play().catch(() => {}); } catch (e) {} });
       // Müzik: aktif müzikli foto varsa onu çal (ses açıkken), yoksa durdur
@@ -9899,7 +9901,9 @@ export default function Anasayfa({ pro = false }) {
               // SES DURUMU (bu paylaşımda ses var mı) — video / kolajda video / (video olmayan) foto+müzik
               const kolajVideoVar = !!(postMedyalar && postMedyalar.some((m) => m.tip === "video"));
               const videoVar = !!p.video || kolajVideoVar;
-              const muzikVar = !!(p.muzik && p.muzik.url) && !videoVar; // müzik SADECE video yoksa çalar (video kendi sesini verir)
+              // MÜZİK eklenmişse akışta da O çalar (videolu paylaşımda da — tam ekrandaki gibi video sessiz oynar). 25 Kas:
+              //   eskiden videolu paylaşımda müzik akışta HİÇ çalmıyordu, sadece video açılınca çalıyordu.
+              const muzikVar = !!(p.muzik && p.muzik.url);
               const sesliMi = videoVar || muzikVar;
               // CANLI KONUM ROZETİ — "nereden paylaşıldı" (üstte, renkli, belirgin)
               const konumRozet = (p.konum && p.konum.tam) ? (
