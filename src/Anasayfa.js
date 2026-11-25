@@ -5147,6 +5147,9 @@ export default function Anasayfa({ pro = false }) {
       setPaylasVideoPoster(kapakIyi(g.videoPoster));
     }
     setPaylasVideoFile(null); // yeni dosya yok; mevcut video URL'i korunur
+    // MEVCUT ekli dosya ve konum da yüklenir → kaydedince KENDİLİĞİNDEN SİLİNMEZ (25 Kas: eskiden düzenleyince siliniyordu)
+    setPaylasDosya(g.dosya && g.dosya.url ? { url: g.dosya.url, ad: g.dosya.ad || "dosya", boyut: g.dosya.boyut || 0 } : null);
+    setPaylasKonum(g.konum && (g.konum.yer || g.konum.sehir || g.konum.tam) ? g.konum : null);
     setPaylasMuzik(g.muzik && g.muzik.url ? { url: g.muzik.url, ad: g.muzik.ad || "Şarkı" } : null); setMuzikMenu("");
     setYaziMedyaUstunde(!!g.yaziUstunde); setGitLinki(g.gitLinki === true);
     const uy = g.ustYazi || {}; setUstYazi(uy.metin || ""); setUstRenk(uy.renk || "#ffffff"); setUstBoyut(uy.boyut || "orta"); setUstYer(uy.yer || "alt"); setAiOneriler([]); setPaylasDuzen(g.duzen || null); setPaylasZemin(g.zemin || ""); setPaylasYaziRenk(g.yaziRenk || "");
@@ -8060,6 +8063,8 @@ export default function Anasayfa({ pro = false }) {
         dosyaObj = await dosyaYukle(paylasDosya.file, uu.uid, (y) => setPaylasYukleme(y));
         setPaylasDurum("gonderiliyor");
       } catch (e) { setPaylasDurum("dosyahata"); return; }
+    } else if (paylasDosya && paylasDosya.url) {
+      dosyaObj = { url: paylasDosya.url, ad: paylasDosya.ad || "dosya", boyut: paylasDosya.boyut || 0 }; // düzenlemede mevcut dosya korunur
     }
     // MÜZİK varsa: kendi yüklediği dosyayı Storage'a yükle → {url, ad}; kütüphane/düzenleme ise mevcut url'i kullan
     let muzikObj = null;
@@ -11876,7 +11881,7 @@ export default function Anasayfa({ pro = false }) {
               </div>
             )}
             </div>{/* /pyl-kaydir */}
-            <button className="paylas-gonder" onClick={() => { if (duzenlenen && duzenlenen.id) { paylasGonder(); } else { setMedyaMenu(""); setTurSecAcik(true); } }} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "muzik" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasGorsel && !paylasVideoFile && !paylasDosya && !paylasMuzik && !(anketAcik && anketSecenekler.filter((s) => s.trim()).length >= 2))}>
+            <button className="paylas-gonder" onClick={() => { if (duzenlenen && duzenlenen.id) { paylasGonder(); } else { setMedyaMenu(""); setTurSecAcik(true); } }} disabled={paylasDurum === "gonderiliyor" || paylasDurum === "video" || paylasDurum === "muzik" || paylasDurum === "dosya" || (!paylasYazi.trim() && !paylasBaslik.trim() && !paylasGorsel && !paylasEkFotolar.length && !paylasVideoFile && !paylasVideo && !paylasDosya && !paylasMuzik && !(anketAcik && anketSecenekler.filter((s) => s.trim()).length >= 2))}>
               {paylasDurum === "video" ? (t("paylasVideoYuk", "Video yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "muzik" ? (t("muzikYukleniyor", "Müzik yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "dosya" ? (t("dosyaYukleniyor", "Dosya yükleniyor…") + " %" + paylasYukleme) : paylasDurum === "gonderiliyor" ? t("araMesajGonderiliyor", "Gönderiliyor…") : (paylasDurum === "ok" ? t("paylasOk", "Paylaşıldı ✓") : t("paylasEt", "Paylaş"))}
             </button>
             {paylasDurum === "dosyahata" && <div className="adm-durum hata">{t("dosyaHata", "Dosya yüklenemedi, tekrar dene.")}</div>}
