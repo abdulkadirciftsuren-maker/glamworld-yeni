@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, Fragment, Component, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
+import { dosyaVer } from "./dosyaVer";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "firebase/auth";
@@ -294,7 +295,8 @@ function _tebrikYaziBas(dataUrl, baslik, altYazi) {
           // Okunurluk için alt bölgeye yumuşak KOYU KAHVE bant (siyah DEĞİL — anayasa); yazı yüksekliğine göre büyür
           const bandY = H * (altN >= 3 ? 0.48 : altN >= 1 ? 0.55 : 0.62);
           const g = x.createLinearGradient(0, bandY, 0, H);
-          g.addColorStop(0, "rgba(24,14,0,0)"); g.addColorStop(1, "rgba(24,14,0,0.72)");
+          // 27 Kas: bant hafifletildi (0.72 → 0.55) — resim soluk/karanlık görünmesin, yazı yine okunur (gölgeli)
+          g.addColorStop(0, "rgba(24,14,0,0)"); g.addColorStop(1, "rgba(24,14,0,0.55)");
           x.fillStyle = g; x.fillRect(0, bandY, W, H - bandY);
           // BAŞLIK — büyük şık altın; sığmıyorsa font küçülür (KESİLMEZ)
           let f = Math.round(W * 0.086);
@@ -302,7 +304,9 @@ function _tebrikYaziBas(dataUrl, baslik, altYazi) {
           while (x.measureText(baslik).width > W * 0.9 && f > 20) { f -= 2; x.font = "700 " + f + "px Georgia,serif"; }
           const bY = H * (altN >= 2 ? 0.66 : altN === 1 ? 0.72 : 0.80);
           const yg = x.createLinearGradient(0, bY - f, 0, bY + f);
-          yg.addColorStop(0, "#fff3c4"); yg.addColorStop(0.5, "#ffd700"); yg.addColorStop(1, "#e6b422");
+          // Başlık rengi de HER KARTTA farklı (altın / beyaz-altın / gül altını / fildişi-turkuaz) — hep aynı görünmesin
+          const bR = tekrarsizSec("tebrik_baslikRenk", [["#fff3c4", "#ffd700", "#e6b422"], ["#ffffff", "#fff1b8", "#ffd34d"], ["#ffe4e1", "#ffb6a3", "#f08a6c"], ["#fffdf0", "#c8fff4", "#5fe0d0"]]);
+          yg.addColorStop(0, bR[0]); yg.addColorStop(0.5, bR[1]); yg.addColorStop(1, bR[2]);
           x.shadowColor = "rgba(0,0,0,0.6)"; x.shadowBlur = Math.round(W * 0.02); x.shadowOffsetY = 2;
           x.fillStyle = yg; x.fillText(baslik, W / 2, bY);
           // ALT SATIRLAR (biraz uzun dua/dilek)
@@ -319,6 +323,30 @@ function _tebrikYaziBas(dataUrl, baslik, altYazi) {
     } catch (e) { resolve(dataUrl); }
   });
 }
+// TEKRARSIZ SEÇİM (27 Kas, kullanıcı: "cuma resmi hep aynı soluk renk ve aynı yazı"): son seçilenler telefonda hatırlanır,
+// listenin yarısı kadar son seçim tekrar seçilmez → art arda aynı sahne/yazı/renk GELMEZ.
+function tekrarsizSec(anahtar, dizi) {
+  if (!dizi || !dizi.length) return undefined;
+  let son = [];
+  try { son = JSON.parse(localStorage.getItem("gw_tekrarsiz_" + anahtar) || "[]"); } catch (e) {}
+  const yasak = new Set(son.slice(-Math.floor(dizi.length / 2)));
+  const adaylar = dizi.map((_, i) => i).filter((i) => !yasak.has(i));
+  const i = (adaylar.length ? adaylar : dizi.map((_, j) => j))[Math.floor(Math.random() * (adaylar.length || dizi.length))];
+  try { localStorage.setItem("gw_tekrarsiz_" + anahtar, JSON.stringify([...son, i].slice(-12))); } catch (e) {}
+  return dizi[i];
+}
+// Her tebrik resminde FARKLI, CANLI renk teması (soluk olmasın)
+const TEBRIK_RENKLER = [
+  "dominant colors: radiant sunrise gold, coral and warm peach",
+  "dominant colors: royal blue, turquoise and shining gold",
+  "dominant colors: fresh emerald green, mint and gold",
+  "dominant colors: rose pink, blush and champagne gold",
+  "dominant colors: vivid purple, violet and gold",
+  "dominant colors: sky blue, white and soft gold, bright daylight",
+  "dominant colors: deep ruby red, crimson and gold",
+  "dominant colors: sunny yellow, orange and fresh green",
+  "dominant colors: aqua, teal and pearl white",
+];
 // TEBRİK KARTLARI — tür (Cuma/Bayram/Doğum günü/Geçmiş olsun/Yeni yıl) × DİL (tr/en/de, yoksa en'e düşer). Her türde birden çok
 // {b:başlık, a:biraz uzun dua/dilek} → RASTGELE seçilir (hep aynı olmasın). sahneler = YAZISIZ güzel arka plan betimleri (İngilizce).
 const TEBRIK = {
@@ -333,10 +361,21 @@ const TEBRIK = {
       "a lush blooming garden with tulips and roses at golden hour, a distant elegant mosque, dreamy warm light, rich vibrant colors",
       "a serene lake mirroring a grand illuminated mosque at twilight, warm golden reflections, colorful glowing sky",
       "intricate turquoise, emerald and gold Islamic geometric art with a glowing central medallion, luxurious festive",
+      "a sunlit courtyard of a beautiful mosque with a fountain, blue and white tiles, blooming flowers, bright cheerful daylight",
+      "a field of colorful wildflowers under a clear bright blue sky, a white mosque with golden domes in the distance, fresh spring morning",
+      "a cup of tea and dates on an ornate tray with roses, soft bright morning sunlight through a decorated window, cozy and warm",
+      "white doves flying over a grand mosque against a radiant pastel sunrise, soft glowing clouds, uplifting",
+      "a mosque dome and minarets reflected in calm water at sunset, vivid purple, pink and gold sky, sparkling",
+      "a colorful bouquet of tulips and roses with soft golden sparkles on a bright cream background, elegant arabesque corners",
     ],
     metin: {
       tr: [
         { b: "Hayırlı Cumalar", a: "Rabbim dualarınızı kabul etsin, gönlünüzü huzur ve bereketle doldursun; yolunuz hep aydınlık olsun." },
+        { b: "Cumanız Hayırlı Olsun", a: "Bu mübarek cuma günü gönlünüze ferahlık, hanenize bereket, sevdiklerinize sağlık getirsin." },
+        { b: "Hayırlı Cumalar", a: "Dualarınız kabul, gönlünüz mutlu, sofranız bereketli olsun; Rabbim sizi sevdiklerinizle bağışlasın." },
+        { b: "Huzurlu Cumalar", a: "Cumanın nuru evinizi aydınlatsın; kalbinizdeki tüm güzel dilekler hayırlısıyla gerçekleşsin." },
+        { b: "Bereketli Cumalar", a: "Bugün açılan ellerin hiçbiri boş dönmesin; size ve ailenize sağlık, huzur ve bolluk dilerim." },
+        { b: "Cuma Mübarek", a: "Rabbim yüreğinizi sevgiyle, ömrünüzü hayırla, yolunuzu nurla doldursun. Hayırlı cumalar dostlar." },
         { b: "Cumanız Mübarek Olsun", a: "Bu mübarek günde kalbiniz huzurla, eviniz bereketle dolsun; dertlerinize derman, dualarınıza kabul olsun." },
         { b: "Hayırlı ve Bereketli Cumalar", a: "Allah tüm sevdiklerinizle sağlık ve mutluluk versin; gönlünüzden geçen güzel dilekleri hayırlısıyla nasip etsin." },
         { b: "Mübarek Cumalar", a: "Bu güzel günün hürmetine evinize huzur, sofranıza bereket, ömrünüze hayır dolsun. Âmin." },
@@ -548,6 +587,9 @@ const AIPANEL = {
   durakla: { tr: "Duraklat", en: "Pause", de: "Pause", fr: "Pause", es: "Pausa", it: "Pausa", pt: "Pausa", ru: "Пауза", uk: "Пауза", ar: "إيقاف مؤقت", zh: "暂停", ja: "一時停止", hi: "रोकें" },
   devam: { tr: "Devam", en: "Resume", de: "Weiter", fr: "Reprendre", es: "Continuar", it: "Riprendi", pt: "Continuar", ru: "Продолжить", uk: "Продовжити", ar: "متابعة", zh: "继续", ja: "再開", hi: "जारी रखें" },
   sus: { tr: "Sus", en: "Stop", de: "Aus", fr: "Stop", es: "Parar", it: "Basta", pt: "Parar", ru: "Стоп", uk: "Стоп", ar: "إسكات", zh: "停止", ja: "止める", hi: "बंद" },
+  galeri: { tr: "Galeriye kaydet", en: "Save to gallery", de: "In Galerie speichern", fr: "Enregistrer dans la galerie", es: "Guardar en galería", it: "Salva in galleria", pt: "Salvar na galeria", ru: "Сохранить в галерею", uk: "Зберегти в галерею", ar: "حفظ في المعرض", zh: "保存到相册", ja: "ギャラリーに保存", hi: "गैलरी में सहेजें" },
+  gonder: { tr: "Gönder (WhatsApp…)", en: "Send (WhatsApp…)", de: "Senden (WhatsApp…)", fr: "Envoyer (WhatsApp…)", es: "Enviar (WhatsApp…)", it: "Invia (WhatsApp…)", pt: "Enviar (WhatsApp…)", ru: "Отправить (WhatsApp…)", uk: "Надіслати (WhatsApp…)", ar: "إرسال (واتساب…)", zh: "发送（WhatsApp…）", ja: "送信（WhatsApp…）", hi: "भेजें (WhatsApp…)" },
+  gloxPaylas: { tr: "GLOXORG'da paylaş", en: "Post on GLOXORG", de: "Auf GLOXORG teilen", fr: "Publier sur GLOXORG", es: "Publicar en GLOXORG", it: "Pubblica su GLOXORG", pt: "Publicar no GLOXORG", ru: "Опубликовать в GLOXORG", uk: "Опублікувати в GLOXORG", ar: "انشر على GLOXORG", zh: "发布到 GLOXORG", ja: "GLOXORGに投稿", hi: "GLOXORG पर पोस्ट करें" },
 };
 function pl(dil, key) { const o = AIPANEL[key]; return (o && (o[dil] || o.en)) || ""; }
 function renkliCumleler(metin, palet, aktif) {
@@ -6755,16 +6797,17 @@ export default function Anasayfa({ pro = false }) {
         let tebrikTur = "";
         for (const k of Object.keys(TEBRIK)) { if (TEBRIK[k].test.test(kulDusC)) { tebrikTur = k; break; } }
         if (tebrikTur && paylasNiyet) {
-          const sec = (a) => a[Math.floor(Math.random() * a.length)];
           const cfg = TEBRIK[tebrikTur];
           const d0 = (aiDilRef.current || dil || "tr").slice(0, 2).toLowerCase();     // kullanıcının konuştuğu/seçtiği dil
           const L = cfg.metin[d0] ? d0 : (cfg.metin.en ? "en" : "tr");                // desteklenmeyen dilde İngilizce'ye düş
-          const kart = sec(cfg.metin[L]);
-          const sahne = sec(cfg.sahneler);
+          // TEKRARSIZ: son çıkan sahne/yazı/renk tekrar gelmez (eskiden tamamen rastgeleydi → hep benzer çıkıyordu)
+          const kart = tekrarsizSec(tebrikTur + "_metin_" + L, cfg.metin[L]);
+          const sahne = tekrarsizSec(tebrikTur + "_sahne", cfg.sahneler);
+          const renk = tekrarsizSec("tebrik_renk", TEBRIK_RENKLER);
           resimUstuYazi = kart.b;   // ✍️ doğru başlık — canvas ile basılır
           resimUstuAlt = kart.a;    // ✍️ biraz uzun dua/dilek (her seferinde farklı) — canvas ile basılır
           // ⛔ ÜRETİCİYE YAZI YAZDIRMIYORUZ (yazıyı bozuyor). Sadece güzel, YAZISIZ, canlı arka plan iste.
-          resimIstem = `A stunning full-bleed vertical greeting BACKGROUND artwork that FILLS THE ENTIRE FRAME edge to edge — no frame, no mockup, no shelf, no borders. Scene: ${sahne}. IMPORTANT: absolutely NO text, NO letters, NO words, NO writing anywhere in the image — text-free artwork only. Keep the lower-center area calm and softly shaded so a greeting can be placed there later. Rich vivid festive colors, luxurious, highly detailed, beautiful, photorealistic, high quality, 4k, vertical composition.`;
+          resimIstem = `A stunning full-bleed vertical greeting BACKGROUND artwork that FILLS THE ENTIRE FRAME edge to edge — no frame, no mockup, no shelf, no borders. Scene: ${sahne}. Color palette — ${renk}. IMPORTANT: absolutely NO text, NO letters, NO words, NO writing anywhere in the image — text-free artwork only. Keep the lower-center area calm and slightly softer so a greeting can be placed there later. BRIGHT, luminous, cheerful, high saturation, vivid festive colors — NOT dark, NOT muted, NOT faded, NOT gloomy. Luxurious, highly detailed, beautiful, photorealistic, high quality, 4k, vertical composition.`;
           paylasim = `${kart.b}\n\n${kart.a}`; // paylaşım metni (yazı paneli) — aynı dilde, başlık + dua
           metin = t("tebrikHazir", "İşte sana özel bir tebrik paylaşımı hazırladım 🎉");
         }
@@ -7611,15 +7654,10 @@ export default function Anasayfa({ pro = false }) {
   // Hazırlanan metni DOSYA olarak indir (.txt)
   const metniIndir = (metin) => {
     const txt = (metin || "").toString(); if (!txt) return;
-    try {
-      const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "GLOXORG-" + (txt.replace(/\s+/g, "-").slice(0, 24) || "paylasim") + ".txt";
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 1500);
-      setKucukMesaj(t("indirildi", "İndirildi 📄"));
-    } catch (e) {}
+    // Ortak dosya yolu (dosyaVer): telefon uygulamasında İndirilenler/GLOXORG'a kaydeder (eskiden uygulamada hiç inmiyordu)
+    const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+    const ad = "GLOXORG-" + (txt.replace(/[^\wğüşıöçĞÜŞİÖÇ]+/g, "-").slice(0, 24) || "paylasim") + ".txt";
+    dosyaVer(blob, ad, "GLOXORG", "indir").then(() => setKucukMesaj(t("indirildi", "İndirildi 📄"))).catch(() => setKucukMesaj(t("indirilemedi", "İndirilemedi")));
   };
   // GLOXOO ÇİZİMİNİ İNDİR — SVG çizimi PNG resmine çevirip (yüksek çözünürlük) telefona indir (her yerde açılır, gönderiye eklenir)
   const cizimIndir = (svg) => {
@@ -7649,15 +7687,22 @@ export default function Anasayfa({ pro = false }) {
   // GERÇEK RESMİ indir. ÖNEMLİ: Firebase (http) adresli resimlerde tarayıcı, download="benzersiz ad"ı cross-origin
   // güvenlik yüzünden YOK SAYIP Firebase'deki aynı ismi kullanıyordu → "aynı dosyayı tekrar mı?" soruyordu.
   // ÇÖZÜM: http resmi ÖNCE blob olarak indir → aynı-köken object URL yap → benzersiz ad ARTIK ÇALIŞIR → soru çıkmaz.
-  const resimIndir = (dataUrl) => {
-    const s = (dataUrl || "").toString(); if (!s) return;
+  // GALERİYE KAYDET (27 Kas): uygulamada resim telefonun GALERİSİNE (Resimler/GLOXORG) kaydedilir; tarayıcıda iner.
+  //   (Eskiden uygulamada "İndir" hiçbir yere indirmiyordu.) Hem data: hem http resim desteklenir.
+  const resimIndir = async (dataUrl) => {
+    const blob = await _resimBlob(dataUrl); if (!blob) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); return; }
+    const uz = (blob.type || "").indexOf("png") >= 0 ? "png" : "jpg";
     try {
-      // ESKİ ÇALIŞAN HAL: resim base64 (data:) → doğrudan iner. Benzersiz ad → "tekrar mı?" sormaz.
-      const a = document.createElement("a"); a.href = s; a.download = "GLOXORG-resim-" + Date.now().toString(36) + ".png";
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      await dosyaVer(blob, "GLOXORG-resim-" + Date.now().toString(36) + "." + uz, "GLOXORG", "indir");
       setResimIndi(true); setTimeout(() => setResimIndi(false), 2500);
-      setKucukMesaj(t("indirildi", "İndirildi 📄"));
+      setKucukMesaj(t("resimGaleride", "Galeriye kaydedildi ✓"));
     } catch (e) { setKucukMesaj(t("indirilemedi", "İndirilemedi")); }
+  };
+  // GÖNDER: WhatsApp, Instagram, e-posta… (telefonun gönder penceresi) — GLOXORG'da paylaş ayrı düğme
+  const resimGonder = async (dataUrl) => {
+    const blob = await _resimBlob(dataUrl); if (!blob) { setKucukMesaj(t("paylasilamadi", "Paylaşılamadı")); return; }
+    const uz = (blob.type || "").indexOf("png") >= 0 ? "png" : "jpg";
+    try { await dosyaVer(blob, "GLOXORG-resim-" + Date.now().toString(36) + "." + uz, "GLOXORG", "gonder"); } catch (e) { setKucukMesaj(t("paylasilamadi", "Paylaşılamadı")); }
   };
   // data URL → Blob (paylaş/kopyala için gerçek dosya lazım)
   const _dataUrlBlob = (dataUrl) => {
@@ -7676,17 +7721,6 @@ export default function Anasayfa({ pro = false }) {
     const s = (src || "").toString(); if (!s) return null;
     if (s.slice(0, 5) === "data:") return _dataUrlBlob(s);
     try { return await (await fetch(s, { mode: "cors" })).blob(); } catch (e) { return null; }
-  };
-  // RESMİ KOPYALA — panoya PNG olarak koyar (destekleyen tarayıcıda), olmazsa indirir
-  const resimKopyala = async (dataUrl) => {
-    const blob = await _resimBlob(dataUrl); if (!blob) { setKucukMesaj(t("kopyalanamadi", "Kopyalanamadı")); return; }
-    try {
-      if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([new window.ClipboardItem({ [blob.type || "image/png"]: blob })]);
-        setKucukMesaj(t("resimKopyalandi", "Resim kopyalandı 📋")); return;
-      }
-    } catch (e) {}
-    resimIndir(dataUrl); setKucukMesaj(t("resimIndiKopya", "Resim indirildi 📄"));
   };
   // ÜRETİLEN RESMİ GLOXORG'DA PAYLAŞ — resmi paylaşım penceresine (kendi feed'ine) taşır, yazı boş açılır.
   // ÖNEMLİ: resimde ZATEN GLOXORG filigranı var → paylaşımda TEKRAR filigran ekleme (çift olmasın) → filigranEkle=false.
@@ -12814,17 +12848,19 @@ export default function Anasayfa({ pro = false }) {
                           <>
                             <img className="ai-resim-gorsel" src={m.resimData} alt={t("resim", "resim")} onClick={() => setCizimBuyut(m.resimData)} />
                             <div className="ai-cizim-arac">
+                              {/* 27 Kas: Kopyala KALDIRILDI (uygulamada resim panoya kopyalanamıyordu). Galeriye kaydet + Gönder (diğer
+                                  uygulamalar) + GLOXORG'da paylaş AYRI düğmeler. */}
                               <button className="ai-paylasim-btn indir" onClick={() => resimIndir(m.resimData)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-                                {pl(aiDil, "indir")}
+                                <KayanYazi>{pl(aiDil, "galeri")}</KayanYazi>
                               </button>
-                              <button className="ai-paylasim-btn kopya" onClick={() => resimKopyala(m.resimData)}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-                                {pl(aiDil, "kopyala")}
+                              <button className="ai-paylasim-btn gonder" onClick={() => resimGonder(m.resimData)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                                <KayanYazi>{pl(aiDil, "gonder")}</KayanYazi>
                               </button>
                               <button className="ai-paylasim-btn paylas" onClick={() => resimGloxordaPaylas(m.resimData)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-                                {pl(aiDil, "paylas")}
+                                <KayanYazi>{pl(aiDil, "gloxPaylas")}</KayanYazi>
                               </button>
                               <button className="ai-paylasim-btn kopya" onClick={() => setCizimBuyut(m.resimData)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>

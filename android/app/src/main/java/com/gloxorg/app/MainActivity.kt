@@ -518,7 +518,10 @@ class MainActivity : Activity() {
                 val uri = androidx.core.content.FileProvider.getUriForFile(this@MainActivity, "$packageName.dosyalar", dosya)
                 when (islem) {
                     "gonder" -> runOnUiThread { gonderAc(uri, tur, gonderYazi) }
-                    "indir" -> {
+                    "indir" -> if (tur.startsWith("image/") && Build.VERSION.SDK_INT >= 29 && galeriyeKaydet(bayt, temizAd, tur)) {
+                        // RESİM → telefonun GALERİSİNE (Resimler/GLOXORG), görüntüleyici açılmaz, sadece "kaydedildi" yazısı (27 Kas)
+                        runOnUiThread { try { android.widget.Toast.makeText(this@MainActivity, kayitYazi, android.widget.Toast.LENGTH_LONG).show() } catch (e: Exception) {} }
+                    } else {
                         indirilenlereKaydet(bayt, temizAd, tur)
                         runOnUiThread {
                             try { android.widget.Toast.makeText(this@MainActivity, kayitYazi, android.widget.Toast.LENGTH_LONG).show() } catch (e: Exception) {}
@@ -933,6 +936,20 @@ class MainActivity : Activity() {
             val u = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, d) ?: return
             contentResolver.openOutputStream(u)?.use { it.write(bayt) }
         } catch (e: Exception) {}
+    }
+
+    // Resmin galeride görünmesi için Resimler/GLOXORG klasörüne kaydeder (Android 10+, izin gerekmez). Başarılıysa true.
+    private fun galeriyeKaydet(bayt: ByteArray, ad: String, tur: String): Boolean {
+        return try {
+            val d = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, ad)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, tur)
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/GLOXORG")
+            }
+            val u = contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, d) ?: return false
+            contentResolver.openOutputStream(u)?.use { it.write(bayt) } ?: return false
+            true
+        } catch (e: Exception) { false }
     }
 
     // "Aç" → PDF okuyucuda TAM EKRAN açılır; "Gönder" → WhatsApp/e-posta vb.

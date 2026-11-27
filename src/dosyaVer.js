@@ -25,7 +25,9 @@ export async function dosyaVer(blob, ad, baslik, islem) {
   if (k && typeof k.dosyaIslem === "function") {
     try {
       const b64 = await base64Yap(blob);
-      const ok = k.dosyaIslem(b64, ad, tur, islem || "", ceviri("dosyaHazir", "Dosya hazır ✓ (İndirilenler/GLOXORG)"), ceviri("dosyaAc", "Aç"), ceviri("dosyaGonder", "Gönder"));
+      // Resim + indir → uygulama GALERİYE (Resimler/GLOXORG) kaydeder; diğer dosyalar İndirilenler/GLOXORG
+      const kayitYazi = (tur.indexOf("image/") === 0 && islem === "indir") ? ceviri("resimGaleride", "Galeriye kaydedildi ✓") : ceviri("dosyaHazir", "Dosya hazır ✓ (İndirilenler/GLOXORG)");
+      const ok = k.dosyaIslem(b64, ad, tur, islem || "", kayitYazi, ceviri("dosyaAc", "Aç"), ceviri("dosyaGonder", "Gönder"));
       if (ok) return;
     } catch (e) {}
   } else if (k && typeof k.dosyaVer === "function") { // B490 uygulaması (ayrı indir/gönder yok → sorar)
